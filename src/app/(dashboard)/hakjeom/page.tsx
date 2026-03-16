@@ -177,15 +177,6 @@ function getPaginationPages(current: number, total: number): (number | '...')[] 
   return pages;
 }
 
-// click_source 파싱: "대분류_중분류" → { major, minor }
-function parseClickSource(source: string | null): { major: string; minor: string } {
-  if (!source) return { major: '', minor: '' };
-  const stripped = source.startsWith('바로폼_') ? source.slice(4) : source;
-  const idx = stripped.indexOf('_');
-  if (idx === -1) return { major: stripped, minor: '' };
-  return { major: stripped.slice(0, idx), minor: stripped.slice(idx + 1) };
-}
-
 // 맘카페 ID → 한글 이름 매핑
 const CAFE_NAMES: Record<string, string> = {
   cjsam: '순광맘',
@@ -207,6 +198,27 @@ const CAFE_NAMES: Record<string, string> = {
   andongmom: '안동맘',
   donanmam: '도안맘',
 };
+
+// click_source 파싱: "대분류_중분류" → { major, minor(한글), needsCheck }
+const KNOWN_CAFE_IDS = new Set(Object.keys(CAFE_NAMES));
+const KNOWN_CAFE_KOREAN = new Set(Object.values(CAFE_NAMES));
+
+function parseClickSource(source: string | null): { major: string; minor: string; needsCheck: boolean } {
+  if (!source) return { major: '', minor: '', needsCheck: false };
+  const stripped = source.startsWith('바로폼_') ? source.slice(4) : source;
+  const idx = stripped.indexOf('_');
+  if (idx === -1) return { major: stripped, minor: '', needsCheck: false };
+  const major = stripped.slice(0, idx);
+  const rawMinor = stripped.slice(idx + 1);
+  const resolvedName = CAFE_NAMES[rawMinor] ?? rawMinor;
+  const isUnknownMamcafe =
+    major === '맘카페' &&
+    rawMinor !== '확인필요' &&
+    !KNOWN_CAFE_IDS.has(rawMinor) &&
+    !KNOWN_CAFE_KOREAN.has(rawMinor);
+  const minor = isUnknownMamcafe ? `${resolvedName}(확인필요)` : resolvedName;
+  return { major, minor, needsCheck: isUnknownMamcafe || rawMinor === '확인필요' };
+}
 
 // click_source를 사람이 읽기 쉬운 형태로 변환
 // "맘카페_momspanggju" → "맘카페 > 광주맘스팡"
@@ -1473,11 +1485,13 @@ function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) =>
   // 필터링
   const uniqueManagers = Array.from(new Set(items.map(c => c.manager).filter(Boolean))) as string[];
   const uniqueMajorCategories = Array.from(new Set(items.map(c => parseClickSource(c.click_source).major).filter(Boolean))).sort();
+  const needsCheckCount = items.filter(c => parseClickSource(c.click_source).needsCheck).length;
   const uniqueMinorCategories = Array.from(new Set(
     items
       .filter(c => majorCategoryFilter === 'all' || parseClickSource(c.click_source).major === majorCategoryFilter)
-      .map(c => parseClickSource(c.click_source).minor)
-      .filter(Boolean)
+      .map(c => parseClickSource(c.click_source))
+      .filter(p => Boolean(p.minor) && !p.needsCheck)
+      .map(p => p.minor)
   )).sort();
 
   const filtered = items.filter(c => {
@@ -1493,7 +1507,11 @@ function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) =>
       if (managerFilter !== 'none' && c.manager !== managerFilter) return false;
     }
     if (majorCategoryFilter !== 'all' && parseClickSource(c.click_source).major !== majorCategoryFilter) return false;
-    if (minorCategoryFilter !== 'all' && parseClickSource(c.click_source).minor !== minorCategoryFilter) return false;
+    if (minorCategoryFilter !== 'all') {
+      const parsed = parseClickSource(c.click_source);
+      if (minorCategoryFilter === '__needs_check__') { if (!parsed.needsCheck) return false; }
+      else if (parsed.minor !== minorCategoryFilter) return false;
+    }
     if (reasonFilter !== 'all') {
       const reasons = (c.reason || '').split(', ').map(r => r.trim());
       if (!reasons.includes(reasonFilter)) return false;
@@ -1732,7 +1750,7 @@ function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) =>
                       <input type="checkbox" checked={selectedIds.includes(item.id)} onChange={() => toggleSelect(item.id)} className={styles.checkbox} />
                     </td>
                     <td className={styles.tdSecondary}>{parseClickSource(item.click_source).major || '-'}</td>
-                    <td className={styles.tdSecondary}>{parseClickSource(item.click_source).minor || '-'}</td>
+                    <td className={styles.tdSecondary} style={parseClickSource(item.click_source).needsCheck ? { color: '#ef4444', fontWeight: 600 } : undefined}>{parseClickSource(item.click_source).minor || '-'}</td>
                     <td className={styles.tdBold}>{item.name}</td>
                     <td className={styles.tdTabular}>{item.contact}</td>
                     <td className={styles.tdSecondary}>{item.education ?? '-'}</td>
@@ -1823,6 +1841,9 @@ function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) =>
           {openFilterColumn === 'minor' && (
             <>
               <div className={`${styles.filterDropdownItem}${minorCategoryFilter === 'all' ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setMinorCategoryFilter('all'); setCurrentPage(1); setOpenFilterColumn(null); }}>전체</div>
+              {needsCheckCount > 0 && (
+                <div className={`${styles.filterDropdownItem}${minorCategoryFilter === '__needs_check__' ? ` ${styles.filterDropdownItemActive}` : ''}`} style={{ color: '#ef4444', fontWeight: 600 }} onClick={() => { setMinorCategoryFilter('__needs_check__'); setCurrentPage(1); setOpenFilterColumn(null); }}>확인필요 ({needsCheckCount})</div>
+              )}
               {uniqueMinorCategories.map(m => (
                 <div key={m} className={`${styles.filterDropdownItem}${minorCategoryFilter === m ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setMinorCategoryFilter(m); setCurrentPage(1); setOpenFilterColumn(null); }}>{m}</div>
               ))}
@@ -1946,10 +1967,13 @@ function PrivateCertTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode
   // 파생 데이터
   const uniqueManagers = Array.from(new Set(items.map(c => c.manager).filter(Boolean))) as string[];
   const uniqueMajorCategories = Array.from(new Set(items.map(c => parseClickSource(c.click_source).major).filter(Boolean))).sort();
+  const needsCheckCount = items.filter(c => parseClickSource(c.click_source).needsCheck).length;
   const uniqueMinorCategories = Array.from(new Set(
     items
       .filter(c => majorCategoryFilter === 'all' || parseClickSource(c.click_source).major === majorCategoryFilter)
-      .map(c => parseClickSource(c.click_source).minor).filter(Boolean)
+      .map(c => parseClickSource(c.click_source))
+      .filter(p => Boolean(p.minor) && !p.needsCheck)
+      .map(p => p.minor)
   )).sort();
 
   const filtered = items.filter(c => {
@@ -1965,7 +1989,11 @@ function PrivateCertTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode
       if (managerFilter !== 'none' && c.manager !== managerFilter) return false;
     }
     if (majorCategoryFilter !== 'all' && parseClickSource(c.click_source).major !== majorCategoryFilter) return false;
-    if (minorCategoryFilter !== 'all' && parseClickSource(c.click_source).minor !== minorCategoryFilter) return false;
+    if (minorCategoryFilter !== 'all') {
+      const parsed = parseClickSource(c.click_source);
+      if (minorCategoryFilter === '__needs_check__') { if (!parsed.needsCheck) return false; }
+      else if (parsed.minor !== minorCategoryFilter) return false;
+    }
     if (reasonFilter !== 'all') {
       const reasons = (c.reason || '').split(', ').map(r => r.trim());
       if (!reasons.includes(reasonFilter)) return false;
@@ -2197,7 +2225,7 @@ function PrivateCertTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode
                       <input type="checkbox" checked={selectedIds.includes(item.id)} onChange={() => toggleSelect(item.id)} className={styles.checkbox} />
                     </td>
                     <td className={styles.tdSecondary}>{parseClickSource(item.click_source).major || '-'}</td>
-                    <td className={styles.tdSecondary}>{parseClickSource(item.click_source).minor || '-'}</td>
+                    <td className={styles.tdSecondary} style={parseClickSource(item.click_source).needsCheck ? { color: '#ef4444', fontWeight: 600 } : undefined}>{parseClickSource(item.click_source).minor || '-'}</td>
                     <td className={styles.tdBold}>{item.name}</td>
                     <td className={styles.tdTabular}>{item.contact}</td>
                     <td className={styles.tdSecondary}>{item.major_category ?? '-'}</td>
@@ -2280,6 +2308,9 @@ function PrivateCertTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode
           {openFilterColumn === 'minor' && (
             <>
               <div className={`${styles.filterDropdownItem}${minorCategoryFilter === 'all' ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setMinorCategoryFilter('all'); setCurrentPage(1); setOpenFilterColumn(null); }}>전체</div>
+              {needsCheckCount > 0 && (
+                <div className={`${styles.filterDropdownItem}${minorCategoryFilter === '__needs_check__' ? ` ${styles.filterDropdownItemActive}` : ''}`} style={{ color: '#ef4444', fontWeight: 600 }} onClick={() => { setMinorCategoryFilter('__needs_check__'); setCurrentPage(1); setOpenFilterColumn(null); }}>확인필요 ({needsCheckCount})</div>
+              )}
               {uniqueMinorCategories.map(m => (
                 <div key={m} className={`${styles.filterDropdownItem}${minorCategoryFilter === m ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setMinorCategoryFilter(m); setCurrentPage(1); setOpenFilterColumn(null); }}>{m}</div>
               ))}
