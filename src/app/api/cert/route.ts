@@ -1,0 +1,150 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { supabaseAdmin } from '@/lib/supabase/admin';
+
+// 결제 상태 타입
+type PaymentStatus = 'pending' | 'paid' | 'failed' | 'cancelled';
+
+// 업데이트 가능한 필드 타입
+interface CertUpdatePayload {
+  is_checked?: boolean;
+  payment_status?: PaymentStatus;
+  name?: string;
+  contact?: string;
+  birth_prefix?: string;
+  address?: string;
+  address_main?: string;
+  address_detail?: string;
+  certificates?: string[];
+  cash_receipt?: string;
+  amount?: number | null;
+  mul_no?: string | null;
+  pay_method?: string | null;
+  source?: string | null;
+}
+
+// GET: 전체 목록 조회
+// 쿼리 파라미터:
+//   - name: 이름 검색 (부분 일치)
+//   - contact: 연락처 검색 (부분 일치)
+//   - payment_status: 결제 상태 필터 (paid | pending | failed | cancelled | all)
+//   - source: 출처 탭 필터 (hakjeom | edu | all)
+export async function GET(request: NextRequest) {
+  try {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      return NextResponse.json({ error: 'Supabase configuration missing' }, { status: 500 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const name = searchParams.get('name');
+    const contact = searchParams.get('contact');
+    const paymentStatus = searchParams.get('payment_status');
+    // source 탭 필터: 'hakjeom' = 학점연계, 'edu' = 교육원, 나머지(all/없음) = 전체
+    const sourceTab = searchParams.get('source_tab');
+
+    let query = supabaseAdmin
+      .from('certificate_applications')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (name) {
+      query = query.ilike('name', `%${name}%`);
+    }
+
+    if (contact) {
+      query = query.ilike('contact', `%${contact}%`);
+    }
+
+    if (paymentStatus && paymentStatus !== 'all') {
+      query = query.eq('payment_status', paymentStatus);
+    }
+
+    // source 탭 필터링
+    // 'hakjeom' 탭: source 값이 'hakjeom' 또는 학점연계 관련 값인 레코드
+    // 'edu' 탭: source 값이 'edu' 또는 교육원 관련 값인 레코드
+    if (sourceTab && sourceTab !== 'all') {
+      query = query.eq('source', sourceTab);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('[cert GET] Supabase error:', error);
+      return NextResponse.json({ error: 'Failed to fetch certificate applications' }, { status: 500 });
+    }
+
+    return NextResponse.json(data ?? []);
+  } catch (err) {
+    console.error('[cert GET] Unexpected error:', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+// PATCH: 필드 업데이트 (id 필수)
+export async function PATCH(request: NextRequest) {
+  try {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      return NextResponse.json({ error: 'Supabase configuration missing' }, { status: 500 });
+    }
+
+    const body = await request.json();
+    const {
+      id,
+      is_checked,
+      payment_status,
+      name,
+      contact,
+      birth_prefix,
+      address,
+      address_main,
+      address_detail,
+      certificates,
+      cash_receipt,
+      amount,
+      mul_no,
+      pay_method,
+      source,
+    } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    }
+
+    const updateData: CertUpdatePayload = {};
+
+    if (is_checked !== undefined) updateData.is_checked = is_checked;
+    if (payment_status !== undefined) updateData.payment_status = payment_status;
+    if (name !== undefined) updateData.name = name;
+    if (contact !== undefined) updateData.contact = contact;
+    if (birth_prefix !== undefined) updateData.birth_prefix = birth_prefix;
+    if (address !== undefined) updateData.address = address;
+    if (address_main !== undefined) updateData.address_main = address_main;
+    if (address_detail !== undefined) updateData.address_detail = address_detail;
+    if (certificates !== undefined) updateData.certificates = certificates;
+    if (cash_receipt !== undefined) updateData.cash_receipt = cash_receipt;
+    if (amount !== undefined) updateData.amount = amount ?? null;
+    if (mul_no !== undefined) updateData.mul_no = mul_no ?? null;
+    if (pay_method !== undefined) updateData.pay_method = pay_method ?? null;
+    if (source !== undefined) updateData.source = source ?? null;
+
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json({ error: 'At least one field is required for update' }, { status: 400 });
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from('certificate_applications')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('[cert PATCH] Supabase error:', error);
+      return NextResponse.json({ error: 'Failed to update certificate application' }, { status: 500 });
+    }
+
+    return NextResponse.json({ message: 'Updated successfully', data });
+  } catch (err) {
+    console.error('[cert PATCH] Unexpected error:', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
