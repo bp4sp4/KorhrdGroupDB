@@ -59,10 +59,12 @@ export async function GET(request: NextRequest) {
     }
 
     // source 탭 필터링
-    // 'hakjeom' 탭: source 값이 'hakjeom' 또는 학점연계 관련 값인 레코드
-    // 'edu' 탭: source 값이 'edu' 또는 교육원 관련 값인 레코드
+    // 'hakjeom' 탭: source = 'bridge' (학점연계 신청)
+    // 'edu' 탭: source = 'prepayment' (교육원)
     if (sourceTab && sourceTab !== 'all') {
-      query = query.eq('source', sourceTab);
+      const sourceMap: Record<string, string> = { hakjeom: 'bridge', edu: 'prepayment' };
+      const dbSource = sourceMap[sourceTab] ?? sourceTab;
+      query = query.eq('source', dbSource);
     }
 
     const { data, error } = await query;
@@ -145,6 +147,111 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ message: 'Updated successfully', data });
   } catch (err) {
     console.error('[cert PATCH] Unexpected error:', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+// DELETE: 일괄 삭제 (ids 배열 필수)
+export async function DELETE(request: NextRequest) {
+  try {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      return NextResponse.json({ error: 'Supabase configuration missing' }, { status: 500 });
+    }
+
+    const body = await request.json();
+    const { ids } = body;
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return NextResponse.json({ error: 'IDs are required' }, { status: 400 });
+    }
+
+    const { error } = await supabaseAdmin
+      .from('certificate_applications')
+      .delete()
+      .in('id', ids);
+
+    if (error) {
+      console.error('[cert DELETE] Supabase error:', error);
+      return NextResponse.json({ error: 'Failed to delete' }, { status: 500 });
+    }
+
+    return NextResponse.json({ message: 'Deleted successfully' });
+  } catch (err) {
+    console.error('[cert DELETE] Unexpected error:', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+// POST: 신규 신청 추가 (FormData - 사진 포함)
+export async function POST(request: NextRequest) {
+  try {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      return NextResponse.json({ error: 'Supabase configuration missing' }, { status: 500 });
+    }
+
+    const formData = await request.formData();
+    const name = formData.get('name') as string | null;
+    const contact = formData.get('contact') as string | null;
+    const birth_prefix = formData.get('birth_prefix') as string | null;
+    const address = formData.get('address') as string | null;
+    const address_detail = formData.get('address_detail') as string | null;
+    const certificatesRaw = formData.get('certificates') as string | null;
+    const cash_receipt = formData.get('cash_receipt') as string | null;
+    const source = formData.get('source') as string | null;
+    const amountRaw = formData.get('amount') as string | null;
+    const photo = formData.get('photo') as File | null;
+
+    if (!name || !contact) {
+      return NextResponse.json({ error: '이름과 연락처는 필수입니다.' }, { status: 400 });
+    }
+
+    const certificates = certificatesRaw ? JSON.parse(certificatesRaw) : [];
+    const amount = amountRaw ? Number(amountRaw) : null;
+
+    // 사진 업로드
+    let photo_url: string | null = null;
+    if (photo && photo.size > 0) {
+      const ext = photo.name.split('.').pop() || 'jpg';
+      const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      const buffer = Buffer.from(await photo.arrayBuffer());
+
+      const { error: uploadError } = await supabaseAdmin.storage
+        .from('photos')
+        .upload(fileName, buffer, { contentType: photo.type });
+
+      if (uploadError) {
+        console.error('[cert POST] Photo upload error:', uploadError);
+      } else {
+        photo_url = fileName;
+      }
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from('certificate_applications')
+      .insert({
+        name,
+        contact,
+        birth_prefix: birth_prefix || null,
+        address: address || null,
+        address_detail: address_detail || null,
+        certificates,
+        cash_receipt: cash_receipt || null,
+        source: source || null,
+        amount,
+        photo_url,
+        payment_status: 'pending',
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('[cert POST] Supabase error:', error);
+      return NextResponse.json({ error: 'Failed to create certificate application' }, { status: 500 });
+    }
+
+    return NextResponse.json({ message: 'Created successfully', data }, { status: 201 });
+  } catch (err) {
+    console.error('[cert POST] Unexpected error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

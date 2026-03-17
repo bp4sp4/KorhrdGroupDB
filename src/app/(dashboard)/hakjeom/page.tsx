@@ -12,7 +12,7 @@ import styles from './page.module.css';
 
 type ConsultationStatus = '상담대기' | '상담중' | '보류' | '등록대기' | '등록완료';
 type AgencyStatus = '협약대기' | '협약중' | '보류' | '협약완료';
-type TabKey = 'hakjeom' | 'private-cert' | 'agency' | 'bulk' | 'stats';
+type TabKey = 'hakjeom' | 'agency' | 'bulk' | 'stats';
 
 // ─── 학점은행제 타입 ─────────────────────────────────────────────────────────
 
@@ -32,25 +32,6 @@ interface HakjeomConsultation {
   counsel_check: string | null;
   created_at: string;
   updated_at: string | null;
-}
-
-// ─── 민간자격증 타입 ─────────────────────────────────────────────────────────
-
-interface PrivateCert {
-  id: number;
-  name: string;
-  contact: string;
-  major_category: string | null;
-  hope_course: string | null;
-  reason: string | null;
-  click_source: string | null;
-  memo: string | null;
-  counsel_check: string | null;
-  status: ConsultationStatus;
-  subject_cost: number | null;
-  manager: string | null;
-  residence: string | null;
-  created_at: string;
 }
 
 // ─── 기관협약 타입 ────────────────────────────────────────────────────────────
@@ -134,15 +115,43 @@ function Highlight({ text, query }: { text: string | null; query: string }) {
   if (!query || !text) return <>{text ?? '-'}</>;
   const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const parts = text.split(new RegExp(`(${escaped})`, 'gi'));
-  return (
-    <>
-      {parts.map((part, i) =>
-        part.toLowerCase() === query.toLowerCase()
-          ? <mark key={i} style={{ background: '#FFE500', color: 'inherit', borderRadius: 2, padding: '0 1px' }}>{part}</mark>
-          : part
-      )}
-    </>
-  );
+  const hasDirectMatch = parts.length > 1;
+  if (hasDirectMatch) {
+    return (
+      <>
+        {parts.map((part, i) =>
+          part.toLowerCase() === query.toLowerCase()
+            ? <mark key={i} style={{ background: '#FFE500', color: 'inherit', borderRadius: 2, padding: '0 1px' }}>{part}</mark>
+            : part
+        )}
+      </>
+    );
+  }
+  // 하이픈 제거 후 매칭 (전화번호 등)
+  const textClean = text.replace(/-/g, '');
+  const queryClean = query.replace(/-/g, '');
+  if (queryClean && textClean.toLowerCase().includes(queryClean.toLowerCase())) {
+    // 원본 text에서 하이픈 포함 위치 계산
+    const cleanIdx = textClean.toLowerCase().indexOf(queryClean.toLowerCase());
+    let origStart = 0, cleanCount = 0;
+    for (let i = 0; i < text.length && cleanCount < cleanIdx; i++) {
+      if (text[i] !== '-') cleanCount++;
+      origStart = i + 1;
+    }
+    let origEnd = origStart, matched = 0;
+    for (let i = origStart; i < text.length && matched < queryClean.length; i++) {
+      if (text[i] !== '-') matched++;
+      origEnd = i + 1;
+    }
+    return (
+      <>
+        {text.slice(0, origStart)}
+        <mark style={{ background: '#FFE500', color: 'inherit', borderRadius: 2, padding: '0 1px' }}>{text.slice(origStart, origEnd)}</mark>
+        {text.slice(origEnd)}
+      </>
+    );
+  }
+  return <>{text}</>;
 }
 
 // ─── 유틸 함수 ───────────────────────────────────────────────────────────────
@@ -788,319 +797,6 @@ function HakjeomDetailPanel({ item, onClose, onUpdate }: HakjeomDetailPanelProps
   );
 }
 
-// ─── 민간자격증 상세 패널 ────────────────────────────────────────────────────
-
-interface CertDetailPanelProps {
-  item: PrivateCert;
-  onClose: () => void;
-  onUpdate: (id: number, fields: Partial<PrivateCert>) => Promise<void>;
-}
-
-function CertDetailPanel({ item, onClose, onUpdate }: CertDetailPanelProps) {
-  const [editStatus, setEditStatus] = useState<ConsultationStatus>(item.status);
-  const [editMemo, setEditMemo] = useState(item.memo ?? '');
-  const [editManager, setEditManager] = useState(item.manager ?? '');
-  const [editMajorCategory, setEditMajorCategory] = useState(item.major_category ?? '');
-  const [editHopeCourse, setEditHopeCourse] = useState(item.hope_course ?? '');
-  const [editReason, setEditReason] = useState<string[]>(
-    item.reason ? item.reason.split(', ').map(s => s.trim()).filter(Boolean) : []
-  );
-  const parseCounselCheck2 = (raw: string | null) => {
-    if (!raw) return { checks: [], etc: '' };
-    const items = raw.split(', ').map(s => s.trim()).filter(Boolean);
-    const etcItem = items.find(s => s.startsWith('기타(') && s.endsWith(')'));
-    const checks = items.map(s => s.startsWith('기타(') && s.endsWith(')') ? '기타' : s);
-    const etc = etcItem ? etcItem.slice(3, -1) : '';
-    return { checks, etc };
-  };
-  const initCounsel2 = parseCounselCheck2(item.counsel_check);
-  const [editCounselCheck, setEditCounselCheck] = useState<string[]>(initCounsel2.checks);
-  const [editCounselCheckEtc, setEditCounselCheckEtc] = useState(initCounsel2.etc);
-  const [editClickSource, setEditClickSource] = useState(item.click_source ?? '');
-  const [editResidence, setEditResidence] = useState(item.residence ?? '');
-  const [editSubjectCost, setEditSubjectCost] = useState(item.subject_cost ? String(item.subject_cost) : '');
-  const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'basic' | 'info' | 'memo'>('basic');
-
-  useEffect(() => {
-    setEditStatus(item.status);
-    setEditMemo(item.memo ?? '');
-    setEditManager(item.manager ?? '');
-    setEditMajorCategory(item.major_category ?? '');
-    setEditHopeCourse(item.hope_course ?? '');
-    setEditReason(item.reason ? item.reason.split(', ').map(s => s.trim()).filter(Boolean) : []);
-    const counsel2 = parseCounselCheck2(item.counsel_check);
-    setEditCounselCheck(counsel2.checks);
-    setEditCounselCheckEtc(counsel2.etc);
-    setEditClickSource(item.click_source ?? '');
-    setEditResidence(item.residence ?? '');
-    setEditSubjectCost(item.subject_cost ? String(item.subject_cost) : '');
-  }, [item.id]);
-
-  const toggleReason = (val: string) => {
-    setEditReason(prev => prev.includes(val) ? prev.filter(v => v !== val) : [...prev, val]);
-  };
-
-  const toggleCounselCheck = (val: string) => {
-    setEditCounselCheck(prev => prev.includes(val) ? prev.filter(v => v !== val) : [...prev, val]);
-  };
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      await onUpdate(item.id, {
-        status: editStatus,
-        memo: editMemo || null,
-        manager: editManager || null,
-        major_category: editMajorCategory || null,
-        hope_course: editHopeCourse || null,
-        reason: editReason.length > 0 ? editReason.join(', ') : null,
-        counsel_check: editCounselCheck.length > 0
-          ? editCounselCheck.map(c => c === '기타' && editCounselCheckEtc.trim() ? `기타(${editCounselCheckEtc.trim()})` : c).join(', ')
-          : null,
-        click_source: editClickSource || null,
-        residence: editResidence || null,
-        subject_cost: editSubjectCost ? parseInt(editSubjectCost.replace(/,/g, ''), 10) || null : null,
-      });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  // 이니셜: 이름 첫 글자
-  const avatarChar = item.name.charAt(0);
-
-  return (
-    <div
-      className={styles.detailModalOverlay}
-      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
-    >
-      <div className={styles.detailModal}>
-        {/* 헤더 */}
-        <div className={styles.detailModalHeader}>
-          <div className={styles.detailModalHeaderTop}>
-            <div className={styles.detailModalHeaderLeft}>
-              <div>
-                <div className={styles.detailModalNameRow}>
-                  <p className={styles.detailModalName}>{item.name}</p>
-                  <StatusBadge status={editStatus} styleMap={CONSULTATION_STATUS_STYLE} />
-                </div>
-                <p className={styles.detailModalSub}>{item.contact}</p>
-                <p className={styles.detailModalSub}>등록일: {formatDateShort(item.created_at)}</p>
-              </div>
-            </div>
-            <button onClick={onClose} className={styles.detailModalCloseBtn}>✕</button>
-          </div>
-
-          {/* 탭 바 */}
-          <div className={styles.detailModalTabs}>
-            {(['basic', 'info', 'memo'] as const).map(tab => {
-              const labels = { basic: '기본정보', info: '취득정보', memo: '메모' };
-              return (
-                <button
-                  key={tab}
-                  type="button"
-                  onClick={() => setActiveTab(tab)}
-                  className={`${styles.detailModalTab} ${activeTab === tab ? styles.detailModalTabActive : ''}`}
-                >
-                  {labels[tab]}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* 바디 */}
-        <div className={styles.detailModalBody}>
-          {activeTab === 'basic' && (
-            <>
-              {/* 유입경로 */}
-              <div className={styles.detailFieldRow}>
-                <span className={styles.detailFieldLabel}>유입경로</span>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <input
-                    value={editClickSource}
-                    onChange={e => setEditClickSource(e.target.value)}
-                    placeholder="예) 맘카페_순광맘"
-                    className={`${styles.input} ${styles.inputFull}`}
-                  />
-                  {editClickSource && (
-                    <p className={styles.clickSourceTextPreview}>
-                      표시: {formatClickSourceDisplay(editClickSource)}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* 대분류 */}
-              <div className={styles.detailFieldRow}>
-                <span className={styles.detailFieldLabel}>대분류</span>
-                <CustomSelect
-                  value={editMajorCategory}
-                  onChange={setEditMajorCategory}
-                  fullWidth
-                  options={[
-                    { value: '', label: '선택 안 함' },
-                    ...CERT_MAJOR_CATEGORIES.map(o => ({ value: o, label: o })),
-                  ]}
-                />
-              </div>
-
-              {/* 희망과정 */}
-              <div className={styles.detailFieldRow}>
-                <span className={styles.detailFieldLabel}>희망과정</span>
-                <input
-                  value={editHopeCourse}
-                  onChange={e => setEditHopeCourse(e.target.value)}
-                  placeholder="희망과정 입력"
-                  className={`${styles.input} ${styles.inputFull}`}
-                />
-              </div>
-
-              {/* 거주지 */}
-              <div className={styles.detailFieldRow}>
-                <span className={styles.detailFieldLabel}>거주지</span>
-                <input
-                  value={editResidence}
-                  onChange={e => setEditResidence(e.target.value)}
-                  placeholder="예) 서울 강남구"
-                  className={`${styles.input} ${styles.inputFull}`}
-                />
-              </div>
-
-              {/* 과목비용 */}
-              <div className={styles.detailFieldRow}>
-                <span className={styles.detailFieldLabel}>과목비용</span>
-                <input
-                  value={editSubjectCost}
-                  onChange={e => setEditSubjectCost(e.target.value)}
-                  placeholder="예) 280000"
-                  type="number"
-                  className={`${styles.input} ${styles.inputFull}`}
-                />
-              </div>
-            </>
-          )}
-
-          {activeTab === 'info' && (
-            <>
-              {/* 취득사유 */}
-              <div className={styles.detailChipSection}>
-                <span className={styles.detailChipSectionLabel}>취득사유</span>
-                <div className={styles.detailChipRow}>
-                  {REASON_OPTIONS.map(r => (
-                    <button
-                      key={r}
-                      type="button"
-                      onClick={() => toggleReason(r)}
-                      className={editReason.includes(r) ? styles.tagBtnActive : styles.tagBtn}
-                    >
-                      {editReason.includes(r) ? `✓ ${r}` : r}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* 고민 (다중 선택) */}
-              <div className={styles.detailChipSection}>
-                <span className={styles.detailChipSectionLabel}>고민</span>
-                <div className={styles.detailChipRow}>
-                  {COUNSEL_CHECK_OPTIONS.map(c => (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => toggleCounselCheck(c)}
-                      className={editCounselCheck.includes(c) ? styles.tagBtnActive : styles.tagBtn}
-                    >
-                      {editCounselCheck.includes(c) ? `✓ ${c}` : c}
-                    </button>
-                  ))}
-                </div>
-                {editCounselCheck.includes('기타') && (
-                  <input
-                    value={editCounselCheckEtc}
-                    onChange={e => setEditCounselCheckEtc(e.target.value)}
-                    placeholder="기타 내용 입력"
-                    className={`${styles.input} ${styles.inputFull}`}
-                    style={{ marginTop: 8 }}
-                    autoFocus
-                  />
-                )}
-              </div>
-
-              {/* 상태 */}
-              <div className={styles.detailChipSection}>
-                <span className={styles.detailChipSectionLabel}>상태</span>
-                <div className={styles.detailChipRow}>
-                  {CONSULTATION_STATUS_OPTIONS.map(s => (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => setEditStatus(s)}
-                      style={
-                        editStatus === s
-                          ? {
-                              padding: '5px 12px', borderRadius: 20, cursor: 'pointer',
-                              border: `2px solid ${CONSULTATION_STATUS_STYLE[s].color}`,
-                              background: CONSULTATION_STATUS_STYLE[s].background,
-                              color: CONSULTATION_STATUS_STYLE[s].color,
-                              fontSize: 13, fontWeight: 600, transition: 'all 0.15s',
-                            }
-                          : {
-                              padding: '5px 12px', borderRadius: 20, cursor: 'pointer',
-                              border: '2px solid var(--toss-border)',
-                              background: 'transparent',
-                              color: 'var(--toss-text-secondary)',
-                              fontSize: 13, fontWeight: 600, transition: 'all 0.15s',
-                            }
-                      }
-                    >
-                      {s}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* 담당자 */}
-              <div className={styles.detailFieldRow}>
-                <span className={styles.detailFieldLabel}>담당자</span>
-                <input
-                  type="text"
-                  value={editManager}
-                  onChange={e => setEditManager(e.target.value)}
-                  placeholder="담당자 이름"
-                  className={`${styles.input} ${styles.inputFull}`}
-                />
-              </div>
-            </>
-          )}
-
-          {activeTab === 'memo' && (
-            <textarea
-              value={editMemo}
-              onChange={e => setEditMemo(e.target.value)}
-              rows={8}
-              placeholder="메모를 입력하세요"
-              className={styles.textarea}
-            />
-          )}
-        </div>
-
-        {/* 푸터 */}
-        <div className={styles.detailModalFooter}>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className={`${styles.panelSaveBtn} ${saving ? styles.panelSaveBtnDisabled : ''}`}
-          >
-            {saving ? '저장 중...' : '변경사항 저장'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ─── 모달: 신규 추가 (학점은행제) ────────────────────────────────────────────
 
 interface HakjeomAddModalProps {
@@ -1212,7 +908,7 @@ function HakjeomAddModal({ onClose, onSaved, uniqueManagers = [] }: HakjeomAddMo
           {/* ── Step 1: 기본 정보 + 희망과정 ── */}
           {step === 1 && (
             <div className={styles.funnelStep}>
-              <p className={styles.funnelQuestion}>고객 정보를 입력해주세요</p>
+              <p className={styles.funnelQuestion}>학생 정보를 입력해주세요</p>
               <div className={styles.funnelFieldGroup}>
                 <label className={styles.funnelLabel}>이름</label>
                 <input
@@ -1435,110 +1131,6 @@ function HakjeomAddModal({ onClose, onSaved, uniqueManagers = [] }: HakjeomAddMo
   );
 }
 
-// ─── 모달: 신규 추가 (민간자격증) ────────────────────────────────────────────
-
-interface CertAddModalProps {
-  onClose: () => void;
-  onSaved: () => void;
-}
-
-function CertAddModal({ onClose, onSaved }: CertAddModalProps) {
-  const [form, setForm] = useState({
-    name: '', contact: '', major_category: '', hope_course: '',
-    reason: '', click_source: '', subject_cost: '', manager: '', residence: '', memo: '',
-  });
-  const [saving, setSaving] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.name || !form.contact) { alert('이름과 연락처는 필수입니다.'); return; }
-    setSaving(true);
-    try {
-      const res = await fetch('/api/hakjeom/private-cert', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-      if (!res.ok) throw new Error('추가 실패');
-      onSaved();
-      onClose();
-    } catch {
-      alert('추가에 실패했습니다.');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <div onClick={e => { if (e.target === e.currentTarget) onClose(); }} className={styles.modalOverlay}>
-      <div className={styles.modalBox}>
-        <h2 className={styles.modalTitle}>민간자격증 추가</h2>
-        <form onSubmit={handleSubmit}>
-          {([
-            { label: '이름 *', key: 'name', placeholder: '이름 입력' },
-            { label: '연락처 *', key: 'contact', placeholder: '010-0000-0000' },
-            { label: '거주지', key: 'residence', placeholder: '예) 서울 강남구' },
-            { label: '유입경로', key: 'click_source', placeholder: '예) 맘카페_예시카페' },
-            { label: '과목비용', key: 'subject_cost', placeholder: '예) 150,000' },
-            { label: '담당자', key: 'manager', placeholder: '담당자 이름' },
-          ] as { label: string; key: keyof typeof form; placeholder: string }[]).map(({ label, key, placeholder }) => (
-            <div key={key} className={styles.modalFieldGroup}>
-              <label className={styles.modalLabel}>{label}</label>
-              <input
-                value={form[key]}
-                onChange={e => { const val = key === 'contact' ? formatPhoneNumber(e.target.value) : e.target.value; setForm(p => ({ ...p, [key]: val })); }}
-                placeholder={placeholder}
-                className={`${styles.input} ${styles.inputFull}`}
-              />
-            </div>
-          ))}
-          <div className={styles.modalFieldGroup}>
-            <label className={styles.modalLabel}>대분류</label>
-            <CustomSelect
-              value={form.major_category}
-              onChange={v => setForm(p => ({ ...p, major_category: v }))}
-              fullWidth
-              options={[
-                { value: '', label: '선택' },
-                ...CERT_MAJOR_CATEGORIES.map(o => ({ value: o, label: o })),
-              ]}
-            />
-          </div>
-          <div className={styles.modalFieldGroup}>
-            <label className={styles.modalLabel}>취득사유</label>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              {REASON_OPTIONS.map(r => (
-                <button
-                  key={r}
-                  type="button"
-                  onClick={() => setForm(p => ({ ...p, reason: p.reason === r ? '' : r }))}
-                  className={form.reason === r ? styles.tagBtnV2Active : styles.tagBtnV2}
-                >
-                  {r}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className={styles.modalFieldGroupLast}>
-            <label className={styles.modalLabel}>메모</label>
-            <textarea
-              value={form.memo}
-              onChange={e => setForm(p => ({ ...p, memo: e.target.value }))}
-              rows={3}
-              placeholder="메모 입력"
-              className={styles.textarea}
-            />
-          </div>
-          <div className={styles.modalBtnRow}>
-            <button type="submit" disabled={saving} className={`${styles.btnPrimary} ${styles.modalBtnFlex}`}>{saving ? '저장 중...' : '저장'}</button>
-            <button type="button" onClick={onClose} className={`${styles.btnSecondary} ${styles.modalBtnFlex}`}>취소</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
 // ─── 모달: 신규 추가 (기관협약) ──────────────────────────────────────────────
 
 interface AgencyAddModalProps {
@@ -1749,28 +1341,6 @@ function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) =>
     setDeleting(false);
   };
 
-  const handleMoveToPrivateCert = async () => {
-    if (!confirm(`선택한 ${selectedIds.length}건을 민간자격증으로 이동하시겠습니까?`)) return;
-    const targets = items.filter(c => selectedIds.includes(c.id));
-    try {
-      for (const item of targets) {
-        await fetch('/api/hakjeom/private-cert', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: item.name, contact: item.contact, education: item.education, hope_course: item.hope_course, reason: item.reason, click_source: item.click_source, memo: item.memo, counsel_check: item.counsel_check, status: item.status, subject_cost: item.subject_cost, manager: item.manager, residence: item.residence }),
-        });
-      }
-      await fetch('/api/hakjeom', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids: selectedIds }),
-      });
-      setSelectedIds([]);
-      fetchData();
-    } catch {
-      alert('이동에 실패했습니다.');
-    }
-  };
 
   // 필터링
   const uniqueManagers = Array.from(new Set(items.map(c => c.manager).filter(Boolean))) as string[];
@@ -1881,7 +1451,7 @@ function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) =>
     <div>
       {/* 필터 영역 */}
       <div className={styles.filterRow}>
-        <input type="text" value={searchText} onChange={e => { setSearchText(e.target.value); setCurrentPage(1); }} placeholder="이름, 연락처, 취득사유, 메모 검색..." className={styles.input} style={{ width: 220 }} />
+        <input type="text" value={searchText} onChange={e => { setSearchText(e.target.value); setCurrentPage(1); }} placeholder="이름, 연락처, 취득사유, 메모 검색..." className={styles.input} style={{ width: 300 }} />
         <input type="date" value={startDate} onChange={e => { setStartDate(e.target.value); setCurrentPage(1); }} className={styles.input} style={{ width: 140 }} />
         <span className={styles.dateSeparator}>~</span>
         <input type="date" value={endDate} onChange={e => { setEndDate(e.target.value); setCurrentPage(1); }} className={styles.input} style={{ width: 140 }} />
@@ -1894,7 +1464,6 @@ function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) =>
             <button onClick={handleBulkDelete} disabled={deleting} className={styles.btnDanger}>
               {deleting ? '삭제 중...' : '선택 삭제'}
             </button>
-            <button onClick={handleMoveToPrivateCert} disabled={deleting} className={styles.btnSecondary}>민간이동</button>
             <button onClick={() => setSelectedIds([])} className={styles.btnSecondary}>선택 해제</button>
           </>
         )}
@@ -1947,7 +1516,12 @@ function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) =>
                       <button className={`${styles.thFilterBtn}${reasonFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'reason') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('reason'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
                     </div>
                   </th>
-                  <th className={styles.th}>담당자</th>
+                  <th className={styles.thFilterable}>
+                    <div className={styles.thInner}>
+                      담당자
+                      <button className={`${styles.thFilterBtn}${managerFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'manager') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('manager'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
+                    </div>
+                  </th>
                   <th className={styles.thFilterable}>
                     <div className={styles.thInner}>
                       고민
@@ -2098,410 +1672,12 @@ function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) =>
               ))}
             </>
           )}
-          {openFilterColumn === 'status' && (
+          {openFilterColumn === 'manager' && (
             <>
-              <div className={`${styles.filterDropdownItem}${statusFilter === 'all' ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setStatusFilter('all'); setCurrentPage(1); setOpenFilterColumn(null); }}>전체</div>
-              {CONSULTATION_STATUS_OPTIONS.map(s => (
-                <div key={s} className={`${styles.filterDropdownItem}${statusFilter === s ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setStatusFilter(s as ConsultationStatus); setCurrentPage(1); setOpenFilterColumn(null); }}>{s}</div>
-              ))}
-            </>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── 탭: 민간자격증 ──────────────────────────────────────────────────────────
-
-function PrivateCertTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) => void }) {
-  const [items, setItems] = useState<PrivateCert[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // 필터 상태
-  const [searchText, setSearchText] = useState('');
-  const [statusFilter, setStatusFilter] = useState<ConsultationStatus | 'all'>('all');
-  const [managerFilter, setManagerFilter] = useState('all');
-  const [majorCategoryFilter, setMajorCategoryFilter] = useState('all');
-  const [minorCategoryFilter, setMinorCategoryFilter] = useState('all');
-  const [reasonFilter, setReasonFilter] = useState('all');
-  const [counselCheckFilter, setCounselCheckFilter] = useState('all');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-
-  // UI 상태
-  const [selectedItem, setSelectedItem] = useState<PrivateCert | null>(null);
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const [deleting, setDeleting] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [openFilterColumn, setOpenFilterColumn] = useState<string | null>(null);
-  const [filterDropdownPos, setFilterDropdownPos] = useState({ top: 0, left: 0 });
-  const itemsPerPage = 10;
-
-  const fetchData = useCallback(async (background = false) => {
-    if (!background) setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch('/api/hakjeom/private-cert');
-      if (!res.ok) throw new Error('데이터를 불러오지 못했습니다.');
-      const data: PrivateCert[] = await res.json();
-      setItems(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '알 수 없는 오류');
-    } finally {
-      if (!background) setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
-  useEffect(() => {
-    if (!openFilterColumn) return;
-    const close = () => setOpenFilterColumn(null);
-    document.addEventListener('click', close);
-    return () => document.removeEventListener('click', close);
-  }, [openFilterColumn]);
-
-  const handleUpdate = async (id: number, fields: Partial<PrivateCert>) => {
-    const res = await fetch('/api/hakjeom/private-cert', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, ...fields }),
-    });
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      throw new Error(body.error ?? '업데이트에 실패했습니다.');
-    }
-    const { data: updated } = await res.json();
-    const merged = updated ?? fields;
-    setItems(prev => prev.map(c => c.id === id ? { ...c, ...merged } : c));
-    setSelectedItem(prev => prev?.id === id ? { ...prev, ...merged } : prev);
-  };
-
-  const handleStatusChange = async (id: number, status: ConsultationStatus) => {
-    await handleUpdate(id, { status });
-  };
-
-  const handleBulkDelete = async () => {
-    if (selectedIds.length === 0) return;
-    if (!confirm(`${selectedIds.length}건을 삭제할까요?`)) return;
-    setDeleting(true);
-    await fetch('/api/hakjeom/private-cert', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ids: selectedIds }),
-    });
-    setSelectedIds([]);
-    await fetchData();
-    setDeleting(false);
-  };
-
-  // 파생 데이터
-  const uniqueManagers = Array.from(new Set(items.map(c => c.manager).filter(Boolean))) as string[];
-  const uniqueMajorCategories = Array.from(new Set(items.map(c => parseClickSource(c.click_source).major).filter(Boolean))).sort();
-  const needsCheckCount = items.filter(c => parseClickSource(c.click_source).needsCheck).length;
-  const uniqueMinorCategories = Array.from(new Set(
-    items
-      .filter(c => majorCategoryFilter === 'all' || parseClickSource(c.click_source).major === majorCategoryFilter)
-      .map(c => parseClickSource(c.click_source))
-      .filter(p => Boolean(p.minor) && !p.needsCheck)
-      .map(p => p.minor)
-  )).sort();
-
-  const filtered = items.filter(c => {
-    if (searchText) {
-      const q = searchText.toLowerCase();
-      const contactClean = c.contact.replace(/-/g, '');
-      const searchClean = searchText.replace(/-/g, '');
-      if (!(c.name.toLowerCase().includes(q) || contactClean.includes(searchClean) || (c.reason || '').toLowerCase().includes(q) || (c.memo || '').toLowerCase().includes(q))) return false;
-    }
-    if (statusFilter !== 'all' && c.status !== statusFilter) return false;
-    if (managerFilter !== 'all') {
-      if (managerFilter === 'none' && c.manager) return false;
-      if (managerFilter !== 'none' && c.manager !== managerFilter) return false;
-    }
-    if (majorCategoryFilter !== 'all' && parseClickSource(c.click_source).major !== majorCategoryFilter) return false;
-    if (minorCategoryFilter !== 'all') {
-      const parsed = parseClickSource(c.click_source);
-      if (minorCategoryFilter === '__needs_check__') { if (!parsed.needsCheck) return false; }
-      else if (parsed.minor !== minorCategoryFilter) return false;
-    }
-    if (reasonFilter !== 'all') {
-      const reasons = (c.reason || '').split(', ').map(r => r.trim());
-      if (!reasons.includes(reasonFilter)) return false;
-    }
-    if (counselCheckFilter !== 'all') {
-      const checks = (c.counsel_check || '').split(', ').map(ch => ch.trim());
-      if (counselCheckFilter === '기타') {
-        if (!checks.some(ch => ch.startsWith('기타'))) return false;
-      } else {
-        if (!checks.includes(counselCheckFilter)) return false;
-      }
-    }
-    if (startDate || endDate) {
-      const d = new Date(c.created_at);
-      if (startDate && d < new Date(startDate + 'T00:00:00')) return false;
-      if (endDate && d > new Date(endDate + 'T23:59:59')) return false;
-    }
-    return true;
-  });
-
-  const totalPages = Math.ceil(filtered.length / itemsPerPage);
-  const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
-  const toggleSelect = (id: number) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
-  const toggleSelectAll = () => setSelectedIds(prev => prev.length === paginated.length ? [] : paginated.map(c => c.id));
-
-  const isFiltered = searchText || statusFilter !== 'all' || managerFilter !== 'all' || majorCategoryFilter !== 'all' || minorCategoryFilter !== 'all' || reasonFilter !== 'all' || counselCheckFilter !== 'all' || startDate || endDate;
-
-  const resetFilters = () => {
-    setSearchText(''); setStatusFilter('all'); setManagerFilter('all');
-    setMajorCategoryFilter('all'); setMinorCategoryFilter('all');
-    setReasonFilter('all'); setCounselCheckFilter('all');
-    setStartDate(''); setEndDate(''); setCurrentPage(1);
-  };
-
-  // 담당자별 실적 (헤더 칩)
-  useEffect(() => {
-    const mgrs = Array.from(new Set(items.map(c => c.manager).filter(Boolean))) as string[];
-    if (mgrs.length === 0) { setStatsNode(null); return; }
-    const rate = (list: PrivateCert[]) => {
-      const t = list.length;
-      return t > 0 ? Math.round((list.filter(c => c.status === '등록완료').length / t) * 100) : 0;
-    };
-    const mStats = mgrs.map(name => {
-      const all = items.filter(c => c.manager === name);
-      const recent30 = [...all].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 30);
-      return { name, overall: rate(all), recent: rate(recent30) };
-    }).sort((a, b) => b.overall - a.overall);
-    const topName = mStats[0]?.overall > 0 ? mStats[0].name : null;
-    setStatsNode(
-      <div className={styles.statsInline}>
-        <span className={styles.statsInlineLabel}>담당자 실적</span>
-        {mStats.map(m => {
-          const isTop = m.name === topName;
-          return (
-            <span key={m.name} className={`${styles.statsInlineItem} ${isTop ? styles.statsInlineItemTop : ''}`}>
-              <span className={styles.statsInlineName}>
-                {isTop && '🥇 '}{m.name}
-              </span>
-              <span className={styles.statsInlineRateGroup}>
-                <span className={styles.statsInlineRateLabel}>30건</span>
-                <span className={styles.statsInlineRate}>{m.recent}%</span>
-              </span>
-              <span className={styles.statsInlineRateGroup}>
-                <span className={styles.statsInlineRateLabel}>전체</span>
-                <span className={`${styles.statsInlineRate} ${isTop ? styles.statsInlineRateTop : ''}`}>{m.overall}%</span>
-              </span>
-            </span>
-          );
-        })}
-      </div>
-    );
-    return () => setStatsNode(null);
-  }, [items, setStatsNode]);
-
-  return (
-    <div>
-      <div className={styles.filterRow}>
-        <input type="text" value={searchText} onChange={e => { setSearchText(e.target.value); setCurrentPage(1); }} placeholder="이름, 연락처, 취득사유 검색..." className={styles.input} style={{ width: 220 }} />
-        <input type="date" value={startDate} onChange={e => { setStartDate(e.target.value); setCurrentPage(1); }} className={styles.input} style={{ width: 140 }} />
-        <span className={styles.dateSeparator}>~</span>
-        <input type="date" value={endDate} onChange={e => { setEndDate(e.target.value); setCurrentPage(1); }} className={styles.input} style={{ width: 140 }} />
-        {isFiltered && <button onClick={resetFilters} className={styles.btnSecondary}>필터 초기화</button>}
-        {selectedIds.length > 0 && (
-          <>
-            <span className={styles.bulkActionCount}>{selectedIds.length}건 선택됨</span>
-            <button onClick={handleBulkDelete} disabled={deleting} className={styles.btnDanger}>
-              {deleting ? '삭제 중...' : '선택 삭제'}
-            </button>
-            <button onClick={() => setSelectedIds([])} className={styles.btnSecondary}>선택 해제</button>
-          </>
-        )}
-      </div>
-
-      <div className={styles.actionBar}>
-        <span className={styles.actionBarCount}>총 <strong className={styles.actionBarCountBold}>{filtered.length}</strong>건</span>
-        <div className={styles.actionBarSpacer} />
-        <button onClick={() => setShowAddModal(true)} className={styles.btnPrimary}>+ 추가</button>
-      </div>
-
-      <div className={styles.tableCard}>
-        {loading ? (
-          <div className={styles.tableEmptyMsg}>불러오는 중...</div>
-        ) : error ? (
-          <div className={styles.tableErrorMsg}>{error}</div>
-        ) : filtered.length === 0 ? (
-          <div className={styles.tableEmptyMsg}>검색 결과가 없습니다.</div>
-        ) : (
-          <div className={styles.tableOverflow}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th className={styles.thCenter}>
-                    <input type="checkbox" checked={paginated.length > 0 && selectedIds.length === paginated.length} onChange={toggleSelectAll} className={styles.checkbox} />
-                  </th>
-                  <th className={styles.thFilterable}>
-                    <div className={styles.thInner}>
-                      대분류
-                      <button className={`${styles.thFilterBtn}${majorCategoryFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'major') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('major'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
-                    </div>
-                  </th>
-                  <th className={styles.thFilterable}>
-                    <div className={styles.thInner}>
-                      중분류
-                      <button className={`${styles.thFilterBtn}${minorCategoryFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'minor') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('minor'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
-                    </div>
-                  </th>
-                  <th className={styles.th}>이름</th>
-                  <th className={styles.th}>연락처</th>
-                  <th className={styles.th}>과정분류</th>
-                  <th className={styles.th}>희망과정</th>
-                  <th className={styles.thFilterable}>
-                    <div className={styles.thInner}>
-                      취득사유
-                      <button className={`${styles.thFilterBtn}${reasonFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'reason') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('reason'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
-                    </div>
-                  </th>
-                  <th className={styles.th}>담당자</th>
-                  <th className={styles.thFilterable}>
-                    <div className={styles.thInner}>
-                      고민
-                      <button className={`${styles.thFilterBtn}${counselCheckFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'counsel') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('counsel'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
-                    </div>
-                  </th>
-                  <th className={styles.thFilterable}>
-                    <div className={styles.thInner}>
-                      상태
-                      <button className={`${styles.thFilterBtn}${statusFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'status') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('status'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
-                    </div>
-                  </th>
-                  <th className={styles.th}>메모</th>
-                  <th className={styles.th}>등록일</th>
-                </tr>
-              </thead>
-              <tbody>
-                {paginated.map(item => (
-                  <tr
-                    key={item.id}
-                    onClick={() => setSelectedItem(item)}
-                    style={{
-                      cursor: 'pointer',
-                      background: selectedItem?.id === item.id ? '#EBF3FE' : selectedIds.includes(item.id) ? '#f0f7ff' : 'transparent',
-                      transition: 'background 0.1s',
-                    }}
-                    onMouseEnter={e => { if (selectedItem?.id !== item.id && !selectedIds.includes(item.id)) (e.currentTarget as HTMLTableRowElement).style.background = 'var(--toss-bg)'; }}
-                    onMouseLeave={e => { if (selectedItem?.id !== item.id && !selectedIds.includes(item.id)) (e.currentTarget as HTMLTableRowElement).style.background = 'transparent'; }}
-                  >
-                    <td className={styles.tdCenter} onClick={e => e.stopPropagation()}>
-                      <input type="checkbox" checked={selectedIds.includes(item.id)} onChange={() => toggleSelect(item.id)} className={styles.checkbox} />
-                    </td>
-                    <td className={styles.tdSecondary}>{parseClickSource(item.click_source).major || '-'}</td>
-                    <td className={styles.tdSecondary} style={parseClickSource(item.click_source).needsCheck ? { color: '#ef4444', fontWeight: 600 } : undefined}>{parseClickSource(item.click_source).minor || '-'}</td>
-                    <td className={styles.tdBold}>{item.name}</td>
-                    <td className={styles.tdTabular}>{item.contact}</td>
-                    <td className={styles.tdSecondary}>{item.major_category ?? '-'}</td>
-                    <td className={styles.tdEllipsis}>{item.hope_course ?? '-'}</td>
-                    <td className={styles.tdEllipsis} title={item.reason ?? ''}>{item.reason ?? '-'}</td>
-                    <td className={styles.tdSecondary}>{item.manager ?? '-'}</td>
-                    <td className={styles.tdCounsel}>
-                      {item.counsel_check ? (
-                        <div className={styles.counselChipRow}>
-                          {item.counsel_check.split(', ').map(c => c.trim()).filter(Boolean).map(c => (
-                            <span key={c} className={styles.counselChip}>{c}</span>
-                          ))}
-                        </div>
-                      ) : <span className={styles.tdMuted}>-</span>}
-                    </td>
-                    <td className={styles.td} onClick={e => e.stopPropagation()}>
-                      <StatusSelect
-                        value={item.status}
-                        onChange={v => handleStatusChange(item.id, v as ConsultationStatus)}
-                        options={CONSULTATION_STATUS_OPTIONS}
-                        styleMap={CONSULTATION_STATUS_STYLE}
-                      />
-                    </td>
-                    <td className={styles.tdMemo} title={item.memo ?? ''}>{item.memo || '-'}</td>
-                    <td className={styles.tdDateSmall}>
-                      {formatDate(item.created_at)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {totalPages > 1 && (
-        <div className={styles.pagination}>
-          <button
-            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-            disabled={currentPage === 1}
-            className={styles.pageBtn}
-            style={{ marginRight: 4 }}
-          >‹</button>
-          {getPaginationPages(currentPage, totalPages).map((page, idx) =>
-            page === '...'
-              ? <span key={`ellipsis-${idx}`} className={styles.pageEllipsis}>…</span>
-              : <button
-                  key={page}
-                  onClick={() => setCurrentPage(page)}
-                  className={page === currentPage ? styles.pageBtnActive : styles.pageBtn}
-                >{page}</button>
-          )}
-          <button
-            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-            disabled={currentPage === totalPages}
-            className={styles.pageBtn}
-            style={{ marginLeft: 4 }}
-          >›</button>
-        </div>
-      )}
-
-      {selectedItem && <CertDetailPanel item={selectedItem} onClose={() => setSelectedItem(null)} onUpdate={handleUpdate} />}
-      {showAddModal && <CertAddModal onClose={() => setShowAddModal(false)} onSaved={fetchData} />}
-
-      {/* 컬럼 필터 드롭다운 */}
-      {openFilterColumn && (
-        <div
-          className={styles.filterColumnDropdown}
-          style={{ top: filterDropdownPos.top, left: filterDropdownPos.left }}
-          onClick={e => e.stopPropagation()}
-        >
-          {openFilterColumn === 'major' && (
-            <>
-              <div className={`${styles.filterDropdownItem}${majorCategoryFilter === 'all' ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setMajorCategoryFilter('all'); setMinorCategoryFilter('all'); setCurrentPage(1); setOpenFilterColumn(null); }}>전체</div>
-              {uniqueMajorCategories.map(m => (
-                <div key={m} className={`${styles.filterDropdownItem}${majorCategoryFilter === m ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setMajorCategoryFilter(m); setMinorCategoryFilter('all'); setCurrentPage(1); setOpenFilterColumn(null); }}>{m}</div>
-              ))}
-            </>
-          )}
-          {openFilterColumn === 'minor' && (
-            <>
-              <div className={`${styles.filterDropdownItem}${minorCategoryFilter === 'all' ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setMinorCategoryFilter('all'); setCurrentPage(1); setOpenFilterColumn(null); }}>전체</div>
-              {needsCheckCount > 0 && (
-                <div className={`${styles.filterDropdownItem}${minorCategoryFilter === '__needs_check__' ? ` ${styles.filterDropdownItemActive}` : ''}`} style={{ color: '#ef4444', fontWeight: 600 }} onClick={() => { setMinorCategoryFilter('__needs_check__'); setCurrentPage(1); setOpenFilterColumn(null); }}>확인필요 ({needsCheckCount})</div>
-              )}
-              {uniqueMinorCategories.map(m => (
-                <div key={m} className={`${styles.filterDropdownItem}${minorCategoryFilter === m ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setMinorCategoryFilter(m); setCurrentPage(1); setOpenFilterColumn(null); }}>{m}</div>
-              ))}
-            </>
-          )}
-          {openFilterColumn === 'reason' && (
-            <>
-              <div className={`${styles.filterDropdownItem}${reasonFilter === 'all' ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setReasonFilter('all'); setCurrentPage(1); setOpenFilterColumn(null); }}>전체</div>
-              {REASON_OPTIONS.map(r => (
-                <div key={r} className={`${styles.filterDropdownItem}${reasonFilter === r ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setReasonFilter(r); setCurrentPage(1); setOpenFilterColumn(null); }}>{r}</div>
-              ))}
-            </>
-          )}
-          {openFilterColumn === 'counsel' && (
-            <>
-              <div className={`${styles.filterDropdownItem}${counselCheckFilter === 'all' ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setCounselCheckFilter('all'); setCurrentPage(1); setOpenFilterColumn(null); }}>전체</div>
-              {COUNSEL_CHECK_OPTIONS.map(c => (
-                <div key={c} className={`${styles.filterDropdownItem}${counselCheckFilter === c ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setCounselCheckFilter(c); setCurrentPage(1); setOpenFilterColumn(null); }}>{c}</div>
+              <div className={`${styles.filterDropdownItem}${managerFilter === 'all' ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setManagerFilter('all'); setCurrentPage(1); setOpenFilterColumn(null); }}>전체</div>
+              <div className={`${styles.filterDropdownItem}${managerFilter === 'none' ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setManagerFilter('none'); setCurrentPage(1); setOpenFilterColumn(null); }}>미배정</div>
+              {uniqueManagers.map(m => (
+                <div key={m} className={`${styles.filterDropdownItem}${managerFilter === m ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setManagerFilter(m); setCurrentPage(1); setOpenFilterColumn(null); }}>{m}</div>
               ))}
             </>
           )}
@@ -2530,6 +1706,11 @@ function AgencyTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) => 
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState<AgencyStatus | 'all'>('all');
   const [managerFilter, setManagerFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+
+  // 헤더 필터 드롭다운
+  const [openFilterColumn, setOpenFilterColumn] = useState<string | null>(null);
+  const [filterDropdownPos, setFilterDropdownPos] = useState({ top: 0, left: 0 });
 
   // UI
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
@@ -2557,6 +1738,13 @@ function AgencyTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) => 
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  useEffect(() => {
+    if (!openFilterColumn) return;
+    const close = () => setOpenFilterColumn(null);
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
+  }, [openFilterColumn]);
 
   const handleStatusChange = async (id: number, status: AgencyStatus) => {
     const res = await fetch('/api/hakjeom/agency', {
@@ -2602,16 +1790,20 @@ function AgencyTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) => 
   };
 
   const uniqueManagers = Array.from(new Set(agencies.map(a => a.manager).filter(Boolean))) as string[];
+  const uniqueCategories = Array.from(new Set(agencies.map(a => a.category).filter(Boolean))) as string[];
 
   const filtered = agencies.filter(a => {
     if (statusFilter !== 'all' && a.status !== statusFilter) return false;
+    if (categoryFilter !== 'all' && a.category !== categoryFilter) return false;
     if (managerFilter !== 'all') {
       if (managerFilter === 'none' && a.manager) return false;
       if (managerFilter !== 'none' && a.manager !== managerFilter) return false;
     }
     if (searchText) {
       const q = searchText.toLowerCase();
-      if (!((a.institution_name || '').toLowerCase().includes(q) || (a.region || '').toLowerCase().includes(q) || (a.category || '').toLowerCase().includes(q) || (a.manager || '').toLowerCase().includes(q))) return false;
+      const contactClean = (a.contact || '').replace(/-/g, '');
+      const searchClean = searchText.replace(/-/g, '');
+      if (!((a.institution_name || '').toLowerCase().includes(q) || (a.contact || '').toLowerCase().includes(q) || contactClean.includes(searchClean) || (a.region || '').toLowerCase().includes(q) || (a.category || '').toLowerCase().includes(q) || (a.manager || '').toLowerCase().includes(q))) return false;
     }
     return true;
   });
@@ -2619,7 +1811,7 @@ function AgencyTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) => 
   const toggleSelect = (id: number) => setSelectedIds(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; });
   const toggleSelectAll = () => setSelectedIds(prev => prev.size === filtered.length ? new Set() : new Set(filtered.map(a => a.id)));
 
-  const isFiltered = searchText || statusFilter !== 'all' || managerFilter !== 'all';
+  const isFiltered = searchText || statusFilter !== 'all' || managerFilter !== 'all' || categoryFilter !== 'all';
 
   // 담당자별 실적 (헤더 칩)
   useEffect(() => {
@@ -2645,27 +1837,8 @@ function AgencyTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) => 
   return (
     <div>
       <div className={styles.filterRow}>
-        <input type="text" value={searchText} onChange={e => setSearchText(e.target.value)} placeholder="기관명, 지역, 분류, 담당자 검색..." className={styles.input} style={{ width: 240 }} />
-        <CustomSelect
-          value={statusFilter}
-          onChange={v => setStatusFilter(v as AgencyStatus | 'all')}
-          style={{ minWidth: 100 }}
-          options={[
-            { value: 'all', label: '전체 상태' },
-            ...AGENCY_STATUS_OPTIONS.map(s => ({ value: s, label: s })),
-          ]}
-        />
-        <CustomSelect
-          value={managerFilter}
-          onChange={v => setManagerFilter(v)}
-          style={{ minWidth: 110 }}
-          options={[
-            { value: 'all', label: '전체 담당자' },
-            { value: 'none', label: '미배정' },
-            ...uniqueManagers.map(m => ({ value: m, label: m })),
-          ]}
-        />
-        {isFiltered && <button onClick={() => { setSearchText(''); setStatusFilter('all'); setManagerFilter('all'); }} className={styles.btnSecondary}>필터 초기화</button>}
+        <input type="text" value={searchText} onChange={e => setSearchText(e.target.value)} placeholder="기관명, 지역, 분류, 담당자 검색..." className={styles.input} style={{ width: 300 }} />
+        {isFiltered && <button onClick={() => { setSearchText(''); setStatusFilter('all'); setManagerFilter('all'); setCategoryFilter('all'); }} className={styles.btnSecondary}>필터 초기화</button>}
       </div>
 
       {/* 일괄 선택 액션 바 */}
@@ -2709,9 +1882,31 @@ function AgencyTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) => 
                   <th className={styles.thCenter}>
                     <input type="checkbox" checked={filtered.length > 0 && selectedIds.size === filtered.length} onChange={toggleSelectAll} className={styles.checkbox} />
                   </th>
-                  {['분류', '지역', '기관이름', '연락처', '학점커미션', '민간커미션', '담당자', '메모', '상태', '등록일'].map(col => (
-                    <th key={col} className={styles.th}>{col}</th>
-                  ))}
+                  <th className={styles.thFilterable}>
+                    <div className={styles.thInner}>
+                      분류
+                      <button className={`${styles.thFilterBtn}${categoryFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'category') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('category'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
+                    </div>
+                  </th>
+                  <th className={styles.th}>지역</th>
+                  <th className={styles.th}>기관이름</th>
+                  <th className={styles.th}>연락처</th>
+                  <th className={styles.th}>학점커미션</th>
+                  <th className={styles.th}>민간커미션</th>
+                  <th className={styles.thFilterable}>
+                    <div className={styles.thInner}>
+                      담당자
+                      <button className={`${styles.thFilterBtn}${managerFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'manager') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('manager'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
+                    </div>
+                  </th>
+                  <th className={styles.th}>메모</th>
+                  <th className={styles.thFilterable}>
+                    <div className={styles.thInner}>
+                      상태
+                      <button className={`${styles.thFilterBtn}${statusFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'status') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('status'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
+                    </div>
+                  </th>
+                  <th className={styles.th}>등록일</th>
                 </tr>
               </thead>
               <tbody>
@@ -2720,9 +1915,9 @@ function AgencyTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) => 
                     <td className={styles.tdCenter}>
                       <input type="checkbox" checked={selectedIds.has(a.id)} onChange={() => toggleSelect(a.id)} className={styles.checkbox} />
                     </td>
-                    <td className={styles.tdSecondary}>{a.category || '-'}</td>
-                    <td className={styles.tdSecondary}>{a.region || '-'}</td>
-                    <td className={styles.tdBold}>{a.institution_name || '-'}</td>
+                    <td className={styles.tdSecondary}><Highlight text={a.category} query={searchText} /></td>
+                    <td className={styles.tdSecondary}><Highlight text={a.region} query={searchText} /></td>
+                    <td className={styles.tdBold}><Highlight text={a.institution_name} query={searchText} /></td>
                     <td className={styles.td}>
                       {a.contact ? (
                         <span
@@ -2732,7 +1927,7 @@ function AgencyTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) => 
                           onMouseLeave={e => (e.currentTarget.style.background = '')}
                           title="클릭하여 복사"
                         >
-                          {a.contact}
+                          <Highlight text={a.contact} query={searchText} />
                         </span>
                       ) : '-'}
                     </td>
@@ -2766,7 +1961,7 @@ function AgencyTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) => 
                         onMouseEnter={e => (e.currentTarget.style.background = '#f2f4f6')}
                         onMouseLeave={e => (e.currentTarget.style.background = '')}
                       >
-                        {a.manager || <span className={styles.agencyEmptyColor}>미배정</span>}
+                        {a.manager ? <Highlight text={a.manager} query={searchText} /> : <span className={styles.agencyEmptyColor}>미배정</span>}
                       </span>
                     </td>
                     {/* 메모 */}
@@ -2779,12 +1974,12 @@ function AgencyTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) => 
                         {a.memo || <span className={styles.agencyEmptyColor}>-</span>}
                       </span>
                     </td>
-                    <td className={styles.td}>
-                      <CustomSelect
+                    <td className={styles.td} onClick={e => e.stopPropagation()}>
+                      <StatusSelect
                         value={a.status}
                         onChange={v => handleStatusChange(a.id, v as AgencyStatus)}
-                        style={{ fontSize: 12 }}
-                        options={AGENCY_STATUS_OPTIONS.map(s => ({ value: s, label: s }))}
+                        options={AGENCY_STATUS_OPTIONS}
+                        styleMap={AGENCY_STATUS_STYLE}
                       />
                     </td>
                     <td className={styles.agencyDateTd}>{formatDateShort(a.created_at)}</td>
@@ -2795,6 +1990,41 @@ function AgencyTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) => 
           </div>
         )}
       </div>
+
+      {/* 헤더 필터 드롭다운 */}
+      {openFilterColumn && (
+        <div
+          className={styles.filterColumnDropdown}
+          style={{ top: filterDropdownPos.top, left: filterDropdownPos.left }}
+          onClick={e => e.stopPropagation()}
+        >
+          {openFilterColumn === 'category' && (
+            <>
+              <div className={`${styles.filterDropdownItem}${categoryFilter === 'all' ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setCategoryFilter('all'); setOpenFilterColumn(null); }}>전체</div>
+              {uniqueCategories.map(c => (
+                <div key={c} className={`${styles.filterDropdownItem}${categoryFilter === c ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setCategoryFilter(c); setOpenFilterColumn(null); }}>{c}</div>
+              ))}
+            </>
+          )}
+          {openFilterColumn === 'manager' && (
+            <>
+              <div className={`${styles.filterDropdownItem}${managerFilter === 'all' ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setManagerFilter('all'); setOpenFilterColumn(null); }}>전체</div>
+              <div className={`${styles.filterDropdownItem}${managerFilter === 'none' ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setManagerFilter('none'); setOpenFilterColumn(null); }}>미배정</div>
+              {uniqueManagers.map(m => (
+                <div key={m} className={`${styles.filterDropdownItem}${managerFilter === m ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setManagerFilter(m); setOpenFilterColumn(null); }}>{m}</div>
+              ))}
+            </>
+          )}
+          {openFilterColumn === 'status' && (
+            <>
+              <div className={`${styles.filterDropdownItem}${statusFilter === 'all' ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setStatusFilter('all'); setOpenFilterColumn(null); }}>전체</div>
+              {AGENCY_STATUS_OPTIONS.map(s => (
+                <div key={s} className={`${styles.filterDropdownItem}${statusFilter === s ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setStatusFilter(s as AgencyStatus); setOpenFilterColumn(null); }}>{s}</div>
+              ))}
+            </>
+          )}
+        </div>
+      )}
 
       {/* 셀 편집 모달 */}
       {fieldModal && (
@@ -3259,7 +2489,7 @@ interface StatItem {
   created_at: string;
 }
 
-type StatsSource = 'hakjeom' | 'private_cert' | 'all';
+type StatsSource = 'hakjeom';
 type StatsSubTab = 'overview' | 'status' | 'source' | 'time';
 
 // 통계 상수
@@ -3273,8 +2503,6 @@ const SOURCE_COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#8b5cf6', '#ec4899', '#
 
 const SOURCE_LABELS: { id: StatsSource; label: string }[] = [
   { id: 'hakjeom', label: '학점은행제' },
-  { id: 'private_cert', label: '민간자격증' },
-  { id: 'all', label: '전체' },
 ];
 
 const STATS_SUB_TABS: { id: StatsSubTab; label: string }[] = [
@@ -3767,7 +2995,6 @@ function StatsTab() {
 
 const TAB_CONFIG: { key: TabKey; label: string }[] = [
   { key: 'hakjeom', label: '학점은행제' },
-  { key: 'private-cert', label: '민간자격증' },
   { key: 'agency', label: '기관협약' },
   { key: 'bulk', label: '일괄등록' },
   { key: 'stats', label: '통계' },
@@ -3784,7 +3011,7 @@ export default function HakjeomPage() {
         <div>
           <h2 className={styles.pageTitle}>학점은행제 관리</h2>
           <p className={styles.pageSubTitle}>
-            학점은행제, 민간자격증, 기관협약 상담 내역을 통합 관리합니다.
+            학점은행제, 기관협약 상담 내역을 통합 관리합니다.
           </p>
         </div>
         {statsNode}
@@ -3805,7 +3032,6 @@ export default function HakjeomPage() {
 
       {/* 탭 컨텐츠 */}
       {activeTab === 'hakjeom' && <HakjeomTab setStatsNode={setStatsNode} />}
-      {activeTab === 'private-cert' && <PrivateCertTab setStatsNode={setStatsNode} />}
       {activeTab === 'agency' && <AgencyTab setStatsNode={setStatsNode} />}
       {activeTab === 'bulk' && <BulkTab />}
       {activeTab === 'stats' && <StatsTab />}
