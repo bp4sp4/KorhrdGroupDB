@@ -12,6 +12,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/hakjeom': '학점은행제',
   '/cert': '자격증신청',
   '/practice': '실습/취업',
+  '/mini-admin': '미니관리자',
 }
 
 export default function DashboardLayout({
@@ -22,15 +23,35 @@ export default function DashboardLayout({
   const router = useRouter()
   const pathname = usePathname()
   const [isChecking, setIsChecking] = useState(true)
+  const [userRole, setUserRole] = useState<string | null>(null)
   const supabase = createClient()
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) {
         router.replace('/login')
-      } else {
-        setIsChecking(false)
+        return
       }
+
+      // app_users에서 role 조회
+      try {
+        const res = await fetch('/api/auth/me')
+        if (res.ok) {
+          const data = await res.json()
+          setUserRole(data.role ?? 'admin')
+
+          // mini-admin이 일반 페이지 접근 시 리다이렉트
+          if (data.role === 'mini-admin' && !window.location.pathname.startsWith('/mini-admin')) {
+            router.replace('/mini-admin')
+            return
+          }
+        }
+      } catch {
+        // role 조회 실패 시 기본 admin으로
+        setUserRole('admin')
+      }
+
+      setIsChecking(false)
     })
   }, [router])
 
@@ -46,7 +67,7 @@ export default function DashboardLayout({
 
   return (
     <div className={styles.dashboardWrap}>
-      <Sidebar />
+      <Sidebar userRole={userRole} />
 
       <div className={styles.dashboardMain}>
         <Header title={pageTitle} />

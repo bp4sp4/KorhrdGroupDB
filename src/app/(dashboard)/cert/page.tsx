@@ -59,6 +59,7 @@ interface CertApplication {
   cancelled_at?: string | null
   is_checked?: boolean | null
   source?: string | null
+  ref?: string | null
   created_at: string
   updated_at?: string | null
 }
@@ -2214,6 +2215,16 @@ function ApplicationTab({ sourceTab }: { sourceTab: 'hakjeom' | 'edu' }) {
                         onClick={() => setSelectedApp(app)}
                       >
                         {SOURCE_DISPLAY[app.source ?? ''] ?? app.source ?? '-'}
+                        {app.ref && (
+                          <span className={styles.statusBadge} style={{
+                            marginLeft: 6,
+                            fontSize: 10,
+                            background: '#ede9fe',
+                            color: '#6d28d9',
+                          }}>
+                            {app.ref}
+                          </span>
+                        )}
                       </td>
 
                       {/* 신청일 */}

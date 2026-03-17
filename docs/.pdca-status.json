@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-03-17T07:54:34.752Z",
+  "lastUpdated": "2026-03-17T09:57:43.290Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -20,7 +20,9 @@
     "scripts",
     "creaditbridge",
     "creaditprepayment",
-    "apply"
+    "apply",
+    "mini-admin",
+    "me"
   ],
   "primaryFeature": "supabase",
   "features": {
@@ -46,7 +48,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:18:14.828Z",
-        "lastUpdated": "2026-03-16T09:45:41.117Z"
+        "lastUpdated": "2026-03-17T09:03:59.270Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(auth)/login/page.tsx"
     },
@@ -59,7 +61,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:20:48.298Z",
-        "lastUpdated": "2026-03-17T02:11:11.422Z"
+        "lastUpdated": "2026-03-17T09:02:53.409Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/layout.tsx"
     },
@@ -72,7 +74,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:20:57.368Z",
-        "lastUpdated": "2026-03-17T02:11:01.194Z"
+        "lastUpdated": "2026-03-17T09:03:40.014Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/components/layout/Sidebar.tsx"
     },
@@ -111,7 +113,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:41:16.658Z",
-        "lastUpdated": "2026-03-17T07:54:34.752Z"
+        "lastUpdated": "2026-03-17T09:57:43.290Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/cert/page.tsx"
     },
@@ -241,9 +243,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-17T07:47:52.555Z",
-        "lastUpdated": "2026-03-17T07:47:52.555Z"
+        "lastUpdated": "2026-03-17T08:05:10.381Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/creaditbridge/app/page.tsx"
+      "lastFile": "/Users/korhrd/Documents/GitHub/creaditbridge/components/CertificateApplicationForm.tsx"
     },
     "creaditprepayment": {
       "phase": "do",
@@ -254,9 +256,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-17T07:47:56.221Z",
-        "lastUpdated": "2026-03-17T07:47:56.221Z"
+        "lastUpdated": "2026-03-17T08:59:06.579Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/creaditprepayment/app/page.tsx"
+      "lastFile": "/Users/korhrd/Documents/GitHub/creaditprepayment/components/CertificateApplicationForm.tsx"
     },
     "apply": {
       "phase": "do",
@@ -267,9 +269,35 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-17T07:48:16.063Z",
-        "lastUpdated": "2026-03-17T07:48:16.063Z"
+        "lastUpdated": "2026-03-17T08:04:18.552Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/creaditbridge/app/apply/page.tsx"
+    },
+    "mini-admin": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-03-17T09:01:09.810Z",
+        "lastUpdated": "2026-03-17T09:02:20.826Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/mini-admin/page.tsx"
+    },
+    "me": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-03-17T09:03:03.020Z",
+        "lastUpdated": "2026-03-17T09:03:03.020Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/auth/me/route.ts"
     }
   },
   "pipeline": {
@@ -280,7 +308,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-03-17T07:54:34.752Z"
+    "lastActivity": "2026-03-17T09:57:43.290Z"
   },
   "history": [
     {
@@ -2253,6 +2281,138 @@
     },
     {
       "timestamp": "2026-03-17T07:54:34.752Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-17T08:04:14.548Z",
+      "feature": "creaditbridge",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-17T08:04:14.916Z",
+      "feature": "creaditprepayment",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-17T08:04:18.552Z",
+      "feature": "apply",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-17T08:04:42.340Z",
+      "feature": "creaditbridge",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-17T08:04:49.330Z",
+      "feature": "creaditprepayment",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-17T08:05:10.381Z",
+      "feature": "creaditbridge",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-17T08:05:11.360Z",
+      "feature": "creaditprepayment",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-17T08:58:57.184Z",
+      "feature": "creaditprepayment",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-17T08:59:06.579Z",
+      "feature": "creaditprepayment",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-17T08:59:21.602Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-17T09:01:09.810Z",
+      "feature": "mini-admin",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-17T09:02:20.826Z",
+      "feature": "mini-admin",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-17T09:02:53.409Z",
+      "feature": "(dashboard)",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-17T09:03:03.020Z",
+      "feature": "me",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-17T09:03:14.573Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-17T09:03:33.643Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-17T09:03:40.014Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-17T09:03:49.728Z",
+      "feature": "login",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-17T09:03:59.270Z",
+      "feature": "login",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-17T09:57:01.714Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-17T09:57:32.312Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-17T09:57:43.290Z",
       "feature": "cert",
       "phase": "do",
       "action": "updated"

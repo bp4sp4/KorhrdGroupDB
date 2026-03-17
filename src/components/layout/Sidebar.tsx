@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
-import { GraduationCap, FileText, Briefcase, ChevronLeft, ChevronRight } from 'lucide-react'
+import { GraduationCap, FileText, Briefcase, ChevronLeft, ChevronRight, Users } from 'lucide-react'
 import styles from './layout.module.css'
 
 interface NavItem {
@@ -13,7 +13,7 @@ interface NavItem {
   icon: React.ReactNode
 }
 
-const NAV_ITEMS: NavItem[] = [
+const ADMIN_NAV_ITEMS: NavItem[] = [
   {
     id: 'hakjeom',
     label: '학점은행제 상담신청',
@@ -34,9 +34,24 @@ const NAV_ITEMS: NavItem[] = [
   },
 ]
 
-export default function Sidebar() {
+const MINI_ADMIN_NAV_ITEMS: NavItem[] = [
+  {
+    id: 'mini-admin',
+    label: '미니관리자',
+    href: '/mini-admin',
+    icon: <Users size={18} />,
+  },
+]
+
+interface SidebarProps {
+  userRole?: string | null
+}
+
+export default function Sidebar({ userRole }: SidebarProps) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
+
+  const navItems = userRole === 'mini-admin' ? MINI_ADMIN_NAV_ITEMS : ADMIN_NAV_ITEMS
 
   return (
     <aside
@@ -65,7 +80,7 @@ export default function Sidebar() {
         )}
 
         <ul className={styles.sidebarList}>
-          {NAV_ITEMS.map((item) => {
+          {navItems.map((item) => {
             const isActive = pathname.startsWith(item.href)
 
             return (

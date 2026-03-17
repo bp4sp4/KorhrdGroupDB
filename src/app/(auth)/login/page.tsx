@@ -15,8 +15,20 @@ export default function LoginPage() {
 
   // 이미 로그인된 경우 대시보드로 redirect
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) router.replace('/hakjeom')
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session) {
+        try {
+          const res = await fetch('/api/auth/me')
+          if (res.ok) {
+            const data = await res.json()
+            if (data.role === 'mini-admin') {
+              router.replace('/mini-admin')
+              return
+            }
+          }
+        } catch { /* ignore */ }
+        router.replace('/hakjeom')
+      }
     })
   }, [])
 
@@ -33,6 +45,17 @@ export default function LoginPage() {
       return
     }
 
+    // role에 따라 리다이렉트
+    try {
+      const res = await fetch('/api/auth/me')
+      if (res.ok) {
+        const data = await res.json()
+        if (data.role === 'mini-admin') {
+          router.replace('/mini-admin')
+          return
+        }
+      }
+    } catch { /* ignore */ }
     router.replace('/hakjeom')
   }
 
