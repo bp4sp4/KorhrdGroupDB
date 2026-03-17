@@ -2,7 +2,9 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { GraduationCap, FileText, Briefcase } from 'lucide-react'
+import { useState } from 'react'
+import { GraduationCap, FileText, Briefcase, ChevronLeft, ChevronRight } from 'lucide-react'
+import styles from './layout.module.css'
 
 interface NavItem {
   id: string
@@ -14,13 +16,13 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   {
     id: 'hakjeom',
-    label: '학점은행제',
+    label: '학점은행제 상담신청',
     href: '/hakjeom',
     icon: <GraduationCap size={18} />,
   },
   {
     id: 'cert',
-    label: '자격증신청',
+    label: '민간자격증',
     href: '/cert',
     icon: <FileText size={18} />,
   },
@@ -34,56 +36,35 @@ const NAV_ITEMS: NavItem[] = [
 
 export default function Sidebar() {
   const pathname = usePathname()
+  const [collapsed, setCollapsed] = useState(false)
 
   return (
-    <aside style={{
-      width: 'var(--toss-sidebar-width)',
-      flexShrink: 0,
-      background: 'var(--toss-card-bg)',
-      borderRight: '1px solid var(--toss-border)',
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100vh',
-      position: 'sticky',
-      top: 0,
-    }}>
+    <aside
+      className={styles.sidebar}
+      style={{ width: collapsed ? 80 : 'var(--toss-sidebar-width)' }}
+    >
       {/* 로고 영역 */}
-      <div style={{
-        height: 'var(--toss-nav-height)',
-        display: 'flex',
-        alignItems: 'center',
-        padding: '0 20px',
-        borderBottom: '1px solid var(--toss-border)',
-        gap: 10,
-        flexShrink: 0,
-      }}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo.png" alt="한평생교육 로고" style={{ width: '100%', height: 'auto', display: 'block' }} />
+      <div className={`${styles.sidebarLogo} ${collapsed ? styles.sidebarLogoCollapsed : styles.sidebarLogoExpanded}`}>
+        {!collapsed && (
+          /* eslint-disable-next-line @next/next/no-img-element */
+          <img src="/logo.png" alt="한평생교육 로고" className={styles.sidebarLogoImg} />
+        )}
+        <button
+          onClick={() => setCollapsed(v => !v)}
+          className={styles.sidebarToggleBtn}
+          title={collapsed ? '사이드바 펼치기' : '사이드바 접기'}
+        >
+          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+        </button>
       </div>
 
       {/* 네비게이션 메뉴 */}
-      <nav style={{ padding: '16px 10px', flex: 1 }}>
-        {/* 메뉴 섹션 레이블 */}
-        <p style={{
-          fontSize: 10,
-          fontWeight: 600,
-          color: 'var(--toss-text-tertiary)',
-          textTransform: 'uppercase',
-          letterSpacing: '0.8px',
-          padding: '0 12px',
-          marginBottom: 6,
-        }}>
-          메뉴
-        </p>
+      <nav className={`${styles.sidebarNav} ${collapsed ? styles.sidebarNavCollapsed : styles.sidebarNavExpanded}`}>
+        {!collapsed && (
+          <p className={styles.sidebarMenuLabel}>메뉴</p>
+        )}
 
-        <ul style={{
-          listStyle: 'none',
-          margin: 0,
-          padding: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 2,
-        }}>
+        <ul className={styles.sidebarList}>
           {NAV_ITEMS.map((item) => {
             const isActive = pathname.startsWith(item.href)
 
@@ -91,29 +72,21 @@ export default function Sidebar() {
               <li key={item.id}>
                 <Link
                   href={item.href}
+                  title={collapsed ? item.label : undefined}
+                  className={`${styles.sidebarLink} ${collapsed ? styles.sidebarLinkCollapsed : styles.sidebarLinkExpanded}`}
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 10,
-                    padding: '9px 12px',
-                    borderRadius: 10,
-                    fontSize: 14,
                     fontWeight: isActive ? 600 : 400,
                     color: isActive ? 'var(--toss-blue)' : 'var(--toss-text-secondary)',
                     background: isActive ? 'var(--toss-blue-subtle)' : 'transparent',
-                    textDecoration: 'none',
-                    transition: 'all 150ms ease',
                   }}
                 >
-                  <span style={{
-                    color: isActive ? 'var(--toss-blue)' : 'var(--toss-text-tertiary)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    transition: 'color 150ms ease',
-                  }}>
+                  <span
+                    className={styles.sidebarLinkIcon}
+                    style={{ color: isActive ? 'var(--toss-blue)' : 'var(--toss-text-tertiary)' }}
+                  >
                     {item.icon}
                   </span>
-                  {item.label}
+                  <span className={styles.sidebarLinkLabel}>{item.label}</span>
                 </Link>
               </li>
             )
@@ -122,18 +95,10 @@ export default function Sidebar() {
       </nav>
 
       {/* 하단 버전 정보 */}
-      <div style={{
-        padding: '12px 20px 16px',
-        borderTop: '1px solid var(--toss-border)',
-        flexShrink: 0,
-      }}>
-        <p style={{
-          fontSize: 11,
-          color: 'var(--toss-text-tertiary)',
-          margin: 0,
-        }}>
-          v1.0.0
-        </p>
+      <div className={`${styles.sidebarFooter} ${collapsed ? styles.sidebarFooterCollapsed : ''}`}>
+        {!collapsed && (
+          <p className={styles.sidebarVersion}>v1.0.0</p>
+        )}
       </div>
     </aside>
   )

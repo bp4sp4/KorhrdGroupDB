@@ -128,6 +128,23 @@ const REASON_OPTIONS = ['즉시취업', '이직', '미래준비', '취업'];
 const EDUCATION_OPTIONS = ['고등학교 졸업', '전문대 졸업', '대학교 재학', '대학교 중퇴', '대학교 졸업', '대학원 이상'];
 const HAKJEOM_COURSE_OPTIONS = ['사회복지사', '아동학사', '평생교육사', '편입/대학원', '건강가정사', '청소년지도사', '보육교사', '심리상담사'];
 
+// ─── 검색어 하이라이트 ──────────────────────────────────────────────────────
+
+function Highlight({ text, query }: { text: string | null; query: string }) {
+  if (!query || !text) return <>{text ?? '-'}</>;
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const parts = text.split(new RegExp(`(${escaped})`, 'gi'));
+  return (
+    <>
+      {parts.map((part, i) =>
+        part.toLowerCase() === query.toLowerCase()
+          ? <mark key={i} style={{ background: '#FFE500', color: 'inherit', borderRadius: 2, padding: '0 1px' }}>{part}</mark>
+          : part
+      )}
+    </>
+  );
+}
+
 // ─── 유틸 함수 ───────────────────────────────────────────────────────────────
 
 function formatDate(dateString: string): string {
@@ -327,7 +344,9 @@ interface CustomSelectProps {
 
 function CustomSelect({ value, onChange, options, placeholder, fullWidth, style }: CustomSelectProps) {
   const [open, setOpen] = useState(false);
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
   const ref = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -337,14 +356,29 @@ function CustomSelect({ value, onChange, options, placeholder, fullWidth, style 
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
+  const handleOpen = () => {
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setDropdownStyle({
+        position: 'fixed',
+        top: rect.bottom + 6,
+        left: rect.left,
+        width: rect.width,
+        zIndex: 9999,
+      });
+    }
+    setOpen(v => !v);
+  };
+
   const selected = options.find(o => o.value === value);
   const displayLabel = selected?.label ?? placeholder ?? '선택';
 
   return (
     <div ref={ref} className={`${styles.customSelectWrap} ${fullWidth ? styles.customSelectFull : ''}`} style={style}>
       <button
+        ref={triggerRef}
         type="button"
-        onClick={() => setOpen(v => !v)}
+        onClick={handleOpen}
         className={styles.customSelectTrigger}
       >
         <span className={value ? styles.customSelectValue : styles.customSelectPlaceholder}>
@@ -360,7 +394,7 @@ function CustomSelect({ value, onChange, options, placeholder, fullWidth, style 
         </svg>
       </button>
       {open && (
-        <div className={styles.customSelectDropdown}>
+        <div className={styles.customSelectDropdown} style={dropdownStyle}>
           {options.map(opt => (
             <div
               key={opt.value}
@@ -418,9 +452,17 @@ function HakjeomDetailPanel({ item, onClose, onUpdate }: HakjeomDetailPanelProps
   const [editReason, setEditReason] = useState<string[]>(
     item.reason ? item.reason.split(', ').map(s => s.trim()).filter(Boolean) : []
   );
-  const [editCounselCheck, setEditCounselCheck] = useState<string[]>(
-    item.counsel_check ? item.counsel_check.split(', ').map(s => s.trim()).filter(Boolean) : []
-  );
+  const parseCounselCheck = (raw: string | null) => {
+    if (!raw) return { checks: [], etc: '' };
+    const items = raw.split(', ').map(s => s.trim()).filter(Boolean);
+    const etcItem = items.find(s => s.startsWith('기타(') && s.endsWith(')'));
+    const checks = items.map(s => s.startsWith('기타(') && s.endsWith(')') ? '기타' : s);
+    const etc = etcItem ? etcItem.slice(3, -1) : (items.includes('기타') ? '' : '');
+    return { checks, etc };
+  };
+  const initCounsel = parseCounselCheck(item.counsel_check);
+  const [editCounselCheck, setEditCounselCheck] = useState<string[]>(initCounsel.checks);
+  const [editCounselCheckEtc, setEditCounselCheckEtc] = useState(initCounsel.etc);
   const [editSourceMajor, setEditSourceMajor] = useState(() => initSource(item.click_source).major);
   const [editSourceMinor, setEditSourceMinor] = useState(() => initSource(item.click_source).minor);
   const [editResidence, setEditResidence] = useState(item.residence ?? '');
@@ -440,7 +482,9 @@ function HakjeomDetailPanel({ item, onClose, onUpdate }: HakjeomDetailPanelProps
     setEditEducation(item.education ?? '');
     setEditHopeCourse(item.hope_course ?? '');
     setEditReason(item.reason ? item.reason.split(', ').map(s => s.trim()).filter(Boolean) : []);
-    setEditCounselCheck(item.counsel_check ? item.counsel_check.split(', ').map(s => s.trim()).filter(Boolean) : []);
+    const counsel = parseCounselCheck(item.counsel_check);
+    setEditCounselCheck(counsel.checks);
+    setEditCounselCheckEtc(counsel.etc);
     setEditSourceMajor(major);
     setEditSourceMinor(minor);
     setEditResidence(item.residence ?? '');
@@ -479,7 +523,9 @@ function HakjeomDetailPanel({ item, onClose, onUpdate }: HakjeomDetailPanelProps
         education: editEducation || null,
         hope_course: editHopeCourse || null,
         reason: editReason.length > 0 ? editReason.join(', ') : null,
-        counsel_check: editCounselCheck.length > 0 ? editCounselCheck.join(', ') : null,
+        counsel_check: editCounselCheck.length > 0
+          ? editCounselCheck.map(c => c === '기타' && editCounselCheckEtc.trim() ? `기타(${editCounselCheckEtc.trim()})` : c).join(', ')
+          : null,
         click_source: builtClickSource || null,
         residence: editResidence || null,
         subject_cost: editSubjectCost ? parseInt(editSubjectCost.replace(/,/g, ''), 10) || null : null,
@@ -657,6 +703,16 @@ function HakjeomDetailPanel({ item, onClose, onUpdate }: HakjeomDetailPanelProps
                     </button>
                   ))}
                 </div>
+                {editCounselCheck.includes('기타') && (
+                  <input
+                    value={editCounselCheckEtc}
+                    onChange={e => setEditCounselCheckEtc(e.target.value)}
+                    placeholder="기타 내용 입력"
+                    className={`${styles.input} ${styles.inputFull}`}
+                    style={{ marginTop: 8 }}
+                    autoFocus
+                  />
+                )}
               </div>
 
               {/* 상태 */}
@@ -749,9 +805,17 @@ function CertDetailPanel({ item, onClose, onUpdate }: CertDetailPanelProps) {
   const [editReason, setEditReason] = useState<string[]>(
     item.reason ? item.reason.split(', ').map(s => s.trim()).filter(Boolean) : []
   );
-  const [editCounselCheck, setEditCounselCheck] = useState<string[]>(
-    item.counsel_check ? item.counsel_check.split(', ').map(s => s.trim()).filter(Boolean) : []
-  );
+  const parseCounselCheck2 = (raw: string | null) => {
+    if (!raw) return { checks: [], etc: '' };
+    const items = raw.split(', ').map(s => s.trim()).filter(Boolean);
+    const etcItem = items.find(s => s.startsWith('기타(') && s.endsWith(')'));
+    const checks = items.map(s => s.startsWith('기타(') && s.endsWith(')') ? '기타' : s);
+    const etc = etcItem ? etcItem.slice(3, -1) : '';
+    return { checks, etc };
+  };
+  const initCounsel2 = parseCounselCheck2(item.counsel_check);
+  const [editCounselCheck, setEditCounselCheck] = useState<string[]>(initCounsel2.checks);
+  const [editCounselCheckEtc, setEditCounselCheckEtc] = useState(initCounsel2.etc);
   const [editClickSource, setEditClickSource] = useState(item.click_source ?? '');
   const [editResidence, setEditResidence] = useState(item.residence ?? '');
   const [editSubjectCost, setEditSubjectCost] = useState(item.subject_cost ? String(item.subject_cost) : '');
@@ -765,7 +829,9 @@ function CertDetailPanel({ item, onClose, onUpdate }: CertDetailPanelProps) {
     setEditMajorCategory(item.major_category ?? '');
     setEditHopeCourse(item.hope_course ?? '');
     setEditReason(item.reason ? item.reason.split(', ').map(s => s.trim()).filter(Boolean) : []);
-    setEditCounselCheck(item.counsel_check ? item.counsel_check.split(', ').map(s => s.trim()).filter(Boolean) : []);
+    const counsel2 = parseCounselCheck2(item.counsel_check);
+    setEditCounselCheck(counsel2.checks);
+    setEditCounselCheckEtc(counsel2.etc);
     setEditClickSource(item.click_source ?? '');
     setEditResidence(item.residence ?? '');
     setEditSubjectCost(item.subject_cost ? String(item.subject_cost) : '');
@@ -789,7 +855,9 @@ function CertDetailPanel({ item, onClose, onUpdate }: CertDetailPanelProps) {
         major_category: editMajorCategory || null,
         hope_course: editHopeCourse || null,
         reason: editReason.length > 0 ? editReason.join(', ') : null,
-        counsel_check: editCounselCheck.length > 0 ? editCounselCheck.join(', ') : null,
+        counsel_check: editCounselCheck.length > 0
+          ? editCounselCheck.map(c => c === '기타' && editCounselCheckEtc.trim() ? `기타(${editCounselCheckEtc.trim()})` : c).join(', ')
+          : null,
         click_source: editClickSource || null,
         residence: editResidence || null,
         subject_cost: editSubjectCost ? parseInt(editSubjectCost.replace(/,/g, ''), 10) || null : null,
@@ -948,6 +1016,16 @@ function CertDetailPanel({ item, onClose, onUpdate }: CertDetailPanelProps) {
                     </button>
                   ))}
                 </div>
+                {editCounselCheck.includes('기타') && (
+                  <input
+                    value={editCounselCheckEtc}
+                    onChange={e => setEditCounselCheckEtc(e.target.value)}
+                    placeholder="기타 내용 입력"
+                    className={`${styles.input} ${styles.inputFull}`}
+                    style={{ marginTop: 8 }}
+                    autoFocus
+                  />
+                )}
               </div>
 
               {/* 상태 */}
@@ -1028,27 +1106,72 @@ function CertDetailPanel({ item, onClose, onUpdate }: CertDetailPanelProps) {
 interface HakjeomAddModalProps {
   onClose: () => void;
   onSaved: () => void;
+  uniqueManagers?: string[];
 }
 
-function HakjeomAddModal({ onClose, onSaved }: HakjeomAddModalProps) {
+function HakjeomAddModal({ onClose, onSaved, uniqueManagers = [] }: HakjeomAddModalProps) {
+  const [step, setStep] = useState(1);
   const [form, setForm] = useState({
-    name: '', contact: '', education: '', hope_course: '',
-    reason: '', click_source: '', subject_cost: '', manager: '', residence: '', memo: '',
+    name: '', contact: '', education: '',
+    hope_course: '',
+    reason: [] as string[],
+    counsel_check: [] as string[],
+    counsel_check_etc: '',
+    sourceMajor: '', sourceMinor: '',
+    subject_cost: '', manager: '', residence: '', memo: '',
   });
   const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState<{ name?: string; contact?: string }>({});
+  const [showManagerInput, setShowManagerInput] = useState(false);
+  const nameRef = useRef<HTMLInputElement>(null);
+  const contactRef = useRef<HTMLInputElement>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.name || !form.contact) {
-      alert('이름과 연락처는 필수입니다.');
-      return;
-    }
+  const TOTAL_STEPS = 3;
+
+  const toggleArr = (arr: string[], val: string) =>
+    arr.includes(val) ? arr.filter(v => v !== val) : [...arr, val];
+
+  useEffect(() => {
+    if (step === 1) setTimeout(() => nameRef.current?.focus(), 50);
+  }, [step]);
+
+  const validateStep1 = () => {
+    const newErrors: { name?: string; contact?: string } = {};
+    if (!form.name.trim()) newErrors.name = '이름을 입력해주세요';
+    if (!form.contact.trim()) newErrors.contact = '연락처를 입력해주세요';
+    else if (form.contact.replace(/-/g, '').length < 10) newErrors.contact = '연락처를 정확히 입력해주세요';
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleNext = () => {
+    if (step === 1 && !validateStep1()) return;
+    if (step < TOTAL_STEPS) setStep(s => s + 1);
+  };
+
+  const handleBack = () => {
+    if (step > 1) setStep(s => s - 1);
+  };
+
+  const handleSubmit = async () => {
     setSaving(true);
     try {
       const res = await fetch('/api/hakjeom', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, is_manual_entry: true }),
+        body: JSON.stringify({
+          ...form,
+          hope_course: form.hope_course,
+          reason: form.reason.join(', '),
+          counsel_check: [
+            ...form.counsel_check.filter(c => c !== '기타'),
+            ...(form.counsel_check.includes('기타') && form.counsel_check_etc.trim() ? [`기타(${form.counsel_check_etc.trim()})`] : form.counsel_check.includes('기타') ? ['기타'] : []),
+          ].join(', '),
+          click_source: form.sourceMajor
+            ? (form.sourceMinor ? `${form.sourceMajor}_${form.sourceMinor}` : form.sourceMajor)
+            : '',
+          is_manual_entry: true,
+        }),
       });
       if (!res.ok) throw new Error('추가 실패');
       onSaved();
@@ -1060,86 +1183,253 @@ function HakjeomAddModal({ onClose, onSaved }: HakjeomAddModalProps) {
     }
   };
 
+  const handleContactChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = formatPhoneNumber(e.target.value);
+    setForm(p => ({ ...p, contact: val }));
+    if (errors.contact) setErrors(p => ({ ...p, contact: undefined }));
+  };
+
   return (
     <div onClick={e => { if (e.target === e.currentTarget) onClose(); }} className={styles.modalOverlay}>
-      <div className={styles.modalBox}>
-        <h2 className={styles.modalTitle}>학점은행제 추가</h2>
-        <form onSubmit={handleSubmit}>
-          {([
-            { label: '이름 *', key: 'name', placeholder: '이름 입력' },
-            { label: '연락처 *', key: 'contact', placeholder: '010-0000-0000' },
-            { label: '거주지', key: 'residence', placeholder: '예) 서울 강남구' },
-            { label: '유입경로', key: 'click_source', placeholder: '예) 맘카페_예시카페' },
-            { label: '과목비용', key: 'subject_cost', placeholder: '예) 150,000' },
-            { label: '담당자', key: 'manager', placeholder: '담당자 이름' },
-          ] as { label: string; key: keyof typeof form; placeholder: string }[]).map(({ label, key, placeholder }) => (
-            <div key={key} className={styles.modalFieldGroup}>
-              <label className={styles.modalLabel}>{label}</label>
-              <input
-                value={form[key]}
-                onChange={e => {
-                  const val = key === 'contact' ? formatPhoneNumber(e.target.value) : e.target.value;
-                  setForm(p => ({ ...p, [key]: val }));
-                }}
-                placeholder={placeholder}
-                className={`${styles.input} ${styles.inputFull}`}
-              />
+      <div className={styles.funnelBox}>
+        {/* 헤더 */}
+        <div className={styles.funnelHeader}>
+          <button type="button" onClick={step === 1 ? onClose : handleBack} className={styles.funnelBackBtn}>
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M14 9H4M4 9L8 5M4 9L8 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </button>
+          <span className={styles.funnelStepLabel}>{step} / {TOTAL_STEPS}</span>
+          <button type="button" onClick={onClose} className={styles.funnelCloseBtn}>✕</button>
+        </div>
+
+        {/* 진행 바 */}
+        <div className={styles.funnelProgressBar}>
+          <div className={styles.funnelProgressFill} style={{ width: `${(step / TOTAL_STEPS) * 100}%` }} />
+        </div>
+
+        {/* 스텝 콘텐츠 */}
+        <div className={styles.funnelBody}>
+
+          {/* ── Step 1: 기본 정보 + 희망과정 ── */}
+          {step === 1 && (
+            <div className={styles.funnelStep}>
+              <p className={styles.funnelQuestion}>고객 정보를 입력해주세요</p>
+              <div className={styles.funnelFieldGroup}>
+                <label className={styles.funnelLabel}>이름</label>
+                <input
+                  ref={nameRef}
+                  value={form.name}
+                  onChange={e => { setForm(p => ({ ...p, name: e.target.value })); if (errors.name) setErrors(p => ({ ...p, name: undefined })); }}
+                  onKeyDown={e => e.key === 'Enter' && contactRef.current?.focus()}
+                  placeholder="홍길동"
+                  className={`${styles.funnelInput}${errors.name ? ` ${styles.funnelInputError}` : ''}`}
+                />
+                {errors.name && <p className={styles.funnelError}>{errors.name}</p>}
+              </div>
+              <div className={styles.funnelFieldGroup}>
+                <label className={styles.funnelLabel}>연락처</label>
+                <input
+                  ref={contactRef}
+                  value={form.contact}
+                  onChange={handleContactChange}
+                  placeholder="010-0000-0000"
+                  inputMode="tel"
+                  className={`${styles.funnelInput}${errors.contact ? ` ${styles.funnelInputError}` : ''}`}
+                />
+                {errors.contact && <p className={styles.funnelError}>{errors.contact}</p>}
+              </div>
+              <div className={styles.funnelFieldGroup}>
+                <label className={styles.funnelLabel}>거주지 <span className={styles.funnelOptional}>(선택)</span></label>
+                <input
+                  value={form.residence}
+                  onChange={e => setForm(p => ({ ...p, residence: e.target.value }))}
+                  placeholder="예) 서울 강남구"
+                  className={styles.funnelInput}
+                />
+              </div>
+              <div className={styles.funnelFieldGroup}>
+                <label className={styles.funnelLabel}>희망과정 <span className={styles.funnelOptional}>(선택)</span></label>
+                <CustomSelect
+                  value={form.hope_course}
+                  onChange={v => setForm(p => ({ ...p, hope_course: v }))}
+                  fullWidth
+                  options={[
+                    { value: '', label: '선택' },
+                    ...HAKJEOM_COURSE_OPTIONS.map(o => ({ value: o, label: o })),
+                  ]}
+                />
+              </div>
             </div>
-          ))}
-          <div className={styles.modalFieldGroup}>
-            <label className={styles.modalLabel}>최종학력</label>
-            <CustomSelect
-              value={form.education}
-              onChange={v => setForm(p => ({ ...p, education: v }))}
-              fullWidth
-              options={[
-                { value: '', label: '선택' },
-                ...EDUCATION_OPTIONS.map(o => ({ value: o, label: o })),
-              ]}
-            />
-          </div>
-          <div className={styles.modalFieldGroup}>
-            <label className={styles.modalLabel}>희망과정</label>
-            <CustomSelect
-              value={form.hope_course}
-              onChange={v => setForm(p => ({ ...p, hope_course: v }))}
-              fullWidth
-              options={[
-                { value: '', label: '선택' },
-                ...HAKJEOM_COURSE_OPTIONS.map(o => ({ value: o, label: o })),
-              ]}
-            />
-          </div>
-          <div className={styles.modalFieldGroup}>
-            <label className={styles.modalLabel}>취득사유</label>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              {REASON_OPTIONS.map(r => (
-                <button
-                  key={r}
-                  type="button"
-                  onClick={() => setForm(p => ({ ...p, reason: p.reason === r ? '' : r }))}
-                  className={form.reason === r ? styles.tagBtnV2Active : styles.tagBtnV2}
-                >
-                  {r}
-                </button>
-              ))}
+          )}
+
+          {/* ── Step 2: 취득사유 + 최종학력 ── */}
+          {step === 2 && (
+            <div className={styles.funnelStep}>
+              <p className={styles.funnelQuestion}>취득 목적과 학력을 선택해주세요</p>
+              <div className={styles.funnelFieldGroup}>
+                <label className={styles.funnelLabel}>취득사유 <span className={styles.funnelOptional}>(복수 선택 가능)</span></label>
+                <div className={styles.funnelTagRow}>
+                  {REASON_OPTIONS.map(r => (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => setForm(p => ({ ...p, reason: toggleArr(p.reason, r) }))}
+                      className={form.reason.includes(r) ? styles.tagBtnV2Active : styles.tagBtnV2}
+                    >
+                      {form.reason.includes(r) ? `✓ ${r}` : r}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className={styles.funnelFieldGroup}>
+                <label className={styles.funnelLabel}>최종학력 <span className={styles.funnelOptional}>(선택)</span></label>
+                <div className={styles.funnelTagRow} style={{ flexWrap: 'wrap' }}>
+                  {EDUCATION_OPTIONS.map(edu => (
+                    <button
+                      key={edu}
+                      type="button"
+                      onClick={() => setForm(p => ({ ...p, education: p.education === edu ? '' : edu }))}
+                      className={form.education === edu ? styles.tagBtnV2Active : styles.tagBtnV2}
+                    >
+                      {edu}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className={styles.funnelFieldGroup}>
+                <label className={styles.funnelLabel}>고민 <span className={styles.funnelOptional}>(복수 선택 가능)</span></label>
+                <div className={styles.funnelTagRow} style={{ flexWrap: 'wrap' }}>
+                  {COUNSEL_CHECK_OPTIONS.map(c => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setForm(p => ({ ...p, counsel_check: toggleArr(p.counsel_check, c) }))}
+                      className={form.counsel_check.includes(c) ? styles.tagBtnV2Active : styles.tagBtnV2}
+                    >
+                      {form.counsel_check.includes(c) ? `✓ ${c}` : c}
+                    </button>
+                  ))}
+                </div>
+                {form.counsel_check.includes('기타') && (
+                  <input
+                    value={form.counsel_check_etc}
+                    onChange={e => setForm(p => ({ ...p, counsel_check_etc: e.target.value }))}
+                    placeholder="기타 내용 입력"
+                    className={styles.funnelInput}
+                    style={{ marginTop: 8 }}
+                  />
+                )}
+              </div>
             </div>
-          </div>
-          <div className={styles.modalFieldGroupLast}>
-            <label className={styles.modalLabel}>메모</label>
-            <textarea
-              value={form.memo}
-              onChange={e => setForm(p => ({ ...p, memo: e.target.value }))}
-              rows={3}
-              placeholder="메모 입력"
-              className={styles.textarea}
-            />
-          </div>
-          <div className={styles.modalBtnRow}>
-            <button type="submit" disabled={saving} className={`${styles.btnPrimary} ${styles.modalBtnFlex}`}>{saving ? '저장 중...' : '저장'}</button>
-            <button type="button" onClick={onClose} className={`${styles.btnSecondary} ${styles.modalBtnFlex}`}>취소</button>
-          </div>
-        </form>
+          )}
+
+          {/* ── Step 3: 내부 정보 ── */}
+          {step === 3 && (
+            <div className={styles.funnelStep}>
+              <p className={styles.funnelQuestion}>내부 정보를 입력해주세요</p>
+              <p className={styles.funnelSubQuestion}>모두 선택사항이에요</p>
+              <div className={styles.funnelFieldGroup}>
+                <label className={styles.funnelLabel}>담당자</label>
+                {uniqueManagers.length > 0 && (
+                  <div className={styles.funnelTagRow} style={{ marginBottom: showManagerInput ? 8 : 0 }}>
+                    {uniqueManagers.map(m => (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => { setForm(p => ({ ...p, manager: p.manager === m ? '' : m })); setShowManagerInput(false); }}
+                        className={form.manager === m ? styles.tagBtnV2Active : styles.tagBtnV2}
+                      >
+                        {m}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => { setShowManagerInput(v => !v); setForm(p => ({ ...p, manager: '' })); }}
+                      className={showManagerInput ? styles.tagBtnV2Active : styles.tagBtnV2}
+                    >
+                      직접 입력
+                    </button>
+                  </div>
+                )}
+                {(uniqueManagers.length === 0 || showManagerInput) && (
+                  <input
+                    value={form.manager}
+                    onChange={e => setForm(p => ({ ...p, manager: e.target.value }))}
+                    placeholder="담당자 이름"
+                    className={styles.funnelInput}
+                    autoFocus={showManagerInput}
+                  />
+                )}
+              </div>
+              <div className={styles.funnelFieldGroup}>
+                <label className={styles.funnelLabel}>유입경로 <span className={styles.funnelOptional}>(선택)</span></label>
+                <div className={styles.funnelTagRow} style={{ flexWrap: 'wrap' }}>
+                  {SOURCE_MAJORS.map(m => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setForm(p => ({ ...p, sourceMajor: p.sourceMajor === m ? '' : m, sourceMinor: '' }))}
+                      className={form.sourceMajor === m ? styles.tagBtnV2Active : styles.tagBtnV2}
+                    >
+                      {form.sourceMajor === m ? `✓ ${m}` : m}
+                    </button>
+                  ))}
+                </div>
+                {form.sourceMajor === '맘카페' && (
+                  <div className={styles.clickSourceSubPanel} style={{ marginTop: 8 }}>
+                    {CAFE_NAME_LIST.map(cafeName => (
+                      <button
+                        key={cafeName}
+                        type="button"
+                        onClick={() => setForm(p => ({ ...p, sourceMinor: p.sourceMinor === cafeName ? '' : cafeName }))}
+                        className={form.sourceMinor === cafeName ? styles.tagBtnSmActive : styles.tagBtnSm}
+                      >
+                        {cafeName}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {form.sourceMajor && (
+                  <p className={styles.clickSourcePreview}>
+                    {formatClickSourceDisplay(form.sourceMajor + (form.sourceMinor ? `_${form.sourceMinor}` : ''))}
+                  </p>
+                )}
+              </div>
+              <div className={styles.funnelFieldGroup}>
+                <label className={styles.funnelLabel}>과목비용</label>
+                <input
+                  value={form.subject_cost}
+                  onChange={e => setForm(p => ({ ...p, subject_cost: e.target.value }))}
+                  placeholder="예) 150000"
+                  inputMode="numeric"
+                  className={styles.funnelInput}
+                />
+              </div>
+              <div className={styles.funnelFieldGroup}>
+                <label className={styles.funnelLabel}>메모</label>
+                <textarea
+                  value={form.memo}
+                  onChange={e => setForm(p => ({ ...p, memo: e.target.value }))}
+                  rows={3}
+                  placeholder="메모 입력"
+                  className={styles.textarea}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 하단 버튼 */}
+        <div className={styles.funnelFooter}>
+          {step < TOTAL_STEPS ? (
+            <button type="button" onClick={handleNext} className={`${styles.btnPrimary} ${styles.funnelNextBtn}`}>
+              다음
+            </button>
+          ) : (
+            <button type="button" onClick={handleSubmit} disabled={saving} className={`${styles.btnPrimary} ${styles.funnelNextBtn}`}>
+              {saving ? '저장 중...' : '등록 완료'}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -1595,79 +1885,20 @@ function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) =>
         <input type="date" value={startDate} onChange={e => { setStartDate(e.target.value); setCurrentPage(1); }} className={styles.input} style={{ width: 140 }} />
         <span className={styles.dateSeparator}>~</span>
         <input type="date" value={endDate} onChange={e => { setEndDate(e.target.value); setCurrentPage(1); }} className={styles.input} style={{ width: 140 }} />
-        <CustomSelect
-          value={majorCategoryFilter}
-          onChange={v => { setMajorCategoryFilter(v); setMinorCategoryFilter('all'); setCurrentPage(1); }}
-          style={{ minWidth: 110 }}
-          options={[
-            { value: 'all', label: '전체 대분류' },
-            ...uniqueMajorCategories.map(m => ({ value: m, label: m })),
-          ]}
-        />
-        {majorCategoryFilter !== 'all' && uniqueMinorCategories.length > 0 && (
-          <CustomSelect
-            value={minorCategoryFilter}
-            onChange={v => { setMinorCategoryFilter(v); setCurrentPage(1); }}
-            style={{ minWidth: 110 }}
-            options={[
-              { value: 'all', label: '전체 중분류' },
-              ...uniqueMinorCategories.map(m => ({ value: m, label: m })),
-            ]}
-          />
-        )}
-        <CustomSelect
-          value={statusFilter}
-          onChange={v => { setStatusFilter(v as ConsultationStatus | 'all'); setCurrentPage(1); }}
-          style={{ minWidth: 100 }}
-          options={[
-            { value: 'all', label: '전체 상태' },
-            ...CONSULTATION_STATUS_OPTIONS.map(s => ({ value: s, label: s })),
-          ]}
-        />
-        <CustomSelect
-          value={managerFilter}
-          onChange={v => { setManagerFilter(v); setCurrentPage(1); }}
-          style={{ minWidth: 110 }}
-          options={[
-            { value: 'all', label: '전체 담당자' },
-            { value: 'none', label: '미배정' },
-            ...uniqueManagers.map(m => ({ value: m, label: m })),
-          ]}
-        />
-        <CustomSelect
-          value={reasonFilter}
-          onChange={v => { setReasonFilter(v); setCurrentPage(1); }}
-          style={{ minWidth: 110 }}
-          options={[
-            { value: 'all', label: '전체 취득사유' },
-            ...REASON_OPTIONS.map(r => ({ value: r, label: r })),
-          ]}
-        />
-        <CustomSelect
-          value={counselCheckFilter}
-          onChange={v => { setCounselCheckFilter(v); setCurrentPage(1); }}
-          style={{ minWidth: 100 }}
-          options={[
-            { value: 'all', label: '전체 고민' },
-            ...COUNSEL_CHECK_OPTIONS.map(c => ({ value: c, label: c })),
-          ]}
-        />
         {isFiltered && (
           <button onClick={resetFilters} className={styles.btnSecondary}>필터 초기화</button>
         )}
+        {selectedIds.length > 0 && (
+          <>
+            <span className={styles.bulkActionCount}>{selectedIds.length}건 선택됨</span>
+            <button onClick={handleBulkDelete} disabled={deleting} className={styles.btnDanger}>
+              {deleting ? '삭제 중...' : '선택 삭제'}
+            </button>
+            <button onClick={handleMoveToPrivateCert} disabled={deleting} className={styles.btnSecondary}>민간이동</button>
+            <button onClick={() => setSelectedIds([])} className={styles.btnSecondary}>선택 해제</button>
+          </>
+        )}
       </div>
-
-      {/* 일괄 선택 액션 바 */}
-      {selectedIds.length > 0 && (
-        <div className={styles.bulkActionBar}>
-          <span className={styles.bulkActionCount}>{selectedIds.length}건 선택됨</span>
-          <button onClick={handleBulkDelete} disabled={deleting} className={styles.btnDanger}>
-            {deleting ? '삭제 중...' : '선택 삭제'}
-          </button>
-          <button onClick={handleMoveToPrivateCert} disabled={deleting} className={styles.btnSecondary}>민간이동</button>
-          <button onClick={() => setSelectedIds([])} className={styles.btnSecondary}>선택 해제</button>
-        </div>
-      )}
 
       {/* 액션 바 */}
       <div className={styles.actionBar}>
@@ -1697,13 +1928,13 @@ function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) =>
                   <th className={styles.thFilterable}>
                     <div className={styles.thInner}>
                       대분류
-                      <button className={`${styles.thFilterBtn}${majorCategoryFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'major') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('major'); }}>▾</button>
+                      <button className={`${styles.thFilterBtn}${majorCategoryFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'major') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('major'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
                     </div>
                   </th>
                   <th className={styles.thFilterable}>
                     <div className={styles.thInner}>
                       중분류
-                      <button className={`${styles.thFilterBtn}${minorCategoryFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'minor') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('minor'); }}>▾</button>
+                      <button className={`${styles.thFilterBtn}${minorCategoryFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'minor') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('minor'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
                     </div>
                   </th>
                   <th className={styles.th}>이름</th>
@@ -1713,22 +1944,23 @@ function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) =>
                   <th className={styles.thFilterable}>
                     <div className={styles.thInner}>
                       취득사유
-                      <button className={`${styles.thFilterBtn}${reasonFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'reason') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('reason'); }}>▾</button>
+                      <button className={`${styles.thFilterBtn}${reasonFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'reason') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('reason'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
                     </div>
                   </th>
                   <th className={styles.th}>담당자</th>
                   <th className={styles.thFilterable}>
                     <div className={styles.thInner}>
                       고민
-                      <button className={`${styles.thFilterBtn}${counselCheckFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'counsel') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('counsel'); }}>▾</button>
+                      <button className={`${styles.thFilterBtn}${counselCheckFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'counsel') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('counsel'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
                     </div>
                   </th>
                   <th className={styles.thFilterable}>
                     <div className={styles.thInner}>
                       상태
-                      <button className={`${styles.thFilterBtn}${statusFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'status') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('status'); }}>▾</button>
+                      <button className={`${styles.thFilterBtn}${statusFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'status') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('status'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
                     </div>
                   </th>
+                  <th className={styles.th}>과목비용</th>
                   <th className={styles.th}>메모</th>
                   <th className={styles.th}>등록일</th>
                 </tr>
@@ -1746,16 +1978,16 @@ function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) =>
                     onMouseEnter={e => { if (selectedItem?.id !== item.id && !selectedIds.includes(item.id)) (e.currentTarget as HTMLTableRowElement).style.background = 'var(--toss-bg)'; }}
                     onMouseLeave={e => { if (selectedItem?.id !== item.id && !selectedIds.includes(item.id)) (e.currentTarget as HTMLTableRowElement).style.background = 'transparent'; }}
                   >
-                    <td className={styles.tdCenter} onClick={e => { e.stopPropagation(); toggleSelect(item.id); }}>
+                    <td className={styles.tdCenter} onClick={e => e.stopPropagation()}>
                       <input type="checkbox" checked={selectedIds.includes(item.id)} onChange={() => toggleSelect(item.id)} className={styles.checkbox} />
                     </td>
                     <td className={styles.tdSecondary}>{parseClickSource(item.click_source).major || '-'}</td>
                     <td className={styles.tdSecondary} style={parseClickSource(item.click_source).needsCheck ? { color: '#ef4444', fontWeight: 600 } : undefined}>{parseClickSource(item.click_source).minor || '-'}</td>
-                    <td className={styles.tdBold}>{item.name}</td>
-                    <td className={styles.tdTabular}>{item.contact}</td>
+                    <td className={styles.tdBold}><Highlight text={item.name} query={searchText} /></td>
+                    <td className={styles.tdTabular}><Highlight text={item.contact} query={searchText} /></td>
                     <td className={styles.tdSecondary}>{item.education ?? '-'}</td>
                     <td className={styles.tdSecondary}>{item.hope_course ?? '-'}</td>
-                    <td className={styles.tdEllipsis} title={item.reason ?? ''}>{item.reason ?? '-'}</td>
+                    <td className={styles.tdEllipsis} title={item.reason ?? ''}><Highlight text={item.reason} query={searchText} /></td>
                     <td className={styles.tdSecondary}>{item.manager ?? '-'}</td>
                     <td className={styles.tdCounsel}>
                       {item.counsel_check ? (
@@ -1774,6 +2006,7 @@ function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) =>
                         styleMap={CONSULTATION_STATUS_STYLE}
                       />
                     </td>
+                    <td className={styles.tdSecondary}>{formatCost(item.subject_cost)}</td>
                     <td className={styles.tdMemo} title={item.memo ?? ''}>{item.memo || '-'}</td>
                     <td className={styles.tdDateSmall}>
                       {formatDate(item.created_at)}
@@ -1820,7 +2053,7 @@ function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) =>
 
       {/* 추가 모달 */}
       {showAddModal && (
-        <HakjeomAddModal onClose={() => setShowAddModal(false)} onSaved={fetchData} />
+        <HakjeomAddModal onClose={() => setShowAddModal(false)} onSaved={fetchData} uniqueManagers={uniqueManagers} />
       )}
 
       {/* 컬럼 필터 드롭다운 */}
@@ -2076,77 +2309,17 @@ function PrivateCertTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode
         <input type="date" value={startDate} onChange={e => { setStartDate(e.target.value); setCurrentPage(1); }} className={styles.input} style={{ width: 140 }} />
         <span className={styles.dateSeparator}>~</span>
         <input type="date" value={endDate} onChange={e => { setEndDate(e.target.value); setCurrentPage(1); }} className={styles.input} style={{ width: 140 }} />
-        {/* 과정 대분류 (major_category) */}
-        <CustomSelect
-          value={majorCategoryFilter}
-          onChange={v => { setMajorCategoryFilter(v); setMinorCategoryFilter('all'); setCurrentPage(1); }}
-          style={{ minWidth: 110 }}
-          options={[
-            { value: 'all', label: '전체 대분류' },
-            ...uniqueMajorCategories.map(m => ({ value: m, label: m })),
-          ]}
-        />
-        {majorCategoryFilter !== 'all' && uniqueMinorCategories.length > 0 && (
-          <CustomSelect
-            value={minorCategoryFilter}
-            onChange={v => { setMinorCategoryFilter(v); setCurrentPage(1); }}
-            style={{ minWidth: 110 }}
-            options={[
-              { value: 'all', label: '전체 중분류' },
-              ...uniqueMinorCategories.map(m => ({ value: m, label: m })),
-            ]}
-          />
-        )}
-        <CustomSelect
-          value={statusFilter}
-          onChange={v => { setStatusFilter(v as ConsultationStatus | 'all'); setCurrentPage(1); }}
-          style={{ minWidth: 100 }}
-          options={[
-            { value: 'all', label: '전체 상태' },
-            ...CONSULTATION_STATUS_OPTIONS.map(s => ({ value: s, label: s })),
-          ]}
-        />
-        <CustomSelect
-          value={managerFilter}
-          onChange={v => { setManagerFilter(v); setCurrentPage(1); }}
-          style={{ minWidth: 110 }}
-          options={[
-            { value: 'all', label: '전체 담당자' },
-            { value: 'none', label: '미배정' },
-            ...uniqueManagers.map(m => ({ value: m, label: m })),
-          ]}
-        />
-        <CustomSelect
-          value={reasonFilter}
-          onChange={v => { setReasonFilter(v); setCurrentPage(1); }}
-          style={{ minWidth: 110 }}
-          options={[
-            { value: 'all', label: '전체 취득사유' },
-            ...REASON_OPTIONS.map(r => ({ value: r, label: r })),
-          ]}
-        />
-        <CustomSelect
-          value={counselCheckFilter}
-          onChange={v => { setCounselCheckFilter(v); setCurrentPage(1); }}
-          style={{ minWidth: 100 }}
-          options={[
-            { value: 'all', label: '전체 고민' },
-            ...COUNSEL_CHECK_OPTIONS.map(c => ({ value: c, label: c })),
-          ]}
-        />
         {isFiltered && <button onClick={resetFilters} className={styles.btnSecondary}>필터 초기화</button>}
+        {selectedIds.length > 0 && (
+          <>
+            <span className={styles.bulkActionCount}>{selectedIds.length}건 선택됨</span>
+            <button onClick={handleBulkDelete} disabled={deleting} className={styles.btnDanger}>
+              {deleting ? '삭제 중...' : '선택 삭제'}
+            </button>
+            <button onClick={() => setSelectedIds([])} className={styles.btnSecondary}>선택 해제</button>
+          </>
+        )}
       </div>
-
-      {/* 일괄 선택 액션 바 */}
-      {selectedIds.length > 0 && (
-        <div className={styles.bulkActionBar}>
-          <span className={styles.bulkActionCount}>{selectedIds.length}건 선택됨</span>
-          <button onClick={handleBulkDelete} disabled={deleting} className={styles.btnDanger}>
-            {deleting ? '삭제 중...' : '선택 삭제'}
-          </button>
-          <button onClick={() => setSelectedIds([])} className={styles.btnSecondary}>선택 해제</button>
-        </div>
-      )}
 
       <div className={styles.actionBar}>
         <span className={styles.actionBarCount}>총 <strong className={styles.actionBarCountBold}>{filtered.length}</strong>건</span>
@@ -2172,13 +2345,13 @@ function PrivateCertTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode
                   <th className={styles.thFilterable}>
                     <div className={styles.thInner}>
                       대분류
-                      <button className={`${styles.thFilterBtn}${majorCategoryFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'major') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('major'); }}>▾</button>
+                      <button className={`${styles.thFilterBtn}${majorCategoryFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'major') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('major'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
                     </div>
                   </th>
                   <th className={styles.thFilterable}>
                     <div className={styles.thInner}>
                       중분류
-                      <button className={`${styles.thFilterBtn}${minorCategoryFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'minor') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('minor'); }}>▾</button>
+                      <button className={`${styles.thFilterBtn}${minorCategoryFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'minor') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('minor'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
                     </div>
                   </th>
                   <th className={styles.th}>이름</th>
@@ -2188,20 +2361,20 @@ function PrivateCertTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode
                   <th className={styles.thFilterable}>
                     <div className={styles.thInner}>
                       취득사유
-                      <button className={`${styles.thFilterBtn}${reasonFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'reason') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('reason'); }}>▾</button>
+                      <button className={`${styles.thFilterBtn}${reasonFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'reason') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('reason'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
                     </div>
                   </th>
                   <th className={styles.th}>담당자</th>
                   <th className={styles.thFilterable}>
                     <div className={styles.thInner}>
                       고민
-                      <button className={`${styles.thFilterBtn}${counselCheckFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'counsel') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('counsel'); }}>▾</button>
+                      <button className={`${styles.thFilterBtn}${counselCheckFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'counsel') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('counsel'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
                     </div>
                   </th>
                   <th className={styles.thFilterable}>
                     <div className={styles.thInner}>
                       상태
-                      <button className={`${styles.thFilterBtn}${statusFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'status') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('status'); }}>▾</button>
+                      <button className={`${styles.thFilterBtn}${statusFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'status') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('status'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
                     </div>
                   </th>
                   <th className={styles.th}>메모</th>
@@ -2221,7 +2394,7 @@ function PrivateCertTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode
                     onMouseEnter={e => { if (selectedItem?.id !== item.id && !selectedIds.includes(item.id)) (e.currentTarget as HTMLTableRowElement).style.background = 'var(--toss-bg)'; }}
                     onMouseLeave={e => { if (selectedItem?.id !== item.id && !selectedIds.includes(item.id)) (e.currentTarget as HTMLTableRowElement).style.background = 'transparent'; }}
                   >
-                    <td className={styles.tdCenter} onClick={e => { e.stopPropagation(); toggleSelect(item.id); }}>
+                    <td className={styles.tdCenter} onClick={e => e.stopPropagation()}>
                       <input type="checkbox" checked={selectedIds.includes(item.id)} onChange={() => toggleSelect(item.id)} className={styles.checkbox} />
                     </td>
                     <td className={styles.tdSecondary}>{parseClickSource(item.click_source).major || '-'}</td>

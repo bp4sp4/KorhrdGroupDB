@@ -515,10 +515,10 @@ export default function CertPage() {
           color: 'var(--toss-text-primary)',
           margin: 0,
         }}>
-          자격증신청
+          민간자격증
         </h2>
         <p style={{ fontSize: 14, color: 'var(--toss-text-secondary)', marginTop: 4, marginBottom: 0 }}>
-          자격증 신청 내역을 관리합니다.
+          민간자격증 신청 내역을 관리합니다.
         </p>
       </div>
 

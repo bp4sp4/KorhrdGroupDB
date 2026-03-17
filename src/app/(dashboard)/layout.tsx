@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import Sidebar from '@/components/layout/Sidebar'
 import Header from '@/components/layout/Header'
 import { createClient } from '@/lib/supabase/client'
+import styles from '@/components/layout/layout.module.css'
 
 // 경로별 헤더 타이틀 매핑
 const PAGE_TITLES: Record<string, string> = {
@@ -33,17 +34,10 @@ export default function DashboardLayout({
     })
   }, [router])
 
-  // 인증 확인 중에는 빈 화면 표시 (flash 방지)
   if (isChecking) {
     return (
-      <div style={{
-        minHeight: '100vh',
-        background: 'var(--toss-bg)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}>
-        <p style={{ color: 'var(--toss-text-secondary)', fontSize: 14 }}>로딩 중...</p>
+      <div className={styles.loadingWrap}>
+        <p className={styles.loadingText}>로딩 중...</p>
       </div>
     )
   }
@@ -51,26 +45,13 @@ export default function DashboardLayout({
   const pageTitle = PAGE_TITLES[pathname] ?? '대시보드'
 
   return (
-    <div style={{
-      display: 'flex',
-      minHeight: '100vh',
-      background: 'var(--toss-bg)',
-    }}>
+    <div className={styles.dashboardWrap}>
       <Sidebar />
 
-      <div style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        minWidth: 0, // flex 자식 overflow 방지
-      }}>
+      <div className={styles.dashboardMain}>
         <Header title={pageTitle} />
 
-        <main style={{
-          flex: 1,
-          padding: 24,
-          overflow: 'auto',
-        }}>
+        <main className={styles.mainContent}>
           {children}
         </main>
       </div>

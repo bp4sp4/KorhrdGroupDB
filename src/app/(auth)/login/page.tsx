@@ -64,7 +64,7 @@ export default function LoginPage() {
           gap: 14,
         }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.png" alt="한평생교육 로고" style={{ width: '100%', height: 'auto', display: 'block' }} />
+          <img src="/logo.png" alt="한평생그룹 로고" style={{ width: '100%', height: 'auto', display: 'block' }} />
 
           <p style={{
             fontSize: 13,

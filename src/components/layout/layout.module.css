@@ -1,0 +1,258 @@
+/* ─── Dashboard Layout ───────────────────────────────────────────────────── */
+
+.dashboardWrap {
+  display: flex;
+  min-height: 100vh;
+  background: var(--toss-bg);
+}
+
+.dashboardMain {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.mainContent {
+  flex: 1;
+  padding: 24px;
+  overflow: auto;
+}
+
+.loadingWrap {
+  min-height: 100vh;
+  background: var(--toss-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loadingText {
+  color: var(--toss-text-secondary);
+  font-size: 14px;
+}
+
+/* ─── Header ─────────────────────────────────────────────────────────────── */
+
+.header {
+  height: var(--toss-nav-height);
+  background: var(--toss-card-bg);
+  border-bottom: 1px solid var(--toss-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  flex-shrink: 0;
+}
+
+.headerTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--toss-text-primary);
+  margin: 0;
+  letter-spacing: -0.3px;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--toss-blue-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.avatarInitial {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--toss-blue);
+  line-height: 1;
+}
+
+.headerUserName {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--toss-text-primary);
+}
+
+.headerDivider {
+  width: 1px;
+  height: 14px;
+  background: var(--toss-border);
+  flex-shrink: 0;
+}
+
+.logoutBtn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--toss-text-secondary);
+  font-size: 13px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.logoutBtn:hover {
+  background: var(--toss-bg);
+  color: var(--toss-text-primary);
+}
+
+/* ─── Sidebar ────────────────────────────────────────────────────────────── */
+
+.sidebar {
+  flex-shrink: 0;
+  background: var(--toss-card-bg);
+  border-right: 1px solid var(--toss-border);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  transition: width 200ms ease;
+  overflow: hidden;
+}
+
+.sidebarLogo {
+  height: var(--toss-nav-height);
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--toss-border);
+  flex-shrink: 0;
+  gap: 10;
+}
+
+.sidebarLogoExpanded {
+  justify-content: space-between;
+  padding: 0 12px 0 20px;
+}
+
+.sidebarLogoCollapsed {
+  justify-content: center;
+  padding: 0;
+}
+
+.sidebarLogoImg {
+  height: 28px;
+  width: auto;
+  display: block;
+}
+
+.sidebarToggleBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--toss-text-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  transition: background 150ms ease;
+}
+
+.sidebarToggleBtn:hover {
+  background: var(--toss-bg);
+}
+
+.sidebarNav {
+  flex: 1;
+}
+
+.sidebarNavExpanded {
+  padding: 16px 10px;
+}
+
+.sidebarNavCollapsed {
+  padding: 16px 8px;
+}
+
+.sidebarMenuLabel {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--toss-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  padding: 0 12px;
+  margin-bottom: 6px;
+  white-space: nowrap;
+}
+
+.sidebarList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sidebarLink {
+  display: flex;
+  align-items: center;
+  border-radius: 10px;
+  text-decoration: none;
+  transition: all 150ms ease;
+  text-align: center;
+  overflow: hidden;
+  line-height: 1.3;
+}
+
+.sidebarLinkExpanded {
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 9px 12px;
+  font-size: 14px;
+}
+
+.sidebarLinkCollapsed {
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 4px;
+  font-size: 12px;
+}
+
+.sidebarLinkIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: color 150ms ease;
+}
+
+.sidebarLinkLabel {
+  word-break: keep-all;
+  white-space: normal;
+}
+
+.sidebarFooter {
+  border-top: 1px solid var(--toss-border);
+  flex-shrink: 0;
+  padding: 12px 20px 16px;
+}
+
+.sidebarFooterCollapsed {
+  padding: 12px 0 16px;
+  text-align: center;
+}
+
+.sidebarVersion {
+  font-size: 11px;
+  color: var(--toss-text-tertiary);
+  margin: 0;
+}
