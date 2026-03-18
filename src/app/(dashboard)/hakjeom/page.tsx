@@ -2145,7 +2145,7 @@ function toCostInt(v: string | null | undefined): number | null {
   return isNaN(n) ? null : n;
 }
 
-function BulkTab() {
+function BulkTab({ onMoveSuccess }: { onMoveSuccess?: () => void }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [view, setView] = useState<BulkTabView>('upload');
   const [uploadType, setUploadType] = useState<RowType>('consult');
@@ -2209,19 +2209,31 @@ function BulkTab() {
     const certTargets = targets.filter(t => t.row_type === 'cert');
     setMoving(true);
     let ok = true;
+    let errMsg = '';
 
     if (consultTargets.length) {
       const res = await fetch('/api/hakjeom/bulk', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rows: consultTargets }) });
-      if (!res.ok) ok = false;
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        errMsg = body.error || `학점은행제 이동 실패 (${res.status})`;
+        ok = false;
+      }
     }
     if (ok && certTargets.length) {
       const res = await fetch('/api/hakjeom/private-cert/bulk', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rows: certTargets }) });
-      if (!res.ok) ok = false;
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        errMsg = body.error || `민간자격증 이동 실패 (${res.status})`;
+        ok = false;
+      }
     }
     if (ok) {
       await fetch('/api/bulk', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: selectedIds }) });
       setSelectedIds([]);
       await fetchStaging();
+      onMoveSuccess?.();
+    } else {
+      alert(`이동 실패: ${errMsg}`);
     }
     setMoving(false);
   }
@@ -3033,7 +3045,7 @@ export default function HakjeomPage() {
       {/* 탭 컨텐츠 */}
       {activeTab === 'hakjeom' && <HakjeomTab setStatsNode={setStatsNode} />}
       {activeTab === 'agency' && <AgencyTab setStatsNode={setStatsNode} />}
-      {activeTab === 'bulk' && <BulkTab />}
+      {activeTab === 'bulk' && <BulkTab onMoveSuccess={() => setActiveTab('hakjeom')} />}
       {activeTab === 'stats' && <StatsTab />}
     </div>
   );

@@ -34,7 +34,7 @@ const PAYMENT_STATUS_COLOR: Record<string, { bg: string; color: string }> = {
 
 const PAGE_SIZE = 10
 
-export default function MiniAdminPage() {
+export default function PaymentStatusPage() {
   const [rows, setRows] = useState<MiniAdminApplication[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')

@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
-import { GraduationCap, FileText, Briefcase, ChevronLeft, ChevronRight, Users } from 'lucide-react'
+import { GraduationCap, FileText, Briefcase, ChevronLeft, ChevronRight, Users, UserCog } from 'lucide-react'
 import styles from './layout.module.css'
 
 interface NavItem {
@@ -32,13 +32,19 @@ const ADMIN_NAV_ITEMS: NavItem[] = [
     href: '/practice',
     icon: <Briefcase size={18} />,
   },
+  {
+    id: 'ref-manage',
+    label: '미니어드민 관리',
+    href: '/ref-manage',
+    icon: <UserCog size={18} />,
+  },
 ]
 
 const MINI_ADMIN_NAV_ITEMS: NavItem[] = [
   {
     id: 'mini-admin',
-    label: '미니관리자',
-    href: '/mini-admin',
+    label: '결제확인',
+    href: '/paymentstatus',
     icon: <Users size={18} />,
   },
 ]
