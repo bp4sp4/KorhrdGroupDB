@@ -9,10 +9,6 @@ const SOURCE_LABEL: Record<string, string> = {
   agency_agreements: '기관협약',
 };
 
-// 테이블별 이름 컬럼 (기본: name)
-const NAME_COLUMN: Record<string, string> = {
-  agency_agreements: 'institution_name',
-};
 
 const TABLES = Object.keys(SOURCE_LABEL);
 
@@ -30,27 +26,44 @@ export async function GET() {
     }[] = [];
 
     for (const table of TABLES) {
-      const nameCol = NAME_COLUMN[table] ?? 'name';
-      const { data, error } = await supabaseAdmin
-        .from(table)
-        .select(`id, ${nameCol}, contact, deleted_at`)
-        .not('deleted_at', 'is', null)
-        .order('deleted_at', { ascending: false });
+      if (table === 'agency_agreements') {
+        const { data, error } = await supabaseAdmin
+          .from('agency_agreements')
+          .select('id, institution_name, contact, deleted_at')
+          .not('deleted_at', 'is', null)
+          .order('deleted_at', { ascending: false });
 
-      if (error) {
-        console.error(`[trash GET] ${table} error:`, error);
-        continue;
-      }
+        if (error) { console.error(`[trash GET] ${table} error:`, error); continue; }
 
-      for (const row of data ?? []) {
-        results.push({
-          id: row.id,
-          source_table: table,
-          source_label: SOURCE_LABEL[table],
-          name: (row as Record<string, unknown>)[nameCol] as string ?? '-',
-          contact: row.contact ?? null,
-          deleted_at: row.deleted_at,
-        });
+        for (const row of data ?? []) {
+          results.push({
+            id: row.id,
+            source_table: table,
+            source_label: SOURCE_LABEL[table],
+            name: row.institution_name ?? '-',
+            contact: row.contact ?? null,
+            deleted_at: row.deleted_at,
+          });
+        }
+      } else {
+        const { data, error } = await supabaseAdmin
+          .from(table as 'hakjeom_consultations' | 'private_cert_consultations' | 'certificate_applications')
+          .select('id, name, contact, deleted_at')
+          .not('deleted_at', 'is', null)
+          .order('deleted_at', { ascending: false });
+
+        if (error) { console.error(`[trash GET] ${table} error:`, error); continue; }
+
+        for (const row of data ?? []) {
+          results.push({
+            id: row.id,
+            source_table: table,
+            source_label: SOURCE_LABEL[table],
+            name: row.name ?? '-',
+            contact: row.contact ?? null,
+            deleted_at: row.deleted_at,
+          });
+        }
       }
     }
 
