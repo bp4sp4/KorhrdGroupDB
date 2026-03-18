@@ -44,6 +44,7 @@ export async function GET(request: NextRequest) {
     let query = supabaseAdmin
       .from('certificate_applications')
       .select('*')
+      .is('deleted_at', null)
       .order('created_at', { ascending: false });
 
     if (name) {
@@ -167,15 +168,15 @@ export async function DELETE(request: NextRequest) {
 
     const { error } = await supabaseAdmin
       .from('certificate_applications')
-      .delete()
+      .update({ deleted_at: new Date().toISOString() })
       .in('id', ids);
 
     if (error) {
       console.error('[cert DELETE] Supabase error:', error);
-      return NextResponse.json({ error: 'Failed to delete' }, { status: 500 });
+      return NextResponse.json({ error: 'Failed to move to trash' }, { status: 500 });
     }
 
-    return NextResponse.json({ message: 'Deleted successfully' });
+    return NextResponse.json({ message: 'Moved to trash' });
   } catch (err) {
     console.error('[cert DELETE] Unexpected error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

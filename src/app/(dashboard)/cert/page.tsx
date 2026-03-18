@@ -454,7 +454,7 @@ function DetailPanel({
   onClose: () => void
   onUpdate: (id: string, fields: Partial<CertApplication>) => Promise<void>
 }) {
-  const [activeTab, setActiveTab] = useState<'basic' | 'payment' | 'photo'>('basic')
+  const [activeTab, setActiveTab] = useState<'basic' | 'payment'>('basic')
   const [editName, setEditName] = useState(app.name)
   const [editContact, setEditContact] = useState(app.contact)
   const [editBirthPrefix, setEditBirthPrefix] = useState(app.birth_prefix ?? '')
@@ -466,6 +466,19 @@ function DetailPanel({
   const [editAmount, setEditAmount] = useState(app.amount ? String(app.amount) : '')
   const [isChecked, setIsChecked] = useState(!!app.is_checked)
   const [saving, setSaving] = useState(false)
+
+  const handlePhotoDownload = async () => {
+    if (!app.photo_url) return
+    const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/photos/${app.photo_url}`
+    const res = await fetch(url)
+    const blob = await res.blob()
+    const objectUrl = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = objectUrl
+    a.download = app.photo_url.split('/').pop() ?? 'photo'
+    a.click()
+    URL.revokeObjectURL(objectUrl)
+  }
 
   useEffect(() => {
     setEditName(app.name)
@@ -501,7 +514,7 @@ function DetailPanel({
     }
   }
 
-  const tabLabels = { basic: '기본정보', payment: '결제정보', photo: '사진/기타' } as const
+  const tabLabels = { basic: '기본정보', payment: '결제정보' } as const
 
   return (
     <div
@@ -530,7 +543,7 @@ function DetailPanel({
 
           {/* 탭 */}
           <div className={styles.detailModalTabs}>
-            {(['basic', 'payment', 'photo'] as const).map(tab => (
+            {(['basic', 'payment'] as const).map(tab => (
               <button
                 key={tab}
                 type="button"
@@ -547,6 +560,26 @@ function DetailPanel({
         <div className={styles.detailModalBody}>
           {activeTab === 'basic' && (
             <>
+              {/* 제출 사진 썸네일 */}
+              {app.photo_url && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                  <span className={styles.detailFieldLabel}>제출 사진</span>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/photos/${app.photo_url}`}
+                    alt="제출 사진"
+                    style={{ width: 64, height: 64, borderRadius: 8, objectFit: 'cover', border: '1px solid var(--toss-border)', flexShrink: 0 }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handlePhotoDownload}
+                    style={{ fontSize: 12, color: 'var(--toss-blue)', background: 'transparent', border: '1px solid var(--toss-blue)', borderRadius: 6, padding: '3px 8px', whiteSpace: 'nowrap', cursor: 'pointer' }}
+                  >
+                    다운로드
+                  </button>
+                </div>
+              )}
+
               {/* 확인 처리 */}
               <div className={styles.detailChipSection}>
                 <span className={styles.detailChipSectionLabel}>확인 상태</span>
@@ -734,36 +767,9 @@ function DetailPanel({
                 {app.cancelled_at && <DetailRow label="취소일" value={new Date(app.cancelled_at).toLocaleString('ko-KR')} last />}
                 {!app.cancelled_at && !app.failed_at && <DetailRow label="" value="" last />}
               </div>
-            </>
-          )}
 
-          {activeTab === 'photo' && (
-            <>
-              {/* 제출 사진 */}
-              {app.photo_url ? (
-                <div>
-                  <span className={styles.detailChipSectionLabel} style={{ marginBottom: 8, display: 'block' }}>제출 사진</span>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/photos/${app.photo_url}`}
-                    alt="제출 사진"
-                    style={{
-                      width: '100%',
-                      borderRadius: 'var(--toss-radius-card)',
-                      border: '1px solid var(--toss-border)',
-                      objectFit: 'cover',
-                      maxHeight: 400,
-                    }}
-                  />
-                </div>
-              ) : (
-                <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--toss-text-secondary)', fontSize: 14 }}>
-                  제출된 사진이 없습니다.
-                </div>
-              )}
-
-              {/* 기타 정보 (읽기 전용) */}
-              <div style={{ marginTop: 16, background: 'var(--toss-bg)', border: '1px solid var(--toss-border)', borderRadius: 'var(--toss-radius-card)', overflow: 'hidden' }}>
+              {/* 기타 정보 */}
+              <div style={{ marginTop: 12, background: 'var(--toss-bg)', border: '1px solid var(--toss-border)', borderRadius: 'var(--toss-radius-card)', overflow: 'hidden' }}>
                 <DetailRow label="출처" value={SOURCE_DISPLAY[app.source ?? ''] ?? app.source ?? '-'} />
                 <DetailRow label="신청일" value={new Date(app.created_at).toLocaleString('ko-KR')} />
                 {app.updated_at && <DetailRow label="수정일" value={new Date(app.updated_at).toLocaleString('ko-KR')} last />}

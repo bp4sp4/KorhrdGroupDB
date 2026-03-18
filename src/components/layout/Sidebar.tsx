@@ -2,8 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useState } from 'react'
-import { GraduationCap, FileText, Briefcase, ChevronLeft, ChevronRight, Users, UserCog } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { GraduationCap, FileText, Briefcase, ChevronLeft, ChevronRight, Users, UserCog, Trash2 } from 'lucide-react'
 import styles from './layout.module.css'
 
 interface NavItem {
@@ -33,6 +33,12 @@ const ADMIN_NAV_ITEMS: NavItem[] = [
     icon: <Briefcase size={18} />,
   },
   {
+    id: 'trash',
+    label: '삭제목록',
+    href: '/trash',
+    icon: <Trash2 size={18} />,
+  },
+  {
     id: 'ref-manage',
     label: '미니어드민 관리',
     href: '/ref-manage',
@@ -56,6 +62,15 @@ interface SidebarProps {
 export default function Sidebar({ userRole }: SidebarProps) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
+  const [trashCount, setTrashCount] = useState<number>(0)
+
+  useEffect(() => {
+    if (userRole === 'mini-admin') return
+    fetch('/api/trash')
+      .then(r => r.ok ? r.json() : [])
+      .then((data: unknown[]) => setTrashCount(Array.isArray(data) ? data.length : 0))
+      .catch(() => {})
+  }, [userRole])
 
   const navItems = userRole === 'mini-admin' ? MINI_ADMIN_NAV_ITEMS : ADMIN_NAV_ITEMS
 
@@ -88,6 +103,7 @@ export default function Sidebar({ userRole }: SidebarProps) {
         <ul className={styles.sidebarList}>
           {navItems.map((item) => {
             const isActive = pathname.startsWith(item.href)
+            const isTrash = item.id === 'trash'
 
             return (
               <li key={item.id}>
@@ -108,6 +124,21 @@ export default function Sidebar({ userRole }: SidebarProps) {
                     {item.icon}
                   </span>
                   <span className={styles.sidebarLinkLabel}>{item.label}</span>
+                  {isTrash && !collapsed && trashCount > 0 && (
+                    <span style={{
+                      marginLeft: 'auto',
+                      fontSize: 11,
+                      fontWeight: 600,
+                      background: '#fee2e2',
+                      color: '#dc2626',
+                      padding: '1px 6px',
+                      borderRadius: 10,
+                      minWidth: 18,
+                      textAlign: 'center',
+                    }}>
+                      {trashCount}
+                    </span>
+                  )}
                 </Link>
               </li>
             )

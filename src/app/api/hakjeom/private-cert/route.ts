@@ -34,6 +34,7 @@ export async function GET() {
     const { data, error } = await supabaseAdmin
       .from(TABLE)
       .select('*')
+      .is('deleted_at', null)
       .order('created_at', { ascending: false })
       .order('id', { ascending: false });
 
@@ -177,16 +178,16 @@ export async function DELETE(request: NextRequest) {
 
     const { data, error } = await supabaseAdmin
       .from(TABLE)
-      .delete()
+      .update({ deleted_at: new Date().toISOString() })
       .in('id', ids)
       .select();
 
     if (error) {
       console.error('[hakjeom/private-cert DELETE] Supabase error:', error);
-      return NextResponse.json({ error: 'Failed to delete private cert consultations' }, { status: 500 });
+      return NextResponse.json({ error: 'Failed to move to trash' }, { status: 500 });
     }
 
-    return NextResponse.json({ message: 'Deleted successfully', data });
+    return NextResponse.json({ message: 'Moved to trash', data });
   } catch (err) {
     console.error('[hakjeom/private-cert DELETE] Unexpected error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
