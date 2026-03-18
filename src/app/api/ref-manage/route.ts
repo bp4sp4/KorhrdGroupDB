@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
       .from('app_users')
       .insert({
         username: email,
-        password_hash: '',
+        password_hash: 'unused',
         display_name: display_name || null,
         ref_code: ref_code || null,
         role: 'mini-admin',

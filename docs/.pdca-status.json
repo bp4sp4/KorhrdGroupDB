@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-03-18T02:29:32.876Z",
+  "lastUpdated": "2026-03-18T03:07:34.082Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -50,7 +50,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:18:14.828Z",
-        "lastUpdated": "2026-03-17T09:03:59.270Z"
+        "lastUpdated": "2026-03-18T02:53:40.661Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(auth)/login/page.tsx"
     },
@@ -115,7 +115,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:41:16.658Z",
-        "lastUpdated": "2026-03-18T02:06:15.496Z"
+        "lastUpdated": "2026-03-18T03:07:34.082Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/cert/page.tsx"
     },
@@ -323,9 +323,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-18T01:26:30.722Z",
-        "lastUpdated": "2026-03-18T02:09:23.599Z"
+        "lastUpdated": "2026-03-18T02:53:45.756Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/ref-manage/page.tsx"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/ref-manage/route.ts"
     }
   },
   "pipeline": {
@@ -336,7 +336,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-03-18T02:29:32.876Z"
+    "lastActivity": "2026-03-18T03:07:34.082Z"
   },
   "history": [
     {
@@ -2610,6 +2610,84 @@
     {
       "timestamp": "2026-03-18T02:29:32.876Z",
       "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-18T02:53:40.661Z",
+      "feature": "login",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-18T02:53:45.756Z",
+      "feature": "ref-manage",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-18T02:58:47.712Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-18T02:58:57.290Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-18T02:59:04.671Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-18T03:00:59.692Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-18T03:01:06.317Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-18T03:01:14.268Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-18T03:01:38.658Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-18T03:03:08.733Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-18T03:03:18.731Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-18T03:04:46.150Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-18T03:07:34.082Z",
+      "feature": "cert",
       "phase": "do",
       "action": "updated"
     }

@@ -1914,6 +1914,9 @@ function ApplicationTab({ sourceTab }: { sourceTab: 'hakjeom' | 'edu' }) {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('paid')
+  const [sourceFilter, setSourceFilter] = useState<string>('all')
+  const [openFilterColumn, setOpenFilterColumn] = useState<string | null>(null)
+  const [filterDropdownPos, setFilterDropdownPos] = useState({ top: 0, left: 0 })
   const [selectedApp, setSelectedApp] = useState<CertApplication | null>(null)
   const [showAddModal, setShowAddModal] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
@@ -1948,17 +1951,35 @@ function ApplicationTab({ sourceTab }: { sourceTab: 'hakjeom' | 'edu' }) {
   }, [fetchApplications])
 
   // ── 클라이언트 사이드 검색 필터링 ────────────
-  const filtered = searchQuery.trim()
-    ? applications.filter((app) => {
-        const q = searchQuery.toLowerCase()
-        const contactClean = app.contact.replace(/-/g, '')
-        return (
-          app.name.toLowerCase().includes(q) ||
-          app.contact.toLowerCase().includes(q) ||
-          contactClean.includes(q.replace(/-/g, ''))
-        )
-      })
-    : applications
+  const sourceOptions = [
+    { value: 'all', label: '전체' },
+    ...Array.from(new Set(applications.map(a => a.source).filter(Boolean)))
+      .sort()
+      .map(s => ({ value: `src:${s}`, label: SOURCE_DISPLAY[s as string] ?? (s as string) })),
+    ...Array.from(new Set(applications.map(a => a.ref).filter(Boolean)))
+      .sort()
+      .map(s => ({ value: `ref:${s}`, label: s as string })),
+  ]
+
+  const filtered = applications.filter((app) => {
+    if (sourceFilter !== 'all') {
+      if (sourceFilter.startsWith('src:')) {
+        if (app.source !== sourceFilter.slice(4)) return false
+      } else if (sourceFilter.startsWith('ref:')) {
+        if (app.ref !== sourceFilter.slice(4)) return false
+      }
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      const contactClean = app.contact.replace(/-/g, '')
+      if (
+        !app.name.toLowerCase().includes(q) &&
+        !app.contact.toLowerCase().includes(q) &&
+        !contactClean.includes(q.replace(/-/g, ''))
+      ) return false
+    }
+    return true
+  })
 
   // ── 페이지네이션 ──────────────────────────────
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
@@ -2064,8 +2085,8 @@ function ApplicationTab({ sourceTab }: { sourceTab: 'hakjeom' | 'edu' }) {
             <option key={opt.value} value={opt.value}>{opt.label}</option>
           ))}
         </select>
-        {(searchQuery || statusFilter !== 'all') && (
-          <button onClick={() => { handleSearchChange(''); setStatusFilter('all') }} className={styles.btnSecondary}>필터 초기화</button>
+        {(searchQuery || statusFilter !== 'all' || sourceFilter !== 'all') && (
+          <button onClick={() => { handleSearchChange(''); setStatusFilter('all'); setSourceFilter('all') }} className={styles.btnSecondary}>필터 초기화</button>
         )}
         {selectedIds.size > 0 && (
           <>
@@ -2114,10 +2135,26 @@ function ApplicationTab({ sourceTab }: { sourceTab: 'hakjeom' | 'edu' }) {
                   </th>
                   <th className={styles.th}>이름</th>
                   <th className={styles.th}>연락처</th>
-                  <th className={styles.th}>신청 자격증</th>
+                  {sourceTab !== 'edu' && <th className={styles.th}>신청 자격증</th>}
                   <th className={styles.th}>결제 금액</th>
                   <th className={styles.th}>결제 상태</th>
-                  <th className={styles.th}>출처</th>
+                  <th className={styles.thFilterable}>
+                    <div className={styles.thInner}>
+                      출처
+                      <button
+                        className={`${styles.thFilterBtn}${sourceFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`}
+                        onClick={e => {
+                          e.stopPropagation()
+                          if (openFilterColumn === 'source') { setOpenFilterColumn(null); return; }
+                          const rect = e.currentTarget.getBoundingClientRect()
+                          setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left })
+                          setOpenFilterColumn('source')
+                        }}
+                      >
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      </button>
+                    </div>
+                  </th>
                   <th className={styles.th}>신청일</th>
                 </tr>
               </thead>
@@ -2172,23 +2209,25 @@ function ApplicationTab({ sourceTab }: { sourceTab: 'hakjeom' | 'edu' }) {
                       </td>
 
                       {/* 신청 자격증 */}
-                      <td
-                        className={styles.td}
-                        style={{ cursor: 'pointer' }}
-                        onClick={() => setSelectedApp(app)}
-                      >
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, maxWidth: 260 }}>
-                          {app.certificates?.map((cert, idx) => (
-                            <span
-                              key={idx}
-                              className={styles.statusBadge}
-                              style={{ background: 'var(--toss-blue-subtle)', color: 'var(--toss-blue)', fontSize: 11 }}
-                            >
-                              {cert}
-                            </span>
-                          ))}
-                        </div>
-                      </td>
+                      {sourceTab !== 'edu' && (
+                        <td
+                          className={styles.td}
+                          style={{ cursor: 'pointer' }}
+                          onClick={() => setSelectedApp(app)}
+                        >
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, maxWidth: 260 }}>
+                            {app.certificates?.map((cert, idx) => (
+                              <span
+                                key={idx}
+                                className={styles.statusBadge}
+                                style={{ background: 'var(--toss-blue-subtle)', color: 'var(--toss-blue)', fontSize: 11 }}
+                              >
+                                {cert}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                      )}
 
                       {/* 결제 금액 */}
                       <td
@@ -2300,6 +2339,31 @@ function ApplicationTab({ sourceTab }: { sourceTab: 'hakjeom' | 'edu' }) {
           onClose={() => setSelectedApp(null)}
           onUpdate={handleUpdate}
         />
+      )}
+
+      {/* 출처 헤더 필터 드롭다운 */}
+      {openFilterColumn === 'source' && (
+        <div
+          className={styles.filterColumnDropdown}
+          style={{ top: filterDropdownPos.top, left: filterDropdownPos.left }}
+          onClick={e => e.stopPropagation()}
+        >
+          <div
+            className={`${styles.filterDropdownItem}${sourceFilter === 'all' ? ` ${styles.filterDropdownItemActive}` : ''}`}
+            onClick={() => { setSourceFilter('all'); setCurrentPage(1); setOpenFilterColumn(null) }}
+          >
+            전체
+          </div>
+          {sourceOptions.filter(o => o.value !== 'all').map(o => (
+            <div
+              key={o.value}
+              className={`${styles.filterDropdownItem}${sourceFilter === o.value ? ` ${styles.filterDropdownItemActive}` : ''}`}
+              onClick={() => { setSourceFilter(o.value); setCurrentPage(1); setOpenFilterColumn(null) }}
+            >
+              {o.label}
+            </div>
+          ))}
+        </div>
       )}
     </div>
   )
