@@ -1,24 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 
-// practice_applications 테이블 타입 (korhrdsocialform의 구조 참조)
 export interface PracticeApplication {
   id: string
-  student_name: string
+  name: string
   gender: string | null
   contact: string
   birth_date: string | null
-  residence_area: string | null
   address: string | null
-  practice_start_date: string | null
-  grade_report_date: string | null
-  preferred_semester: string | null
+  address_detail: string | null
+  zonecode: string | null
   practice_type: string | null
-  preferred_days: string | null
-  has_car: boolean
-  cash_receipt_number: string | null
+  desired_job_field: string | null
+  employment_types: string[] | null
+  has_resume: boolean
+  certifications: string | null
+  payment_amount: number | null
+  payment_status: string | null
+  payment_id: string | null
   privacy_agreed: boolean
-  practice_place: string | null
+  terms_agreed: boolean
   click_source: string | null
   status: string
   memo: string | null
@@ -29,9 +30,6 @@ export interface PracticeApplication {
 
 /**
  * GET /api/practice/applications
- * 쿼리 파라미터:
- *   - search: student_name 또는 contact 검색 (부분 일치)
- *   - status: 상태 필터
  */
 export async function GET(request: NextRequest) {
   try {
@@ -45,7 +43,7 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false })
 
     if (search) {
-      query = query.or(`student_name.ilike.%${search}%,contact.ilike.%${search}%`)
+      query = query.or(`name.ilike.%${search}%,contact.ilike.%${search}%`)
     }
 
     if (status) {
@@ -65,17 +63,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(data ?? [])
   } catch (err) {
     console.error('[GET /api/practice/applications] Unexpected error:', err)
-    return NextResponse.json(
-      { error: '서버 오류가 발생했습니다.' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: '서버 오류가 발생했습니다.' }, { status: 500 })
   }
 }
 
 /**
  * PATCH /api/practice/applications
- * 바디: { id: string, ...업데이트할 필드 }
- * 업데이트 허용 필드: status, memo, manager, practice_place
  */
 export async function PATCH(request: NextRequest) {
   try {
@@ -87,10 +80,9 @@ export async function PATCH(request: NextRequest) {
     }
 
     const ALLOWED_FIELDS: (keyof PracticeApplication)[] = [
-      'status',
-      'memo',
-      'manager',
-      'practice_place',
+      'status', 'memo', 'manager',
+      'practice_type', 'desired_job_field', 'employment_types',
+      'certifications', 'payment_amount', 'payment_status', 'click_source',
     ]
 
     const updatePayload: Partial<PracticeApplication> = {}
@@ -129,7 +121,6 @@ export async function PATCH(request: NextRequest) {
 
 /**
  * DELETE /api/practice/applications
- * 바디: { ids: string[] }
  */
 export async function DELETE(request: NextRequest) {
   try {

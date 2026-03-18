@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import styles from '../hakjeom/page.module.css'
+import practiceStyles from './page.module.css'
 
 // ─── 탭 타입 ─────────────────────────────────────────────────────────────────
 
@@ -9,7 +10,8 @@ type PracticeTab = 'consultation' | 'practice' | 'employment'
 
 // ─── 타입 정의 ────────────────────────────────────────────────────────────────
 
-type ConsultationStatus = '상담대기' | '상담중' | '보류' | '등록대기' | '등록완료'
+type ConsultationStatus = '상담대기' | '상담중' | '취업추진중' | '완료'
+type PracticeAppStatus = '대기' | '진행중' | '완료'
 type ConsultationType = 'consultation' | 'practice' | 'employment'
 
 interface PracticeConsultation {
@@ -47,21 +49,23 @@ interface PracticeConsultation {
 
 interface PracticeApplication {
   id: string
-  student_name: string
+  name: string
   gender: string | null
   contact: string
   birth_date: string | null
-  residence_area: string | null
   address: string | null
-  practice_start_date: string | null
-  grade_report_date: string | null
-  preferred_semester: string | null
+  address_detail: string | null
+  zonecode: string | null
   practice_type: string | null
-  preferred_days: string | null
-  has_car: boolean
-  cash_receipt_number: string | null
+  desired_job_field: string | null
+  employment_types: string[] | null
+  has_resume: boolean
+  certifications: string | null
+  payment_amount: number | null
+  payment_status: string | null
+  payment_id: string | null
   privacy_agreed: boolean
-  practice_place: string | null
+  terms_agreed: boolean
   click_source: string | null
   status: string
   memo: string | null
@@ -98,7 +102,9 @@ interface EmploymentApplication {
 
 const PAGE_SIZE = 20
 
-const CONSULTATION_STATUS_OPTIONS: ConsultationStatus[] = ['상담대기', '상담중', '보류', '등록대기', '등록완료']
+const CONSULTATION_STATUS_OPTIONS: ConsultationStatus[] = ['상담대기', '상담중', '취업추진중', '완료']
+const PRACTICE_APP_STATUS_OPTIONS: PracticeAppStatus[] = ['대기', '진행중', '완료']
+const EDUCATION_OPTIONS = ['고등학교 졸업', '전문대 졸업', '대학교 재학', '대학교 중퇴', '대학교 졸업', '대학원 이상']
 
 const CONSULTATION_TYPE_LABEL: Record<ConsultationType, string> = {
   consultation: '상담',
@@ -107,22 +113,40 @@ const CONSULTATION_TYPE_LABEL: Record<ConsultationType, string> = {
 }
 
 const CONSULTATION_STATUS_STYLE: Record<ConsultationStatus, { background: string; color: string }> = {
-  상담대기: { background: '#EBF3FE', color: '#3182F6' },
-  상담중:   { background: '#FFF8E6', color: '#D97706' },
-  보류:     { background: '#F3F4F6', color: '#6B7684' },
-  등록대기: { background: '#FEF3C7', color: '#B45309' },
-  등록완료: { background: '#DCFCE7', color: '#16A34A' },
+  상담대기:   { background: '#EBF3FE', color: '#3182F6' },
+  상담중:     { background: '#FFF8E6', color: '#D97706' },
+  취업추진중: { background: '#F3E8FF', color: '#7C3AED' },
+  완료:       { background: '#DCFCE7', color: '#16A34A' },
+}
+
+const PRACTICE_APP_STATUS_STYLE: Record<PracticeAppStatus, { background: string; color: string }> = {
+  대기:   { background: '#EBF3FE', color: '#3182F6' },
+  진행중: { background: '#FFF8E6', color: '#D97706' },
+  완료:   { background: '#DCFCE7', color: '#16A34A' },
+}
+
+const APP_STATUS_LABEL: Record<string, string> = {
+  pending: '대기중', confirmed: '확인됨', completed: '완료', cancelled: '취소', failed: '실패',
+}
+
+const APP_STATUS_STYLE: Record<string, { background: string; color: string }> = {
+  pending:   { background: '#fef3c7', color: '#92400e' },
+  confirmed: { background: '#d1fae5', color: '#065f46' },
+  completed: { background: '#dbeafe', color: '#1d4ed8' },
+  cancelled: { background: '#fee2e2', color: '#991b1b' },
+  failed:    { background: '#fee2e2', color: '#991b1b' },
 }
 
 const PAYMENT_STATUS_STYLE: Record<string, { background: string; color: string }> = {
   paid:      { background: '#d1fae5', color: '#065f46' },
   pending:   { background: '#fef3c7', color: '#92400e' },
+  requested: { background: '#fef9c3', color: '#854d0e' },
   failed:    { background: '#fee2e2', color: '#991b1b' },
   cancelled: { background: '#fee2e2', color: '#991b1b' },
 }
 
 const PAYMENT_STATUS_LABEL: Record<string, string> = {
-  paid: '결제완료', pending: '결제대기', failed: '결제실패', cancelled: '취소',
+  paid: '결제완료', pending: '결제대기', requested: '요청됨', failed: '결제실패', cancelled: '취소',
 }
 
 // ─── 유틸 ────────────────────────────────────────────────────────────────────
@@ -329,6 +353,129 @@ function InfoRow({ label, value }: { label: string; value: string | number | boo
   )
 }
 
+// ─── 상담신청 추가 모달 ──────────────────────────────────────────────────────
+
+function AddConsultationModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
+  const [name, setName] = useState('')
+  const [contact, setContact] = useState('')
+  const [serviceType, setServiceType] = useState<'' | 'practice' | 'employment' | 'both'>('')
+  const [employmentHopeTime, setEmploymentHopeTime] = useState<'' | '바로 취업' | '3개월 준비' | '6개월 준비'>('')
+  const [employmentSupportFund, setEmploymentSupportFund] = useState<'' | 'true' | 'false'>('')
+  const [saving, setSaving] = useState(false)
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const validate = () => {
+    const e: Record<string, string> = {}
+    if (!name.trim()) e.name = '이름을 입력해주세요'
+    if (!contact.trim()) e.contact = '연락처를 입력해주세요'
+    if (!serviceType) e.serviceType = '희망 신청 서비스를 선택해주세요'
+    setErrors(e)
+    return Object.keys(e).length === 0
+  }
+
+  const handleSubmit = async () => {
+    if (!validate()) return
+    setSaving(true)
+    try {
+      const body: Record<string, unknown> = {
+        name: name.trim(),
+        contact: contact.trim(),
+        service_practice: serviceType === 'practice' || serviceType === 'both',
+        service_employment: serviceType === 'employment' || serviceType === 'both',
+      }
+      if (employmentHopeTime) body.employment_hope_time = employmentHopeTime
+      if (employmentSupportFund) body.employment_support_fund = employmentSupportFund === 'true'
+      const res = await fetch('/api/practice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      if (!res.ok) throw new Error()
+      onSaved()
+      onClose()
+    } catch {
+      alert('추가에 실패했습니다.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className={styles.modalOverlay} onClick={onClose}>
+      <div className={styles.modalBox} onClick={e => e.stopPropagation()} style={{ maxWidth: 440, maxHeight: '90vh', overflowY: 'auto' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+          <h3 className={practiceStyles.addModalTitle}>상담 신청</h3>
+          <button onClick={onClose} className={practiceStyles.addModalCloseBtn}>✕</button>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div>
+            <label className={practiceStyles.addModalFieldLabel}>이름<span className={practiceStyles.addModalRequired}>*</span></label>
+            <input className={styles.inputFull} value={name} onChange={e => setName(e.target.value)} placeholder="이름을 입력해주세요" />
+            {errors.name && <span className={practiceStyles.addModalFieldError}>{errors.name}</span>}
+          </div>
+
+          <div>
+            <label className={practiceStyles.addModalFieldLabel}>연락처<span className={practiceStyles.addModalRequired}>*</span></label>
+            <input className={styles.inputFull} value={contact} onChange={e => setContact(e.target.value)} placeholder="010-0000-0000" />
+            {errors.contact && <span className={practiceStyles.addModalFieldError}>{errors.contact}</span>}
+          </div>
+
+          <div>
+            <label className={practiceStyles.addModalFieldLabel}>희망 신청 서비스<span className={practiceStyles.addModalRequired}>*</span></label>
+            <CustomSelect
+              value={serviceType}
+              onChange={v => setServiceType(v as typeof serviceType)}
+              options={[
+                { value: 'practice', label: '실습' },
+                { value: 'employment', label: '취업' },
+                { value: 'both', label: '실습 + 취업' },
+              ]}
+              placeholder="선택해주세요"
+              fullWidth
+            />
+            {errors.serviceType && <span className={practiceStyles.addModalFieldError}>{errors.serviceType}</span>}
+          </div>
+
+          <div>
+            <label className={practiceStyles.addModalFieldLabel}>취업 희망 시기</label>
+            <CustomSelect
+              value={employmentHopeTime}
+              onChange={v => setEmploymentHopeTime(v as typeof employmentHopeTime)}
+              options={[
+                { value: '바로 취업', label: '바로 취업' },
+                { value: '3개월 준비', label: '3개월 준비' },
+                { value: '6개월 준비', label: '6개월 준비' },
+              ]}
+              placeholder="선택해주세요"
+              fullWidth
+            />
+          </div>
+
+          <div>
+            <label className={practiceStyles.addModalFieldLabel}>취업지원금 희망여부</label>
+            <CustomSelect
+              value={employmentSupportFund}
+              onChange={v => setEmploymentSupportFund(v as typeof employmentSupportFund)}
+              options={[
+                { value: 'true', label: '희망함' },
+                { value: 'false', label: '희망하지 않음' },
+              ]}
+              placeholder="선택해주세요"
+              fullWidth
+            />
+          </div>
+        </div>
+
+        <div style={{ marginTop: 24, display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+          <button onClick={onClose} className={styles.btnSecondary}>취소</button>
+          <button onClick={handleSubmit} disabled={saving} className={styles.btnPrimary}>{saving ? '저장 중...' : '추가'}</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── 상담신청 상세 모달 ──────────────────────────────────────────────────────
 
 function ConsultationDetailModal({ item, onClose, onUpdate }: {
@@ -341,6 +488,16 @@ function ConsultationDetailModal({ item, onClose, onUpdate }: {
   const [editManager, setEditManager] = useState(item.manager ?? '')
   const [editMemo, setEditMemo] = useState(item.memo ?? '')
   const [editNotes, setEditNotes] = useState(item.notes ?? '')
+  const [editType, setEditType] = useState<ConsultationType | null>(item.type)
+  const [editEducation, setEditEducation] = useState(item.education ?? '')
+  const [editHopeCourse, setEditHopeCourse] = useState(item.hope_course ?? '')
+  const [editResidence, setEditResidence] = useState(item.residence ?? '')
+  const [editAddress, setEditAddress] = useState(item.address ?? '')
+  const [editStudyMethod, setEditStudyMethod] = useState(item.study_method ?? '')
+  const [editServicePractice, setEditServicePractice] = useState(item.service_practice ?? false)
+  const [editServiceEmployment, setEditServiceEmployment] = useState(item.service_employment ?? false)
+  const [editEmploymentHopeTime, setEditEmploymentHopeTime] = useState(item.employment_hope_time ?? '')
+  const [editEmploymentSupportFund, setEditEmploymentSupportFund] = useState<boolean | null>(item.employment_support_fund ?? null)
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -348,13 +505,38 @@ function ConsultationDetailModal({ item, onClose, onUpdate }: {
     setEditManager(item.manager ?? '')
     setEditMemo(item.memo ?? '')
     setEditNotes(item.notes ?? '')
+    setEditType(item.type)
+    setEditEducation(item.education ?? '')
+    setEditHopeCourse(item.hope_course ?? '')
+    setEditResidence(item.residence ?? '')
+    setEditAddress(item.address ?? '')
+    setEditStudyMethod(item.study_method ?? '')
+    setEditServicePractice(item.service_practice ?? false)
+    setEditServiceEmployment(item.service_employment ?? false)
+    setEditEmploymentHopeTime(item.employment_hope_time ?? '')
+    setEditEmploymentSupportFund(item.employment_support_fund ?? null)
     setActiveTab('basic')
   }, [item.id])
 
   const handleSave = async () => {
     setSaving(true)
     try {
-      await onUpdate(item.id, { status: editStatus, manager: editManager, memo: editMemo, notes: editNotes })
+      await onUpdate(item.id, {
+        status: editStatus,
+        manager: editManager,
+        memo: editMemo,
+        notes: editNotes,
+        type: editType,
+        education: editEducation || null,
+        hope_course: editHopeCourse || null,
+        residence: editResidence || null,
+        address: editAddress || null,
+        study_method: editStudyMethod || null,
+        service_practice: editServicePractice,
+        service_employment: editServiceEmployment,
+        employment_hope_time: editEmploymentHopeTime || null,
+        employment_support_fund: editEmploymentSupportFund,
+      })
     } finally {
       setSaving(false)
     }
@@ -408,11 +590,12 @@ function ConsultationDetailModal({ item, onClose, onUpdate }: {
                       key={s}
                       type="button"
                       onClick={() => setEditStatus(s)}
-                      style={
-                        editStatus === s
-                          ? { padding: '5px 12px', borderRadius: 20, cursor: 'pointer', border: `2px solid ${CONSULTATION_STATUS_STYLE[s].color}`, background: CONSULTATION_STATUS_STYLE[s].background, color: CONSULTATION_STATUS_STYLE[s].color, fontSize: 13, fontWeight: 600, transition: 'all 0.15s' }
-                          : { padding: '5px 12px', borderRadius: 20, cursor: 'pointer', border: '2px solid var(--toss-border)', background: 'transparent', color: 'var(--toss-text-secondary)', fontSize: 13, fontWeight: 600, transition: 'all 0.15s' }
-                      }
+                      className={practiceStyles.chipBtn}
+                      style={editStatus === s ? {
+                        border: `2px solid ${CONSULTATION_STATUS_STYLE[s].color}`,
+                        background: CONSULTATION_STATUS_STYLE[s].background,
+                        color: CONSULTATION_STATUS_STYLE[s].color,
+                      } : undefined}
                     >
                       {s}
                     </button>
@@ -431,34 +614,105 @@ function ConsultationDetailModal({ item, onClose, onUpdate }: {
                 />
               </div>
 
-              {/* 기본 정보 */}
-              <InfoRow label="유형" value={item.type ? CONSULTATION_TYPE_LABEL[item.type] : '-'} />
-              <InfoRow label="학력" value={item.education} />
-              <InfoRow label="희망과정" value={item.hope_course} />
-              <InfoRow label="거주지" value={item.residence} />
-              <InfoRow label="주소" value={item.address} />
-              <InfoRow label="학습방법" value={item.study_method} />
+              {/* 유형 */}
+              <div className={styles.detailChipSection}>
+                <span className={styles.detailChipSectionLabel}>유형</span>
+                <div className={styles.detailChipRow}>
+                  {(['practice', 'employment', 'consultation'] as ConsultationType[]).map(t => (
+                    <button key={t} type="button" onClick={() => setEditType(t)}
+                      className={practiceStyles.chipBtn}
+                      style={editType === t ? { border: `2px solid ${CONSULTATION_STATUS_STYLE['상담대기'].color}`, background: CONSULTATION_STATUS_STYLE['상담대기'].background, color: CONSULTATION_STATUS_STYLE['상담대기'].color } : undefined}
+                    >{CONSULTATION_TYPE_LABEL[t]}</button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 최종학력 */}
+              <div className={styles.detailFieldRow}>
+                <span className={styles.detailFieldLabel}>최종학력</span>
+                <CustomSelect
+                  value={editEducation}
+                  onChange={setEditEducation}
+                  fullWidth
+                  options={[
+                    { value: '', label: '선택 안 함' },
+                    ...EDUCATION_OPTIONS.map(o => ({ value: o, label: o })),
+                  ]}
+                />
+              </div>
+
+              {/* 희망과정 */}
+              <div className={styles.detailFieldRow}>
+                <span className={styles.detailFieldLabel}>희망과정</span>
+                <input value={editHopeCourse} onChange={e => setEditHopeCourse(e.target.value)} placeholder="희망 과정 입력" className={`${styles.input} ${styles.inputFull}`} />
+              </div>
+
+              {/* 거주지 */}
+              <div className={styles.detailFieldRow}>
+                <span className={styles.detailFieldLabel}>거주지</span>
+                <input value={editResidence} onChange={e => setEditResidence(e.target.value)} placeholder="예) 서울 강남구" className={`${styles.input} ${styles.inputFull}`} />
+              </div>
+
+              {/* 주소 */}
+              <div className={styles.detailFieldRow}>
+                <span className={styles.detailFieldLabel}>주소</span>
+                <input value={editAddress} onChange={e => setEditAddress(e.target.value)} placeholder="상세 주소 입력" className={`${styles.input} ${styles.inputFull}`} />
+              </div>
+
+              {/* 유입경로 (읽기 전용) */}
               <InfoRow label="유입경로" value={item.click_source} />
             </>
           )}
 
           {activeTab === 'detail' && (
             <>
-              <InfoRow label="진행상황" value={item.progress} />
-              <InfoRow label="실습처" value={item.practice_place} />
-              <InfoRow label="실습예정일" value={item.practice_planned_date} />
-              <InfoRow label="취업희망시기" value={item.employment_hope_time} />
-              <InfoRow label="고용지원금" value={item.employment_support_fund} />
-              <InfoRow label="취업상담" value={item.employment_consulting} />
-              <InfoRow label="취업연계" value={item.employment_connection} />
-              <InfoRow label="자격취득후취업" value={item.employment_after_cert} />
-              <InfoRow label="취득사유" value={item.reason} />
-              <InfoRow label="과목비용" value={item.subject_cost !== null ? `${item.subject_cost?.toLocaleString()}원` : null} />
-              <InfoRow label="학생상태" value={item.student_status} />
-              <InfoRow label="실습서비스" value={item.service_practice} />
-              <InfoRow label="취업서비스" value={item.service_employment} />
-              <InfoRow label="완료여부" value={item.is_completed} />
-              <InfoRow label="비고" value={item.notes} />
+              {/* 실습서비스 */}
+              <div className={styles.detailChipSection}>
+                <span className={styles.detailChipSectionLabel}>실습서비스</span>
+                <div className={styles.detailChipRow}>
+                  {[true, false].map(v => (
+                    <button key={String(v)} type="button" onClick={() => setEditServicePractice(v)}
+                      className={`${practiceStyles.chipBtn} ${editServicePractice === v ? (v ? practiceStyles.chipBtnTrue : practiceStyles.chipBtnFalse) : ''}`}
+                    >{v ? '예' : '아니오'}</button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 취업서비스 */}
+              <div className={styles.detailChipSection}>
+                <span className={styles.detailChipSectionLabel}>취업서비스</span>
+                <div className={styles.detailChipRow}>
+                  {[true, false].map(v => (
+                    <button key={String(v)} type="button" onClick={() => setEditServiceEmployment(v)}
+                      className={`${practiceStyles.chipBtn} ${editServiceEmployment === v ? (v ? practiceStyles.chipBtnTrue : practiceStyles.chipBtnFalse) : ''}`}
+                    >{v ? '예' : '아니오'}</button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 취업희망시기 */}
+              <div className={styles.detailFieldRow}>
+                <span className={styles.detailFieldLabel}>취업희망시기</span>
+                <input
+                  value={editEmploymentHopeTime}
+                  onChange={e => setEditEmploymentHopeTime(e.target.value)}
+                  placeholder="예) 바로 취업, 6개월 후"
+                  className={`${styles.input} ${styles.inputFull}`}
+                />
+              </div>
+
+              {/* 고용지원금 */}
+              <div className={styles.detailChipSection}>
+                <span className={styles.detailChipSectionLabel}>고용지원금</span>
+                <div className={styles.detailChipRow}>
+                  {([true, false, null] as (boolean | null)[]).map(v => (
+                    <button key={String(v)} type="button" onClick={() => setEditEmploymentSupportFund(v)}
+                      className={`${practiceStyles.chipBtn} ${editEmploymentSupportFund === v ? (v === true ? practiceStyles.chipBtnTrue : v === false ? practiceStyles.chipBtnFalse : practiceStyles.chipBtnNull) : ''}`}
+                    >{v === true ? '희망' : v === false ? '미희망' : '미입력'}</button>
+                  ))}
+                </div>
+              </div>
+
               <InfoRow label="등록일" value={formatDateTime(item.created_at)} />
               <InfoRow label="수정일" value={formatDateTime(item.updated_at)} />
             </>
@@ -466,8 +720,8 @@ function ConsultationDetailModal({ item, onClose, onUpdate }: {
 
           {activeTab === 'memo' && (
             <>
-              <div style={{ marginBottom: 12 }}>
-                <label style={{ fontSize: 12, color: 'var(--toss-text-secondary)', display: 'block', marginBottom: 6 }}>메모</label>
+              <div className={practiceStyles.memoGroup}>
+                <label className={practiceStyles.memoLabel}>메모</label>
                 <textarea
                   value={editMemo}
                   onChange={e => setEditMemo(e.target.value)}
@@ -477,7 +731,7 @@ function ConsultationDetailModal({ item, onClose, onUpdate }: {
                 />
               </div>
               <div>
-                <label style={{ fontSize: 12, color: 'var(--toss-text-secondary)', display: 'block', marginBottom: 6 }}>비고</label>
+                <label className={practiceStyles.memoLabel}>비고</label>
                 <textarea
                   value={editNotes}
                   onChange={e => setEditNotes(e.target.value)}
@@ -515,22 +769,40 @@ function PracticeApplicationDetailModal({ item, onClose, onUpdate }: {
   const [activeTab, setActiveTab] = useState<'basic' | 'detail'>('basic')
   const [editStatus, setEditStatus] = useState(item.status)
   const [editManager, setEditManager] = useState(item.manager ?? '')
-  const [editPracticePlace, setEditPracticePlace] = useState(item.practice_place ?? '')
   const [editMemo, setEditMemo] = useState(item.memo ?? '')
+  const [editPracticeType, setEditPracticeType] = useState(item.practice_type ?? '')
+  const [editDesiredJobField, setEditDesiredJobField] = useState(item.desired_job_field ?? '')
+  const [editCertifications, setEditCertifications] = useState(item.certifications ?? '')
+  const [editPaymentAmount, setEditPaymentAmount] = useState(item.payment_amount != null ? String(item.payment_amount) : '')
+  const [editPaymentStatus, setEditPaymentStatus] = useState(item.payment_status ?? '')
+  const [editClickSource, setEditClickSource] = useState(item.click_source ?? '')
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     setEditStatus(item.status)
     setEditManager(item.manager ?? '')
-    setEditPracticePlace(item.practice_place ?? '')
     setEditMemo(item.memo ?? '')
+    setEditPracticeType(item.practice_type ?? '')
+    setEditDesiredJobField(item.desired_job_field ?? '')
+    setEditCertifications(item.certifications ?? '')
+    setEditPaymentAmount(item.payment_amount != null ? String(item.payment_amount) : '')
+    setEditPaymentStatus(item.payment_status ?? '')
+    setEditClickSource(item.click_source ?? '')
     setActiveTab('basic')
   }, [item.id])
 
   const handleSave = async () => {
     setSaving(true)
     try {
-      await onUpdate(item.id, { status: editStatus, manager: editManager, practice_place: editPracticePlace, memo: editMemo })
+      await onUpdate(item.id, {
+        status: editStatus, manager: editManager, memo: editMemo,
+        practice_type: editPracticeType || null,
+        desired_job_field: editDesiredJobField || null,
+        certifications: editCertifications || null,
+        payment_amount: editPaymentAmount ? Number(editPaymentAmount) : null,
+        payment_status: editPaymentStatus || null,
+        click_source: editClickSource || null,
+      })
     } finally {
       setSaving(false)
     }
@@ -545,8 +817,10 @@ function PracticeApplicationDetailModal({ item, onClose, onUpdate }: {
             <div className={styles.detailModalHeaderLeft}>
               <div>
                 <div className={styles.detailModalNameRow}>
-                  <p className={styles.detailModalName}>{item.student_name}</p>
-                  <span className={styles.statusBadge} style={{ background: '#DCFCE7', color: '#16A34A' }}>{item.status}</span>
+                  <p className={styles.detailModalName}>{item.name}</p>
+                  <span className={styles.statusBadge} style={{ background: (APP_STATUS_STYLE[item.status] ?? APP_STATUS_STYLE.pending).background, color: (APP_STATUS_STYLE[item.status] ?? APP_STATUS_STYLE.pending).color }}>
+                    {APP_STATUS_LABEL[item.status] ?? item.status}
+                  </span>
                 </div>
                 <p className={styles.detailModalSub}>{item.contact}</p>
                 <p className={styles.detailModalSub}>등록일: {formatDateShort(item.created_at)}</p>
@@ -575,69 +849,66 @@ function PracticeApplicationDetailModal({ item, onClose, onUpdate }: {
         <div className={styles.detailModalBody}>
           {activeTab === 'basic' && (
             <>
-              {/* 상태 */}
-              <div className={styles.detailFieldRow}>
-                <span className={styles.detailFieldLabel}>상태</span>
-                <input
-                  value={editStatus}
-                  onChange={e => setEditStatus(e.target.value)}
-                  className={`${styles.input} ${styles.inputFull}`}
-                />
-              </div>
-
               {/* 담당자 */}
               <div className={styles.detailFieldRow}>
                 <span className={styles.detailFieldLabel}>담당자</span>
-                <input
-                  value={editManager}
-                  onChange={e => setEditManager(e.target.value)}
-                  placeholder="담당자 이름"
-                  className={`${styles.input} ${styles.inputFull}`}
-                />
-              </div>
-
-              {/* 실습처 */}
-              <div className={styles.detailFieldRow}>
-                <span className={styles.detailFieldLabel}>실습처</span>
-                <input
-                  value={editPracticePlace}
-                  onChange={e => setEditPracticePlace(e.target.value)}
-                  placeholder="실습처 이름"
-                  className={`${styles.input} ${styles.inputFull}`}
-                />
+                <input value={editManager} onChange={e => setEditManager(e.target.value)} placeholder="담당자 이름" className={`${styles.input} ${styles.inputFull}`} />
               </div>
 
               {/* 메모 */}
-              <div className={styles.detailFieldRow} style={{ alignItems: 'flex-start' }}>
-                <span className={styles.detailFieldLabel} style={{ paddingTop: 6 }}>메모</span>
-                <textarea
-                  value={editMemo}
-                  onChange={e => setEditMemo(e.target.value)}
-                  rows={4}
-                  placeholder="메모를 입력하세요"
-                  className={styles.textarea}
-                  style={{ flex: 1 }}
-                />
+              <div className={styles.detailFieldRow}>
+                <span className={styles.detailFieldLabel}>메모</span>
+                <textarea value={editMemo} onChange={e => setEditMemo(e.target.value)} rows={4} placeholder="메모를 입력하세요" className={styles.textarea} />
               </div>
 
               <InfoRow label="성별" value={item.gender} />
               <InfoRow label="생년월일" value={item.birth_date} />
-              <InfoRow label="거주지역" value={item.residence_area} />
               <InfoRow label="주소" value={item.address} />
+              <InfoRow label="상세주소" value={item.address_detail} />
             </>
           )}
 
           {activeTab === 'detail' && (
             <>
-              <InfoRow label="실습유형" value={item.practice_type} />
-              <InfoRow label="실습시작일" value={item.practice_start_date} />
-              <InfoRow label="성적표발급일" value={item.grade_report_date} />
-              <InfoRow label="희망학기" value={item.preferred_semester} />
-              <InfoRow label="선호요일" value={item.preferred_days} />
-              <InfoRow label="자차여부" value={item.has_car} />
-              <InfoRow label="현금영수증" value={item.cash_receipt_number} />
-              <InfoRow label="유입경로" value={item.click_source} />
-              <InfoRow label="개인정보동의" value={item.privacy_agreed} />
+              <div className={styles.detailFieldRow}>
+                <span className={styles.detailFieldLabel}>실습유형</span>
+                <input value={editPracticeType} onChange={e => setEditPracticeType(e.target.value)} placeholder="실습유형 입력" className={`${styles.input} ${styles.inputFull}`} />
+              </div>
+              <div className={styles.detailFieldRow}>
+                <span className={styles.detailFieldLabel}>희망직무</span>
+                <input value={editDesiredJobField} onChange={e => setEditDesiredJobField(e.target.value)} placeholder="희망직무 입력" className={`${styles.input} ${styles.inputFull}`} />
+              </div>
+              <InfoRow label="고용형태" value={item.employment_types?.join(', ')} />
+              <InfoRow label="이력서" value={item.has_resume ? '있음' : '없음'} />
+              <div className={styles.detailFieldRow}>
+                <span className={styles.detailFieldLabel}>자격증</span>
+                <input value={editCertifications} onChange={e => setEditCertifications(e.target.value)} placeholder="자격증 입력" className={`${styles.input} ${styles.inputFull}`} />
+              </div>
+              <div className={styles.detailFieldRow}>
+                <span className={styles.detailFieldLabel}>결제금액</span>
+                <input type="number" value={editPaymentAmount} onChange={e => setEditPaymentAmount(e.target.value)} placeholder="금액 입력" className={`${styles.input} ${styles.inputFull}`} />
+              </div>
+              <div className={styles.detailFieldRow}>
+                <span className={styles.detailFieldLabel}>결제상태</span>
+                <CustomSelect
+                  value={editPaymentStatus}
+                  onChange={v => setEditPaymentStatus(v)}
+                  options={[
+                    { value: '', label: '미선택' },
+                    { value: 'pending', label: '결제대기' },
+                    { value: 'requested', label: '요청됨' },
+                    { value: 'paid', label: '결제완료' },
+                    { value: 'failed', label: '결제실패' },
+                    { value: 'cancelled', label: '취소' },
+                  ]}
+                  fullWidth
+                />
+              </div>
+              <div className={styles.detailFieldRow}>
+                <span className={styles.detailFieldLabel}>유입경로</span>
+                <input value={editClickSource} onChange={e => setEditClickSource(e.target.value)} placeholder="유입경로 입력" className={`${styles.input} ${styles.inputFull}`} />
+              </div>
+              <InfoRow label="개인정보동의" value={item.privacy_agreed ? '동의' : '미동의'} />
               <InfoRow label="등록일" value={formatDateTime(item.created_at)} />
               <InfoRow label="수정일" value={formatDateTime(item.updated_at)} />
             </>
@@ -827,11 +1098,19 @@ export default function PracticePage() {
   const [practicePage, setPracticePage] = useState(1)
   const [selectedPracticeApp, setSelectedPracticeApp] = useState<PracticeApplication | null>(null)
 
+  // 체크박스 선택
+  const [selectedConsultationIds, setSelectedConsultationIds] = useState<Set<number>>(new Set())
+  const [selectedPracticeAppIds, setSelectedPracticeAppIds] = useState<Set<string>>(new Set())
+  const [deleting, setDeleting] = useState(false)
+
   // 취업신청
   const [employmentApplications, setEmploymentApplications] = useState<EmploymentApplication[]>([])
   const [employmentSearch, setEmploymentSearch] = useState('')
   const [employmentPage, setEmploymentPage] = useState(1)
   const [selectedEmploymentApp, setSelectedEmploymentApp] = useState<EmploymentApplication | null>(null)
+
+  // 모달
+  const [showAddConsultationModal, setShowAddConsultationModal] = useState(false)
 
   // 공통
   const [loading, setLoading] = useState(true)
@@ -945,6 +1224,55 @@ export default function PracticePage() {
     setSelectedEmploymentApp(updated)
   }
 
+  // 삭제 (상담신청)
+  async function handleDeleteConsultations() {
+    const ids = Array.from(selectedConsultationIds)
+    if (ids.length === 0) return
+    if (!confirm(`${ids.length}건을 삭제할까요?`)) return
+    setDeleting(true)
+    const res = await fetch('/api/practice', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids }),
+    })
+    setDeleting(false)
+    if (!res.ok) { alert('삭제에 실패했습니다.'); return }
+    setConsultations(prev => prev.filter(c => !selectedConsultationIds.has(c.id)))
+    setSelectedConsultationIds(new Set())
+    if (selectedConsultation && selectedConsultationIds.has(selectedConsultation.id)) setSelectedConsultation(null)
+  }
+
+  // 삭제 (실습섭외신청서)
+  async function handleDeletePracticeApps() {
+    const ids = Array.from(selectedPracticeAppIds)
+    if (ids.length === 0) return
+    if (!confirm(`${ids.length}건을 삭제할까요?`)) return
+    setDeleting(true)
+    const res = await fetch('/api/practice/applications', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids }),
+    })
+    setDeleting(false)
+    if (!res.ok) { alert('삭제에 실패했습니다.'); return }
+    setPracticeApplications(prev => prev.filter(a => !selectedPracticeAppIds.has(a.id)))
+    setSelectedPracticeAppIds(new Set())
+    if (selectedPracticeApp && selectedPracticeAppIds.has(selectedPracticeApp.id)) setSelectedPracticeApp(null)
+  }
+
+  // 인라인 상태 변경 (실습섭외신청서)
+  async function handlePracticeAppStatusChange(id: string, status: string) {
+    const res = await fetch('/api/practice/applications', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, status }),
+    })
+    if (!res.ok) return
+    const updated: PracticeApplication = await res.json()
+    setPracticeApplications(prev => prev.map(item => item.id === updated.id ? updated : item))
+    if (selectedPracticeApp?.id === updated.id) setSelectedPracticeApp(updated)
+  }
+
   // 인라인 상태 변경 (상담신청)
   async function handleConsultationStatusChange(id: number, status: ConsultationStatus) {
     const res = await fetch('/api/practice', {
@@ -1035,6 +1363,9 @@ export default function PracticePage() {
   return (
     <div>
       {/* 상세 모달 */}
+      {showAddConsultationModal && (
+        <AddConsultationModal onClose={() => setShowAddConsultationModal(false)} onSaved={fetchConsultations} />
+      )}
       {selectedConsultation && (
         <ConsultationDetailModal
           item={selectedConsultation}
@@ -1084,13 +1415,12 @@ export default function PracticePage() {
           {/* 필터 */}
           <div className={styles.filterRow}>
             <input
-              className={styles.input}
+              className={`${styles.input} ${practiceStyles.searchInput}`}
               type="text"
               value={consultationSearch}
               onChange={e => setConsultationSearch(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') fetchConsultations() }}
               placeholder="이름 또는 연락처 검색"
-              style={{ flex: '1 1 200px' }}
             />
             <CustomSelect
               value={consultationStatusFilter}
@@ -1112,7 +1442,12 @@ export default function PracticePage() {
               ]}
               placeholder="전체 유형"
             />
-            <button onClick={fetchConsultations} className={styles.btnPrimary}>검색</button>
+            <button onClick={() => setShowAddConsultationModal(true)} className={styles.btnPrimary} style={{ marginLeft: 'auto' }}>+ 추가</button>
+            {selectedConsultationIds.size > 0 && (
+              <button onClick={handleDeleteConsultations} disabled={deleting} className={styles.btnDanger}>
+                {deleting ? '삭제 중...' : `${selectedConsultationIds.size}건 삭제`}
+              </button>
+            )}
           </div>
 
           {/* 테이블 */}
@@ -1121,32 +1456,67 @@ export default function PracticePage() {
               <table className={styles.table}>
                 <thead>
                   <tr>
-                    {['이름', '연락처', '유형', '상태', '담당자', '유입경로', '등록일'].map(col => (
+                    <th className={styles.thCenter}>
+                      <input
+                        type="checkbox"
+                        className={styles.checkbox}
+                        checked={consultationPaged.length > 0 && consultationPaged.every(c => selectedConsultationIds.has(c.id))}
+                        onChange={() => {
+                          const allSelected = consultationPaged.every(c => selectedConsultationIds.has(c.id))
+                          setSelectedConsultationIds(allSelected ? new Set() : new Set(consultationPaged.map(c => c.id)))
+                        }}
+                      />
+                    </th>
+                    {['이름', '연락처', '희망서비스(실습/취업)', '취업희망시기', '고용지원금', '담당자', '상태', '등록일'].map(col => (
                       <th key={col} className={styles.th}>{col}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
-                    <tr><td className={styles.td} colSpan={7}><LoadingState /></td></tr>
+                    <tr><td className={styles.td} colSpan={9}><LoadingState /></td></tr>
                   ) : error ? (
-                    <tr><td className={styles.td} colSpan={7}><ErrorState message={error} /></td></tr>
+                    <tr><td className={styles.td} colSpan={9}><ErrorState message={error} /></td></tr>
                   ) : consultationPaged.length === 0 ? (
-                    <tr><td className={styles.td} colSpan={7}><EmptyState /></td></tr>
+                    <tr><td className={styles.td} colSpan={9}><EmptyState /></td></tr>
                   ) : consultationPaged.map(item => (
                     <tr
                       key={item.id}
                       className={styles.tr}
                       onClick={() => setSelectedConsultation(item)}
-                      style={{ background: selectedConsultation?.id === item.id ? 'var(--toss-blue-subtle)' : undefined }}
+                      style={{ background: selectedConsultation?.id === item.id ? 'var(--toss-blue-subtle)' : selectedConsultationIds.has(item.id) ? '#f0f7ff' : undefined }}
                     >
+                      <td className={styles.tdCenter} onClick={e => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          className={styles.checkbox}
+                          checked={selectedConsultationIds.has(item.id)}
+                          onChange={() => setSelectedConsultationIds(prev => {
+                            const next = new Set(prev)
+                            next.has(item.id) ? next.delete(item.id) : next.add(item.id)
+                            return next
+                          })}
+                        />
+                      </td>
                       <td className={styles.td} style={{ fontWeight: 600 }}>
                         <Highlight text={item.name} query={consultationSearch} />
                       </td>
                       <td className={styles.td}>
                         <Highlight text={item.contact} query={consultationSearch} />
                       </td>
-                      <td className={styles.td}>{item.type ? CONSULTATION_TYPE_LABEL[item.type] : '-'}</td>
+                      <td className={styles.td}>
+                        {item.service_practice && item.service_employment ? '실습 + 취업'
+                          : item.service_practice ? '실습'
+                          : item.service_employment ? '취업'
+                          : '-'}
+                      </td>
+                      <td className={styles.td}>{item.employment_hope_time ?? '-'}</td>
+                      <td className={styles.td}>
+                        {item.employment_support_fund === true ? '희망'
+                          : item.employment_support_fund === false ? '미희망'
+                          : '-'}
+                      </td>
+                      <td className={styles.td}>{item.manager ?? '-'}</td>
                       <td className={styles.td} onClick={e => e.stopPropagation()}>
                         <StatusSelect
                           value={item.status}
@@ -1155,8 +1525,6 @@ export default function PracticePage() {
                           styleMap={CONSULTATION_STATUS_STYLE}
                         />
                       </td>
-                      <td className={styles.td}>{item.manager ?? '-'}</td>
-                      <td className={styles.td}>{item.click_source ?? '-'}</td>
                       <td className={styles.td}>{formatDateShort(item.created_at)}</td>
                     </tr>
                   ))}
@@ -1179,15 +1547,18 @@ export default function PracticePage() {
           {/* 필터 */}
           <div className={styles.filterRow}>
             <input
-              className={styles.input}
+              className={`${styles.input} ${practiceStyles.searchInput}`}
               type="text"
               value={practiceSearch}
               onChange={e => setPracticeSearch(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') fetchPracticeApplications() }}
               placeholder="이름 또는 연락처 검색"
-              style={{ flex: '1 1 200px' }}
             />
-            <button onClick={fetchPracticeApplications} className={styles.btnPrimary}>검색</button>
+            {selectedPracticeAppIds.size > 0 && (
+              <button onClick={handleDeletePracticeApps} disabled={deleting} className={styles.btnDanger}>
+                {deleting ? '삭제 중...' : `${selectedPracticeAppIds.size}건 삭제`}
+              </button>
+            )}
           </div>
 
           {/* 테이블 */}
@@ -1196,39 +1567,78 @@ export default function PracticePage() {
               <table className={styles.table}>
                 <thead>
                   <tr>
-                    {['이름', '연락처', '실습유형', '실습처', '실습시작일', '담당자', '상태', '등록일'].map(col => (
+                    <th className={styles.thCenter}>
+                      <input
+                        type="checkbox"
+                        className={styles.checkbox}
+                        checked={practicePaged.length > 0 && practicePaged.every(a => selectedPracticeAppIds.has(a.id))}
+                        onChange={() => {
+                          const allSelected = practicePaged.every(a => selectedPracticeAppIds.has(a.id))
+                          setSelectedPracticeAppIds(allSelected ? new Set() : new Set(practicePaged.map(a => a.id)))
+                        }}
+                      />
+                    </th>
+                    {['이름', '연락처', '실습유형', '희망직무', '결제금액', '결제상태', '담당자', '상태', '등록일'].map(col => (
                       <th key={col} className={styles.th}>{col}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
-                    <tr><td className={styles.td} colSpan={8}><LoadingState /></td></tr>
+                    <tr><td className={styles.td} colSpan={10}><LoadingState /></td></tr>
                   ) : error ? (
-                    <tr><td className={styles.td} colSpan={8}><ErrorState message={error} /></td></tr>
+                    <tr><td className={styles.td} colSpan={10}><ErrorState message={error} /></td></tr>
                   ) : practicePaged.length === 0 ? (
-                    <tr><td className={styles.td} colSpan={8}><EmptyState /></td></tr>
+                    <tr><td className={styles.td} colSpan={10}><EmptyState /></td></tr>
                   ) : practicePaged.map(item => (
                     <tr
                       key={item.id}
                       className={styles.tr}
                       onClick={() => setSelectedPracticeApp(item)}
-                      style={{ background: selectedPracticeApp?.id === item.id ? 'var(--toss-blue-subtle)' : undefined }}
+                      style={{ background: selectedPracticeApp?.id === item.id ? 'var(--toss-blue-subtle)' : selectedPracticeAppIds.has(item.id) ? '#f0f7ff' : undefined }}
                     >
+                      <td className={styles.tdCenter} onClick={e => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          className={styles.checkbox}
+                          checked={selectedPracticeAppIds.has(item.id)}
+                          onChange={() => setSelectedPracticeAppIds(prev => {
+                            const next = new Set(prev)
+                            next.has(item.id) ? next.delete(item.id) : next.add(item.id)
+                            return next
+                          })}
+                        />
+                      </td>
                       <td className={styles.td} style={{ fontWeight: 600 }}>
-                        <Highlight text={item.student_name} query={practiceSearch} />
+                        <Highlight text={item.name} query={practiceSearch} />
                       </td>
                       <td className={styles.td}>
                         <Highlight text={item.contact} query={practiceSearch} />
                       </td>
                       <td className={styles.td}>{item.practice_type ?? '-'}</td>
-                      <td className={styles.td}>{item.practice_place ?? '-'}</td>
-                      <td className={styles.td}>{item.practice_start_date ?? '-'}</td>
-                      <td className={styles.td}>{item.manager ?? '-'}</td>
+                      <td className={styles.td}>{item.desired_job_field ?? '-'}</td>
+                      <td className={styles.td}>{item.payment_amount != null ? `${item.payment_amount.toLocaleString()}원` : '-'}</td>
                       <td className={styles.td}>
-                        <span className={styles.statusBadge} style={{ background: '#DCFCE7', color: '#16A34A' }}>
-                          {item.status}
-                        </span>
+                        {item.payment_status ? (
+                          <span
+                            className={styles.statusBadge}
+                            style={{
+                              background: (PAYMENT_STATUS_STYLE[item.payment_status] ?? PAYMENT_STATUS_STYLE.pending).background,
+                              color: (PAYMENT_STATUS_STYLE[item.payment_status] ?? PAYMENT_STATUS_STYLE.pending).color,
+                            }}
+                          >
+                            {PAYMENT_STATUS_LABEL[item.payment_status] ?? item.payment_status}
+                          </span>
+                        ) : '-'}
+                      </td>
+                      <td className={styles.td}>{item.manager ?? '-'}</td>
+                      <td className={styles.td} onClick={e => e.stopPropagation()}>
+                        <StatusSelect
+                          value={PRACTICE_APP_STATUS_OPTIONS.includes(item.status as PracticeAppStatus) ? item.status : '대기'}
+                          onChange={v => handlePracticeAppStatusChange(item.id, v)}
+                          options={PRACTICE_APP_STATUS_OPTIONS}
+                          styleMap={PRACTICE_APP_STATUS_STYLE}
+                        />
                       </td>
                       <td className={styles.td}>{formatDateShort(item.created_at)}</td>
                     </tr>
@@ -1254,15 +1664,13 @@ export default function PracticePage() {
           {/* 필터 */}
           <div className={styles.filterRow}>
             <input
-              className={styles.input}
+              className={`${styles.input} ${practiceStyles.searchInput}`}
               type="text"
               value={employmentSearch}
               onChange={e => setEmploymentSearch(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') fetchEmploymentApplications() }}
               placeholder="이름 또는 연락처 검색"
-              style={{ flex: '1 1 200px' }}
             />
-            <button onClick={fetchEmploymentApplications} className={styles.btnPrimary}>검색</button>
           </div>
 
           {/* 테이블 */}

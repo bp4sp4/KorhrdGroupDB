@@ -675,6 +675,7 @@ function HakjeomDetailPanel({ item, onClose, onUpdate }: HakjeomDetailPanelProps
                   className={`${styles.input} ${styles.inputFull}`}
                 />
               </div>
+
             </>
           )}
 

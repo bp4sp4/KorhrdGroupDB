@@ -7,6 +7,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip,
 } from 'recharts'
 import styles from '../hakjeom/page.module.css'
+import certStyles from './page.module.css'
 
 // ─────────────────────────────────────────────
 // Types
@@ -208,7 +209,7 @@ function Highlight({ text, query }: { text: string; query: string }) {
     <>
       {parts.map((part, i) =>
         part.toLowerCase() === query.toLowerCase() ? (
-          <mark key={i} style={{ background: '#fef08a', color: 'inherit', borderRadius: 2 }}>
+          <mark key={i} className={certStyles.highlightMark}>
             {part}
           </mark>
         ) : (
@@ -332,7 +333,7 @@ function StatusSelect({
               >
                 <span className={styles.statusSelectDot} style={{ background: st.color }} />
                 {opt}
-                {value === opt && <span style={{ marginLeft: 'auto', color: st.color, fontSize: 11 }}>✓</span>}
+                {value === opt && <span className={certStyles.statusSelectCheck} style={{ color: st.color }}>✓</span>}
               </div>
             );
           })}
@@ -428,14 +429,13 @@ function PaymentBadge({ status }: { status?: PaymentStatus | null }) {
 /** 통계 카드 */
 function StatCard({ label, value, highlight }: { label: string; value: number; highlight?: boolean }) {
   return (
-    <div className={styles.statsCard} style={{ flex: 1, minWidth: 0 }}>
-      <p className={styles.statsCardLabel} style={{ margin: '0 0 8px 0' }}>{label}</p>
+    <div className={`${styles.statsCard} ${certStyles.statCardWrap}`}>
+      <p className={`${styles.statsCardLabel} ${certStyles.statCardLabel}`}>{label}</p>
       <p
-        className={styles.statsCardValue}
-        style={{ color: highlight ? 'var(--toss-blue)' : 'var(--toss-text-primary)', margin: 0 }}
+        className={`${styles.statsCardValue} ${highlight ? certStyles.statCardValueHighlight : certStyles.statCardValue}`}
       >
         {value.toLocaleString()}
-        <span style={{ fontSize: 14, fontWeight: 500, marginLeft: 4, color: 'var(--toss-text-secondary)' }}>건</span>
+        <span className={certStyles.statCardUnit}>건</span>
       </p>
     </div>
   )
@@ -562,18 +562,18 @@ function DetailPanel({
             <>
               {/* 제출 사진 썸네일 */}
               {app.photo_url && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                <div className={certStyles.photoRow}>
                   <span className={styles.detailFieldLabel}>제출 사진</span>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/photos/${app.photo_url}`}
                     alt="제출 사진"
-                    style={{ width: 64, height: 64, borderRadius: 8, objectFit: 'cover', border: '1px solid var(--toss-border)', flexShrink: 0 }}
+                    className={certStyles.photoThumb}
                   />
                   <button
                     type="button"
                     onClick={handlePhotoDownload}
-                    style={{ fontSize: 12, color: 'var(--toss-blue)', background: 'transparent', border: '1px solid var(--toss-blue)', borderRadius: 6, padding: '3px 8px', whiteSpace: 'nowrap', cursor: 'pointer' }}
+                    className={certStyles.photoDownloadBtn}
                   >
                     다운로드
                   </button>
@@ -585,29 +585,22 @@ function DetailPanel({
                 <span className={styles.detailChipSectionLabel}>확인 상태</span>
                 <div className={styles.detailChipRow}>
                   {[
-                    { value: false, label: '미확인' },
-                    { value: true, label: '확인 완료' },
+                    { value: false, label: '미발급' },
+                    { value: true, label: '발급완료' },
                   ].map(opt => (
                     <button
                       key={String(opt.value)}
                       type="button"
                       onClick={() => setIsChecked(opt.value)}
+                      className={isChecked === opt.value ? certStyles.chipBtn : certStyles.chipBtnInactive}
                       style={
                         isChecked === opt.value
                           ? {
-                              padding: '5px 12px', borderRadius: 20, cursor: 'pointer',
                               border: `2px solid ${opt.value ? '#059669' : '#f59e0b'}`,
                               background: opt.value ? '#d1fae5' : '#fef3c7',
                               color: opt.value ? '#065f46' : '#92400e',
-                              fontSize: 13, fontWeight: 600, transition: 'all 0.15s',
                             }
-                          : {
-                              padding: '5px 12px', borderRadius: 20, cursor: 'pointer',
-                              border: '2px solid var(--toss-border)',
-                              background: 'transparent',
-                              color: 'var(--toss-text-secondary)',
-                              fontSize: 13, fontWeight: 600, transition: 'all 0.15s',
-                            }
+                          : undefined
                       }
                     >
                       {opt.label}
@@ -680,12 +673,11 @@ function DetailPanel({
                 />
               </div>
               {editCerts && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, padding: '0 0 0 120px' }}>
+                <div className={certStyles.certPreviewRow}>
                   {editCerts.split(',').map(s => s.trim()).filter(Boolean).map((cert, idx) => (
                     <span
                       key={idx}
-                      className={styles.statusBadge}
-                      style={{ background: 'var(--toss-blue-subtle)', color: 'var(--toss-blue)', fontSize: 11 }}
+                      className={`${styles.statusBadge} ${certStyles.certPreviewBadge}`}
                     >
                       {cert}
                     </span>
@@ -708,22 +700,15 @@ function DetailPanel({
                         key={s}
                         type="button"
                         onClick={() => setEditPaymentStatus(s)}
+                        className={editPaymentStatus === s ? certStyles.chipBtn : certStyles.chipBtnInactive}
                         style={
                           editPaymentStatus === s
                             ? {
-                                padding: '5px 12px', borderRadius: 20, cursor: 'pointer',
                                 border: `2px solid ${color.color}`,
                                 background: color.bg,
                                 color: color.color,
-                                fontSize: 13, fontWeight: 600, transition: 'all 0.15s',
                               }
-                            : {
-                                padding: '5px 12px', borderRadius: 20, cursor: 'pointer',
-                                border: '2px solid var(--toss-border)',
-                                background: 'transparent',
-                                color: 'var(--toss-text-secondary)',
-                                fontSize: 13, fontWeight: 600, transition: 'all 0.15s',
-                              }
+                            : undefined
                         }
                       >
                         {PAYMENT_STATUS_LABEL[s]}
@@ -757,7 +742,7 @@ function DetailPanel({
               </div>
 
               {/* 읽기 전용 결제 정보 */}
-              <div style={{ marginTop: 8, background: 'var(--toss-bg)', border: '1px solid var(--toss-border)', borderRadius: 'var(--toss-radius-card)', overflow: 'hidden' }}>
+              <div className={certStyles.detailInfoBox}>
                 <DetailRow label="결제 수단" value={app.pay_method ?? '-'} />
                 <DetailRow label="결제번호" value={app.mul_no ?? '-'} mono />
                 <DetailRow label="주문번호" value={app.order_id ?? '-'} mono />
@@ -769,7 +754,7 @@ function DetailPanel({
               </div>
 
               {/* 기타 정보 */}
-              <div style={{ marginTop: 12, background: 'var(--toss-bg)', border: '1px solid var(--toss-border)', borderRadius: 'var(--toss-radius-card)', overflow: 'hidden' }}>
+              <div className={certStyles.detailInfoBoxMt12}>
                 <DetailRow label="출처" value={SOURCE_DISPLAY[app.source ?? ''] ?? app.source ?? '-'} />
                 <DetailRow label="신청일" value={new Date(app.created_at).toLocaleString('ko-KR')} />
                 {app.updated_at && <DetailRow label="수정일" value={new Date(app.updated_at).toLocaleString('ko-KR')} last />}
@@ -797,11 +782,12 @@ function DetailPanel({
 /** 상세 패널 내 행 (읽기 전용) */
 function DetailRow({ label, value, mono, last }: { label: string; value: React.ReactNode; mono?: boolean; last?: boolean }) {
   return (
-    <div className={styles.infoRow} style={{ padding: '10px 14px', borderBottom: last ? 'none' : '1px solid var(--toss-border)', alignItems: 'flex-start', gap: 12 }}>
-      <span className={styles.infoRowLabel} style={{ minWidth: 80, flexShrink: 0 }}>{label}</span>
+    <div
+      className={`${styles.infoRow} ${certStyles.detailRowInner} ${last ? certStyles.detailRowNoBorder : certStyles.detailRowBorderBottom}`}
+    >
+      <span className={`${styles.infoRowLabel} ${certStyles.detailRowLabel}`}>{label}</span>
       <span
-        className={styles.infoRowValue}
-        style={{ fontFamily: mono ? 'var(--font-mono)' : undefined, textAlign: 'left', wordBreak: 'break-all' }}
+        className={`${styles.infoRowValue} ${mono ? certStyles.detailRowValueMono : certStyles.detailRowValue}`}
       >
         {value ?? '-'}
       </span>
@@ -1008,30 +994,20 @@ function AddCertModal({
                   <label className={styles.funnelLabel}>
                     신청 자격증
                     {selectedCerts.length > 0 && (
-                      <span style={{ marginLeft: 6, fontSize: 12, color: '#3182F6', fontWeight: 600 }}>{selectedCerts.length}개 선택</span>
+                      <span className={certStyles.selectedCertCount}>{selectedCerts.length}개 선택</span>
                     )}
                   </label>
 
                   {/* 선택된 자격증 태그 */}
                   {selectedCerts.length > 0 && (
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+                    <div className={certStyles.selectedCertTagRow}>
                       {selectedCerts.map(cert => (
-                        <span
-                          key={cert}
-                          style={{
-                            display: 'inline-flex', alignItems: 'center', gap: 4,
-                            padding: '4px 10px', borderRadius: 16, fontSize: 12, fontWeight: 500,
-                            background: '#EBF3FE', color: '#3182F6',
-                          }}
-                        >
+                        <span key={cert} className={certStyles.selectedCertTag}>
                           {cert}
                           <button
                             type="button"
                             onClick={() => setSelectedCerts(prev => prev.filter(c => c !== cert))}
-                            style={{
-                              border: 'none', background: 'none', color: '#3182F6', cursor: 'pointer',
-                              fontSize: 14, lineHeight: 1, padding: 0, marginLeft: 2,
-                            }}
+                            className={certStyles.selectedCertTagRemoveBtn}
                           >
                             ×
                           </button>
@@ -1045,20 +1021,18 @@ function AddCertModal({
                     value={certSearch}
                     onChange={e => setCertSearch(e.target.value)}
                     placeholder="자격증 검색..."
-                    className={styles.funnelInput}
-                    style={{ marginBottom: 8 }}
+                    className={`${styles.funnelInput} ${certStyles.certSearchInput}`}
                   />
 
                   {/* 카테고리 탭 */}
                   {!certSearch.trim() && (
-                    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 8 }}>
+                    <div className={certStyles.certCategoryTabRow}>
                       {CERT_CATEGORIES.map(cat => (
                         <button
                           key={cat.label}
                           type="button"
                           onClick={() => setCertCategory(cat.label)}
-                          className={certCategory === cat.label ? styles.tagBtnV2Active : styles.tagBtnV2}
-                          style={{ fontSize: 11, padding: '4px 10px' }}
+                          className={`${certCategory === cat.label ? styles.tagBtnV2Active : styles.tagBtnV2} ${certStyles.certCategoryTabBtn}`}
                         >
                           {cat.label}
                         </button>
@@ -1067,12 +1041,9 @@ function AddCertModal({
                   )}
 
                   {/* 자격증 목록 */}
-                  <div style={{
-                    maxHeight: 180, overflowY: 'auto', border: '1px solid var(--toss-border)',
-                    borderRadius: 10, padding: 4,
-                  }}>
+                  <div className={certStyles.certListBox}>
                     {filteredOptions.length === 0 ? (
-                      <div style={{ padding: '12px 8px', color: '#8b95a1', fontSize: 13, textAlign: 'center' }}>
+                      <div className={certStyles.certListEmpty}>
                         검색 결과가 없습니다
                       </div>
                     ) : (
@@ -1085,22 +1056,9 @@ function AddCertModal({
                             onClick={() => setSelectedCerts(prev =>
                               isSelected ? prev.filter(c => c !== opt) : [...prev, opt]
                             )}
-                            style={{
-                              display: 'flex', alignItems: 'center', gap: 8, width: '100%',
-                              padding: '8px 10px', border: 'none', borderRadius: 8, cursor: 'pointer',
-                              fontSize: 13, textAlign: 'left',
-                              background: isSelected ? '#EBF3FE' : 'transparent',
-                              color: isSelected ? '#3182F6' : '#333D4B',
-                              fontWeight: isSelected ? 600 : 400,
-                            }}
+                            className={isSelected ? certStyles.certListItemSelected : certStyles.certListItem}
                           >
-                            <span style={{
-                              width: 18, height: 18, borderRadius: 4, flexShrink: 0,
-                              border: isSelected ? '2px solid #3182F6' : '2px solid #d1d6db',
-                              background: isSelected ? '#3182F6' : '#fff',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              fontSize: 11, color: '#fff',
-                            }}>
+                            <span className={isSelected ? certStyles.certListCheckboxSelected : certStyles.certListCheckbox}>
                               {isSelected && '✓'}
                             </span>
                             {opt}
@@ -1145,33 +1103,27 @@ function AddCertModal({
                   type="file"
                   accept="image/*"
                   onChange={handlePhotoChange}
-                  style={{ display: 'none' }}
+                  className={certStyles.hidden}
                 />
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className={styles.btnSecondary}
-                  style={{ width: '100%', padding: '10px', textAlign: 'center' }}
+                  className={`${styles.btnSecondary} ${certStyles.photoUploadBtn}`}
                 >
                   {photoFile ? photoFile.name : '사진 선택'}
                 </button>
                 {photoPreview && (
-                  <div style={{ marginTop: 8, position: 'relative' }}>
+                  <div className={certStyles.photoPreviewWrap}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={photoPreview}
                       alt="미리보기"
-                      style={{ width: '100%', borderRadius: 8, border: '1px solid var(--toss-border)', objectFit: 'cover', maxHeight: 200 }}
+                      className={certStyles.photoPreviewImg}
                     />
                     <button
                       type="button"
                       onClick={() => { setPhotoFile(null); setPhotoPreview(null) }}
-                      style={{
-                        position: 'absolute', top: 6, right: 6,
-                        background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%',
-                        color: '#fff', width: 24, height: 24, fontSize: 12, cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      }}
+                      className={certStyles.photoPreviewRemoveBtn}
                     >
                       ✕
                     </button>
@@ -1310,7 +1262,7 @@ function PCertDetailPanel({ item, onClose, onUpdate }: PCertDetailPanelProps) {
             <>
               <div className={styles.detailFieldRow}>
                 <span className={styles.detailFieldLabel}>유입경로</span>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <div className={certStyles.clickSourceRow}>
                   <input value={editClickSource} onChange={e => setEditClickSource(e.target.value)} placeholder="예) 맘카페_순광맘" className={`${styles.input} ${styles.inputFull}`} />
                   {editClickSource && <p className={styles.clickSourceTextPreview}>표시: {formatClickSourceDisplay(editClickSource)}</p>}
                 </div>
@@ -1356,7 +1308,7 @@ function PCertDetailPanel({ item, onClose, onUpdate }: PCertDetailPanelProps) {
                   ))}
                 </div>
                 {editCounselCheck.includes('기타') && (
-                  <input value={editCounselCheckEtc} onChange={e => setEditCounselCheckEtc(e.target.value)} placeholder="기타 내용 입력" className={`${styles.input} ${styles.inputFull}`} style={{ marginTop: 8 }} autoFocus />
+                  <input value={editCounselCheckEtc} onChange={e => setEditCounselCheckEtc(e.target.value)} placeholder="기타 내용 입력" className={`${styles.input} ${styles.inputFull} ${certStyles.mt8}`} autoFocus />
                 )}
               </div>
               <div className={styles.detailChipSection}>
@@ -1364,9 +1316,10 @@ function PCertDetailPanel({ item, onClose, onUpdate }: PCertDetailPanelProps) {
                 <div className={styles.detailChipRow}>
                   {CONSULTATION_STATUS_OPTIONS.map(s => (
                     <button key={s} type="button" onClick={() => setEditStatus(s)}
+                      className={editStatus === s ? certStyles.chipBtn : certStyles.chipBtnInactive}
                       style={editStatus === s
-                        ? { padding: '5px 12px', borderRadius: 20, cursor: 'pointer', border: `2px solid ${CONSULTATION_STATUS_STYLE[s].color}`, background: CONSULTATION_STATUS_STYLE[s].background, color: CONSULTATION_STATUS_STYLE[s].color, fontSize: 13, fontWeight: 600, transition: 'all 0.15s' }
-                        : { padding: '5px 12px', borderRadius: 20, cursor: 'pointer', border: '2px solid var(--toss-border)', background: 'transparent', color: 'var(--toss-text-secondary)', fontSize: 13, fontWeight: 600, transition: 'all 0.15s' }
+                        ? { border: `2px solid ${CONSULTATION_STATUS_STYLE[s].color}`, background: CONSULTATION_STATUS_STYLE[s].background, color: CONSULTATION_STATUS_STYLE[s].color }
+                        : undefined
                       }
                     >{s}</button>
                   ))}
@@ -1451,7 +1404,7 @@ function PCertAddModal({ onClose, onSaved }: { onClose: () => void; onSaved: () 
           </div>
           <div className={styles.modalFieldGroup}>
             <label className={styles.modalLabel}>취득사유</label>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <div className={certStyles.reasonBtnRow}>
               {REASON_OPTIONS.map(r => (
                 <button key={r} type="button" onClick={() => setForm(p => ({ ...p, reason: p.reason === r ? '' : r }))}
                   className={form.reason === r ? styles.tagBtnV2Active : styles.tagBtnV2}>{r}</button>
@@ -1484,7 +1437,7 @@ function PCertHighlight({ text, query }: { text: string | null; query: string })
       <>
         {parts.map((part, i) =>
           part.toLowerCase() === query.toLowerCase()
-            ? <mark key={i} style={{ background: '#FFE500', color: 'inherit', borderRadius: 2, padding: '0 1px' }}>{part}</mark>
+            ? <mark key={i} className={certStyles.pcertHighlightMark}>{part}</mark>
             : part
         )}
       </>
@@ -1507,7 +1460,7 @@ function PCertHighlight({ text, query }: { text: string | null; query: string })
     return (
       <>
         {text.slice(0, origStart)}
-        <mark style={{ background: '#FFE500', color: 'inherit', borderRadius: 2, padding: '0 1px' }}>{text.slice(origStart, origEnd)}</mark>
+        <mark className={certStyles.pcertHighlightMark}>{text.slice(origStart, origEnd)}</mark>
         {text.slice(origEnd)}
       </>
     );
@@ -1704,10 +1657,10 @@ function PrivateCertTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode
   return (
     <div>
       <div className={styles.filterRow}>
-        <input type="text" value={searchText} onChange={e => { setSearchText(e.target.value); setCurrentPage(1); }} placeholder="이름, 연락처, 취득사유 검색..." className={styles.input} style={{ width: 300 }} />
-        <input type="date" value={startDate} onChange={e => { setStartDate(e.target.value); setCurrentPage(1); }} className={styles.input} style={{ width: 140 }} />
+        <input type="text" value={searchText} onChange={e => { setSearchText(e.target.value); setCurrentPage(1); }} placeholder="이름, 연락처, 취득사유 검색..." className={`${styles.input} ${certStyles.pcertSearchInput}`} />
+        <input type="date" value={startDate} onChange={e => { setStartDate(e.target.value); setCurrentPage(1); }} className={`${styles.input} ${certStyles.dateInput140}`} />
         <span className={styles.dateSeparator}>~</span>
-        <input type="date" value={endDate} onChange={e => { setEndDate(e.target.value); setCurrentPage(1); }} className={styles.input} style={{ width: 140 }} />
+        <input type="date" value={endDate} onChange={e => { setEndDate(e.target.value); setCurrentPage(1); }} className={`${styles.input} ${certStyles.dateInput140}`} />
         {isFiltered && <button onClick={resetFilters} className={styles.btnSecondary}>필터 초기화</button>}
         {selectedIds.length > 0 && (
           <>
@@ -1790,10 +1743,9 @@ function PrivateCertTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode
                   <tr
                     key={item.id}
                     onClick={() => setSelectedItem(item)}
+                    className={certStyles.pcertTr}
                     style={{
-                      cursor: 'pointer',
                       background: selectedItem?.id === item.id ? '#EBF3FE' : selectedIds.includes(item.id) ? '#f0f7ff' : 'transparent',
-                      transition: 'background 0.1s',
                     }}
                     onMouseEnter={e => { if (selectedItem?.id !== item.id && !selectedIds.includes(item.id)) (e.currentTarget as HTMLTableRowElement).style.background = 'var(--toss-bg)'; }}
                     onMouseLeave={e => { if (selectedItem?.id !== item.id && !selectedIds.includes(item.id)) (e.currentTarget as HTMLTableRowElement).style.background = 'transparent'; }}
@@ -1802,7 +1754,7 @@ function PrivateCertTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode
                       <input type="checkbox" checked={selectedIds.includes(item.id)} onChange={() => toggleSelect(item.id)} className={styles.checkbox} />
                     </td>
                     <td className={styles.tdSecondary}>{parseClickSource(item.click_source).major || '-'}</td>
-                    <td className={styles.tdSecondary} style={parseClickSource(item.click_source).needsCheck ? { color: '#ef4444', fontWeight: 600 } : undefined}>{parseClickSource(item.click_source).minor || '-'}</td>
+                    <td className={`${styles.tdSecondary}${parseClickSource(item.click_source).needsCheck ? ` ${certStyles.tdNeedsCheck}` : ''}`}>{parseClickSource(item.click_source).minor || '-'}</td>
                     <td className={styles.tdBold}><PCertHighlight text={item.name} query={searchText} /></td>
                     <td className={styles.tdTabular}><PCertHighlight text={item.contact} query={searchText} /></td>
                     <td className={styles.tdSecondary}>{item.major_category ?? '-'}</td>
@@ -1838,13 +1790,13 @@ function PrivateCertTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode
 
       {totalPages > 1 && (
         <div className={styles.pagination}>
-          <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className={styles.pageBtn} style={{ marginRight: 4 }}>‹</button>
+          <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className={`${styles.pageBtn} ${certStyles.pageBtnMr4}`}>‹</button>
           {getPaginationPages(currentPage, totalPages).map((page, idx) =>
             page === '...'
               ? <span key={`ellipsis-${idx}`} className={styles.pageEllipsis}>…</span>
               : <button key={page} onClick={() => setCurrentPage(page as number)} className={page === currentPage ? styles.pageBtnActive : styles.pageBtn}>{page}</button>
           )}
-          <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className={styles.pageBtn} style={{ marginLeft: 4 }}>›</button>
+          <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className={`${styles.pageBtn} ${certStyles.pageBtnMl4}`}>›</button>
         </div>
       )}
 
@@ -1865,7 +1817,7 @@ function PrivateCertTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode
             <>
               <div className={`${styles.filterDropdownItem}${minorCategoryFilter === 'all' ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setMinorCategoryFilter('all'); setCurrentPage(1); setOpenFilterColumn(null); }}>전체</div>
               {needsCheckCount > 0 && (
-                <div className={`${styles.filterDropdownItem}${minorCategoryFilter === '__needs_check__' ? ` ${styles.filterDropdownItemActive}` : ''}`} style={{ color: '#ef4444', fontWeight: 600 }} onClick={() => { setMinorCategoryFilter('__needs_check__'); setCurrentPage(1); setOpenFilterColumn(null); }}>확인필요 ({needsCheckCount})</div>
+                <div className={`${styles.filterDropdownItem}${minorCategoryFilter === '__needs_check__' ? ` ${styles.filterDropdownItemActive}` : ''} ${certStyles.filterNeedsCheck}`} onClick={() => { setMinorCategoryFilter('__needs_check__'); setCurrentPage(1); setOpenFilterColumn(null); }}>확인필요 ({needsCheckCount})</div>
               )}
               {uniqueMinorCategories.map(m => (
                 <div key={m} className={`${styles.filterDropdownItem}${minorCategoryFilter === m ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setMinorCategoryFilter(m); setCurrentPage(1); setOpenFilterColumn(null); }}>{m}</div>
@@ -2069,7 +2021,7 @@ function ApplicationTab({ sourceTab }: { sourceTab: 'hakjeom' | 'edu' }) {
   // ─────────────────────────────────────────────
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column'}}>
+    <div className={certStyles.appTabWrap}>
 
       {/* 검색 / 필터 행 */}
       <div className={styles.filterRow}>
@@ -2078,14 +2030,12 @@ function ApplicationTab({ sourceTab }: { sourceTab: 'hakjeom' | 'edu' }) {
           placeholder="이름, 연락처 검색..."
           value={searchQuery}
           onChange={(e) => handleSearchChange(e.target.value)}
-          className={styles.input}
-          style={{ width: 300 }}
+          className={`${styles.input} ${certStyles.searchInput300}`}
         />
         <select
           value={statusFilter}
           onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1) }}
-          className={styles.select}
-          style={{ minWidth: 130 }}
+          className={`${styles.select} ${certStyles.selectMinW130}`}
         >
           {STATUS_FILTER_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -2126,11 +2076,11 @@ function ApplicationTab({ sourceTab }: { sourceTab: 'hakjeom' | 'edu' }) {
           <div className={styles.tableEmptyMsg}>신청 내역이 없습니다.</div>
         ) : (
           <div className={styles.tableOverflow}>
-            <table className={styles.table} style={{ minWidth: 900 }}>
+            <table className={`${styles.table} ${certStyles.tableMinW900}`}>
               <thead>
                 <tr>
                   {/* 전체 선택 체크박스 */}
-                  <th className={styles.thCenter} style={{ width: 44 }}>
+                  <th className={`${styles.thCenter} ${certStyles.thCheckboxW44}`}>
                     <input
                       type="checkbox"
                       className={styles.checkbox}
@@ -2170,8 +2120,7 @@ function ApplicationTab({ sourceTab }: { sourceTab: 'hakjeom' | 'edu' }) {
                   return (
                     <tr
                       key={app.id}
-                      className={isSelected ? styles.trSelected : styles.tr}
-                      style={app.is_checked && !isSelected ? { background: '#f0fdf4' } : undefined}
+                      className={`${isSelected ? styles.trSelected : styles.tr}${app.is_checked && !isSelected ? ` ${certStyles.trChecked}` : ''}`}
                     >
                       {/* 체크박스 */}
                       <td
@@ -2188,27 +2137,20 @@ function ApplicationTab({ sourceTab }: { sourceTab: 'hakjeom' | 'edu' }) {
 
                       {/* 이름 */}
                       <td
-                        className={styles.tdBold}
-                        style={{ cursor: 'pointer', whiteSpace: 'nowrap' }}
+                        className={`${styles.tdBold} ${certStyles.tdClickable}`}
                         onClick={() => setSelectedApp(app)}
                       >
                         <Highlight text={app.name} query={searchQuery} />
                         {app.is_checked && (
-                          <span className={styles.statusBadge} style={{
-                            marginLeft: 6,
-                            fontSize: 11,
-                            background: '#d1fae5',
-                            color: '#065f46',
-                          }}>
-                            확인
+                          <span className={`${styles.statusBadge} ${certStyles.issuedBadge}`}>
+                            발급완료
                           </span>
                         )}
                       </td>
 
                       {/* 연락처 */}
                       <td
-                        className={styles.tdTabular}
-                        style={{ cursor: 'pointer', whiteSpace: 'nowrap' }}
+                        className={`${styles.tdTabular} ${certStyles.tdClickable}`}
                         onClick={() => setSelectedApp(app)}
                       >
                         <Highlight text={app.contact} query={searchQuery} />
@@ -2217,16 +2159,14 @@ function ApplicationTab({ sourceTab }: { sourceTab: 'hakjeom' | 'edu' }) {
                       {/* 신청 자격증 */}
                       {sourceTab !== 'edu' && (
                         <td
-                          className={styles.td}
-                          style={{ cursor: 'pointer' }}
+                          className={`${styles.td} ${certStyles.tdClickable}`}
                           onClick={() => setSelectedApp(app)}
                         >
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, maxWidth: 260 }}>
+                          <div className={certStyles.certTagList}>
                             {app.certificates?.map((cert, idx) => (
                               <span
                                 key={idx}
-                                className={styles.statusBadge}
-                                style={{ background: 'var(--toss-blue-subtle)', color: 'var(--toss-blue)', fontSize: 11 }}
+                                className={`${styles.statusBadge} ${certStyles.certTagBadge}`}
                               >
                                 {cert}
                               </span>
@@ -2237,8 +2177,7 @@ function ApplicationTab({ sourceTab }: { sourceTab: 'hakjeom' | 'edu' }) {
 
                       {/* 결제 금액 */}
                       <td
-                        className={styles.tdTabular}
-                        style={{ cursor: 'pointer', whiteSpace: 'nowrap' }}
+                        className={`${styles.tdTabular} ${certStyles.tdClickable}`}
                         onClick={() => setSelectedApp(app)}
                       >
                         {app.amount ? `${app.amount.toLocaleString()}원` : '-'}
@@ -2246,8 +2185,7 @@ function ApplicationTab({ sourceTab }: { sourceTab: 'hakjeom' | 'edu' }) {
 
                       {/* 결제 상태 */}
                       <td
-                        className={styles.td}
-                        style={{ cursor: 'pointer', whiteSpace: 'nowrap' }}
+                        className={`${styles.td} ${certStyles.tdClickable}`}
                         onClick={() => setSelectedApp(app)}
                       >
                         <PaymentBadge status={app.payment_status} />
@@ -2255,18 +2193,12 @@ function ApplicationTab({ sourceTab }: { sourceTab: 'hakjeom' | 'edu' }) {
 
                       {/* 출처 */}
                       <td
-                        className={styles.tdSecondary}
-                        style={{ cursor: 'pointer', whiteSpace: 'nowrap', fontSize: 13, color: 'var(--toss-text-secondary)' }}
+                        className={`${styles.tdSecondary} ${certStyles.tdSource}`}
                         onClick={() => setSelectedApp(app)}
                       >
                         {SOURCE_DISPLAY[app.source ?? ''] ?? app.source ?? '-'}
                         {app.ref && (
-                          <span className={styles.statusBadge} style={{
-                            marginLeft: 6,
-                            fontSize: 10,
-                            background: '#ede9fe',
-                            color: '#6d28d9',
-                          }}>
+                          <span className={`${styles.statusBadge} ${certStyles.refBadge}`}>
                             {app.ref}
                           </span>
                         )}
@@ -2274,13 +2206,12 @@ function ApplicationTab({ sourceTab }: { sourceTab: 'hakjeom' | 'edu' }) {
 
                       {/* 신청일 */}
                       <td
-                        className={styles.tdDateSmall}
-                        style={{ cursor: 'pointer', color: 'var(--toss-text-secondary)', fontSize: 13 }}
+                        className={`${styles.tdDateSmall} ${certStyles.tdDate}`}
                         onClick={() => setSelectedApp(app)}
                       >
                         {new Date(app.created_at).toLocaleDateString('ko-KR')}
                         <br />
-                        <span style={{ fontSize: 12 }}>
+                        <span className={certStyles.tdDateTime}>
                           {new Date(app.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </td>
@@ -2298,10 +2229,9 @@ function ApplicationTab({ sourceTab }: { sourceTab: 'hakjeom' | 'edu' }) {
       {!loading && totalPages > 1 && (
         <div className={styles.pagination}>
           <button
-            className={styles.pageBtn}
+            className={`${styles.pageBtn} ${safePage <= 1 ? certStyles.pageBtnDisabled : certStyles.pageBtnActive}`}
             disabled={safePage <= 1}
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            style={{ opacity: safePage <= 1 ? 0.4 : 1 }}
           >
             ‹
           </button>
@@ -2319,10 +2249,9 @@ function ApplicationTab({ sourceTab }: { sourceTab: 'hakjeom' | 'edu' }) {
             ),
           )}
           <button
-            className={styles.pageBtn}
+            className={`${styles.pageBtn} ${safePage >= totalPages ? certStyles.pageBtnDisabled : certStyles.pageBtnActive}`}
             disabled={safePage >= totalPages}
             onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-            style={{ opacity: safePage >= totalPages ? 0.4 : 1 }}
           >
             ›
           </button>
@@ -2644,23 +2573,17 @@ function CertStatsTab() {
       <div className={styles.statsSourceToggleWrap}>
         <div ref={srcBarRef} className={styles.statsSourceBar}>
           {srcPill && (
-            <div style={{
-              position: 'absolute', bottom: 0, left: srcPill.left, width: srcPill.width, height: '100%',
-              background: 'rgba(2,32,71,0.08)', borderRadius: 32,
-              transition: 'left 0.22s cubic-bezier(0.4,0,0.2,1), width 0.22s cubic-bezier(0.4,0,0.2,1)',
-              zIndex: 0,
-            }} />
+            <div
+              className={certStyles.srcPillBase}
+              style={{ left: srcPill.left, width: srcPill.width }}
+            />
           )}
           {CERT_STATS_SOURCE_LABELS.map((s, i) => (
             <button
               key={s.id}
               ref={el => { srcRefs.current[i] = el; }}
               onClick={() => setSource(s.id)}
-              className={styles.statsSourceBtn}
-              style={{
-                fontWeight: source === s.id ? 700 : 500,
-                color: source === s.id ? '#191f28' : '#8b95a1',
-              }}
+              className={`${styles.statsSourceBtn} ${source === s.id ? certStyles.statsSourceBtnActive : certStyles.statsSourceBtnInactive}`}
             >{s.label}</button>
           ))}
         </div>
@@ -2672,13 +2595,7 @@ function CertStatsTab() {
           <button
             key={t.id}
             onClick={() => setSubTab(t.id)}
-            className={styles.statsSubTabBtn}
-            style={{
-              borderBottom: subTab === t.id ? '2px solid #191f28' : '2px solid transparent',
-              marginBottom: -1,
-              fontWeight: subTab === t.id ? 700 : 400,
-              color: subTab === t.id ? '#191f28' : '#8b95a1',
-            }}
+            className={`${styles.statsSubTabBtn} ${subTab === t.id ? certStyles.statsSubTabBtnActive : certStyles.statsSubTabBtnInactive}`}
           >{t.label}</button>
         ))}
       </div>

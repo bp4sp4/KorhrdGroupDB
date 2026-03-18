@@ -1,0 +1,540 @@
+/* ─────────────────────────────────────────────────────────
+   cert/page.module.css
+   cert 페이지 전용 클래스 (hakjeom/page.module.css 보완)
+   ───────────────────────────────────────────────────────── */
+
+/* ── Highlight mark ── */
+.highlightMark {
+  background: #fef08a;
+  color: inherit;
+  border-radius: 2px;
+}
+
+.pcertHighlightMark {
+  background: #FFE500;
+  color: inherit;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+/* ── StatCard ── */
+.statCardWrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.statCardLabel {
+  margin: 0 0 8px 0;
+}
+
+.statCardValue {
+  margin: 0;
+}
+
+.statCardValueHighlight {
+  color: var(--toss-blue);
+  margin: 0;
+}
+
+.statCardUnit {
+  font-size: 14px;
+  font-weight: 500;
+  margin-left: 4px;
+  color: var(--toss-text-secondary);
+}
+
+/* ── StatusSelect checkmark span ── */
+.statusSelectCheck {
+  margin-left: auto;
+  font-size: 11px;
+}
+
+/* ── DetailPanel: 제출 사진 영역 ── */
+.photoRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.photoThumb {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid var(--toss-border);
+  flex-shrink: 0;
+}
+
+.photoDownloadBtn {
+  font-size: 12px;
+  color: var(--toss-blue);
+  background: transparent;
+  border: 1px solid var(--toss-blue);
+  border-radius: 6px;
+  padding: 3px 8px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+/* ── DetailPanel / PCertDetailPanel: 칩 버튼 (active / inactive) ── */
+/* active 상태는 동적 색상을 인라인으로 유지하되, 공통 구조는 클래스로 처리 */
+.chipBtn {
+  padding: 5px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+
+.chipBtnInactive {
+  padding: 5px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 2px solid var(--toss-border);
+  background: transparent;
+  color: var(--toss-text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+
+/* ── DetailPanel: 읽기 전용 정보 박스 ── */
+.detailInfoBox {
+  background: var(--toss-bg);
+  border: 1px solid var(--toss-border);
+  border-radius: var(--toss-radius-card);
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.detailInfoBoxMt12 {
+  background: var(--toss-bg);
+  border: 1px solid var(--toss-border);
+  border-radius: var(--toss-radius-card);
+  overflow: hidden;
+  margin-top: 12px;
+}
+
+/* ── DetailRow ── */
+.detailRowInner {
+  padding: 10px 14px;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.detailRowLabel {
+  min-width: 80px;
+  flex-shrink: 0;
+}
+
+.detailRowValueMono {
+  font-family: var(--font-mono);
+  text-align: left;
+  word-break: break-all;
+}
+
+.detailRowValue {
+  text-align: left;
+  word-break: break-all;
+}
+
+/* ── AddCertModal: 진행 바 fill ── */
+/* width는 인라인으로 동적 처리, 나머지 구조 클래스화 */
+
+/* ── AddCertModal: 선택 자격증 카운트 span ── */
+.selectedCertCount {
+  margin-left: 6px;
+  font-size: 12px;
+  color: #3182F6;
+  font-weight: 600;
+}
+
+/* ── AddCertModal: 선택된 자격증 태그 묶음 ── */
+.selectedCertTagRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.selectedCertTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  background: #EBF3FE;
+  color: #3182F6;
+}
+
+.selectedCertTagRemoveBtn {
+  border: none;
+  background: none;
+  color: #3182F6;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
+  margin-left: 2px;
+}
+
+/* ── AddCertModal: 검색 input 여백 ── */
+.certSearchInput {
+  margin-bottom: 8px;
+}
+
+/* ── AddCertModal: 카테고리 탭 행 ── */
+.certCategoryTabRow {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.certCategoryTabBtn {
+  font-size: 11px;
+  padding: 4px 10px;
+}
+
+/* ── AddCertModal: 자격증 목록 스크롤 박스 ── */
+.certListBox {
+  max-height: 180px;
+  overflow-y: auto;
+  border: 1px solid var(--toss-border);
+  border-radius: 10px;
+  padding: 4px;
+}
+
+.certListEmpty {
+  padding: 12px 8px;
+  color: #8b95a1;
+  font-size: 13px;
+  text-align: center;
+}
+
+/* 자격증 목록 항목 (선택/비선택은 data-selected attribute로 처리) */
+.certListItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  text-align: left;
+  background: transparent;
+  color: #333D4B;
+  font-weight: 400;
+}
+
+.certListItemSelected {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  text-align: left;
+  background: #EBF3FE;
+  color: #3182F6;
+  font-weight: 600;
+}
+
+.certListCheckbox {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  border: 2px solid #d1d6db;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: #fff;
+}
+
+.certListCheckboxSelected {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  border: 2px solid #3182F6;
+  background: #3182F6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: #fff;
+}
+
+/* ── AddCertModal: 사진 버튼 ── */
+.photoUploadBtn {
+  width: 100%;
+  padding: 10px;
+  text-align: center;
+}
+
+/* ── AddCertModal: 사진 미리보기 컨테이너 ── */
+.photoPreviewWrap {
+  margin-top: 8px;
+  position: relative;
+}
+
+.photoPreviewImg {
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid var(--toss-border);
+  object-fit: cover;
+  max-height: 200px;
+}
+
+.photoPreviewRemoveBtn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: rgba(0, 0, 0, 0.5);
+  border: none;
+  border-radius: 50%;
+  color: #fff;
+  width: 24px;
+  height: 24px;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── PCertDetailPanel: 유입경로 input 행 ── */
+.clickSourceRow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ── PCertAddModal: 취득사유 버튼 행 ── */
+.reasonBtnRow {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* ── PrivateCertTab: 테이블 행 ── */
+.pcertTr {
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+/* ── PrivateCertTab: 중분류 td 확인필요 강조 ── */
+.tdNeedsCheck {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+/* ── PrivateCertTab: 필터 드롭다운 아이템 확인필요 ── */
+.filterNeedsCheck {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+/* ── ApplicationTab: wrapper ── */
+.appTabWrap {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── ApplicationTab: 검색 input ── */
+.searchInput300 {
+  width: 300px;
+}
+
+/* ── ApplicationTab: select 최소 너비 ── */
+.selectMinW130 {
+  min-width: 130px;
+}
+
+/* ── ApplicationTab: 테이블 최소 너비 ── */
+.tableMinW900 {
+  min-width: 900px;
+}
+
+/* ── ApplicationTab: checkbox th 너비 ── */
+.thCheckboxW44 {
+  width: 44px;
+}
+
+/* ── ApplicationTab: 체크된 행 배경 (발급완료) ── */
+.trChecked {
+  background: #f0fdf4;
+}
+
+/* ── ApplicationTab: td 클릭 가능 (cursor + nowrap) ── */
+.tdClickable {
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* ── ApplicationTab: 발급완료 배지 ── */
+.issuedBadge {
+  margin-left: 6px;
+  font-size: 11px;
+  background: #d1fae5;
+  color: #065f46;
+}
+
+/* ── ApplicationTab: 자격증 태그 목록 div ── */
+.certTagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-width: 260px;
+}
+
+/* ── ApplicationTab: 자격증 배지 (blue) ── */
+.certTagBadge {
+  background: var(--toss-blue-subtle);
+  color: var(--toss-blue);
+  font-size: 11px;
+}
+
+/* ── DetailPanel 상세 탭: 자격증 preview 태그 묶음 ── */
+.certPreviewRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 0 0 0 94px;
+}
+
+.certPreviewBadge {
+  background: var(--toss-blue-subtle);
+  color: var(--toss-blue);
+  font-size: 11px;
+}
+
+/* ── ApplicationTab: ref 배지 ── */
+.refBadge {
+  margin-left: 6px;
+  font-size: 10px;
+  background: #ede9fe;
+  color: #6d28d9;
+}
+
+/* ── ApplicationTab: td 출처 ── */
+.tdSource {
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--toss-text-secondary);
+}
+
+/* ── ApplicationTab: td 신청일 ── */
+.tdDate {
+  cursor: pointer;
+  color: var(--toss-text-secondary);
+  font-size: 13px;
+}
+
+.tdDateTime {
+  font-size: 12px;
+}
+
+/* ── ApplicationTab: 페이지네이션 버튼 ── */
+.pageBtnActive {
+  opacity: 1;
+}
+
+.pageBtnDisabled {
+  opacity: 0.4;
+}
+
+/* ── CertStatsTab: srcPill 슬라이딩 배경 ──
+   left, width는 동적이라 인라인 유지 */
+.srcPillBase {
+  position: absolute;
+  bottom: 0;
+  height: 100%;
+  background: rgba(2, 32, 71, 0.08);
+  border-radius: 32px;
+  transition: left 0.22s cubic-bezier(0.4, 0, 0.2, 1), width 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 0;
+}
+
+/* ── CertStatsTab: 소스 버튼 active / inactive ── */
+.statsSourceBtnActive {
+  font-weight: 700;
+  color: #191f28;
+}
+
+.statsSourceBtnInactive {
+  font-weight: 500;
+  color: #8b95a1;
+}
+
+/* ── CertStatsTab: 서브탭 버튼 active / inactive ── */
+.statsSubTabBtnActive {
+  border-bottom: 2px solid #191f28;
+  margin-bottom: -1px;
+  font-weight: 700;
+  color: #191f28;
+}
+
+.statsSubTabBtnInactive {
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  font-weight: 400;
+  color: #8b95a1;
+}
+
+/* ── CertStatsCard: badge ── */
+/* background, color는 동적이라 인라인 유지 */
+
+/* ── CertStatsCard: value ── */
+/* color는 동적이라 인라인 유지 */
+
+/* ── PrivateCertTab: 날짜 input ── */
+.dateInput140 {
+  width: 140px;
+}
+
+/* ── PrivateCertTab: 검색 input ── */
+.pcertSearchInput {
+  width: 300px;
+}
+
+/* ── 파일 input 숨김 ── */
+.hidden {
+  display: none;
+}
+
+/* ── 단순 marginTop 유틸 ── */
+.mt8 {
+  margin-top: 8px;
+}
+
+/* ── 페이지네이션 버튼 margin ── */
+.pageBtnMr4 {
+  margin-right: 4px;
+}
+
+.pageBtnMl4 {
+  margin-left: 4px;
+}
+
+/* ── DetailRow: last 분기 처리용 ── */
+.detailRowBorderBottom {
+  border-bottom: 1px solid var(--toss-border);
+}
+
+.detailRowNoBorder {
+  border-bottom: none;
+}

@@ -99,6 +99,50 @@ export async function GET(request: NextRequest) {
 }
 
 /**
+ * POST /api/practice
+ * 바디: { name, contact, ...선택 필드 }
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const { name, contact, ...rest } = body as Partial<PracticeConsultation> & { name: string; contact: string }
+
+    if (!name?.trim() || !contact?.trim()) {
+      return NextResponse.json({ error: '이름과 연락처는 필수입니다.' }, { status: 400 })
+    }
+
+    const ALLOWED_INSERT_FIELDS: (keyof PracticeConsultation)[] = [
+      'type', 'education', 'hope_course', 'residence', 'address', 'study_method',
+      'progress', 'practice_place', 'employment_after_cert', 'student_status',
+      'reason', 'click_source', 'memo', 'manager', 'subject_cost',
+      'service_practice', 'service_employment', 'employment_hope_time',
+      'employment_support_fund', 'practice_planned_date',
+    ]
+
+    const insertPayload: Record<string, unknown> = { name: name.trim(), contact: contact.trim(), status: '상담대기' }
+    for (const key of ALLOWED_INSERT_FIELDS) {
+      if (key in rest) insertPayload[key] = (rest as Record<string, unknown>)[key]
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from('practice_consultations')
+      .insert(insertPayload)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('[POST /api/practice] Supabase error:', error)
+      return NextResponse.json({ error: '저장에 실패했습니다.', detail: error.message }, { status: 500 })
+    }
+
+    return NextResponse.json(data, { status: 201 })
+  } catch (err) {
+    console.error('[POST /api/practice] Unexpected error:', err)
+    return NextResponse.json({ error: '서버 오류가 발생했습니다.' }, { status: 500 })
+  }
+}
+
+/**
  * PATCH /api/practice
  * 바디: { id: number, ...업데이트할 필드 }
  * id 필드는 필수. 업데이트 가능 필드: status, memo, manager, notes, progress, practice_place,
@@ -128,6 +172,15 @@ export async function PATCH(request: NextRequest) {
       'practice_planned_date',
       'subject_cost',
       'is_completed',
+      'service_practice',
+      'service_employment',
+      'employment_support_fund',
+      'type',
+      'education',
+      'hope_course',
+      'residence',
+      'address',
+      'study_method',
     ]
 
     const updatePayload: Partial<PracticeConsultation> = {}
@@ -168,5 +221,39 @@ export async function PATCH(request: NextRequest) {
       { error: '서버 오류가 발생했습니다.' },
       { status: 500 }
     )
+  }
+}
+
+/**
+ * DELETE /api/practice
+ * 바디: { ids: number[] }
+ */
+export async function DELETE(request: NextRequest) {
+  try {
+    const body = await request.json()
+    const { ids } = body as { ids: number[] }
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return NextResponse.json({ error: 'ids 배열이 필요합니다.' }, { status: 400 })
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from('practice_consultations')
+      .delete()
+      .in('id', ids)
+      .select()
+
+    if (error) {
+      console.error('[DELETE /api/practice] Supabase error:', error)
+      return NextResponse.json(
+        { error: '삭제에 실패했습니다.', detail: error.message },
+        { status: 500 }
+      )
+    }
+
+    return NextResponse.json({ message: '삭제되었습니다.', data })
+  } catch (err) {
+    console.error('[DELETE /api/practice] Unexpected error:', err)
+    return NextResponse.json({ error: '서버 오류가 발생했습니다.' }, { status: 500 })
   }
 }
