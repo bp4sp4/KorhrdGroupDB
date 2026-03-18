@@ -1,3 +1,4 @@
+import { requireAuth } from '@/lib/auth/requireAuth'
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 
@@ -27,6 +28,8 @@ const TABLE = 'private_cert_consultations';
 
 export async function GET() {
   try {
+    const { user: _user, errorResponse } = await requireAuth()
+    if (errorResponse) return errorResponse
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
       return NextResponse.json({ error: 'Supabase configuration missing' }, { status: 500 });
     }
@@ -54,6 +57,8 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const { user: _user, errorResponse } = await requireAuth()
+    if (errorResponse) return errorResponse
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
       return NextResponse.json({ error: 'Supabase configuration missing' }, { status: 500 });
     }
@@ -104,6 +109,8 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
+    const { user: _user, errorResponse } = await requireAuth()
+    if (errorResponse) return errorResponse
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
       return NextResponse.json({ error: 'Supabase configuration missing' }, { status: 500 });
     }
@@ -165,6 +172,8 @@ export async function PATCH(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const { user: _user, errorResponse } = await requireAuth()
+    if (errorResponse) return errorResponse
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
       return NextResponse.json({ error: 'Supabase configuration missing' }, { status: 500 });
     }

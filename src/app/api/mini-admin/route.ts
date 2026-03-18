@@ -1,3 +1,4 @@
+import { requireAuth } from '@/lib/auth/requireAuth'
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
@@ -5,6 +6,8 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 // GET: 미니관리자의 ref_code와 매칭되는 자격증 신청 목록 조회
 export async function GET(request: NextRequest) {
   try {
+    const { user: _user, errorResponse } = await requireAuth()
+    if (errorResponse) return errorResponse
     // 로그인한 유저 확인
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();

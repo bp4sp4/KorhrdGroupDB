@@ -1,3 +1,4 @@
+import { requireAuth } from '@/lib/auth/requireAuth'
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 
@@ -35,6 +36,8 @@ export interface EmploymentApplication {
  */
 export async function GET(request: NextRequest) {
   try {
+    const { user: _user, errorResponse } = await requireAuth()
+    if (errorResponse) return errorResponse
     const { searchParams } = request.nextUrl
     const search = searchParams.get('search')?.trim() ?? ''
     const status = searchParams.get('status') ?? ''
@@ -84,6 +87,8 @@ export async function GET(request: NextRequest) {
  */
 export async function PATCH(request: NextRequest) {
   try {
+    const { user: _user, errorResponse } = await requireAuth()
+    if (errorResponse) return errorResponse
     const body = await request.json()
     const { id, ...fields } = body as { id: string } & Partial<EmploymentApplication>
 
@@ -138,6 +143,8 @@ export async function PATCH(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   try {
+    const { user: _user, errorResponse } = await requireAuth()
+    if (errorResponse) return errorResponse
     const body = await request.json()
     const { ids } = body as { ids: string[] }
 

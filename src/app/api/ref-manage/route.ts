@@ -1,3 +1,4 @@
+import { requireAuth } from '@/lib/auth/requireAuth'
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
@@ -21,6 +22,8 @@ async function checkAdmin() {
 // GET: mini-admin 목록 조회
 export async function GET() {
   try {
+    const { user: _user, errorResponse } = await requireAuth()
+    if (errorResponse) return errorResponse
     const user = await checkAdmin();
     if (!user) {
       return NextResponse.json({ error: '권한이 없습니다.' }, { status: 403 });
@@ -45,6 +48,8 @@ export async function GET() {
 // POST: mini-admin 계정 생성
 export async function POST(request: NextRequest) {
   try {
+    const { user: _user, errorResponse } = await requireAuth()
+    if (errorResponse) return errorResponse
     const user = await checkAdmin();
     if (!user) {
       return NextResponse.json({ error: '권한이 없습니다.' }, { status: 403 });
@@ -94,6 +99,8 @@ export async function POST(request: NextRequest) {
 // PATCH: ref_code 또는 display_name 수정
 export async function PATCH(request: NextRequest) {
   try {
+    const { user: _user, errorResponse } = await requireAuth()
+    if (errorResponse) return errorResponse
     const user = await checkAdmin();
     if (!user) {
       return NextResponse.json({ error: '권한이 없습니다.' }, { status: 403 });

@@ -1,3 +1,4 @@
+import { requireAuth } from '@/lib/auth/requireAuth'
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 
@@ -16,6 +17,8 @@ const TABLES = Object.keys(SOURCE_LABEL);
 
 export async function GET() {
   try {
+    const { user: _user, errorResponse } = await requireAuth()
+    if (errorResponse) return errorResponse
     const results: {
       id: string | number;
       source_table: string;
@@ -82,6 +85,8 @@ export async function GET() {
 
 export async function PATCH(request: NextRequest) {
   try {
+    const { user: _user, errorResponse } = await requireAuth()
+    if (errorResponse) return errorResponse
     const body = await request.json();
     const { source_table, ids } = body;
 
@@ -115,6 +120,8 @@ export async function PATCH(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const { user: _user, errorResponse } = await requireAuth()
+    if (errorResponse) return errorResponse
     const body = await request.json();
     const { source_table, ids, all } = body;
 

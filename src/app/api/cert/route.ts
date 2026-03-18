@@ -1,3 +1,4 @@
+import { requireAuth } from '@/lib/auth/requireAuth'
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 
@@ -30,6 +31,8 @@ interface CertUpdatePayload {
 //   - source: 출처 탭 필터 (hakjeom | edu | all)
 export async function GET(request: NextRequest) {
   try {
+    const { user: _user, errorResponse } = await requireAuth()
+    if (errorResponse) return errorResponse
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
       return NextResponse.json({ error: 'Supabase configuration missing' }, { status: 500 });
     }
@@ -85,6 +88,8 @@ export async function GET(request: NextRequest) {
 // PATCH: 필드 업데이트 (id 필수)
 export async function PATCH(request: NextRequest) {
   try {
+    const { user: _user, errorResponse } = await requireAuth()
+    if (errorResponse) return errorResponse
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
       return NextResponse.json({ error: 'Supabase configuration missing' }, { status: 500 });
     }
@@ -155,6 +160,8 @@ export async function PATCH(request: NextRequest) {
 // DELETE: 일괄 삭제 (ids 배열 필수)
 export async function DELETE(request: NextRequest) {
   try {
+    const { user: _user, errorResponse } = await requireAuth()
+    if (errorResponse) return errorResponse
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
       return NextResponse.json({ error: 'Supabase configuration missing' }, { status: 500 });
     }
@@ -186,6 +193,8 @@ export async function DELETE(request: NextRequest) {
 // POST: 신규 신청 추가 (FormData - 사진 포함)
 export async function POST(request: NextRequest) {
   try {
+    const { user: _user, errorResponse } = await requireAuth()
+    if (errorResponse) return errorResponse
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
       return NextResponse.json({ error: 'Supabase configuration missing' }, { status: 500 });
     }
