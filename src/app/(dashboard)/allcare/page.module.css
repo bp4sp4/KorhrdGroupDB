@@ -36,6 +36,32 @@
   margin-top: 4px;
 }
 
+.revenueBreakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--toss-border);
+}
+
+.revenueRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.revenueLabel {
+  font-size: 12px;
+  color: var(--toss-text-tertiary);
+}
+
+.revenueAmt {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--toss-text-secondary);
+}
+
 /* 탭 */
 .tabs {
   display: flex;

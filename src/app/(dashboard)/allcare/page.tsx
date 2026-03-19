@@ -343,9 +343,20 @@ export default function AllcarePage() {
         <div className={styles.statCard}>
           <p className={styles.statLabel}>총 매출</p>
           <p className={styles.statValue}>{stats ? fmt(stats.totalRevenue) : '-'}</p>
-          <p className={styles.statSub}>
-            구독 {stats ? fmt(stats.subscriptionRevenue) : '-'} &middot; 단과 {stats ? fmt(stats.customRevenue) : '-'}
-          </p>
+          <div className={styles.revenueBreakdown}>
+            <div className={styles.revenueRow}>
+              <span className={styles.revenueLabel}>구독</span>
+              <span className={styles.revenueAmt}>{stats ? fmt(stats.subscriptionRevenue) : '-'}</span>
+            </div>
+            <div className={styles.revenueRow}>
+              <span className={styles.revenueLabel}>패키지</span>
+              <span className={styles.revenueAmt}>{stats ? fmt(stats.packageRevenue) : '-'}</span>
+            </div>
+            <div className={styles.revenueRow}>
+              <span className={styles.revenueLabel}>단과</span>
+              <span className={styles.revenueAmt}>{stats ? fmt(stats.customRevenue) : '-'}</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -410,7 +421,7 @@ export default function AllcarePage() {
                       <th>가입일</th>
                       <th>구독 상태</th>
                       <th>플랜</th>
-                      <th>금액</th>
+                      <th>구독료</th>
                       <th>다음 결제일</th>
                       <th>실습매칭 열람권</th>
                       <th>관리</th>

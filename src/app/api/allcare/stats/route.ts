@@ -17,7 +17,7 @@ export async function GET() {
     allcareAdmin.from('users').select('*', { count: 'exact', head: true }),
     allcareAdmin.from('subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'active').is('cancelled_at', null),
     allcareAdmin.from('subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'active').not('cancelled_at', 'is', null),
-    allcareAdmin.from('payments').select('amount').eq('status', 'completed').not('order_id', 'like', 'PKG-%').not('order_id', 'like', 'CUSTOM-%'),
+    allcareAdmin.from('payments').select('amount').eq('status', 'completed').like('order_id', 'SUBS-%'),
     allcareAdmin.from('payments').select('amount').eq('status', 'completed').like('order_id', 'PKG-%'),
     allcareAdmin.from('payments').select('amount').eq('status', 'completed').like('order_id', 'CUSTOM-%'),
   ])

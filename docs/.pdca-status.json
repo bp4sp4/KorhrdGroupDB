@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-03-19T05:55:43.525Z",
+  "lastUpdated": "2026-03-19T06:18:43.611Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -35,7 +35,9 @@
     "allcare",
     "update",
     "access",
-    "webhook"
+    "webhook",
+    "reset-subs",
+    "reset-order"
   ],
   "primaryFeature": "supabase",
   "features": {
@@ -191,7 +193,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T06:02:01.426Z",
-        "lastUpdated": "2026-03-19T05:03:41.158Z"
+        "lastUpdated": "2026-03-19T06:18:43.611Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/allcare/stats/route.ts"
     },
@@ -438,7 +440,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-19T03:56:50.293Z",
-        "lastUpdated": "2026-03-19T05:33:32.276Z"
+        "lastUpdated": "2026-03-19T06:08:56.248Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/allcare/page.tsx"
     },
@@ -480,6 +482,32 @@
         "lastUpdated": "2026-03-19T05:15:33.278Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/allcare/src/app/api/payments/webhook/route.ts"
+    },
+    "reset-subs": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-03-19T06:10:39.332Z",
+        "lastUpdated": "2026-03-19T06:10:39.332Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/allcare/reset-subs/route.ts"
+    },
+    "reset-order": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-03-19T06:15:59.255Z",
+        "lastUpdated": "2026-03-19T06:15:59.255Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/allcare/reset-order/route.ts"
     }
   },
   "pipeline": {
@@ -490,7 +518,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-03-19T05:55:43.525Z"
+    "lastActivity": "2026-03-19T06:18:43.611Z"
   },
   "history": [
     {
@@ -4384,6 +4412,48 @@
     {
       "timestamp": "2026-03-19T05:55:43.525Z",
       "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-19T06:00:45.598Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-19T06:07:57.562Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-19T06:08:43.287Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-19T06:08:56.248Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-19T06:10:39.332Z",
+      "feature": "reset-subs",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-19T06:15:59.255Z",
+      "feature": "reset-order",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-19T06:18:43.611Z",
+      "feature": "stats",
       "phase": "do",
       "action": "updated"
     }
