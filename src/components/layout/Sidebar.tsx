@@ -2,9 +2,10 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { GraduationCap, FileText, Briefcase, ChevronLeft, ChevronRight, Users, UserCog, Trash2 } from 'lucide-react'
 import styles from './layout.module.css'
+import { createClient } from '@/lib/supabase/client'
 
 interface NavItem {
   id: string
@@ -63,13 +64,38 @@ export default function Sidebar({ userRole }: SidebarProps) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
   const [trashCount, setTrashCount] = useState<number>(0)
+  const channelRef = useRef<ReturnType<ReturnType<typeof createClient>['channel']> | null>(null)
 
   useEffect(() => {
     if (userRole === 'mini-admin') return
-    fetch('/api/trash')
-      .then(r => r.ok ? r.json() : [])
-      .then((data: unknown[]) => setTrashCount(Array.isArray(data) ? data.length : 0))
-      .catch(() => {})
+
+    const fetchCount = () => {
+      fetch('/api/trash')
+        .then(r => r.ok ? r.json() : [])
+        .then((data: unknown[]) => setTrashCount(Array.isArray(data) ? data.length : 0))
+        .catch(() => {})
+    }
+
+    fetchCount()
+    const interval = setInterval(fetchCount, 5000)
+
+    const supabase = createClient()
+    const tables = ['hakjeom_consultations', 'private_cert_consultations', 'certificate_applications', 'agency_agreements']
+    const channel = supabase.channel('sidebar-trash-count')
+    tables.forEach(table => {
+      channel.on('postgres_changes', { event: '*', schema: 'public', table }, () => {
+        fetchCount()
+      })
+    })
+    channel.subscribe()
+    channelRef.current = channel
+
+    return () => {
+      clearInterval(interval)
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current)
+      }
+    }
   }, [userRole])
 
   const navItems = userRole === 'mini-admin' ? MINI_ADMIN_NAV_ITEMS : ADMIN_NAV_ITEMS
