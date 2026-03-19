@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-03-19T05:11:01.095Z",
+  "lastUpdated": "2026-03-19T05:22:51.289Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -438,7 +438,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-19T03:56:50.293Z",
-        "lastUpdated": "2026-03-19T05:08:14.882Z"
+        "lastUpdated": "2026-03-19T05:22:51.289Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/allcare/page.tsx"
     },
@@ -477,7 +477,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-19T05:10:34.137Z",
-        "lastUpdated": "2026-03-19T05:11:01.095Z"
+        "lastUpdated": "2026-03-19T05:15:33.278Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/allcare/src/app/api/payments/webhook/route.ts"
     }
@@ -490,7 +490,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-03-19T05:11:01.095Z"
+    "lastActivity": "2026-03-19T05:22:51.289Z"
   },
   "history": [
     {
@@ -4276,6 +4276,72 @@
     {
       "timestamp": "2026-03-19T05:11:01.095Z",
       "feature": "webhook",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-19T05:15:14.126Z",
+      "feature": "webhook",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-19T05:15:24.836Z",
+      "feature": "webhook",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-19T05:15:33.278Z",
+      "feature": "webhook",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-19T05:21:15.088Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-19T05:21:28.489Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-19T05:21:35.979Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-19T05:21:42.487Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-19T05:21:47.779Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-19T05:22:00.044Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-19T05:22:42.808Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-19T05:22:51.289Z",
+      "feature": "allcare",
       "phase": "do",
       "action": "updated"
     }

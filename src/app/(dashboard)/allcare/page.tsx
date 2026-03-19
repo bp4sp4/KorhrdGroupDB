@@ -77,6 +77,29 @@ function SubscriptionBadge({ status, cancelledAt }: { status: string | null; can
   return <span className={`${styles.badge} ${styles.badgeCancelled}`}>취소</span>
 }
 
+function OrderIdCell({ orderId }: { orderId: string }) {
+  let type = 'ORDER'
+  let color = '#64748b'
+  let bg = '#f1f5f9'
+
+  if (orderId.startsWith('SUBS-')) { type = 'SUBS'; color = '#2563eb'; bg = '#dbeafe' }
+  else if (orderId.startsWith('PKG-')) { type = 'PKG'; color = '#7c3aed'; bg = '#ede9fe' }
+  else if (orderId.startsWith('CUSTOM-')) { type = 'CUSTOM'; color = '#d97706'; bg = '#fef3c7' }
+
+  // 끝 숫자(타임스탬프) 추출
+  const match = orderId.match(/(\d+)$/)
+  const tail = match ? match[1] : orderId
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <span style={{ background: bg, color, fontSize: 10, fontWeight: 700, padding: '2px 6px', borderRadius: 4 }}>
+        {type}
+      </span>
+      <span style={{ fontSize: 11, color: '#94a3b8', fontFamily: 'monospace' }}>{tail}</span>
+    </div>
+  )
+}
+
 function PaymentStatusBadge({ status }: { status: string }) {
   const map: Record<string, [string, string]> = {
     completed: [styles.badgeCompleted, '완료'],
@@ -122,6 +145,12 @@ export default function AllcarePage() {
   const [showModal, setShowModal] = useState(false)
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null)
   const [newStatus, setNewStatus] = useState<SubStatus>('cancelled')
+
+  // 열람권 확인 팝업
+  const [accessConfirm, setAccessConfirm] = useState<{ user: UserData; newAccess: boolean } | null>(null)
+
+  // 완료 토스트
+  const [toast, setToast] = useState<string | null>(null)
   const [modalLoading, setModalLoading] = useState(false)
 
   const pageSize = 10
@@ -212,6 +241,11 @@ export default function AllcarePage() {
     setShowModal(true)
   }
 
+  const showToast = (msg: string) => {
+    setToast(msg)
+    setTimeout(() => setToast(null), 2500)
+  }
+
   const handleStatusChange = async () => {
     if (!selectedUser) return
     setModalLoading(true)
@@ -224,29 +258,38 @@ export default function AllcarePage() {
       if (res.ok) {
         setShowModal(false)
         fetchUsers()
+        showToast('구독 상태가 변경되었습니다.')
       } else {
         const d = await res.json()
-        alert(d.error || '변경에 실패했습니다.')
+        showToast(d.error || '변경에 실패했습니다.')
       }
     } catch {
-      alert('오류가 발생했습니다.')
+      showToast('오류가 발생했습니다.')
     } finally {
       setModalLoading(false)
     }
   }
 
   // ─── 실습매칭 열람권 토글 ─────────────────────────────────────────────────
-  const toggleAccess = async (user: UserData) => {
-    const newAccess = !user.practice_matching_access
+  const confirmAccess = (user: UserData) => {
+    setAccessConfirm({ user, newAccess: !user.practice_matching_access })
+  }
+
+  const handleAccessConfirm = async () => {
+    if (!accessConfirm) return
+    const { user, newAccess } = accessConfirm
+    setAccessConfirm(null)
     setUsers(prev => prev.map(u => u.user_id === user.user_id ? { ...u, practice_matching_access: newAccess } : u))
     const res = await fetch('/api/allcare/users/access', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId: user.user_id, access: newAccess }),
     })
-    if (!res.ok) {
+    if (res.ok) {
+      showToast(newAccess ? '실습매칭 열람권이 허용되었습니다.' : '실습매칭 열람권이 해제되었습니다.')
+    } else {
       setUsers(prev => prev.map(u => u.user_id === user.user_id ? { ...u, practice_matching_access: !newAccess } : u))
-      alert('변경에 실패했습니다.')
+      showToast('변경에 실패했습니다.')
     }
   }
 
@@ -380,7 +423,7 @@ export default function AllcarePage() {
                         <td>
                           <button
                             className={`${styles.accessBtn} ${u.practice_matching_access ? styles.accessEnabled : styles.accessDisabled}`}
-                            onClick={() => toggleAccess(u)}
+                            onClick={() => confirmAccess(u)}
                           >
                             {u.practice_matching_access ? '허용됨' : '미허용'}
                           </button>
@@ -429,7 +472,9 @@ export default function AllcarePage() {
                       <td>{p.users?.name || '-'}</td>
                       <td>{p.users?.email || '-'}</td>
                       <td>{p.good_name || '-'}</td>
-                      <td style={{ fontSize: 11 }}>{p.order_id}</td>
+                      <td>
+                        <OrderIdCell orderId={p.order_id} />
+                      </td>
                       <td className={`${styles.amount} ${p.status === 'refunded' ? styles.amountNegative : ''}`}>
                         {p.status === 'refunded' ? '-' : ''}{fmt(p.amount)}
                       </td>
@@ -491,6 +536,23 @@ export default function AllcarePage() {
         </div>
       )}
 
+      {/* 열람권 확인 팝업 */}
+      {accessConfirm && (
+        <div className={styles.modalOverlay} onClick={() => setAccessConfirm(null)}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <h3 className={styles.modalTitle}>실습매칭 열람권</h3>
+            <p className={styles.modalUser}>{accessConfirm.user.name} ({accessConfirm.user.email})</p>
+            <p className={styles.modalDesc}>
+              {accessConfirm.newAccess ? '실습매칭 열람권을 허용하시겠습니까?' : '실습매칭 열람권을 해제하시겠습니까?'}
+            </p>
+            <div className={styles.modalActions}>
+              <button className={styles.modalCancel} onClick={() => setAccessConfirm(null)}>취소</button>
+              <button className={styles.modalConfirm} onClick={handleAccessConfirm}>확인</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 상태변경 모달 */}
       {showModal && selectedUser && (
         <div className={styles.modalOverlay} onClick={() => setShowModal(false)}>
@@ -523,6 +585,11 @@ export default function AllcarePage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* 완료 토스트 */}
+      {toast && (
+        <div className={styles.toast}>{toast}</div>
       )}
     </div>
   )
