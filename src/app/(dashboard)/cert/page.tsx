@@ -229,14 +229,15 @@ function parseClickSource(source: string | null): { major: string; minor: string
   if (idx === -1) return { major: stripped, minor: '', needsCheck: false };
   const major = stripped.slice(0, idx);
   const rawMinor = stripped.slice(idx + 1);
-  const resolvedName = CAFE_NAMES[rawMinor] ?? rawMinor;
+  const cleanedMinor = rawMinor.replace(/\(확인필요\)/g, '');
+  const resolvedName = CAFE_NAMES[cleanedMinor] ?? cleanedMinor;
   const isUnknownMamcafe =
     major === '맘카페' &&
-    rawMinor !== '확인필요' &&
-    !KNOWN_CAFE_IDS.has(rawMinor) &&
-    !KNOWN_CAFE_KOREAN.has(rawMinor);
+    cleanedMinor !== '확인필요' &&
+    !KNOWN_CAFE_IDS.has(cleanedMinor) &&
+    !KNOWN_CAFE_KOREAN.has(cleanedMinor);
   const minor = isUnknownMamcafe ? `${resolvedName}(확인필요)` : resolvedName;
-  return { major, minor, needsCheck: isUnknownMamcafe || rawMinor === '확인필요' };
+  return { major, minor, needsCheck: isUnknownMamcafe || cleanedMinor === '확인필요' };
 }
 
 function formatClickSourceDisplay(source: string | null): string {

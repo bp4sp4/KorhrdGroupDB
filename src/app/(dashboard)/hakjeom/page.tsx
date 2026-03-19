@@ -236,12 +236,13 @@ function parseClickSource(source: string | null): { major: string; minor: string
   if (idx === -1) return { major: stripped, minor: '', needsCheck: false };
   const major = stripped.slice(0, idx);
   const rawMinor = stripped.slice(idx + 1);
-  const resolvedName = CAFE_NAMES[rawMinor] ?? rawMinor;
+  const cleanedMinor = rawMinor.replace(/\(확인필요\)/g, '');
+  const resolvedName = CAFE_NAMES[cleanedMinor] ?? cleanedMinor;
   const isUnknownMamcafe =
     major === '맘카페' &&
-    rawMinor !== '확인필요' &&
-    !KNOWN_CAFE_IDS.has(rawMinor) &&
-    !KNOWN_CAFE_KOREAN.has(rawMinor);
+    cleanedMinor !== '확인필요' &&
+    !KNOWN_CAFE_IDS.has(cleanedMinor) &&
+    !KNOWN_CAFE_KOREAN.has(cleanedMinor);
   const minor = isUnknownMamcafe ? `${resolvedName}(확인필요)` : resolvedName;
   return { major, minor, needsCheck: isUnknownMamcafe || rawMinor === '확인필요' };
 }
@@ -1266,12 +1267,12 @@ function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) =>
 
   // 필터 상태
   const [searchText, setSearchText] = useState('');
-  const [statusFilter, setStatusFilter] = useState<ConsultationStatus | 'all'>('all');
-  const [managerFilter, setManagerFilter] = useState('all');
-  const [majorCategoryFilter, setMajorCategoryFilter] = useState('all');
-  const [minorCategoryFilter, setMinorCategoryFilter] = useState('all');
-  const [reasonFilter, setReasonFilter] = useState('all');
-  const [counselCheckFilter, setCounselCheckFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState<ConsultationStatus[]>([]);
+  const [managerFilter, setManagerFilter] = useState<string[]>([]);
+  const [majorCategoryFilter, setMajorCategoryFilter] = useState<string[]>([]);
+  const [minorCategoryFilter, setMinorCategoryFilter] = useState<string[]>([]);
+  const [reasonFilter, setReasonFilter] = useState<string[]>([]);
+  const [counselCheckFilter, setCounselCheckFilter] = useState<string[]>([]);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
@@ -1349,7 +1350,7 @@ function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) =>
   const needsCheckCount = items.filter(c => parseClickSource(c.click_source).needsCheck).length;
   const uniqueMinorCategories = Array.from(new Set(
     items
-      .filter(c => majorCategoryFilter === 'all' || parseClickSource(c.click_source).major === majorCategoryFilter)
+      .filter(c => majorCategoryFilter.length === 0 || majorCategoryFilter.includes(parseClickSource(c.click_source).major))
       .map(c => parseClickSource(c.click_source))
       .filter(p => Boolean(p.minor) && !p.needsCheck)
       .map(p => p.minor)
@@ -1362,28 +1363,29 @@ function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) =>
       const searchClean = searchText.replace(/-/g, '');
       if (!(c.name.toLowerCase().includes(q) || contactClean.includes(searchClean) || (c.reason || '').toLowerCase().includes(q) || (c.memo || '').toLowerCase().includes(q) || (c.click_source || '').toLowerCase().includes(q))) return false;
     }
-    if (statusFilter !== 'all' && c.status !== statusFilter) return false;
-    if (managerFilter !== 'all') {
-      if (managerFilter === 'none' && c.manager) return false;
-      if (managerFilter !== 'none' && c.manager !== managerFilter) return false;
+    if (statusFilter.length > 0 && !statusFilter.includes(c.status)) return false;
+    if (managerFilter.length > 0) {
+      const hasNone = managerFilter.includes('none');
+      const others = managerFilter.filter(x => x !== 'none');
+      const matches = (hasNone && !c.manager) || others.some(m => c.manager === m);
+      if (!matches) return false;
     }
-    if (majorCategoryFilter !== 'all' && parseClickSource(c.click_source).major !== majorCategoryFilter) return false;
-    if (minorCategoryFilter !== 'all') {
+    if (majorCategoryFilter.length > 0 && !majorCategoryFilter.includes(parseClickSource(c.click_source).major)) return false;
+    if (minorCategoryFilter.length > 0) {
       const parsed = parseClickSource(c.click_source);
-      if (minorCategoryFilter === '__needs_check__') { if (!parsed.needsCheck) return false; }
-      else if (parsed.minor !== minorCategoryFilter) return false;
+      const matches = minorCategoryFilter.some(f => f === '__needs_check__' ? parsed.needsCheck : parsed.minor === f);
+      if (!matches) return false;
     }
-    if (reasonFilter !== 'all') {
+    if (reasonFilter.length > 0) {
       const reasons = (c.reason || '').split(', ').map(r => r.trim());
-      if (!reasons.includes(reasonFilter)) return false;
+      if (!reasonFilter.some(f => reasons.includes(f))) return false;
     }
-    if (counselCheckFilter !== 'all') {
+    if (counselCheckFilter.length > 0) {
       const checks = (c.counsel_check || '').split(', ').map(ch => ch.trim());
-      if (counselCheckFilter === '기타') {
-        if (!checks.some(ch => ch.startsWith('기타'))) return false;
-      } else {
-        if (!checks.includes(counselCheckFilter)) return false;
-      }
+      const matches = counselCheckFilter.some(f =>
+        f === '기타' ? checks.some(ch => ch.startsWith('기타')) : checks.includes(f)
+      );
+      if (!matches) return false;
     }
     if (startDate || endDate) {
       const d = new Date(c.created_at);
@@ -1399,12 +1401,12 @@ function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) =>
   const toggleSelect = (id: number) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   const toggleSelectAll = () => setSelectedIds(prev => prev.length === paginated.length ? [] : paginated.map(c => c.id));
 
-  const isFiltered = searchText || statusFilter !== 'all' || managerFilter !== 'all' || majorCategoryFilter !== 'all' || minorCategoryFilter !== 'all' || reasonFilter !== 'all' || counselCheckFilter !== 'all' || startDate || endDate;
+  const isFiltered = searchText || statusFilter.length > 0 || managerFilter.length > 0 || majorCategoryFilter.length > 0 || minorCategoryFilter.length > 0 || reasonFilter.length > 0 || counselCheckFilter.length > 0 || startDate || endDate;
 
   const resetFilters = () => {
-    setSearchText(''); setStatusFilter('all'); setManagerFilter('all');
-    setMajorCategoryFilter('all'); setMinorCategoryFilter('all');
-    setReasonFilter('all'); setCounselCheckFilter('all');
+    setSearchText(''); setStatusFilter([]); setManagerFilter([]);
+    setMajorCategoryFilter([]); setMinorCategoryFilter([]);
+    setReasonFilter([]); setCounselCheckFilter([]);
     setStartDate(''); setEndDate(''); setCurrentPage(1);
   };
 
@@ -1498,13 +1500,13 @@ function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) =>
                   <th className={styles.thFilterable}>
                     <div className={styles.thInner}>
                       대분류
-                      <button className={`${styles.thFilterBtn}${majorCategoryFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'major') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('major'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
+                      <button className={`${styles.thFilterBtn}${majorCategoryFilter.length > 0 ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'major') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('major'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
                     </div>
                   </th>
                   <th className={styles.thFilterable}>
                     <div className={styles.thInner}>
                       중분류
-                      <button className={`${styles.thFilterBtn}${minorCategoryFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'minor') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('minor'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
+                      <button className={`${styles.thFilterBtn}${minorCategoryFilter.length > 0 ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'minor') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('minor'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
                     </div>
                   </th>
                   <th className={styles.th}>이름</th>
@@ -1514,25 +1516,25 @@ function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) =>
                   <th className={styles.thFilterable}>
                     <div className={styles.thInner}>
                       취득사유
-                      <button className={`${styles.thFilterBtn}${reasonFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'reason') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('reason'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
+                      <button className={`${styles.thFilterBtn}${reasonFilter.length > 0 ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'reason') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('reason'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
                     </div>
                   </th>
                   <th className={styles.thFilterable}>
                     <div className={styles.thInner}>
                       담당자
-                      <button className={`${styles.thFilterBtn}${managerFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'manager') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('manager'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
+                      <button className={`${styles.thFilterBtn}${managerFilter.length > 0 ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'manager') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('manager'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
                     </div>
                   </th>
                   <th className={styles.thFilterable}>
                     <div className={styles.thInner}>
                       고민
-                      <button className={`${styles.thFilterBtn}${counselCheckFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'counsel') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('counsel'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
+                      <button className={`${styles.thFilterBtn}${counselCheckFilter.length > 0 ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'counsel') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('counsel'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
                     </div>
                   </th>
                   <th className={styles.thFilterable}>
                     <div className={styles.thInner}>
                       상태
-                      <button className={`${styles.thFilterBtn}${statusFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'status') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('status'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
+                      <button className={`${styles.thFilterBtn}${statusFilter.length > 0 ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'status') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('status'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
                     </div>
                   </th>
                   <th className={styles.th}>과목비용</th>
@@ -1640,53 +1642,53 @@ function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) =>
         >
           {openFilterColumn === 'major' && (
             <>
-              <div className={`${styles.filterDropdownItem}${majorCategoryFilter === 'all' ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setMajorCategoryFilter('all'); setMinorCategoryFilter('all'); setCurrentPage(1); setOpenFilterColumn(null); }}>전체</div>
+              <div className={`${styles.filterDropdownItem}${majorCategoryFilter.length === 0 ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setMajorCategoryFilter([]); setMinorCategoryFilter([]); setCurrentPage(1); setOpenFilterColumn(null); }}>전체</div>
               {uniqueMajorCategories.map(m => (
-                <div key={m} className={`${styles.filterDropdownItem}${majorCategoryFilter === m ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setMajorCategoryFilter(m); setMinorCategoryFilter('all'); setCurrentPage(1); setOpenFilterColumn(null); }}>{m}</div>
+                <div key={m} className={`${styles.filterDropdownItem}${majorCategoryFilter.includes(m) ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setMajorCategoryFilter(prev => prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m]); setCurrentPage(1); }}>{m}</div>
               ))}
             </>
           )}
           {openFilterColumn === 'minor' && (
             <>
-              <div className={`${styles.filterDropdownItem}${minorCategoryFilter === 'all' ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setMinorCategoryFilter('all'); setCurrentPage(1); setOpenFilterColumn(null); }}>전체</div>
+              <div className={`${styles.filterDropdownItem}${minorCategoryFilter.length === 0 ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setMinorCategoryFilter([]); setCurrentPage(1); setOpenFilterColumn(null); }}>전체</div>
               {needsCheckCount > 0 && (
-                <div className={`${styles.filterDropdownItem}${minorCategoryFilter === '__needs_check__' ? ` ${styles.filterDropdownItemActive}` : ''}`} style={{ color: '#ef4444', fontWeight: 600 }} onClick={() => { setMinorCategoryFilter('__needs_check__'); setCurrentPage(1); setOpenFilterColumn(null); }}>확인필요 ({needsCheckCount})</div>
+                <div className={`${styles.filterDropdownItem}${minorCategoryFilter.includes('__needs_check__') ? ` ${styles.filterDropdownItemActive}` : ''}`} style={{ color: '#ef4444', fontWeight: 600 }} onClick={() => { setMinorCategoryFilter(prev => prev.includes('__needs_check__') ? prev.filter(x => x !== '__needs_check__') : [...prev, '__needs_check__']); setCurrentPage(1); }}>확인필요 ({needsCheckCount})</div>
               )}
               {uniqueMinorCategories.map(m => (
-                <div key={m} className={`${styles.filterDropdownItem}${minorCategoryFilter === m ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setMinorCategoryFilter(m); setCurrentPage(1); setOpenFilterColumn(null); }}>{m}</div>
+                <div key={m} className={`${styles.filterDropdownItem}${minorCategoryFilter.includes(m) ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setMinorCategoryFilter(prev => prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m]); setCurrentPage(1); }}>{m}</div>
               ))}
             </>
           )}
           {openFilterColumn === 'reason' && (
             <>
-              <div className={`${styles.filterDropdownItem}${reasonFilter === 'all' ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setReasonFilter('all'); setCurrentPage(1); setOpenFilterColumn(null); }}>전체</div>
+              <div className={`${styles.filterDropdownItem}${reasonFilter.length === 0 ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setReasonFilter([]); setCurrentPage(1); setOpenFilterColumn(null); }}>전체</div>
               {REASON_OPTIONS.map(r => (
-                <div key={r} className={`${styles.filterDropdownItem}${reasonFilter === r ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setReasonFilter(r); setCurrentPage(1); setOpenFilterColumn(null); }}>{r}</div>
+                <div key={r} className={`${styles.filterDropdownItem}${reasonFilter.includes(r) ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setReasonFilter(prev => prev.includes(r) ? prev.filter(x => x !== r) : [...prev, r]); setCurrentPage(1); }}>{r}</div>
               ))}
             </>
           )}
           {openFilterColumn === 'counsel' && (
             <>
-              <div className={`${styles.filterDropdownItem}${counselCheckFilter === 'all' ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setCounselCheckFilter('all'); setCurrentPage(1); setOpenFilterColumn(null); }}>전체</div>
+              <div className={`${styles.filterDropdownItem}${counselCheckFilter.length === 0 ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setCounselCheckFilter([]); setCurrentPage(1); setOpenFilterColumn(null); }}>전체</div>
               {COUNSEL_CHECK_OPTIONS.map(c => (
-                <div key={c} className={`${styles.filterDropdownItem}${counselCheckFilter === c ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setCounselCheckFilter(c); setCurrentPage(1); setOpenFilterColumn(null); }}>{c}</div>
+                <div key={c} className={`${styles.filterDropdownItem}${counselCheckFilter.includes(c) ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setCounselCheckFilter(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c]); setCurrentPage(1); }}>{c}</div>
               ))}
             </>
           )}
           {openFilterColumn === 'manager' && (
             <>
-              <div className={`${styles.filterDropdownItem}${managerFilter === 'all' ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setManagerFilter('all'); setCurrentPage(1); setOpenFilterColumn(null); }}>전체</div>
-              <div className={`${styles.filterDropdownItem}${managerFilter === 'none' ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setManagerFilter('none'); setCurrentPage(1); setOpenFilterColumn(null); }}>미배정</div>
+              <div className={`${styles.filterDropdownItem}${managerFilter.length === 0 ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setManagerFilter([]); setCurrentPage(1); setOpenFilterColumn(null); }}>전체</div>
+              <div className={`${styles.filterDropdownItem}${managerFilter.includes('none') ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setManagerFilter(prev => prev.includes('none') ? prev.filter(x => x !== 'none') : [...prev, 'none']); setCurrentPage(1); }}>미배정</div>
               {uniqueManagers.map(m => (
-                <div key={m} className={`${styles.filterDropdownItem}${managerFilter === m ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setManagerFilter(m); setCurrentPage(1); setOpenFilterColumn(null); }}>{m}</div>
+                <div key={m} className={`${styles.filterDropdownItem}${managerFilter.includes(m) ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setManagerFilter(prev => prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m]); setCurrentPage(1); }}>{m}</div>
               ))}
             </>
           )}
           {openFilterColumn === 'status' && (
             <>
-              <div className={`${styles.filterDropdownItem}${statusFilter === 'all' ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setStatusFilter('all'); setCurrentPage(1); setOpenFilterColumn(null); }}>전체</div>
+              <div className={`${styles.filterDropdownItem}${statusFilter.length === 0 ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setStatusFilter([]); setCurrentPage(1); setOpenFilterColumn(null); }}>전체</div>
               {CONSULTATION_STATUS_OPTIONS.map(s => (
-                <div key={s} className={`${styles.filterDropdownItem}${statusFilter === s ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setStatusFilter(s as ConsultationStatus); setCurrentPage(1); setOpenFilterColumn(null); }}>{s}</div>
+                <div key={s} className={`${styles.filterDropdownItem}${statusFilter.includes(s as ConsultationStatus) ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setStatusFilter(prev => prev.includes(s as ConsultationStatus) ? prev.filter(x => x !== s) : [...prev, s as ConsultationStatus]); setCurrentPage(1); }}>{s}</div>
               ))}
             </>
           )}

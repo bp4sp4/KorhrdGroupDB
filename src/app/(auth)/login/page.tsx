@@ -17,10 +17,17 @@ export default function LoginPage() {
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session) {
+        // 캐시된 role 확인 (새로고침 시 API 호출 스킵)
+        const cachedRole = localStorage.getItem('user_role')
+        if (cachedRole) {
+          router.replace(cachedRole === 'mini-admin' ? '/mini-admin' : '/hakjeom')
+          return
+        }
         try {
           const res = await fetch('/api/auth/me')
           if (res.ok) {
             const data = await res.json()
+            localStorage.setItem('user_role', data.role ?? 'admin')
             if (data.role === 'mini-admin') {
               router.replace('/mini-admin')
               return
@@ -49,6 +56,7 @@ export default function LoginPage() {
       const res = await fetch('/api/auth/me')
       if (res.ok) {
         const data = await res.json()
+        localStorage.setItem('user_role', data.role ?? 'admin')
         if (data.role === 'mini-admin') {
           router.replace('/mini-admin')
           return

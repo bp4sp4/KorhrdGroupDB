@@ -1,0 +1,383 @@
+.container {
+  padding: 24px;
+  max-width: 1200px;
+}
+
+/* 통계 카드 */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.statCard {
+  background: #fff;
+  border: 1px solid var(--toss-border);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.statLabel {
+  font-size: 13px;
+  color: var(--toss-text-tertiary);
+  margin-bottom: 8px;
+}
+
+.statValue {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--toss-text-primary);
+}
+
+.statSub {
+  font-size: 12px;
+  color: var(--toss-text-tertiary);
+  margin-top: 4px;
+}
+
+/* 탭 */
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--toss-border);
+}
+
+.tab {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--toss-text-secondary);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  margin-bottom: -1px;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.tab:hover {
+  color: var(--toss-text-primary);
+}
+
+.tabActive {
+  color: var(--toss-blue);
+  border-bottom-color: var(--toss-blue);
+}
+
+/* 필터 영역 */
+.filterRow {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 200px;
+  max-width: 320px;
+  padding: 8px 12px;
+  border: 1px solid var(--toss-border);
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+}
+
+.searchInput:focus {
+  border-color: var(--toss-blue);
+}
+
+.select {
+  padding: 8px 12px;
+  border: 1px solid var(--toss-border);
+  border-radius: 8px;
+  font-size: 14px;
+  background: #fff;
+  cursor: pointer;
+  outline: none;
+}
+
+/* 테이블 */
+.tableWrap {
+  background: #fff;
+  border: 1px solid var(--toss-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table thead tr {
+  background: var(--toss-bg);
+  border-bottom: 1px solid var(--toss-border);
+}
+
+.table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--toss-text-secondary);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 12px 16px;
+  color: var(--toss-text-primary);
+  border-bottom: 1px solid var(--toss-border);
+  vertical-align: middle;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.table tbody tr:hover {
+  background: var(--toss-bg);
+}
+
+/* 배지 */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.badgeActive {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.badgeCancelled {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.badgeCancelScheduled {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.badgeNone {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.badgeCompleted {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.badgePending {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.badgePaid {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+/* 페이지네이션 */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  border-top: 1px solid var(--toss-border);
+}
+
+.pageBtn {
+  padding: 6px 12px;
+  border: 1px solid var(--toss-border);
+  border-radius: 6px;
+  background: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--toss-text-secondary);
+}
+
+.pageBtn:hover:not(:disabled) {
+  border-color: var(--toss-blue);
+  color: var(--toss-blue);
+}
+
+.pageBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pageBtnActive {
+  background: var(--toss-blue);
+  border-color: var(--toss-blue);
+  color: #fff;
+}
+
+.pageInfo {
+  font-size: 13px;
+  color: var(--toss-text-secondary);
+}
+
+/* 로딩 / 빈 상태 */
+.loading {
+  text-align: center;
+  padding: 48px;
+  color: var(--toss-text-tertiary);
+  font-size: 14px;
+}
+
+.empty {
+  text-align: center;
+  padding: 48px;
+  color: var(--toss-text-tertiary);
+  font-size: 14px;
+}
+
+/* 금액 */
+.amount {
+  font-weight: 600;
+  color: var(--toss-text-primary);
+}
+
+.amountNegative {
+  color: #dc2626;
+}
+
+/* 열람권 버튼 */
+.accessBtn {
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.accessBtn:hover {
+  opacity: 0.8;
+}
+
+.accessEnabled {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.accessDisabled {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+/* 관리 버튼 */
+.actionBtn {
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--toss-blue);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.actionBtn:hover {
+  opacity: 0.85;
+}
+
+/* 모달 */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px;
+  width: 360px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.16);
+}
+
+.modalTitle {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: var(--toss-text-primary);
+}
+
+.modalUser {
+  font-size: 13px;
+  color: var(--toss-text-secondary);
+  margin-bottom: 20px;
+}
+
+.modalOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.modalOption {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--toss-text-primary);
+  cursor: pointer;
+}
+
+.modalOption input[type='radio'] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--toss-blue);
+  cursor: pointer;
+}
+
+.modalActions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.modalCancel {
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: 1px solid var(--toss-border);
+  background: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--toss-text-secondary);
+  cursor: pointer;
+}
+
+.modalConfirm {
+  padding: 8px 20px;
+  border-radius: 8px;
+  border: none;
+  background: var(--toss-blue);
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+}
+
+.modalConfirm:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
-import { GraduationCap, FileText, Briefcase, ChevronLeft, ChevronRight, Users, UserCog, Trash2 } from 'lucide-react'
+import { GraduationCap, FileText, Briefcase, ChevronLeft, ChevronRight, Users, UserCog, Trash2, HeartPulse } from 'lucide-react'
 import styles from './layout.module.css'
 import { createClient } from '@/lib/supabase/client'
 
@@ -44,6 +44,12 @@ const ADMIN_NAV_ITEMS: NavItem[] = [
     label: '미니어드민 관리',
     href: '/ref-manage',
     icon: <UserCog size={18} />,
+  },
+  {
+    id: 'allcare',
+    label: '올케어 관리자',
+    href: '/allcare',
+    icon: <HeartPulse size={18} />,
   },
 ]
 
