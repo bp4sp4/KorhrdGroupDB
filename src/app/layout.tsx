@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'),
+  metadataBase: new URL('https://korhrd-group-db.vercel.app'),
   title: '한평생교육 - 학점은행제 통합 관리',
   description: '학점은행제 통합 관리 시스템',
   openGraph: {
