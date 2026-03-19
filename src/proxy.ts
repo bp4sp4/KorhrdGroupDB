@@ -37,7 +37,8 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith('/api/auth/') ||
     pathname.startsWith('/_next/') ||
     pathname === '/favicon.ico' ||
-    pathname === '/logo.png'
+    pathname === '/logo.png' ||
+    pathname === '/og-image.png'
 
   if (isPublic) return response
 
