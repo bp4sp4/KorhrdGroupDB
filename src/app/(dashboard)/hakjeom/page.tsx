@@ -1700,6 +1700,36 @@ function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) =>
 
 // ─── 탭: 기관협약 ────────────────────────────────────────────────────────────
 
+// 기관협약 CSV 헤더 매핑
+const AGENCY_HEADER_MAP: Record<string, string> = {
+  '기관명': 'institution_name', 'institution_name': 'institution_name',
+  '분류': 'category', 'category': 'category',
+  '지역': 'region', 'region': 'region',
+  '연락처': 'contact', 'contact': 'contact',
+  '학점수수료': 'credit_commission', 'credit_commission': 'credit_commission',
+  '민간수수료': 'private_commission', 'private_commission': 'private_commission',
+  '담당자': 'manager', 'manager': 'manager',
+  '메모': 'memo', 'memo': 'memo',
+  '상태': 'status', 'status': 'status',
+};
+
+const AGENCY_CSV_TEMPLATE = '\uFEFF기관명,분류,지역,연락처,학점수수료,민간수수료,담당자,메모,상태\n한빛유치원,어린이집,서울 강동구,02-1234-5678,10%,15%,김담당,,협약대기\n';
+
+function parseAgencyCsv(text: string): Record<string, string>[] {
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  if (lines.length < 2) return [];
+  const headers = lines[0].split(',').map(h => h.trim().replace(/^\uFEFF/, '').replace(/^"|"$/g, ''));
+  const colMap = headers.map((h, i) => ({ field: AGENCY_HEADER_MAP[h], idx: i })).filter(({ field }) => field);
+  return lines.slice(1).map(line => {
+    const cols = line.split(',').map(c => c.trim().replace(/^"|"$/g, ''));
+    if (cols.every(c => !c)) return null;
+    const row: Record<string, string> = {};
+    colMap.forEach(({ field, idx }) => { if (cols[idx] !== undefined) row[field] = cols[idx]; });
+    if (!row.status) row.status = '협약대기';
+    return row;
+  }).filter(Boolean) as Record<string, string>[];
+}
+
 function AgencyTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) => void }) {
   const [agencies, setAgencies] = useState<Agency[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1715,6 +1745,10 @@ function AgencyTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) => 
   const [openFilterColumn, setOpenFilterColumn] = useState<string | null>(null);
   const [filterDropdownPos, setFilterDropdownPos] = useState({ top: 0, left: 0 });
 
+  // 페이지네이션
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
+
   // UI
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [deleting, setDeleting] = useState(false);
@@ -1724,6 +1758,7 @@ function AgencyTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) => 
   // 셀 클릭 편집
   const [fieldModal, setFieldModal] = useState<{ id: number; field: keyof Agency; label: string; value: string; multiline?: boolean } | null>(null);
   const [fieldSaving, setFieldSaving] = useState(false);
+
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -1810,6 +1845,12 @@ function AgencyTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) => 
     }
     return true;
   });
+
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const paginated = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+  // 필터 변경 시 첫 페이지로 리셋
+  useEffect(() => { setCurrentPage(1); }, [searchText, statusFilter, managerFilter, categoryFilter]);
 
   const toggleSelect = (id: number) => setSelectedIds(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; });
   const toggleSelectAll = () => setSelectedIds(prev => prev.size === filtered.length ? new Set() : new Set(filtered.map(a => a.id)));
@@ -1913,7 +1954,7 @@ function AgencyTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) => 
                 </tr>
               </thead>
               <tbody>
-                {filtered.map(a => (
+                {paginated.map(a => (
                   <tr key={a.id} style={{ background: selectedIds.has(a.id) ? '#f0f7ff' : 'transparent' }}>
                     <td className={styles.tdCenter}>
                       <input type="checkbox" checked={selectedIds.has(a.id)} onChange={() => toggleSelect(a.id)} className={styles.checkbox} />
@@ -1993,6 +2034,19 @@ function AgencyTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) => 
           </div>
         )}
       </div>
+
+      {/* 페이지네이션 */}
+      {totalPages > 1 && (
+        <div className={styles.pagination}>
+          <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className={styles.pageBtn} style={{ marginRight: 4 }}>‹</button>
+          {getPaginationPages(currentPage, totalPages).map((page, idx) =>
+            page === '...'
+              ? <span key={`ellipsis-${idx}`} className={styles.pageEllipsis}>…</span>
+              : <button key={page} onClick={() => setCurrentPage(page)} className={page === currentPage ? styles.pageBtnActive : styles.pageBtn}>{page}</button>
+          )}
+          <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className={styles.pageBtn} style={{ marginLeft: 4 }}>›</button>
+        </div>
+      )}
 
       {/* 헤더 필터 드롭다운 */}
       {openFilterColumn && (
@@ -2081,6 +2135,7 @@ function AgencyTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) => 
       {showModal && (
         <AgencyAddModal editTarget={editTarget} onClose={() => { setShowModal(false); setEditTarget(null); }} onSaved={fetchData} uniqueManagers={uniqueManagers} />
       )}
+
     </div>
   );
 }
@@ -2148,11 +2203,14 @@ function toCostInt(v: string | null | undefined): number | null {
   return isNaN(n) ? null : n;
 }
 
+type BulkUploadType = RowType | 'agency';
+
 function BulkTab({ onMoveSuccess }: { onMoveSuccess?: () => void }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [view, setView] = useState<BulkTabView>('upload');
-  const [uploadType, setUploadType] = useState<RowType>('consult');
+  const [uploadType, setUploadType] = useState<BulkUploadType>('consult');
   const [csvRows, setCsvRows] = useState<CsvRow[]>([]);
+  const [agencyRows, setAgencyRows] = useState<Record<string, string>[]>([]);
   const [fileName, setFileName] = useState('');
   const [saving, setSaving] = useState(false);
   const [staging, setStaging] = useState<StagingRow[]>([]);
@@ -2173,7 +2231,14 @@ function BulkTab({ onMoveSuccess }: { onMoveSuccess?: () => void }) {
   function handleFile(file: File) {
     setFileName(file.name);
     const reader = new FileReader();
-    reader.onload = ev => setCsvRows(parseCsv(ev.target?.result as string));
+    reader.onload = ev => {
+      const text = ev.target?.result as string;
+      if (uploadType === 'agency') {
+        setAgencyRows(parseAgencyCsv(text));
+      } else {
+        setCsvRows(parseCsv(text));
+      }
+    };
     reader.readAsText(file, 'utf-8');
   }
 
@@ -2249,12 +2314,31 @@ function BulkTab({ onMoveSuccess }: { onMoveSuccess?: () => void }) {
   }
 
   function downloadTemplate() {
-    const content = uploadType === 'consult' ? CONSULT_TEMPLATE : CERT_TEMPLATE;
-    const name = uploadType === 'consult' ? '학점은행제_CSV템플릿.csv' : '민간자격증_CSV템플릿.csv';
+    const content = uploadType === 'agency' ? AGENCY_CSV_TEMPLATE : uploadType === 'consult' ? CONSULT_TEMPLATE : CERT_TEMPLATE;
+    const name = uploadType === 'agency' ? '기관협약_CSV템플릿.csv' : uploadType === 'consult' ? '학점은행제_CSV템플릿.csv' : '민간자격증_CSV템플릿.csv';
     const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url; a.download = name; a.click();
     URL.revokeObjectURL(url);
+  }
+
+  async function handleAgencySave() {
+    if (!agencyRows.length) return;
+    setSaving(true);
+    const res = await fetch('/api/hakjeom/agency/bulk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rows: agencyRows }),
+    });
+    if (res.ok) {
+      const { count } = await res.json();
+      setAgencyRows([]); setFileName('');
+      alert(`${count}건이 등록되었습니다.`);
+    } else {
+      const d = await res.json();
+      alert(d.error || '등록에 실패했습니다.');
+    }
+    setSaving(false);
   }
 
   const filteredStaging = typeFilter === 'all' ? staging : staging.filter(s => s.row_type === typeFilter);
@@ -2300,28 +2384,69 @@ function BulkTab({ onMoveSuccess }: { onMoveSuccess?: () => void }) {
         <div className={styles.bulkUploadArea}>
           {/* 구분 선택 */}
           <div className={styles.bulkTypeRow}>
-            {(['consult', 'cert'] as RowType[]).map(t => (
-              <button key={t} onClick={() => { setUploadType(t); setCsvRows([]); setFileName(''); }}
+            {(['consult', 'cert', 'agency'] as BulkUploadType[]).map(t => (
+              <button key={t} onClick={() => { setUploadType(t); setCsvRows([]); setAgencyRows([]); setFileName(''); }}
                 className={`${styles.bulkTypeBtn} ${uploadType === t ? styles.bulkTypeBtnActive : ''}`}>
-                {t === 'consult' ? '학점은행제' : '민간자격증'}
+                {t === 'consult' ? '학점은행제' : t === 'cert' ? '민간자격증' : '기관협약'}
               </button>
             ))}
           </div>
 
           {/* 드롭존 */}
-          {!csvRows.length && (
+          {!csvRows.length && !agencyRows.length && (
             <div className={styles.bulkDropzone}
               onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) handleFile(f); }}
               onDragOver={e => e.preventDefault()}
               onClick={() => fileInputRef.current?.click()}
             >
               <span className={styles.bulkDropzoneIcon}>📂</span>
-              <p className={styles.bulkDropzoneTitle}>{uploadType === 'consult' ? '학점은행제' : '민간자격증'} CSV 파일 업로드</p>
+              <p className={styles.bulkDropzoneTitle}>{uploadType === 'consult' ? '학점은행제' : uploadType === 'cert' ? '민간자격증' : '기관협약'} CSV 파일 업로드</p>
               <p className={styles.bulkDropzoneSub}>파일을 드래그하거나 클릭해서 선택하세요</p>
             </div>
           )}
 
           {/* 미리보기 */}
+          {/* 기관협약 미리보기 */}
+          {agencyRows.length > 0 && (
+            <div className={styles.bulkPreviewCard}>
+              <div className={styles.bulkPreviewHeader}>
+                <div>
+                  <span className={styles.bulkPreviewTitle}>미리보기</span>
+                  <span className={styles.bulkPreviewMeta}>{fileName} · {agencyRows.length}건</span>
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={() => { setAgencyRows([]); setFileName(''); }} className={styles.btnSecondary}>취소</button>
+                  <button onClick={handleAgencySave} disabled={saving} className={styles.btnPrimary}>
+                    {saving ? '등록 중...' : `${agencyRows.length}건 등록`}
+                  </button>
+                </div>
+              </div>
+              <div className={styles.bulkPreviewTableWrap}>
+                <table className={styles.bulkTable}>
+                  <thead><tr className={styles.bulkThead}>
+                    <th className={styles.th}>#</th>
+                    {['기관명', '분류', '지역', '연락처', '학점수수료', '민간수수료', '담당자', '상태'].map(h => <th key={h} className={styles.th}>{h}</th>)}
+                  </tr></thead>
+                  <tbody>
+                    {agencyRows.map((row, i) => (
+                      <tr key={i} className={styles.tr}>
+                        <td className={styles.td} style={{ color: '#aaa', textAlign: 'center' }}>{i + 1}</td>
+                        <td className={styles.td}>{row.institution_name || <span className={styles.tdMuted}>-</span>}</td>
+                        <td className={styles.td}>{row.category || <span className={styles.tdMuted}>-</span>}</td>
+                        <td className={styles.td}>{row.region || <span className={styles.tdMuted}>-</span>}</td>
+                        <td className={styles.td}>{row.contact || <span className={styles.tdMuted}>-</span>}</td>
+                        <td className={styles.td}>{row.credit_commission || <span className={styles.tdMuted}>-</span>}</td>
+                        <td className={styles.td}>{row.private_commission || <span className={styles.tdMuted}>-</span>}</td>
+                        <td className={styles.td}>{row.manager || <span className={styles.tdMuted}>-</span>}</td>
+                        <td className={styles.td}>{row.status || '협약대기'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
           {csvRows.length > 0 && (
             <div className={styles.bulkPreviewCard}>
               <div className={styles.bulkPreviewHeader}>
@@ -2361,7 +2486,17 @@ function BulkTab({ onMoveSuccess }: { onMoveSuccess?: () => void }) {
           <div className={styles.bulkGuideBox}>
             <p className={styles.bulkGuideTitle}>컬럼 안내</p>
             <div className={styles.bulkGuideGrid}>
-              {(uploadType === 'consult' ? [
+              {(uploadType === 'agency' ? [
+                { col: '기관명*', desc: '필수' },
+                { col: '분류', desc: '어린이집, 유치원 등' },
+                { col: '지역', desc: '서울 강동구 등' },
+                { col: '연락처', desc: '전화번호' },
+                { col: '학점수수료', desc: '10% 등 자유 입력' },
+                { col: '민간수수료', desc: '15% 등 자유 입력' },
+                { col: '담당자', desc: '담당자 이름' },
+                { col: '메모', desc: '자유 입력' },
+                { col: '상태', desc: '비우면 협약대기' },
+              ] : uploadType === 'consult' ? [
                 { col: '대분류', desc: '네이버, 맘카페, 당근 등' },
                 { col: '중분류', desc: '→ 유입경로 자동 조합' },
                 { col: '이름*', desc: '필수' },
@@ -2505,7 +2640,7 @@ interface StatItem {
 }
 
 type StatsSource = 'hakjeom';
-type StatsSubTab = 'overview' | 'status' | 'source' | 'time';
+type StatsSubTab = 'overview' | 'status' | 'source' | 'time' | 'mamcafe';
 
 // 통계 상수
 const STATS_STATUS_COLORS: Record<string, string> = {
@@ -2525,6 +2660,7 @@ const STATS_SUB_TABS: { id: StatsSubTab; label: string }[] = [
   { id: 'status', label: '상태 분석' },
   { id: 'source', label: '유입 경로' },
   { id: 'time', label: '시간 패턴' },
+  { id: 'mamcafe', label: '맘카페' },
 ];
 
 // 유틸
@@ -2686,6 +2822,18 @@ function StatsTab() {
   const srcMap: Record<string, number> = {};
   data.forEach(c => { const m = getMajorSrc(c.click_source); srcMap[m] = (srcMap[m] || 0) + 1; });
   const srcData = Object.entries(srcMap).sort((a, b) => b[1] - a[1]).map(([name, value]) => ({ name, value }));
+
+  // ── 맘카페 세부 통계
+  const mamcafeMap: Record<string, number> = {};
+  data
+    .filter(c => getMajorSrc(c.click_source) === '맘카페')
+    .forEach(c => {
+      const { minor } = parseClickSource(c.click_source);
+      const key = minor || '미입력';
+      mamcafeMap[key] = (mamcafeMap[key] || 0) + 1;
+    });
+  const mamcafeData = Object.entries(mamcafeMap).sort((a, b) => b[1] - a[1]).map(([name, value]) => ({ name, value }));
+  const mamcafeTotal = mamcafeData.reduce((s, d) => s + d.value, 0);
 
   // ── 시간대
   const hourData = Array.from({ length: 24 }, (_, h) => ({
@@ -2927,6 +3075,63 @@ function StatsTab() {
                   </div>
                 </StatsPanel>
               </div>
+
+            </div>
+          )}
+
+          {/* ════ 맘카페 ════ */}
+          {subTab === 'mamcafe' && (
+            <div>
+              <div className={styles.statsGrid4}>
+                {mamcafeData.slice(0, 4).map((d, i) => (
+                  <StatsCard key={d.name} label={d.name} value={d.value}
+                    sub={mamcafeTotal > 0 ? `전체의 ${Math.round((d.value / mamcafeTotal) * 100)}%` : '-'}
+                    color={SOURCE_COLORS[i]}
+                  />
+                ))}
+              </div>
+
+              {mamcafeData.length === 0 ? (
+                <StatsPanel title="맘카페 세부 통계">
+                  <p style={{ textAlign: 'center', color: '#8b95a1', padding: '32px 0', fontSize: 14 }}>맘카페 신청 데이터가 없습니다.</p>
+                </StatsPanel>
+              ) : (
+                <div className={styles.statsGridSourceDetail}>
+                  <StatsPanel title="카페별 신청 건수" sub="카페명 기준">
+                    <ResponsiveContainer width="100%" height={Math.max(200, mamcafeData.length * 42)}>
+                      <BarChart data={mamcafeData} layout="vertical" margin={{ top: 4, right: 32, bottom: 0, left: 72 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
+                        <XAxis type="number" tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} allowDecimals={false} />
+                        <YAxis type="category" dataKey="name" tick={{ fontSize: 12, fill: '#4e5968' }} tickLine={false} axisLine={false} width={72} />
+                        <Tooltip content={<StatsTip />} />
+                        <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={22} name="건수">
+                          {mamcafeData.map((_, i) => <Cell key={i} fill={SOURCE_COLORS[i % SOURCE_COLORS.length]} />)}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </StatsPanel>
+
+                  <StatsPanel title="비율">
+                    <ResponsiveContainer width="100%" height={220}>
+                      <PieChart>
+                        <Pie data={mamcafeData} cx="50%" cy="50%" outerRadius={90} paddingAngle={2} dataKey="value">
+                          {mamcafeData.map((_, i) => <Cell key={i} fill={SOURCE_COLORS[i % SOURCE_COLORS.length]} />)}
+                        </Pie>
+                        <Tooltip content={<StatsTip />} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className={styles.statsSrcLegend}>
+                      {mamcafeData.map((d, i) => (
+                        <div key={d.name} className={styles.statsSrcLegendItem}>
+                          <div className={styles.statsSrcLegendDot} style={{ background: SOURCE_COLORS[i % SOURCE_COLORS.length] }} />
+                          <span className={styles.statsSrcLegendName}>{d.name}</span>
+                          <span className={styles.statsSrcLegendCount}>{d.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </StatsPanel>
+                </div>
+              )}
             </div>
           )}
 

@@ -550,6 +550,29 @@
   color: var(--toss-text-primary);
 }
 
+.modalHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.modalHeader .modalTitle {
+  margin: 0;
+}
+
+.modalSub {
+  font-size: 13px;
+  color: var(--toss-text-tertiary);
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 8px;
+}
+
 .modalFieldGroup {
   margin-bottom: 14px;
 }
@@ -2395,4 +2418,62 @@
 
 .statsInlineRateTop {
   color: #d97706 !important;
+}
+
+/* 맘카페 세부 통계 */
+.mamcafeList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.mamcafeRow {
+  display: grid;
+  grid-template-columns: 24px 120px 1fr 40px 36px;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.mamcafeRank {
+  font-size: 11px;
+  font-weight: 700;
+  color: #b0b8c1;
+  text-align: center;
+}
+
+.mamcafeName {
+  color: #4e5968;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mamcafeBarTrack {
+  background: #f2f4f6;
+  border-radius: 6px;
+  height: 8px;
+  overflow: hidden;
+}
+
+.mamcafeBarInner {
+  height: 100%;
+  background: #f472b6;
+  border-radius: 6px;
+  transition: width 0.4s ease;
+}
+
+.mamcafeCount {
+  font-size: 12px;
+  font-weight: 600;
+  color: #191f28;
+  text-align: right;
+}
+
+.mamcafePct {
+  font-size: 11px;
+  color: #8b95a1;
+  text-align: right;
 }

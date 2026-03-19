@@ -71,6 +71,51 @@ export async function GET(request: NextRequest) {
 }
 
 /**
+ * POST /api/practice/applications
+ * 관리자 수동 등록
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const { user: _user, errorResponse } = await requireAuth()
+    if (errorResponse) return errorResponse
+    const body = await request.json()
+    const { name, gender, contact, birth_date, address, address_detail, practice_type, desired_job_field, employment_types, has_resume, certifications, manager, memo } = body
+
+    if (!name || !contact) {
+      return NextResponse.json({ error: '이름과 연락처는 필수입니다.' }, { status: 400 })
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from('practice_applications')
+      .insert([{
+        name, gender: gender || null, contact,
+        birth_date: birth_date || null,
+        address: address || null, address_detail: address_detail || null,
+        practice_type: practice_type || null,
+        desired_job_field: desired_job_field || null,
+        employment_types: employment_types || [],
+        has_resume: has_resume ?? false,
+        certifications: certifications || null,
+        manager: manager || null, memo: memo || null,
+        payment_amount: 0, payment_status: 'confirmed',
+        privacy_agreed: true, terms_agreed: true, status: '대기',
+      }])
+      .select()
+      .single()
+
+    if (error) {
+      console.error('[POST /api/practice/applications] Supabase error:', error)
+      return NextResponse.json({ error: '등록에 실패했습니다.', detail: error.message }, { status: 500 })
+    }
+
+    return NextResponse.json(data, { status: 201 })
+  } catch (err) {
+    console.error('[POST /api/practice/applications] Unexpected error:', err)
+    return NextResponse.json({ error: '서버 오류가 발생했습니다.' }, { status: 500 })
+  }
+}
+
+/**
  * PATCH /api/practice/applications
  */
 export async function PATCH(request: NextRequest) {

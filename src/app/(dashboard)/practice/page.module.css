@@ -193,6 +193,302 @@
   cursor: pointer;
 }
 
+/* ─── 취업신청 추가 모달 (토스 스타일) ───────────────────────────── */
+.empAddOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 1000;
+}
+
+@media (min-width: 480px) {
+  .empAddOverlay {
+    align-items: center;
+  }
+}
+
+.empAddModal {
+  background: #fff;
+  border-radius: 20px 20px 0 0;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+@media (min-width: 480px) {
+  .empAddModal {
+    border-radius: 20px;
+  }
+}
+
+.empAddHeader {
+  padding: 24px 24px 0;
+  flex-shrink: 0;
+}
+
+.empAddHeaderTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.empAddTitle {
+  font-size: 20px;
+  font-weight: 700;
+  color: #191F28;
+  letter-spacing: -0.5px;
+  line-height: 1.3;
+}
+
+.empAddStep {
+  font-size: 13px;
+  color: #8B95A1;
+  margin-top: 2px;
+}
+
+.empAddCloseBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: #F2F4F6;
+  color: #8B95A1;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.empAddCloseBtn:hover {
+  background: #E5E8EB;
+}
+
+.empAddProgress {
+  display: flex;
+  gap: 4px;
+  margin-top: 16px;
+}
+
+.empAddProgressBar {
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: #E5E8EB;
+  transition: background 0.3s;
+}
+
+.empAddProgressBarActive {
+  background: #3182F6;
+}
+
+.empAddBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.empAddField {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.empAddFieldLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: #191F28;
+  letter-spacing: -0.2px;
+}
+
+.empAddInput {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1.5px solid #E5E8EB;
+  border-radius: 12px;
+  font-size: 15px;
+  color: #191F28;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+}
+
+.empAddInput:focus {
+  border-color: #3182F6;
+}
+
+.empAddInput::placeholder {
+  color: #B0B8C1;
+}
+
+.empAddOptionRow {
+  display: flex;
+  gap: 8px;
+}
+
+.empAddOptionCard {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1.5px solid #E5E8EB;
+  border-radius: 12px;
+  cursor: pointer;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333D4B;
+  transition: all 0.15s;
+}
+
+.empAddOptionCard:hover {
+  border-color: #3182F6;
+  background: #F0F6FF;
+}
+
+.empAddOptionCardActive {
+  border-color: #3182F6;
+  background: #F0F6FF;
+  color: #3182F6;
+  font-weight: 600;
+}
+
+.empAddDot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid #D1D6DB;
+  background: #fff;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.empAddDotActive {
+  border-color: #3182F6;
+  background: #3182F6;
+}
+
+.empAddDotInner {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.empAddCheckbox {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  border: 2px solid #D1D6DB;
+  background: #fff;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  font-size: 11px;
+  color: #fff;
+}
+
+.empAddCheckboxActive {
+  border-color: #3182F6;
+  background: #3182F6;
+}
+
+.empAddOptionGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.empAddTextarea {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1.5px solid #E5E8EB;
+  border-radius: 12px;
+  font-size: 15px;
+  color: #191F28;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.15s;
+  resize: vertical;
+  box-sizing: border-box;
+  font-family: inherit;
+  min-height: 80px;
+}
+
+.empAddTextarea:focus {
+  border-color: #3182F6;
+}
+
+.empAddTextarea::placeholder {
+  color: #B0B8C1;
+}
+
+.empAddFooter {
+  padding: 16px 24px 24px;
+  flex-shrink: 0;
+  display: flex;
+  gap: 8px;
+}
+
+.empAddBackBtn {
+  padding: 15px 20px;
+  border: 1.5px solid #E5E8EB;
+  border-radius: 12px;
+  background: #fff;
+  color: #333D4B;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.empAddBackBtn:hover {
+  background: #F2F4F6;
+}
+
+.empAddNextBtn {
+  flex: 1;
+  padding: 15px;
+  background: #3182F6;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+  letter-spacing: -0.3px;
+}
+
+.empAddNextBtn:hover {
+  background: #1b6fe8;
+}
+
+.empAddNextBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
 /* 추가 버튼 (모달 하단) */
 .addModalSubmitBtn {
   width: 100%;

@@ -30,19 +30,31 @@ export async function GET() {
       return NextResponse.json({ error: 'Supabase configuration missing' }, { status: 500 });
     }
 
-    const { data, error } = await supabaseAdmin
-      .from(TABLE)
-      .select('*')
-      .is('deleted_at', null)
-      .order('created_at', { ascending: false })
-      .order('id', { ascending: false });
+    const allData: unknown[] = [];
+    const PAGE_SIZE = 1000;
+    let from = 0;
 
-    if (error) {
-      console.error('[hakjeom/agency GET] Supabase error:', error);
-      return NextResponse.json({ error: 'Failed to fetch agency agreements' }, { status: 500 });
+    while (true) {
+      const { data, error } = await supabaseAdmin
+        .from(TABLE)
+        .select('*')
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: false })
+        .range(from, from + PAGE_SIZE - 1);
+
+      if (error) {
+        console.error('[hakjeom/agency GET] Supabase error:', error);
+        return NextResponse.json({ error: 'Failed to fetch agency agreements' }, { status: 500 });
+      }
+
+      if (!data || data.length === 0) break;
+      allData.push(...data);
+      if (data.length < PAGE_SIZE) break;
+      from += PAGE_SIZE;
     }
 
-    return NextResponse.json(data || []);
+    return NextResponse.json(allData);
   } catch (err) {
     console.error('[hakjeom/agency GET] Unexpected error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

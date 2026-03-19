@@ -327,6 +327,7 @@ function CustomSelect({ value, onChange, options, placeholder, fullWidth, style 
   )
 }
 
+
 function LoadingState() {
   return <div style={{ padding: '60px 24px', textAlign: 'center', color: 'var(--toss-text-secondary)', fontSize: 14 }}>데이터를 불러오는 중...</div>
 }
@@ -932,28 +933,76 @@ function PracticeApplicationDetailModal({ item, onClose, onUpdate }: {
 
 // ─── 취업신청 상세 모달 ──────────────────────────────────────────────────────
 
+const EMPLOYMENT_TYPE_OPTIONS = ['정규직', '계약직', '파트타임', '부업']
+const PRACTICE_TYPE_OPTIONS = [
+  '사회복지사 실습 160시간',
+  '사회복지사 실습 120시간',
+  '보육교사 실습 240시간',
+  '평생교육사 실습 160시간',
+]
+
 function EmploymentDetailModal({ item, onClose, onUpdate }: {
   item: EmploymentApplication
   onClose: () => void
   onUpdate: (id: string, fields: Partial<EmploymentApplication>) => Promise<void>
 }) {
   const [activeTab, setActiveTab] = useState<'basic' | 'detail'>('basic')
-  const [editStatus, setEditStatus] = useState(item.status)
-  const [editManager, setEditManager] = useState(item.manager ?? '')
-  const [editMemo, setEditMemo] = useState(item.memo ?? '')
+  const [form, setForm] = useState({
+    name: item.name ?? '',
+    gender: item.gender ?? '',
+    contact: item.contact ?? '',
+    birth_date: item.birth_date ?? '',
+    address: item.address ?? '',
+    address_detail: item.address_detail ?? '',
+    status: item.status ?? '',
+    manager: item.manager ?? '',
+    memo: item.memo ?? '',
+    desired_job_field: item.desired_job_field ?? '',
+    employment_types: item.employment_types ?? [],
+    has_resume: item.has_resume,
+    certifications: item.certifications ?? '',
+    click_source: item.click_source ?? '',
+  })
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    setEditStatus(item.status)
-    setEditManager(item.manager ?? '')
-    setEditMemo(item.memo ?? '')
+    setForm({
+      name: item.name ?? '',
+      gender: item.gender ?? '',
+      contact: item.contact ?? '',
+      birth_date: item.birth_date ?? '',
+      address: item.address ?? '',
+      address_detail: item.address_detail ?? '',
+      status: item.status ?? '',
+      manager: item.manager ?? '',
+      memo: item.memo ?? '',
+      desired_job_field: item.desired_job_field ?? '',
+      employment_types: item.employment_types ?? [],
+      has_resume: item.has_resume,
+      certifications: item.certifications ?? '',
+      click_source: item.click_source ?? '',
+    })
     setActiveTab('basic')
   }, [item.id])
+
+  const set = (field: string, value: unknown) => setForm(prev => ({ ...prev, [field]: value }))
+
+  const toggleEmploymentType = (type: string) => {
+    setForm(prev => ({
+      ...prev,
+      employment_types: prev.employment_types.includes(type)
+        ? prev.employment_types.filter(t => t !== type)
+        : [...prev.employment_types, type],
+    }))
+  }
 
   const handleSave = async () => {
     setSaving(true)
     try {
-      await onUpdate(item.id, { status: editStatus, manager: editManager, memo: editMemo })
+      await onUpdate(item.id, {
+        ...form,
+        has_resume: form.has_resume,
+      })
     } finally {
       setSaving(false)
     }
@@ -971,10 +1020,7 @@ function EmploymentDetailModal({ item, onClose, onUpdate }: {
               <div>
                 <div className={styles.detailModalNameRow}>
                   <p className={styles.detailModalName}>{item.name}</p>
-                  <span
-                    className={styles.statusBadge}
-                    style={{ background: payStyle.background, color: payStyle.color }}
-                  >
+                  <span className={styles.statusBadge} style={{ background: payStyle.background, color: payStyle.color }}>
                     {PAYMENT_STATUS_LABEL[item.payment_status] ?? item.payment_status}
                   </span>
                 </div>
@@ -988,19 +1034,12 @@ function EmploymentDetailModal({ item, onClose, onUpdate }: {
             <button onClick={onClose} className={styles.detailModalCloseBtn}>✕</button>
           </div>
           <div className={styles.detailModalTabs}>
-            {(['basic', 'detail'] as const).map(tab => {
-              const labels = { basic: '기본정보', detail: '상세정보' }
-              return (
-                <button
-                  key={tab}
-                  type="button"
-                  onClick={() => setActiveTab(tab)}
-                  className={`${styles.detailModalTab} ${activeTab === tab ? styles.detailModalTabActive : ''}`}
-                >
-                  {labels[tab]}
-                </button>
-              )
-            })}
+            {(['basic', 'detail'] as const).map(tab => (
+              <button key={tab} type="button" onClick={() => setActiveTab(tab)}
+                className={`${styles.detailModalTab} ${activeTab === tab ? styles.detailModalTabActive : ''}`}>
+                {{ basic: '기본정보', detail: '상세정보' }[tab]}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -1008,56 +1047,85 @@ function EmploymentDetailModal({ item, onClose, onUpdate }: {
         <div className={styles.detailModalBody}>
           {activeTab === 'basic' && (
             <>
-              {/* 상태 */}
+              <div className={styles.detailFieldRow}>
+                <span className={styles.detailFieldLabel}>이름</span>
+                <input value={form.name} onChange={e => set('name', e.target.value)} className={`${styles.input} ${styles.inputFull}`} />
+              </div>
+              <div className={styles.detailFieldRow}>
+                <span className={styles.detailFieldLabel}>성별</span>
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                  {['여', '남'].map(g => (
+                    <label key={g} style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', fontSize: 14 }}>
+                      <input type="radio" name="gender" value={g} checked={form.gender === g} onChange={() => set('gender', g)} /> {g}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div className={styles.detailFieldRow}>
+                <span className={styles.detailFieldLabel}>연락처</span>
+                <input value={form.contact} onChange={e => set('contact', e.target.value)} className={`${styles.input} ${styles.inputFull}`} />
+              </div>
+              <div className={styles.detailFieldRow}>
+                <span className={styles.detailFieldLabel}>생년월일</span>
+                <input value={form.birth_date} onChange={e => set('birth_date', e.target.value)} placeholder="YYMMDD" className={`${styles.input} ${styles.inputFull}`} />
+              </div>
+              <div className={styles.detailFieldRow}>
+                <span className={styles.detailFieldLabel}>주소</span>
+                <input value={form.address} onChange={e => set('address', e.target.value)} className={`${styles.input} ${styles.inputFull}`} />
+              </div>
+              <div className={styles.detailFieldRow}>
+                <span className={styles.detailFieldLabel}>상세주소</span>
+                <input value={form.address_detail} onChange={e => set('address_detail', e.target.value)} className={`${styles.input} ${styles.inputFull}`} />
+              </div>
               <div className={styles.detailFieldRow}>
                 <span className={styles.detailFieldLabel}>상태</span>
-                <input
-                  value={editStatus}
-                  onChange={e => setEditStatus(e.target.value)}
-                  className={`${styles.input} ${styles.inputFull}`}
-                />
+                <input value={form.status} onChange={e => set('status', e.target.value)} className={`${styles.input} ${styles.inputFull}`} />
               </div>
-
-              {/* 담당자 */}
               <div className={styles.detailFieldRow}>
                 <span className={styles.detailFieldLabel}>담당자</span>
-                <input
-                  value={editManager}
-                  onChange={e => setEditManager(e.target.value)}
-                  placeholder="담당자 이름"
-                  className={`${styles.input} ${styles.inputFull}`}
-                />
+                <input value={form.manager} onChange={e => set('manager', e.target.value)} placeholder="담당자 이름" className={`${styles.input} ${styles.inputFull}`} />
               </div>
-
-              {/* 메모 */}
               <div className={styles.detailFieldRow} style={{ alignItems: 'flex-start' }}>
                 <span className={styles.detailFieldLabel} style={{ paddingTop: 6 }}>메모</span>
-                <textarea
-                  value={editMemo}
-                  onChange={e => setEditMemo(e.target.value)}
-                  rows={4}
-                  placeholder="메모를 입력하세요"
-                  className={styles.textarea}
-                  style={{ flex: 1 }}
-                />
+                <textarea value={form.memo} onChange={e => set('memo', e.target.value)} rows={4} placeholder="메모를 입력하세요" className={styles.textarea} style={{ flex: 1 }} />
               </div>
-
-              <InfoRow label="성별" value={item.gender} />
-              <InfoRow label="생년월일" value={item.birth_date} />
-              <InfoRow label="주소" value={item.address} />
-              <InfoRow label="상세주소" value={item.address_detail} />
             </>
           )}
 
           {activeTab === 'detail' && (
             <>
-              <InfoRow label="희망직무" value={item.desired_job_field} />
-              <InfoRow label="취업유형" value={item.employment_types} />
-              <InfoRow label="이력서보유" value={item.has_resume} />
-              <InfoRow label="자격증" value={item.certifications} />
-              <InfoRow label="유입경로" value={item.click_source} />
-              <InfoRow label="개인정보동의" value={item.privacy_agreed} />
-              <InfoRow label="이용약관동의" value={item.terms_agreed} />
+              <div className={styles.detailFieldRow}>
+                <span className={styles.detailFieldLabel}>취업 희망분야</span>
+                <input value={form.desired_job_field} onChange={e => set('desired_job_field', e.target.value)} placeholder="ex. 노인복지" className={`${styles.input} ${styles.inputFull}`} />
+              </div>
+              <div className={styles.detailFieldRow} style={{ alignItems: 'flex-start' }}>
+                <span className={styles.detailFieldLabel} style={{ paddingTop: 4 }}>고용형태</span>
+                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                  {EMPLOYMENT_TYPE_OPTIONS.map(type => (
+                    <label key={type} style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', fontSize: 14 }}>
+                      <input type="checkbox" checked={form.employment_types.includes(type)} onChange={() => toggleEmploymentType(type)} /> {type}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div className={styles.detailFieldRow}>
+                <span className={styles.detailFieldLabel}>이력서 보유</span>
+                <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                  {[{ label: '보유함', value: true }, { label: '보유하지 않음', value: false }].map(opt => (
+                    <label key={String(opt.value)} style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', fontSize: 14 }}>
+                      <input type="radio" name="has_resume" checked={form.has_resume === opt.value} onChange={() => set('has_resume', opt.value)} /> {opt.label}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div className={styles.detailFieldRow}>
+                <span className={styles.detailFieldLabel}>자격증</span>
+                <input value={form.certifications} onChange={e => set('certifications', e.target.value)} placeholder="보유 자격증을 입력하세요" className={`${styles.input} ${styles.inputFull}`} />
+              </div>
+              <div className={styles.detailFieldRow}>
+                <span className={styles.detailFieldLabel}>유입경로</span>
+                <input value={form.click_source} onChange={e => set('click_source', e.target.value)} className={`${styles.input} ${styles.inputFull}`} />
+              </div>
               <InfoRow label="결제ID" value={item.payment_id} />
               <InfoRow label="등록일" value={formatDateTime(item.created_at)} />
             </>
@@ -1066,13 +1134,342 @@ function EmploymentDetailModal({ item, onClose, onUpdate }: {
 
         {/* 푸터 */}
         <div className={styles.detailModalFooter}>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className={`${styles.panelSaveBtn} ${saving ? styles.panelSaveBtnDisabled : ''}`}
-          >
+          <button onClick={handleSave} disabled={saving} className={`${styles.panelSaveBtn} ${saving ? styles.panelSaveBtnDisabled : ''}`}>
             {saving ? '저장 중...' : '변경사항 저장'}
           </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── 실습섭외신청 추가 모달 (토스 스타일) ─────────────────────────────────────
+
+function PracticeAddModal({ onClose, onAdd }: {
+  onClose: () => void
+  onAdd: (fields: Partial<PracticeApplication>) => Promise<void>
+}) {
+  const [step, setStep] = useState(1)
+  const [form, setForm] = useState({
+    name: '', gender: '', contact: '', birth_date: '',
+    address: '', address_detail: '',
+    practice_type: '', desired_job_field: '',
+    employment_types: [] as string[],
+    has_resume: null as boolean | null,
+    certifications: '', manager: '', memo: '',
+  })
+  const [saving, setSaving] = useState(false)
+
+  const set = (field: string, value: unknown) => setForm(prev => ({ ...prev, [field]: value }))
+  const toggleType = (type: string) => setForm(prev => ({
+    ...prev,
+    employment_types: prev.employment_types.includes(type)
+      ? prev.employment_types.filter(t => t !== type)
+      : [...prev.employment_types, type],
+  }))
+
+  const handleNext = () => {
+    if (!form.name || !form.contact) { alert('이름과 연락처는 필수입니다.'); return }
+    setStep(2)
+  }
+
+  const handleSubmit = async () => {
+    setSaving(true)
+    try { await onAdd({ ...form, has_resume: form.has_resume ?? false }) } finally { setSaving(false) }
+  }
+
+  return (
+    <div className={practiceStyles.empAddOverlay} onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div className={practiceStyles.empAddModal}>
+        <div className={practiceStyles.empAddHeader}>
+          <div className={practiceStyles.empAddHeaderTop}>
+            <div>
+              <p className={practiceStyles.empAddTitle}>실습섭외 신청 추가</p>
+              <p className={practiceStyles.empAddStep}>{step} / 2단계</p>
+            </div>
+            <button onClick={onClose} className={practiceStyles.empAddCloseBtn}>✕</button>
+          </div>
+          <div className={practiceStyles.empAddProgress}>
+            {[1, 2].map(s => (
+              <div key={s} className={`${practiceStyles.empAddProgressBar} ${s <= step ? practiceStyles.empAddProgressBarActive : ''}`} />
+            ))}
+          </div>
+        </div>
+
+        <div className={practiceStyles.empAddBody}>
+          {step === 1 && (
+            <>
+              <div className={practiceStyles.empAddField}>
+                <span className={practiceStyles.empAddFieldLabel}>이름 <span className={practiceStyles.addModalRequired}>*</span></span>
+                <input value={form.name} onChange={e => set('name', e.target.value)} placeholder="이름을 입력하세요" className={practiceStyles.empAddInput} />
+              </div>
+              <div className={practiceStyles.empAddField}>
+                <span className={practiceStyles.empAddFieldLabel}>성별</span>
+                <div className={practiceStyles.empAddOptionRow}>
+                  {[{ label: '여성', value: '여' }, { label: '남성', value: '남' }].map(g => (
+                    <div key={g.value} className={`${practiceStyles.empAddOptionCard} ${form.gender === g.value ? practiceStyles.empAddOptionCardActive : ''}`} onClick={() => set('gender', g.value)}>
+                      <div className={`${practiceStyles.empAddDot} ${form.gender === g.value ? practiceStyles.empAddDotActive : ''}`}>
+                        {form.gender === g.value && <div className={practiceStyles.empAddDotInner} />}
+                      </div>
+                      {g.label}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className={practiceStyles.empAddField}>
+                <span className={practiceStyles.empAddFieldLabel}>연락처 <span className={practiceStyles.addModalRequired}>*</span></span>
+                <input value={form.contact} onChange={e => set('contact', e.target.value)} placeholder="연락처를 입력하세요" className={practiceStyles.empAddInput} />
+              </div>
+              <div className={practiceStyles.empAddField}>
+                <span className={practiceStyles.empAddFieldLabel}>생년월일</span>
+                <input value={form.birth_date} onChange={e => set('birth_date', e.target.value)} placeholder="생년월일 6자리 (ex. 900101)" className={practiceStyles.empAddInput} />
+              </div>
+              <div className={practiceStyles.empAddField}>
+                <span className={practiceStyles.empAddFieldLabel}>주소</span>
+                <input value={form.address} onChange={e => set('address', e.target.value)} placeholder="주소를 입력하세요" className={practiceStyles.empAddInput} />
+              </div>
+              <div className={practiceStyles.empAddField}>
+                <span className={practiceStyles.empAddFieldLabel}>상세주소</span>
+                <input value={form.address_detail} onChange={e => set('address_detail', e.target.value)} placeholder="상세주소" className={practiceStyles.empAddInput} />
+              </div>
+            </>
+          )}
+
+          {step === 2 && (
+            <>
+              <div className={practiceStyles.empAddField}>
+                <span className={practiceStyles.empAddFieldLabel}>실습 유형</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {PRACTICE_TYPE_OPTIONS.map(type => (
+                    <div key={type} className={`${practiceStyles.empAddOptionCard} ${form.practice_type === type ? practiceStyles.empAddOptionCardActive : ''}`} onClick={() => set('practice_type', type)}>
+                      <div className={`${practiceStyles.empAddDot} ${form.practice_type === type ? practiceStyles.empAddDotActive : ''}`}>
+                        {form.practice_type === type && <div className={practiceStyles.empAddDotInner} />}
+                      </div>
+                      {type}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className={practiceStyles.empAddField}>
+                <span className={practiceStyles.empAddFieldLabel}>취업 희망분야</span>
+                <input value={form.desired_job_field} onChange={e => set('desired_job_field', e.target.value)} placeholder="ex. 노인복지" className={practiceStyles.empAddInput} />
+              </div>
+              <div className={practiceStyles.empAddField}>
+                <span className={practiceStyles.empAddFieldLabel}>고용형태</span>
+                <div className={practiceStyles.empAddOptionGrid}>
+                  {EMPLOYMENT_TYPE_OPTIONS.map(type => {
+                    const active = form.employment_types.includes(type)
+                    return (
+                      <div key={type} className={`${practiceStyles.empAddOptionCard} ${active ? practiceStyles.empAddOptionCardActive : ''}`} onClick={() => toggleType(type)}>
+                        <div className={`${practiceStyles.empAddCheckbox} ${active ? practiceStyles.empAddCheckboxActive : ''}`}>{active && '✓'}</div>
+                        {type}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+              <div className={practiceStyles.empAddField}>
+                <span className={practiceStyles.empAddFieldLabel}>자기소개서·이력서 보유 여부</span>
+                <div className={practiceStyles.empAddOptionRow}>
+                  {[{ label: '보유함', value: true }, { label: '보유하지 않음', value: false }].map(opt => (
+                    <div key={String(opt.value)} className={`${practiceStyles.empAddOptionCard} ${form.has_resume === opt.value ? practiceStyles.empAddOptionCardActive : ''}`} onClick={() => set('has_resume', opt.value)}>
+                      <div className={`${practiceStyles.empAddDot} ${form.has_resume === opt.value ? practiceStyles.empAddDotActive : ''}`}>
+                        {form.has_resume === opt.value && <div className={practiceStyles.empAddDotInner} />}
+                      </div>
+                      {opt.label}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className={practiceStyles.empAddField}>
+                <span className={practiceStyles.empAddFieldLabel}>보유 자격증</span>
+                <input value={form.certifications} onChange={e => set('certifications', e.target.value)} placeholder="취득하신 자격증이 있다면 작성해주세요" className={practiceStyles.empAddInput} />
+              </div>
+              <div className={practiceStyles.empAddField}>
+                <span className={practiceStyles.empAddFieldLabel}>담당자</span>
+                <input value={form.manager} onChange={e => set('manager', e.target.value)} placeholder="담당자 이름" className={practiceStyles.empAddInput} />
+              </div>
+              <div className={practiceStyles.empAddField}>
+                <span className={practiceStyles.empAddFieldLabel}>메모</span>
+                <textarea value={form.memo} onChange={e => set('memo', e.target.value)} placeholder="메모를 입력하세요" className={practiceStyles.empAddTextarea} />
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className={practiceStyles.empAddFooter}>
+          {step === 1 ? (
+            <button onClick={handleNext} className={practiceStyles.empAddNextBtn}>다음</button>
+          ) : (
+            <>
+              <button onClick={() => setStep(1)} className={practiceStyles.empAddBackBtn}>이전</button>
+              <button onClick={handleSubmit} disabled={saving} className={practiceStyles.empAddNextBtn}>
+                {saving ? '저장 중...' : '추가하기'}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── 취업신청 추가 모달 (토스 스타일) ────────────────────────────────────────
+
+function EmploymentAddModal({ onClose, onAdd }: {
+  onClose: () => void
+  onAdd: (fields: Partial<EmploymentApplication>) => Promise<void>
+}) {
+  const [step, setStep] = useState(1)
+  const [form, setForm] = useState({
+    name: '', gender: '', contact: '', birth_date: '',
+    address: '', address_detail: '',
+    desired_job_field: '', employment_types: [] as string[],
+    has_resume: null as boolean | null,
+    certifications: '', manager: '', memo: '',
+  })
+  const [saving, setSaving] = useState(false)
+
+  const set = (field: string, value: unknown) => setForm(prev => ({ ...prev, [field]: value }))
+  const toggleType = (type: string) => setForm(prev => ({
+    ...prev,
+    employment_types: prev.employment_types.includes(type)
+      ? prev.employment_types.filter(t => t !== type)
+      : [...prev.employment_types, type],
+  }))
+
+  const handleNext = () => {
+    if (!form.name || !form.contact) { alert('이름과 연락처는 필수입니다.'); return }
+    setStep(2)
+  }
+
+  const handleSubmit = async () => {
+    setSaving(true)
+    try { await onAdd(form) } finally { setSaving(false) }
+  }
+
+  return (
+    <div className={practiceStyles.empAddOverlay} onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div className={practiceStyles.empAddModal}>
+        {/* 헤더 */}
+        <div className={practiceStyles.empAddHeader}>
+          <div className={practiceStyles.empAddHeaderTop}>
+            <div>
+              <p className={practiceStyles.empAddTitle}>취업신청 추가</p>
+              <p className={practiceStyles.empAddStep}>{step} / 2단계</p>
+            </div>
+            <button onClick={onClose} className={practiceStyles.empAddCloseBtn}>✕</button>
+          </div>
+          <div className={practiceStyles.empAddProgress}>
+            {[1, 2].map(s => (
+              <div key={s} className={`${practiceStyles.empAddProgressBar} ${s <= step ? practiceStyles.empAddProgressBarActive : ''}`} />
+            ))}
+          </div>
+        </div>
+
+        {/* 바디 */}
+        <div className={practiceStyles.empAddBody}>
+          {step === 1 && (
+            <>
+              <div className={practiceStyles.empAddField}>
+                <span className={practiceStyles.empAddFieldLabel}>이름 <span className={practiceStyles.addModalRequired}>*</span></span>
+                <input value={form.name} onChange={e => set('name', e.target.value)} placeholder="이름을 입력하세요" className={practiceStyles.empAddInput} />
+              </div>
+              <div className={practiceStyles.empAddField}>
+                <span className={practiceStyles.empAddFieldLabel}>성별</span>
+                <div className={practiceStyles.empAddOptionRow}>
+                  {[{ label: '여성', value: '여' }, { label: '남성', value: '남' }].map(g => (
+                    <div key={g.value} className={`${practiceStyles.empAddOptionCard} ${form.gender === g.value ? practiceStyles.empAddOptionCardActive : ''}`} onClick={() => set('gender', g.value)}>
+                      <div className={`${practiceStyles.empAddDot} ${form.gender === g.value ? practiceStyles.empAddDotActive : ''}`}>
+                        {form.gender === g.value && <div className={practiceStyles.empAddDotInner} />}
+                      </div>
+                      {g.label}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className={practiceStyles.empAddField}>
+                <span className={practiceStyles.empAddFieldLabel}>연락처 <span className={practiceStyles.addModalRequired}>*</span></span>
+                <input value={form.contact} onChange={e => set('contact', e.target.value)} placeholder="연락처를 입력하세요" className={practiceStyles.empAddInput} />
+              </div>
+              <div className={practiceStyles.empAddField}>
+                <span className={practiceStyles.empAddFieldLabel}>생년월일</span>
+                <input value={form.birth_date} onChange={e => set('birth_date', e.target.value)} placeholder="생년월일 6자리 (ex. 900101)" className={practiceStyles.empAddInput} />
+              </div>
+              <div className={practiceStyles.empAddField}>
+                <span className={practiceStyles.empAddFieldLabel}>주소</span>
+                <input value={form.address} onChange={e => set('address', e.target.value)} placeholder="주소를 입력하세요" className={practiceStyles.empAddInput} />
+              </div>
+              <div className={practiceStyles.empAddField}>
+                <span className={practiceStyles.empAddFieldLabel}>상세주소</span>
+                <input value={form.address_detail} onChange={e => set('address_detail', e.target.value)} placeholder="상세주소" className={practiceStyles.empAddInput} />
+              </div>
+            </>
+          )}
+
+          {step === 2 && (
+            <>
+              <div className={practiceStyles.empAddField}>
+                <span className={practiceStyles.empAddFieldLabel}>취업 희망분야</span>
+                <input value={form.desired_job_field} onChange={e => set('desired_job_field', e.target.value)} placeholder="ex. 노인복지" className={practiceStyles.empAddInput} />
+              </div>
+              <div className={practiceStyles.empAddField}>
+                <span className={practiceStyles.empAddFieldLabel}>고용형태</span>
+                <div className={practiceStyles.empAddOptionGrid}>
+                  {EMPLOYMENT_TYPE_OPTIONS.map(type => {
+                    const active = form.employment_types.includes(type)
+                    return (
+                      <div key={type} className={`${practiceStyles.empAddOptionCard} ${active ? practiceStyles.empAddOptionCardActive : ''}`} onClick={() => toggleType(type)}>
+                        <div className={`${practiceStyles.empAddCheckbox} ${active ? practiceStyles.empAddCheckboxActive : ''}`}>
+                          {active && '✓'}
+                        </div>
+                        {type}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+              <div className={practiceStyles.empAddField}>
+                <span className={practiceStyles.empAddFieldLabel}>자기소개서·이력서 보유 여부</span>
+                <div className={practiceStyles.empAddOptionRow}>
+                  {[{ label: '보유함', value: true }, { label: '보유하지 않음', value: false }].map(opt => (
+                    <div key={String(opt.value)} className={`${practiceStyles.empAddOptionCard} ${form.has_resume === opt.value ? practiceStyles.empAddOptionCardActive : ''}`} onClick={() => set('has_resume', opt.value)}>
+                      <div className={`${practiceStyles.empAddDot} ${form.has_resume === opt.value ? practiceStyles.empAddDotActive : ''}`}>
+                        {form.has_resume === opt.value && <div className={practiceStyles.empAddDotInner} />}
+                      </div>
+                      {opt.label}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className={practiceStyles.empAddField}>
+                <span className={practiceStyles.empAddFieldLabel}>보유 자격증</span>
+                <input value={form.certifications} onChange={e => set('certifications', e.target.value)} placeholder="취득하신 자격증이 있다면 작성해주세요" className={practiceStyles.empAddInput} />
+              </div>
+              <div className={practiceStyles.empAddField}>
+                <span className={practiceStyles.empAddFieldLabel}>담당자</span>
+                <input value={form.manager} onChange={e => set('manager', e.target.value)} placeholder="담당자 이름" className={practiceStyles.empAddInput} />
+              </div>
+              <div className={practiceStyles.empAddField}>
+                <span className={practiceStyles.empAddFieldLabel}>메모</span>
+                <textarea value={form.memo} onChange={e => set('memo', e.target.value)} placeholder="메모를 입력하세요" className={practiceStyles.empAddTextarea} />
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* 푸터 */}
+        <div className={practiceStyles.empAddFooter}>
+          {step === 1 ? (
+            <button onClick={handleNext} className={practiceStyles.empAddNextBtn}>다음</button>
+          ) : (
+            <>
+              <button onClick={() => setStep(1)} className={practiceStyles.empAddBackBtn}>이전</button>
+              <button onClick={handleSubmit} disabled={saving} className={practiceStyles.empAddNextBtn}>
+                {saving ? '저장 중...' : '추가하기'}
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -1087,9 +1484,15 @@ export default function PracticePage() {
   // 상담신청
   const [consultations, setConsultations] = useState<PracticeConsultation[]>([])
   const [consultationSearch, setConsultationSearch] = useState('')
-  const [consultationStatusFilter, setConsultationStatusFilter] = useState<ConsultationStatus | ''>('')
-  const [consultationTypeFilter, setConsultationTypeFilter] = useState<ConsultationType | ''>('')
   const [consultationPage, setConsultationPage] = useState(1)
+  // 컬럼 헤더 필터 (다중선택)
+  const [consultNameFilter, setConsultNameFilter] = useState<string[]>([])
+  const [consultServiceFilter, setConsultServiceFilter] = useState<string[]>([])
+  const [consultHopeTimeFilter, setConsultHopeTimeFilter] = useState<string[]>([])
+  const [consultManagerFilter, setConsultManagerFilter] = useState<string[]>([])
+  const [consultStatusMultiFilter, setConsultStatusMultiFilter] = useState<string[]>([])
+  const [openFilterColumn, setOpenFilterColumn] = useState<string | null>(null)
+  const [filterDropdownPos, setFilterDropdownPos] = useState({ top: 0, left: 0 })
   const [selectedConsultation, setSelectedConsultation] = useState<PracticeConsultation | null>(null)
 
   // 실습섭외신청서
@@ -1097,10 +1500,19 @@ export default function PracticePage() {
   const [practiceSearch, setPracticeSearch] = useState('')
   const [practicePage, setPracticePage] = useState(1)
   const [selectedPracticeApp, setSelectedPracticeApp] = useState<PracticeApplication | null>(null)
+  // 컬럼 헤더 필터 (다중선택)
+  const [practiceNameFilter, setPracticeNameFilter] = useState<string[]>([])
+  const [practiceContactFilter, setPracticeContactFilter] = useState<string[]>([])
+  const [practiceTypeFilter, setPracticeTypeFilter] = useState<string[]>([])
+  const [practiceJobFilter, setPracticeJobFilter] = useState<string[]>([])
+  const [practicePayStatusFilter, setPracticePayStatusFilter] = useState<string[]>([])
+  const [practiceStatusFilter, setPracticeStatusFilter] = useState<string[]>([])
+  const [practiceManagerFilter, setPracticeManagerFilter] = useState<string[]>([])
 
   // 체크박스 선택
   const [selectedConsultationIds, setSelectedConsultationIds] = useState<Set<number>>(new Set())
   const [selectedPracticeAppIds, setSelectedPracticeAppIds] = useState<Set<string>>(new Set())
+  const [showAddPracticeModal, setShowAddPracticeModal] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
   // 취업신청
@@ -1108,6 +1520,14 @@ export default function PracticePage() {
   const [employmentSearch, setEmploymentSearch] = useState('')
   const [employmentPage, setEmploymentPage] = useState(1)
   const [selectedEmploymentApp, setSelectedEmploymentApp] = useState<EmploymentApplication | null>(null)
+  const [selectedEmploymentIds, setSelectedEmploymentIds] = useState<Set<string>>(new Set())
+  const [showAddEmploymentModal, setShowAddEmploymentModal] = useState(false)
+  // 컬럼 헤더 필터 (다중선택)
+  const [empNameFilter, setEmpNameFilter] = useState<string[]>([])
+  const [empContactFilter, setEmpContactFilter] = useState<string[]>([])
+  const [empTypeFilter, setEmpTypeFilter] = useState<string[]>([])
+  const [empPayStatusFilter, setEmpPayStatusFilter] = useState<string[]>([])
+  const [empManagerFilter, setEmpManagerFilter] = useState<string[]>([])
 
   // 모달
   const [showAddConsultationModal, setShowAddConsultationModal] = useState(false)
@@ -1124,8 +1544,6 @@ export default function PracticePage() {
     try {
       const params = new URLSearchParams()
       if (consultationSearch) params.set('search', consultationSearch)
-      if (consultationStatusFilter) params.set('status', consultationStatusFilter)
-      if (consultationTypeFilter) params.set('type', consultationTypeFilter)
       const res = await fetch(`/api/practice?${params.toString()}`)
       if (!res.ok) {
         const body = await res.json().catch(() => ({}))
@@ -1138,7 +1556,7 @@ export default function PracticePage() {
     } finally {
       setLoading(false)
     }
-  }, [consultationSearch, consultationStatusFilter, consultationTypeFilter])
+  }, [consultationSearch])
 
   const fetchPracticeApplications = useCallback(async () => {
     setLoading(true)
@@ -1186,6 +1604,25 @@ export default function PracticePage() {
     else if (activeTab === 'employment') fetchEmploymentApplications()
   }, [activeTab, fetchConsultations, fetchPracticeApplications, fetchEmploymentApplications])
 
+  useEffect(() => {
+    setConsultationPage(1)
+  }, [consultNameFilter, consultServiceFilter, consultHopeTimeFilter, consultManagerFilter, consultStatusMultiFilter])
+
+  useEffect(() => {
+    setPracticePage(1)
+  }, [practiceNameFilter, practiceContactFilter, practiceTypeFilter, practiceJobFilter, practicePayStatusFilter, practiceStatusFilter, practiceManagerFilter])
+
+  useEffect(() => {
+    setEmploymentPage(1)
+  }, [empNameFilter, empContactFilter, empTypeFilter, empPayStatusFilter, empManagerFilter])
+
+  useEffect(() => {
+    if (!openFilterColumn) return
+    const handler = () => setOpenFilterColumn(null)
+    document.addEventListener('click', handler)
+    return () => document.removeEventListener('click', handler)
+  }, [openFilterColumn])
+
   // ─── 업데이트 핸들러 ───────────────────────────────────────────────────────
 
   async function handleConsultationUpdate(id: number, fields: Partial<PracticeConsultation>) {
@@ -1222,6 +1659,50 @@ export default function PracticePage() {
     const updated: EmploymentApplication = await res.json()
     setEmploymentApplications(prev => prev.map(item => item.id === updated.id ? updated : item))
     setSelectedEmploymentApp(updated)
+  }
+
+  // 추가 (실습섭외신청)
+  async function handlePracticeAdd(fields: Partial<PracticeApplication>) {
+    const res = await fetch('/api/practice/applications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(fields),
+    })
+    if (!res.ok) { alert((await res.json().catch(() => ({}))).error ?? '등록에 실패했습니다.'); return }
+    const created: PracticeApplication = await res.json()
+    setPracticeApplications(prev => [created, ...prev])
+    setShowAddPracticeModal(false)
+  }
+
+  // 삭제 (취업신청)
+  async function handleDeleteEmploymentApps() {
+    const ids = Array.from(selectedEmploymentIds)
+    if (ids.length === 0) return
+    if (!confirm(`${ids.length}건을 삭제할까요?`)) return
+    setDeleting(true)
+    const res = await fetch('/api/practice/employment', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids }),
+    })
+    setDeleting(false)
+    if (!res.ok) { alert('삭제에 실패했습니다.'); return }
+    setEmploymentApplications(prev => prev.filter(a => !selectedEmploymentIds.has(a.id)))
+    setSelectedEmploymentIds(new Set())
+    if (selectedEmploymentApp && selectedEmploymentIds.has(selectedEmploymentApp.id)) setSelectedEmploymentApp(null)
+  }
+
+  // 추가 (취업신청)
+  async function handleEmploymentAdd(fields: Partial<EmploymentApplication>) {
+    const res = await fetch('/api/practice/employment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(fields),
+    })
+    if (!res.ok) { alert((await res.json().catch(() => ({}))).error ?? '등록에 실패했습니다.'); return }
+    const created: EmploymentApplication = await res.json()
+    setEmploymentApplications(prev => [created, ...prev])
+    setShowAddEmploymentModal(false)
   }
 
   // 삭제 (상담신청)
@@ -1316,16 +1797,70 @@ export default function PracticePage() {
     pending: employmentApplications.filter(i => i.payment_status === 'pending').length,
   }
 
+  // ─── 클라이언트 필터 ────────────────────────────────────────────────────────
+
+  const consultationNames = [...new Set(consultations.map(c => c.name).filter(Boolean))]
+  const consultationManagers = [...new Set(consultations.map(c => c.manager).filter(Boolean) as string[])]
+
+  const consultationFiltered = consultations.filter(item => {
+    if (consultNameFilter.length > 0 && !consultNameFilter.includes(item.name)) return false
+    if (consultServiceFilter.length > 0) {
+      const svc = item.service_practice && item.service_employment ? '실습+취업'
+        : item.service_practice ? '실습'
+        : item.service_employment ? '취업'
+        : ''
+      if (!consultServiceFilter.includes(svc)) return false
+    }
+    if (consultHopeTimeFilter.length > 0 && !consultHopeTimeFilter.includes(item.employment_hope_time ?? '')) return false
+    if (consultManagerFilter.length > 0 && !consultManagerFilter.includes(item.manager ?? '')) return false
+    if (consultStatusMultiFilter.length > 0 && !consultStatusMultiFilter.includes(item.status)) return false
+    return true
+  })
+
   // ─── 페이징 ────────────────────────────────────────────────────────────────
 
-  const consultationTotalPages = Math.ceil(consultations.length / PAGE_SIZE)
-  const consultationPaged = consultations.slice((consultationPage - 1) * PAGE_SIZE, consultationPage * PAGE_SIZE)
+  const consultationTotalPages = Math.ceil(consultationFiltered.length / PAGE_SIZE)
+  const consultationPaged = consultationFiltered.slice((consultationPage - 1) * PAGE_SIZE, consultationPage * PAGE_SIZE)
 
-  const practiceTotalPages = Math.ceil(practiceApplications.length / PAGE_SIZE)
-  const practicePaged = practiceApplications.slice((practicePage - 1) * PAGE_SIZE, practicePage * PAGE_SIZE)
+  const practiceNames = [...new Set(practiceApplications.map(a => a.name).filter(Boolean))]
+  const practiceContacts = [...new Set(practiceApplications.map(a => a.contact).filter(Boolean))]
+  const practiceTypes = [...new Set(practiceApplications.map(a => a.practice_type).filter(Boolean) as string[])]
+  const practiceJobs = [...new Set(practiceApplications.map(a => a.desired_job_field).filter(Boolean) as string[])]
+  const practicePayStatuses = [...new Set(practiceApplications.map(a => a.payment_status).filter(Boolean) as string[])]
+  const practiceStatuses = [...new Set(practiceApplications.map(a => a.status).filter(Boolean))]
+  const practiceManagers = [...new Set(practiceApplications.map(a => a.manager).filter(Boolean) as string[])]
 
-  const employmentTotalPages = Math.ceil(employmentApplications.length / PAGE_SIZE)
-  const employmentPaged = employmentApplications.slice((employmentPage - 1) * PAGE_SIZE, employmentPage * PAGE_SIZE)
+  const practiceFiltered = practiceApplications.filter(item => {
+    if (practiceNameFilter.length > 0 && !practiceNameFilter.includes(item.name)) return false
+    if (practiceContactFilter.length > 0 && !practiceContactFilter.includes(item.contact)) return false
+    if (practiceTypeFilter.length > 0 && !practiceTypeFilter.includes(item.practice_type ?? '')) return false
+    if (practiceJobFilter.length > 0 && !practiceJobFilter.includes(item.desired_job_field ?? '')) return false
+    if (practicePayStatusFilter.length > 0 && !practicePayStatusFilter.includes(item.payment_status ?? '')) return false
+    if (practiceStatusFilter.length > 0 && !practiceStatusFilter.includes(item.status)) return false
+    if (practiceManagerFilter.length > 0 && !practiceManagerFilter.includes(item.manager ?? '')) return false
+    return true
+  })
+
+  const practiceTotalPages = Math.ceil(practiceFiltered.length / PAGE_SIZE)
+  const practicePaged = practiceFiltered.slice((practicePage - 1) * PAGE_SIZE, practicePage * PAGE_SIZE)
+
+  const empNames = [...new Set(employmentApplications.map(a => a.name).filter(Boolean))]
+  const empContacts = [...new Set(employmentApplications.map(a => a.contact).filter(Boolean))]
+  const empTypes = [...new Set(employmentApplications.flatMap(a => Array.isArray(a.employment_types) ? a.employment_types : []).filter(Boolean))]
+  const empPayStatuses = [...new Set(employmentApplications.map(a => a.payment_status).filter(Boolean))]
+  const empManagers = [...new Set(employmentApplications.map(a => a.manager).filter(Boolean) as string[])]
+
+  const employmentFiltered = employmentApplications.filter(item => {
+    if (empNameFilter.length > 0 && !empNameFilter.includes(item.name)) return false
+    if (empContactFilter.length > 0 && !empContactFilter.includes(item.contact)) return false
+    if (empTypeFilter.length > 0 && !empTypeFilter.some(t => Array.isArray(item.employment_types) && item.employment_types.includes(t))) return false
+    if (empPayStatusFilter.length > 0 && !empPayStatusFilter.includes(item.payment_status)) return false
+    if (empManagerFilter.length > 0 && !empManagerFilter.includes(item.manager ?? '')) return false
+    return true
+  })
+
+  const employmentTotalPages = Math.ceil(employmentFiltered.length / PAGE_SIZE)
+  const employmentPaged = employmentFiltered.slice((employmentPage - 1) * PAGE_SIZE, employmentPage * PAGE_SIZE)
 
   // ─── 탭 설정 ───────────────────────────────────────────────────────────────
 
@@ -1414,6 +1949,11 @@ export default function PracticePage() {
         <>
           {/* 필터 */}
           <div className={styles.filterRow}>
+            {selectedConsultationIds.size > 0 && (
+              <button onClick={handleDeleteConsultations} disabled={deleting} className={styles.btnDanger}>
+                {deleting ? '삭제 중...' : `${selectedConsultationIds.size}건 삭제`}
+              </button>
+            )}
             <input
               className={`${styles.input} ${practiceStyles.searchInput}`}
               type="text"
@@ -1422,32 +1962,8 @@ export default function PracticePage() {
               onKeyDown={e => { if (e.key === 'Enter') fetchConsultations() }}
               placeholder="이름 또는 연락처 검색"
             />
-            <CustomSelect
-              value={consultationStatusFilter}
-              onChange={v => setConsultationStatusFilter(v as ConsultationStatus | '')}
-              options={[
-                { value: '', label: '전체 상태' },
-                ...CONSULTATION_STATUS_OPTIONS.map(s => ({ value: s, label: s })),
-              ]}
-              placeholder="전체 상태"
-            />
-            <CustomSelect
-              value={consultationTypeFilter}
-              onChange={v => setConsultationTypeFilter(v as ConsultationType | '')}
-              options={[
-                { value: '', label: '전체 유형' },
-                { value: 'consultation', label: '상담' },
-                { value: 'practice', label: '실습' },
-                { value: 'employment', label: '취업' },
-              ]}
-              placeholder="전체 유형"
-            />
-            <button onClick={() => setShowAddConsultationModal(true)} className={styles.btnPrimary} style={{ marginLeft: 'auto' }}>+ 추가</button>
-            {selectedConsultationIds.size > 0 && (
-              <button onClick={handleDeleteConsultations} disabled={deleting} className={styles.btnDanger}>
-                {deleting ? '삭제 중...' : `${selectedConsultationIds.size}건 삭제`}
-              </button>
-            )}
+            <div className={styles.actionBarSpacer} />
+            <button onClick={() => setShowAddConsultationModal(true)} className={styles.btnPrimary}>+ 추가</button>
           </div>
 
           {/* 테이블 */}
@@ -1467,9 +1983,71 @@ export default function PracticePage() {
                         }}
                       />
                     </th>
-                    {['이름', '연락처', '희망서비스(실습/취업)', '취업희망시기', '고용지원금', '담당자', '상태', '등록일'].map(col => (
-                      <th key={col} className={styles.th}>{col}</th>
-                    ))}
+                    {/* 이름 */}
+                    <th className={styles.thFilterable}>
+                      <div className={styles.thInner}>
+                        이름
+                        <button
+                          className={`${styles.thFilterBtn}${consultNameFilter.length > 0 ? ` ${styles.thFilterBtnActive}` : ''}`}
+                          onClick={e => { e.stopPropagation(); if (openFilterColumn === 'name') { setOpenFilterColumn(null); return; } const r = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: r.bottom + 4, left: r.left }); setOpenFilterColumn('name') }}
+                        >
+                          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        </button>
+                      </div>
+                    </th>
+                    {/* 연락처 */}
+                    <th className={styles.th}>연락처</th>
+                    {/* 희망서비스 */}
+                    <th className={styles.thFilterable}>
+                      <div className={styles.thInner}>
+                        희망서비스
+                        <button
+                          className={`${styles.thFilterBtn}${consultServiceFilter.length > 0 ? ` ${styles.thFilterBtnActive}` : ''}`}
+                          onClick={e => { e.stopPropagation(); if (openFilterColumn === 'service') { setOpenFilterColumn(null); return; } const r = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: r.bottom + 4, left: r.left }); setOpenFilterColumn('service') }}
+                        >
+                          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        </button>
+                      </div>
+                    </th>
+                    {/* 취업희망시기 */}
+                    <th className={styles.thFilterable}>
+                      <div className={styles.thInner}>
+                        취업희망시기
+                        <button
+                          className={`${styles.thFilterBtn}${consultHopeTimeFilter.length > 0 ? ` ${styles.thFilterBtnActive}` : ''}`}
+                          onClick={e => { e.stopPropagation(); if (openFilterColumn === 'hopeTime') { setOpenFilterColumn(null); return; } const r = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: r.bottom + 4, left: r.left }); setOpenFilterColumn('hopeTime') }}
+                        >
+                          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        </button>
+                      </div>
+                    </th>
+                    {/* 고용지원금 */}
+                    <th className={styles.th}>고용지원금</th>
+                    {/* 담당자 */}
+                    <th className={styles.thFilterable}>
+                      <div className={styles.thInner}>
+                        담당자
+                        <button
+                          className={`${styles.thFilterBtn}${consultManagerFilter.length > 0 ? ` ${styles.thFilterBtnActive}` : ''}`}
+                          onClick={e => { e.stopPropagation(); if (openFilterColumn === 'manager') { setOpenFilterColumn(null); return; } const r = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: r.bottom + 4, left: r.left }); setOpenFilterColumn('manager') }}
+                        >
+                          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        </button>
+                      </div>
+                    </th>
+                    {/* 상태 */}
+                    <th className={styles.thFilterable}>
+                      <div className={styles.thInner}>
+                        상태
+                        <button
+                          className={`${styles.thFilterBtn}${consultStatusMultiFilter.length > 0 ? ` ${styles.thFilterBtnActive}` : ''}`}
+                          onClick={e => { e.stopPropagation(); if (openFilterColumn === 'status') { setOpenFilterColumn(null); return; } const r = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: r.bottom + 4, left: r.left }); setOpenFilterColumn('status') }}
+                        >
+                          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        </button>
+                      </div>
+                    </th>
+                    <th className={styles.th}>등록일</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1531,13 +2109,43 @@ export default function PracticePage() {
                 </tbody>
               </table>
             </div>
-            {!loading && !error && consultations.length > 0 && (
+            {!loading && !error && consultationFiltered.length > 0 && (
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderTop: '1px solid var(--toss-border)' }}>
-                <span style={{ fontSize: 13, color: 'var(--toss-text-secondary)' }}>총 {consultations.length.toLocaleString()}건</span>
+                <span style={{ fontSize: 13, color: 'var(--toss-text-secondary)' }}>총 {consultationFiltered.length.toLocaleString()}건</span>
                 <Pagination page={consultationPage} totalPages={consultationTotalPages} onChange={setConsultationPage} />
               </div>
             )}
           </div>
+
+          {/* 컬럼 필터 드롭다운 */}
+          {openFilterColumn && (
+            <div
+              className={styles.filterColumnDropdown}
+              style={{ top: filterDropdownPos.top, left: filterDropdownPos.left }}
+              onClick={e => e.stopPropagation()}
+            >
+              {openFilterColumn === 'name' && consultationNames.map(n => (
+                <div key={n} className={`${styles.filterDropdownItem}${consultNameFilter.includes(n) ? ` ${styles.filterDropdownItemActive}` : ''}`}
+                  onClick={() => setConsultNameFilter(prev => prev.includes(n) ? prev.filter(x => x !== n) : [...prev, n])}>{n}</div>
+              ))}
+              {openFilterColumn === 'service' && ['실습', '취업', '실습+취업'].map(opt => (
+                <div key={opt} className={`${styles.filterDropdownItem}${consultServiceFilter.includes(opt) ? ` ${styles.filterDropdownItemActive}` : ''}`}
+                  onClick={() => setConsultServiceFilter(prev => prev.includes(opt) ? prev.filter(x => x !== opt) : [...prev, opt])}>{opt}</div>
+              ))}
+              {openFilterColumn === 'hopeTime' && ['바로 취업', '3개월 준비', '6개월 준비'].map(opt => (
+                <div key={opt} className={`${styles.filterDropdownItem}${consultHopeTimeFilter.includes(opt) ? ` ${styles.filterDropdownItemActive}` : ''}`}
+                  onClick={() => setConsultHopeTimeFilter(prev => prev.includes(opt) ? prev.filter(x => x !== opt) : [...prev, opt])}>{opt}</div>
+              ))}
+              {openFilterColumn === 'manager' && consultationManagers.map(m => (
+                <div key={m} className={`${styles.filterDropdownItem}${consultManagerFilter.includes(m) ? ` ${styles.filterDropdownItemActive}` : ''}`}
+                  onClick={() => setConsultManagerFilter(prev => prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m])}>{m}</div>
+              ))}
+              {openFilterColumn === 'status' && CONSULTATION_STATUS_OPTIONS.map(s => (
+                <div key={s} className={`${styles.filterDropdownItem}${consultStatusMultiFilter.includes(s) ? ` ${styles.filterDropdownItemActive}` : ''}`}
+                  onClick={() => setConsultStatusMultiFilter(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s])}>{s}</div>
+              ))}
+            </div>
+          )}
         </>
       )}
 
@@ -1546,6 +2154,11 @@ export default function PracticePage() {
         <>
           {/* 필터 */}
           <div className={styles.filterRow}>
+            {selectedPracticeAppIds.size > 0 && (
+              <button onClick={handleDeletePracticeApps} disabled={deleting} className={styles.btnDanger}>
+                {deleting ? '삭제 중...' : `${selectedPracticeAppIds.size}건 삭제`}
+              </button>
+            )}
             <input
               className={`${styles.input} ${practiceStyles.searchInput}`}
               type="text"
@@ -1554,11 +2167,8 @@ export default function PracticePage() {
               onKeyDown={e => { if (e.key === 'Enter') fetchPracticeApplications() }}
               placeholder="이름 또는 연락처 검색"
             />
-            {selectedPracticeAppIds.size > 0 && (
-              <button onClick={handleDeletePracticeApps} disabled={deleting} className={styles.btnDanger}>
-                {deleting ? '삭제 중...' : `${selectedPracticeAppIds.size}건 삭제`}
-              </button>
-            )}
+            <div className={styles.actionBarSpacer} />
+            <button onClick={() => setShowAddPracticeModal(true)} className={styles.btnPrimary}>+ 추가</button>
           </div>
 
           {/* 테이블 */}
@@ -1578,9 +2188,23 @@ export default function PracticePage() {
                         }}
                       />
                     </th>
-                    {['이름', '연락처', '실습유형', '희망직무', '결제금액', '결제상태', '담당자', '상태', '등록일'].map(col => (
-                      <th key={col} className={styles.th}>{col}</th>
-                    ))}
+                    {/* 이름 */}
+                    <th className={styles.thFilterable}><div className={styles.thInner}>이름<button className={`${styles.thFilterBtn}${practiceNameFilter.length > 0 ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'pname') { setOpenFilterColumn(null); return; } const r = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: r.bottom + 4, left: r.left }); setOpenFilterColumn('pname') }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button></div></th>
+                    {/* 연락처 */}
+                    <th className={styles.thFilterable}><div className={styles.thInner}>연락처<button className={`${styles.thFilterBtn}${practiceContactFilter.length > 0 ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'pcontact') { setOpenFilterColumn(null); return; } const r = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: r.bottom + 4, left: r.left }); setOpenFilterColumn('pcontact') }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button></div></th>
+                    {/* 실습유형 */}
+                    <th className={styles.thFilterable}><div className={styles.thInner}>실습유형<button className={`${styles.thFilterBtn}${practiceTypeFilter.length > 0 ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'ptype') { setOpenFilterColumn(null); return; } const r = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: r.bottom + 4, left: r.left }); setOpenFilterColumn('ptype') }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button></div></th>
+                    {/* 희망직무 */}
+                    <th className={styles.thFilterable}><div className={styles.thInner}>희망직무<button className={`${styles.thFilterBtn}${practiceJobFilter.length > 0 ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'pjob') { setOpenFilterColumn(null); return; } const r = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: r.bottom + 4, left: r.left }); setOpenFilterColumn('pjob') }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button></div></th>
+                    {/* 결제금액 */}
+                    <th className={styles.th}>결제금액</th>
+                    {/* 결제상태 */}
+                    <th className={styles.thFilterable}><div className={styles.thInner}>결제상태<button className={`${styles.thFilterBtn}${practicePayStatusFilter.length > 0 ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'ppaystatus') { setOpenFilterColumn(null); return; } const r = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: r.bottom + 4, left: r.left }); setOpenFilterColumn('ppaystatus') }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button></div></th>
+                    {/* 담당자 */}
+                    <th className={styles.thFilterable}><div className={styles.thInner}>담당자<button className={`${styles.thFilterBtn}${practiceManagerFilter.length > 0 ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'pmanager') { setOpenFilterColumn(null); return; } const r = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: r.bottom + 4, left: r.left }); setOpenFilterColumn('pmanager') }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button></div></th>
+                    {/* 상태 */}
+                    <th className={styles.thFilterable}><div className={styles.thInner}>상태<button className={`${styles.thFilterBtn}${practiceStatusFilter.length > 0 ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'pstatus') { setOpenFilterColumn(null); return; } const r = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: r.bottom + 4, left: r.left }); setOpenFilterColumn('pstatus') }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button></div></th>
+                    <th className={styles.th}>등록일</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1646,23 +2270,71 @@ export default function PracticePage() {
                 </tbody>
               </table>
             </div>
-            {!loading && !error && practiceApplications.length > 0 && (
+            {!loading && !error && practiceFiltered.length > 0 && (
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderTop: '1px solid var(--toss-border)' }}>
-                <span style={{ fontSize: 13, color: 'var(--toss-text-secondary)' }}>총 {practiceApplications.length.toLocaleString()}건</span>
+                <span style={{ fontSize: 13, color: 'var(--toss-text-secondary)' }}>총 {practiceFiltered.length.toLocaleString()}건</span>
                 <Pagination page={practicePage} totalPages={practiceTotalPages} onChange={setPracticePage} />
               </div>
             )}
           </div>
+
+          {/* 컬럼 필터 드롭다운 */}
+          {openFilterColumn && (
+            <div
+              className={styles.filterColumnDropdown}
+              style={{ top: filterDropdownPos.top, left: filterDropdownPos.left }}
+              onClick={e => e.stopPropagation()}
+            >
+              {openFilterColumn === 'pname' && practiceNames.map(n => (
+                <div key={n} className={`${styles.filterDropdownItem}${practiceNameFilter.includes(n) ? ` ${styles.filterDropdownItemActive}` : ''}`}
+                  onClick={() => setPracticeNameFilter(prev => prev.includes(n) ? prev.filter(x => x !== n) : [...prev, n])}>{n}</div>
+              ))}
+              {openFilterColumn === 'pcontact' && practiceContacts.map(c => (
+                <div key={c} className={`${styles.filterDropdownItem}${practiceContactFilter.includes(c) ? ` ${styles.filterDropdownItemActive}` : ''}`}
+                  onClick={() => setPracticeContactFilter(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c])}>{c}</div>
+              ))}
+              {openFilterColumn === 'ptype' && practiceTypes.map(t => (
+                <div key={t} className={`${styles.filterDropdownItem}${practiceTypeFilter.includes(t) ? ` ${styles.filterDropdownItemActive}` : ''}`}
+                  onClick={() => setPracticeTypeFilter(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t])}>{t}</div>
+              ))}
+              {openFilterColumn === 'pjob' && practiceJobs.map(j => (
+                <div key={j} className={`${styles.filterDropdownItem}${practiceJobFilter.includes(j) ? ` ${styles.filterDropdownItemActive}` : ''}`}
+                  onClick={() => setPracticeJobFilter(prev => prev.includes(j) ? prev.filter(x => x !== j) : [...prev, j])}>{j}</div>
+              ))}
+              {openFilterColumn === 'ppaystatus' && practicePayStatuses.map(ps => (
+                <div key={ps} className={`${styles.filterDropdownItem}${practicePayStatusFilter.includes(ps) ? ` ${styles.filterDropdownItemActive}` : ''}`}
+                  onClick={() => setPracticePayStatusFilter(prev => prev.includes(ps) ? prev.filter(x => x !== ps) : [...prev, ps])}>{PAYMENT_STATUS_LABEL[ps] ?? ps}</div>
+              ))}
+              {openFilterColumn === 'pmanager' && practiceManagers.map(m => (
+                <div key={m} className={`${styles.filterDropdownItem}${practiceManagerFilter.includes(m) ? ` ${styles.filterDropdownItemActive}` : ''}`}
+                  onClick={() => setPracticeManagerFilter(prev => prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m])}>{m}</div>
+              ))}
+              {openFilterColumn === 'pstatus' && practiceStatuses.map(s => (
+                <div key={s} className={`${styles.filterDropdownItem}${practiceStatusFilter.includes(s) ? ` ${styles.filterDropdownItemActive}` : ''}`}
+                  onClick={() => setPracticeStatusFilter(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s])}>{s}</div>
+              ))}
+            </div>
+          )}
+
+          {showAddPracticeModal && (
+            <PracticeAddModal
+              onClose={() => setShowAddPracticeModal(false)}
+              onAdd={handlePracticeAdd}
+            />
+          )}
         </>
       )}
 
       {/* ===== 취업신청 탭 ===== */}
       {activeTab === 'employment' && (
         <>
-
-
-          {/* 필터 */}
+          {/* 필터 + 액션 */}
           <div className={styles.filterRow}>
+            {selectedEmploymentIds.size > 0 && (
+              <button onClick={handleDeleteEmploymentApps} disabled={deleting} className={styles.btnDanger}>
+                {deleting ? '삭제 중...' : `${selectedEmploymentIds.size}건 삭제`}
+              </button>
+            )}
             <input
               className={`${styles.input} ${practiceStyles.searchInput}`}
               type="text"
@@ -1671,6 +2343,8 @@ export default function PracticePage() {
               onKeyDown={e => { if (e.key === 'Enter') fetchEmploymentApplications() }}
               placeholder="이름 또는 연락처 검색"
             />
+            <div className={styles.actionBarSpacer} />
+            <button onClick={() => setShowAddEmploymentModal(true)} className={styles.btnPrimary}>+ 추가</button>
           </div>
 
           {/* 테이블 */}
@@ -1679,18 +2353,35 @@ export default function PracticePage() {
               <table className={styles.table}>
                 <thead>
                   <tr>
-                    {['이름', '연락처', '희망직무', '결제금액', '결제상태', '담당자', '유입경로', '등록일'].map(col => (
-                      <th key={col} className={styles.th}>{col}</th>
-                    ))}
+                    <th className={styles.thCenter}>
+                      <input
+                        type="checkbox"
+                        className={styles.checkbox}
+                        checked={employmentPaged.length > 0 && employmentPaged.every(a => selectedEmploymentIds.has(a.id))}
+                        onChange={() => {
+                          const allSelected = employmentPaged.every(a => selectedEmploymentIds.has(a.id))
+                          setSelectedEmploymentIds(allSelected ? new Set() : new Set(employmentPaged.map(a => a.id)))
+                        }}
+                      />
+                    </th>
+                    <th className={styles.thFilterable}><div className={styles.thInner}>이름<button className={`${styles.thFilterBtn}${empNameFilter.length > 0 ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'ename') { setOpenFilterColumn(null); return; } const r = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: r.bottom + 4, left: r.left }); setOpenFilterColumn('ename') }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button></div></th>
+                    <th className={styles.thFilterable}><div className={styles.thInner}>연락처<button className={`${styles.thFilterBtn}${empContactFilter.length > 0 ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'econtact') { setOpenFilterColumn(null); return; } const r = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: r.bottom + 4, left: r.left }); setOpenFilterColumn('econtact') }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button></div></th>
+                    <th className={styles.th}>희망직무</th>
+                    <th className={styles.thFilterable}><div className={styles.thInner}>취업유형<button className={`${styles.thFilterBtn}${empTypeFilter.length > 0 ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'etype') { setOpenFilterColumn(null); return; } const r = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: r.bottom + 4, left: r.left }); setOpenFilterColumn('etype') }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button></div></th>
+                    <th className={styles.th}>자격증</th>
+                    <th className={styles.th}>결제금액</th>
+                    <th className={styles.thFilterable}><div className={styles.thInner}>결제상태<button className={`${styles.thFilterBtn}${empPayStatusFilter.length > 0 ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'epaystatus') { setOpenFilterColumn(null); return; } const r = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: r.bottom + 4, left: r.left }); setOpenFilterColumn('epaystatus') }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button></div></th>
+                    <th className={styles.thFilterable}><div className={styles.thInner}>담당자<button className={`${styles.thFilterBtn}${empManagerFilter.length > 0 ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'emanager') { setOpenFilterColumn(null); return; } const r = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: r.bottom + 4, left: r.left }); setOpenFilterColumn('emanager') }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button></div></th>
+                    <th className={styles.th}>등록일</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
-                    <tr><td className={styles.td} colSpan={8}><LoadingState /></td></tr>
+                    <tr><td className={styles.td} colSpan={10}><LoadingState /></td></tr>
                   ) : error ? (
-                    <tr><td className={styles.td} colSpan={8}><ErrorState message={error} /></td></tr>
+                    <tr><td className={styles.td} colSpan={10}><ErrorState message={error} /></td></tr>
                   ) : employmentPaged.length === 0 ? (
-                    <tr><td className={styles.td} colSpan={8}><EmptyState /></td></tr>
+                    <tr><td className={styles.td} colSpan={10}><EmptyState /></td></tr>
                   ) : employmentPaged.map(item => {
                     const payStyle = PAYMENT_STATUS_STYLE[item.payment_status] ?? PAYMENT_STATUS_STYLE.pending
                     return (
@@ -1698,8 +2389,20 @@ export default function PracticePage() {
                         key={item.id}
                         className={styles.tr}
                         onClick={() => setSelectedEmploymentApp(item)}
-                        style={{ background: selectedEmploymentApp?.id === item.id ? 'var(--toss-blue-subtle)' : undefined }}
+                        style={{ background: selectedEmploymentApp?.id === item.id ? 'var(--toss-blue-subtle)' : selectedEmploymentIds.has(item.id) ? '#f0f7ff' : undefined }}
                       >
+                        <td className={styles.tdCenter} onClick={e => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            className={styles.checkbox}
+                            checked={selectedEmploymentIds.has(item.id)}
+                            onChange={() => setSelectedEmploymentIds(prev => {
+                              const next = new Set(prev)
+                              next.has(item.id) ? next.delete(item.id) : next.add(item.id)
+                              return next
+                            })}
+                          />
+                        </td>
                         <td className={styles.td} style={{ fontWeight: 600 }}>
                           <Highlight text={item.name} query={employmentSearch} />
                         </td>
@@ -1707,6 +2410,8 @@ export default function PracticePage() {
                           <Highlight text={item.contact} query={employmentSearch} />
                         </td>
                         <td className={styles.td}>{item.desired_job_field ?? '-'}</td>
+                        <td className={styles.td}>{Array.isArray(item.employment_types) ? item.employment_types.join(', ') : (item.employment_types ?? '-')}</td>
+                        <td className={styles.td}>{item.certifications ?? '-'}</td>
                         <td className={styles.td} style={{ fontWeight: 500 }}>
                           {item.payment_amount ? `${item.payment_amount.toLocaleString()}원` : '-'}
                         </td>
@@ -1716,7 +2421,6 @@ export default function PracticePage() {
                           </span>
                         </td>
                         <td className={styles.td}>{item.manager ?? '-'}</td>
-                        <td className={styles.td}>{item.click_source ?? '-'}</td>
                         <td className={styles.td}>{formatDateShort(item.created_at)}</td>
                       </tr>
                     )
@@ -1724,13 +2428,50 @@ export default function PracticePage() {
                 </tbody>
               </table>
             </div>
-            {!loading && !error && employmentApplications.length > 0 && (
+            {!loading && !error && employmentFiltered.length > 0 && (
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderTop: '1px solid var(--toss-border)' }}>
-                <span style={{ fontSize: 13, color: 'var(--toss-text-secondary)' }}>총 {employmentApplications.length.toLocaleString()}건</span>
+                <span style={{ fontSize: 13, color: 'var(--toss-text-secondary)' }}>총 {employmentFiltered.length.toLocaleString()}건</span>
                 <Pagination page={employmentPage} totalPages={employmentTotalPages} onChange={setEmploymentPage} />
               </div>
             )}
           </div>
+
+          {/* 컬럼 필터 드롭다운 */}
+          {openFilterColumn && (
+            <div
+              className={styles.filterColumnDropdown}
+              style={{ top: filterDropdownPos.top, left: filterDropdownPos.left }}
+              onClick={e => e.stopPropagation()}
+            >
+              {openFilterColumn === 'ename' && empNames.map(n => (
+                <div key={n} className={`${styles.filterDropdownItem}${empNameFilter.includes(n) ? ` ${styles.filterDropdownItemActive}` : ''}`}
+                  onClick={() => setEmpNameFilter(prev => prev.includes(n) ? prev.filter(x => x !== n) : [...prev, n])}>{n}</div>
+              ))}
+              {openFilterColumn === 'econtact' && empContacts.map(c => (
+                <div key={c} className={`${styles.filterDropdownItem}${empContactFilter.includes(c) ? ` ${styles.filterDropdownItemActive}` : ''}`}
+                  onClick={() => setEmpContactFilter(prev => prev.includes(c) ? prev.filter(x => x !== c) : [...prev, c])}>{c}</div>
+              ))}
+              {openFilterColumn === 'etype' && empTypes.map(t => (
+                <div key={t} className={`${styles.filterDropdownItem}${empTypeFilter.includes(t) ? ` ${styles.filterDropdownItemActive}` : ''}`}
+                  onClick={() => setEmpTypeFilter(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t])}>{t}</div>
+              ))}
+              {openFilterColumn === 'epaystatus' && empPayStatuses.map(ps => (
+                <div key={ps} className={`${styles.filterDropdownItem}${empPayStatusFilter.includes(ps) ? ` ${styles.filterDropdownItemActive}` : ''}`}
+                  onClick={() => setEmpPayStatusFilter(prev => prev.includes(ps) ? prev.filter(x => x !== ps) : [...prev, ps])}>{PAYMENT_STATUS_LABEL[ps] ?? ps}</div>
+              ))}
+              {openFilterColumn === 'emanager' && empManagers.map(m => (
+                <div key={m} className={`${styles.filterDropdownItem}${empManagerFilter.includes(m) ? ` ${styles.filterDropdownItemActive}` : ''}`}
+                  onClick={() => setEmpManagerFilter(prev => prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m])}>{m}</div>
+              ))}
+            </div>
+          )}
+
+          {showAddEmploymentModal && (
+            <EmploymentAddModal
+              onClose={() => setShowAddEmploymentModal(false)}
+              onAdd={handleEmploymentAdd}
+            />
+          )}
         </>
       )}
     </div>
