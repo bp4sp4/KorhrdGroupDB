@@ -222,7 +222,7 @@ const CAFE_NAMES: Record<string, string> = {
   babylovecafe: '베이비러브',
   naese: '중리사랑방',
   andongmom: '안동맘',
-  donanmam: '도안맘',
+  donanmam: '대전도안맘',
 };
 
 // click_source 파싱: "대분류_중분류" → { major, minor(한글), needsCheck }

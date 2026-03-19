@@ -175,7 +175,7 @@ const CAFE_NAMES: Record<string, string> = {
   cjasm: '충주아사모', mygodsend: '화성남양애', yul2moms: '율하맘', chbabymom: '춘천맘',
   seosanmom: '서산맘', redog2oi: '부천소사구', ksn82599: '둔산맘', magic26: '안평맘스비',
   anjungmom: '평택안포맘', tlgmdaka0: '시맘수', babylovecafe: '베이비러브', naese: '중리사랑방',
-  andongmom: '안동맘', donanmam: '도안맘',
+  andongmom: '안동맘', donanmam: '대전도안맘',
 };
 const KNOWN_CAFE_IDS = new Set(Object.keys(CAFE_NAMES));
 const KNOWN_CAFE_KOREAN = new Set(Object.values(CAFE_NAMES));
