@@ -69,35 +69,70 @@
 /* 필터 영역 */
 .filterRow {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   margin-bottom: 16px;
   align-items: center;
   flex-wrap: wrap;
+  background: #fff;
+  border: 1px solid var(--toss-border);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.searchBox {
+  flex: 1;
+  min-width: 200px;
+  max-width: 320px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  border: 1px solid var(--toss-border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  transition: border-color 0.15s;
+}
+
+.searchBox:focus-within {
+  border-color: var(--toss-blue);
+  background: #fff;
+}
+
+.searchIcon {
+  width: 16px;
+  height: 16px;
+  color: var(--toss-text-tertiary);
+  flex-shrink: 0;
 }
 
 .searchInput {
   flex: 1;
-  min-width: 200px;
-  max-width: 320px;
-  padding: 8px 12px;
-  border: 1px solid var(--toss-border);
-  border-radius: 8px;
+  border: none;
+  background: transparent;
   font-size: 14px;
   outline: none;
+  color: var(--toss-text-primary);
 }
 
-.searchInput:focus {
-  border-color: var(--toss-blue);
+.searchInput::placeholder {
+  color: var(--toss-text-tertiary);
 }
 
 .select {
   padding: 8px 12px;
   border: 1px solid var(--toss-border);
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 13px;
   background: #fff;
   cursor: pointer;
   outline: none;
+  color: var(--toss-text-secondary);
+  transition: border-color 0.15s;
+}
+
+.select:focus {
+  border-color: var(--toss-blue);
+  background: #fff;
 }
 
 /* 테이블 */
@@ -115,7 +150,7 @@
 }
 
 .table thead tr {
-  background: var(--toss-bg);
+  background: #fff;
   border-bottom: 1px solid var(--toss-border);
 }
 
@@ -139,7 +174,7 @@
 }
 
 .table tbody tr:hover {
-  background: var(--toss-bg);
+  background: #fff;
 }
 
 /* 배지 */

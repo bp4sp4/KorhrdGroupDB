@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-03-19T05:22:51.289Z",
+  "lastUpdated": "2026-03-19T05:33:32.276Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -87,7 +87,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:20:57.368Z",
-        "lastUpdated": "2026-03-19T03:55:35.106Z"
+        "lastUpdated": "2026-03-19T05:32:22.655Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/components/layout/Sidebar.tsx"
     },
@@ -412,7 +412,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-19T03:55:19.321Z",
-        "lastUpdated": "2026-03-19T05:03:49.966Z"
+        "lastUpdated": "2026-03-19T05:33:09.725Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/allcare/users/route.ts"
     },
@@ -438,7 +438,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-19T03:56:50.293Z",
-        "lastUpdated": "2026-03-19T05:22:51.289Z"
+        "lastUpdated": "2026-03-19T05:33:32.276Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/allcare/page.tsx"
     },
@@ -490,7 +490,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-03-19T05:22:51.289Z"
+    "lastActivity": "2026-03-19T05:33:32.276Z"
   },
   "history": [
     {
@@ -4341,6 +4341,36 @@
     },
     {
       "timestamp": "2026-03-19T05:22:51.289Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-19T05:29:04.834Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-19T05:29:17.787Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-19T05:32:22.655Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-19T05:33:09.725Z",
+      "feature": "users",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-19T05:33:32.276Z",
       "feature": "allcare",
       "phase": "do",
       "action": "updated"

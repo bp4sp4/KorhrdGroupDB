@@ -34,6 +34,12 @@ const ADMIN_NAV_ITEMS: NavItem[] = [
     icon: <Briefcase size={18} />,
   },
   {
+    id: 'allcare',
+    label: '올케어 관리자',
+    href: '/allcare',
+    icon: <HeartPulse size={18} />,
+  },
+  {
     id: 'trash',
     label: '삭제목록',
     href: '/trash',
@@ -44,12 +50,6 @@ const ADMIN_NAV_ITEMS: NavItem[] = [
     label: '미니어드민 관리',
     href: '/ref-manage',
     icon: <UserCog size={18} />,
-  },
-  {
-    id: 'allcare',
-    label: '올케어 관리자',
-    href: '/allcare',
-    icon: <HeartPulse size={18} />,
   },
 ]
 

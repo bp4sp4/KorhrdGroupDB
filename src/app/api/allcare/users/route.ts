@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
   const provider = searchParams.get('provider') || 'all'
   const subscription = searchParams.get('subscription') || 'all'
   const page = parseInt(searchParams.get('page') || '1', 10)
-  const pageSize = 20
+  const pageSize = 10
 
   let query = allcareAdmin.from('admin_user_details').select('*')
 

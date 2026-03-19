@@ -297,13 +297,14 @@ export default function AllcarePage() {
   function Pagination({ total, page, onPage }: { total: number; page: number; onPage: (p: number) => void }) {
     const totalPages = Math.ceil(total / pageSize)
     if (totalPages <= 1) return null
-    const pages = Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
-      const start = Math.max(1, page - 3)
-      return start + i
-    }).filter(p => p <= totalPages)
+
+    const start = Math.max(1, page - 2)
+    const end = Math.min(totalPages, start + 4)
+    const pages = Array.from({ length: end - start + 1 }, (_, i) => start + i)
 
     return (
       <div className={styles.pagination}>
+        <button className={styles.pageBtn} onClick={() => onPage(1)} disabled={page <= 1}>처음</button>
         <button className={styles.pageBtn} onClick={() => onPage(page - 1)} disabled={page <= 1}>이전</button>
         {pages.map(p => (
           <button
@@ -315,7 +316,8 @@ export default function AllcarePage() {
           </button>
         ))}
         <button className={styles.pageBtn} onClick={() => onPage(page + 1)} disabled={page >= totalPages}>다음</button>
-        <span className={styles.pageInfo}>{total}명 / {page}/{totalPages}페이지</span>
+        <button className={styles.pageBtn} onClick={() => onPage(totalPages)} disabled={page >= totalPages}>마지막</button>
+        <span className={styles.pageInfo}>총 {total}건 · {page}/{totalPages}페이지</span>
       </div>
     )
   }
@@ -349,13 +351,13 @@ export default function AllcarePage() {
 
       {/* 탭 */}
       <div className={styles.tabs}>
-        {(['users', 'payments', 'custom'] as Tab[]).map(t => (
+        {(['users', 'payments'] as Tab[]).map(t => (
           <button
             key={t}
             className={`${styles.tab} ${activeTab === t ? styles.tabActive : ''}`}
             onClick={() => setActiveTab(t)}
           >
-            {t === 'users' ? '회원 목록' : t === 'payments' ? '결제 내역' : '단과반 결제'}
+            {t === 'users' ? '회원 목록' : '결제 내역'}
           </button>
         ))}
       </div>
@@ -364,12 +366,18 @@ export default function AllcarePage() {
       {activeTab === 'users' && (
         <>
           <div className={styles.filterRow}>
-            <input
-              className={styles.searchInput}
-              placeholder="이름, 이메일, 전화번호 검색"
-              value={userSearch}
-              onChange={e => { setUserSearch(e.target.value); setUserPage(1) }}
-            />
+            <div className={styles.searchBox}>
+              <svg className={styles.searchIcon} viewBox="0 0 20 20" fill="none">
+                <circle cx="9" cy="9" r="6" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M14 14l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+              <input
+                className={styles.searchInput}
+                placeholder="이름, 이메일, 전화번호 검색"
+                value={userSearch}
+                onChange={e => { setUserSearch(e.target.value); setUserPage(1) }}
+              />
+            </div>
             <select className={styles.select} value={userProvider} onChange={e => { setUserProvider(e.target.value); setUserPage(1) }}>
               <option value="all">전체 가입경로</option>
               <option value="email">이메일</option>
@@ -486,51 +494,6 @@ export default function AllcarePage() {
                 </tbody>
               </table>
               <Pagination total={paymentTotal} page={paymentPage} onPage={p => setPaymentPage(p)} />
-            </>
-          )}
-        </div>
-      )}
-
-      {/* 단과반 탭 */}
-      {activeTab === 'custom' && (
-        <div className={styles.tableWrap}>
-          {customsLoading ? (
-            <p className={styles.loading}>불러오는 중...</p>
-          ) : customs.length === 0 ? (
-            <p className={styles.empty}>단과반 결제 요청이 없습니다.</p>
-          ) : (
-            <>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>회원</th>
-                    <th>이메일</th>
-                    <th>과목</th>
-                    <th>과목수</th>
-                    <th>금액</th>
-                    <th>상태</th>
-                    <th>메모</th>
-                    <th>요청일</th>
-                    <th>결제일</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {customs.map(c => (
-                    <tr key={c.id}>
-                      <td>{c.users?.name || '-'}</td>
-                      <td>{c.users?.email || '-'}</td>
-                      <td>{c.subject}</td>
-                      <td>{c.subject_count}</td>
-                      <td className={styles.amount}>{fmt(c.amount)}</td>
-                      <td><PaymentStatusBadge status={c.status} /></td>
-                      <td>{c.memo || '-'}</td>
-                      <td>{fmtDate(c.created_at)}</td>
-                      <td>{fmtDate(c.paid_at)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <Pagination total={customTotal} page={customPage} onPage={p => setCustomPage(p)} />
             </>
           )}
         </div>
