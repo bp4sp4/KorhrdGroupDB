@@ -22,38 +22,48 @@ const TABLE = 'agency_agreements';
 
 // ─── GET: 목록 조회 ──────────────────────────────────────────────────────────
 
+const COLS = 'id,category,region,institution_name,contact,credit_commission,private_commission,manager,memo,status,created_at'
+const PAGE_SIZE = 1000;
+
 export async function GET() {
   try {
     const { user: _user, errorResponse } = await requireAuth()
     if (errorResponse) return errorResponse
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-      return NextResponse.json({ error: 'Supabase configuration missing' }, { status: 500 });
+
+    // 1. 전체 건수 조회 (head: true → 데이터 없이 count만)
+    const { count, error: countError } = await supabaseAdmin
+      .from(TABLE)
+      .select('*', { count: 'exact', head: true })
+      .is('deleted_at', null)
+
+    if (countError) {
+      console.error('[hakjeom/agency GET] count error:', countError);
+      return NextResponse.json({ error: 'Failed to fetch agency agreements' }, { status: 500 });
     }
 
-    const allData: unknown[] = [];
-    const PAGE_SIZE = 1000;
-    let from = 0;
+    if (!count) return NextResponse.json([]);
 
-    while (true) {
-      const { data, error } = await supabaseAdmin
+    // 2. 필요한 페이지 수 계산 후 병렬 요청
+    const pageCount = Math.ceil(count / PAGE_SIZE);
+    const requests = Array.from({ length: pageCount }, (_, i) =>
+      supabaseAdmin
         .from(TABLE)
-        .select('*')
+        .select(COLS)
         .is('deleted_at', null)
         .order('created_at', { ascending: false })
         .order('id', { ascending: false })
-        .range(from, from + PAGE_SIZE - 1);
+        .range(i * PAGE_SIZE, (i + 1) * PAGE_SIZE - 1)
+    );
 
-      if (error) {
-        console.error('[hakjeom/agency GET] Supabase error:', error);
-        return NextResponse.json({ error: 'Failed to fetch agency agreements' }, { status: 500 });
-      }
+    const results = await Promise.all(requests);
 
-      if (!data || data.length === 0) break;
-      allData.push(...data);
-      if (data.length < PAGE_SIZE) break;
-      from += PAGE_SIZE;
+    const failed = results.find(r => r.error);
+    if (failed?.error) {
+      console.error('[hakjeom/agency GET] Supabase error:', failed.error);
+      return NextResponse.json({ error: 'Failed to fetch agency agreements' }, { status: 500 });
     }
 
+    const allData = results.flatMap(r => r.data ?? []);
     return NextResponse.json(allData);
   } catch (err) {
     console.error('[hakjeom/agency GET] Unexpected error:', err);
