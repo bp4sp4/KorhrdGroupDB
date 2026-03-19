@@ -22,7 +22,6 @@ const TABLE = 'agency_agreements';
 
 // ─── GET: 목록 조회 ──────────────────────────────────────────────────────────
 
-const COLS = 'id,category,region,institution_name,contact,credit_commission,private_commission,manager,memo,status,created_at'
 const PAGE_SIZE = 1000;
 
 export async function GET() {
@@ -30,7 +29,7 @@ export async function GET() {
     const { user: _user, errorResponse } = await requireAuth()
     if (errorResponse) return errorResponse
 
-    // 1. 전체 건수 조회 (head: true → 데이터 없이 count만)
+    // 1. 전체 건수 조회
     const { count, error: countError } = await supabaseAdmin
       .from(TABLE)
       .select('*', { count: 'exact', head: true })
@@ -43,12 +42,12 @@ export async function GET() {
 
     if (!count) return NextResponse.json([]);
 
-    // 2. 필요한 페이지 수 계산 후 병렬 요청
+    // 2. 페이지 수 계산 후 병렬 요청 (순차 → 동시)
     const pageCount = Math.ceil(count / PAGE_SIZE);
     const requests = Array.from({ length: pageCount }, (_, i) =>
       supabaseAdmin
         .from(TABLE)
-        .select(COLS)
+        .select('*')
         .is('deleted_at', null)
         .order('created_at', { ascending: false })
         .order('id', { ascending: false })

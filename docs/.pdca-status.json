@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-03-19T09:05:23.095Z",
+  "lastUpdated": "2026-03-19T09:11:52.464Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -154,7 +154,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:49:23.781Z",
-        "lastUpdated": "2026-03-19T09:05:23.095Z"
+        "lastUpdated": "2026-03-19T09:11:52.464Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/hakjeom/agency/route.ts"
     },
@@ -518,7 +518,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-03-19T09:05:23.095Z"
+    "lastActivity": "2026-03-19T09:11:52.464Z"
   },
   "history": [
     {
@@ -4933,6 +4933,12 @@
     },
     {
       "timestamp": "2026-03-19T09:05:23.095Z",
+      "feature": "agency",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-19T09:11:52.464Z",
       "feature": "agency",
       "phase": "do",
       "action": "updated"

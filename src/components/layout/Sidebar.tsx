@@ -17,13 +17,13 @@ interface NavItem {
 const ADMIN_NAV_ITEMS: NavItem[] = [
   {
     id: 'hakjeom',
-    label: '학점은행제 상담신청',
+    label: '학점은행제 사업부',
     href: '/hakjeom',
     icon: <GraduationCap size={18} />,
   },
   {
     id: 'cert',
-    label: '민간자격증',
+    label: '민간자격증 사업부',
     href: '/cert',
     icon: <FileText size={18} />,
   },
