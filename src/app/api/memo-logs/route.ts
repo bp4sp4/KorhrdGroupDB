@@ -9,6 +9,7 @@ const ALLOWED_TABLES = [
   'practice_applications',
   'employment_applications',
   'agency_agreements',
+  'certificate_applications',
 ]
 
 // GET /api/memo-logs?table=hakjeom_consultations&id=xxx

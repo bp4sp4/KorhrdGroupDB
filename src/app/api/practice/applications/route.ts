@@ -73,7 +73,21 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    return NextResponse.json(data ?? [])
+    const items = data ?? [];
+    if (items.length > 0) {
+      const ids = items.map(item => String(item.id));
+      const { data: memoRows } = await supabaseAdmin
+        .from('memo_logs')
+        .select('record_id')
+        .eq('table_name', 'practice_applications')
+        .in('record_id', ids);
+      const countMap: Record<string, number> = {};
+      for (const m of memoRows || []) {
+        countMap[m.record_id] = (countMap[m.record_id] || 0) + 1;
+      }
+      return NextResponse.json(items.map(item => ({ ...item, memo_count: countMap[String(item.id)] || 0 })));
+    }
+    return NextResponse.json(items)
   } catch (err) {
     console.error('[GET /api/practice/applications] Unexpected error:', err)
     return NextResponse.json({ error: '서버 오류가 발생했습니다.' }, { status: 500 })

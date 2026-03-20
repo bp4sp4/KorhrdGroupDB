@@ -71,10 +71,6 @@ export default function MemoTimeline({ tableName, recordId, legacyMemo, onCountC
   const [visibleCount, setVisibleCount] = useState(3)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  useEffect(() => {
-    textareaRef.current?.focus()
-  }, [])
-
   const fetchLogs = async () => {
     setLoading(true)
     try {
@@ -212,29 +208,6 @@ export default function MemoTimeline({ tableName, recordId, legacyMemo, onCountC
 
   return (
     <div className={styles.wrap}>
-      {/* 입력창 */}
-      <div className={styles.inputWrap}>
-        <textarea
-          ref={textareaRef}
-          className={styles.input}
-          placeholder={`메모 내용을 입력하세요\n(Cmd+Enter 또는 Ctrl+Enter로 저장)`}
-          value={input}
-          onChange={autoResize}
-          onKeyDown={handleKeyDown}
-          rows={3}
-        />
-        <div className={styles.inputFooter}>
-          <span className={styles.inputHint}>Cmd+Enter로 저장</span>
-          <button
-            className={styles.addBtn}
-            onClick={handleAdd}
-            disabled={!input.trim() || saving}
-          >
-            {saving ? '저장 중...' : '메모 추가'}
-          </button>
-        </div>
-      </div>
-
       {/* 타임라인 */}
       <div className={styles.timeline} ref={timelineRef}>
         {loading && (
@@ -355,6 +328,29 @@ export default function MemoTimeline({ tableName, recordId, legacyMemo, onCountC
             </div>
           </div>
         )}
+      </div>
+
+      {/* 입력창 */}
+      <div className={styles.inputWrap}>
+        <textarea
+          ref={textareaRef}
+          className={styles.input}
+          placeholder={`메모 내용을 입력하세요\n(Cmd+Enter 또는 Ctrl+Enter로 저장)`}
+          value={input}
+          onChange={autoResize}
+          onKeyDown={handleKeyDown}
+          rows={3}
+        />
+        <div className={styles.inputFooter}>
+          <span className={styles.inputHint}>Cmd+Enter로 저장</span>
+          <button
+            className={styles.addBtn}
+            onClick={handleAdd}
+            disabled={!input.trim() || saving}
+          >
+            {saving ? '저장 중...' : '메모 추가'}
+          </button>
+        </div>
       </div>
     </div>
   )

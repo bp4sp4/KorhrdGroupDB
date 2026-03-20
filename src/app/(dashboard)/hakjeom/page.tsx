@@ -34,6 +34,7 @@ interface HakjeomConsultation {
   counsel_check: string | null;
   created_at: string;
   updated_at: string | null;
+  memo_count?: number;
 }
 
 // ─── 기관협약 타입 ────────────────────────────────────────────────────────────
@@ -1608,7 +1609,9 @@ function HakjeomTab({ setStatsNode, isActive }: { setStatsNode: (node: React.Rea
                       />
                     </td>
                     <td className={styles.tdSecondary}>{formatCost(item.subject_cost)}</td>
-                    <td className={styles.tdMemo} title={item.memo ?? ''} onClick={e => { e.stopPropagation(); setOpenTab('memo'); setSelectedItem(item); }} style={{ cursor: 'pointer' }}>{item.memo || '-'}</td>
+                    <td className={styles.tdMemo} title={item.memo ?? ''} onClick={e => { e.stopPropagation(); setOpenTab('memo'); setSelectedItem(item); }} style={{ cursor: 'pointer' }}>
+                      {item.memo_count ? `메모 ${item.memo_count}개` : (item.memo || '-')}
+                    </td>
                     <td className={styles.tdDateSmall}>
                       {formatDate(item.created_at)}
                     </td>

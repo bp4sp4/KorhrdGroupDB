@@ -38,6 +38,7 @@ interface PrivateCert {
   manager: string | null;
   residence: string | null;
   created_at: string;
+  memo_count?: number;
 }
 
 interface CertApplication {
@@ -65,6 +66,7 @@ interface CertApplication {
   ref?: string | null
   created_at: string
   updated_at?: string | null
+  memo_count?: number
 }
 
 interface Stats {
@@ -481,7 +483,8 @@ function DetailPanel({
   onClose: () => void
   onUpdate: (id: string, fields: Partial<CertApplication>) => Promise<void>
 }) {
-  const [activeTab, setActiveTab] = useState<'basic' | 'payment'>('basic')
+  const [activeTab, setActiveTab] = useState<'basic' | 'payment' | 'memo'>('basic')
+  const [memoCount, setMemoCount] = useState<number | null>(null)
   const [editName, setEditName] = useState(app.name)
   const [editContact, setEditContact] = useState(app.contact)
   const [editBirthPrefix, setEditBirthPrefix] = useState(app.birth_prefix ?? '')
@@ -569,7 +572,7 @@ function DetailPanel({
     }
   }
 
-  const tabLabels = { basic: '기본정보', payment: '결제정보' } as const
+  const tabLabels = { basic: '기본정보', payment: '결제정보', memo: '메모' } as const
 
   return (
     <div
@@ -598,14 +601,16 @@ function DetailPanel({
 
           {/* 탭 */}
           <div className={styles.detailModalTabs}>
-            {(['basic', 'payment'] as const).map(tab => (
+            {(['basic', 'payment', 'memo'] as const).map(tab => (
               <button
                 key={tab}
                 type="button"
                 onClick={() => setActiveTab(tab)}
                 className={`${styles.detailModalTab} ${activeTab === tab ? styles.detailModalTabActive : ''}`}
               >
-                {tabLabels[tab]}
+                {tab === 'memo' && memoCount != null && memoCount > 0
+                  ? `메모 (${memoCount})`
+                  : tabLabels[tab]}
               </button>
             ))}
           </div>
@@ -837,6 +842,14 @@ function DetailPanel({
                 {!app.updated_at && <DetailRow label="" value="" last />}
               </div>
             </>
+          )}
+
+          {activeTab === 'memo' && (
+            <MemoTimeline
+              tableName="certificate_applications"
+              recordId={String(app.id)}
+              onCountChange={setMemoCount}
+            />
           )}
         </div>
 
@@ -2014,7 +2027,9 @@ function PrivateCertTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode
                         styleMap={CONSULTATION_STATUS_STYLE}
                       />
                     </td>
-                    <td className={styles.tdMemo} title={item.memo ?? ''} onClick={e => { e.stopPropagation(); setOpenTab('memo'); setSelectedItem(item); }} style={{ cursor: 'pointer' }}>{item.memo || '-'}</td>
+                    <td className={styles.tdMemo} title={item.memo ?? ''} onClick={e => { e.stopPropagation(); setOpenTab('memo'); setSelectedItem(item); }} style={{ cursor: 'pointer' }}>
+                      {item.memo_count ? `메모 ${item.memo_count}개` : (item.memo || '-')}
+                    </td>
                     <td className={styles.tdDateSmall}>{formatDate(item.created_at)}</td>
                   </tr>
                 ))}

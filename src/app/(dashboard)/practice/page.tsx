@@ -47,6 +47,7 @@ interface PracticeConsultation {
   employment_support_fund: boolean | null
   created_at: string
   updated_at: string
+  memo_count?: number
 }
 
 interface PracticeApplication {
@@ -74,6 +75,7 @@ interface PracticeApplication {
   manager: string | null
   created_at: string
   updated_at: string
+  memo_count?: number
 }
 
 interface EmploymentApplication {
@@ -98,6 +100,7 @@ interface EmploymentApplication {
   memo: string | null
   manager: string | null
   created_at: string
+  memo_count?: number
 }
 
 // ─── 상수 ────────────────────────────────────────────────────────────────────
@@ -743,32 +746,31 @@ function ConsultationDetailModal({ item, onClose, onUpdate }: {
                 </div>
               </div>
 
+              {/* 비고 */}
+              <div className={styles.detailFieldRow} style={{ alignItems: 'flex-start' }}>
+                <span className={styles.detailFieldLabel} style={{ paddingTop: 6 }}>비고</span>
+                <textarea
+                  value={editNotes}
+                  onChange={e => setEditNotes(e.target.value)}
+                  rows={4}
+                  placeholder="비고를 입력하세요"
+                  className={styles.textarea}
+                  style={{ flex: 1 }}
+                />
+              </div>
+
               <InfoRow label="등록일" value={formatDateTime(item.created_at)} />
               <InfoRow label="수정일" value={formatDateTime(item.updated_at)} />
             </>
           )}
 
           {activeTab === 'memo' && (
-            <>
-              <MemoTimeline
-                tableName="practice_consultations"
-                recordId={String(item.id)}
-                legacyMemo={item.memo}
-                onCountChange={setMemoCount}
-              />
-              <div className={practiceStyles.memoGroup}>
-                <div>
-                  <label className={practiceStyles.memoLabel}>비고</label>
-                  <textarea
-                    value={editNotes}
-                    onChange={e => setEditNotes(e.target.value)}
-                    rows={4}
-                    placeholder="비고를 입력하세요"
-                    className={styles.textarea}
-                  />
-                </div>
-              </div>
-            </>
+            <MemoTimeline
+              tableName="practice_consultations"
+              recordId={String(item.id)}
+              legacyMemo={item.memo}
+              onCountChange={setMemoCount}
+            />
           )}
         </div>
 
@@ -794,7 +796,8 @@ function PracticeApplicationDetailModal({ item, onClose, onUpdate }: {
   onClose: () => void
   onUpdate: (id: string, fields: Partial<PracticeApplication>) => Promise<void>
 }) {
-  const [activeTab, setActiveTab] = useState<'basic' | 'detail'>('basic')
+  const [activeTab, setActiveTab] = useState<'basic' | 'detail' | 'memo'>('basic')
+  const [memoCount, setMemoCount] = useState<number | null>(null)
   const [editStatus, setEditStatus] = useState(item.status)
   const [editManager, setEditManager] = useState(item.manager ?? '')
   const [editMemo, setEditMemo] = useState(item.memo ?? '')
@@ -858,8 +861,8 @@ function PracticeApplicationDetailModal({ item, onClose, onUpdate }: {
             <button onClick={onClose} className={styles.detailModalCloseBtn}>✕</button>
           </div>
           <div className={styles.detailModalTabs}>
-            {(['basic', 'detail'] as const).map(tab => {
-              const labels = { basic: '기본정보', detail: '상세정보' }
+            {(['basic', 'detail', 'memo'] as const).map(tab => {
+              const labels = { basic: '기본정보', detail: '상세정보', memo: '메모' }
               return (
                 <button
                   key={tab}
@@ -867,7 +870,9 @@ function PracticeApplicationDetailModal({ item, onClose, onUpdate }: {
                   onClick={() => setActiveTab(tab)}
                   className={`${styles.detailModalTab} ${activeTab === tab ? styles.detailModalTabActive : ''}`}
                 >
-                  {labels[tab]}
+                  {tab === 'memo' && memoCount != null && memoCount > 0
+                    ? `메모 (${memoCount})`
+                    : labels[tab]}
                 </button>
               )
             })}
@@ -882,12 +887,6 @@ function PracticeApplicationDetailModal({ item, onClose, onUpdate }: {
               <div className={styles.detailFieldRow}>
                 <span className={styles.detailFieldLabel}>담당자</span>
                 <input value={editManager} onChange={e => setEditManager(e.target.value)} placeholder="담당자 이름" className={`${styles.input} ${styles.inputFull}`} />
-              </div>
-
-              {/* 메모 */}
-              <div className={styles.detailFieldRow}>
-                <span className={styles.detailFieldLabel}>메모</span>
-                <textarea value={editMemo} onChange={e => setEditMemo(e.target.value)} rows={4} placeholder="메모를 입력하세요" className={styles.textarea} />
               </div>
 
               <InfoRow label="성별" value={item.gender} />
@@ -942,6 +941,15 @@ function PracticeApplicationDetailModal({ item, onClose, onUpdate }: {
               <InfoRow label="수정일" value={formatDateTime(item.updated_at)} />
             </>
           )}
+
+          {activeTab === 'memo' && (
+            <MemoTimeline
+              tableName="practice_applications"
+              recordId={String(item.id)}
+              legacyMemo={item.memo}
+              onCountChange={setMemoCount}
+            />
+          )}
         </div>
 
         {/* 푸터 */}
@@ -974,7 +982,8 @@ function EmploymentDetailModal({ item, onClose, onUpdate }: {
   onClose: () => void
   onUpdate: (id: string, fields: Partial<EmploymentApplication>) => Promise<void>
 }) {
-  const [activeTab, setActiveTab] = useState<'basic' | 'detail'>('basic')
+  const [activeTab, setActiveTab] = useState<'basic' | 'detail' | 'memo'>('basic')
+  const [memoCount, setMemoCount] = useState<number | null>(null)
   const [form, setForm] = useState({
     name: item.name ?? '',
     gender: item.gender ?? '',
@@ -1063,10 +1072,12 @@ function EmploymentDetailModal({ item, onClose, onUpdate }: {
             <button onClick={onClose} className={styles.detailModalCloseBtn}>✕</button>
           </div>
           <div className={styles.detailModalTabs}>
-            {(['basic', 'detail'] as const).map(tab => (
+            {(['basic', 'detail', 'memo'] as const).map(tab => (
               <button key={tab} type="button" onClick={() => setActiveTab(tab)}
                 className={`${styles.detailModalTab} ${activeTab === tab ? styles.detailModalTabActive : ''}`}>
-                {{ basic: '기본정보', detail: '상세정보' }[tab]}
+                {tab === 'memo' && memoCount != null && memoCount > 0
+                  ? `메모 (${memoCount})`
+                  : { basic: '기본정보', detail: '상세정보', memo: '메모' }[tab]}
               </button>
             ))}
           </div>
@@ -1114,10 +1125,6 @@ function EmploymentDetailModal({ item, onClose, onUpdate }: {
                 <span className={styles.detailFieldLabel}>담당자</span>
                 <input value={form.manager} onChange={e => set('manager', e.target.value)} placeholder="담당자 이름" className={`${styles.input} ${styles.inputFull}`} />
               </div>
-              <div className={styles.detailFieldRow} style={{ alignItems: 'flex-start' }}>
-                <span className={styles.detailFieldLabel} style={{ paddingTop: 6 }}>메모</span>
-                <textarea value={form.memo} onChange={e => set('memo', e.target.value)} rows={4} placeholder="메모를 입력하세요" className={styles.textarea} style={{ flex: 1 }} />
-              </div>
             </>
           )}
 
@@ -1158,6 +1165,15 @@ function EmploymentDetailModal({ item, onClose, onUpdate }: {
               <InfoRow label="결제ID" value={item.payment_id} />
               <InfoRow label="등록일" value={formatDateTime(item.created_at)} />
             </>
+          )}
+
+          {activeTab === 'memo' && (
+            <MemoTimeline
+              tableName="employment_applications"
+              recordId={String(item.id)}
+              legacyMemo={item.memo}
+              onCountChange={setMemoCount}
+            />
           )}
         </div>
 
