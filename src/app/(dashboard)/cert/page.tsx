@@ -100,7 +100,7 @@ const SOURCE_DISPLAY: Record<string, string> = {
 }
 
 const STATUS_FILTER_OPTIONS = [
-  { value: 'all', label: '전체 결제상태' },
+  { value: 'all', label: '전체' },
   { value: 'paid', label: '결제완료' },
   { value: 'pending', label: '결제대기' },
   { value: 'cancelled', label: '취소' },
@@ -205,19 +205,43 @@ function Highlight({ text, query }: { text: string; query: string }) {
   if (!query.trim()) return <>{text}</>
   const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   const parts = text.split(new RegExp(`(${escaped})`, 'gi'))
-  return (
-    <>
-      {parts.map((part, i) =>
-        part.toLowerCase() === query.toLowerCase() ? (
-          <mark key={i} className={certStyles.highlightMark}>
-            {part}
-          </mark>
-        ) : (
-          part
-        ),
-      )}
-    </>
-  )
+  if (parts.length > 1) {
+    return (
+      <>
+        {parts.map((part, i) =>
+          part.toLowerCase() === query.toLowerCase() ? (
+            <mark key={i} className={certStyles.highlightMark}>{part}</mark>
+          ) : (
+            part
+          ),
+        )}
+      </>
+    )
+  }
+  // 하이픈 제거 후 매칭 (전화번호 등)
+  const textClean = text.replace(/-/g, '')
+  const queryClean = query.replace(/-/g, '')
+  if (queryClean && textClean.toLowerCase().includes(queryClean.toLowerCase())) {
+    const cleanIdx = textClean.toLowerCase().indexOf(queryClean.toLowerCase())
+    let origStart = 0, cleanCount = 0
+    for (let i = 0; i < text.length && cleanCount < cleanIdx; i++) {
+      if (text[i] !== '-') cleanCount++
+      origStart = i + 1
+    }
+    let origEnd = origStart, matched = 0
+    for (let i = origStart; i < text.length && matched < queryClean.length; i++) {
+      if (text[i] !== '-') matched++
+      origEnd = i + 1
+    }
+    return (
+      <>
+        {text.slice(0, origStart)}
+        <mark className={certStyles.highlightMark}>{text.slice(origStart, origEnd)}</mark>
+        {text.slice(origEnd)}
+      </>
+    )
+  }
+  return <>{text}</>
 }
 
 // ─── 민간자격증 헬퍼 ─────────────────────────
@@ -467,6 +491,16 @@ function DetailPanel({
   const [editAmount, setEditAmount] = useState(app.amount ? String(app.amount) : '')
   const [isChecked, setIsChecked] = useState(!!app.is_checked)
   const [saving, setSaving] = useState(false)
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+  const [uploadingPhoto, setUploadingPhoto] = useState(false)
+
+  const handlePhotoFileChange = (file: File) => {
+    setPhotoFile(file)
+    const reader = new FileReader()
+    reader.onload = e => setPhotoPreview(e.target?.result as string)
+    reader.readAsDataURL(file)
+  }
 
   const handlePhotoDownload = async () => {
     if (!app.photo_url) return
@@ -498,6 +532,21 @@ function DetailPanel({
   const handleSave = async () => {
     setSaving(true)
     try {
+      let newPhotoUrl: string | undefined
+      if (photoFile) {
+        setUploadingPhoto(true)
+        const fd = new FormData()
+        fd.append('id', app.id)
+        fd.append('photo', photoFile)
+        const res = await fetch('/api/cert/photo', { method: 'POST', body: fd })
+        if (res.ok) {
+          const json = await res.json()
+          newPhotoUrl = json.photo_url
+        }
+        setUploadingPhoto(false)
+        setPhotoFile(null)
+        setPhotoPreview(null)
+      }
       await onUpdate(app.id, {
         name: editName,
         contact: editContact,
@@ -509,9 +558,12 @@ function DetailPanel({
         payment_status: editPaymentStatus as PaymentStatus,
         amount: editAmount ? Number(editAmount) : undefined,
         is_checked: isChecked,
+        ...(newPhotoUrl ? { photo_url: newPhotoUrl } : {}),
       })
+      onClose()
     } finally {
       setSaving(false)
+      setUploadingPhoto(false)
     }
   }
 
@@ -561,25 +613,46 @@ function DetailPanel({
         <div className={styles.detailModalBody}>
           {activeTab === 'basic' && (
             <>
-              {/* 제출 사진 썸네일 */}
-              {app.photo_url && (
-                <div className={certStyles.photoRow}>
-                  <span className={styles.detailFieldLabel}>제출 사진</span>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/photos/${app.photo_url}`}
-                    alt="제출 사진"
-                    className={certStyles.photoThumb}
-                  />
-                  <button
-                    type="button"
-                    onClick={handlePhotoDownload}
-                    className={certStyles.photoDownloadBtn}
-                  >
-                    다운로드
-                  </button>
+              {/* 제출 사진 */}
+              <div className={styles.detailFieldRow}>
+                <span className={styles.detailFieldLabel}>제출 사진</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 1 }}>
+                  {/* 기존 사진 또는 새 미리보기 */}
+                  {(photoPreview || app.photo_url) && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={photoPreview ?? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/photos/${app.photo_url}`}
+                        alt="제출 사진"
+                        className={certStyles.photoThumb}
+                      />
+                      {!photoPreview && app.photo_url && (
+                        <button type="button" onClick={handlePhotoDownload} className={certStyles.photoDownloadBtn}>
+                          다운로드
+                        </button>
+                      )}
+                      {photoPreview && (
+                        <button type="button" onClick={() => { setPhotoFile(null); setPhotoPreview(null) }} className={certStyles.photoDownloadBtn}>
+                          취소
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  {/* 업로드 버튼 */}
+                  <label style={{ cursor: 'pointer', display: 'inline-block' }}>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      onChange={e => { const f = e.target.files?.[0]; if (f) handlePhotoFileChange(f) }}
+                    />
+                    <span className={`${styles.btnSecondary} ${certStyles.photoUploadBtn}`} style={{ display: 'inline-block', cursor: 'pointer' }}>
+                      {app.photo_url || photoPreview ? '사진 교체' : '사진 첨부'}
+                    </span>
+                  </label>
+                  {uploadingPhoto && <span style={{ fontSize: 12, color: 'var(--toss-text-tertiary)' }}>업로드 중...</span>}
                 </div>
-              )}
+              </div>
 
               {/* 확인 처리 */}
               <div className={styles.detailChipSection}>
@@ -1225,6 +1298,7 @@ function PCertDetailPanel({ item, onClose, onUpdate }: PCertDetailPanelProps) {
         residence: editResidence || null,
         subject_cost: editSubjectCost ? parseInt(editSubjectCost.replace(/,/g, ''), 10) || null : null,
       });
+      onClose();
     } finally {
       setSaving(false);
     }
@@ -1349,15 +1423,40 @@ function PCertDetailPanel({ item, onClose, onUpdate }: PCertDetailPanelProps) {
 // ─── 민간자격증 추가 모달 ────────────────────────────────────────────────────
 
 function PCertAddModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
+  const TOTAL_STEPS = 3;
+  const [step, setStep] = useState(1);
   const [form, setForm] = useState({
-    name: '', contact: '', major_category: '', hope_course: '',
-    reason: '', click_source: '', subject_cost: '', manager: '', residence: '', memo: '',
+    name: '', contact: '', residence: '',
+    major_category: '', reason: '', click_source: '',
+    subject_cost: '', manager: '', memo: '',
   });
+  const [errors, setErrors] = useState<{ name?: string; contact?: string }>({});
   const [saving, setSaving] = useState(false);
+  const nameRef = useRef<HTMLInputElement>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.name || !form.contact) { alert('이름과 연락처는 필수입니다.'); return; }
+  useEffect(() => {
+    if (step === 1) setTimeout(() => nameRef.current?.focus(), 50);
+  }, [step]);
+
+  const validateStep1 = () => {
+    const newErrors: { name?: string; contact?: string } = {};
+    if (!form.name.trim()) newErrors.name = '이름을 입력해주세요';
+    if (!form.contact.trim()) newErrors.contact = '연락처를 입력해주세요';
+    else if (form.contact.replace(/-/g, '').length < 10) newErrors.contact = '연락처를 정확히 입력해주세요';
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleNext = () => {
+    if (step === 1 && !validateStep1()) return;
+    if (step < TOTAL_STEPS) setStep(s => s + 1);
+  };
+
+  const handleBack = () => {
+    if (step > 1) setStep(s => s - 1);
+  };
+
+  const handleSubmit = async () => {
     setSaving(true);
     try {
       const res = await fetch('/api/hakjeom/private-cert', {
@@ -1377,50 +1476,156 @@ function PCertAddModal({ onClose, onSaved }: { onClose: () => void; onSaved: () 
 
   return (
     <div onClick={e => { if (e.target === e.currentTarget) onClose(); }} className={styles.modalOverlay}>
-      <div className={styles.modalBox}>
-        <h2 className={styles.modalTitle}>민간자격증 추가</h2>
-        <form onSubmit={handleSubmit}>
-          {([
-            { label: '이름 *', key: 'name', placeholder: '이름 입력' },
-            { label: '연락처 *', key: 'contact', placeholder: '010-0000-0000' },
-            { label: '거주지', key: 'residence', placeholder: '예) 서울 강남구' },
-            { label: '유입경로', key: 'click_source', placeholder: '예) 맘카페_예시카페' },
-            { label: '과목비용', key: 'subject_cost', placeholder: '예) 150,000' },
-            { label: '담당자', key: 'manager', placeholder: '담당자 이름' },
-          ] as { label: string; key: keyof typeof form; placeholder: string }[]).map(({ label, key, placeholder }) => (
-            <div key={key} className={styles.modalFieldGroup}>
-              <label className={styles.modalLabel}>{label}</label>
-              <input
-                value={form[key]}
-                onChange={e => { const val = key === 'contact' ? formatPhoneNumber(e.target.value) : e.target.value; setForm(p => ({ ...p, [key]: val })); }}
-                placeholder={placeholder}
-                className={`${styles.input} ${styles.inputFull}`}
-              />
+      <div className={styles.funnelBox}>
+        {/* 헤더 */}
+        <div className={styles.funnelHeader}>
+          <button type="button" onClick={step === 1 ? onClose : handleBack} className={styles.funnelBackBtn}>
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M14 9H4M4 9L8 5M4 9L8 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </button>
+          <span className={styles.funnelStepLabel}>{step} / {TOTAL_STEPS}</span>
+          <button type="button" onClick={onClose} className={styles.funnelCloseBtn}>✕</button>
+        </div>
+
+        {/* 진행 바 */}
+        <div className={styles.funnelProgressBar}>
+          <div className={styles.funnelProgressFill} style={{ width: `${(step / TOTAL_STEPS) * 100}%` }} />
+        </div>
+
+        {/* 스텝 콘텐츠 */}
+        <div className={styles.funnelBody}>
+
+          {/* ── Step 1: 기본 정보 ── */}
+          {step === 1 && (
+            <div className={styles.funnelStep}>
+              <p className={styles.funnelQuestion}>기본 정보를 입력해주세요</p>
+              <div className={styles.funnelFieldGroup}>
+                <label className={styles.funnelLabel}>이름</label>
+                <input
+                  ref={nameRef}
+                  value={form.name}
+                  onChange={e => { setForm(p => ({ ...p, name: e.target.value })); if (errors.name) setErrors(p => ({ ...p, name: undefined })); }}
+                  placeholder="홍길동"
+                  className={`${styles.funnelInput}${errors.name ? ` ${styles.funnelInputError}` : ''}`}
+                />
+                {errors.name && <p className={styles.funnelError}>{errors.name}</p>}
+              </div>
+              <div className={styles.funnelFieldGroup}>
+                <label className={styles.funnelLabel}>연락처</label>
+                <input
+                  value={form.contact}
+                  onChange={e => { setForm(p => ({ ...p, contact: formatPhoneNumber(e.target.value) })); if (errors.contact) setErrors(p => ({ ...p, contact: undefined })); }}
+                  placeholder="010-0000-0000"
+                  inputMode="tel"
+                  className={`${styles.funnelInput}${errors.contact ? ` ${styles.funnelInputError}` : ''}`}
+                />
+                {errors.contact && <p className={styles.funnelError}>{errors.contact}</p>}
+              </div>
+              <div className={styles.funnelFieldGroup}>
+                <label className={styles.funnelLabel}>거주지 <span className={styles.funnelOptional}>(선택)</span></label>
+                <input
+                  value={form.residence}
+                  onChange={e => setForm(p => ({ ...p, residence: e.target.value }))}
+                  placeholder="예) 서울 강남구"
+                  className={styles.funnelInput}
+                />
+              </div>
             </div>
-          ))}
-          <div className={styles.modalFieldGroup}>
-            <label className={styles.modalLabel}>대분류</label>
-            <CustomSelect value={form.major_category} onChange={v => setForm(p => ({ ...p, major_category: v }))} fullWidth
-              options={[{ value: '', label: '선택' }, ...CERT_MAJOR_CATEGORIES.map(o => ({ value: o, label: o }))]} />
-          </div>
-          <div className={styles.modalFieldGroup}>
-            <label className={styles.modalLabel}>취득사유</label>
-            <div className={certStyles.reasonBtnRow}>
-              {REASON_OPTIONS.map(r => (
-                <button key={r} type="button" onClick={() => setForm(p => ({ ...p, reason: p.reason === r ? '' : r }))}
-                  className={form.reason === r ? styles.tagBtnV2Active : styles.tagBtnV2}>{r}</button>
-              ))}
+          )}
+
+          {/* ── Step 2: 과정 정보 ── */}
+          {step === 2 && (
+            <div className={styles.funnelStep}>
+              <p className={styles.funnelQuestion}>과정 정보를 선택해주세요</p>
+              <p className={styles.funnelSubQuestion}>모두 선택사항이에요</p>
+              <div className={styles.funnelFieldGroup}>
+                <label className={styles.funnelLabel}>대분류</label>
+                <select
+                  value={form.major_category}
+                  onChange={e => setForm(p => ({ ...p, major_category: e.target.value }))}
+                  className={styles.funnelSelect}
+                >
+                  <option value="">선택 안 함</option>
+                  {CERT_MAJOR_CATEGORIES.map(o => (
+                    <option key={o} value={o}>{o}</option>
+                  ))}
+                </select>
+              </div>
+              <div className={styles.funnelFieldGroup}>
+                <label className={styles.funnelLabel}>취득사유</label>
+                <div className={styles.funnelTagRow}>
+                  {REASON_OPTIONS.map(r => (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => setForm(p => ({ ...p, reason: p.reason === r ? '' : r }))}
+                      className={form.reason === r ? styles.tagBtnV2Active : styles.tagBtnV2}
+                    >
+                      {r}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className={styles.funnelFieldGroup}>
+                <label className={styles.funnelLabel}>유입경로 <span className={styles.funnelOptional}>(선택)</span></label>
+                <input
+                  value={form.click_source}
+                  onChange={e => setForm(p => ({ ...p, click_source: e.target.value }))}
+                  placeholder="예) 맘카페_예시카페"
+                  className={styles.funnelInput}
+                />
+              </div>
             </div>
-          </div>
-          <div className={styles.modalFieldGroupLast}>
-            <label className={styles.modalLabel}>메모</label>
-            <textarea value={form.memo} onChange={e => setForm(p => ({ ...p, memo: e.target.value }))} rows={3} placeholder="메모 입력" className={styles.textarea} />
-          </div>
-          <div className={styles.modalBtnRow}>
-            <button type="submit" disabled={saving} className={`${styles.btnPrimary} ${styles.modalBtnFlex}`}>{saving ? '저장 중...' : '저장'}</button>
-            <button type="button" onClick={onClose} className={`${styles.btnSecondary} ${styles.modalBtnFlex}`}>취소</button>
-          </div>
-        </form>
+          )}
+
+          {/* ── Step 3: 추가 정보 ── */}
+          {step === 3 && (
+            <div className={styles.funnelStep}>
+              <p className={styles.funnelQuestion}>추가 정보를 입력해주세요</p>
+              <p className={styles.funnelSubQuestion}>모두 선택사항이에요</p>
+              <div className={styles.funnelFieldGroup}>
+                <label className={styles.funnelLabel}>과목비용</label>
+                <input
+                  value={form.subject_cost}
+                  onChange={e => setForm(p => ({ ...p, subject_cost: e.target.value }))}
+                  placeholder="예) 150,000"
+                  className={styles.funnelInput}
+                />
+              </div>
+              <div className={styles.funnelFieldGroup}>
+                <label className={styles.funnelLabel}>담당자</label>
+                <input
+                  value={form.manager}
+                  onChange={e => setForm(p => ({ ...p, manager: e.target.value }))}
+                  placeholder="담당자 이름"
+                  className={styles.funnelInput}
+                />
+              </div>
+              <div className={styles.funnelFieldGroup}>
+                <label className={styles.funnelLabel}>메모 <span className={styles.funnelOptional}>(선택)</span></label>
+                <textarea
+                  value={form.memo}
+                  onChange={e => setForm(p => ({ ...p, memo: e.target.value }))}
+                  rows={3}
+                  placeholder="메모 입력"
+                  className={styles.textarea}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 하단 버튼 */}
+        <div className={styles.funnelFooter}>
+          {step < TOTAL_STEPS ? (
+            <button type="button" onClick={handleNext} className={`${styles.btnPrimary} ${styles.funnelNextBtn}`}>
+              다음
+            </button>
+          ) : (
+            <button type="button" onClick={handleSubmit} disabled={saving} className={`${styles.btnPrimary} ${styles.funnelNextBtn}`}>
+              {saving ? '저장 중...' : '등록 완료'}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -1492,6 +1697,9 @@ function PrivateCertTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode
   const [currentPage, setCurrentPage] = useState(1);
   const [showAddModal, setShowAddModal] = useState(false);
   const [openFilterColumn, setOpenFilterColumn] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [toastVisible, setToastVisible] = useState(false);
+  const [deleteToastVisible, setDeleteToastVisible] = useState(false);
   const [filterDropdownPos, setFilterDropdownPos] = useState({ top: 0, left: 0 });
   const itemsPerPage = 10;
 
@@ -1513,9 +1721,13 @@ function PrivateCertTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode
   useEffect(() => { fetchData(); }, [fetchData]);
   useEffect(() => {
     if (!openFilterColumn) return;
-    const close = () => setOpenFilterColumn(null);
-    document.addEventListener('click', close);
-    return () => document.removeEventListener('click', close);
+    const handleMouseDown = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setOpenFilterColumn(null);
+      }
+    };
+    document.addEventListener('mousedown', handleMouseDown);
+    return () => document.removeEventListener('mousedown', handleMouseDown);
   }, [openFilterColumn]);
 
   // 담당자별 실적 (헤더 칩)
@@ -1572,6 +1784,8 @@ function PrivateCertTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode
     const merged = updated ?? fields;
     setItems(prev => prev.map(c => c.id === id ? { ...c, ...merged } : c));
     setSelectedItem(prev => prev?.id === id ? { ...prev, ...merged } : prev);
+    setToastVisible(true);
+    setTimeout(() => setToastVisible(false), 2500);
   };
 
   const handleStatusChange = async (id: number, status: ConsultationStatus) => {
@@ -1590,6 +1804,8 @@ function PrivateCertTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode
     setSelectedIds([]);
     await fetchData();
     setDeleting(false);
+    setDeleteToastVisible(true);
+    setTimeout(() => setDeleteToastVisible(false), 2500);
   };
 
   const uniqueManagers = Array.from(new Set(items.map(c => c.manager).filter(Boolean))) as string[];
@@ -1695,6 +1911,7 @@ function PrivateCertTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode
                   <th className={styles.thCenter}>
                     <input type="checkbox" checked={paginated.length > 0 && selectedIds.length === paginated.length} onChange={toggleSelectAll} className={styles.checkbox} />
                   </th>
+                  <th className={styles.thNum}>번호</th>
                   <th className={styles.thFilterable}>
                     <div className={styles.thInner}>
                       대분류
@@ -1740,7 +1957,7 @@ function PrivateCertTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode
                 </tr>
               </thead>
               <tbody>
-                {paginated.map(item => (
+                {paginated.map((item, index) => (
                   <tr
                     key={item.id}
                     onClick={() => setSelectedItem(item)}
@@ -1754,6 +1971,7 @@ function PrivateCertTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode
                     <td className={styles.tdCenter} onClick={e => e.stopPropagation()}>
                       <input type="checkbox" checked={selectedIds.includes(item.id)} onChange={() => toggleSelect(item.id)} className={styles.checkbox} />
                     </td>
+                    <td className={styles.tdNum}>{index + 1}</td>
                     <td className={styles.tdSecondary}>{parseClickSource(item.click_source).major || '-'}</td>
                     <td className={`${styles.tdSecondary}${parseClickSource(item.click_source).needsCheck ? ` ${certStyles.tdNeedsCheck}` : ''}`}>{parseClickSource(item.click_source).minor || '-'}</td>
                     <td className={styles.tdBold}><PCertHighlight text={item.name} query={searchText} /></td>
@@ -1803,9 +2021,11 @@ function PrivateCertTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode
 
       {selectedItem && <PCertDetailPanel item={selectedItem} onClose={() => setSelectedItem(null)} onUpdate={handleUpdate} />}
       {showAddModal && <PCertAddModal onClose={() => setShowAddModal(false)} onSaved={fetchData} />}
+      {toastVisible && <div className={styles.toast}>저장이 완료되었습니다</div>}
+      {deleteToastVisible && <div className={styles.toast}>삭제되었습니다</div>}
 
       {openFilterColumn && (
-        <div className={styles.filterColumnDropdown} style={{ top: filterDropdownPos.top, left: filterDropdownPos.left }} onClick={e => e.stopPropagation()}>
+        <div ref={dropdownRef} className={styles.filterColumnDropdown} style={{ top: filterDropdownPos.top, left: filterDropdownPos.left }}>
           {openFilterColumn === 'major' && (
             <>
               <div className={`${styles.filterDropdownItem}${majorCategoryFilter === 'all' ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setMajorCategoryFilter('all'); setMinorCategoryFilter('all'); setCurrentPage(1); setOpenFilterColumn(null); }}>전체</div>
@@ -1872,13 +2092,16 @@ function ApplicationTab({ sourceTab }: { sourceTab: 'hakjeom' | 'edu' }) {
   const [applications, setApplications] = useState<CertApplication[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string>('paid')
+  const [statusFilter, setStatusFilter] = useState<string>('all')
   const [sourceFilter, setSourceFilter] = useState<string>('all')
   const [openFilterColumn, setOpenFilterColumn] = useState<string | null>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
   const [filterDropdownPos, setFilterDropdownPos] = useState({ top: 0, left: 0 })
   const [selectedApp, setSelectedApp] = useState<CertApplication | null>(null)
   const [showAddModal, setShowAddModal] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
+  const [toastVisible2, setToastVisible2] = useState(false)
+  const [deleteToastVisible2, setDeleteToastVisible2] = useState(false)
 
   // 체크박스 선택 상태
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -1908,6 +2131,17 @@ function ApplicationTab({ sourceTab }: { sourceTab: 'hakjeom' | 'edu' }) {
   useEffect(() => {
     fetchApplications()
   }, [fetchApplications])
+
+  useEffect(() => {
+    if (!openFilterColumn) return
+    const handleMouseDown = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setOpenFilterColumn(null)
+      }
+    }
+    document.addEventListener('mousedown', handleMouseDown)
+    return () => document.removeEventListener('mousedown', handleMouseDown)
+  }, [openFilterColumn])
 
   // ── 클라이언트 사이드 검색 필터링 ────────────
   const sourceOptions = [
@@ -1967,6 +2201,8 @@ function ApplicationTab({ sourceTab }: { sourceTab: 'hakjeom' | 'edu' }) {
       if (selectedApp?.id === id) {
         setSelectedApp((prev) => (prev ? { ...prev, ...fields } : prev))
       }
+      setToastVisible2(true)
+      setTimeout(() => setToastVisible2(false), 2500)
     } catch (err) {
       console.error('[CertPage] update error:', err)
       alert('저장에 실패했습니다.')
@@ -2009,6 +2245,8 @@ function ApplicationTab({ sourceTab }: { sourceTab: 'hakjeom' | 'edu' }) {
       })
       if (!res.ok) throw new Error('삭제 실패')
       await fetchApplications()
+      setDeleteToastVisible2(true)
+      setTimeout(() => setDeleteToastVisible2(false), 2500)
     } catch (err) {
       console.error('[CertPage] bulk delete error:', err)
       alert('삭제에 실패했습니다.')
@@ -2033,15 +2271,6 @@ function ApplicationTab({ sourceTab }: { sourceTab: 'hakjeom' | 'edu' }) {
           onChange={(e) => handleSearchChange(e.target.value)}
           className={`${styles.input} ${certStyles.searchInput300}`}
         />
-        <select
-          value={statusFilter}
-          onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1) }}
-          className={`${styles.select} ${certStyles.selectMinW130}`}
-        >
-          {STATUS_FILTER_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </select>
         {(searchQuery || statusFilter !== 'all' || sourceFilter !== 'all') && (
           <button onClick={() => { handleSearchChange(''); setStatusFilter('all'); setSourceFilter('all') }} className={styles.btnSecondary}>필터 초기화</button>
         )}
@@ -2090,11 +2319,28 @@ function ApplicationTab({ sourceTab }: { sourceTab: 'hakjeom' | 'edu' }) {
                       onChange={(e) => handleSelectAll(e.target.checked)}
                     />
                   </th>
+                  <th className={styles.thNum}>번호</th>
                   <th className={styles.th}>이름</th>
                   <th className={styles.th}>연락처</th>
                   {sourceTab !== 'edu' && <th className={styles.th}>신청 자격증</th>}
                   <th className={styles.th}>결제 금액</th>
-                  <th className={styles.th}>결제 상태</th>
+                  <th className={styles.thFilterable}>
+                    <div className={styles.thInner}>
+                      결제 상태
+                      <button
+                        className={`${styles.thFilterBtn}${statusFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`}
+                        onClick={e => {
+                          e.stopPropagation()
+                          if (openFilterColumn === 'payment_status') { setOpenFilterColumn(null); return; }
+                          const rect = e.currentTarget.getBoundingClientRect()
+                          setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left })
+                          setOpenFilterColumn('payment_status')
+                        }}
+                      >
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      </button>
+                    </div>
+                  </th>
                   <th className={styles.thFilterable}>
                     <div className={styles.thInner}>
                       출처
@@ -2116,7 +2362,7 @@ function ApplicationTab({ sourceTab }: { sourceTab: 'hakjeom' | 'edu' }) {
                 </tr>
               </thead>
               <tbody>
-                {paginated.map((app) => {
+                {paginated.map((app, index) => {
                   const isSelected = selectedIds.has(app.id)
                   return (
                     <tr
@@ -2135,6 +2381,7 @@ function ApplicationTab({ sourceTab }: { sourceTab: 'hakjeom' | 'edu' }) {
                           onChange={(e) => handleSelectOne(app.id, e.target.checked)}
                         />
                       </td>
+                      <td className={styles.tdNum}>{index + 1}</td>
 
                       {/* 이름 */}
                       <td
@@ -2276,13 +2523,34 @@ function ApplicationTab({ sourceTab }: { sourceTab: 'hakjeom' | 'edu' }) {
           onUpdate={handleUpdate}
         />
       )}
+      {toastVisible2 && <div className={styles.toast}>저장이 완료되었습니다</div>}
+      {deleteToastVisible2 && <div className={styles.toast}>삭제되었습니다</div>}
+
+      {/* 결제 상태 헤더 필터 드롭다운 */}
+      {openFilterColumn === 'payment_status' && (
+        <div
+          ref={dropdownRef}
+          className={styles.filterColumnDropdown}
+          style={{ top: filterDropdownPos.top, left: filterDropdownPos.left }}
+        >
+          {STATUS_FILTER_OPTIONS.map(o => (
+            <div
+              key={o.value}
+              className={`${styles.filterDropdownItem}${statusFilter === o.value ? ` ${styles.filterDropdownItemActive}` : ''}`}
+              onClick={() => { setStatusFilter(o.value); setCurrentPage(1); setOpenFilterColumn(null) }}
+            >
+              {o.label}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* 출처 헤더 필터 드롭다운 */}
       {openFilterColumn === 'source' && (
         <div
+          ref={dropdownRef}
           className={styles.filterColumnDropdown}
           style={{ top: filterDropdownPos.top, left: filterDropdownPos.left }}
-          onClick={e => e.stopPropagation()}
         >
           <div
             className={`${styles.filterDropdownItem}${sourceFilter === 'all' ? ` ${styles.filterDropdownItemActive}` : ''}`}
@@ -2827,7 +3095,7 @@ export default function CertPage() {
       {/* 페이지 헤더 */}
       <div className={styles.pageHeader}>
         <div>
-          <h2 className={styles.pageTitle}>민간자격증</h2>
+          <h2 className={styles.pageTitle}>민간자격증 사업부</h2>
           <p className={styles.pageSubTitle}>
             민간자격증 신청 및 상담 내역을 관리합니다.
           </p>

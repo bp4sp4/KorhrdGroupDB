@@ -16,6 +16,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/paymentstatus': '결제확인',
   '/ref-manage': '미니어드민 관리',
   '/allcare': '올케어 관리자',
+  '/logs': '로그 관리',
 }
 
 export default function DashboardLayout({

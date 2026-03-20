@@ -1,0 +1,379 @@
+/* ─── 필터 영역 ─────────────────────────────────────────────────── */
+.filterRow {
+  background: var(--toss-card-bg);
+  border: 1px solid var(--toss-border);
+  border-radius: var(--toss-radius-card);
+  padding: 10px 12px;
+  box-shadow: var(--toss-shadow-card);
+  margin-bottom: 12px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filterDateInput {
+  height: 36px;
+  padding: 0 10px;
+  border: 1.5px solid var(--toss-border);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--toss-text-primary);
+  background: #fff;
+  outline: none;
+}
+
+.filterDateInput:focus {
+  border-color: var(--toss-blue);
+}
+
+.filterSearch {
+  height: 36px;
+  padding: 0 12px;
+  border: 1.5px solid var(--toss-border);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--toss-text-primary);
+  background: #fff;
+  outline: none;
+  width: 200px;
+}
+
+.filterSearch:focus {
+  border-color: var(--toss-blue);
+}
+
+.filterDateSep {
+  font-size: 13px;
+  color: var(--toss-text-secondary);
+}
+
+.resetBtn {
+  height: 36px;
+  padding: 0 14px;
+  border: 1.5px solid var(--toss-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--toss-text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.resetBtn:hover {
+  background: var(--toss-bg);
+}
+
+.countText {
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--toss-text-secondary);
+  white-space: nowrap;
+}
+
+/* ─── Custom Select ──────────────────────────────────────────────── */
+.customSelectWrap {
+  position: relative;
+  display: inline-block;
+}
+
+.customSelectTrigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 12px;
+  height: 36px;
+  background: #fff;
+  border: 1.5px solid var(--toss-border);
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.15s;
+  min-width: 120px;
+}
+
+.customSelectTrigger:hover,
+.customSelectTriggerOpen {
+  border-color: var(--toss-blue);
+}
+
+.customSelectValue {
+  color: var(--toss-text-primary);
+  font-weight: 500;
+}
+
+.customSelectPlaceholder {
+  color: var(--toss-text-secondary);
+}
+
+.customSelectCaret {
+  color: var(--toss-text-secondary);
+  transition: transform 0.15s;
+  flex-shrink: 0;
+}
+
+.customSelectCaretOpen {
+  transform: rotate(180deg);
+}
+
+.customSelectDropdown {
+  background: #fff;
+  border: 1px solid var(--toss-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+  padding: 6px;
+  overflow-y: auto;
+  max-height: 240px;
+}
+
+.customSelectOption {
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--toss-text-primary);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.1s;
+  white-space: nowrap;
+}
+
+.customSelectOption:hover {
+  background: #f2f4f6;
+}
+
+.customSelectOptionActive {
+  color: var(--toss-blue);
+  font-weight: 600;
+}
+
+/* ─── 테이블 카드 ────────────────────────────────────────────────── */
+.tableCard {
+  background: var(--toss-card-bg);
+  border: 1px solid var(--toss-border);
+  border-radius: var(--toss-radius-card);
+  box-shadow: var(--toss-shadow-card);
+  overflow: hidden;
+}
+
+.tableOverflow {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.th {
+  padding: 14px 10px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--toss-text-secondary);
+  white-space: nowrap;
+  background: #fafafa;
+  border-bottom: 1px solid var(--toss-border);
+}
+
+.tr {
+  transition: background 0.1s;
+}
+
+.tr:hover {
+  background: #f8f9fa;
+}
+
+.td {
+  padding: 14px 10px;
+  font-size: 14px;
+  color: #191f28;
+  border-bottom: 1px solid var(--toss-border);
+}
+
+.tr:last-child .td {
+  border-bottom: none;
+}
+
+/* ─── 빈 상태 ───────────────────────────────────────────────────── */
+.emptyWrap {
+  padding: 60px 24px;
+  text-align: center;
+  color: var(--toss-text-secondary);
+  font-size: 14px;
+}
+
+/* ─── 시간 셀 ───────────────────────────────────────────────────── */
+.timeCell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  white-space: nowrap;
+}
+
+.timeDate {
+  font-size: 13px;
+  color: #191f28;
+  font-weight: 500;
+}
+
+.timeTime {
+  font-size: 12px;
+  color: var(--toss-text-secondary);
+}
+
+/* ─── 대상 이름 ─────────────────────────────────────────────────── */
+.targetName {
+  font-size: 14px;
+  font-weight: 600;
+  color: #191f28;
+  white-space: nowrap;
+}
+
+/* ─── 구분 셀 ───────────────────────────────────────────────────── */
+.actionCell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+}
+
+/* ─── 담당자 ─────────────────────────────────────────────────────── */
+.userText {
+  font-size: 13px;
+  color: var(--toss-text-secondary);
+}
+
+/* ─── 액션 배지 ─────────────────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badgeCreate {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.badgeUpdate {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.badgeDelete {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.badgeBulkCreate {
+  background: #ccfbf1;
+  color: #065f46;
+}
+
+.badgeBulkDelete {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.badgeRestore {
+  background: #f3e8ff;
+  color: #7e22ce;
+}
+
+.badgeHardDelete {
+  background: #fef2f2;
+  color: #7f1d1d;
+}
+
+/* ─── 리소스 태그 ────────────────────────────────────────────────── */
+.resourceTag {
+  display: inline-flex;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  background: #f2f4f6;
+  color: var(--toss-text-secondary);
+  white-space: nowrap;
+}
+
+/* ─── 변경 내용 ─────────────────────────────────────────────────── */
+.detailWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detailText {
+  font-size: 13px;
+  color: var(--toss-text-secondary);
+}
+
+.changesList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.changeItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background: #f0f6ff;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.changeKey {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.changeVal {
+  color: #1e40af;
+  font-weight: 600;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.changeBefore {
+  color: #9ca3af;
+  text-decoration: line-through;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.changeArrow {
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.changeAfter {
+  color: #1e40af;
+  font-weight: 600;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.changeMore {
+  font-size: 11px;
+  color: #9ca3af;
+  padding: 2px 6px;
+  background: #f3f4f6;
+  border-radius: 4px;
+  white-space: nowrap;
+}

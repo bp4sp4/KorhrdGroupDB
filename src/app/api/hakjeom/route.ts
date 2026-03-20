@@ -1,6 +1,7 @@
 import { requireAuth } from '@/lib/auth/requireAuth'
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { logAction } from '@/lib/audit/logAction';
 
 // ─── 타입 정의 ───────────────────────────────────────────────────────────────
 
@@ -67,7 +68,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { user: _user, errorResponse } = await requireAuth()
+    const { user, errorResponse } = await requireAuth()
     if (errorResponse) return errorResponse
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
       return NextResponse.json({ error: 'Supabase configuration missing' }, { status: 500 });
@@ -107,6 +108,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to save hakjeom consultation' }, { status: 500 });
     }
 
+    await logAction({ user_id: user.id, user_email: user.email, action: 'create', resource: '학점은행제 상담', resource_id: String(data.id), detail: `${data.name} 상담 등록` });
     return NextResponse.json({ message: 'Created successfully', data }, { status: 201 });
   } catch (err) {
     console.error('[hakjeom POST] Unexpected error:', err);
@@ -118,7 +120,7 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const { user: _user, errorResponse } = await requireAuth()
+    const { user, errorResponse } = await requireAuth()
     if (errorResponse) return errorResponse
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
       return NextResponse.json({ error: 'Supabase configuration missing' }, { status: 500 });
@@ -157,6 +159,8 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'At least one field is required for update' }, { status: 400 });
     }
 
+    const { data: current } = await supabaseAdmin.from(TABLE).select('*').eq('id', id).single();
+
     const { data, error } = await supabaseAdmin
       .from(TABLE)
       .update(updateData)
@@ -169,6 +173,11 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to update hakjeom consultation' }, { status: 500 });
     }
 
+    const changes: Record<string, { before: unknown; after: unknown }> = {};
+    for (const [key, newVal] of Object.entries(updateData as Record<string, unknown>)) {
+      changes[key] = { before: (current as Record<string, unknown>)?.[key] ?? null, after: newVal };
+    }
+    await logAction({ user_id: user.id, user_email: user.email, action: 'update', resource: '학점은행제 상담', resource_id: String(id), detail: `${current?.name ?? `ID ${id}`} 수정`, meta: { changes } });
     return NextResponse.json({ message: 'Updated successfully', data });
   } catch (err) {
     console.error('[hakjeom PATCH] Unexpected error:', err);
@@ -180,7 +189,7 @@ export async function PATCH(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const { user: _user, errorResponse } = await requireAuth()
+    const { user, errorResponse } = await requireAuth()
     if (errorResponse) return errorResponse
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
       return NextResponse.json({ error: 'Supabase configuration missing' }, { status: 500 });
@@ -204,6 +213,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to move to trash' }, { status: 500 });
     }
 
+    await logAction({ user_id: user.id, user_email: user.email, action: 'delete', resource: '학점은행제 상담', resource_id: ids.join(','), detail: `${ids.length}건 휴지통 이동`, meta: { ids } });
     return NextResponse.json({ message: 'Moved to trash', data });
   } catch (err) {
     console.error('[hakjeom DELETE] Unexpected error:', err);

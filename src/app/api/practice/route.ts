@@ -1,6 +1,7 @@
 import { requireAuth } from '@/lib/auth/requireAuth'
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
+import { logAction } from '@/lib/audit/logAction'
 
 // practice_consultations 테이블의 레코드 타입
 export type PracticeConsultationStatus =
@@ -66,9 +67,18 @@ export async function GET(request: NextRequest) {
       .select('*')
       .order('created_at', { ascending: false })
 
-    // 이름 또는 연락처 검색 (OR 조건)
+    // 이름 또는 연락처 검색 (하이픈 제거 버전 포함 OR 조건)
     if (search) {
-      query = query.or(`name.ilike.%${search}%,contact.ilike.%${search}%`)
+      const clean = search.replace(/-/g, '')
+      let hyphenated = ''
+      if (/^\d{4,}$/.test(clean)) {
+        hyphenated = clean.length >= 10
+          ? `${clean.slice(0,3)}-${clean.slice(3,7)}-${clean.slice(7)}`
+          : `${clean.slice(0,3)}-${clean.slice(3)}`
+      }
+      const contactPatterns = [search, ...(hyphenated && hyphenated !== search ? [hyphenated] : [])]
+      const orParts = [`name.ilike.%${search}%`, ...contactPatterns.map(p => `contact.ilike.%${p}%`)]
+      query = query.or(orParts.join(','))
     }
 
     // 상태 필터
@@ -107,7 +117,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const { user: _user, errorResponse } = await requireAuth()
+    const { user, errorResponse } = await requireAuth()
     if (errorResponse) return errorResponse
     const body = await request.json()
     const { name, contact, ...rest } = body as Partial<PracticeConsultation> & { name: string; contact: string }
@@ -140,6 +150,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '저장에 실패했습니다.', detail: error.message }, { status: 500 })
     }
 
+    await logAction({ user_id: user.id, user_email: user.email, action: 'create', resource: '실습/취업 상담', resource_id: String(data.id), detail: `${data.name} 상담 등록` })
     return NextResponse.json(data, { status: 201 })
   } catch (err) {
     console.error('[POST /api/practice] Unexpected error:', err)
@@ -155,7 +166,7 @@ export async function POST(request: NextRequest) {
  */
 export async function PATCH(request: NextRequest) {
   try {
-    const { user: _user, errorResponse } = await requireAuth()
+    const { user, errorResponse } = await requireAuth()
     if (errorResponse) return errorResponse
     const body = await request.json()
     const { id, ...fields } = body as { id: number } & Partial<PracticeConsultation>
@@ -205,6 +216,8 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
+    const { data: current } = await supabaseAdmin.from('practice_consultations').select('*').eq('id', id).single()
+
     // updated_at 자동 갱신
     const { data, error } = await supabaseAdmin
       .from('practice_consultations')
@@ -221,6 +234,11 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
+    const changes: Record<string, { before: unknown; after: unknown }> = {}
+    for (const [key, newVal] of Object.entries(updatePayload as Record<string, unknown>)) {
+      changes[key] = { before: (current as Record<string, unknown>)?.[key] ?? null, after: newVal }
+    }
+    await logAction({ user_id: user.id, user_email: user.email, action: 'update', resource: '실습/취업 상담', resource_id: String(id), detail: `${current?.name ?? `ID ${id}`} 수정`, meta: { changes } })
     return NextResponse.json(data)
   } catch (err) {
     console.error('[PATCH /api/practice] Unexpected error:', err)
@@ -237,7 +255,7 @@ export async function PATCH(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   try {
-    const { user: _user, errorResponse } = await requireAuth()
+    const { user, errorResponse } = await requireAuth()
     if (errorResponse) return errorResponse
     const body = await request.json()
     const { ids } = body as { ids: number[] }
@@ -260,6 +278,7 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
+    await logAction({ user_id: user.id, user_email: user.email, action: 'delete', resource: '실습/취업 상담', resource_id: ids.join(','), detail: `${ids.length}건 삭제`, meta: { ids } })
     return NextResponse.json({ message: '삭제되었습니다.', data })
   } catch (err) {
     console.error('[DELETE /api/practice] Unexpected error:', err)

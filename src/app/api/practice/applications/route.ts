@@ -1,6 +1,7 @@
 import { requireAuth } from '@/lib/auth/requireAuth'
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
+import { logAction } from '@/lib/audit/logAction'
 
 export interface PracticeApplication {
   id: string
@@ -46,7 +47,16 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false })
 
     if (search) {
-      query = query.or(`name.ilike.%${search}%,contact.ilike.%${search}%`)
+      const clean = search.replace(/-/g, '')
+      let hyphenated = ''
+      if (/^\d{4,}$/.test(clean)) {
+        hyphenated = clean.length >= 10
+          ? `${clean.slice(0,3)}-${clean.slice(3,7)}-${clean.slice(7)}`
+          : `${clean.slice(0,3)}-${clean.slice(3)}`
+      }
+      const contactPatterns = [search, ...(hyphenated && hyphenated !== search ? [hyphenated] : [])]
+      const orParts = [`name.ilike.%${search}%`, ...contactPatterns.map(p => `contact.ilike.%${p}%`)]
+      query = query.or(orParts.join(','))
     }
 
     if (status) {
@@ -76,7 +86,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const { user: _user, errorResponse } = await requireAuth()
+    const { user, errorResponse } = await requireAuth()
     if (errorResponse) return errorResponse
     const body = await request.json()
     const { name, gender, contact, birth_date, address, address_detail, practice_type, desired_job_field, employment_types, has_resume, certifications, manager, memo } = body
@@ -108,6 +118,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '등록에 실패했습니다.', detail: error.message }, { status: 500 })
     }
 
+    await logAction({ user_id: user.id, user_email: user.email, action: 'create', resource: '실습섭외신청', resource_id: String(data.id), detail: `${data.name} 실습신청 등록` })
     return NextResponse.json(data, { status: 201 })
   } catch (err) {
     console.error('[POST /api/practice/applications] Unexpected error:', err)
@@ -120,7 +131,7 @@ export async function POST(request: NextRequest) {
  */
 export async function PATCH(request: NextRequest) {
   try {
-    const { user: _user, errorResponse } = await requireAuth()
+    const { user, errorResponse } = await requireAuth()
     if (errorResponse) return errorResponse
     const body = await request.json()
     const { id, ...fields } = body as { id: string } & Partial<PracticeApplication>
@@ -147,6 +158,8 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: '업데이트할 필드가 없습니다.' }, { status: 400 })
     }
 
+    const { data: current } = await supabaseAdmin.from('practice_applications').select('*').eq('id', id).single()
+
     const { data, error } = await supabaseAdmin
       .from('practice_applications')
       .update({ ...updatePayload, updated_at: new Date().toISOString() })
@@ -162,6 +175,11 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
+    const changes: Record<string, { before: unknown; after: unknown }> = {}
+    for (const [key, newVal] of Object.entries(updatePayload as Record<string, unknown>)) {
+      changes[key] = { before: (current as Record<string, unknown>)?.[key] ?? null, after: newVal }
+    }
+    await logAction({ user_id: user.id, user_email: user.email, action: 'update', resource: '실습섭외신청', resource_id: String(id), detail: `${current?.name ?? `ID ${id}`} 수정`, meta: { changes } })
     return NextResponse.json(data)
   } catch (err) {
     console.error('[PATCH /api/practice/applications] Unexpected error:', err)
@@ -174,7 +192,7 @@ export async function PATCH(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   try {
-    const { user: _user, errorResponse } = await requireAuth()
+    const { user, errorResponse } = await requireAuth()
     if (errorResponse) return errorResponse
     const body = await request.json()
     const { ids } = body as { ids: string[] }
@@ -197,6 +215,7 @@ export async function DELETE(request: NextRequest) {
       )
     }
 
+    await logAction({ user_id: user.id, user_email: user.email, action: 'delete', resource: '실습섭외신청', resource_id: ids.join(','), detail: `${ids.length}건 삭제`, meta: { ids } })
     return NextResponse.json({ message: '삭제되었습니다.', data })
   } catch (err) {
     console.error('[DELETE /api/practice/applications] Unexpected error:', err)

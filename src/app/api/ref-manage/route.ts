@@ -2,6 +2,7 @@ import { requireAuth } from '@/lib/auth/requireAuth'
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { logAction } from '@/lib/audit/logAction';
 
 // 어드민 권한 확인 헬퍼
 async function checkAdmin() {
@@ -90,6 +91,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'app_users 등록 실패: ' + insertError.message }, { status: 500 });
     }
 
+    await logAction({ user_id: user.id, user_email: user.email, action: 'create', resource: '어드민관리', detail: `미니어드민 계정 생성: ${email}` });
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: '서버 오류' }, { status: 500 });
@@ -127,6 +129,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: '업데이트 실패' }, { status: 500 });
     }
 
+    await logAction({ user_id: user.id, user_email: user.email, action: 'update', resource: '어드민관리', resource_id: String(id), detail: `미니어드민 ID ${id} 정보 수정`, meta: { changes: updateData as Record<string, unknown> } });
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: '서버 오류' }, { status: 500 });

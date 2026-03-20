@@ -1,9 +1,10 @@
 import { requireAuth } from '@/lib/auth/requireAuth'
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { logAction } from '@/lib/audit/logAction';
 
 export async function POST(req: NextRequest) {
-  const { user: _user, errorResponse } = await requireAuth()
+  const { user, errorResponse } = await requireAuth()
   if (errorResponse) return errorResponse
 
   const { rows } = await req.json();
@@ -12,7 +13,7 @@ export async function POST(req: NextRequest) {
 
   const insertData = rows.map((r: Record<string, unknown>) => ({
     category: r.category || null,
-    region: r.region || null,
+    address: r.address ?? r.region ?? null,
     institution_name: r.institution_name || null,
     contact: r.contact || null,
     credit_commission: r.credit_commission || null,
@@ -27,5 +28,7 @@ export async function POST(req: NextRequest) {
 
   const { error } = await supabaseAdmin.from('agency_agreements').insert(insertData);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  await logAction({ user_id: user.id, user_email: user.email, action: 'bulk_create', resource: '기관협약', detail: `${insertData.length}건 일괄 등록` });
   return NextResponse.json({ count: insertData.length }, { status: 201 });
 }

@@ -1,3 +1,27 @@
+/* ─── 토스트 ─────────────────────────────────────────────────────────────── */
+
+.toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1a1a1a;
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 10000;
+  pointer-events: none;
+  animation: toastIn 0.2s ease;
+  white-space: nowrap;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
 /* ─── 공통 버튼 & 인풋 ───────────────────────────────────────────────────── */
 
 .filterRow {
@@ -2476,4 +2500,26 @@
   font-size: 11px;
   color: #8b95a1;
   text-align: right;
+}
+
+.thNum {
+  width: 50px;
+  min-width: 50px;
+  text-align: center;
+  color: var(--toss-text-secondary);
+  font-weight: 600;
+  font-size: 12px;
+  padding: 14px 10px;
+  white-space: nowrap;
+  background: #fafafa;
+  border-bottom: 1px solid var(--toss-border);
+}
+
+.tdNum {
+  text-align: center;
+  color: #191f28;
+  font-size: 12px;
+  padding: 14px 10px;
+  border-bottom: 1px solid var(--toss-border);
+  vertical-align: middle;
 }

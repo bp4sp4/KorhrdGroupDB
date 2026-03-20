@@ -163,9 +163,10 @@
 
 /* 테이블 */
 .tableWrap {
-  background: #fff;
+  background: var(--toss-card-bg);
   border: 1px solid var(--toss-border);
-  border-radius: 12px;
+  border-radius: var(--toss-radius-card);
+  box-shadow: var(--toss-shadow-card);
   overflow: hidden;
 }
 
@@ -176,21 +177,23 @@
 }
 
 .table thead tr {
-  background: #fff;
+  background: #fafafa;
   border-bottom: 1px solid var(--toss-border);
 }
 
 .table th {
-  padding: 12px 16px;
+  padding: 14px 10px;
   text-align: left;
+  font-size: 12px;
   font-weight: 600;
   color: var(--toss-text-secondary);
   white-space: nowrap;
 }
 
 .table td {
-  padding: 12px 16px;
-  color: var(--toss-text-primary);
+  padding: 14px 10px;
+  font-size: 14px;
+  color: #191f28;
   border-bottom: 1px solid var(--toss-border);
   vertical-align: middle;
 }
@@ -200,7 +203,7 @@
 }
 
 .table tbody tr:hover {
-  background: #fff;
+  background: #f8f9fa;
 }
 
 /* 배지 */

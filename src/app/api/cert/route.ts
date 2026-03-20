@@ -1,6 +1,7 @@
 import { requireAuth } from '@/lib/auth/requireAuth'
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { logAction } from '@/lib/audit/logAction';
 
 // 결제 상태 타입
 type PaymentStatus = 'pending' | 'paid' | 'failed' | 'cancelled';
@@ -55,7 +56,18 @@ export async function GET(request: NextRequest) {
     }
 
     if (contact) {
-      query = query.ilike('contact', `%${contact}%`);
+      const clean = contact.replace(/-/g, '')
+      let hyphenated = ''
+      if (/^\d{4,}$/.test(clean)) {
+        hyphenated = clean.length >= 10
+          ? `${clean.slice(0,3)}-${clean.slice(3,7)}-${clean.slice(7)}`
+          : `${clean.slice(0,3)}-${clean.slice(3)}`
+      }
+      if (hyphenated && hyphenated !== contact) {
+        query = query.or(`contact.ilike.%${contact}%,contact.ilike.%${hyphenated}%`)
+      } else {
+        query = query.ilike('contact', `%${contact}%`)
+      }
     }
 
     if (paymentStatus && paymentStatus !== 'all') {
@@ -88,7 +100,7 @@ export async function GET(request: NextRequest) {
 // PATCH: 필드 업데이트 (id 필수)
 export async function PATCH(request: NextRequest) {
   try {
-    const { user: _user, errorResponse } = await requireAuth()
+    const { user, errorResponse } = await requireAuth()
     if (errorResponse) return errorResponse
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
       return NextResponse.json({ error: 'Supabase configuration missing' }, { status: 500 });
@@ -138,6 +150,8 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'At least one field is required for update' }, { status: 400 });
     }
 
+    const { data: current } = await supabaseAdmin.from('certificate_applications').select('*').eq('id', id).single();
+
     const { data, error } = await supabaseAdmin
       .from('certificate_applications')
       .update(updateData)
@@ -150,6 +164,11 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to update certificate application' }, { status: 500 });
     }
 
+    const changes: Record<string, { before: unknown; after: unknown }> = {};
+    for (const [key, newVal] of Object.entries(updateData as Record<string, unknown>)) {
+      changes[key] = { before: (current as Record<string, unknown>)?.[key] ?? null, after: newVal };
+    }
+    await logAction({ user_id: user.id, user_email: user.email, action: 'update', resource: '자격증신청', resource_id: String(id), detail: `${current?.name ?? `ID ${id}`} 수정`, meta: { changes } });
     return NextResponse.json({ message: 'Updated successfully', data });
   } catch (err) {
     console.error('[cert PATCH] Unexpected error:', err);
@@ -160,7 +179,7 @@ export async function PATCH(request: NextRequest) {
 // DELETE: 일괄 삭제 (ids 배열 필수)
 export async function DELETE(request: NextRequest) {
   try {
-    const { user: _user, errorResponse } = await requireAuth()
+    const { user, errorResponse } = await requireAuth()
     if (errorResponse) return errorResponse
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
       return NextResponse.json({ error: 'Supabase configuration missing' }, { status: 500 });
@@ -183,6 +202,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to move to trash' }, { status: 500 });
     }
 
+    await logAction({ user_id: user.id, user_email: user.email, action: 'delete', resource: '자격증신청', resource_id: ids.join(','), detail: `${ids.length}건 휴지통 이동`, meta: { ids } });
     return NextResponse.json({ message: 'Moved to trash' });
   } catch (err) {
     console.error('[cert DELETE] Unexpected error:', err);
@@ -193,7 +213,7 @@ export async function DELETE(request: NextRequest) {
 // POST: 신규 신청 추가 (FormData - 사진 포함)
 export async function POST(request: NextRequest) {
   try {
-    const { user: _user, errorResponse } = await requireAuth()
+    const { user, errorResponse } = await requireAuth()
     if (errorResponse) return errorResponse
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
       return NextResponse.json({ error: 'Supabase configuration missing' }, { status: 500 });
@@ -242,7 +262,7 @@ export async function POST(request: NextRequest) {
         name,
         contact,
         birth_prefix: birth_prefix || null,
-        address: address || null,
+        address: address || '',
         address_detail: address_detail || null,
         certificates,
         cash_receipt: cash_receipt || null,
@@ -259,6 +279,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create certificate application' }, { status: 500 });
     }
 
+    await logAction({ user_id: user.id, user_email: user.email, action: 'create', resource: '자격증신청', resource_id: String(data.id), detail: `${data.name} 신청 등록` });
     return NextResponse.json({ message: 'Created successfully', data }, { status: 201 });
   } catch (err) {
     console.error('[cert POST] Unexpected error:', err);

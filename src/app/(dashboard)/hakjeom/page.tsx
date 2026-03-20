@@ -39,7 +39,7 @@ interface HakjeomConsultation {
 interface Agency {
   id: number;
   category: string | null;
-  region: string | null;
+  address: string | null;
   institution_name: string | null;
   contact: string | null;
   credit_commission: string | null;
@@ -540,6 +540,7 @@ function HakjeomDetailPanel({ item, onClose, onUpdate }: HakjeomDetailPanelProps
         residence: editResidence || null,
         subject_cost: editSubjectCost ? parseInt(editSubjectCost.replace(/,/g, ''), 10) || null : null,
       });
+      onClose();
     } finally {
       setSaving(false);
     }
@@ -1145,7 +1146,7 @@ interface AgencyAddModalProps {
 function AgencyAddModal({ editTarget, onClose, onSaved, uniqueManagers }: AgencyAddModalProps) {
   const [form, setForm] = useState({
     category: editTarget?.category ?? '',
-    region: editTarget?.region ?? '',
+    address: editTarget?.address ?? '',
     institution_name: editTarget?.institution_name ?? '',
     contact: editTarget?.contact ?? '',
     credit_commission: editTarget?.credit_commission ?? '',
@@ -1184,7 +1185,7 @@ function AgencyAddModal({ editTarget, onClose, onSaved, uniqueManagers }: Agency
         <form onSubmit={handleSubmit}>
           {([
             { label: '분류', key: 'category', placeholder: '예) 복지관, 학교, 센터' },
-            { label: '지역', key: 'region', placeholder: '예) 서울 강남구' },
+            { label: '지역', key: 'address', placeholder: '예) 서울 강남구' },
             { label: '기관이름 *', key: 'institution_name', placeholder: '기관이름 입력' },
             { label: '연락처', key: 'contact', placeholder: '예) 02-1234-5678' },
             { label: '학점커미션', key: 'credit_commission', placeholder: '예) 10%, 5만원' },
@@ -1282,8 +1283,11 @@ function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) =>
   const [deleting, setDeleting] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [toastVisible, setToastVisible] = useState(false);
+  const [deleteToastVisible, setDeleteToastVisible] = useState(false);
   const [openFilterColumn, setOpenFilterColumn] = useState<string | null>(null);
   const [filterDropdownPos, setFilterDropdownPos] = useState({ top: 0, left: 0 });
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const itemsPerPage = 10;
 
   const fetchData = useCallback(async (background = false) => {
@@ -1304,9 +1308,13 @@ function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) =>
   useEffect(() => { fetchData(); }, [fetchData]);
   useEffect(() => {
     if (!openFilterColumn) return;
-    const close = () => setOpenFilterColumn(null);
-    document.addEventListener('click', close);
-    return () => document.removeEventListener('click', close);
+    const handleMouseDown = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setOpenFilterColumn(null);
+      }
+    };
+    document.addEventListener('mousedown', handleMouseDown);
+    return () => document.removeEventListener('mousedown', handleMouseDown);
   }, [openFilterColumn]);
 
   const handleUpdate = async (id: number, fields: Partial<HakjeomConsultation>) => {
@@ -1323,6 +1331,8 @@ function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) =>
     const merged = updated ?? fields;
     setItems(prev => prev.map(c => c.id === id ? { ...c, ...merged } : c));
     setSelectedItem(prev => prev?.id === id ? { ...prev, ...merged } : prev);
+    setToastVisible(true);
+    setTimeout(() => setToastVisible(false), 2500);
   };
 
   const handleStatusChange = async (id: number, status: ConsultationStatus) => {
@@ -1341,6 +1351,8 @@ function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) =>
     setSelectedIds([]);
     await fetchData();
     setDeleting(false);
+    setDeleteToastVisible(true);
+    setTimeout(() => setDeleteToastVisible(false), 2500);
   };
 
 
@@ -1497,6 +1509,7 @@ function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) =>
                   <th className={styles.thCenter}>
                     <input type="checkbox" checked={paginated.length > 0 && selectedIds.length === paginated.length} onChange={toggleSelectAll} className={styles.checkbox} />
                   </th>
+                  <th className={styles.thNum}>번호</th>
                   <th className={styles.thFilterable}>
                     <div className={styles.thInner}>
                       대분류
@@ -1543,7 +1556,7 @@ function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) =>
                 </tr>
               </thead>
               <tbody>
-                {paginated.map(item => (
+                {paginated.map((item, index) => (
                   <tr
                     key={item.id}
                     onClick={() => setSelectedItem(item)}
@@ -1558,6 +1571,7 @@ function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) =>
                     <td className={styles.tdCenter} onClick={e => e.stopPropagation()}>
                       <input type="checkbox" checked={selectedIds.includes(item.id)} onChange={() => toggleSelect(item.id)} className={styles.checkbox} />
                     </td>
+                    <td className={styles.tdNum}>{index + 1}</td>
                     <td className={styles.tdSecondary}>{parseClickSource(item.click_source).major || '-'}</td>
                     <td className={styles.tdSecondary} style={parseClickSource(item.click_source).needsCheck ? { color: '#ef4444', fontWeight: 600 } : undefined}>{parseClickSource(item.click_source).minor || '-'}</td>
                     <td className={styles.tdBold}><Highlight text={item.name} query={searchText} /></td>
@@ -1627,6 +1641,8 @@ function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) =>
       {selectedItem && (
         <HakjeomDetailPanel item={selectedItem} onClose={() => setSelectedItem(null)} onUpdate={handleUpdate} />
       )}
+      {toastVisible && <div className={styles.toast}>저장이 완료되었습니다</div>}
+      {deleteToastVisible && <div className={styles.toast}>삭제되었습니다</div>}
 
       {/* 추가 모달 */}
       {showAddModal && (
@@ -1636,9 +1652,9 @@ function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) =>
       {/* 컬럼 필터 드롭다운 */}
       {openFilterColumn && (
         <div
+          ref={dropdownRef}
           className={styles.filterColumnDropdown}
           style={{ top: filterDropdownPos.top, left: filterDropdownPos.left }}
-          onClick={e => e.stopPropagation()}
         >
           {openFilterColumn === 'major' && (
             <>
@@ -1704,7 +1720,7 @@ function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) =>
 const AGENCY_HEADER_MAP: Record<string, string> = {
   '기관명': 'institution_name', 'institution_name': 'institution_name',
   '분류': 'category', 'category': 'category',
-  '지역': 'region', 'region': 'region',
+  '지역': 'address', 'region': 'address', 'address': 'address',
   '연락처': 'contact', 'contact': 'contact',
   '학점수수료': 'credit_commission', 'credit_commission': 'credit_commission',
   '민간수수료': 'private_commission', 'private_commission': 'private_commission',
@@ -1744,6 +1760,7 @@ function AgencyTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) => 
   // 헤더 필터 드롭다운
   const [openFilterColumn, setOpenFilterColumn] = useState<string | null>(null);
   const [filterDropdownPos, setFilterDropdownPos] = useState({ top: 0, left: 0 });
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // 페이지네이션
   const [currentPage, setCurrentPage] = useState(1);
@@ -1754,6 +1771,7 @@ function AgencyTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) => 
   const [deleting, setDeleting] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editTarget, setEditTarget] = useState<Agency | null>(null);
+  const [deleteToastVisible, setDeleteToastVisible] = useState(false);
 
   // 셀 클릭 편집
   const [fieldModal, setFieldModal] = useState<{ id: number; field: keyof Agency; label: string; value: string; multiline?: boolean } | null>(null);
@@ -1779,9 +1797,13 @@ function AgencyTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) => 
 
   useEffect(() => {
     if (!openFilterColumn) return;
-    const close = () => setOpenFilterColumn(null);
-    document.addEventListener('click', close);
-    return () => document.removeEventListener('click', close);
+    const handleMouseDown = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setOpenFilterColumn(null);
+      }
+    };
+    document.addEventListener('mousedown', handleMouseDown);
+    return () => document.removeEventListener('mousedown', handleMouseDown);
   }, [openFilterColumn]);
 
   const handleStatusChange = async (id: number, status: AgencyStatus) => {
@@ -1825,6 +1847,8 @@ function AgencyTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) => 
     setSelectedIds(new Set());
     await fetchData();
     setDeleting(false);
+    setDeleteToastVisible(true);
+    setTimeout(() => setDeleteToastVisible(false), 2500);
   };
 
   const uniqueManagers = Array.from(new Set(agencies.map(a => a.manager).filter(Boolean))) as string[];
@@ -1841,7 +1865,7 @@ function AgencyTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) => 
       const q = searchText.toLowerCase();
       const contactClean = (a.contact || '').replace(/-/g, '');
       const searchClean = searchText.replace(/-/g, '');
-      if (!((a.institution_name || '').toLowerCase().includes(q) || (a.contact || '').toLowerCase().includes(q) || contactClean.includes(searchClean) || (a.region || '').toLowerCase().includes(q) || (a.category || '').toLowerCase().includes(q) || (a.manager || '').toLowerCase().includes(q))) return false;
+      if (!((a.institution_name || '').toLowerCase().includes(q) || (a.contact || '').toLowerCase().includes(q) || contactClean.includes(searchClean) || (a.address || '').toLowerCase().includes(q) || (a.category || '').toLowerCase().includes(q) || (a.manager || '').toLowerCase().includes(q))) return false;
     }
     return true;
   });
@@ -1926,6 +1950,7 @@ function AgencyTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) => 
                   <th className={styles.thCenter}>
                     <input type="checkbox" checked={filtered.length > 0 && selectedIds.size === filtered.length} onChange={toggleSelectAll} className={styles.checkbox} />
                   </th>
+                  <th className={styles.thNum}>번호</th>
                   <th className={styles.thFilterable}>
                     <div className={styles.thInner}>
                       분류
@@ -1954,13 +1979,14 @@ function AgencyTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) => 
                 </tr>
               </thead>
               <tbody>
-                {paginated.map(a => (
+                {paginated.map((a, index) => (
                   <tr key={a.id} style={{ background: selectedIds.has(a.id) ? '#f0f7ff' : 'transparent' }}>
                     <td className={styles.tdCenter}>
                       <input type="checkbox" checked={selectedIds.has(a.id)} onChange={() => toggleSelect(a.id)} className={styles.checkbox} />
                     </td>
+                    <td className={styles.tdNum}>{index + 1}</td>
                     <td className={styles.tdSecondary}><Highlight text={a.category} query={searchText} /></td>
-                    <td className={styles.tdSecondary}><Highlight text={a.region} query={searchText} /></td>
+                    <td className={styles.tdSecondary}><Highlight text={a.address} query={searchText} /></td>
                     <td className={styles.tdBold}><Highlight text={a.institution_name} query={searchText} /></td>
                     <td className={styles.td}>
                       {a.contact ? (
@@ -2051,9 +2077,9 @@ function AgencyTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) => 
       {/* 헤더 필터 드롭다운 */}
       {openFilterColumn && (
         <div
+          ref={dropdownRef}
           className={styles.filterColumnDropdown}
           style={{ top: filterDropdownPos.top, left: filterDropdownPos.left }}
-          onClick={e => e.stopPropagation()}
         >
           {openFilterColumn === 'category' && (
             <>
@@ -2135,6 +2161,7 @@ function AgencyTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) => 
       {showModal && (
         <AgencyAddModal editTarget={editTarget} onClose={() => { setShowModal(false); setEditTarget(null); }} onSaved={fetchData} uniqueManagers={uniqueManagers} />
       )}
+      {deleteToastVisible && <div className={styles.toast}>삭제되었습니다</div>}
 
     </div>
   );
@@ -2433,7 +2460,7 @@ function BulkTab({ onMoveSuccess }: { onMoveSuccess?: () => void }) {
                         <td className={styles.td} style={{ color: '#aaa', textAlign: 'center' }}>{i + 1}</td>
                         <td className={styles.td}>{row.institution_name || <span className={styles.tdMuted}>-</span>}</td>
                         <td className={styles.td}>{row.category || <span className={styles.tdMuted}>-</span>}</td>
-                        <td className={styles.td}>{row.region || <span className={styles.tdMuted}>-</span>}</td>
+                        <td className={styles.td}>{row.address || <span className={styles.tdMuted}>-</span>}</td>
                         <td className={styles.td}>{row.contact || <span className={styles.tdMuted}>-</span>}</td>
                         <td className={styles.td}>{row.credit_commission || <span className={styles.tdMuted}>-</span>}</td>
                         <td className={styles.td}>{row.private_commission || <span className={styles.tdMuted}>-</span>}</td>
@@ -3229,7 +3256,7 @@ export default function HakjeomPage() {
       {/* 페이지 헤더 */}
       <div className={styles.pageHeader}>
         <div>
-          <h2 className={styles.pageTitle}>학점은행제 관리</h2>
+          <h2 className={styles.pageTitle}>학점은행제 사업부</h2>
           <p className={styles.pageSubTitle}>
             학점은행제, 기관협약 상담 내역을 통합 관리합니다.
           </p>

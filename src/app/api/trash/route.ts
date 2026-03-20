@@ -1,6 +1,7 @@
 import { requireAuth } from '@/lib/auth/requireAuth'
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { logAction } from '@/lib/audit/logAction';
 
 // 소스 테이블 → 표시 이름 매핑
 const SOURCE_LABEL: Record<string, string> = {
@@ -85,7 +86,7 @@ export async function GET() {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const { user: _user, errorResponse } = await requireAuth()
+    const { user, errorResponse } = await requireAuth()
     if (errorResponse) return errorResponse
     const body = await request.json();
     const { source_table, ids } = body;
@@ -107,6 +108,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: '복원에 실패했습니다.' }, { status: 500 });
     }
 
+    await logAction({ user_id: user.id, user_email: user.email, action: 'restore', resource: '휴지통', resource_id: ids.join(','), detail: `${SOURCE_LABEL[source_table] ?? source_table} ${ids.length}건 복원`, meta: { source_table, ids } });
     return NextResponse.json({ message: '복원 완료' });
   } catch (err) {
     console.error('[trash PATCH] Unexpected error:', err);
@@ -120,7 +122,7 @@ export async function PATCH(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const { user: _user, errorResponse } = await requireAuth()
+    const { user, errorResponse } = await requireAuth()
     if (errorResponse) return errorResponse
     const body = await request.json();
     const { source_table, ids, all } = body;
@@ -133,6 +135,7 @@ export async function DELETE(request: NextRequest) {
           .delete()
           .not('deleted_at', 'is', null);
       }
+      await logAction({ user_id: user.id, user_email: user.email, action: 'hard_delete', resource: '휴지통', detail: '휴지통 전체 비우기' });
       return NextResponse.json({ message: '휴지통 전체 비우기 완료' });
     }
 
@@ -154,6 +157,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: '영구 삭제에 실패했습니다.' }, { status: 500 });
     }
 
+    await logAction({ user_id: user.id, user_email: user.email, action: 'hard_delete', resource: '휴지통', resource_id: ids.join(','), detail: `${SOURCE_LABEL[source_table] ?? source_table} ${ids.length}건 영구 삭제`, meta: { source_table, ids } });
     return NextResponse.json({ message: '영구 삭제 완료' });
   } catch (err) {
     console.error('[trash DELETE] Unexpected error:', err);

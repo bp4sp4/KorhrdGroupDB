@@ -10,19 +10,19 @@ export async function GET() {
     { count: totalUsers },
     { count: activeSubscriptions },
     { count: cancelledSubscriptions },
-    { data: subPayments },
+    { data: activeSubAmounts },
     { data: pkgPayments },
     { data: customPayments },
   ] = await Promise.all([
     allcareAdmin.from('users').select('*', { count: 'exact', head: true }),
     allcareAdmin.from('subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'active').is('cancelled_at', null),
     allcareAdmin.from('subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'active').not('cancelled_at', 'is', null),
-    allcareAdmin.from('payments').select('amount').eq('status', 'completed').like('order_id', 'SUBS-%'),
+    allcareAdmin.from('subscriptions').select('amount').eq('status', 'active').is('cancelled_at', null),
     allcareAdmin.from('payments').select('amount').eq('status', 'completed').like('order_id', 'PKG-%'),
     allcareAdmin.from('payments').select('amount').eq('status', 'completed').like('order_id', 'CUSTOM-%'),
   ])
 
-  const subscriptionRevenue = subPayments?.reduce((s, p) => s + (p.amount || 0), 0) ?? 0
+  const subscriptionRevenue = activeSubAmounts?.reduce((s, p) => s + (p.amount || 0), 0) ?? 0
   const packageRevenue = pkgPayments?.reduce((s, p) => s + (p.amount || 0), 0) ?? 0
   const customRevenue = customPayments?.reduce((s, p) => s + (p.amount || 0), 0) ?? 0
 

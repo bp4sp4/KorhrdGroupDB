@@ -194,6 +194,29 @@ function Highlight({ text, query }: { text: string | null; query: string }) {
       </>
     )
   }
+  // 하이픈 제거 후 매칭 (전화번호 등)
+  const textClean = text.replace(/-/g, '')
+  const queryClean = query.replace(/-/g, '')
+  if (queryClean && textClean.toLowerCase().includes(queryClean.toLowerCase())) {
+    const cleanIdx = textClean.toLowerCase().indexOf(queryClean.toLowerCase())
+    let origStart = 0, cleanCount = 0
+    for (let i = 0; i < text.length && cleanCount < cleanIdx; i++) {
+      if (text[i] !== '-') cleanCount++
+      origStart = i + 1
+    }
+    let origEnd = origStart, matched = 0
+    for (let i = origStart; i < text.length && matched < queryClean.length; i++) {
+      if (text[i] !== '-') matched++
+      origEnd = i + 1
+    }
+    return (
+      <>
+        {text.slice(0, origStart)}
+        <mark style={{ background: '#FFE500', color: 'inherit', borderRadius: 2, padding: '0 1px' }}>{text.slice(origStart, origEnd)}</mark>
+        {text.slice(origEnd)}
+      </>
+    )
+  }
   return <>{text}</>
 }
 
@@ -538,6 +561,7 @@ function ConsultationDetailModal({ item, onClose, onUpdate }: {
         employment_hope_time: editEmploymentHopeTime || null,
         employment_support_fund: editEmploymentSupportFund,
       })
+      onClose()
     } finally {
       setSaving(false)
     }
@@ -804,6 +828,7 @@ function PracticeApplicationDetailModal({ item, onClose, onUpdate }: {
         payment_status: editPaymentStatus || null,
         click_source: editClickSource || null,
       })
+      onClose()
     } finally {
       setSaving(false)
     }
@@ -1003,6 +1028,7 @@ function EmploymentDetailModal({ item, onClose, onUpdate }: {
         ...form,
         has_resume: form.has_resume,
       })
+      onClose()
     } finally {
       setSaving(false)
     }
@@ -1492,8 +1518,11 @@ export default function PracticePage() {
   const [consultManagerFilter, setConsultManagerFilter] = useState<string[]>([])
   const [consultStatusMultiFilter, setConsultStatusMultiFilter] = useState<string[]>([])
   const [openFilterColumn, setOpenFilterColumn] = useState<string | null>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
   const [filterDropdownPos, setFilterDropdownPos] = useState({ top: 0, left: 0 })
   const [selectedConsultation, setSelectedConsultation] = useState<PracticeConsultation | null>(null)
+  const [toastVisible, setToastVisible] = useState(false)
+  const [deleteToastVisible, setDeleteToastVisible] = useState(false)
 
   // 실습섭외신청서
   const [practiceApplications, setPracticeApplications] = useState<PracticeApplication[]>([])
@@ -1618,9 +1647,13 @@ export default function PracticePage() {
 
   useEffect(() => {
     if (!openFilterColumn) return
-    const handler = () => setOpenFilterColumn(null)
-    document.addEventListener('click', handler)
-    return () => document.removeEventListener('click', handler)
+    const handleMouseDown = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setOpenFilterColumn(null)
+      }
+    }
+    document.addEventListener('mousedown', handleMouseDown)
+    return () => document.removeEventListener('mousedown', handleMouseDown)
   }, [openFilterColumn])
 
   // ─── 업데이트 핸들러 ───────────────────────────────────────────────────────
@@ -1634,7 +1667,7 @@ export default function PracticePage() {
     if (!res.ok) { alert((await res.json().catch(() => ({}))).error ?? '저장에 실패했습니다.'); return }
     const updated: PracticeConsultation = await res.json()
     setConsultations(prev => prev.map(item => item.id === updated.id ? updated : item))
-    setSelectedConsultation(updated)
+    setToastVisible(true); setTimeout(() => setToastVisible(false), 2500)
   }
 
   async function handlePracticeAppUpdate(id: string, fields: Partial<PracticeApplication>) {
@@ -1646,7 +1679,7 @@ export default function PracticePage() {
     if (!res.ok) { alert((await res.json().catch(() => ({}))).error ?? '저장에 실패했습니다.'); return }
     const updated: PracticeApplication = await res.json()
     setPracticeApplications(prev => prev.map(item => item.id === updated.id ? updated : item))
-    setSelectedPracticeApp(updated)
+    setToastVisible(true); setTimeout(() => setToastVisible(false), 2500)
   }
 
   async function handleEmploymentAppUpdate(id: string, fields: Partial<EmploymentApplication>) {
@@ -1658,7 +1691,7 @@ export default function PracticePage() {
     if (!res.ok) { alert((await res.json().catch(() => ({}))).error ?? '저장에 실패했습니다.'); return }
     const updated: EmploymentApplication = await res.json()
     setEmploymentApplications(prev => prev.map(item => item.id === updated.id ? updated : item))
-    setSelectedEmploymentApp(updated)
+    setToastVisible(true); setTimeout(() => setToastVisible(false), 2500)
   }
 
   // 추가 (실습섭외신청)
@@ -1690,6 +1723,8 @@ export default function PracticePage() {
     setEmploymentApplications(prev => prev.filter(a => !selectedEmploymentIds.has(a.id)))
     setSelectedEmploymentIds(new Set())
     if (selectedEmploymentApp && selectedEmploymentIds.has(selectedEmploymentApp.id)) setSelectedEmploymentApp(null)
+    setDeleteToastVisible(true)
+    setTimeout(() => setDeleteToastVisible(false), 2500)
   }
 
   // 추가 (취업신청)
@@ -1721,6 +1756,8 @@ export default function PracticePage() {
     setConsultations(prev => prev.filter(c => !selectedConsultationIds.has(c.id)))
     setSelectedConsultationIds(new Set())
     if (selectedConsultation && selectedConsultationIds.has(selectedConsultation.id)) setSelectedConsultation(null)
+    setDeleteToastVisible(true)
+    setTimeout(() => setDeleteToastVisible(false), 2500)
   }
 
   // 삭제 (실습섭외신청서)
@@ -1739,6 +1776,8 @@ export default function PracticePage() {
     setPracticeApplications(prev => prev.filter(a => !selectedPracticeAppIds.has(a.id)))
     setSelectedPracticeAppIds(new Set())
     if (selectedPracticeApp && selectedPracticeAppIds.has(selectedPracticeApp.id)) setSelectedPracticeApp(null)
+    setDeleteToastVisible(true)
+    setTimeout(() => setDeleteToastVisible(false), 2500)
   }
 
   // 인라인 상태 변경 (실습섭외신청서)
@@ -1922,6 +1961,8 @@ export default function PracticePage() {
           onUpdate={handleEmploymentAppUpdate}
         />
       )}
+      {toastVisible && <div className={styles.toast}>저장이 완료되었습니다</div>}
+      {deleteToastVisible && <div className={styles.toast}>삭제되었습니다</div>}
 
       {/* 페이지 헤더 */}
       <div style={{ marginBottom: 20 }}>
@@ -1949,19 +1990,28 @@ export default function PracticePage() {
         <>
           {/* 필터 */}
           <div className={styles.filterRow}>
-            {selectedConsultationIds.size > 0 && (
-              <button onClick={handleDeleteConsultations} disabled={deleting} className={styles.btnDanger}>
-                {deleting ? '삭제 중...' : `${selectedConsultationIds.size}건 삭제`}
-              </button>
-            )}
             <input
               className={`${styles.input} ${practiceStyles.searchInput}`}
               type="text"
               value={consultationSearch}
               onChange={e => setConsultationSearch(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') fetchConsultations() }}
-              placeholder="이름 또는 연락처 검색"
+              placeholder="이름, 연락처 검색..."
             />
+            {selectedConsultationIds.size > 0 && (
+              <>
+                <span className={styles.bulkActionCount}>{selectedConsultationIds.size}건 선택됨</span>
+                <button onClick={handleDeleteConsultations} disabled={deleting} className={styles.btnDanger}>
+                  {deleting ? '삭제 중...' : '선택 삭제'}
+                </button>
+                <button onClick={() => setSelectedConsultationIds(new Set())} className={styles.btnSecondary}>선택 해제</button>
+              </>
+            )}
+          </div>
+
+          {/* 액션 바 */}
+          <div className={styles.actionBar}>
+            <span className={styles.actionBarCount}>총 <strong className={styles.actionBarCountBold}>{consultationFiltered.length}</strong>건</span>
             <div className={styles.actionBarSpacer} />
             <button onClick={() => setShowAddConsultationModal(true)} className={styles.btnPrimary}>+ 추가</button>
           </div>
@@ -1983,6 +2033,7 @@ export default function PracticePage() {
                         }}
                       />
                     </th>
+                    <th className={styles.thNum}>번호</th>
                     {/* 이름 */}
                     <th className={styles.thFilterable}>
                       <div className={styles.thInner}>
@@ -2057,7 +2108,7 @@ export default function PracticePage() {
                     <tr><td className={styles.td} colSpan={9}><ErrorState message={error} /></td></tr>
                   ) : consultationPaged.length === 0 ? (
                     <tr><td className={styles.td} colSpan={9}><EmptyState /></td></tr>
-                  ) : consultationPaged.map(item => (
+                  ) : consultationPaged.map((item, index) => (
                     <tr
                       key={item.id}
                       className={styles.tr}
@@ -2076,6 +2127,7 @@ export default function PracticePage() {
                           })}
                         />
                       </td>
+                      <td className={styles.tdNum}>{index + 1}</td>
                       <td className={styles.td} style={{ fontWeight: 600 }}>
                         <Highlight text={item.name} query={consultationSearch} />
                       </td>
@@ -2120,9 +2172,9 @@ export default function PracticePage() {
           {/* 컬럼 필터 드롭다운 */}
           {openFilterColumn && (
             <div
+              ref={dropdownRef}
               className={styles.filterColumnDropdown}
               style={{ top: filterDropdownPos.top, left: filterDropdownPos.left }}
-              onClick={e => e.stopPropagation()}
             >
               {openFilterColumn === 'name' && consultationNames.map(n => (
                 <div key={n} className={`${styles.filterDropdownItem}${consultNameFilter.includes(n) ? ` ${styles.filterDropdownItemActive}` : ''}`}
@@ -2154,19 +2206,28 @@ export default function PracticePage() {
         <>
           {/* 필터 */}
           <div className={styles.filterRow}>
-            {selectedPracticeAppIds.size > 0 && (
-              <button onClick={handleDeletePracticeApps} disabled={deleting} className={styles.btnDanger}>
-                {deleting ? '삭제 중...' : `${selectedPracticeAppIds.size}건 삭제`}
-              </button>
-            )}
             <input
               className={`${styles.input} ${practiceStyles.searchInput}`}
               type="text"
               value={practiceSearch}
               onChange={e => setPracticeSearch(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') fetchPracticeApplications() }}
-              placeholder="이름 또는 연락처 검색"
+              placeholder="이름, 연락처 검색..."
             />
+            {selectedPracticeAppIds.size > 0 && (
+              <>
+                <span className={styles.bulkActionCount}>{selectedPracticeAppIds.size}건 선택됨</span>
+                <button onClick={handleDeletePracticeApps} disabled={deleting} className={styles.btnDanger}>
+                  {deleting ? '삭제 중...' : '선택 삭제'}
+                </button>
+                <button onClick={() => setSelectedPracticeAppIds(new Set())} className={styles.btnSecondary}>선택 해제</button>
+              </>
+            )}
+          </div>
+
+          {/* 액션 바 */}
+          <div className={styles.actionBar}>
+            <span className={styles.actionBarCount}>총 <strong className={styles.actionBarCountBold}>{practiceFiltered.length}</strong>건</span>
             <div className={styles.actionBarSpacer} />
             <button onClick={() => setShowAddPracticeModal(true)} className={styles.btnPrimary}>+ 추가</button>
           </div>
@@ -2188,6 +2249,7 @@ export default function PracticePage() {
                         }}
                       />
                     </th>
+                    <th className={styles.thNum}>번호</th>
                     {/* 이름 */}
                     <th className={styles.thFilterable}><div className={styles.thInner}>이름<button className={`${styles.thFilterBtn}${practiceNameFilter.length > 0 ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'pname') { setOpenFilterColumn(null); return; } const r = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: r.bottom + 4, left: r.left }); setOpenFilterColumn('pname') }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button></div></th>
                     {/* 연락처 */}
@@ -2214,7 +2276,7 @@ export default function PracticePage() {
                     <tr><td className={styles.td} colSpan={10}><ErrorState message={error} /></td></tr>
                   ) : practicePaged.length === 0 ? (
                     <tr><td className={styles.td} colSpan={10}><EmptyState /></td></tr>
-                  ) : practicePaged.map(item => (
+                  ) : practicePaged.map((item, index) => (
                     <tr
                       key={item.id}
                       className={styles.tr}
@@ -2233,6 +2295,7 @@ export default function PracticePage() {
                           })}
                         />
                       </td>
+                      <td className={styles.tdNum}>{index + 1}</td>
                       <td className={styles.td} style={{ fontWeight: 600 }}>
                         <Highlight text={item.name} query={practiceSearch} />
                       </td>
@@ -2281,9 +2344,9 @@ export default function PracticePage() {
           {/* 컬럼 필터 드롭다운 */}
           {openFilterColumn && (
             <div
+              ref={dropdownRef}
               className={styles.filterColumnDropdown}
               style={{ top: filterDropdownPos.top, left: filterDropdownPos.left }}
-              onClick={e => e.stopPropagation()}
             >
               {openFilterColumn === 'pname' && practiceNames.map(n => (
                 <div key={n} className={`${styles.filterDropdownItem}${practiceNameFilter.includes(n) ? ` ${styles.filterDropdownItemActive}` : ''}`}
@@ -2330,19 +2393,28 @@ export default function PracticePage() {
         <>
           {/* 필터 + 액션 */}
           <div className={styles.filterRow}>
-            {selectedEmploymentIds.size > 0 && (
-              <button onClick={handleDeleteEmploymentApps} disabled={deleting} className={styles.btnDanger}>
-                {deleting ? '삭제 중...' : `${selectedEmploymentIds.size}건 삭제`}
-              </button>
-            )}
             <input
               className={`${styles.input} ${practiceStyles.searchInput}`}
               type="text"
               value={employmentSearch}
               onChange={e => setEmploymentSearch(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') fetchEmploymentApplications() }}
-              placeholder="이름 또는 연락처 검색"
+              placeholder="이름, 연락처 검색..."
             />
+            {selectedEmploymentIds.size > 0 && (
+              <>
+                <span className={styles.bulkActionCount}>{selectedEmploymentIds.size}건 선택됨</span>
+                <button onClick={handleDeleteEmploymentApps} disabled={deleting} className={styles.btnDanger}>
+                  {deleting ? '삭제 중...' : '선택 삭제'}
+                </button>
+                <button onClick={() => setSelectedEmploymentIds(new Set())} className={styles.btnSecondary}>선택 해제</button>
+              </>
+            )}
+          </div>
+
+          {/* 액션 바 */}
+          <div className={styles.actionBar}>
+            <span className={styles.actionBarCount}>총 <strong className={styles.actionBarCountBold}>{employmentFiltered.length}</strong>건</span>
             <div className={styles.actionBarSpacer} />
             <button onClick={() => setShowAddEmploymentModal(true)} className={styles.btnPrimary}>+ 추가</button>
           </div>
@@ -2364,6 +2436,7 @@ export default function PracticePage() {
                         }}
                       />
                     </th>
+                    <th className={styles.thNum}>번호</th>
                     <th className={styles.thFilterable}><div className={styles.thInner}>이름<button className={`${styles.thFilterBtn}${empNameFilter.length > 0 ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'ename') { setOpenFilterColumn(null); return; } const r = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: r.bottom + 4, left: r.left }); setOpenFilterColumn('ename') }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button></div></th>
                     <th className={styles.thFilterable}><div className={styles.thInner}>연락처<button className={`${styles.thFilterBtn}${empContactFilter.length > 0 ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'econtact') { setOpenFilterColumn(null); return; } const r = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: r.bottom + 4, left: r.left }); setOpenFilterColumn('econtact') }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button></div></th>
                     <th className={styles.th}>희망직무</th>
@@ -2382,7 +2455,7 @@ export default function PracticePage() {
                     <tr><td className={styles.td} colSpan={10}><ErrorState message={error} /></td></tr>
                   ) : employmentPaged.length === 0 ? (
                     <tr><td className={styles.td} colSpan={10}><EmptyState /></td></tr>
-                  ) : employmentPaged.map(item => {
+                  ) : employmentPaged.map((item, index) => {
                     const payStyle = PAYMENT_STATUS_STYLE[item.payment_status] ?? PAYMENT_STATUS_STYLE.pending
                     return (
                       <tr
@@ -2403,6 +2476,7 @@ export default function PracticePage() {
                             })}
                           />
                         </td>
+                        <td className={styles.tdNum}>{index + 1}</td>
                         <td className={styles.td} style={{ fontWeight: 600 }}>
                           <Highlight text={item.name} query={employmentSearch} />
                         </td>
@@ -2439,9 +2513,9 @@ export default function PracticePage() {
           {/* 컬럼 필터 드롭다운 */}
           {openFilterColumn && (
             <div
+              ref={dropdownRef}
               className={styles.filterColumnDropdown}
               style={{ top: filterDropdownPos.top, left: filterDropdownPos.left }}
-              onClick={e => e.stopPropagation()}
             >
               {openFilterColumn === 'ename' && empNames.map(n => (
                 <div key={n} className={`${styles.filterDropdownItem}${empNameFilter.includes(n) ? ` ${styles.filterDropdownItemActive}` : ''}`}
