@@ -2,6 +2,11 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import styles from './page.module.css'
+import {
+  ResponsiveContainer, ComposedChart, AreaChart, BarChart, PieChart,
+  Bar, Line, Area, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip,
+} from 'recharts'
 
 // ─── 타입 ─────────────────────────────────────────────────────────────────────
 
@@ -54,7 +59,14 @@ interface CustomPayment {
   users: { name: string; email: string; phone: string } | null
 }
 
-type Tab = 'users' | 'payments' | 'custom'
+type Tab = 'users' | 'payments' | 'custom' | 'stats'
+
+interface ChartData {
+  monthly: { month: string; users: number; subs: number }[]
+  statusDist: { name: string; value: number; fill: string }[]
+  revenueDist: { name: string; value: number }[]
+  dailyUsers: { date: string; count: number }[]
+}
 type SubStatus = 'active' | 'cancel_scheduled' | 'cancelled'
 
 // ─── 유틸 ─────────────────────────────────────────────────────────────────────
@@ -114,10 +126,152 @@ function PaymentStatusBadge({ status }: { status: string }) {
   return <span className={`${styles.badge} ${cls}`}>{label}</span>
 }
 
+// ─── 차트 툴팁 ────────────────────────────────────────────────────────────────
+
+function AlcareTip({ active, payload, label }: { active?: boolean; payload?: { name: string; value: number; fill?: string }[]; label?: string }) {
+  if (!active || !payload?.length) return null
+  return (
+    <div className={styles.statsTip}>
+      <p className={styles.statsTipLabel}>{label}</p>
+      {payload.map((p, i) => (
+        <p key={i} className={styles.statsTipRow} style={{ color: p.fill ?? '#3b82f6' }}>
+          {p.name}: {typeof p.value === 'number' && p.value >= 10000
+            ? p.value.toLocaleString('ko-KR') + '원'
+            : p.value + (p.name === '신규회원' || p.name === '신규구독' ? '명' : '')}
+        </p>
+      ))}
+    </div>
+  )
+}
+
+function RevTip({ active, payload, label }: { active?: boolean; payload?: { name: string; value: number }[]; label?: string }) {
+  if (!active || !payload?.length) return null
+  return (
+    <div className={styles.statsTip}>
+      <p className={styles.statsTipLabel}>{label}</p>
+      {payload.map((p, i) => (
+        <p key={i} className={styles.statsTipRow}>{p.name}: {p.value.toLocaleString('ko-KR')}원</p>
+      ))}
+    </div>
+  )
+}
+
+// ─── 통계 탭 ──────────────────────────────────────────────────────────────────
+
+function AllcareStatsTab({ stats, chartData }: { stats: Stats | null; chartData: ChartData | null }) {
+  const REV_COLORS = ['#3b82f6', '#8b5cf6', '#f59e0b']
+
+  return (
+    <div className={styles.statsContainer}>
+      {/* 요약 카드 */}
+      <div className={styles.statsGrid4}>
+        <div className={styles.statsCard}>
+          <p className={styles.statsCardLabel}>전체 회원</p>
+          <p className={styles.statsCardValue}>{stats?.totalUsers?.toLocaleString() ?? '-'}<span className={styles.statsCardUnit}>명</span></p>
+        </div>
+        <div className={styles.statsCard}>
+          <p className={styles.statsCardLabel}>활성 구독</p>
+          <p className={styles.statsCardValue}>{stats?.activeSubscriptions?.toLocaleString() ?? '-'}<span className={styles.statsCardUnit}>명</span></p>
+        </div>
+        <div className={styles.statsCard}>
+          <p className={styles.statsCardLabel}>취소된 구독</p>
+          <p className={styles.statsCardValue}>{stats?.cancelledSubscriptions?.toLocaleString() ?? '-'}<span className={styles.statsCardUnit}>명</span></p>
+        </div>
+        <div className={styles.statsCard}>
+          <p className={styles.statsCardLabel}>총 매출</p>
+          <p className={styles.statsCardValue}>{stats ? (stats.totalRevenue / 10000).toFixed(0) : '-'}<span className={styles.statsCardUnit}>만원</span></p>
+        </div>
+      </div>
+
+      {/* 차트 2열 */}
+      <div className={styles.statsRow2}>
+        {/* 월별 신규 회원 & 구독 */}
+        <div className={styles.statsPanel}>
+          <p className={styles.statsPanelTitle}>월별 신규 회원 & 구독</p>
+          <ResponsiveContainer width="100%" height={220}>
+            <ComposedChart data={chartData?.monthly ?? []} margin={{ top: 4, right: 8, bottom: 0, left: -20 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+              <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#94a3b8' }} />
+              <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} allowDecimals={false} />
+              <Tooltip content={<AlcareTip />} />
+              <Bar dataKey="users" name="신규회원" fill="#93c5fd" radius={[4, 4, 0, 0]} barSize={20} />
+              <Bar dataKey="subs" name="신규구독" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={20} />
+              <Line type="monotone" dataKey="users" name="신규회원" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3, fill: '#3b82f6' }} />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* 구독 상태 분포 */}
+        <div className={styles.statsPanel}>
+          <p className={styles.statsPanelTitle}>구독 상태 분포</p>
+          <div className={styles.statsPieWrap}>
+            <ResponsiveContainer width="100%" height={180}>
+              <PieChart>
+                <Pie data={chartData?.statusDist ?? []} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value" paddingAngle={3}>
+                  {chartData?.statusDist.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+                </Pie>
+                <Tooltip formatter={(v: number) => [`${v}명`, '']} />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className={styles.statsLegend}>
+              {chartData?.statusDist.map((d, i) => (
+                <div key={i} className={styles.statsLegendItem}>
+                  <span className={styles.statsLegendDot} style={{ background: d.fill }} />
+                  <span className={styles.statsLegendName}>{d.name}</span>
+                  <span className={styles.statsLegendVal}>{d.value}명</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.statsRow2}>
+        {/* 일별 신규 회원 (30일) */}
+        <div className={styles.statsPanel}>
+          <p className={styles.statsPanelTitle}>일별 신규 회원 (최근 30일)</p>
+          <ResponsiveContainer width="100%" height={180}>
+            <AreaChart data={chartData?.dailyUsers ?? []} margin={{ top: 4, right: 8, bottom: 0, left: -20 }}>
+              <defs>
+                <linearGradient id="allcareUserGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2} />
+                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+              <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} interval={4} />
+              <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} allowDecimals={false} />
+              <Tooltip formatter={(v: number) => [`${v}명`, '신규 회원']} />
+              <Area type="monotone" dataKey="count" stroke="#3b82f6" strokeWidth={2} fill="url(#allcareUserGrad)" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* 매출 분포 */}
+        <div className={styles.statsPanel}>
+          <p className={styles.statsPanelTitle}>매출 구성</p>
+          <ResponsiveContainer width="100%" height={180}>
+            <BarChart data={chartData?.revenueDist ?? []} margin={{ top: 4, right: 8, bottom: 0, left: -10 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+              <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#94a3b8' }} />
+              <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} tickFormatter={v => `${(v / 10000).toFixed(0)}만`} />
+              <Tooltip content={<RevTip />} />
+              <Bar dataKey="value" name="매출" radius={[6, 6, 0, 0]} barSize={40}>
+                {chartData?.revenueDist.map((_, i) => <Cell key={i} fill={REV_COLORS[i % REV_COLORS.length]} />)}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── 컴포넌트 ─────────────────────────────────────────────────────────────────
 
 export default function AllcarePage() {
   const [stats, setStats] = useState<Stats | null>(null)
+  const [chartData, setChartData] = useState<ChartData | null>(null)
   const [activeTab, setActiveTab] = useState<Tab>('users')
 
   // 회원
@@ -125,8 +279,7 @@ export default function AllcarePage() {
   const [userTotal, setUserTotal] = useState(0)
   const [userPage, setUserPage] = useState(1)
   const [userSearch, setUserSearch] = useState('')
-  const [userProvider, setUserProvider] = useState('all')
-  const [userSub, setUserSub] = useState('all')
+
   const [usersLoading, setUsersLoading] = useState(false)
 
   // 결제
@@ -161,6 +314,10 @@ export default function AllcarePage() {
       .then(r => r.ok ? r.json() : null)
       .then(d => d && setStats(d))
       .catch(() => {})
+    fetch('/api/allcare/charts')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => d && setChartData(d))
+      .catch(() => {})
   }, [])
 
   // ─── 회원 ─────────────────────────────────────────────────────────────────
@@ -169,8 +326,6 @@ export default function AllcarePage() {
     const params = new URLSearchParams({
       page: String(userPage),
       search: userSearch,
-      provider: userProvider,
-      subscription: userSub,
     })
     fetch(`/api/allcare/users?${params}`)
       .then(r => r.ok ? r.json() : null)
@@ -182,7 +337,7 @@ export default function AllcarePage() {
       })
       .catch(() => {})
       .finally(() => setUsersLoading(false))
-  }, [userPage, userSearch, userProvider, userSub])
+  }, [userPage, userSearch])
 
   useEffect(() => {
     if (activeTab === 'users') fetchUsers()
@@ -362,13 +517,13 @@ export default function AllcarePage() {
 
       {/* 탭 */}
       <div className={styles.tabs}>
-        {(['users', 'payments'] as Tab[]).map(t => (
+        {(['users', 'payments', 'stats'] as Tab[]).map(t => (
           <button
             key={t}
             className={`${styles.tab} ${activeTab === t ? styles.tabActive : ''}`}
             onClick={() => setActiveTab(t)}
           >
-            {t === 'users' ? '회원 목록' : '결제 내역'}
+            {t === 'users' ? '회원 목록' : t === 'payments' ? '결제 내역' : '통계'}
           </button>
         ))}
       </div>
@@ -389,20 +544,6 @@ export default function AllcarePage() {
                 onChange={e => { setUserSearch(e.target.value); setUserPage(1) }}
               />
             </div>
-            <select className={styles.select} value={userProvider} onChange={e => { setUserProvider(e.target.value); setUserPage(1) }}>
-              <option value="all">전체 가입경로</option>
-              <option value="email">이메일</option>
-              <option value="google">구글</option>
-              <option value="kakao">카카오</option>
-              <option value="naver">네이버</option>
-            </select>
-            <select className={styles.select} value={userSub} onChange={e => { setUserSub(e.target.value); setUserPage(1) }}>
-              <option value="all">전체 구독</option>
-              <option value="active">활성</option>
-              <option value="cancel_scheduled">취소예정</option>
-              <option value="cancelled">취소</option>
-              <option value="none">없음</option>
-            </select>
           </div>
           <div className={styles.tableWrap}>
             {usersLoading ? (
@@ -417,7 +558,6 @@ export default function AllcarePage() {
                       <th>이름</th>
                       <th>이메일</th>
                       <th>전화번호</th>
-                      <th>가입경로</th>
                       <th>가입일</th>
                       <th>구독 상태</th>
                       <th>플랜</th>
@@ -433,7 +573,6 @@ export default function AllcarePage() {
                         <td>{u.name || '-'}</td>
                         <td>{u.email}</td>
                         <td>{u.phone || '-'}</td>
-                        <td>{u.provider || '-'}</td>
                         <td>{fmtDate(u.registered_at)}</td>
                         <td><SubscriptionBadge status={u.subscription_status} cancelledAt={u.cancelled_at} /></td>
                         <td>{u.plan || '-'}</td>
@@ -514,14 +653,24 @@ export default function AllcarePage() {
       {accessConfirm && (
         <div className={styles.modalOverlay} onClick={() => setAccessConfirm(null)}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <div className={`${styles.modalIcon} ${accessConfirm.newAccess ? styles.modalIconGreen : styles.modalIconGray}`}>
+              {accessConfirm.newAccess ? '✓' : '✕'}
+            </div>
             <h3 className={styles.modalTitle}>실습매칭 열람권</h3>
-            <p className={styles.modalUser}>{accessConfirm.user.name} ({accessConfirm.user.email})</p>
+            <div className={styles.modalUserChip}>{accessConfirm.user.name} · {accessConfirm.user.email}</div>
             <p className={styles.modalDesc}>
-              {accessConfirm.newAccess ? '실습매칭 열람권을 허용하시겠습니까?' : '실습매칭 열람권을 해제하시겠습니까?'}
+              {accessConfirm.newAccess
+                ? '이 회원에게 실습매칭 열람권을 허용합니다.'
+                : '이 회원의 실습매칭 열람권을 해제합니다.'}
             </p>
-            <div className={styles.modalActions}>
-              <button className={styles.modalCancel} onClick={() => setAccessConfirm(null)}>취소</button>
-              <button className={styles.modalConfirm} onClick={handleAccessConfirm}>확인</button>
+            <div className={styles.modalActionsCol}>
+              <button
+                className={`${styles.modalConfirmFull} ${accessConfirm.newAccess ? '' : styles.modalConfirmDanger}`}
+                onClick={handleAccessConfirm}
+              >
+                {accessConfirm.newAccess ? '허용하기' : '해제하기'}
+              </button>
+              <button className={styles.modalCancelFull} onClick={() => setAccessConfirm(null)}>취소</button>
             </div>
           </div>
         </div>
@@ -531,15 +680,18 @@ export default function AllcarePage() {
       {showModal && selectedUser && (
         <div className={styles.modalOverlay} onClick={() => setShowModal(false)}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
-            <h3 className={styles.modalTitle}>구독 상태 변경</h3>
-            <p className={styles.modalUser}>{selectedUser.name} ({selectedUser.email})</p>
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>구독 상태 변경</h3>
+              <button className={styles.modalClose} onClick={() => setShowModal(false)}>✕</button>
+            </div>
+            <div className={styles.modalUserChip}>{selectedUser.name} · {selectedUser.email}</div>
             <div className={styles.modalOptions}>
               {[
-                { value: 'active', label: '구독중 (정상)' },
-                { value: 'cancel_scheduled', label: '구독취소 (다음 결제일까지 유지)' },
-                { value: 'cancelled', label: '취소됨 (즉시 종료)' },
+                { value: 'active', label: '구독중', desc: '정상 구독 상태로 유지됩니다' },
+                { value: 'cancel_scheduled', label: '구독취소 예정', desc: '다음 결제일까지 서비스가 유지됩니다' },
+                { value: 'cancelled', label: '취소됨', desc: '즉시 서비스가 종료됩니다' },
               ].map(opt => (
-                <label key={opt.value} className={styles.modalOption}>
+                <label key={opt.value} className={`${styles.modalOptionCard} ${newStatus === opt.value ? styles.modalOptionCardActive : ''}`}>
                   <input
                     type="radio"
                     name="status"
@@ -547,18 +699,26 @@ export default function AllcarePage() {
                     checked={newStatus === opt.value}
                     onChange={() => setNewStatus(opt.value as SubStatus)}
                   />
-                  {opt.label}
+                  <div className={styles.modalOptionText}>
+                    <div className={styles.modalOptionLabel}>{opt.label}</div>
+                    <div className={styles.modalOptionDesc}>{opt.desc}</div>
+                  </div>
                 </label>
               ))}
             </div>
-            <div className={styles.modalActions}>
-              <button className={styles.modalCancel} onClick={() => setShowModal(false)}>취소</button>
-              <button className={styles.modalConfirm} onClick={handleStatusChange} disabled={modalLoading}>
-                {modalLoading ? '변경 중...' : '변경'}
+            <div className={styles.modalActionsCol}>
+              <button className={styles.modalConfirmFull} onClick={handleStatusChange} disabled={modalLoading}>
+                {modalLoading ? '변경 중...' : '변경하기'}
               </button>
+              <button className={styles.modalCancelFull} onClick={() => setShowModal(false)}>취소</button>
             </div>
           </div>
         </div>
+      )}
+
+      {/* 통계 탭 */}
+      {activeTab === 'stats' && (
+        <AllcareStatsTab stats={stats} chartData={chartData} />
       )}
 
       {/* 완료 토스트 */}

@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-03-20T05:53:30.050Z",
+  "lastUpdated": "2026-03-20T06:46:07.107Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -40,7 +40,8 @@
     "reset-order",
     "audit",
     "logs",
-    "photo"
+    "photo",
+    "charts"
   ],
   "primaryFeature": "supabase",
   "features": {
@@ -105,7 +106,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:30:16.038Z",
-        "lastUpdated": "2026-03-20T02:48:55.277Z"
+        "lastUpdated": "2026-03-20T06:45:39.168Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/hakjeom/page.tsx"
     },
@@ -118,9 +119,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:41:07.175Z",
-        "lastUpdated": "2026-03-20T05:45:59.050Z"
+        "lastUpdated": "2026-03-20T06:46:07.107Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/practice/route.ts"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/practice/page.tsx"
     },
     "cert": {
       "phase": "do",
@@ -131,7 +132,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:41:16.658Z",
-        "lastUpdated": "2026-03-20T05:53:30.050Z"
+        "lastUpdated": "2026-03-20T06:45:49.501Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/cert/page.tsx"
     },
@@ -443,7 +444,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-19T03:56:50.293Z",
-        "lastUpdated": "2026-03-20T05:14:08.473Z"
+        "lastUpdated": "2026-03-20T06:40:56.492Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/allcare/page.tsx"
     },
@@ -456,7 +457,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-19T04:59:27.989Z",
-        "lastUpdated": "2026-03-19T05:04:10.363Z"
+        "lastUpdated": "2026-03-20T06:20:32.872Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/allcare/subscription/update/route.ts"
     },
@@ -550,6 +551,19 @@
         "lastUpdated": "2026-03-20T05:49:46.574Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/cert/photo/route.ts"
+    },
+    "charts": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-03-20T06:39:32.502Z",
+        "lastUpdated": "2026-03-20T06:39:32.502Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/allcare/charts/route.ts"
     }
   },
   "pipeline": {
@@ -560,7 +574,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-03-20T05:53:30.050Z"
+    "lastActivity": "2026-03-20T06:46:07.107Z"
   },
   "history": [
     {
@@ -6422,6 +6436,186 @@
     {
       "timestamp": "2026-03-20T05:53:30.050Z",
       "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T06:14:25.695Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T06:16:28.421Z",
+      "feature": "update",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T06:17:44.637Z",
+      "feature": "update",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T06:17:50.126Z",
+      "feature": "update",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T06:17:55.051Z",
+      "feature": "update",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T06:18:29.930Z",
+      "feature": "update",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T06:18:38.274Z",
+      "feature": "update",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T06:19:19.229Z",
+      "feature": "update",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T06:20:32.872Z",
+      "feature": "update",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T06:25:20.407Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T06:25:23.891Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T06:25:28.638Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T06:25:34.452Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T06:25:40.726Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T06:25:46.958Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T06:39:32.502Z",
+      "feature": "charts",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T06:39:42.128Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T06:39:47.405Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T06:40:17.083Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T06:40:22.674Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T06:40:33.945Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T06:40:44.160Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T06:40:56.492Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T06:45:34.873Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T06:45:39.168Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T06:45:42.833Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T06:45:49.501Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T06:45:54.563Z",
+      "feature": "practice",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T06:45:58.841Z",
+      "feature": "practice",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T06:46:07.107Z",
+      "feature": "practice",
       "phase": "do",
       "action": "updated"
     }

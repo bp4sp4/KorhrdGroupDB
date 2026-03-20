@@ -1971,7 +1971,7 @@ function PrivateCertTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode
                     <td className={styles.tdCenter} onClick={e => e.stopPropagation()}>
                       <input type="checkbox" checked={selectedIds.includes(item.id)} onChange={() => toggleSelect(item.id)} className={styles.checkbox} />
                     </td>
-                    <td className={styles.tdNum}>{index + 1}</td>
+                    <td className={styles.tdNum}>{(currentPage - 1) * itemsPerPage + index + 1}</td>
                     <td className={styles.tdSecondary}>{parseClickSource(item.click_source).major || '-'}</td>
                     <td className={`${styles.tdSecondary}${parseClickSource(item.click_source).needsCheck ? ` ${certStyles.tdNeedsCheck}` : ''}`}>{parseClickSource(item.click_source).minor || '-'}</td>
                     <td className={styles.tdBold}><PCertHighlight text={item.name} query={searchText} /></td>
@@ -2381,7 +2381,7 @@ function ApplicationTab({ sourceTab }: { sourceTab: 'hakjeom' | 'edu' }) {
                           onChange={(e) => handleSelectOne(app.id, e.target.checked)}
                         />
                       </td>
-                      <td className={styles.tdNum}>{index + 1}</td>
+                      <td className={styles.tdNum}>{(currentPage - 1) * itemsPerPage + index + 1}</td>
 
                       {/* 이름 */}
                       <td

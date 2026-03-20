@@ -167,7 +167,7 @@
 }
 
 .th {
-  padding: 14px 10px;
+  padding: 10px 16px;
   text-align: left;
   font-size: 12px;
   font-weight: 600;
@@ -186,7 +186,7 @@
 }
 
 .td {
-  padding: 14px 10px;
+  padding: 10px 16px;
   font-size: 14px;
   color: #191f28;
   border-bottom: 1px solid var(--toss-border);
@@ -308,6 +308,7 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  margin-right: 16px;
 }
 
 .detailText {
@@ -318,15 +319,15 @@
 .changesList {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 3px;
   align-items: center;
 }
 
 .changeItem {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 2px 8px;
+  gap: 15px;
+  padding: 2px 6px;
   background: #f0f6ff;
   border-radius: 6px;
   font-size: 12px;
@@ -340,19 +341,15 @@
 .changeVal {
   color: #1e40af;
   font-weight: 600;
-  max-width: 160px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  max-width: 350px;
+  word-break: break-all;
 }
 
 .changeBefore {
   color: #9ca3af;
   text-decoration: line-through;
-  max-width: 100px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  max-width: 350px;
+  word-break: break-all;
 }
 
 .changeArrow {
@@ -363,10 +360,8 @@
 .changeAfter {
   color: #1e40af;
   font-weight: 600;
-  max-width: 100px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  max-width: 350px;
+  word-break: break-all;
 }
 
 .changeMore {

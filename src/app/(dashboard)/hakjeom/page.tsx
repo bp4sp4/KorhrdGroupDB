@@ -1571,7 +1571,7 @@ function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) =>
                     <td className={styles.tdCenter} onClick={e => e.stopPropagation()}>
                       <input type="checkbox" checked={selectedIds.includes(item.id)} onChange={() => toggleSelect(item.id)} className={styles.checkbox} />
                     </td>
-                    <td className={styles.tdNum}>{index + 1}</td>
+                    <td className={styles.tdNum}>{(currentPage - 1) * itemsPerPage + index + 1}</td>
                     <td className={styles.tdSecondary}>{parseClickSource(item.click_source).major || '-'}</td>
                     <td className={styles.tdSecondary} style={parseClickSource(item.click_source).needsCheck ? { color: '#ef4444', fontWeight: 600 } : undefined}>{parseClickSource(item.click_source).minor || '-'}</td>
                     <td className={styles.tdBold}><Highlight text={item.name} query={searchText} /></td>
@@ -1984,7 +1984,7 @@ function AgencyTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) => 
                     <td className={styles.tdCenter}>
                       <input type="checkbox" checked={selectedIds.has(a.id)} onChange={() => toggleSelect(a.id)} className={styles.checkbox} />
                     </td>
-                    <td className={styles.tdNum}>{index + 1}</td>
+                    <td className={styles.tdNum}>{(currentPage - 1) * itemsPerPage + index + 1}</td>
                     <td className={styles.tdSecondary}><Highlight text={a.category} query={searchText} /></td>
                     <td className={styles.tdSecondary}><Highlight text={a.address} query={searchText} /></td>
                     <td className={styles.tdBold}><Highlight text={a.institution_name} query={searchText} /></td>

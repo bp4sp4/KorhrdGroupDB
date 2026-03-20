@@ -2127,7 +2127,7 @@ export default function PracticePage() {
                           })}
                         />
                       </td>
-                      <td className={styles.tdNum}>{index + 1}</td>
+                      <td className={styles.tdNum}>{(consultationPage - 1) * PAGE_SIZE + index + 1}</td>
                       <td className={styles.td} style={{ fontWeight: 600 }}>
                         <Highlight text={item.name} query={consultationSearch} />
                       </td>
@@ -2295,7 +2295,7 @@ export default function PracticePage() {
                           })}
                         />
                       </td>
-                      <td className={styles.tdNum}>{index + 1}</td>
+                      <td className={styles.tdNum}>{(practicePage - 1) * PAGE_SIZE + index + 1}</td>
                       <td className={styles.td} style={{ fontWeight: 600 }}>
                         <Highlight text={item.name} query={practiceSearch} />
                       </td>
@@ -2476,7 +2476,7 @@ export default function PracticePage() {
                             })}
                           />
                         </td>
-                        <td className={styles.tdNum}>{index + 1}</td>
+                        <td className={styles.tdNum}>{(employmentPage - 1) * PAGE_SIZE + index + 1}</td>
                         <td className={styles.td} style={{ fontWeight: 600 }}>
                           <Highlight text={item.name} query={employmentSearch} />
                         </td>
