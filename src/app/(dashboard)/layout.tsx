@@ -10,11 +10,11 @@ import styles from '@/components/layout/layout.module.css'
 // 경로별 헤더 타이틀 매핑
 const PAGE_TITLES: Record<string, string> = {
   '/hakjeom': '학점은행제',
-  '/cert': '자격증신청',
+  '/cert': '민간자격증',
   '/practice': '실습/취업',
   '/mini-admin': '결제확인',
   '/paymentstatus': '결제확인',
-  '/ref-manage': '미니어드민 관리',
+  '/ref-manage': '어드민 관리',
   '/allcare': '올케어 관리자',
   '/logs': '로그 관리',
 }
@@ -69,7 +69,7 @@ export default function DashboardLayout({
     )
   }
 
-  const pageTitle = PAGE_TITLES[pathname] ?? '대시보드'
+  const pageTitle = PAGE_TITLES[pathname] ?? '삭제목록'
 
   return (
     <div className={styles.dashboardWrap}>

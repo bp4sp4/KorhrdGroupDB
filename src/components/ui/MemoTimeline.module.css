@@ -1,0 +1,335 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── 입력창 ── */
+.inputWrap {
+  border: 1.5px solid var(--toss-border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+  transition: border-color 0.15s;
+}
+
+.inputWrap:focus-within {
+  border-color: var(--toss-blue);
+}
+
+.input {
+  width: 100%;
+  padding: 14px 16px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #191f28;
+  border: none;
+  outline: none;
+  resize: none;
+  font-family: inherit;
+  background: transparent;
+  min-height: 80px;
+}
+
+.input::placeholder {
+  color: #b0b8c1;
+  white-space: pre-line;
+}
+
+.inputFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px 10px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.inputHint {
+  font-size: 11px;
+  color: #b0b8c1;
+}
+
+.addBtn {
+  padding: 6px 16px;
+  border-radius: 8px;
+  border: none;
+  background: var(--toss-blue);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.addBtn:hover {
+  opacity: 0.88;
+}
+
+.addBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── 타임라인 ── */
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding-left: 4px;
+  max-height: 340px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #e5e7eb transparent;
+}
+
+.timeline::-webkit-scrollbar {
+  width: 4px;
+}
+
+.timeline::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.timeline::-webkit-scrollbar-thumb {
+  background: #e5e7eb;
+  border-radius: 4px;
+}
+
+.loadMoreBtn {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 12px;
+  background: none;
+  border: none;
+  color: #6b7684;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+  border-radius: 8px;
+  transition: background 0.12s, color 0.12s;
+}
+
+.loadMoreBtn:hover {
+  background: #f1f5f9;
+  color: var(--toss-blue);
+}
+
+.empty {
+  font-size: 13px;
+  color: #b0b8c1;
+  text-align: center;
+  padding: 24px 0;
+}
+
+.logItem {
+  display: flex;
+  gap: 14px;
+  position: relative;
+  padding-bottom: 18px;
+}
+
+.logItem:last-child {
+  padding-bottom: 0;
+}
+
+/* ── 스켈레톤 ── */
+@keyframes shimmer {
+  0% { background-position: -200px 0; }
+  100% { background-position: calc(200px + 100%) 0; }
+}
+
+.skel {
+  display: block;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #f1f5f9 25%, #e9eef5 50%, #f1f5f9 75%);
+  background-size: 200px 100%;
+  animation: shimmer 1.2s infinite linear;
+}
+
+.skelDot {
+  background: linear-gradient(90deg, #e5e7eb 25%, #d1d5db 50%, #e5e7eb 75%) !important;
+  background-size: 200px 100% !important;
+  animation: shimmer 1.2s infinite linear;
+  box-shadow: none !important;
+}
+
+.skelName {
+  width: 60px;
+  height: 12px;
+}
+
+.skelTime {
+  width: 90px;
+  height: 10px;
+}
+
+.skelContent {
+  width: 100%;
+  height: 52px;
+  border-radius: 8px;
+}
+
+/* 세로 연결선 */
+.logItem:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 20px;
+  bottom: 0;
+  width: 1.5px;
+  background: #e5e7eb;
+}
+
+.logDot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--toss-blue);
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 1.5px var(--toss-blue);
+  flex-shrink: 0;
+  margin-top: 2px;
+  z-index: 1;
+}
+
+.logItemLegacy .logDot {
+  background: #94a3b8;
+  box-shadow: 0 0 0 1.5px #94a3b8;
+}
+
+.logBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.logHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.logAuthor {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.logTime {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.logTimeLegacy {
+  background: #f1f5f9;
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: #94a3b8;
+}
+
+.editBtn {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--toss-blue);
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  cursor: pointer;
+  padding: 3px 10px;
+  border-radius: 6px;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.editBtn:hover {
+  background: #dbeafe;
+  border-color: var(--toss-blue);
+}
+
+.deleteBtn {
+  font-size: 11px;
+  color: #cbd5e1;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.deleteBtn:hover {
+  color: #ef4444;
+  background: #fee2e2;
+}
+
+.editWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.editTextarea {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 13px;
+  line-height: 1.75;
+  color: #191f28;
+  border: 1.5px solid var(--toss-blue);
+  border-radius: 8px;
+  outline: none;
+  resize: none;
+  font-family: inherit;
+  background: #fff;
+  min-height: 60px;
+}
+
+.editActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.editBtns {
+  display: flex;
+  gap: 6px;
+}
+
+.cancelBtn {
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1.5px solid var(--toss-border);
+  background: #fff;
+  color: #6b7684;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.cancelBtn:hover {
+  background: #f8fafc;
+}
+
+.dateMark {
+  background: #eff6ff;
+  color: var(--toss-blue);
+  border-radius: 3px;
+  
+  font-weight: 600;
+  font-style: normal;
+}
+
+.logContent {
+  font-size: 13px;
+  line-height: 1.75;
+  color: #374151;
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin: 0;
+  font-family: inherit;
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 10px 14px;
+  border: 1px solid #f1f5f9;
+}

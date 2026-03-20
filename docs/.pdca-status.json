@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-03-20T06:46:07.107Z",
+  "lastUpdated": "2026-03-20T08:24:36.614Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -41,7 +41,9 @@
     "audit",
     "logs",
     "photo",
-    "charts"
+    "charts",
+    "memo-logs",
+    "ui"
   ],
   "primaryFeature": "supabase",
   "features": {
@@ -106,7 +108,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:30:16.038Z",
-        "lastUpdated": "2026-03-20T06:45:39.168Z"
+        "lastUpdated": "2026-03-20T08:05:41.801Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/hakjeom/page.tsx"
     },
@@ -119,7 +121,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:41:07.175Z",
-        "lastUpdated": "2026-03-20T06:46:07.107Z"
+        "lastUpdated": "2026-03-20T08:04:45.144Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/practice/page.tsx"
     },
@@ -132,7 +134,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:41:16.658Z",
-        "lastUpdated": "2026-03-20T06:45:49.501Z"
+        "lastUpdated": "2026-03-20T08:03:47.690Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/cert/page.tsx"
     },
@@ -223,7 +225,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T07:53:42.796Z",
-        "lastUpdated": "2026-03-19T09:35:56.622Z"
+        "lastUpdated": "2026-03-20T08:21:14.489Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/hakjeom/private-cert/bulk/route.ts"
     },
@@ -444,7 +446,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-19T03:56:50.293Z",
-        "lastUpdated": "2026-03-20T06:40:56.492Z"
+        "lastUpdated": "2026-03-20T08:24:36.614Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/allcare/page.tsx"
     },
@@ -561,9 +563,35 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-20T06:39:32.502Z",
-        "lastUpdated": "2026-03-20T06:39:32.502Z"
+        "lastUpdated": "2026-03-20T06:51:33.338Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/allcare/charts/route.ts"
+    },
+    "memo-logs": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-03-20T07:10:37.445Z",
+        "lastUpdated": "2026-03-20T07:19:21.929Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/memo-logs/route.ts"
+    },
+    "ui": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-03-20T07:10:56.345Z",
+        "lastUpdated": "2026-03-20T07:58:13.286Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/components/ui/Skeleton.tsx"
     }
   },
   "pipeline": {
@@ -574,7 +602,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-03-20T06:46:07.107Z"
+    "lastActivity": "2026-03-20T08:24:36.614Z"
   },
   "history": [
     {
@@ -6616,6 +6644,738 @@
     {
       "timestamp": "2026-03-20T06:46:07.107Z",
       "feature": "practice",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T06:51:33.338Z",
+      "feature": "charts",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T06:51:40.121Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T06:52:49.917Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T06:58:52.457Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T06:59:40.235Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:10:37.445Z",
+      "feature": "memo-logs",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:10:56.345Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:11:24.880Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:11:29.066Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:11:41.560Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:11:50.078Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:12:06.855Z",
+      "feature": "practice",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:12:14.665Z",
+      "feature": "practice",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:14:20.638Z",
+      "feature": "practice",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:15:00.268Z",
+      "feature": "memo-logs",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:15:25.871Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:16:18.639Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:17:28.282Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:17:38.214Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:19:21.929Z",
+      "feature": "memo-logs",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:20:54.735Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:20:59.505Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:21:04.211Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:22:52.367Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:23:02.245Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:23:06.498Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:23:17.227Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:23:32.828Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:23:39.125Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:24:22.784Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:24:27.011Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:24:31.594Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:24:36.709Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:24:43.365Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:29:03.472Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:29:06.768Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:29:10.783Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:29:16.366Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:29:21.667Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:29:27.722Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:29:32.187Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:29:36.559Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:29:41.204Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:29:46.182Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:29:50.098Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:29:58.391Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:30:02.691Z",
+      "feature": "practice",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:30:08.007Z",
+      "feature": "practice",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:30:15.039Z",
+      "feature": "practice",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:32:51.426Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:32:55.162Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:32:59.742Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:33:04.997Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:33:12.786Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:33:25.842Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:33:30.763Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:33:34.963Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:33:39.825Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:33:44.328Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:34:49.036Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:34:57.929Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:35:02.940Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:35:07.509Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:35:12.239Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:35:27.654Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:36:13.614Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:37:01.601Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:37:05.383Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:37:10.040Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:37:15.006Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:39:52.278Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:40:52.490Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:41:00.245Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:41:04.045Z",
+      "feature": "practice",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:41:11.635Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:41:16.344Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:41:19.888Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:41:26.359Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:41:30.944Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:42:00.951Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:42:11.620Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:42:32.881Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:42:38.244Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:42:44.041Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:42:48.430Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:43:00.820Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:43:09.758Z",
+      "feature": "practice",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:43:18.591Z",
+      "feature": "practice",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:43:28.570Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:43:32.755Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:43:49.616Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:43:53.853Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:44:01.353Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:45:02.304Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:45:08.569Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:45:13.487Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:45:32.432Z",
+      "feature": "practice",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:50:10.636Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:50:17.100Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:50:21.627Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:50:25.660Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:50:32.294Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:50:36.159Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:50:49.995Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:54:41.212Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:58:13.286Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:58:28.202Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T07:58:38.574Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T08:03:09.616Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T08:03:10.610Z",
+      "feature": "practice",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T08:03:26.901Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T08:03:47.690Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T08:04:21.445Z",
+      "feature": "practice",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T08:04:33.950Z",
+      "feature": "practice",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T08:04:45.144Z",
+      "feature": "practice",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T08:05:11.750Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T08:05:26.260Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T08:05:41.801Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T08:21:02.664Z",
+      "feature": "bulk",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T08:21:14.489Z",
+      "feature": "bulk",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T08:24:35.563Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-20T08:24:36.614Z",
+      "feature": "allcare",
       "phase": "do",
       "action": "updated"
     }

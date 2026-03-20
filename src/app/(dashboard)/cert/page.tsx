@@ -8,6 +8,8 @@ import {
 } from 'recharts'
 import styles from '../hakjeom/page.module.css'
 import certStyles from './page.module.css'
+import MemoTimeline from '@/components/ui/MemoTimeline'
+import { TableSkeleton, StatsCardsSkeleton, ChartsGridSkeleton, FilterBarSkeleton } from '@/components/ui/Skeleton'
 
 // ─────────────────────────────────────────────
 // Types
@@ -1231,9 +1233,10 @@ interface PCertDetailPanelProps {
   item: PrivateCert;
   onClose: () => void;
   onUpdate: (id: number, fields: Partial<PrivateCert>) => Promise<void>;
+  initialTab?: 'basic' | 'info' | 'memo';
 }
 
-function PCertDetailPanel({ item, onClose, onUpdate }: PCertDetailPanelProps) {
+function PCertDetailPanel({ item, onClose, onUpdate, initialTab = 'basic' }: PCertDetailPanelProps) {
   const [editStatus, setEditStatus] = useState<ConsultationStatus>(item.status);
   const [editMemo, setEditMemo] = useState(item.memo ?? '');
   const [editManager, setEditManager] = useState(item.manager ?? '');
@@ -1257,7 +1260,8 @@ function PCertDetailPanel({ item, onClose, onUpdate }: PCertDetailPanelProps) {
   const [editResidence, setEditResidence] = useState(item.residence ?? '');
   const [editSubjectCost, setEditSubjectCost] = useState(item.subject_cost ? String(item.subject_cost) : '');
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'basic' | 'info' | 'memo'>('basic');
+  const [activeTab, setActiveTab] = useState<'basic' | 'info' | 'memo'>(initialTab);
+  const [memoCount, setMemoCount] = useState<number | null>(null);
 
   useEffect(() => {
     setEditStatus(item.status);
@@ -1327,7 +1331,11 @@ function PCertDetailPanel({ item, onClose, onUpdate }: PCertDetailPanelProps) {
               return (
                 <button key={tab} type="button" onClick={() => setActiveTab(tab)}
                   className={`${styles.detailModalTab} ${activeTab === tab ? styles.detailModalTabActive : ''}`}
-                >{labels[tab]}</button>
+                >
+                  {tab === 'memo' && memoCount != null && memoCount > 0
+                    ? `메모 (${memoCount})`
+                    : labels[tab]}
+                </button>
               );
             })}
           </div>
@@ -1407,7 +1415,12 @@ function PCertDetailPanel({ item, onClose, onUpdate }: PCertDetailPanelProps) {
             </>
           )}
           {activeTab === 'memo' && (
-            <textarea value={editMemo} onChange={e => setEditMemo(e.target.value)} rows={8} placeholder="메모를 입력하세요" className={styles.textarea} />
+            <MemoTimeline
+              tableName="private_cert_consultations"
+              recordId={String(item.id)}
+              legacyMemo={item.memo}
+              onCountChange={setMemoCount}
+            />
           )}
         </div>
         <div className={styles.detailModalFooter}>
@@ -1692,6 +1705,7 @@ function PrivateCertTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode
   const [endDate, setEndDate] = useState('');
 
   const [selectedItem, setSelectedItem] = useState<PrivateCert | null>(null);
+  const [openTab, setOpenTab] = useState<'basic' | 'info' | 'memo'>('basic');
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [deleting, setDeleting] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -1873,36 +1887,35 @@ function PrivateCertTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode
 
   return (
     <div>
-      <div className={styles.filterRow}>
-        <input type="text" value={searchText} onChange={e => { setSearchText(e.target.value); setCurrentPage(1); }} placeholder="이름, 연락처, 취득사유 검색..." className={`${styles.input} ${certStyles.pcertSearchInput}`} />
-        <input type="date" value={startDate} onChange={e => { setStartDate(e.target.value); setCurrentPage(1); }} className={`${styles.input} ${certStyles.dateInput140}`} />
-        <span className={styles.dateSeparator}>~</span>
-        <input type="date" value={endDate} onChange={e => { setEndDate(e.target.value); setCurrentPage(1); }} className={`${styles.input} ${certStyles.dateInput140}`} />
-        {isFiltered && <button onClick={resetFilters} className={styles.btnSecondary}>필터 초기화</button>}
-        {selectedIds.length > 0 && (
-          <>
-            <span className={styles.bulkActionCount}>{selectedIds.length}건 선택됨</span>
-            <button onClick={handleBulkDelete} disabled={deleting} className={styles.btnDanger}>
-              {deleting ? '삭제 중...' : '선택 삭제'}
-            </button>
-            <button onClick={() => setSelectedIds([])} className={styles.btnSecondary}>선택 해제</button>
-          </>
-        )}
-      </div>
-
-      <div className={styles.actionBar}>
-        <span className={styles.actionBarCount}>총 <strong className={styles.actionBarCountBold}>{filtered.length}</strong>건</span>
-        <div className={styles.actionBarSpacer} />
-        <button onClick={() => setShowAddModal(true)} className={styles.btnPrimary}>+ 추가</button>
-      </div>
+      {loading ? <FilterBarSkeleton /> : (
+        <>
+          <div className={styles.filterRow}>
+            <input type="text" value={searchText} onChange={e => { setSearchText(e.target.value); setCurrentPage(1); }} placeholder="이름, 연락처, 취득사유 검색..." className={`${styles.input} ${certStyles.pcertSearchInput}`} />
+            <input type="date" value={startDate} onChange={e => { setStartDate(e.target.value); setCurrentPage(1); }} className={`${styles.input} ${certStyles.dateInput140}`} />
+            <span className={styles.dateSeparator}>~</span>
+            <input type="date" value={endDate} onChange={e => { setEndDate(e.target.value); setCurrentPage(1); }} className={`${styles.input} ${certStyles.dateInput140}`} />
+            {isFiltered && <button onClick={resetFilters} className={styles.btnSecondary}>필터 초기화</button>}
+            {selectedIds.length > 0 && (
+              <>
+                <span className={styles.bulkActionCount}>{selectedIds.length}건 선택됨</span>
+                <button onClick={handleBulkDelete} disabled={deleting} className={styles.btnDanger}>
+                  {deleting ? '삭제 중...' : '선택 삭제'}
+                </button>
+                <button onClick={() => setSelectedIds([])} className={styles.btnSecondary}>선택 해제</button>
+              </>
+            )}
+          </div>
+          <div className={styles.actionBar}>
+            <span className={styles.actionBarCount}>총 <strong className={styles.actionBarCountBold}>{filtered.length}</strong>건</span>
+            <div className={styles.actionBarSpacer} />
+            <button onClick={() => setShowAddModal(true)} className={styles.btnPrimary}>+ 추가</button>
+          </div>
+        </>
+      )}
 
       <div className={styles.tableCard}>
-        {loading ? (
-          <div className={styles.tableEmptyMsg}>불러오는 중...</div>
-        ) : error ? (
+        {error ? (
           <div className={styles.tableErrorMsg}>{error}</div>
-        ) : filtered.length === 0 ? (
-          <div className={styles.tableEmptyMsg}>검색 결과가 없습니다.</div>
         ) : (
           <div className={styles.tableOverflow}>
             <table className={styles.table}>
@@ -1957,7 +1970,11 @@ function PrivateCertTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode
                 </tr>
               </thead>
               <tbody>
-                {paginated.map((item, index) => (
+                {loading ? (
+                  <TableSkeleton cols={13} rows={8} />
+                ) : filtered.length === 0 ? (
+                  <tr><td colSpan={13} className={styles.tableEmptyMsg}>검색 결과가 없습니다.</td></tr>
+                ) : paginated.map((item, index) => (
                   <tr
                     key={item.id}
                     onClick={() => setSelectedItem(item)}
@@ -1997,7 +2014,7 @@ function PrivateCertTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode
                         styleMap={CONSULTATION_STATUS_STYLE}
                       />
                     </td>
-                    <td className={styles.tdMemo} title={item.memo ?? ''}>{item.memo || '-'}</td>
+                    <td className={styles.tdMemo} title={item.memo ?? ''} onClick={e => { e.stopPropagation(); setOpenTab('memo'); setSelectedItem(item); }} style={{ cursor: 'pointer' }}>{item.memo || '-'}</td>
                     <td className={styles.tdDateSmall}>{formatDate(item.created_at)}</td>
                   </tr>
                 ))}
@@ -2019,7 +2036,7 @@ function PrivateCertTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode
         </div>
       )}
 
-      {selectedItem && <PCertDetailPanel item={selectedItem} onClose={() => setSelectedItem(null)} onUpdate={handleUpdate} />}
+      {selectedItem && <PCertDetailPanel item={selectedItem} onClose={() => { setSelectedItem(null); setOpenTab('basic'); }} onUpdate={handleUpdate} initialTab={openTab} />}
       {showAddModal && <PCertAddModal onClose={() => setShowAddModal(false)} onSaved={fetchData} />}
       {toastVisible && <div className={styles.toast}>저장이 완료되었습니다</div>}
       {deleteToastVisible && <div className={styles.toast}>삭제되었습니다</div>}
@@ -2262,51 +2279,50 @@ function ApplicationTab({ sourceTab }: { sourceTab: 'hakjeom' | 'edu' }) {
   return (
     <div className={certStyles.appTabWrap}>
 
-      {/* 검색 / 필터 행 */}
-      <div className={styles.filterRow}>
-        <input
-          type="text"
-          placeholder="이름, 연락처 검색..."
-          value={searchQuery}
-          onChange={(e) => handleSearchChange(e.target.value)}
-          className={`${styles.input} ${certStyles.searchInput300}`}
-        />
-        {(searchQuery || statusFilter !== 'all' || sourceFilter !== 'all') && (
-          <button onClick={() => { handleSearchChange(''); setStatusFilter('all'); setSourceFilter('all') }} className={styles.btnSecondary}>필터 초기화</button>
-        )}
-        {selectedIds.size > 0 && (
-          <>
-            <span className={styles.bulkActionCount}>{selectedIds.size}건 선택됨</span>
-            <button
-              onClick={handleBulkDelete}
-              disabled={bulkDeleting}
-              className={styles.btnDanger}
-            >
-              {bulkDeleting ? '삭제 중...' : '선택 삭제'}
-            </button>
-            <button onClick={() => setSelectedIds(new Set())} className={styles.btnSecondary}>선택 해제</button>
-          </>
-        )}
-      </div>
+      {loading ? <FilterBarSkeleton /> : (
+        <>
+          {/* 검색 / 필터 행 */}
+          <div className={styles.filterRow}>
+            <input
+              type="text"
+              placeholder="이름, 연락처 검색..."
+              value={searchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              className={`${styles.input} ${certStyles.searchInput300}`}
+            />
+            {(searchQuery || statusFilter !== 'all' || sourceFilter !== 'all') && (
+              <button onClick={() => { handleSearchChange(''); setStatusFilter('all'); setSourceFilter('all') }} className={styles.btnSecondary}>필터 초기화</button>
+            )}
+            {selectedIds.size > 0 && (
+              <>
+                <span className={styles.bulkActionCount}>{selectedIds.size}건 선택됨</span>
+                <button
+                  onClick={handleBulkDelete}
+                  disabled={bulkDeleting}
+                  className={styles.btnDanger}
+                >
+                  {bulkDeleting ? '삭제 중...' : '선택 삭제'}
+                </button>
+                <button onClick={() => setSelectedIds(new Set())} className={styles.btnSecondary}>선택 해제</button>
+              </>
+            )}
+          </div>
 
-      {/* 액션 바 */}
-      <div className={styles.actionBar}>
-        <span className={styles.actionBarCount}>
-          총 <strong className={styles.actionBarCountBold}>{filtered.length}</strong>건
-        </span>
-        <div className={styles.actionBarSpacer} />
-        <button onClick={() => setShowAddModal(true)} className={styles.btnPrimary}>+ 신청 추가</button>
-      </div>
+          {/* 액션 바 */}
+          <div className={styles.actionBar}>
+            <span className={styles.actionBarCount}>
+              총 <strong className={styles.actionBarCountBold}>{filtered.length}</strong>건
+            </span>
+            <div className={styles.actionBarSpacer} />
+            <button onClick={() => setShowAddModal(true)} className={styles.btnPrimary}>+ 신청 추가</button>
+          </div>
+        </>
+      )}
 
       {/* 테이블 카드 */}
       <div className={styles.tableCard}>
-        {loading ? (
-          <div className={styles.tableEmptyMsg}>데이터를 불러오고 있습니다...</div>
-        ) : filtered.length === 0 ? (
-          <div className={styles.tableEmptyMsg}>신청 내역이 없습니다.</div>
-        ) : (
-          <div className={styles.tableOverflow}>
-            <table className={`${styles.table} ${certStyles.tableMinW900}`}>
+        <div className={styles.tableOverflow}>
+          <table className={`${styles.table} ${certStyles.tableMinW900}`}>
               <thead>
                 <tr>
                   {/* 전체 선택 체크박스 */}
@@ -2362,7 +2378,11 @@ function ApplicationTab({ sourceTab }: { sourceTab: 'hakjeom' | 'edu' }) {
                 </tr>
               </thead>
               <tbody>
-                {paginated.map((app, index) => {
+                {loading ? (
+                  <TableSkeleton cols={9} rows={8} />
+                ) : filtered.length === 0 ? (
+                  <tr><td colSpan={9} className={styles.tableEmptyMsg}>신청 내역이 없습니다.</td></tr>
+                ) : paginated.map((app, index) => {
                   const isSelected = selectedIds.has(app.id)
                   return (
                     <tr
@@ -2381,7 +2401,7 @@ function ApplicationTab({ sourceTab }: { sourceTab: 'hakjeom' | 'edu' }) {
                           onChange={(e) => handleSelectOne(app.id, e.target.checked)}
                         />
                       </td>
-                      <td className={styles.tdNum}>{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                      <td className={styles.tdNum}>{(safePage - 1) * PAGE_SIZE + index + 1}</td>
 
                       {/* 이름 */}
                       <td
@@ -2469,7 +2489,6 @@ function ApplicationTab({ sourceTab }: { sourceTab: 'hakjeom' | 'edu' }) {
               </tbody>
             </table>
           </div>
-        )}
 
       </div>
 
@@ -2870,7 +2889,10 @@ function CertStatsTab() {
       </div>
 
       {loading ? (
-        <div className={styles.statsLoading}>불러오는 중...</div>
+        <>
+          <StatsCardsSkeleton count={5} />
+          <ChartsGridSkeleton />
+        </>
       ) : (
         <>
           {/* ════ 개요 ════ */}

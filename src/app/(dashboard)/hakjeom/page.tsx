@@ -7,6 +7,8 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip,
 } from 'recharts';
 import styles from './page.module.css';
+import MemoTimeline from '@/components/ui/MemoTimeline'
+import { TableSkeleton, StatsCardsSkeleton, ChartsGridSkeleton, FilterBarSkeleton } from '@/components/ui/Skeleton'
 
 // ─── 공통 타입 ──────────────────────────────────────────────────────────────
 
@@ -446,9 +448,10 @@ interface HakjeomDetailPanelProps {
   item: HakjeomConsultation;
   onClose: () => void;
   onUpdate: (id: number, fields: Partial<HakjeomConsultation>) => Promise<void>;
+  initialTab?: 'basic' | 'info' | 'memo';
 }
 
-function HakjeomDetailPanel({ item, onClose, onUpdate }: HakjeomDetailPanelProps) {
+function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic' }: HakjeomDetailPanelProps) {
   const initSource = (src: string | null) => {
     const { major, minor } = parseClickSource(src);
     return { major, minor: CAFE_NAMES[minor] ?? minor };
@@ -478,7 +481,8 @@ function HakjeomDetailPanel({ item, onClose, onUpdate }: HakjeomDetailPanelProps
   const [editResidence, setEditResidence] = useState(item.residence ?? '');
   const [editSubjectCost, setEditSubjectCost] = useState(item.subject_cost ? String(item.subject_cost) : '');
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'basic' | 'info' | 'memo'>('basic');
+  const [activeTab, setActiveTab] = useState<'basic' | 'info' | 'memo'>(initialTab);
+  const [memoCount, setMemoCount] = useState<number | null>(null);
 
   const builtClickSource = editSourceMajor
     ? editSourceMinor ? `${editSourceMajor}_${editSourceMinor}` : editSourceMajor
@@ -582,7 +586,9 @@ function HakjeomDetailPanel({ item, onClose, onUpdate }: HakjeomDetailPanelProps
                   onClick={() => setActiveTab(tab)}
                   className={`${styles.detailModalTab} ${activeTab === tab ? styles.detailModalTabActive : ''}`}
                 >
-                  {labels[tab]}
+                  {tab === 'memo' && memoCount != null && memoCount > 0
+                    ? `메모 (${memoCount})`
+                    : labels[tab]}
                 </button>
               );
             })}
@@ -775,12 +781,11 @@ function HakjeomDetailPanel({ item, onClose, onUpdate }: HakjeomDetailPanelProps
           )}
 
           {activeTab === 'memo' && (
-            <textarea
-              value={editMemo}
-              onChange={e => setEditMemo(e.target.value)}
-              rows={8}
-              placeholder="메모를 입력하세요"
-              className={styles.textarea}
+            <MemoTimeline
+              tableName="hakjeom_consultations"
+              recordId={String(item.id)}
+              legacyMemo={item.memo}
+              onCountChange={setMemoCount}
             />
           )}
         </div>
@@ -1261,7 +1266,7 @@ function AgencyAddModal({ editTarget, onClose, onSaved, uniqueManagers }: Agency
 
 // ─── 탭: 학점은행제 ──────────────────────────────────────────────────────────
 
-function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) => void }) {
+function HakjeomTab({ setStatsNode, isActive }: { setStatsNode: (node: React.ReactNode) => void; isActive: boolean }) {
   const [items, setItems] = useState<HakjeomConsultation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -1279,6 +1284,7 @@ function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) =>
 
   // UI 상태
   const [selectedItem, setSelectedItem] = useState<HakjeomConsultation | null>(null);
+  const [openTab, setOpenTab] = useState<'basic' | 'info' | 'memo'>('basic');
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [deleting, setDeleting] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -1424,6 +1430,7 @@ function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) =>
 
   // 담당자별 실적 (헤더 칩)
   useEffect(() => {
+    if (!isActive) { setStatsNode(null); return; }
     const mgrs = Array.from(new Set(items.map(c => c.manager).filter(Boolean))) as string[];
     if (mgrs.length === 0) { setStatsNode(null); return; }
     const rate = (list: HakjeomConsultation[]) => {
@@ -1460,47 +1467,46 @@ function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) =>
       </div>
     );
     return () => setStatsNode(null);
-  }, [items, setStatsNode]);
+  }, [items, setStatsNode, isActive]);
 
   return (
     <div>
-      {/* 필터 영역 */}
-      <div className={styles.filterRow}>
-        <input type="text" value={searchText} onChange={e => { setSearchText(e.target.value); setCurrentPage(1); }} placeholder="이름, 연락처, 취득사유, 메모 검색..." className={styles.input} style={{ width: 300 }} />
-        <input type="date" value={startDate} onChange={e => { setStartDate(e.target.value); setCurrentPage(1); }} className={styles.input} style={{ width: 140 }} />
-        <span className={styles.dateSeparator}>~</span>
-        <input type="date" value={endDate} onChange={e => { setEndDate(e.target.value); setCurrentPage(1); }} className={styles.input} style={{ width: 140 }} />
-        {isFiltered && (
-          <button onClick={resetFilters} className={styles.btnSecondary}>필터 초기화</button>
-        )}
-        {selectedIds.length > 0 && (
-          <>
-            <span className={styles.bulkActionCount}>{selectedIds.length}건 선택됨</span>
-            <button onClick={handleBulkDelete} disabled={deleting} className={styles.btnDanger}>
-              {deleting ? '삭제 중...' : '선택 삭제'}
-            </button>
-            <button onClick={() => setSelectedIds([])} className={styles.btnSecondary}>선택 해제</button>
-          </>
-        )}
-      </div>
-
-      {/* 액션 바 */}
-      <div className={styles.actionBar}>
-        <span className={styles.actionBarCount}>
-          총 <strong className={styles.actionBarCountBold}>{filtered.length}</strong>건
-        </span>
-        <div className={styles.actionBarSpacer} />
-        <button onClick={() => setShowAddModal(true)} className={styles.btnPrimary}>+ 추가</button>
-      </div>
+      {loading ? <FilterBarSkeleton /> : (
+        <>
+          {/* 필터 영역 */}
+          <div className={styles.filterRow}>
+            <input type="text" value={searchText} onChange={e => { setSearchText(e.target.value); setCurrentPage(1); }} placeholder="이름, 연락처, 취득사유, 메모 검색..." className={styles.input} style={{ width: 300 }} />
+            <input type="date" value={startDate} onChange={e => { setStartDate(e.target.value); setCurrentPage(1); }} className={styles.input} style={{ width: 140 }} />
+            <span className={styles.dateSeparator}>~</span>
+            <input type="date" value={endDate} onChange={e => { setEndDate(e.target.value); setCurrentPage(1); }} className={styles.input} style={{ width: 140 }} />
+            {isFiltered && (
+              <button onClick={resetFilters} className={styles.btnSecondary}>필터 초기화</button>
+            )}
+            {selectedIds.length > 0 && (
+              <>
+                <span className={styles.bulkActionCount}>{selectedIds.length}건 선택됨</span>
+                <button onClick={handleBulkDelete} disabled={deleting} className={styles.btnDanger}>
+                  {deleting ? '삭제 중...' : '선택 삭제'}
+                </button>
+                <button onClick={() => setSelectedIds([])} className={styles.btnSecondary}>선택 해제</button>
+              </>
+            )}
+          </div>
+          {/* 액션 바 */}
+          <div className={styles.actionBar}>
+            <span className={styles.actionBarCount}>
+              총 <strong className={styles.actionBarCountBold}>{filtered.length}</strong>건
+            </span>
+            <div className={styles.actionBarSpacer} />
+            <button onClick={() => setShowAddModal(true)} className={styles.btnPrimary}>+ 추가</button>
+          </div>
+        </>
+      )}
 
       {/* 테이블 */}
       <div className={styles.tableCard}>
-        {loading ? (
-          <div className={styles.tableEmptyMsg}>불러오는 중...</div>
-        ) : error ? (
+        {error ? (
           <div className={styles.tableErrorMsg}>{error}</div>
-        ) : filtered.length === 0 ? (
-          <div className={styles.tableEmptyMsg}>검색 결과가 없습니다.</div>
         ) : (
           <div className={styles.tableOverflow}>
             <table className={styles.table}>
@@ -1556,7 +1562,11 @@ function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) =>
                 </tr>
               </thead>
               <tbody>
-                {paginated.map((item, index) => (
+                {loading ? (
+                  <TableSkeleton cols={15} rows={8} />
+                ) : filtered.length === 0 ? (
+                  <tr><td colSpan={15} className={styles.tableEmptyMsg}>검색 결과가 없습니다.</td></tr>
+                ) : paginated.map((item, index) => (
                   <tr
                     key={item.id}
                     onClick={() => setSelectedItem(item)}
@@ -1598,7 +1608,7 @@ function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) =>
                       />
                     </td>
                     <td className={styles.tdSecondary}>{formatCost(item.subject_cost)}</td>
-                    <td className={styles.tdMemo} title={item.memo ?? ''}>{item.memo || '-'}</td>
+                    <td className={styles.tdMemo} title={item.memo ?? ''} onClick={e => { e.stopPropagation(); setOpenTab('memo'); setSelectedItem(item); }} style={{ cursor: 'pointer' }}>{item.memo || '-'}</td>
                     <td className={styles.tdDateSmall}>
                       {formatDate(item.created_at)}
                     </td>
@@ -1639,7 +1649,7 @@ function HakjeomTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) =>
 
       {/* 사이드 패널 */}
       {selectedItem && (
-        <HakjeomDetailPanel item={selectedItem} onClose={() => setSelectedItem(null)} onUpdate={handleUpdate} />
+        <HakjeomDetailPanel item={selectedItem} onClose={() => { setSelectedItem(null); setOpenTab('basic'); }} onUpdate={handleUpdate} initialTab={openTab} />
       )}
       {toastVisible && <div className={styles.toast}>저장이 완료되었습니다</div>}
       {deleteToastVisible && <div className={styles.toast}>삭제되었습니다</div>}
@@ -1746,7 +1756,7 @@ function parseAgencyCsv(text: string): Record<string, string>[] {
   }).filter(Boolean) as Record<string, string>[];
 }
 
-function AgencyTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) => void }) {
+function AgencyTab({ setStatsNode, isActive }: { setStatsNode: (node: React.ReactNode) => void; isActive: boolean }) {
   const [agencies, setAgencies] = useState<Agency[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -1883,6 +1893,7 @@ function AgencyTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) => 
 
   // 담당자별 실적 (헤더 칩)
   useEffect(() => {
+    if (!isActive) { setStatsNode(null); return; }
     const mgrs = Array.from(new Set(agencies.map(a => a.manager).filter(Boolean))) as string[];
     if (mgrs.length === 0) { setStatsNode(null); return; }
     const mStats = mgrs.map(name => {
@@ -1900,48 +1911,48 @@ function AgencyTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) => 
       </div>
     );
     return () => setStatsNode(null);
-  }, [agencies, setStatsNode]);
+  }, [agencies, setStatsNode, isActive]);
 
   return (
     <div>
-      <div className={styles.filterRow}>
-        <input type="text" value={searchText} onChange={e => setSearchText(e.target.value)} placeholder="기관명, 지역, 분류, 담당자 검색..." className={styles.input} style={{ width: 300 }} />
-        {isFiltered && <button onClick={() => { setSearchText(''); setStatusFilter('all'); setManagerFilter('all'); setCategoryFilter('all'); }} className={styles.btnSecondary}>필터 초기화</button>}
-      </div>
+      {loading ? <FilterBarSkeleton /> : (
+        <>
+          <div className={styles.filterRow}>
+            <input type="text" value={searchText} onChange={e => setSearchText(e.target.value)} placeholder="기관명, 지역, 분류, 담당자 검색..." className={styles.input} style={{ width: 300 }} />
+            {isFiltered && <button onClick={() => { setSearchText(''); setStatusFilter('all'); setManagerFilter('all'); setCategoryFilter('all'); }} className={styles.btnSecondary}>필터 초기화</button>}
+          </div>
 
-      {/* 일괄 선택 액션 바 */}
-      {selectedIds.size > 0 && (
-        <div className={styles.bulkActionBar}>
-          <span className={styles.bulkActionCount}>{selectedIds.size}건 선택됨</span>
-          <button onClick={handleDeleteSelected} disabled={deleting} className={styles.btnDanger}>
-            {deleting ? '삭제 중...' : '선택 삭제'}
-          </button>
-          {selectedIds.size === 1 && (
-            <button
-              onClick={() => { const target = agencies.find(a => a.id === Array.from(selectedIds)[0]); if (target) { setEditTarget(target); setShowModal(true); } }}
-              disabled={deleting}
-              className={styles.btnSecondary}
-            >
-              수정
-            </button>
+          {/* 일괄 선택 액션 바 */}
+          {selectedIds.size > 0 && (
+            <div className={styles.bulkActionBar}>
+              <span className={styles.bulkActionCount}>{selectedIds.size}건 선택됨</span>
+              <button onClick={handleDeleteSelected} disabled={deleting} className={styles.btnDanger}>
+                {deleting ? '삭제 중...' : '선택 삭제'}
+              </button>
+              {selectedIds.size === 1 && (
+                <button
+                  onClick={() => { const target = agencies.find(a => a.id === Array.from(selectedIds)[0]); if (target) { setEditTarget(target); setShowModal(true); } }}
+                  disabled={deleting}
+                  className={styles.btnSecondary}
+                >
+                  수정
+                </button>
+              )}
+              <button onClick={() => setSelectedIds(new Set())} className={styles.btnSecondary}>선택 해제</button>
+            </div>
           )}
-          <button onClick={() => setSelectedIds(new Set())} className={styles.btnSecondary}>선택 해제</button>
-        </div>
+
+          <div className={styles.actionBar}>
+            <span className={styles.actionBarCount}>총 <strong className={styles.actionBarCountBold}>{filtered.length}</strong>건</span>
+            <div className={styles.actionBarSpacer} />
+            <button onClick={() => { setEditTarget(null); setShowModal(true); }} className={styles.btnPrimary}>+ 기관 추가</button>
+          </div>
+        </>
       )}
 
-      <div className={styles.actionBar}>
-        <span className={styles.actionBarCount}>총 <strong className={styles.actionBarCountBold}>{filtered.length}</strong>건</span>
-        <div className={styles.actionBarSpacer} />
-        <button onClick={() => { setEditTarget(null); setShowModal(true); }} className={styles.btnPrimary}>+ 기관 추가</button>
-      </div>
-
       <div className={styles.tableCard}>
-        {loading ? (
-          <div className={styles.tableEmptyMsg}>불러오는 중...</div>
-        ) : error ? (
+        {error ? (
           <div className={styles.tableErrorMsg}>{error}</div>
-        ) : filtered.length === 0 ? (
-          <div className={styles.tableEmptyMsg}>등록된 기관이 없습니다.</div>
         ) : (
           <div className={styles.tableOverflow}>
             <table className={styles.tableMinWidth900}>
@@ -1979,12 +1990,16 @@ function AgencyTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) => 
                 </tr>
               </thead>
               <tbody>
-                {paginated.map((a, index) => (
+                {loading ? (
+                  <TableSkeleton cols={12} rows={8} />
+                ) : filtered.length === 0 ? (
+                  <tr><td colSpan={12} className={styles.tableEmptyMsg}>등록된 기관이 없습니다.</td></tr>
+                ) : paginated.map((a, index) => (
                   <tr key={a.id} style={{ background: selectedIds.has(a.id) ? '#f0f7ff' : 'transparent' }}>
                     <td className={styles.tdCenter}>
                       <input type="checkbox" checked={selectedIds.has(a.id)} onChange={() => toggleSelect(a.id)} className={styles.checkbox} />
                     </td>
-                    <td className={styles.tdNum}>{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                    <td className={styles.tdNum}>{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}</td>
                     <td className={styles.tdSecondary}><Highlight text={a.category} query={searchText} /></td>
                     <td className={styles.tdSecondary}><Highlight text={a.address} query={searchText} /></td>
                     <td className={styles.tdBold}><Highlight text={a.institution_name} query={searchText} /></td>
@@ -2923,7 +2938,10 @@ function StatsTab() {
       </div>
 
       {loading ? (
-        <div className={styles.statsLoading}>불러오는 중...</div>
+        <>
+          <StatsCardsSkeleton count={5} />
+          <ChartsGridSkeleton />
+        </>
       ) : (
         <>
           {/* ════ 개요 ════ */}
@@ -3249,7 +3267,13 @@ const TAB_CONFIG: { key: TabKey; label: string }[] = [
 
 export default function HakjeomPage() {
   const [activeTab, setActiveTab] = useState<TabKey>('hakjeom');
+  const [mountedTabs, setMountedTabs] = useState<Set<TabKey>>(new Set(['hakjeom']));
   const [statsNode, setStatsNode] = useState<React.ReactNode>(null);
+
+  const handleTabChange = (key: TabKey) => {
+    setActiveTab(key);
+    setMountedTabs(prev => new Set([...prev, key]));
+  };
 
   return (
     <div>
@@ -3269,7 +3293,7 @@ export default function HakjeomPage() {
         {TAB_CONFIG.map(({ key, label }) => (
           <button
             key={key}
-            onClick={() => setActiveTab(key)}
+            onClick={() => handleTabChange(key)}
             className={activeTab === key ? styles.tabBtnActive : styles.tabBtn}
           >
             {label}
@@ -3277,11 +3301,19 @@ export default function HakjeomPage() {
         ))}
       </div>
 
-      {/* 탭 컨텐츠 */}
-      {activeTab === 'hakjeom' && <HakjeomTab setStatsNode={setStatsNode} />}
-      {activeTab === 'agency' && <AgencyTab setStatsNode={setStatsNode} />}
-      {activeTab === 'bulk' && <BulkTab onMoveSuccess={() => setActiveTab('hakjeom')} />}
-      {activeTab === 'stats' && <StatsTab />}
+      {/* 탭 컨텐츠 - 첫 방문 시 마운트, 이후 CSS로 숨김 */}
+      <div style={{ display: activeTab === 'hakjeom' ? 'block' : 'none' }}>
+        {mountedTabs.has('hakjeom') && <HakjeomTab setStatsNode={setStatsNode} isActive={activeTab === 'hakjeom'} />}
+      </div>
+      <div style={{ display: activeTab === 'agency' ? 'block' : 'none' }}>
+        {mountedTabs.has('agency') && <AgencyTab setStatsNode={setStatsNode} isActive={activeTab === 'agency'} />}
+      </div>
+      <div style={{ display: activeTab === 'bulk' ? 'block' : 'none' }}>
+        {mountedTabs.has('bulk') && <BulkTab onMoveSuccess={() => handleTabChange('hakjeom')} />}
+      </div>
+      <div style={{ display: activeTab === 'stats' ? 'block' : 'none' }}>
+        {mountedTabs.has('stats') && <StatsTab />}
+      </div>
     </div>
   );
 }

@@ -1,0 +1,149 @@
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: calc(400px + 100%) 0; }
+}
+
+.base {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e8edf4 50%, #f1f5f9 75%);
+  background-size: 400px 100%;
+  animation: shimmer 1.4s infinite linear;
+  border-radius: 6px;
+  display: block;
+}
+
+/* ── 테이블 스켈레톤 ── */
+.tableRow td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.cell {
+  display: block;
+  height: 14px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #f1f5f9 25%, #e8edf4 50%, #f1f5f9 75%);
+  background-size: 400px 100%;
+  animation: shimmer 1.4s infinite linear;
+}
+
+.cellShort { width: 40px; }
+.cellMed   { width: 80px; }
+.cellLong  { width: 120px; }
+.cellFull  { width: 100%; max-width: 160px; }
+
+/* ── 필터바 스켈레톤 ── */
+.filterBar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  border: 1px solid #f1f5f9;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.filterCount {
+  display: block;
+  height: 14px;
+  width: 60px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #f1f5f9 25%, #e8edf4 50%, #f1f5f9 75%);
+  background-size: 400px 100%;
+  animation: shimmer 1.4s infinite linear;
+  flex-shrink: 0;
+}
+
+.filterSearch {
+  display: block;
+  height: 34px;
+  width: 240px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #f1f5f9 25%, #e8edf4 50%, #f1f5f9 75%);
+  background-size: 400px 100%;
+  animation: shimmer 1.4s infinite linear;
+}
+
+/* ── 통계 카드 스켈레톤 ── */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.statsCard {
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #f1f5f9;
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.statsCardLabel {
+  height: 11px;
+  width: 60%;
+  background: linear-gradient(90deg, #f1f5f9 25%, #e8edf4 50%, #f1f5f9 75%);
+  background-size: 400px 100%;
+  animation: shimmer 1.4s infinite linear;
+  border-radius: 4px;
+}
+
+.statsCardValue {
+  height: 24px;
+  width: 50%;
+  background: linear-gradient(90deg, #f1f5f9 25%, #e8edf4 50%, #f1f5f9 75%);
+  background-size: 400px 100%;
+  animation: shimmer 1.4s infinite linear;
+  border-radius: 6px;
+}
+
+.statsCardSub {
+  height: 10px;
+  width: 40%;
+  background: linear-gradient(90deg, #f1f5f9 25%, #e8edf4 50%, #f1f5f9 75%);
+  background-size: 400px 100%;
+  animation: shimmer 1.4s infinite linear;
+  border-radius: 4px;
+}
+
+/* ── 차트 스켈레톤 ── */
+.chartPanel {
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #f1f5f9;
+  padding: 20px;
+}
+
+.chartTitle {
+  height: 14px;
+  width: 100px;
+  background: linear-gradient(90deg, #f1f5f9 25%, #e8edf4 50%, #f1f5f9 75%);
+  background-size: 400px 100%;
+  animation: shimmer 1.4s infinite linear;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+.chartBars {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 140px;
+}
+
+.chartBar {
+  flex: 1;
+  border-radius: 6px 6px 0 0;
+  background: linear-gradient(90deg, #f1f5f9 25%, #e8edf4 50%, #f1f5f9 75%);
+  background-size: 400px 100%;
+  animation: shimmer 1.4s infinite linear;
+}
+
+.chartsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}

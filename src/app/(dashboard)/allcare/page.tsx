@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import styles from './page.module.css'
+import { TableSkeleton, FilterBarSkeleton } from '@/components/ui/Skeleton'
 import {
   ResponsiveContainer, ComposedChart, AreaChart, BarChart, PieChart,
   Bar, Line, Area, Pie, Cell,
@@ -63,9 +64,20 @@ type Tab = 'users' | 'payments' | 'custom' | 'stats'
 
 interface ChartData {
   monthly: { month: string; users: number; subs: number }[]
-  statusDist: { name: string; value: number; fill: string }[]
-  revenueDist: { name: string; value: number }[]
+  statusDist: { name: string; value: number; fill: string; pct: number }[]
+  totalSubs: number
+  revenueDist: { name: string; value: number; pct: number }[]
   dailyUsers: { date: string; count: number }[]
+  avgDaily: number
+  peakDay: string
+  peakCount: number
+  thisMonthUsers: number
+  lastMonthUsers: number
+  userGrowthPct: number | null
+  thisMonthSubs: number
+  subGrowthPct: number | null
+  cancelScheduled: number
+  totalRev: number
 }
 type SubStatus = 'active' | 'cancel_scheduled' | 'cancelled'
 
@@ -158,45 +170,118 @@ function RevTip({ active, payload, label }: { active?: boolean; payload?: { name
 
 // ─── 통계 탭 ──────────────────────────────────────────────────────────────────
 
+function GrowthBadge({ pct }: { pct: number | null }) {
+  if (pct === null) return null
+  const up = pct >= 0
+  return (
+    <span className={up ? styles.badgeUp : styles.badgeDown}>
+      {up ? '▲' : '▼'} {Math.abs(pct)}%
+    </span>
+  )
+}
+
 function AllcareStatsTab({ stats, chartData }: { stats: Stats | null; chartData: ChartData | null }) {
   const REV_COLORS = ['#3b82f6', '#8b5cf6', '#f59e0b']
+  const totalRev = chartData?.totalRev ?? stats?.totalRevenue ?? 0
 
   return (
     <div className={styles.statsContainer}>
-      {/* 요약 카드 */}
+
+      {/* ── 요약 카드 4개 ── */}
       <div className={styles.statsGrid4}>
+        {/* 전체 회원 */}
         <div className={styles.statsCard}>
           <p className={styles.statsCardLabel}>전체 회원</p>
-          <p className={styles.statsCardValue}>{stats?.totalUsers?.toLocaleString() ?? '-'}<span className={styles.statsCardUnit}>명</span></p>
+          <p className={styles.statsCardValue}>
+            {stats?.totalUsers?.toLocaleString() ?? '-'}
+            <span className={styles.statsCardUnit}>명</span>
+          </p>
+          <div className={styles.statsCardSub}>
+            <span>이번 달 신규 <b>{chartData?.thisMonthUsers ?? '-'}명</b></span>
+            <GrowthBadge pct={chartData?.userGrowthPct ?? null} />
+          </div>
+          <p className={styles.statsCardHint}>지난 달 {chartData?.lastMonthUsers ?? '-'}명 가입</p>
         </div>
+
+        {/* 활성 구독 */}
         <div className={styles.statsCard}>
           <p className={styles.statsCardLabel}>활성 구독</p>
-          <p className={styles.statsCardValue}>{stats?.activeSubscriptions?.toLocaleString() ?? '-'}<span className={styles.statsCardUnit}>명</span></p>
+          <p className={styles.statsCardValue}>
+            {stats?.activeSubscriptions?.toLocaleString() ?? '-'}
+            <span className={styles.statsCardUnit}>명</span>
+          </p>
+          <div className={styles.statsCardSub}>
+            <span>구독률 <b>{stats && stats.totalUsers ? Math.round(stats.activeSubscriptions / stats.totalUsers * 100) : '-'}%</b></span>
+          </div>
+          <p className={styles.statsCardHint}>취소예정 {chartData?.cancelScheduled ?? '-'}명 포함</p>
         </div>
+
+        {/* 취소된 구독 */}
         <div className={styles.statsCard}>
           <p className={styles.statsCardLabel}>취소된 구독</p>
-          <p className={styles.statsCardValue}>{stats?.cancelledSubscriptions?.toLocaleString() ?? '-'}<span className={styles.statsCardUnit}>명</span></p>
+          <p className={styles.statsCardValue}>
+            {stats?.cancelledSubscriptions?.toLocaleString() ?? '-'}
+            <span className={styles.statsCardUnit}>명</span>
+          </p>
+          <div className={styles.statsCardSub}>
+            <span>이번 달 신규 구독 <b>{chartData?.thisMonthSubs ?? '-'}건</b></span>
+            <GrowthBadge pct={chartData?.subGrowthPct ?? null} />
+          </div>
+          <p className={styles.statsCardHint}>전체 구독 {chartData?.totalSubs ?? '-'}건 중</p>
         </div>
+
+        {/* 총 매출 */}
         <div className={styles.statsCard}>
           <p className={styles.statsCardLabel}>총 매출</p>
-          <p className={styles.statsCardValue}>{stats ? (stats.totalRevenue / 10000).toFixed(0) : '-'}<span className={styles.statsCardUnit}>만원</span></p>
+          <p className={styles.statsCardValue}>
+            {totalRev ? (totalRev / 10000).toFixed(0) : '-'}
+            <span className={styles.statsCardUnit}>만원</span>
+          </p>
+          <div className={styles.statsRevenueBar}>
+            {chartData?.revenueDist.map((r, i) => (
+              r.value > 0 && (
+                <div
+                  key={i}
+                  className={styles.statsRevenueBarSeg}
+                  style={{ width: `${r.pct}%`, background: REV_COLORS[i] }}
+                  title={`${r.name} ${r.pct}%`}
+                />
+              )
+            ))}
+          </div>
+          <div className={styles.statsRevenueLegendRow}>
+            {chartData?.revenueDist.map((r, i) => (
+              <span key={i} className={styles.statsRevenueLegendItem}>
+                <span className={styles.statsRevenueDot} style={{ background: REV_COLORS[i] }} />
+                {r.name} {r.pct}%
+              </span>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* 차트 2열 */}
+      {/* ── 차트 행 1 ── */}
       <div className={styles.statsRow2}>
         {/* 월별 신규 회원 & 구독 */}
         <div className={styles.statsPanel}>
-          <p className={styles.statsPanelTitle}>월별 신규 회원 & 구독</p>
+          <div className={styles.statsPanelHeader}>
+            <p className={styles.statsPanelTitle}>월별 신규 회원 & 구독</p>
+            <div className={styles.statsChartLegendRow}>
+              <span className={styles.statsChartLegendDot} style={{ background: '#93c5fd' }} />
+              <span className={styles.statsChartLegendText}>회원</span>
+              <span className={styles.statsChartLegendDot} style={{ background: '#3b82f6' }} />
+              <span className={styles.statsChartLegendText}>구독</span>
+            </div>
+          </div>
           <ResponsiveContainer width="100%" height={220}>
             <ComposedChart data={chartData?.monthly ?? []} margin={{ top: 4, right: 8, bottom: 0, left: -20 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
               <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#94a3b8' }} />
               <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} allowDecimals={false} />
               <Tooltip content={<AlcareTip />} />
-              <Bar dataKey="users" name="신규회원" fill="#93c5fd" radius={[4, 4, 0, 0]} barSize={20} />
-              <Bar dataKey="subs" name="신규구독" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={20} />
-              <Line type="monotone" dataKey="users" name="신규회원" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3, fill: '#3b82f6' }} />
+              <Bar dataKey="users" name="신규회원" fill="#93c5fd" radius={[4, 4, 0, 0]} barSize={18} />
+              <Bar dataKey="subs" name="신규구독" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={18} />
+              <Line type="monotone" dataKey="users" stroke="#2563eb" strokeWidth={2} dot={{ r: 3, fill: '#2563eb' }} name="신규회원" />
             </ComposedChart>
           </ResponsiveContainer>
         </div>
@@ -205,20 +290,31 @@ function AllcareStatsTab({ stats, chartData }: { stats: Stats | null; chartData:
         <div className={styles.statsPanel}>
           <p className={styles.statsPanelTitle}>구독 상태 분포</p>
           <div className={styles.statsPieWrap}>
-            <ResponsiveContainer width="100%" height={180}>
-              <PieChart>
-                <Pie data={chartData?.statusDist ?? []} cx="50%" cy="50%" innerRadius={50} outerRadius={80} dataKey="value" paddingAngle={3}>
-                  {chartData?.statusDist.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
-                </Pie>
-                <Tooltip formatter={(v: number) => [`${v}명`, '']} />
-              </PieChart>
-            </ResponsiveContainer>
+            <div className={styles.statsPieRelative}>
+              <ResponsiveContainer width={200} height={200}>
+                <PieChart>
+                  <Pie data={chartData?.statusDist ?? []} cx="50%" cy="50%" innerRadius={58} outerRadius={88} dataKey="value" paddingAngle={3}>
+                    {chartData?.statusDist.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
+                  </Pie>
+                  <Tooltip formatter={(v) => [`${v}명`, '']} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className={styles.statsPieCenter}>
+                <p className={styles.statsPieCenterVal}>{chartData?.totalSubs ?? '-'}</p>
+                <p className={styles.statsPieCenterLabel}>전체</p>
+              </div>
+            </div>
             <div className={styles.statsLegend}>
               {chartData?.statusDist.map((d, i) => (
                 <div key={i} className={styles.statsLegendItem}>
                   <span className={styles.statsLegendDot} style={{ background: d.fill }} />
-                  <span className={styles.statsLegendName}>{d.name}</span>
-                  <span className={styles.statsLegendVal}>{d.value}명</span>
+                  <div>
+                    <div className={styles.statsLegendName}>{d.name}</div>
+                    <div className={styles.statsLegendDetail}>
+                      <span className={styles.statsLegendVal}>{d.value}명</span>
+                      <span className={styles.statsLegendPct}>{d.pct}%</span>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -226,11 +322,19 @@ function AllcareStatsTab({ stats, chartData }: { stats: Stats | null; chartData:
         </div>
       </div>
 
+      {/* ── 차트 행 2 ── */}
       <div className={styles.statsRow2}>
-        {/* 일별 신규 회원 (30일) */}
+        {/* 일별 신규 회원 30일 */}
         <div className={styles.statsPanel}>
-          <p className={styles.statsPanelTitle}>일별 신규 회원 (최근 30일)</p>
-          <ResponsiveContainer width="100%" height={180}>
+          <div className={styles.statsPanelHeader}>
+            <p className={styles.statsPanelTitle}>일별 신규 회원 (최근 30일)</p>
+            <div className={styles.statsPanelMeta}>
+              <span className={styles.statsPanelMetaItem}>일평균 <b>{chartData?.avgDaily ?? '-'}명</b></span>
+              <span className={styles.statsPanelMetaDot} />
+              <span className={styles.statsPanelMetaItem}>최다 <b>{chartData?.peakDay} ({chartData?.peakCount ?? '-'}명)</b></span>
+            </div>
+          </div>
+          <ResponsiveContainer width="100%" height={190}>
             <AreaChart data={chartData?.dailyUsers ?? []} margin={{ top: 4, right: 8, bottom: 0, left: -20 }}>
               <defs>
                 <linearGradient id="allcareUserGrad" x1="0" y1="0" x2="0" y2="1">
@@ -241,26 +345,40 @@ function AllcareStatsTab({ stats, chartData }: { stats: Stats | null; chartData:
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
               <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#94a3b8' }} interval={4} />
               <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} allowDecimals={false} />
-              <Tooltip formatter={(v: number) => [`${v}명`, '신규 회원']} />
-              <Area type="monotone" dataKey="count" stroke="#3b82f6" strokeWidth={2} fill="url(#allcareUserGrad)" />
+              <Tooltip formatter={(v) => [`${v}명`, '신규 회원']} />
+              <Area type="monotone" dataKey="count" stroke="#3b82f6" strokeWidth={2} fill="url(#allcareUserGrad)" dot={false} activeDot={{ r: 4 }} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
 
-        {/* 매출 분포 */}
+        {/* 매출 구성 */}
         <div className={styles.statsPanel}>
-          <p className={styles.statsPanelTitle}>매출 구성</p>
-          <ResponsiveContainer width="100%" height={180}>
-            <BarChart data={chartData?.revenueDist ?? []} margin={{ top: 4, right: 8, bottom: 0, left: -10 }}>
+          <div className={styles.statsPanelHeader}>
+            <p className={styles.statsPanelTitle}>매출 구성</p>
+            <span className={styles.statsPanelTotal}>총 {(totalRev / 10000).toFixed(0)}만원</span>
+          </div>
+          <ResponsiveContainer width="100%" height={190}>
+            <BarChart data={chartData?.revenueDist ?? []} margin={{ top: 16, right: 16, bottom: 0, left: -10 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
               <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#94a3b8' }} />
               <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} tickFormatter={v => `${(v / 10000).toFixed(0)}만`} />
               <Tooltip content={<RevTip />} />
-              <Bar dataKey="value" name="매출" radius={[6, 6, 0, 0]} barSize={40}>
-                {chartData?.revenueDist.map((_, i) => <Cell key={i} fill={REV_COLORS[i % REV_COLORS.length]} />)}
+              <Bar dataKey="value" name="매출" radius={[6, 6, 0, 0]} barSize={44} label={{ position: 'top', fontSize: 11, fill: '#94a3b8', formatter: (v: number) => v > 0 ? `${Math.round(v / 10000)}만` : '' }}>
+                {chartData?.revenueDist.map((r, i) => (
+                  <Cell key={i} fill={REV_COLORS[i % REV_COLORS.length]} opacity={r.value > 0 ? 1 : 0.25} />
+                ))}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
+          <div className={styles.statsRevPctRow}>
+            {chartData?.revenueDist.map((r, i) => (
+              <div key={i} className={styles.statsRevPctItem}>
+                <span className={styles.statsRevPctDot} style={{ background: REV_COLORS[i] }} />
+                <span className={styles.statsRevPctLabel}>{r.name}</span>
+                <span className={styles.statsRevPctVal}>{r.pct}%</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -280,19 +398,19 @@ export default function AllcarePage() {
   const [userPage, setUserPage] = useState(1)
   const [userSearch, setUserSearch] = useState('')
 
-  const [usersLoading, setUsersLoading] = useState(false)
+  const [usersLoading, setUsersLoading] = useState(true)
 
   // 결제
   const [payments, setPayments] = useState<Payment[]>([])
   const [paymentTotal, setPaymentTotal] = useState(0)
   const [paymentPage, setPaymentPage] = useState(1)
-  const [paymentsLoading, setPaymentsLoading] = useState(false)
+  const [paymentsLoading, setPaymentsLoading] = useState(true)
 
   // 단과반
   const [customs, setCustoms] = useState<CustomPayment[]>([])
   const [customTotal, setCustomTotal] = useState(0)
   const [customPage, setCustomPage] = useState(1)
-  const [customsLoading, setCustomsLoading] = useState(false)
+  const [customsLoading, setCustomsLoading] = useState(true)
 
   // 상태변경 모달
   const [showModal, setShowModal] = useState(false)
@@ -482,38 +600,40 @@ export default function AllcarePage() {
     <div className={styles.container}>
 
       {/* 통계 */}
-      <div className={styles.statsGrid}>
-        <div className={styles.statCard}>
-          <p className={styles.statLabel}>전체 회원</p>
-          <p className={styles.statValue}>{stats?.totalUsers?.toLocaleString() ?? '-'}명</p>
-        </div>
-        <div className={styles.statCard}>
-          <p className={styles.statLabel}>활성 구독</p>
-          <p className={styles.statValue}>{stats?.activeSubscriptions?.toLocaleString() ?? '-'}명</p>
-        </div>
-        <div className={styles.statCard}>
-          <p className={styles.statLabel}>취소된 구독</p>
-          <p className={styles.statValue}>{stats?.cancelledSubscriptions?.toLocaleString() ?? '-'}명</p>
-        </div>
-        <div className={styles.statCard}>
-          <p className={styles.statLabel}>총 매출</p>
-          <p className={styles.statValue}>{stats ? fmt(stats.totalRevenue) : '-'}</p>
-          <div className={styles.revenueBreakdown}>
-            <div className={styles.revenueRow}>
-              <span className={styles.revenueLabel}>구독</span>
-              <span className={styles.revenueAmt}>{stats ? fmt(stats.subscriptionRevenue) : '-'}</span>
-            </div>
-            <div className={styles.revenueRow}>
-              <span className={styles.revenueLabel}>패키지</span>
-              <span className={styles.revenueAmt}>{stats ? fmt(stats.packageRevenue) : '-'}</span>
-            </div>
-            <div className={styles.revenueRow}>
-              <span className={styles.revenueLabel}>단과</span>
-              <span className={styles.revenueAmt}>{stats ? fmt(stats.customRevenue) : '-'}</span>
+      {activeTab !== 'stats' && (
+        <div className={styles.statsGrid}>
+          <div className={styles.statCard}>
+            <p className={styles.statLabel}>전체 회원</p>
+            <p className={styles.statValue}>{stats?.totalUsers?.toLocaleString() ?? '-'}명</p>
+          </div>
+          <div className={styles.statCard}>
+            <p className={styles.statLabel}>활성 구독</p>
+            <p className={styles.statValue}>{stats?.activeSubscriptions?.toLocaleString() ?? '-'}명</p>
+          </div>
+          <div className={styles.statCard}>
+            <p className={styles.statLabel}>취소된 구독</p>
+            <p className={styles.statValue}>{stats?.cancelledSubscriptions?.toLocaleString() ?? '-'}명</p>
+          </div>
+          <div className={styles.statCard}>
+            <p className={styles.statLabel}>총 매출</p>
+            <p className={styles.statValue}>{stats ? fmt(stats.totalRevenue) : '-'}</p>
+            <div className={styles.revenueBreakdown}>
+              <div className={styles.revenueRow}>
+                <span className={styles.revenueLabel}>구독</span>
+                <span className={styles.revenueAmt}>{stats ? fmt(stats.subscriptionRevenue) : '-'}</span>
+              </div>
+              <div className={styles.revenueRow}>
+                <span className={styles.revenueLabel}>패키지</span>
+                <span className={styles.revenueAmt}>{stats ? fmt(stats.packageRevenue) : '-'}</span>
+              </div>
+              <div className={styles.revenueRow}>
+                <span className={styles.revenueLabel}>단과</span>
+                <span className={styles.revenueAmt}>{stats ? fmt(stats.customRevenue) : '-'}</span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* 탭 */}
       <div className={styles.tabs}>
@@ -531,29 +651,28 @@ export default function AllcarePage() {
       {/* 회원 탭 */}
       {activeTab === 'users' && (
         <>
-          <div className={styles.filterRow}>
-            <div className={styles.searchBox}>
-              <svg className={styles.searchIcon} viewBox="0 0 20 20" fill="none">
-                <circle cx="9" cy="9" r="6" stroke="currentColor" strokeWidth="1.5"/>
-                <path d="M14 14l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-              </svg>
-              <input
-                className={styles.searchInput}
-                placeholder="이름, 이메일, 전화번호 검색"
-                value={userSearch}
-                onChange={e => { setUserSearch(e.target.value); setUserPage(1) }}
-              />
+          {usersLoading ? (
+            <FilterBarSkeleton />
+          ) : (
+            <div className={styles.filterRow}>
+              <span className={styles.actionBarCount}>총 <strong>{userTotal.toLocaleString()}</strong>건</span>
+              <div className={styles.searchBox}>
+                <svg className={styles.searchIcon} viewBox="0 0 20 20" fill="none">
+                  <circle cx="9" cy="9" r="6" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M14 14l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+                <input
+                  className={styles.searchInput}
+                  placeholder="이름, 이메일, 전화번호 검색"
+                  value={userSearch}
+                  onChange={e => { setUserSearch(e.target.value); setUserPage(1) }}
+                />
+              </div>
             </div>
-          </div>
+          )}
           <div className={styles.tableWrap}>
-            {usersLoading ? (
-              <p className={styles.loading}>불러오는 중...</p>
-            ) : users.length === 0 ? (
-              <p className={styles.empty}>회원이 없습니다.</p>
-            ) : (
-              <>
-                <table className={styles.table}>
-                  <thead>
+            <table className={styles.table}>
+              <thead>
                     <tr>
                       <th>이름</th>
                       <th>이메일</th>
@@ -568,7 +687,11 @@ export default function AllcarePage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {users.map(u => (
+                    {usersLoading ? (
+                      <TableSkeleton cols={10} rows={8} />
+                    ) : users.length === 0 ? (
+                      <tr><td colSpan={10} className={styles.empty}>회원이 없습니다.</td></tr>
+                    ) : users.map(u => (
                       <tr key={u.user_id}>
                         <td>{u.name || '-'}</td>
                         <td>{u.email}</td>
@@ -596,8 +719,6 @@ export default function AllcarePage() {
                   </tbody>
                 </table>
                 <Pagination total={userTotal} page={userPage} onPage={p => setUserPage(p)} />
-              </>
-            )}
           </div>
         </>
       )}
@@ -605,27 +726,25 @@ export default function AllcarePage() {
       {/* 결제 탭 */}
       {activeTab === 'payments' && (
         <div className={styles.tableWrap}>
-          {paymentsLoading ? (
-            <p className={styles.loading}>불러오는 중...</p>
-          ) : payments.length === 0 ? (
-            <p className={styles.empty}>결제 내역이 없습니다.</p>
-          ) : (
-            <>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>회원</th>
-                    <th>이메일</th>
-                    <th>상품명</th>
-                    <th>주문번호</th>
-                    <th>금액</th>
-                    <th>상태</th>
-                    <th>결제수단</th>
-                    <th>결제일시</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {payments.map(p => (
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>회원</th>
+                <th>이메일</th>
+                <th>상품명</th>
+                <th>주문번호</th>
+                <th>금액</th>
+                <th>상태</th>
+                <th>결제수단</th>
+                <th>결제일시</th>
+              </tr>
+            </thead>
+            <tbody>
+              {paymentsLoading ? (
+                <TableSkeleton cols={8} rows={8} />
+              ) : payments.length === 0 ? (
+                <tr><td colSpan={8} className={styles.empty}>결제 내역이 없습니다.</td></tr>
+              ) : payments.map(p => (
                     <tr key={p.id}>
                       <td>{p.users?.name || '-'}</td>
                       <td>{p.users?.email || '-'}</td>
@@ -640,12 +759,10 @@ export default function AllcarePage() {
                       <td>{p.payment_method || '-'}</td>
                       <td>{fmtDate(p.approved_at)}</td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-              <Pagination total={paymentTotal} page={paymentPage} onPage={p => setPaymentPage(p)} />
-            </>
-          )}
+              ))}
+            </tbody>
+          </table>
+          <Pagination total={paymentTotal} page={paymentPage} onPage={p => setPaymentPage(p)} />
         </div>
       )}
 

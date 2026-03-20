@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import styles from '../hakjeom/page.module.css'
 import practiceStyles from './page.module.css'
+import MemoTimeline from '@/components/ui/MemoTimeline'
+import { TableSkeleton, FilterBarSkeleton } from '@/components/ui/Skeleton'
 
 // ─── 탭 타입 ─────────────────────────────────────────────────────────────────
 
@@ -508,6 +510,7 @@ function ConsultationDetailModal({ item, onClose, onUpdate }: {
   onUpdate: (id: number, fields: Partial<PracticeConsultation>) => Promise<void>
 }) {
   const [activeTab, setActiveTab] = useState<'basic' | 'detail' | 'memo'>('basic')
+  const [memoCount, setMemoCount] = useState<number | null>(null)
   const [editStatus, setEditStatus] = useState<ConsultationStatus>(item.status)
   const [editManager, setEditManager] = useState(item.manager ?? '')
   const [editMemo, setEditMemo] = useState(item.memo ?? '')
@@ -595,7 +598,9 @@ function ConsultationDetailModal({ item, onClose, onUpdate }: {
                   onClick={() => setActiveTab(tab)}
                   className={`${styles.detailModalTab} ${activeTab === tab ? styles.detailModalTabActive : ''}`}
                 >
-                  {labels[tab]}
+                  {tab === 'memo' && memoCount != null && memoCount > 0
+                    ? `메모 (${memoCount})`
+                    : labels[tab]}
                 </button>
               )
             })}
@@ -745,25 +750,23 @@ function ConsultationDetailModal({ item, onClose, onUpdate }: {
 
           {activeTab === 'memo' && (
             <>
+              <MemoTimeline
+                tableName="practice_consultations"
+                recordId={String(item.id)}
+                legacyMemo={item.memo}
+                onCountChange={setMemoCount}
+              />
               <div className={practiceStyles.memoGroup}>
-                <label className={practiceStyles.memoLabel}>메모</label>
-                <textarea
-                  value={editMemo}
-                  onChange={e => setEditMemo(e.target.value)}
-                  rows={6}
-                  placeholder="메모를 입력하세요"
-                  className={styles.textarea}
-                />
-              </div>
-              <div>
-                <label className={practiceStyles.memoLabel}>비고</label>
-                <textarea
-                  value={editNotes}
-                  onChange={e => setEditNotes(e.target.value)}
-                  rows={4}
-                  placeholder="비고를 입력하세요"
-                  className={styles.textarea}
-                />
+                <div>
+                  <label className={practiceStyles.memoLabel}>비고</label>
+                  <textarea
+                    value={editNotes}
+                    onChange={e => setEditNotes(e.target.value)}
+                    rows={4}
+                    placeholder="비고를 입력하세요"
+                    className={styles.textarea}
+                  />
+                </div>
               </div>
             </>
           )}
@@ -1988,33 +1991,36 @@ export default function PracticePage() {
       {/* ===== 상담신청 탭 ===== */}
       {activeTab === 'consultation' && (
         <>
-          {/* 필터 */}
-          <div className={styles.filterRow}>
-            <input
-              className={`${styles.input} ${practiceStyles.searchInput}`}
-              type="text"
-              value={consultationSearch}
-              onChange={e => setConsultationSearch(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') fetchConsultations() }}
-              placeholder="이름, 연락처 검색..."
-            />
-            {selectedConsultationIds.size > 0 && (
-              <>
-                <span className={styles.bulkActionCount}>{selectedConsultationIds.size}건 선택됨</span>
-                <button onClick={handleDeleteConsultations} disabled={deleting} className={styles.btnDanger}>
-                  {deleting ? '삭제 중...' : '선택 삭제'}
-                </button>
-                <button onClick={() => setSelectedConsultationIds(new Set())} className={styles.btnSecondary}>선택 해제</button>
-              </>
-            )}
-          </div>
-
-          {/* 액션 바 */}
-          <div className={styles.actionBar}>
-            <span className={styles.actionBarCount}>총 <strong className={styles.actionBarCountBold}>{consultationFiltered.length}</strong>건</span>
-            <div className={styles.actionBarSpacer} />
-            <button onClick={() => setShowAddConsultationModal(true)} className={styles.btnPrimary}>+ 추가</button>
-          </div>
+          {loading ? <FilterBarSkeleton /> : (
+            <>
+              {/* 필터 */}
+              <div className={styles.filterRow}>
+                <input
+                  className={`${styles.input} ${practiceStyles.searchInput}`}
+                  type="text"
+                  value={consultationSearch}
+                  onChange={e => setConsultationSearch(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') fetchConsultations() }}
+                  placeholder="이름, 연락처 검색..."
+                />
+                {selectedConsultationIds.size > 0 && (
+                  <>
+                    <span className={styles.bulkActionCount}>{selectedConsultationIds.size}건 선택됨</span>
+                    <button onClick={handleDeleteConsultations} disabled={deleting} className={styles.btnDanger}>
+                      {deleting ? '삭제 중...' : '선택 삭제'}
+                    </button>
+                    <button onClick={() => setSelectedConsultationIds(new Set())} className={styles.btnSecondary}>선택 해제</button>
+                  </>
+                )}
+              </div>
+              {/* 액션 바 */}
+              <div className={styles.actionBar}>
+                <span className={styles.actionBarCount}>총 <strong className={styles.actionBarCountBold}>{consultationFiltered.length}</strong>건</span>
+                <div className={styles.actionBarSpacer} />
+                <button onClick={() => setShowAddConsultationModal(true)} className={styles.btnPrimary}>+ 추가</button>
+              </div>
+            </>
+          )}
 
           {/* 테이블 */}
           <div className={styles.tableCard}>
@@ -2103,7 +2109,7 @@ export default function PracticePage() {
                 </thead>
                 <tbody>
                   {loading ? (
-                    <tr><td className={styles.td} colSpan={9}><LoadingState /></td></tr>
+                    <TableSkeleton cols={9} rows={8} />
                   ) : error ? (
                     <tr><td className={styles.td} colSpan={9}><ErrorState message={error} /></td></tr>
                   ) : consultationPaged.length === 0 ? (
@@ -2204,33 +2210,36 @@ export default function PracticePage() {
       {/* ===== 실습섭외신청서 탭 ===== */}
       {activeTab === 'practice' && (
         <>
-          {/* 필터 */}
-          <div className={styles.filterRow}>
-            <input
-              className={`${styles.input} ${practiceStyles.searchInput}`}
-              type="text"
-              value={practiceSearch}
-              onChange={e => setPracticeSearch(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') fetchPracticeApplications() }}
-              placeholder="이름, 연락처 검색..."
-            />
-            {selectedPracticeAppIds.size > 0 && (
-              <>
-                <span className={styles.bulkActionCount}>{selectedPracticeAppIds.size}건 선택됨</span>
-                <button onClick={handleDeletePracticeApps} disabled={deleting} className={styles.btnDanger}>
-                  {deleting ? '삭제 중...' : '선택 삭제'}
-                </button>
-                <button onClick={() => setSelectedPracticeAppIds(new Set())} className={styles.btnSecondary}>선택 해제</button>
-              </>
-            )}
-          </div>
-
-          {/* 액션 바 */}
-          <div className={styles.actionBar}>
-            <span className={styles.actionBarCount}>총 <strong className={styles.actionBarCountBold}>{practiceFiltered.length}</strong>건</span>
-            <div className={styles.actionBarSpacer} />
-            <button onClick={() => setShowAddPracticeModal(true)} className={styles.btnPrimary}>+ 추가</button>
-          </div>
+          {loading ? <FilterBarSkeleton /> : (
+            <>
+              {/* 필터 */}
+              <div className={styles.filterRow}>
+                <input
+                  className={`${styles.input} ${practiceStyles.searchInput}`}
+                  type="text"
+                  value={practiceSearch}
+                  onChange={e => setPracticeSearch(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') fetchPracticeApplications() }}
+                  placeholder="이름, 연락처 검색..."
+                />
+                {selectedPracticeAppIds.size > 0 && (
+                  <>
+                    <span className={styles.bulkActionCount}>{selectedPracticeAppIds.size}건 선택됨</span>
+                    <button onClick={handleDeletePracticeApps} disabled={deleting} className={styles.btnDanger}>
+                      {deleting ? '삭제 중...' : '선택 삭제'}
+                    </button>
+                    <button onClick={() => setSelectedPracticeAppIds(new Set())} className={styles.btnSecondary}>선택 해제</button>
+                  </>
+                )}
+              </div>
+              {/* 액션 바 */}
+              <div className={styles.actionBar}>
+                <span className={styles.actionBarCount}>총 <strong className={styles.actionBarCountBold}>{practiceFiltered.length}</strong>건</span>
+                <div className={styles.actionBarSpacer} />
+                <button onClick={() => setShowAddPracticeModal(true)} className={styles.btnPrimary}>+ 추가</button>
+              </div>
+            </>
+          )}
 
           {/* 테이블 */}
           <div className={styles.tableCard}>
@@ -2271,7 +2280,7 @@ export default function PracticePage() {
                 </thead>
                 <tbody>
                   {loading ? (
-                    <tr><td className={styles.td} colSpan={10}><LoadingState /></td></tr>
+                    <TableSkeleton cols={10} rows={8} />
                   ) : error ? (
                     <tr><td className={styles.td} colSpan={10}><ErrorState message={error} /></td></tr>
                   ) : practicePaged.length === 0 ? (
@@ -2391,33 +2400,36 @@ export default function PracticePage() {
       {/* ===== 취업신청 탭 ===== */}
       {activeTab === 'employment' && (
         <>
-          {/* 필터 + 액션 */}
-          <div className={styles.filterRow}>
-            <input
-              className={`${styles.input} ${practiceStyles.searchInput}`}
-              type="text"
-              value={employmentSearch}
-              onChange={e => setEmploymentSearch(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') fetchEmploymentApplications() }}
-              placeholder="이름, 연락처 검색..."
-            />
-            {selectedEmploymentIds.size > 0 && (
-              <>
-                <span className={styles.bulkActionCount}>{selectedEmploymentIds.size}건 선택됨</span>
-                <button onClick={handleDeleteEmploymentApps} disabled={deleting} className={styles.btnDanger}>
-                  {deleting ? '삭제 중...' : '선택 삭제'}
-                </button>
-                <button onClick={() => setSelectedEmploymentIds(new Set())} className={styles.btnSecondary}>선택 해제</button>
-              </>
-            )}
-          </div>
-
-          {/* 액션 바 */}
-          <div className={styles.actionBar}>
-            <span className={styles.actionBarCount}>총 <strong className={styles.actionBarCountBold}>{employmentFiltered.length}</strong>건</span>
-            <div className={styles.actionBarSpacer} />
-            <button onClick={() => setShowAddEmploymentModal(true)} className={styles.btnPrimary}>+ 추가</button>
-          </div>
+          {loading ? <FilterBarSkeleton /> : (
+            <>
+              {/* 필터 + 액션 */}
+              <div className={styles.filterRow}>
+                <input
+                  className={`${styles.input} ${practiceStyles.searchInput}`}
+                  type="text"
+                  value={employmentSearch}
+                  onChange={e => setEmploymentSearch(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') fetchEmploymentApplications() }}
+                  placeholder="이름, 연락처 검색..."
+                />
+                {selectedEmploymentIds.size > 0 && (
+                  <>
+                    <span className={styles.bulkActionCount}>{selectedEmploymentIds.size}건 선택됨</span>
+                    <button onClick={handleDeleteEmploymentApps} disabled={deleting} className={styles.btnDanger}>
+                      {deleting ? '삭제 중...' : '선택 삭제'}
+                    </button>
+                    <button onClick={() => setSelectedEmploymentIds(new Set())} className={styles.btnSecondary}>선택 해제</button>
+                  </>
+                )}
+              </div>
+              {/* 액션 바 */}
+              <div className={styles.actionBar}>
+                <span className={styles.actionBarCount}>총 <strong className={styles.actionBarCountBold}>{employmentFiltered.length}</strong>건</span>
+                <div className={styles.actionBarSpacer} />
+                <button onClick={() => setShowAddEmploymentModal(true)} className={styles.btnPrimary}>+ 추가</button>
+              </div>
+            </>
+          )}
 
           {/* 테이블 */}
           <div className={styles.tableCard}>
@@ -2450,7 +2462,7 @@ export default function PracticePage() {
                 </thead>
                 <tbody>
                   {loading ? (
-                    <tr><td className={styles.td} colSpan={10}><LoadingState /></td></tr>
+                    <TableSkeleton cols={10} rows={8} />
                   ) : error ? (
                     <tr><td className={styles.td} colSpan={10}><ErrorState message={error} /></td></tr>
                   ) : employmentPaged.length === 0 ? (
