@@ -363,7 +363,7 @@ function AllcareStatsTab({ stats, chartData }: { stats: Stats | null; chartData:
               <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#94a3b8' }} />
               <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} tickFormatter={v => `${(v / 10000).toFixed(0)}만`} />
               <Tooltip content={<RevTip />} />
-              <Bar dataKey="value" name="매출" radius={[6, 6, 0, 0]} barSize={44} label={{ position: 'top', fontSize: 11, fill: '#94a3b8', formatter: (v: number) => v > 0 ? `${Math.round(v / 10000)}만` : '' }}>
+              <Bar dataKey="value" name="매출" radius={[6, 6, 0, 0]} barSize={44} label={{ position: 'top', fontSize: 11, fill: '#94a3b8', formatter: (v: unknown) => typeof v === 'number' && v > 0 ? `${Math.round(v / 10000)}만` : '' }}>
                 {chartData?.revenueDist.map((r, i) => (
                   <Cell key={i} fill={REV_COLORS[i % REV_COLORS.length]} opacity={r.value > 0 ? 1 : 0.25} />
                 ))}

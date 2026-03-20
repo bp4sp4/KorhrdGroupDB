@@ -49,13 +49,18 @@ export function ChartSkeleton() {
   )
 }
 
-/** 필터바 스켈레톤 - 총 건수 + 검색 영역 */
+/** 필터바 스켈레톤 - 검색 행 + 총N건/추가버튼 행 */
 export function FilterBarSkeleton() {
   return (
-    <div className={styles.filterBar}>
-      <span className={styles.filterCount} />
-      <span className={styles.filterSearch} />
-    </div>
+    <>
+      <div className={styles.filterBar}>
+        <span className={styles.filterSearch} />
+      </div>
+      <div className={styles.actionBarSkel}>
+        <span className={styles.filterCount} />
+        <span className={styles.filterBtn} />
+      </div>
+    </>
   )
 }
 
