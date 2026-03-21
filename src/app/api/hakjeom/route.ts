@@ -50,31 +50,30 @@ export async function GET(request: NextRequest) {
     if (contact) query = query.ilike('contact', `%${contact}%`);
     if (status && status !== 'all') query = query.eq('status', status);
 
-    const { data, error } = await query;
+    // 데이터 + 메모 카운트를 병렬로 조회
+    const [queryResult, memoResult] = await Promise.all([
+      query,
+      supabaseAdmin
+        .from('memo_logs')
+        .select('record_id')
+        .eq('table_name', TABLE),
+    ]);
 
-    if (error) {
-      console.error('[hakjeom GET] Supabase error:', error);
+    if (queryResult.error) {
+      console.error('[hakjeom GET] Supabase error:', queryResult.error);
       return NextResponse.json({ error: 'Failed to fetch hakjeom consultations' }, { status: 500 });
     }
 
-    const items = data || [];
+    const items = queryResult.data || [];
 
     // memo_count 병합
-    if (items.length > 0) {
-      const ids = items.map(item => String(item.id));
-      const { data: memoRows } = await supabaseAdmin
-        .from('memo_logs')
-        .select('record_id')
-        .eq('table_name', TABLE)
-        .in('record_id', ids);
-      const countMap: Record<string, number> = {};
-      for (const m of memoRows || []) {
-        countMap[m.record_id] = (countMap[m.record_id] || 0) + 1;
-      }
-      return NextResponse.json(items.map(item => ({ ...item, memo_count: countMap[String(item.id)] || 0 })));
+    const countMap: Record<string, number> = {};
+    for (const m of memoResult.data || []) {
+      countMap[m.record_id] = (countMap[m.record_id] || 0) + 1;
     }
+    const result = items.map(item => ({ ...item, memo_count: countMap[String(item.id)] || 0 }));
 
-    return NextResponse.json(items);
+    return NextResponse.json(result);
   } catch (err) {
     console.error('[hakjeom GET] Unexpected error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

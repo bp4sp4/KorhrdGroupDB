@@ -11,6 +11,9 @@ export async function POST(req: NextRequest) {
   if (!Array.isArray(rows) || rows.length === 0)
     return NextResponse.json({ error: 'rows required' }, { status: 400 });
 
+  // 현재 한국시간(KST)
+  const nowKST = new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Seoul' }).replace(' ', 'T') + '+09:00'
+
   const insertData = rows.map((r: Record<string, unknown>) => ({
     category: r.category || null,
     address: r.address ?? r.region ?? null,
@@ -21,6 +24,7 @@ export async function POST(req: NextRequest) {
     manager: r.manager || null,
     memo: r.memo || null,
     status: r.status || '협약대기',
+    created_at: nowKST,
   })).filter(r => r.institution_name);
 
   if (insertData.length === 0)

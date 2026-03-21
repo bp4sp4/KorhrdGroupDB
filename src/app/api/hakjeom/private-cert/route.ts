@@ -35,36 +35,30 @@ export async function GET() {
       return NextResponse.json({ error: 'Supabase configuration missing' }, { status: 500 });
     }
 
-    const { data, error } = await supabaseAdmin
-      .from(TABLE)
-      .select('*')
-      .is('deleted_at', null)
-      .order('created_at', { ascending: false })
-      .order('id', { ascending: false });
+    const [queryResult, memoResult] = await Promise.all([
+      supabaseAdmin
+        .from(TABLE)
+        .select('*')
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: false }),
+      supabaseAdmin
+        .from('memo_logs')
+        .select('record_id')
+        .eq('table_name', TABLE),
+    ]);
 
-    if (error) {
-      console.error('[hakjeom/private-cert GET] Supabase error:', error);
+    if (queryResult.error) {
+      console.error('[hakjeom/private-cert GET] Supabase error:', queryResult.error);
       return NextResponse.json({ error: 'Failed to fetch private cert consultations' }, { status: 500 });
     }
 
-    const items = data || [];
-
-    // memo_count 병합
-    if (items.length > 0) {
-      const ids = items.map(item => String(item.id));
-      const { data: memoRows } = await supabaseAdmin
-        .from('memo_logs')
-        .select('record_id')
-        .eq('table_name', TABLE)
-        .in('record_id', ids);
-      const countMap: Record<string, number> = {};
-      for (const m of memoRows || []) {
-        countMap[m.record_id] = (countMap[m.record_id] || 0) + 1;
-      }
-      return NextResponse.json(items.map(item => ({ ...item, memo_count: countMap[String(item.id)] || 0 })));
+    const items = queryResult.data || [];
+    const countMap: Record<string, number> = {};
+    for (const m of memoResult.data || []) {
+      countMap[m.record_id] = (countMap[m.record_id] || 0) + 1;
     }
-
-    return NextResponse.json(items);
+    return NextResponse.json(items.map(item => ({ ...item, memo_count: countMap[String(item.id)] || 0 })));
   } catch (err) {
     console.error('[hakjeom/private-cert GET] Unexpected error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

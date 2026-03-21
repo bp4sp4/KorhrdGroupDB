@@ -78,7 +78,8 @@ export default function MemoTimeline({ tableName, recordId, legacyMemo, onCountC
       if (res.ok) {
         const data = await res.json()
         setLogs(data)
-        onCountChange?.(data.length)
+        const hasLegacy = legacyMemo && !data.some((l: MemoLog) => l.content === legacyMemo)
+        onCountChange?.(data.length + (hasLegacy ? 1 : 0))
       }
     } finally {
       setLoading(false)
@@ -202,7 +203,8 @@ export default function MemoTimeline({ tableName, recordId, legacyMemo, onCountC
     if (e.key === 'Escape') handleLegacyEditCancel()
   }
 
-  const showLegacy = legacyMemo && logs.length === 0 && !loading
+  const legacyAlreadyMigrated = logs.some(l => l.content === legacyMemo)
+  const showLegacy = !!legacyMemo && !loading && !legacyAlreadyMigrated
   const visibleLogs = logs.slice(0, visibleCount)
   const hiddenCount = logs.length - visibleCount
 

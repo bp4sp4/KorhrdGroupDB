@@ -83,29 +83,25 @@ export async function GET(request: NextRequest) {
       query = query.eq('source', dbSource);
     }
 
-    const { data, error } = await query;
+    const [queryResult, memoResult] = await Promise.all([
+      query,
+      supabaseAdmin
+        .from('memo_logs')
+        .select('record_id')
+        .eq('table_name', 'certificate_applications'),
+    ]);
 
-    if (error) {
-      console.error('[cert GET] Supabase error:', error);
+    if (queryResult.error) {
+      console.error('[cert GET] Supabase error:', queryResult.error);
       return NextResponse.json({ error: 'Failed to fetch certificate applications' }, { status: 500 });
     }
 
-    const items = data ?? [];
-    if (items.length > 0) {
-      const ids = items.map(item => String(item.id));
-      const { data: memoRows } = await supabaseAdmin
-        .from('memo_logs')
-        .select('record_id')
-        .eq('table_name', 'certificate_applications')
-        .in('record_id', ids);
-      const countMap: Record<string, number> = {};
-      for (const m of memoRows || []) {
-        countMap[m.record_id] = (countMap[m.record_id] || 0) + 1;
-      }
-      return NextResponse.json(items.map(item => ({ ...item, memo_count: countMap[String(item.id)] || 0 })));
+    const items = queryResult.data ?? [];
+    const countMap: Record<string, number> = {};
+    for (const m of memoResult.data || []) {
+      countMap[m.record_id] = (countMap[m.record_id] || 0) + 1;
     }
-
-    return NextResponse.json(items);
+    return NextResponse.json(items.map(item => ({ ...item, memo_count: countMap[String(item.id)] || 0 })));
   } catch (err) {
     console.error('[cert GET] Unexpected error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

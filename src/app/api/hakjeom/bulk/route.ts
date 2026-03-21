@@ -11,38 +11,24 @@ export async function POST(req: NextRequest) {
   if (!Array.isArray(rows) || rows.length === 0)
     return NextResponse.json({ error: 'rows required' }, { status: 400 });
 
-  // 날짜 문자열을 KST 기준으로 파싱해 UTC ISO 문자열로 반환
-  const toKSTDate = (v: unknown): string | null => {
-    if (!v || typeof v !== 'string') return null;
-    // 날짜만 있는 경우 (YYYY-MM-DD, YYYY/MM/DD 등) → KST 00:00:00으로 처리
-    const dateOnly = v.match(/^(\d{4})[.\-\/](\d{1,2})[.\-\/](\d{1,2})$/)
-    if (dateOnly) {
-      const [, y, m, d] = dateOnly
-      return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}T00:00:00+09:00`
-    }
-    // 이미 시간 정보가 포함된 경우 그대로 사용
-    const parsed = new Date(v)
-    return isNaN(parsed.getTime()) ? null : v
-  }
+  // 현재 한국시간(KST)
+  const nowKST = new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Seoul' }).replace(' ', 'T') + '+09:00'
 
-  const insertData = rows.map((r: Record<string, unknown>) => {
-    const kstDate = toKSTDate(r.applied_at)
-    return {
-      name: r.name,
-      contact: r.contact,
-      education: r.education || null,
-      hope_course: r.hope_course || null,
-      click_source: r.click_source || null,
-      reason: r.reason || null,
-      memo: r.memo || null,
-      status: r.status || '상담대기',
-      manager: r.manager || null,
-      residence: r.residence || null,
-      counsel_check: r.counsel_check || null,
-      subject_cost: r.subject_cost || null,
-      ...(kstDate ? { created_at: kstDate } : {}),
-    }
-  });
+  const insertData = rows.map((r: Record<string, unknown>) => ({
+    name: r.name,
+    contact: r.contact,
+    education: r.education || null,
+    hope_course: r.hope_course || null,
+    click_source: r.click_source || null,
+    reason: r.reason || null,
+    memo: r.memo || null,
+    status: r.status || '상담대기',
+    manager: r.manager || null,
+    residence: r.residence || null,
+    counsel_check: r.counsel_check || null,
+    subject_cost: r.subject_cost || null,
+    created_at: nowKST,
+  }));
 
   const { error } = await supabaseAdmin.from('hakjeom_consultations').insert(insertData);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
