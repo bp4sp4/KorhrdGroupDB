@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation'
 import { LogOut } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import styles from './layout.module.css'
+import NotificationBell from './NotificationBell'
+import QuickSearch from './QuickSearch'
 
 interface HeaderProps {
   title: string
@@ -39,6 +41,14 @@ export default function Header({ title, userName = '관리자' }: HeaderProps) {
       <h1 className={styles.headerTitle}>{title}</h1>
 
       <div className={styles.headerRight}>
+        <QuickSearch />
+
+        <div className={styles.headerDivider} />
+
+        <NotificationBell />
+
+        <div className={styles.headerDivider} />
+
         <div className={styles.avatar}>
           <span className={styles.avatarInitial}>{initial}</span>
         </div>

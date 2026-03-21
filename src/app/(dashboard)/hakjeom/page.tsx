@@ -1313,6 +1313,7 @@ function HakjeomTab({ setStatsNode, isActive }: { setStatsNode: (node: React.Rea
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { if (isActive) fetchData(true); }, [isActive, fetchData]);
   useEffect(() => {
     if (!openFilterColumn) return;
     const handleMouseDown = (e: MouseEvent) => {
@@ -1807,6 +1808,7 @@ function AgencyTab({ setStatsNode, isActive }: { setStatsNode: (node: React.Reac
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { if (isActive) fetchData(); }, [isActive, fetchData]);
 
   useEffect(() => {
     if (!openFilterColumn) return;

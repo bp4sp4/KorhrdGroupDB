@@ -1,0 +1,244 @@
+/* ─── Trigger Button ────────────────────────────────────────────────────── */
+
+.triggerBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--toss-border);
+  border-radius: 8px;
+  background: var(--toss-bg);
+  color: var(--toss-text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.triggerBtn:hover {
+  border-color: var(--toss-border-hover);
+  color: var(--toss-text-primary);
+}
+
+.triggerText {
+  font-weight: 400;
+}
+
+.kbd {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--toss-text-tertiary);
+  background: var(--toss-card-bg);
+  border: 1px solid var(--toss-border);
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-left: 4px;
+  font-family: var(--font-sans);
+}
+
+/* ─── Overlay ───────────────────────────────────────────────────────────── */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  padding-top: 15vh;
+  animation: fadeIn 100ms ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal {
+  width: 520px;
+  max-height: 460px;
+  background: var(--toss-card-bg);
+  border-radius: 14px;
+  box-shadow: var(--toss-shadow-modal);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideUp 150ms ease;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Input ─────────────────────────────────────────────────────────────── */
+
+.inputWrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--toss-border);
+  flex-shrink: 0;
+}
+
+.inputIcon {
+  color: var(--toss-text-tertiary);
+  flex-shrink: 0;
+}
+
+.input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 15px;
+  color: var(--toss-text-primary);
+  font-family: var(--font-sans);
+}
+
+.input::placeholder {
+  color: var(--toss-text-tertiary);
+}
+
+.clearBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--toss-text-tertiary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.clearBtn:hover {
+  background: var(--toss-bg);
+  color: var(--toss-text-primary);
+}
+
+.escBtn {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--toss-text-tertiary);
+  background: var(--toss-bg);
+  border: 1px solid var(--toss-border);
+  border-radius: 5px;
+  padding: 2px 7px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* ─── Result Area ───────────────────────────────────────────────────────── */
+
+.resultArea {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.loadingWrap,
+.emptyWrap,
+.hintWrap {
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--toss-text-tertiary);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--toss-border);
+  border-top-color: var(--toss-blue);
+  border-radius: 50%;
+  animation: spin 600ms linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ─── Result List ───────────────────────────────────────────────────────── */
+
+.resultList {
+  padding: 6px 0;
+}
+
+.groupLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--toss-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 10px 16px 4px;
+}
+
+.resultItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background 100ms ease;
+}
+
+.resultItem:hover,
+.resultItemActive {
+  background: var(--toss-bg);
+}
+
+.resultInfo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.resultName {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--toss-text-primary);
+  white-space: nowrap;
+}
+
+.resultSub {
+  font-size: 13px;
+  color: var(--toss-text-secondary);
+  white-space: nowrap;
+}
+
+.resultRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.resultStatus {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.resultArrow {
+  color: var(--toss-text-tertiary);
+  opacity: 0;
+  transition: opacity 100ms ease;
+}
+
+.resultItem:hover .resultArrow,
+.resultItemActive .resultArrow {
+  opacity: 1;
+}
