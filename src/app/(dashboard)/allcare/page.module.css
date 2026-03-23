@@ -365,6 +365,198 @@
   opacity: 0.85;
 }
 
+.actionBtns {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.actionBtnSecondary {
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #f0f6ff;
+  color: var(--toss-blue);
+  border: 1px solid #bfdbfe;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.actionBtnSecondary:hover {
+  background: #dbeafe;
+}
+
+/* 단과반 결제 요청 모달 */
+.cpTabs {
+  display: flex;
+  gap: 0;
+  border-radius: 12px;
+  background: #f2f4f6;
+  padding: 3px;
+  margin-bottom: 20px;
+}
+
+.cpTab {
+  flex: 1;
+  padding: 9px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--toss-text-secondary);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.cpTabActive {
+  background: #fff;
+  color: var(--toss-text-primary);
+  font-weight: 700;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.cpForm {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cpField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cpLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--toss-text-primary);
+}
+
+.cpRequired {
+  color: #ef4444;
+}
+
+.cpInput {
+  padding: 10px 12px;
+  border: 1.5px solid var(--toss-border);
+  border-radius: 10px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.cpInput:focus {
+  border-color: var(--toss-blue);
+}
+
+.cpTextarea {
+  padding: 10px 12px;
+  border: 1.5px solid var(--toss-border);
+  border-radius: 10px;
+  font-size: 14px;
+  outline: none;
+  resize: vertical;
+  min-height: 80px;
+  transition: border-color 0.15s;
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.cpTextarea:focus {
+  border-color: var(--toss-blue);
+}
+
+.cpActions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.cpHistory {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.cpEmpty {
+  text-align: center;
+  color: var(--toss-text-secondary);
+  font-size: 14px;
+  padding: 24px 0;
+}
+
+.cpHistoryItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--toss-border);
+}
+
+.cpHistorySubject {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--toss-text-primary);
+}
+
+.cpHistoryMeta {
+  font-size: 12px;
+  color: var(--toss-text-secondary);
+  margin-top: 2px;
+}
+
+.cpHistoryActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.cpStatusBadge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 20px;
+}
+
+.cpStatusPending {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.cpStatusPaid {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.cpStatusCancelled {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.cpCancelBtn {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid #fca5a5;
+  background: #fff;
+  color: #ef4444;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.cpCancelBtn:hover {
+  background: #fef2f2;
+}
+
 /* 모달 */
 .modalOverlay {
   position: fixed;
@@ -387,10 +579,10 @@
   background: #fff;
   border-radius: 24px;
   padding: 32px 28px 24px;
-  width: 380px;
+  width: 480px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
   animation: modalIn 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
-  text-align: center;
+  
 }
 
 @keyframes modalIn {
@@ -458,13 +650,10 @@
 
 .modalUserChip {
   display: inline-block;
-  padding: 4px 12px;
-  background: #f2f4f6;
-  border-radius: 20px;
-  font-size: 12px;
-  color: var(--toss-text-secondary);
-  margin: 10px 0 20px;
-  font-weight: 500;
+  font-size: 14px;
+  color: var(--toss-text-primary);
+  margin: 0 0 20px;
+  font-weight: 600;
 }
 
 .modalDesc {

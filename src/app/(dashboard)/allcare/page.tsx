@@ -60,6 +60,16 @@ interface CustomPayment {
   users: { name: string; email: string; phone: string } | null
 }
 
+interface CpRequest {
+  id: string
+  subject: string
+  subject_count: number
+  amount: number
+  status: string
+  memo: string | null
+  created_at: string
+}
+
 type Tab = 'users' | 'payments' | 'custom' | 'stats'
 
 interface ChartData {
@@ -420,6 +430,15 @@ export default function AllcarePage() {
   // 열람권 확인 팝업
   const [accessConfirm, setAccessConfirm] = useState<{ user: UserData; newAccess: boolean } | null>(null)
 
+  // 단과반 결제 요청 모달
+  const [showCpModal, setShowCpModal] = useState(false)
+  const [cpUser, setCpUser] = useState<UserData | null>(null)
+  const [cpTab, setCpTab] = useState<'new' | 'history'>('new')
+  const [cpRequests, setCpRequests] = useState<CpRequest[]>([])
+  const [cpLoading, setCpLoading] = useState(false)
+  const [cpSubmitting, setCpSubmitting] = useState(false)
+  const [cpForm, setCpForm] = useState({ subject: '', subject_count: 1, amount: '', memo: '' })
+
   // 완료 토스트
   const [toast, setToast] = useState<string | null>(null)
   const [modalLoading, setModalLoading] = useState(false)
@@ -512,6 +531,67 @@ export default function AllcarePage() {
       setNewStatus('cancelled')
     }
     setShowModal(true)
+  }
+
+  // ─── 단과반 결제 요청 모달 ───────────────────────────────────────────────────
+  const fetchCpRequests = async (userId: string) => {
+    setCpLoading(true)
+    const res = await fetch(`/api/allcare/custom-payment?userId=${userId}`)
+    const data = await res.json()
+    setCpRequests(data.requests || [])
+    setCpLoading(false)
+  }
+
+  const openCpModal = (u: UserData) => {
+    setCpUser(u)
+    setCpTab('new')
+    setCpForm({ subject: '', subject_count: 1, amount: '', memo: '' })
+    setCpRequests([])
+    setShowCpModal(true)
+    fetchCpRequests(u.user_id)
+  }
+
+  const handleCpSubmit = async () => {
+    if (!cpUser || !cpForm.subject || !cpForm.amount) return
+    setCpSubmitting(true)
+    try {
+      const res = await fetch('/api/allcare/custom-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: cpUser.user_id,
+          subject: cpForm.subject,
+          subject_count: cpForm.subject_count,
+          amount: cpForm.amount,
+          memo: cpForm.memo || null,
+        }),
+      })
+      if (res.ok) {
+        showToast('결제 요청을 전송했습니다.')
+        setCpForm({ subject: '', subject_count: 1, amount: '', memo: '' })
+        setCpTab('history')
+        fetchCpRequests(cpUser.user_id)
+      } else {
+        const d = await res.json()
+        showToast(d.error || '오류가 발생했습니다.')
+      }
+    } catch {
+      showToast('오류가 발생했습니다.')
+    } finally {
+      setCpSubmitting(false)
+    }
+  }
+
+  const handleCpCancel = async (requestId: string) => {
+    if (!confirm('요청을 취소하시겠습니까?')) return
+    const res = await fetch('/api/allcare/custom-payment', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ requestId }),
+    })
+    if (res.ok && cpUser) {
+      fetchCpRequests(cpUser.user_id)
+    }
   }
 
   const showToast = (msg: string) => {
@@ -710,9 +790,14 @@ export default function AllcarePage() {
                           </button>
                         </td>
                         <td>
-                          <button className={styles.actionBtn} onClick={() => openModal(u)}>
-                            상태변경
-                          </button>
+                          <div className={styles.actionBtns}>
+                            <button className={styles.actionBtn} onClick={() => openModal(u)}>
+                              상태변경
+                            </button>
+                            <button className={styles.actionBtnSecondary} onClick={() => openCpModal(u)}>
+                              단과반 요청
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -829,6 +914,107 @@ export default function AllcarePage() {
               </button>
               <button className={styles.modalCancelFull} onClick={() => setShowModal(false)}>취소</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 단과반 결제 요청 모달 */}
+      {showCpModal && cpUser && (
+        <div className={styles.modalOverlay} onClick={() => setShowCpModal(false)}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>단과반 결제 요청</h3>
+              <button className={styles.modalClose} onClick={() => setShowCpModal(false)}>✕</button>
+            </div>
+            <div className={styles.modalUserChip}>{cpUser.name}</div>
+
+            <div className={styles.cpTabs}>
+              <button
+                className={`${styles.cpTab} ${cpTab === 'new' ? styles.cpTabActive : ''}`}
+                onClick={() => setCpTab('new')}
+              >새 요청</button>
+              <button
+                className={`${styles.cpTab} ${cpTab === 'history' ? styles.cpTabActive : ''}`}
+                onClick={() => { setCpTab('history'); fetchCpRequests(cpUser.user_id) }}
+              >요청 내역 ({cpRequests.length})</button>
+            </div>
+
+            {cpTab === 'new' ? (
+              <div className={styles.cpForm}>
+                <div className={styles.cpField}>
+                  <label className={styles.cpLabel}>과목명 <span className={styles.cpRequired}>*</span></label>
+                  <input
+                    className={styles.cpInput}
+                    placeholder="예: 요양보호사 이론 3과목"
+                    value={cpForm.subject}
+                    onChange={e => setCpForm({ ...cpForm, subject: e.target.value })}
+                  />
+                </div>
+                <div className={styles.cpField}>
+                  <label className={styles.cpLabel}>과목 수</label>
+                  <input
+                    className={styles.cpInput}
+                    type="number"
+                    min={1}
+                    value={cpForm.subject_count}
+                    onChange={e => setCpForm({ ...cpForm, subject_count: parseInt(e.target.value) || 1 })}
+                  />
+                </div>
+                <div className={styles.cpField}>
+                  <label className={styles.cpLabel}>결제 금액 (원) <span className={styles.cpRequired}>*</span></label>
+                  <input
+                    className={styles.cpInput}
+                    type="number"
+                    placeholder="예: 300000"
+                    value={cpForm.amount}
+                    onChange={e => setCpForm({ ...cpForm, amount: e.target.value })}
+                  />
+                </div>
+                <div className={styles.cpField}>
+                  <label className={styles.cpLabel}>메모 (선택)</label>
+                  <textarea
+                    className={styles.cpTextarea}
+                    placeholder="관리자 메모"
+                    value={cpForm.memo}
+                    onChange={e => setCpForm({ ...cpForm, memo: e.target.value })}
+                  />
+                </div>
+                <div className={styles.cpActions}>
+                  <button
+                    className={styles.modalConfirmFull}
+                    onClick={handleCpSubmit}
+                    disabled={cpSubmitting || !cpForm.subject || !cpForm.amount}
+                  >
+                    {cpSubmitting ? '전송 중...' : '결제 요청 전송'}
+                  </button>
+                  <button className={styles.modalCancelFull} onClick={() => setShowCpModal(false)}>닫기</button>
+                </div>
+              </div>
+            ) : (
+              <div className={styles.cpHistory}>
+                {cpLoading ? (
+                  <div className={styles.cpEmpty}>불러오는 중...</div>
+                ) : cpRequests.length === 0 ? (
+                  <div className={styles.cpEmpty}>요청 내역이 없습니다.</div>
+                ) : cpRequests.map(r => (
+                  <div key={r.id} className={styles.cpHistoryItem}>
+                    <div>
+                      <div className={styles.cpHistorySubject}>{r.subject}</div>
+                      <div className={styles.cpHistoryMeta}>{r.amount.toLocaleString()}원 · {fmtDate(r.created_at)}</div>
+                    </div>
+                    <div className={styles.cpHistoryActions}>
+                      <span className={`${styles.cpStatusBadge} ${r.status === 'pending' ? styles.cpStatusPending : r.status === 'paid' ? styles.cpStatusPaid : styles.cpStatusCancelled}`}>
+                        {r.status === 'pending' ? '대기중' : r.status === 'paid' ? '완료' : '취소'}
+                      </span>
+                      {r.status === 'pending' && (
+                        <button className={styles.cpCancelBtn} onClick={() => handleCpCancel(r.id)}>취소</button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                <button className={styles.modalCancelFull} onClick={() => setShowCpModal(false)}>닫기</button>
+              </div>
+            )}
           </div>
         </div>
       )}

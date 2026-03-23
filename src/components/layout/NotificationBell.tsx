@@ -26,13 +26,6 @@ function timeAgo(dateStr: string): string {
   return `${days}일 전`
 }
 
-const TYPE_ICONS: Record<string, string> = {
-  new_consult: '📋',
-  stale_consult: '⏰',
-  payment_complete: '💰',
-  bulk_import: '📦',
-  status_change: '🔄',
-}
 
 export default function NotificationBell() {
   const [open, setOpen] = useState(false)
@@ -148,14 +141,14 @@ export default function NotificationBell() {
               <div className={styles.empty}>알림이 없습니다</div>
             ) : (
               notifications.map(n => (
-                <button
+                <div
                   key={n.id}
+                  role="button"
+                  tabIndex={0}
                   className={`${styles.item} ${!n.is_read ? styles.itemUnread : ''}`}
                   onClick={() => handleClickNotification(n)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleClickNotification(n) }}
                 >
-                  <span className={styles.itemIcon}>
-                    {TYPE_ICONS[n.type] ?? '🔔'}
-                  </span>
                   <div className={styles.itemContent}>
                     <span className={styles.itemTitle}>{n.title}</span>
                     <span className={styles.itemMessage}>{n.message}</span>
@@ -170,7 +163,7 @@ export default function NotificationBell() {
                       <Check size={14} />
                     </button>
                   )}
-                </button>
+                </div>
               ))
             )}
           </div>

@@ -136,13 +136,6 @@
   background: #e4f0fd;
 }
 
-.itemIcon {
-  font-size: 18px;
-  line-height: 1;
-  flex-shrink: 0;
-  margin-top: 1px;
-}
-
 .itemContent {
   flex: 1;
   min-width: 0;
