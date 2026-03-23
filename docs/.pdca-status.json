@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-03-23T05:17:24.178Z",
+  "lastUpdated": "2026-03-23T07:20:44.951Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -50,7 +50,8 @@
     "request-custom",
     "custom-payment",
     "custom",
-    "complete"
+    "complete",
+    "success"
   ],
   "primaryFeature": "supabase",
   "features": {
@@ -440,7 +441,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-19T03:55:26.283Z",
-        "lastUpdated": "2026-03-19T05:04:01.920Z"
+        "lastUpdated": "2026-03-23T06:23:07.871Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/allcare/payments/route.ts"
     },
@@ -453,7 +454,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-19T03:56:50.293Z",
-        "lastUpdated": "2026-03-23T05:09:05.469Z"
+        "lastUpdated": "2026-03-23T07:20:44.951Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/allcare/src/app/page.tsx"
     },
@@ -674,7 +675,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-23T05:09:11.620Z",
-        "lastUpdated": "2026-03-23T05:09:11.620Z"
+        "lastUpdated": "2026-03-23T06:16:38.765Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/allcare/src/app/payment/custom/page.tsx"
     },
@@ -690,6 +691,19 @@
         "lastUpdated": "2026-03-23T05:17:24.178Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/allcare/src/app/api/custom-payment/complete/route.ts"
+    },
+    "success": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-03-23T06:16:42.760Z",
+        "lastUpdated": "2026-03-23T06:17:14.878Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/allcare/src/app/payment/success/page.tsx"
     }
   },
   "pipeline": {
@@ -700,7 +714,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-03-23T05:17:24.178Z"
+    "lastActivity": "2026-03-23T07:20:44.951Z"
   },
   "history": [
     {
@@ -8056,6 +8070,144 @@
     {
       "timestamp": "2026-03-23T05:17:24.178Z",
       "feature": "complete",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-23T05:27:10.412Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-23T05:28:54.237Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-23T05:55:53.564Z",
+      "feature": "custom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-23T06:16:38.765Z",
+      "feature": "custom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-23T06:16:42.760Z",
+      "feature": "success",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-23T06:16:46.685Z",
+      "feature": "success",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-23T06:16:51.140Z",
+      "feature": "success",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-23T06:17:14.879Z",
+      "feature": "success",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-23T06:19:01.736Z",
+      "feature": "payments",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-23T06:21:28.383Z",
+      "feature": "payments",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-23T06:21:36.638Z",
+      "feature": "payments",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-23T06:22:30.138Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-23T06:23:02.685Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-23T06:23:07.871Z",
+      "feature": "payments",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-23T06:24:26.479Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-23T06:25:15.872Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-23T06:25:19.643Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-23T06:26:10.523Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-23T06:26:14.448Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-23T06:31:38.128Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-23T07:19:26.001Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-23T07:20:31.804Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-23T07:20:44.951Z",
+      "feature": "allcare",
       "phase": "do",
       "action": "updated"
     }

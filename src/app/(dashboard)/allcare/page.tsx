@@ -111,14 +111,52 @@ function SubscriptionBadge({ status, cancelledAt }: { status: string | null; can
   return <span className={`${styles.badge} ${styles.badgeCancelled}`}>취소</span>
 }
 
+function GoodNameCell({ goodName, amount, orderId }: { goodName: string | null; amount: number; orderId: string }) {
+  if (orderId.startsWith('CUSTOM-')) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <span style={{ background: '#fef3c7', color: '#d97706', fontSize: 11, fontWeight: 700, padding: '2px 7px', borderRadius: 4 }}>단과반</span>
+        <span>{goodName || '-'}</span>
+      </div>
+    )
+  }
+  if (orderId.startsWith('PKG-')) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <span style={{ background: '#ede9fe', color: '#7c3aed', fontSize: 11, fontWeight: 700, padding: '2px 7px', borderRadius: 4 }}>패키지</span>
+        <span>{goodName || '-'}</span>
+      </div>
+    )
+  }
+  let label = ''
+  let planColor = '#64748b'
+  let planBg = '#f1f5f9'
+  let planName = goodName || '-'
+  if (amount === 9900) { planName = '베이직'; planColor = '#0369a1'; planBg = '#e0f2fe' }
+  else if (amount === 19900) { planName = '올케어스탠다드'; planColor = '#2563eb'; planBg = '#dbeafe' }
+  else if (amount === 29900) { planName = '올케어프리미엄'; planColor = '#7c3aed'; planBg = '#ede9fe' }
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <span style={{ background: planBg, color: planColor, fontSize: 11, fontWeight: 700, padding: '2px 7px', borderRadius: 4 }}>{planName}</span>
+      <span style={{ color: '#94a3b8', fontSize: 12 }}>{label}</span>
+    </div>
+  )
+}
+
+function CustomStatusBadge({ status }: { status: string }) {
+  if (status === 'pending') return <span className={`${styles.badge} ${styles.badgeCancelScheduled}`}>대기중</span>
+  if (status === 'paid') return <span className={`${styles.badge} ${styles.badgeActive}`}>완료</span>
+  return <span className={`${styles.badge} ${styles.badgeCancelled}`}>취소</span>
+}
+
 function OrderIdCell({ orderId }: { orderId: string }) {
-  let type = 'ORDER'
+  let type = '구독'
   let color = '#64748b'
   let bg = '#f1f5f9'
 
-  if (orderId.startsWith('SUBS-')) { type = 'SUBS'; color = '#2563eb'; bg = '#dbeafe' }
-  else if (orderId.startsWith('PKG-')) { type = 'PKG'; color = '#7c3aed'; bg = '#ede9fe' }
-  else if (orderId.startsWith('CUSTOM-')) { type = 'CUSTOM'; color = '#d97706'; bg = '#fef3c7' }
+  if (orderId.startsWith('SUBS-')) { type = '구독'; color = '#2563eb'; bg = '#dbeafe' }
+  else if (orderId.startsWith('PKG-')) { type = '패키지'; color = '#7c3aed'; bg = '#ede9fe' }
+  else if (orderId.startsWith('CUSTOM-')) { type = '단과반'; color = '#d97706'; bg = '#fef3c7' }
 
   // 끝 숫자(타임스탬프) 추출
   const match = orderId.match(/(\d+)$/)
@@ -820,7 +858,7 @@ export default function AllcarePage() {
                 <th>주문번호</th>
                 <th>금액</th>
                 <th>상태</th>
-                <th>결제수단</th>
+                
                 <th>결제일시</th>
               </tr>
             </thead>
@@ -833,7 +871,7 @@ export default function AllcarePage() {
                     <tr key={p.id}>
                       <td>{p.users?.name || '-'}</td>
                       <td>{p.users?.email || '-'}</td>
-                      <td>{p.good_name || '-'}</td>
+                      <td><GoodNameCell goodName={p.good_name} amount={p.amount} orderId={p.order_id} /></td>
                       <td>
                         <OrderIdCell orderId={p.order_id} />
                       </td>
@@ -841,7 +879,7 @@ export default function AllcarePage() {
                         {p.status === 'refunded' ? '-' : ''}{fmt(p.amount)}
                       </td>
                       <td><PaymentStatusBadge status={p.status} /></td>
-                      <td>{p.payment_method || '-'}</td>
+                     
                       <td>{fmtDate(p.approved_at)}</td>
                     </tr>
               ))}
@@ -850,6 +888,8 @@ export default function AllcarePage() {
           <Pagination total={paymentTotal} page={paymentPage} onPage={p => setPaymentPage(p)} />
         </div>
       )}
+
+  
 
       {/* 열람권 확인 팝업 */}
       {accessConfirm && (
