@@ -222,7 +222,7 @@ const CAFE_NAMES: Record<string, string> = {
   magic26: '안평맘스비',
   anjungmom: '평택안포맘',
   tlgmdaka0: '시맘수',
-  babylovecafe: '베이비러브',
+  babylovecafe: '양주베이비러브',
   naese: '중리사랑방',
   andongmom: '안동맘',
   donanmam: '대전도안맘',
