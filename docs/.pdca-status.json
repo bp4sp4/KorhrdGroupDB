@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-03-23T07:41:46.898Z",
+  "lastUpdated": "2026-03-23T07:55:31.753Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -441,7 +441,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-19T03:55:26.283Z",
-        "lastUpdated": "2026-03-23T06:23:07.871Z"
+        "lastUpdated": "2026-03-23T07:55:31.753Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/allcare/payments/route.ts"
     },
@@ -454,9 +454,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-19T03:56:50.293Z",
-        "lastUpdated": "2026-03-23T07:20:44.951Z"
+        "lastUpdated": "2026-03-23T07:47:20.441Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/allcare/src/app/page.tsx"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/allcare/page.tsx"
     },
     "update": {
       "phase": "do",
@@ -714,7 +714,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-03-23T07:41:46.898Z"
+    "lastActivity": "2026-03-23T07:55:31.753Z"
   },
   "history": [
     {
@@ -8220,6 +8220,30 @@
     {
       "timestamp": "2026-03-23T07:41:46.898Z",
       "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-23T07:46:45.664Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-23T07:47:20.441Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-23T07:55:27.456Z",
+      "feature": "payments",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-23T07:55:31.753Z",
+      "feature": "payments",
       "phase": "do",
       "action": "updated"
     }

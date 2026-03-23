@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
     const { data, error, count } = await supabaseAdmin
       .from('allcare_custom_payment_requests')
       .select('*', { count: 'exact' })
+      .neq('user_id', '94832325-c5ec-4b21-bc74-00ae0763cbda')
       .order('created_at', { ascending: false })
       .range(from, to)
 
@@ -46,6 +47,7 @@ export async function GET(request: NextRequest) {
     .from('payments')
     .select('*, users(name, email, phone)', { count: 'exact' })
     .in('status', ['completed', 'cancelled', 'refunded', 'refund_requested'])
+    .neq('user_id', '94832325-c5ec-4b21-bc74-00ae0763cbda')
     .order('approved_at', { ascending: false })
     .range(from, to)
 

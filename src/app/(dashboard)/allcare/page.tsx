@@ -996,8 +996,9 @@ export default function AllcarePage() {
                     className={styles.cpInput}
                     type="number"
                     min={1}
-                    value={cpForm.subject_count}
-                    onChange={e => setCpForm({ ...cpForm, subject_count: parseInt(e.target.value) || 1 })}
+                    placeholder="과목 수 입력"
+                    value={cpForm.subject_count || ''}
+                    onChange={e => setCpForm({ ...cpForm, subject_count: parseInt(e.target.value) || 0 })}
                   />
                 </div>
                 <div className={styles.cpField}>
