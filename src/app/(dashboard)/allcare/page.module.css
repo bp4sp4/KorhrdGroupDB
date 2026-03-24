@@ -371,6 +371,22 @@
   flex-wrap: wrap;
 }
 
+.actionBtnPlan {
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #059669;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.actionBtnPlan:hover {
+  opacity: 0.85;
+}
+
 .actionBtnSecondary {
   padding: 5px 12px;
   border-radius: 8px;

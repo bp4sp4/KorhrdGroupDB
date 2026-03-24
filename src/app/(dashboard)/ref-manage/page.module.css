@@ -1,0 +1,274 @@
+/* ── 페이지 레이아웃 ────────────────────────────────── */
+.pageWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.infoBanner {
+  flex: 1;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: var(--toss-radius-card);
+  padding: 12px 16px;
+  font-size: 13px;
+  color: #1e40af;
+}
+
+.createBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;
+  background: #3182f6;
+  color: #fff;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* ── 테이블 카드 ─────────────────────────────────── */
+.tableCard {
+  background: var(--toss-card-bg);
+  border: 1px solid var(--toss-border);
+  border-radius: var(--toss-radius-card);
+  box-shadow: var(--toss-shadow-card);
+  overflow: hidden;
+}
+
+.tableOverflow {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.th {
+  padding: 14px 10px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--toss-text-secondary);
+  white-space: nowrap;
+  background: #fafafa;
+  border-bottom: 1px solid var(--toss-border);
+}
+
+.td {
+  padding: 14px 10px;
+  font-size: 14px;
+  color: #191f28;
+  border-bottom: 1px solid var(--toss-border);
+}
+
+.tdCenter {
+  padding: 40px 10px;
+  font-size: 14px;
+  color: var(--toss-text-tertiary);
+  border-bottom: 1px solid var(--toss-border);
+  text-align: center;
+}
+
+.tdName {
+  font-weight: 600;
+}
+
+.tdEmail {
+  color: var(--toss-text-secondary);
+  font-size: 13px;
+}
+
+/* ── 셀 안 요소 ──────────────────────────────────── */
+.emptyPlaceholder {
+  color: var(--toss-text-tertiary);
+}
+
+.refCodeBadge {
+  font-family: monospace;
+  font-size: 13px;
+  background: #f3f4f6;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.refCodeEmpty {
+  color: var(--toss-text-tertiary);
+  font-size: 13px;
+}
+
+.copyBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  font-size: 12px;
+  border: 1px solid var(--toss-border);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--toss-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.copyBtnCopied {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.linkNeeded {
+  font-size: 12px;
+  color: var(--toss-text-tertiary);
+}
+
+.editBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  font-size: 12px;
+  border: 1px solid var(--toss-border);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--toss-text-secondary);
+  cursor: pointer;
+}
+
+/* ── 에러 상태 ──────────────────────────────────── */
+.errorState {
+  padding: 40px;
+  text-align: center;
+  color: #991b1b;
+}
+
+/* ── 모달 ────────────────────────────────────────── */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px 32px;
+  width: 400px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.modalTitle {
+  font-size: 17px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--toss-text-primary);
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--toss-text-tertiary);
+  padding: 4px;
+}
+
+/* ── 폼 필드 ─────────────────────────────────────── */
+.fieldGroup {
+  margin-bottom: 16px;
+}
+
+.fieldGroupLast {
+  margin-bottom: 28px;
+}
+
+.fieldLabel {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--toss-text-secondary);
+  margin-bottom: 6px;
+}
+
+.input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--toss-border);
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.inputMono {
+  font-family: monospace;
+}
+
+.readonlyField {
+  padding: 10px 12px;
+  background: #f9fafb;
+  border: 1px solid var(--toss-border);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--toss-text-tertiary);
+}
+
+/* ── 모달 버튼 행 ─────────────────────────────────── */
+.btnRow {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.cancelBtn {
+  flex: 1;
+  padding: 11px 0;
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid var(--toss-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--toss-text-secondary);
+  cursor: pointer;
+}
+
+.submitBtn {
+  flex: 1;
+  padding: 11px 0;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  background: #3182f6;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.submitBtn:disabled {
+  background: #93c5fd;
+  cursor: default;
+}

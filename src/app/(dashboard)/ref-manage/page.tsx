@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { Copy, Check, Pencil, X, Save, UserPlus } from 'lucide-react'
-import styles from '../hakjeom/page.module.css'
+import styles from './page.module.css'
 
 interface MiniAdminUser {
   id: string
@@ -98,7 +98,7 @@ export default function RefManagePage() {
 
   if (error) {
     return (
-      <div style={{ padding: 40, textAlign: 'center', color: '#991b1b' }}>
+      <div className={styles.errorState}>
         <p>{error}</p>
       </div>
     )
@@ -130,50 +130,20 @@ export default function RefManagePage() {
   const editingUser = editState ? users.find(u => u.id === editState.id) : null
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div className={styles.pageWrapper}>
       {/* 안내 + 생성 버튼 */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <div style={{
-          flex: 1,
-          background: '#eff6ff',
-          border: '1px solid #bfdbfe',
-          borderRadius: 'var(--toss-radius-card)',
-          padding: '12px 16px',
-          fontSize: 13,
-          color: '#1e40af',
-        }}>
+      <div className={styles.headerRow}>
+        <div className={styles.infoBanner}>
           미니어드민 계정의 이름과 ref 코드를 관리합니다. 링크를 복사해 담당자에게 전달하세요.
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            padding: '10px 18px',
-            fontSize: 14,
-            fontWeight: 600,
-            border: 'none',
-            borderRadius: 10,
-            background: '#3182f6',
-            color: '#fff',
-            cursor: 'pointer',
-            whiteSpace: 'nowrap',
-          }}
-        >
+        <button onClick={() => setShowCreateModal(true)} className={styles.createBtn}>
           <UserPlus size={16} />
           계정 생성
         </button>
       </div>
 
       {/* 테이블 */}
-      <div style={{
-        background: 'var(--toss-card-bg)',
-        border: '1px solid var(--toss-border)',
-        borderRadius: 'var(--toss-radius-card)',
-        boxShadow: 'var(--toss-shadow-card)',
-        overflow: 'hidden',
-      }}>
+      <div className={styles.tableCard}>
         <div className={styles.tableOverflow}>
           <table className={styles.table}>
             <thead>
@@ -188,81 +158,47 @@ export default function RefManagePage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td className={styles.td} colSpan={5} style={{ textAlign: 'center', padding: 40 }}>
+                  <td className={`${styles.td} ${styles.tdCenter}`} colSpan={5}>
                     로딩 중...
                   </td>
                 </tr>
               ) : users.length === 0 ? (
                 <tr>
-                  <td className={styles.td} colSpan={5} style={{ textAlign: 'center', padding: 40, color: 'var(--toss-text-tertiary)' }}>
+                  <td className={`${styles.td} ${styles.tdCenter}`} colSpan={5}>
                     등록된 미니어드민이 없습니다.
                   </td>
                 </tr>
               ) : (
                 users.map(user => (
                   <tr key={user.id}>
-                    <td className={styles.td} style={{ fontWeight: 600 }}>
-                      {user.display_name || <span style={{ color: 'var(--toss-text-tertiary)' }}>-</span>}
+                    <td className={`${styles.td} ${styles.tdName}`}>
+                      {user.display_name || <span className={styles.emptyPlaceholder}>-</span>}
                     </td>
-                    <td className={styles.td} style={{ color: 'var(--toss-text-secondary)', fontSize: 13 }}>
+                    <td className={`${styles.td} ${styles.tdEmail}`}>
                       {user.username}
                     </td>
                     <td className={styles.td}>
                       {user.ref_code ? (
-                        <span style={{
-                          fontFamily: 'monospace',
-                          fontSize: 13,
-                          background: '#f3f4f6',
-                          padding: '2px 8px',
-                          borderRadius: 4,
-                        }}>
-                          {user.ref_code}
-                        </span>
+                        <span className={styles.refCodeBadge}>{user.ref_code}</span>
                       ) : (
-                        <span style={{ color: 'var(--toss-text-tertiary)', fontSize: 13 }}>미설정</span>
+                        <span className={styles.refCodeEmpty}>미설정</span>
                       )}
                     </td>
                     <td className={styles.td}>
                       {user.ref_code ? (
                         <button
                           onClick={() => handleCopyLink(user.ref_code, user.id)}
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: 4,
-                            padding: '5px 12px',
-                            fontSize: 12,
-                            border: '1px solid var(--toss-border)',
-                            borderRadius: 6,
-                            background: copiedId === user.id ? '#d1fae5' : '#fff',
-                            color: copiedId === user.id ? '#065f46' : 'var(--toss-text-secondary)',
-                            cursor: 'pointer',
-                            transition: 'all 0.15s',
-                          }}
+                          className={`${styles.copyBtn} ${copiedId === user.id ? styles.copyBtnCopied : ''}`}
                         >
                           {copiedId === user.id ? <Check size={13} /> : <Copy size={13} />}
                           {copiedId === user.id ? '복사됨' : '링크 복사'}
                         </button>
                       ) : (
-                        <span style={{ fontSize: 12, color: 'var(--toss-text-tertiary)' }}>ref 코드 필요</span>
+                        <span className={styles.linkNeeded}>ref 코드 필요</span>
                       )}
                     </td>
                     <td className={styles.td}>
-                      <button
-                        onClick={() => handleEditStart(user)}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 4,
-                          padding: '5px 10px',
-                          fontSize: 12,
-                          border: '1px solid var(--toss-border)',
-                          borderRadius: 6,
-                          background: '#fff',
-                          color: 'var(--toss-text-secondary)',
-                          cursor: 'pointer',
-                        }}
-                      >
+                      <button onClick={() => handleEditStart(user)} className={styles.editBtn}>
                         <Pencil size={13} />
                         수정
                       </button>
@@ -275,34 +211,13 @@ export default function RefManagePage() {
         </div>
       </div>
 
-      {/* 수정 팝업 모달 */}
       {/* 계정 생성 모달 */}
       {showCreateModal && (
-        <div
-          onClick={() => setShowCreateModal(false)}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{
-              background: '#fff',
-              borderRadius: 16,
-              padding: '28px 32px',
-              width: 400,
-              boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-              <h2 style={{ fontSize: 17, fontWeight: 700, margin: 0 }}>미니어드민 계정 생성</h2>
-              <button onClick={() => setShowCreateModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--toss-text-tertiary)', padding: 4 }}>
+        <div className={styles.modalOverlay} onClick={() => setShowCreateModal(false)}>
+          <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2 className={styles.modalTitle}>미니어드민 계정 생성</h2>
+              <button onClick={() => setShowCreateModal(false)} className={styles.closeBtn}>
                 <X size={20} />
               </button>
             </div>
@@ -313,51 +228,26 @@ export default function RefManagePage() {
               { label: '담당자명', key: 'display_name', type: 'text', placeholder: '홍길동' },
               { label: 'ref 코드', key: 'ref_code', type: 'text', placeholder: 'consultation' },
             ].map(({ label, key, type, placeholder }) => (
-              <div key={key} style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--toss-text-secondary)', marginBottom: 6 }}>
-                  {label}
-                </label>
+              <div key={key} className={styles.fieldGroup}>
+                <label className={styles.fieldLabel}>{label}</label>
                 <input
                   type={type}
                   value={createForm[key as keyof typeof createForm]}
                   onChange={e => setCreateForm(f => ({ ...f, [key]: e.target.value }))}
                   placeholder={placeholder}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    border: '1px solid var(--toss-border)',
-                    borderRadius: 8,
-                    fontSize: 14,
-                    outline: 'none',
-                    boxSizing: 'border-box',
-                    fontFamily: key === 'ref_code' ? 'monospace' : 'inherit',
-                  }}
+                  className={`${styles.input} ${key === 'ref_code' ? styles.inputMono : ''}`}
                 />
               </div>
             ))}
 
-            <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-              <button
-                onClick={() => setShowCreateModal(false)}
-                style={{
-                  flex: 1, padding: '11px 0', fontSize: 14, fontWeight: 600,
-                  border: '1px solid var(--toss-border)', borderRadius: 8,
-                  background: '#fff', color: 'var(--toss-text-secondary)', cursor: 'pointer',
-                }}
-              >
+            <div className={styles.btnRow}>
+              <button onClick={() => setShowCreateModal(false)} className={styles.cancelBtn}>
                 취소
               </button>
               <button
                 onClick={handleCreateSave}
                 disabled={creating || !createForm.email || !createForm.password}
-                style={{
-                  flex: 1, padding: '11px 0', fontSize: 14, fontWeight: 600,
-                  border: 'none', borderRadius: 8,
-                  background: (creating || !createForm.email || !createForm.password) ? '#93c5fd' : '#3182f6',
-                  color: '#fff',
-                  cursor: (creating || !createForm.email || !createForm.password) ? 'default' : 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                }}
+                className={styles.submitBtn}
               >
                 <UserPlus size={15} />
                 {creating ? '생성 중...' : '생성하기'}
@@ -369,138 +259,49 @@ export default function RefManagePage() {
 
       {/* 수정 모달 */}
       {editState && editingUser && (
-        <div
-          onClick={handleEditCancel}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-          }}
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{
-              background: '#fff',
-              borderRadius: 16,
-              padding: '28px 32px',
-              width: 400,
-              boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
-            }}
-          >
-            {/* 모달 헤더 */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-              <h2 style={{ fontSize: 17, fontWeight: 700, margin: 0, color: 'var(--toss-text-primary)' }}>
-                미니어드민 수정
-              </h2>
-              <button
-                onClick={handleEditCancel}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--toss-text-tertiary)', padding: 4 }}
-              >
+        <div className={styles.modalOverlay} onClick={handleEditCancel}>
+          <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2 className={styles.modalTitle}>미니어드민 수정</h2>
+              <button onClick={handleEditCancel} className={styles.closeBtn}>
                 <X size={20} />
               </button>
             </div>
 
             {/* 계정 이메일 (읽기전용) */}
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--toss-text-secondary)', marginBottom: 6 }}>
-                계정 이메일
-              </label>
-              <div style={{
-                padding: '10px 12px',
-                background: '#f9fafb',
-                border: '1px solid var(--toss-border)',
-                borderRadius: 8,
-                fontSize: 14,
-                color: 'var(--toss-text-tertiary)',
-              }}>
-                {editingUser.username}
-              </div>
+            <div className={styles.fieldGroup}>
+              <label className={styles.fieldLabel}>계정 이메일</label>
+              <div className={styles.readonlyField}>{editingUser.username}</div>
             </div>
 
             {/* 담당자명 */}
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--toss-text-secondary)', marginBottom: 6 }}>
-                담당자명
-              </label>
+            <div className={styles.fieldGroup}>
+              <label className={styles.fieldLabel}>담당자명</label>
               <input
                 value={editState.display_name}
                 onChange={e => setEditState(s => s ? { ...s, display_name: e.target.value } : s)}
                 placeholder="담당자명 입력"
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  border: '1px solid var(--toss-border)',
-                  borderRadius: 8,
-                  fontSize: 14,
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                }}
+                className={styles.input}
               />
             </div>
 
             {/* ref 코드 */}
-            <div style={{ marginBottom: 28 }}>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--toss-text-secondary)', marginBottom: 6 }}>
-                ref 코드
-              </label>
+            <div className={styles.fieldGroupLast}>
+              <label className={styles.fieldLabel}>ref 코드</label>
               <input
                 value={editState.ref_code}
                 onChange={e => setEditState(s => s ? { ...s, ref_code: e.target.value } : s)}
                 placeholder="ref 코드 입력"
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  border: '1px solid var(--toss-border)',
-                  borderRadius: 8,
-                  fontSize: 14,
-                  fontFamily: 'monospace',
-                  outline: 'none',
-                  boxSizing: 'border-box',
-                }}
+                className={`${styles.input} ${styles.inputMono}`}
               />
             </div>
 
             {/* 버튼 */}
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button
-                onClick={handleEditCancel}
-                style={{
-                  flex: 1,
-                  padding: '11px 0',
-                  fontSize: 14,
-                  fontWeight: 600,
-                  border: '1px solid var(--toss-border)',
-                  borderRadius: 8,
-                  background: '#fff',
-                  color: 'var(--toss-text-secondary)',
-                  cursor: 'pointer',
-                }}
-              >
+            <div className={styles.btnRow}>
+              <button onClick={handleEditCancel} className={styles.cancelBtn}>
                 취소
               </button>
-              <button
-                onClick={handleEditSave}
-                disabled={saving}
-                style={{
-                  flex: 1,
-                  padding: '11px 0',
-                  fontSize: 14,
-                  fontWeight: 600,
-                  border: 'none',
-                  borderRadius: 8,
-                  background: saving ? '#93c5fd' : '#3182f6',
-                  color: '#fff',
-                  cursor: saving ? 'default' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 6,
-                }}
-              >
+              <button onClick={handleEditSave} disabled={saving} className={styles.submitBtn}>
                 <Save size={15} />
                 {saving ? '저장 중...' : '저장'}
               </button>

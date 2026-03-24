@@ -143,6 +143,12 @@ function GoodNameCell({ goodName, amount, orderId }: { goodName: string | null; 
   )
 }
 
+const PLAN_OPTIONS = [
+  { key: 'basic', label: '베이직', amount: 9900 },
+  { key: 'standard', label: '스탠다드', amount: 19900 },
+  { key: 'premium', label: '프리미엄', amount: 29900 },
+]
+
 function CustomStatusBadge({ status }: { status: string }) {
   if (status === 'pending') return <span className={`${styles.badge} ${styles.badgeCancelScheduled}`}>대기중</span>
   if (status === 'paid') return <span className={`${styles.badge} ${styles.badgeActive}`}>완료</span>
@@ -465,6 +471,12 @@ export default function AllcarePage() {
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null)
   const [newStatus, setNewStatus] = useState<SubStatus>('cancelled')
 
+  // 플랜 변경 모달
+  const [showPlanModal, setShowPlanModal] = useState(false)
+  const [planUser, setPlanUser] = useState<UserData | null>(null)
+  const [newPlan, setNewPlan] = useState<string>('basic')
+  const [planLoading, setPlanLoading] = useState(false)
+
   // 열람권 확인 팝업
   const [accessConfirm, setAccessConfirm] = useState<{ user: UserData; newAccess: boolean } | null>(null)
 
@@ -557,6 +569,38 @@ export default function AllcarePage() {
   useEffect(() => {
     if (activeTab === 'custom') fetchCustoms()
   }, [activeTab, fetchCustoms])
+
+  // ─── 플랜 변경 모달 ───────────────────────────────────────────────────────
+  const openPlanModal = (user: UserData) => {
+    setPlanUser(user)
+    const matched = PLAN_OPTIONS.find(p => p.label === user.plan)
+    setNewPlan(matched?.key ?? 'basic')
+    setShowPlanModal(true)
+  }
+
+  const handlePlanChange = async () => {
+    if (!planUser) return
+    setPlanLoading(true)
+    try {
+      const res = await fetch('/api/allcare/subscription/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: planUser.user_id, plan: newPlan }),
+      })
+      if (res.ok) {
+        setShowPlanModal(false)
+        fetchUsers()
+        showToast('플랜이 변경되었습니다.')
+      } else {
+        const d = await res.json()
+        showToast(d.error || '변경에 실패했습니다.')
+      }
+    } catch {
+      showToast('오류가 발생했습니다.')
+    } finally {
+      setPlanLoading(false)
+    }
+  }
 
   // ─── 상태변경 모달 ────────────────────────────────────────────────────────
   const openModal = (user: UserData) => {
@@ -829,8 +873,8 @@ export default function AllcarePage() {
                         </td>
                         <td>
                           <div className={styles.actionBtns}>
-                            <button className={styles.actionBtn} onClick={() => openModal(u)}>
-                              상태변경
+                            <button className={styles.actionBtnPlan} onClick={() => openPlanModal(u)}>
+                              플랜변경
                             </button>
                             <button className={styles.actionBtnSecondary} onClick={() => openCpModal(u)}>
                               단과반 요청
@@ -953,6 +997,42 @@ export default function AllcarePage() {
                 {modalLoading ? '변경 중...' : '변경하기'}
               </button>
               <button className={styles.modalCancelFull} onClick={() => setShowModal(false)}>취소</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 플랜 변경 모달 */}
+      {showPlanModal && planUser && (
+        <div className={styles.modalOverlay} onClick={() => setShowPlanModal(false)}>
+          <div className={styles.modal} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>플랜 변경</h3>
+              <button className={styles.modalClose} onClick={() => setShowPlanModal(false)}>✕</button>
+            </div>
+            <div className={styles.modalUserChip}>{planUser.name} · {planUser.email}</div>
+            <div className={styles.modalOptions}>
+              {PLAN_OPTIONS.map(opt => (
+                <label key={opt.key} className={`${styles.modalOptionCard} ${newPlan === opt.key ? styles.modalOptionCardActive : ''}`}>
+                  <input
+                    type="radio"
+                    name="plan"
+                    value={opt.key}
+                    checked={newPlan === opt.key}
+                    onChange={() => setNewPlan(opt.key)}
+                  />
+                  <div className={styles.modalOptionText}>
+                    <div className={styles.modalOptionLabel}>{opt.label}</div>
+                    <div className={styles.modalOptionDesc}>월 {opt.amount.toLocaleString()}원</div>
+                  </div>
+                </label>
+              ))}
+            </div>
+            <div className={styles.modalActionsCol}>
+              <button className={styles.modalConfirmFull} onClick={handlePlanChange} disabled={planLoading}>
+                {planLoading ? '변경 중...' : '변경하기'}
+              </button>
+              <button className={styles.modalCancelFull} onClick={() => setShowPlanModal(false)}>취소</button>
             </div>
           </div>
         </div>

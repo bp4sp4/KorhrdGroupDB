@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-03-24T03:20:31.475Z",
+  "lastUpdated": "2026-03-24T09:09:23.955Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -52,7 +52,11 @@
     "custom",
     "complete",
     "success",
-    "timeline"
+    "timeline",
+    "change-plan",
+    "mypage",
+    "matching",
+    "signup"
   ],
   "primaryFeature": "supabase",
   "features": {
@@ -78,9 +82,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:18:14.828Z",
-        "lastUpdated": "2026-03-19T02:36:29.448Z"
+        "lastUpdated": "2026-03-24T09:07:41.896Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(auth)/login/page.tsx"
+      "lastFile": "/Users/korhrd/Documents/GitHub/allcare/src/app/api/auth/login/route.ts"
     },
     "(dashboard)": {
       "phase": "do",
@@ -351,9 +355,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-18T01:26:30.722Z",
-        "lastUpdated": "2026-03-19T09:52:22.835Z"
+        "lastUpdated": "2026-03-24T07:27:17.909Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/ref-manage/route.ts"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/ref-manage/page.tsx"
     },
     "trash": {
       "phase": "do",
@@ -455,7 +459,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-19T03:56:50.293Z",
-        "lastUpdated": "2026-03-23T07:47:20.441Z"
+        "lastUpdated": "2026-03-24T08:58:32.343Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/allcare/page.tsx"
     },
@@ -468,7 +472,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-19T04:59:27.989Z",
-        "lastUpdated": "2026-03-20T06:20:32.872Z"
+        "lastUpdated": "2026-03-24T08:55:43.338Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/allcare/subscription/update/route.ts"
     },
@@ -494,7 +498,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-19T05:10:34.137Z",
-        "lastUpdated": "2026-03-23T05:17:12.208Z"
+        "lastUpdated": "2026-03-24T06:52:02.371Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/allcare/src/app/api/payments/webhook/route.ts"
     },
@@ -718,6 +722,58 @@
         "lastUpdated": "2026-03-24T02:40:18.075Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/timeline/route.ts"
+    },
+    "change-plan": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-03-24T09:01:30.019Z",
+        "lastUpdated": "2026-03-24T09:01:30.019Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/allcare/src/app/api/subscription/change-plan/route.ts"
+    },
+    "mypage": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-03-24T09:01:42.303Z",
+        "lastUpdated": "2026-03-24T09:09:23.954Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/allcare/src/app/mypage/page.tsx"
+    },
+    "matching": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-03-24T09:07:07.145Z",
+        "lastUpdated": "2026-03-24T09:07:19.145Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/allcare/src/app/matching/page.tsx"
+    },
+    "signup": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-03-24T09:07:25.082Z",
+        "lastUpdated": "2026-03-24T09:07:25.082Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/allcare/src/app/api/auth/signup/route.ts"
     }
   },
   "pipeline": {
@@ -728,7 +784,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-03-24T03:20:31.475Z"
+    "lastActivity": "2026-03-24T09:09:23.955Z"
   },
   "history": [
     {
@@ -8690,6 +8746,126 @@
     {
       "timestamp": "2026-03-24T03:20:31.475Z",
       "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T06:52:02.371Z",
+      "feature": "webhook",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T07:27:17.909Z",
+      "feature": "ref-manage",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T08:55:43.339Z",
+      "feature": "update",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T08:55:59.931Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T08:56:07.372Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T08:56:14.642Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T08:56:25.001Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T08:56:43.675Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T08:56:48.368Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T08:57:51.696Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T08:58:32.343Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T09:01:30.019Z",
+      "feature": "change-plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T09:01:42.303Z",
+      "feature": "mypage",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T09:02:13.465Z",
+      "feature": "mypage",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T09:07:07.145Z",
+      "feature": "matching",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T09:07:14.972Z",
+      "feature": "matching",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T09:07:19.145Z",
+      "feature": "matching",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T09:07:25.082Z",
+      "feature": "signup",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T09:07:41.896Z",
+      "feature": "login",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-24T09:09:23.954Z",
+      "feature": "mypage",
       "phase": "do",
       "action": "updated"
     }
