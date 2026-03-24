@@ -514,11 +514,27 @@ function DetailPanel({
     const res = await fetch(url)
     const blob = await res.blob()
     const objectUrl = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = objectUrl
-    a.download = app.photo_url.split('/').pop() ?? 'photo'
-    a.click()
+    const img = new Image()
+    img.src = objectUrl
+    await new Promise(resolve => { img.onload = resolve })
+    const canvas = document.createElement('canvas')
+    canvas.width = img.naturalWidth
+    canvas.height = img.naturalHeight
+    const ctx = canvas.getContext('2d')!
+    ctx.fillStyle = '#fff'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    ctx.drawImage(img, 0, 0)
     URL.revokeObjectURL(objectUrl)
+    canvas.toBlob(jpgBlob => {
+      if (!jpgBlob) return
+      const jpgUrl = URL.createObjectURL(jpgBlob)
+      const a = document.createElement('a')
+      a.href = jpgUrl
+      const baseName = (app.photo_url!.split('/').pop() ?? 'photo').replace(/\.[^/.]+$/, '')
+      a.download = `${baseName}.jpg`
+      a.click()
+      URL.revokeObjectURL(jpgUrl)
+    }, 'image/jpeg', 0.92)
   }
 
   useEffect(() => {

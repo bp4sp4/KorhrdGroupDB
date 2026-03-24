@@ -981,6 +981,25 @@
   border-bottom: 1px solid var(--toss-border);
 }
 
+.inlineContactInput {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  border: 1.5px solid var(--toss-blue);
+  border-radius: 6px;
+  padding: 3px 7px;
+  outline: none;
+  width: 120px;
+  font-family: inherit;
+  color: #191f28;
+}
+
+.inlineEditHint {
+  margin-left: 4px;
+  font-size: 11px;
+  color: #b0b8c1;
+  opacity: 0.7;
+}
+
 .tdTabular {
   padding: 14px 10px;
   font-size: 14px;
@@ -1859,6 +1878,160 @@
 .managerAssignConfirm:disabled {
   opacity: 0.4;
   cursor: default;
+}
+
+/* ─── 서브패널 추가 입력 ─────────────────────────────────────────────────── */
+.subPanelAddBtn {
+  padding: 3px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--toss-blue);
+  background: #EBF3FE;
+  border: 1px solid #bfdbfe;
+  cursor: pointer;
+  transition: background 0.12s;
+  flex-shrink: 0;
+}
+
+.subPanelAddBtn:hover {
+  background: #dbeafe;
+}
+
+.subPanelAddInput {
+  width: 100px;
+  height: 26px;
+  padding: 0 8px;
+  font-size: 12px;
+  border: 1.5px solid var(--toss-blue);
+  border-radius: 6px;
+  outline: none;
+  color: var(--toss-text-primary);
+  font-family: inherit;
+}
+
+.subPanelAddConfirm {
+  height: 26px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 6px;
+  background: var(--toss-blue);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ─── 유입경로 일괄 배정 드롭다운 ───────────────────────────────────────── */
+.sourceAssignDropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  background: #fff;
+  border: 1px solid var(--toss-border);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.10);
+  padding: 12px;
+  z-index: 200;
+  min-width: 300px;
+}
+
+.sourceAssignLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--toss-text-tertiary);
+  margin-bottom: 6px;
+}
+
+.sourceAssignMajorRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.sourceAssignSubPanel {
+  padding: 8px 10px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.sourceAssignConfirmRow {
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid var(--toss-border);
+  padding-top: 8px;
+  margin-top: 4px;
+}
+
+.sourceAssignConfirm {
+  padding: 6px 18px;
+  border: none;
+  border-radius: 8px;
+  background: var(--toss-blue);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.sourceAssignConfirm:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* ─── 커스텀 항목 호버 삭제 버튼 ───────────────────────────────────────── */
+.customItemWrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.customItemDeleteBtn {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  line-height: 1;
+  z-index: 1;
+  padding: 0;
+}
+
+.customItemWrap:hover .customItemDeleteBtn {
+  display: flex;
+}
+
+/* ─── 일괄 배정 중분류 입력 ─────────────────────────────────────────────── */
+.sourceAssignMinorInput {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1.5px solid var(--toss-border);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--toss-text-primary);
+  background: #fff;
+  outline: none;
+  margin-top: 8px;
+  font-family: inherit;
+}
+
+.sourceAssignMinorInput:focus {
+  border-color: var(--toss-blue);
 }
 
 /* ─── 메인 페이지 ────────────────────────────────────────────────────────── */

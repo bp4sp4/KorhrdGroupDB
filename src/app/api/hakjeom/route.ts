@@ -166,6 +166,17 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ message: 'Bulk manager updated' })
     }
 
+    // 일괄 유입경로 배정
+    if (Array.isArray(ids) && ids.length > 0 && click_source !== undefined) {
+      const { error } = await supabaseAdmin
+        .from(TABLE)
+        .update({ click_source: click_source || null })
+        .in('id', ids)
+      if (error) return NextResponse.json({ error: 'Failed to bulk update click_source' }, { status: 500 })
+      await logAction({ user_id: user.id, user_email: user.email, action: 'update', resource: '학점은행제 상담', resource_id: ids.join(','), detail: `${ids.length}건 유입경로 일괄 배정: ${click_source || '없음'}`, meta: { ids, click_source } })
+      return NextResponse.json({ message: 'Bulk click_source updated' })
+    }
+
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }

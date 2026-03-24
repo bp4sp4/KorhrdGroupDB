@@ -243,11 +243,16 @@ function parseClickSource(source: string | null): { major: string; minor: string
   const rawMinor = stripped.slice(idx + 1);
   const cleanedMinor = rawMinor.replace(/\(확인필요\)/g, '');
   const resolvedName = CAFE_NAMES[cleanedMinor] ?? cleanedMinor;
+  let customCafes: string[] = [];
+  if (typeof window !== 'undefined') {
+    try { customCafes = JSON.parse(localStorage.getItem('hakjeom_custom_cafes') ?? '[]'); } catch {}
+  }
   const isUnknownMamcafe =
     major === '맘카페' &&
     cleanedMinor !== '확인필요' &&
     !KNOWN_CAFE_IDS.has(cleanedMinor) &&
-    !KNOWN_CAFE_KOREAN.has(cleanedMinor);
+    !KNOWN_CAFE_KOREAN.has(cleanedMinor) &&
+    !customCafes.includes(cleanedMinor);
   const minor = isUnknownMamcafe ? `${resolvedName}(확인필요)` : resolvedName;
   return { major, minor, needsCheck: isUnknownMamcafe || rawMinor === '확인필요' };
 }
@@ -483,9 +488,25 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic' }: H
   const [editSourceMinor, setEditSourceMinor] = useState(() => initSource(item.click_source).minor);
   const [editResidence, setEditResidence] = useState(item.residence ?? '');
   const [editSubjectCost, setEditSubjectCost] = useState(item.subject_cost ? String(item.subject_cost) : '');
+  const [editContact, setEditContact] = useState(item.contact ?? '');
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'basic' | 'info' | 'memo'>(initialTab);
   const [memoCount, setMemoCount] = useState<number | null>(null);
+  const [customCafes, setCustomCafes] = useState<string[]>([]);
+  const [customDanggeun, setCustomDanggeun] = useState<string[]>([]);
+  const [cafeAddInput, setCafeAddInput] = useState('');
+  const [showCafeAdd, setShowCafeAdd] = useState(false);
+  const [danggeunAddInput, setDanggeunAddInput] = useState('');
+  const [showDanggeunAdd, setShowDanggeunAdd] = useState(false);
+
+  useEffect(() => {
+    try {
+      const cafes = JSON.parse(localStorage.getItem('hakjeom_custom_cafes') ?? '[]');
+      setCustomCafes(Array.isArray(cafes) ? cafes : []);
+      const danggeun = JSON.parse(localStorage.getItem('hakjeom_custom_danggeun') ?? '[]');
+      setCustomDanggeun(Array.isArray(danggeun) ? danggeun : []);
+    } catch {}
+  }, []);
 
   const builtClickSource = editSourceMajor
     ? editSourceMinor ? `${editSourceMajor}_${editSourceMinor}` : editSourceMajor
@@ -506,6 +527,7 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic' }: H
     setEditSourceMinor(minor);
     setEditResidence(item.residence ?? '');
     setEditSubjectCost(item.subject_cost ? String(item.subject_cost) : '');
+    setEditContact(item.contact ?? '');
   }, [item.id]);
 
   const toggleReason = (val: string) => {
@@ -530,6 +552,42 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic' }: H
     setEditSourceMinor(prev => prev === cafeName ? '' : cafeName);
   };
 
+  const handleAddCafe = () => {
+    const name = cafeAddInput.trim();
+    if (!name || CAFE_NAME_LIST.includes(name) || customCafes.includes(name)) return;
+    const next = [...customCafes, name];
+    setCustomCafes(next);
+    try { localStorage.setItem('hakjeom_custom_cafes', JSON.stringify(next)); } catch {}
+    setEditSourceMinor(name);
+    setCafeAddInput('');
+    setShowCafeAdd(false);
+  };
+
+  const handleAddDanggeun = () => {
+    const name = danggeunAddInput.trim();
+    if (!name || customDanggeun.includes(name)) return;
+    const next = [...customDanggeun, name];
+    setCustomDanggeun(next);
+    try { localStorage.setItem('hakjeom_custom_danggeun', JSON.stringify(next)); } catch {}
+    setEditSourceMinor(name);
+    setDanggeunAddInput('');
+    setShowDanggeunAdd(false);
+  };
+
+  const handleDeleteCafe = (name: string) => {
+    const next = customCafes.filter(c => c !== name);
+    setCustomCafes(next);
+    try { localStorage.setItem('hakjeom_custom_cafes', JSON.stringify(next)); } catch {}
+    if (editSourceMinor === name) setEditSourceMinor('');
+  };
+
+  const handleDeleteDanggeun = (name: string) => {
+    const next = customDanggeun.filter(c => c !== name);
+    setCustomDanggeun(next);
+    try { localStorage.setItem('hakjeom_custom_danggeun', JSON.stringify(next)); } catch {}
+    if (editSourceMinor === name) setEditSourceMinor('');
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -546,6 +604,7 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic' }: H
         click_source: builtClickSource || null,
         residence: editResidence || null,
         subject_cost: editSubjectCost ? parseInt(editSubjectCost.replace(/,/g, ''), 10) || null : null,
+        contact: editContact || item.contact,
       });
       onClose();
     } finally {
@@ -629,6 +688,64 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic' }: H
                         {cafeName}
                       </button>
                     ))}
+                    {customCafes.map(cafeName => (
+                      <span key={cafeName} className={styles.customItemWrap}>
+                        <button
+                          type="button"
+                          onClick={() => handleMinorSelect(cafeName)}
+                          className={editSourceMinor === cafeName ? styles.tagBtnSmActive : styles.tagBtnSm}
+                        >
+                          {cafeName}
+                        </button>
+                        <button type="button" className={styles.customItemDeleteBtn} onClick={() => handleDeleteCafe(cafeName)}>✕</button>
+                      </span>
+                    ))}
+                    {showCafeAdd ? (
+                      <>
+                        <input
+                          className={styles.subPanelAddInput}
+                          value={cafeAddInput}
+                          onChange={e => setCafeAddInput(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter') handleAddCafe(); if (e.key === 'Escape') setShowCafeAdd(false); }}
+                          placeholder="카페 이름"
+                          autoFocus
+                        />
+                        <button type="button" className={styles.subPanelAddConfirm} onClick={handleAddCafe}>추가</button>
+                      </>
+                    ) : (
+                      <button type="button" className={styles.subPanelAddBtn} onClick={() => setShowCafeAdd(true)}>+ 카페</button>
+                    )}
+                  </div>
+                )}
+                {editSourceMajor === '당근' && (
+                  <div className={styles.clickSourceSubPanel}>
+                    {customDanggeun.map(area => (
+                      <span key={area} className={styles.customItemWrap}>
+                        <button
+                          type="button"
+                          onClick={() => handleMinorSelect(area)}
+                          className={editSourceMinor === area ? styles.tagBtnSmActive : styles.tagBtnSm}
+                        >
+                          {area}
+                        </button>
+                        <button type="button" className={styles.customItemDeleteBtn} onClick={() => handleDeleteDanggeun(area)}>✕</button>
+                      </span>
+                    ))}
+                    {showDanggeunAdd ? (
+                      <>
+                        <input
+                          className={styles.subPanelAddInput}
+                          value={danggeunAddInput}
+                          onChange={e => setDanggeunAddInput(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter') handleAddDanggeun(); if (e.key === 'Escape') setShowDanggeunAdd(false); }}
+                          placeholder="지역 이름"
+                          autoFocus
+                        />
+                        <button type="button" className={styles.subPanelAddConfirm} onClick={handleAddDanggeun}>추가</button>
+                      </>
+                    ) : (
+                      <button type="button" className={styles.subPanelAddBtn} onClick={() => setShowDanggeunAdd(true)}>+ 지역</button>
+                    )}
                   </div>
                 )}
                 {builtClickSource && (
@@ -683,6 +800,18 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic' }: H
                   onChange={e => setEditSubjectCost(e.target.value)}
                   placeholder="예) 580000"
                   type="number"
+                  className={`${styles.input} ${styles.inputFull}`}
+                />
+              </div>
+
+              {/* 연락처 */}
+              <div className={styles.detailFieldRow}>
+                <span className={styles.detailFieldLabel}>연락처</span>
+                <input
+                  value={editContact}
+                  onChange={e => setEditContact(formatPhoneNumber(e.target.value))}
+                  placeholder="010-0000-0000"
+                  inputMode="tel"
                   className={`${styles.input} ${styles.inputFull}`}
                 />
               </div>
@@ -832,6 +961,57 @@ function HakjeomAddModal({ onClose, onSaved, uniqueManagers = [] }: HakjeomAddMo
   const [showManagerInput, setShowManagerInput] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
   const contactRef = useRef<HTMLInputElement>(null);
+  const [modalCustomCafes, setModalCustomCafes] = useState<string[]>([]);
+  const [modalCustomDanggeun, setModalCustomDanggeun] = useState<string[]>([]);
+  const [modalCafeAddInput, setModalCafeAddInput] = useState('');
+  const [modalShowCafeAdd, setModalShowCafeAdd] = useState(false);
+  const [modalDanggeunAddInput, setModalDanggeunAddInput] = useState('');
+  const [modalShowDanggeunAdd, setModalShowDanggeunAdd] = useState(false);
+
+  useEffect(() => {
+    try {
+      const cafes = JSON.parse(localStorage.getItem('hakjeom_custom_cafes') ?? '[]');
+      setModalCustomCafes(Array.isArray(cafes) ? cafes : []);
+      const danggeun = JSON.parse(localStorage.getItem('hakjeom_custom_danggeun') ?? '[]');
+      setModalCustomDanggeun(Array.isArray(danggeun) ? danggeun : []);
+    } catch {}
+  }, []);
+
+  const handleModalAddCafe = () => {
+    const name = modalCafeAddInput.trim();
+    if (!name || CAFE_NAME_LIST.includes(name) || modalCustomCafes.includes(name)) return;
+    const next = [...modalCustomCafes, name];
+    setModalCustomCafes(next);
+    try { localStorage.setItem('hakjeom_custom_cafes', JSON.stringify(next)); } catch {}
+    setForm(p => ({ ...p, sourceMinor: name }));
+    setModalCafeAddInput('');
+    setModalShowCafeAdd(false);
+  };
+
+  const handleModalAddDanggeun = () => {
+    const name = modalDanggeunAddInput.trim();
+    if (!name || modalCustomDanggeun.includes(name)) return;
+    const next = [...modalCustomDanggeun, name];
+    setModalCustomDanggeun(next);
+    try { localStorage.setItem('hakjeom_custom_danggeun', JSON.stringify(next)); } catch {}
+    setForm(p => ({ ...p, sourceMinor: name }));
+    setModalDanggeunAddInput('');
+    setModalShowDanggeunAdd(false);
+  };
+
+  const handleModalDeleteCafe = (name: string) => {
+    const next = modalCustomCafes.filter(c => c !== name);
+    setModalCustomCafes(next);
+    try { localStorage.setItem('hakjeom_custom_cafes', JSON.stringify(next)); } catch {}
+    if (form.sourceMinor === name) setForm(p => ({ ...p, sourceMinor: '' }));
+  };
+
+  const handleModalDeleteDanggeun = (name: string) => {
+    const next = modalCustomDanggeun.filter(c => c !== name);
+    setModalCustomDanggeun(next);
+    try { localStorage.setItem('hakjeom_custom_danggeun', JSON.stringify(next)); } catch {}
+    if (form.sourceMinor === name) setForm(p => ({ ...p, sourceMinor: '' }));
+  };
 
   const TOTAL_STEPS = 3;
 
@@ -1093,6 +1273,64 @@ function HakjeomAddModal({ onClose, onSaved, uniqueManagers = [] }: HakjeomAddMo
                         {cafeName}
                       </button>
                     ))}
+                    {modalCustomCafes.map(cafeName => (
+                      <span key={cafeName} className={styles.customItemWrap}>
+                        <button
+                          type="button"
+                          onClick={() => setForm(p => ({ ...p, sourceMinor: p.sourceMinor === cafeName ? '' : cafeName }))}
+                          className={form.sourceMinor === cafeName ? styles.tagBtnSmActive : styles.tagBtnSm}
+                        >
+                          {cafeName}
+                        </button>
+                        <button type="button" className={styles.customItemDeleteBtn} onClick={() => handleModalDeleteCafe(cafeName)}>✕</button>
+                      </span>
+                    ))}
+                    {modalShowCafeAdd ? (
+                      <>
+                        <input
+                          className={styles.subPanelAddInput}
+                          value={modalCafeAddInput}
+                          onChange={e => setModalCafeAddInput(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter') handleModalAddCafe(); if (e.key === 'Escape') setModalShowCafeAdd(false); }}
+                          placeholder="카페 이름"
+                          autoFocus
+                        />
+                        <button type="button" className={styles.subPanelAddConfirm} onClick={handleModalAddCafe}>추가</button>
+                      </>
+                    ) : (
+                      <button type="button" className={styles.subPanelAddBtn} onClick={() => setModalShowCafeAdd(true)}>+ 카페</button>
+                    )}
+                  </div>
+                )}
+                {form.sourceMajor === '당근' && (
+                  <div className={styles.clickSourceSubPanel} style={{ marginTop: 8 }}>
+                    {modalCustomDanggeun.map(area => (
+                      <span key={area} className={styles.customItemWrap}>
+                        <button
+                          type="button"
+                          onClick={() => setForm(p => ({ ...p, sourceMinor: p.sourceMinor === area ? '' : area }))}
+                          className={form.sourceMinor === area ? styles.tagBtnSmActive : styles.tagBtnSm}
+                        >
+                          {area}
+                        </button>
+                        <button type="button" className={styles.customItemDeleteBtn} onClick={() => handleModalDeleteDanggeun(area)}>✕</button>
+                      </span>
+                    ))}
+                    {modalShowDanggeunAdd ? (
+                      <>
+                        <input
+                          className={styles.subPanelAddInput}
+                          value={modalDanggeunAddInput}
+                          onChange={e => setModalDanggeunAddInput(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter') handleModalAddDanggeun(); if (e.key === 'Escape') setModalShowDanggeunAdd(false); }}
+                          placeholder="지역 이름"
+                          autoFocus
+                        />
+                        <button type="button" className={styles.subPanelAddConfirm} onClick={handleModalAddDanggeun}>추가</button>
+                      </>
+                    ) : (
+                      <button type="button" className={styles.subPanelAddBtn} onClick={() => setModalShowDanggeunAdd(true)}>+ 지역</button>
+                    )}
                   </div>
                 )}
                 {form.sourceMajor && (
@@ -1297,7 +1535,24 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
   const [openFilterColumn, setOpenFilterColumn] = useState<string | null>(null);
   const [filterDropdownPos, setFilterDropdownPos] = useState({ top: 0, left: 0 });
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [inlineContact, setInlineContact] = useState<{ id: number; value: string } | null>(null);
   const [showManagerAssign, setShowManagerAssign] = useState(false);
+  const [showSourceAssign, setShowSourceAssign] = useState(false);
+  const [bulkSourceMajor, setBulkSourceMajor] = useState('');
+  const [bulkSourceMinor, setBulkSourceMinor] = useState('');
+  const [assigningSource, setAssigningSource] = useState(false);
+  const sourceAssignRef = useRef<HTMLDivElement>(null);
+  const [bulkCustomCafes, setBulkCustomCafes] = useState<string[]>([]);
+  const [bulkCustomDanggeun, setBulkCustomDanggeun] = useState<string[]>([]);
+
+  useEffect(() => {
+    try {
+      const cafes = JSON.parse(localStorage.getItem('hakjeom_custom_cafes') ?? '[]');
+      setBulkCustomCafes(Array.isArray(cafes) ? cafes : []);
+      const danggeun = JSON.parse(localStorage.getItem('hakjeom_custom_danggeun') ?? '[]');
+      setBulkCustomDanggeun(Array.isArray(danggeun) ? danggeun : []);
+    } catch {}
+  }, []);
 
   useEffect(() => { setSelectedIds([]); }, [currentPage]);
   const [assigningManager, setAssigningManager] = useState(false);
@@ -1309,6 +1564,9 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
     const handler = (e: MouseEvent) => {
       if (managerAssignRef.current && !managerAssignRef.current.contains(e.target as Node)) {
         setShowManagerAssign(false);
+      }
+      if (sourceAssignRef.current && !sourceAssignRef.current.contains(e.target as Node)) {
+        setShowSourceAssign(false);
       }
     };
     document.addEventListener('mousedown', handler);
@@ -1413,6 +1671,52 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
     setTimeout(() => setToastVisible(false), 2500);
   };
 
+  const handleInlineContactSave = async () => {
+    if (!inlineContact) return;
+    const { id, value } = inlineContact;
+    const orig = items.find(i => i.id === id);
+    if (!orig || orig.contact === value) { setInlineContact(null); return; }
+    setInlineContact(null);
+    await fetch('/api/hakjeom', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, contact: value }),
+    });
+    await fetchData(true);
+  };
+
+  const handleBulkAssignSource = async () => {
+    if (selectedIds.length === 0 || !bulkSourceMajor) return;
+    const click_source = bulkSourceMinor ? `${bulkSourceMajor}_${bulkSourceMinor}` : bulkSourceMajor;
+    setAssigningSource(true);
+    setShowSourceAssign(false);
+    await fetch('/api/hakjeom', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: selectedIds, click_source }),
+    });
+    setSelectedIds([]);
+    setBulkSourceMajor('');
+    setBulkSourceMinor('');
+    await fetchData();
+    setAssigningSource(false);
+    setToastVisible(true);
+    setTimeout(() => setToastVisible(false), 2500);
+  };
+
+  const handleBulkDeleteCafe = (name: string) => {
+    const next = bulkCustomCafes.filter(c => c !== name);
+    setBulkCustomCafes(next);
+    try { localStorage.setItem('hakjeom_custom_cafes', JSON.stringify(next)); } catch {}
+    if (bulkSourceMinor === name) setBulkSourceMinor('');
+  };
+
+  const handleBulkDeleteDanggeun = (name: string) => {
+    const next = bulkCustomDanggeun.filter(c => c !== name);
+    setBulkCustomDanggeun(next);
+    try { localStorage.setItem('hakjeom_custom_danggeun', JSON.stringify(next)); } catch {}
+    if (bulkSourceMinor === name) setBulkSourceMinor('');
+  };
 
   // 필터링
   const uniqueManagers = Array.from(new Set(items.map(c => c.manager).filter(Boolean))) as string[];
@@ -1577,10 +1881,95 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
                     </div>
                   )}
                 </div>
+                <div ref={sourceAssignRef} style={{ position: 'relative' }}>
+                  <button
+                    onClick={() => { setShowSourceAssign(v => !v); setBulkSourceMajor(''); setBulkSourceMinor(''); }}
+                    disabled={assigningSource}
+                    className={styles.btnSecondary}
+                  >
+                    {assigningSource ? '배정 중...' : '유입경로 배정 ▾'}
+                  </button>
+                  {showSourceAssign && (
+                    <div className={styles.sourceAssignDropdown}>
+                      <p className={styles.sourceAssignLabel}>대분류 선택</p>
+                      <div className={styles.sourceAssignMajorRow}>
+                        {SOURCE_MAJORS.map(m => (
+                          <button
+                            key={m}
+                            type="button"
+                            className={bulkSourceMajor === m ? styles.tagBtnSmActive : styles.tagBtnSm}
+                            onClick={() => { setBulkSourceMajor(prev => prev === m ? '' : m); setBulkSourceMinor(''); }}
+                          >
+                            {m}
+                          </button>
+                        ))}
+                      </div>
+                      {bulkSourceMajor === '맘카페' && (
+                        <div className={styles.sourceAssignSubPanel}>
+                          {CAFE_NAME_LIST.map(name => (
+                            <button
+                              key={name}
+                              type="button"
+                              className={bulkSourceMinor === name ? styles.tagBtnSmActive : styles.tagBtnSm}
+                              onClick={() => setBulkSourceMinor(prev => prev === name ? '' : name)}
+                            >
+                              {name}
+                            </button>
+                          ))}
+                          {bulkCustomCafes.map(name => (
+                            <span key={name} className={styles.customItemWrap}>
+                              <button
+                                type="button"
+                                className={bulkSourceMinor === name ? styles.tagBtnSmActive : styles.tagBtnSm}
+                                onClick={() => setBulkSourceMinor(prev => prev === name ? '' : name)}
+                              >
+                                {name}
+                              </button>
+                              <button type="button" className={styles.customItemDeleteBtn} onClick={() => handleBulkDeleteCafe(name)}>✕</button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {bulkSourceMajor === '당근' && bulkCustomDanggeun.length > 0 && (
+                        <div className={styles.sourceAssignSubPanel}>
+                          {bulkCustomDanggeun.map(name => (
+                            <span key={name} className={styles.customItemWrap}>
+                              <button
+                                type="button"
+                                className={bulkSourceMinor === name ? styles.tagBtnSmActive : styles.tagBtnSm}
+                                onClick={() => setBulkSourceMinor(prev => prev === name ? '' : name)}
+                              >
+                                {name}
+                              </button>
+                              <button type="button" className={styles.customItemDeleteBtn} onClick={() => handleBulkDeleteDanggeun(name)}>✕</button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {bulkSourceMajor && (
+                        <input
+                          className={styles.sourceAssignMinorInput}
+                          placeholder="중분류 직접 입력 (선택)"
+                          value={bulkSourceMinor}
+                          onChange={e => setBulkSourceMinor(e.target.value)}
+                        />
+                      )}
+                      <div className={styles.sourceAssignConfirmRow}>
+                        <button
+                          className={styles.sourceAssignConfirm}
+                          disabled={!bulkSourceMajor}
+                          onClick={handleBulkAssignSource}
+                        >
+                          {bulkSourceMajor ? `"${bulkSourceMajor}${bulkSourceMinor ? ` > ${bulkSourceMinor}` : ''}" 배정` : '대분류를 선택하세요'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
                 <button onClick={handleBulkDelete} disabled={deleting} className={styles.btnDanger}>
                   {deleting ? '삭제 중...' : '선택 삭제'}
                 </button>
-                <button onClick={() => { setSelectedIds([]); setShowManagerAssign(false); }} className={styles.btnSecondary}>선택 해제</button>
+                <button onClick={() => { setSelectedIds([]); setShowManagerAssign(false); setShowSourceAssign(false); }} className={styles.btnSecondary}>선택 해제</button>
               </>
             )}
           </div>
@@ -1678,7 +2067,27 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
                     <td className={styles.tdSecondary}>{parseClickSource(item.click_source).major || '-'}</td>
                     <td className={styles.tdSecondary} style={parseClickSource(item.click_source).needsCheck ? { color: '#ef4444', fontWeight: 600 } : undefined}>{parseClickSource(item.click_source).minor || '-'}</td>
                     <td className={styles.tdBold}><Highlight text={item.name} query={searchText} /></td>
-                    <td className={styles.tdTabular}><Highlight text={item.contact} query={searchText} /></td>
+                    <td
+                      className={styles.tdTabular}
+                      onClick={e => { e.stopPropagation(); if (selectedItem?.id === item.id) setInlineContact({ id: item.id, value: item.contact }); }}
+                    >
+                      {inlineContact?.id === item.id ? (
+                        <input
+                          className={styles.inlineContactInput}
+                          value={inlineContact.value}
+                          onChange={e => setInlineContact(p => p ? { ...p, value: formatPhoneNumber(e.target.value) } : null)}
+                          onBlur={handleInlineContactSave}
+                          onKeyDown={e => { if (e.key === 'Enter') handleInlineContactSave(); if (e.key === 'Escape') setInlineContact(null); }}
+                          autoFocus
+                          onClick={e => e.stopPropagation()}
+                        />
+                      ) : (
+                        <span title={selectedItem?.id === item.id ? '클릭하여 수정' : undefined}>
+                          <Highlight text={item.contact} query={searchText} />
+                          {selectedItem?.id === item.id && <span className={styles.inlineEditHint}>✎</span>}
+                        </span>
+                      )}
+                    </td>
                     <td className={styles.tdSecondary}>{item.education ?? '-'}</td>
                     <td className={styles.tdSecondary}>{item.hope_course ?? '-'}</td>
                     <td className={styles.tdEllipsis} title={item.reason ?? ''}><Highlight text={item.reason} query={searchText} /></td>
@@ -1744,7 +2153,7 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
 
       {/* 사이드 패널 */}
       {selectedItem && (
-        <HakjeomDetailPanel item={selectedItem} onClose={() => { setSelectedItem(null); setOpenTab('basic'); }} onUpdate={handleUpdate} initialTab={openTab} />
+        <HakjeomDetailPanel item={selectedItem} onClose={() => { setSelectedItem(null); setOpenTab('basic'); setInlineContact(null); }} onUpdate={handleUpdate} initialTab={openTab} />
       )}
       {toastVisible && <div className={styles.toast}>저장이 완료되었습니다</div>}
       {deleteToastVisible && <div className={styles.toast}>삭제되었습니다</div>}
