@@ -33,11 +33,33 @@ export async function POST(request: NextRequest) {
       .limit(1)
       .single()
 
+    const planInfo = PLAN_MAP[plan]
+
     if (!subscription) {
-      return NextResponse.json({ error: '활성 구독이 없어 플랜을 변경할 수 없습니다.' }, { status: 404 })
+      // 활성 구독이 없으면 새로 생성
+      const now = new Date().toISOString()
+      const nextBilling = new Date()
+      nextBilling.setMonth(nextBilling.getMonth() + 1)
+      const { error: insertError } = await allcareAdmin
+        .from('subscriptions')
+        .insert({
+          user_id: userId,
+          plan: planInfo.name,
+          status: 'active',
+          amount: planInfo.amount,
+          billing_cycle: 'monthly',
+          start_date: now,
+          next_billing_date: nextBilling.toISOString(),
+          cancelled_at: null,
+          end_date: null,
+          created_at: now,
+        })
+      if (insertError) {
+        return NextResponse.json({ error: '구독 생성에 실패했습니다.', detail: insertError.message }, { status: 500 })
+      }
+      return NextResponse.json({ success: true })
     }
 
-    const planInfo = PLAN_MAP[plan]
     const { error: updateError } = await allcareAdmin
       .from('subscriptions')
       .update({ plan: planInfo.name, amount: planInfo.amount })

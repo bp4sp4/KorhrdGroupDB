@@ -476,6 +476,8 @@ export default function AllcarePage() {
   const [planUser, setPlanUser] = useState<UserData | null>(null)
   const [newPlan, setNewPlan] = useState<string>('basic')
   const [planLoading, setPlanLoading] = useState(false)
+  const [cancelSubLoading, setCancelSubLoading] = useState(false)
+  const [planCancelConfirm, setPlanCancelConfirm] = useState(false)
 
   // 열람권 확인 팝업
   const [accessConfirm, setAccessConfirm] = useState<{ user: UserData; newAccess: boolean } | null>(null)
@@ -575,7 +577,13 @@ export default function AllcarePage() {
     setPlanUser(user)
     const matched = PLAN_OPTIONS.find(p => p.label === user.plan)
     setNewPlan(matched?.key ?? 'basic')
+    setPlanCancelConfirm(false)
     setShowPlanModal(true)
+  }
+
+  const closePlanModal = () => {
+    setShowPlanModal(false)
+    setPlanCancelConfirm(false)
   }
 
   const handlePlanChange = async () => {
@@ -588,7 +596,7 @@ export default function AllcarePage() {
         body: JSON.stringify({ userId: planUser.user_id, plan: newPlan }),
       })
       if (res.ok) {
-        setShowPlanModal(false)
+        closePlanModal()
         fetchUsers()
         showToast('플랜이 변경되었습니다.')
       } else {
@@ -599,6 +607,30 @@ export default function AllcarePage() {
       showToast('오류가 발생했습니다.')
     } finally {
       setPlanLoading(false)
+    }
+  }
+
+  const handleCancelSubscription = async () => {
+    if (!planUser) return
+    setCancelSubLoading(true)
+    try {
+      const res = await fetch('/api/allcare/subscription/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: planUser.user_id, status: 'cancelled' }),
+      })
+      if (res.ok) {
+        closePlanModal()
+        fetchUsers()
+        showToast('구독이 취소되었습니다.')
+      } else {
+        const d = await res.json()
+        showToast(d.error || '구독 취소에 실패했습니다.')
+      }
+    } catch {
+      showToast('오류가 발생했습니다.')
+    } finally {
+      setCancelSubLoading(false)
     }
   }
 
@@ -1004,36 +1036,59 @@ export default function AllcarePage() {
 
       {/* 플랜 변경 모달 */}
       {showPlanModal && planUser && (
-        <div className={styles.modalOverlay} onClick={() => setShowPlanModal(false)}>
+        <div className={styles.modalOverlay} onClick={closePlanModal}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>플랜 변경</h3>
-              <button className={styles.modalClose} onClick={() => setShowPlanModal(false)}>✕</button>
+              <button className={styles.modalClose} onClick={closePlanModal}>✕</button>
             </div>
             <div className={styles.modalUserChip}>{planUser.name} · {planUser.email}</div>
-            <div className={styles.modalOptions}>
-              {PLAN_OPTIONS.map(opt => (
-                <label key={opt.key} className={`${styles.modalOptionCard} ${newPlan === opt.key ? styles.modalOptionCardActive : ''}`}>
-                  <input
-                    type="radio"
-                    name="plan"
-                    value={opt.key}
-                    checked={newPlan === opt.key}
-                    onChange={() => setNewPlan(opt.key)}
-                  />
-                  <div className={styles.modalOptionText}>
-                    <div className={styles.modalOptionLabel}>{opt.label}</div>
-                    <div className={styles.modalOptionDesc}>월 {opt.amount.toLocaleString()}원</div>
-                  </div>
-                </label>
-              ))}
-            </div>
-            <div className={styles.modalActionsCol}>
-              <button className={styles.modalConfirmFull} onClick={handlePlanChange} disabled={planLoading}>
-                {planLoading ? '변경 중...' : '변경하기'}
-              </button>
-              <button className={styles.modalCancelFull} onClick={() => setShowPlanModal(false)}>취소</button>
-            </div>
+            {planCancelConfirm ? (
+              <>
+                <div className={styles.cancelConfirmMsg}>
+                  구독을 즉시 취소합니다.<br />서비스 이용이 바로 중단됩니다. 계속하시겠습니까?
+                </div>
+                <div className={styles.modalActionsCol}>
+                  <button
+                    className={`${styles.modalConfirmFull} ${styles.modalConfirmDanger}`}
+                    onClick={handleCancelSubscription}
+                    disabled={cancelSubLoading}
+                  >
+                    {cancelSubLoading ? '취소 중...' : '구독 취소 확인'}
+                  </button>
+                  <button className={styles.modalCancelFull} onClick={() => setPlanCancelConfirm(false)}>돌아가기</button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className={styles.modalOptions}>
+                  {PLAN_OPTIONS.map(opt => (
+                    <label key={opt.key} className={`${styles.modalOptionCard} ${newPlan === opt.key ? styles.modalOptionCardActive : ''}`}>
+                      <input
+                        type="radio"
+                        name="plan"
+                        value={opt.key}
+                        checked={newPlan === opt.key}
+                        onChange={() => setNewPlan(opt.key)}
+                      />
+                      <div className={styles.modalOptionText}>
+                        <div className={styles.modalOptionLabel}>{opt.label}</div>
+                        <div className={styles.modalOptionDesc}>월 {opt.amount.toLocaleString()}원</div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+                <div className={styles.modalActionsCol}>
+                  <button className={styles.modalConfirmFull} onClick={handlePlanChange} disabled={planLoading}>
+                    {planLoading ? '변경 중...' : '변경하기'}
+                  </button>
+                  <button className={styles.modalCancelFull} onClick={closePlanModal}>취소</button>
+                  <button className={styles.modalCancelSubBtn} onClick={() => setPlanCancelConfirm(true)}>
+                    구독 취소
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
