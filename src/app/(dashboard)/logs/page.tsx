@@ -95,6 +95,8 @@ function formatChangeVal(v: unknown): string {
 
 // ─── 상수 ────────────────────────────────────────────────────────────────────
 
+const PAGE_SIZE = 15
+
 const ACTION_OPTIONS = [
   { value: '', label: '전체 액션' },
   { value: 'create', label: '등록' },
@@ -226,11 +228,68 @@ function formatEmail(email: string | null) {
   return email.split('@')[0]
 }
 
-// ─── 메인 페이지 ─────────────────────────────────────────────────────────────
+// ─── 페이지네이션 ─────────────────────────────────────────────────────────────
+
+interface PaginationProps {
+  page: number
+  totalPages: number
+  onChange: (page: number) => void
+}
+
+function Pagination({ page, totalPages, onChange }: PaginationProps) {
+  if (totalPages <= 1) return null
+
+  const pages: (number | '...')[] = []
+  if (totalPages <= 7) {
+    for (let i = 1; i <= totalPages; i++) pages.push(i)
+  } else {
+    pages.push(1)
+    if (page > 3) pages.push('...')
+    for (let i = Math.max(2, page - 1); i <= Math.min(totalPages - 1, page + 1); i++) pages.push(i)
+    if (page < totalPages - 2) pages.push('...')
+    pages.push(totalPages)
+  }
+
+  return (
+    <div className={styles.pagination}>
+      <button
+        className={styles.pageBtn}
+        onClick={() => onChange(page - 1)}
+        disabled={page === 1}
+      >
+        ‹
+      </button>
+      {pages.map((p, i) =>
+        p === '...' ? (
+          <span key={`ellipsis-${i}`} className={styles.pageEllipsis}>…</span>
+        ) : (
+          <button
+            key={p}
+            className={`${styles.pageBtn} ${p === page ? styles.pageBtnActive : ''}`}
+            onClick={() => onChange(p)}
+          >
+            {p}
+          </button>
+        )
+      )}
+      <button
+        className={styles.pageBtn}
+        onClick={() => onChange(page + 1)}
+        disabled={page === totalPages}
+      >
+        ›
+      </button>
+    </div>
+  )
+}
+
+// ─── 메인 페이지 ─────────────────────────────────────────────────
 
 export default function LogsPage() {
   const [logs, setLogs] = useState<AuditLog[]>([])
+  const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
 
   const [resource, setResource] = useState('')
   const [action, setAction] = useState('')
@@ -238,7 +297,7 @@ export default function LogsPage() {
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
 
-  const fetchLogs = useCallback(async () => {
+  const fetchLogs = useCallback(async (p: number) => {
     setLoading(true)
     try {
       const params = new URLSearchParams()
@@ -247,12 +306,13 @@ export default function LogsPage() {
       if (search) params.set('search', search)
       if (fromDate) params.set('from', fromDate)
       if (toDate) params.set('to', toDate)
-      params.set('limit', '500')
+      params.set('page', String(p))
 
       const res = await fetch(`/api/logs?${params.toString()}`)
       if (!res.ok) return
-      const data = await res.json()
-      setLogs(data)
+      const json = await res.json()
+      setLogs(json.data ?? [])
+      setTotal(json.total ?? 0)
     } catch {
       //
     } finally {
@@ -261,8 +321,14 @@ export default function LogsPage() {
   }, [resource, action, search, fromDate, toDate])
 
   useEffect(() => {
-    fetchLogs()
-  }, [fetchLogs])
+    setPage(1)
+  }, [resource, action, search, fromDate, toDate])
+
+  useEffect(() => {
+    fetchLogs(page)
+  }, [fetchLogs, page])
+
+  const totalPages = Math.ceil(total / PAGE_SIZE)
 
   function reset() {
     setResource('')
@@ -313,7 +379,7 @@ export default function LogsPage() {
         <button className={styles.resetBtn} onClick={reset}>초기화</button>
 
         <span className={styles.countText}>
-          {loading ? '로딩 중...' : `총 ${logs.length.toLocaleString()}건`}
+          {loading ? '로딩 중...' : `총 ${total.toLocaleString()}건`}
         </span>
       </div>
 
@@ -404,6 +470,9 @@ export default function LogsPage() {
           </tbody>
         </table>
         </div>
+
+        {/* 페이지네이션 */}
+        <Pagination page={page} totalPages={totalPages} onChange={setPage} />
       </div>
     </div>
   )

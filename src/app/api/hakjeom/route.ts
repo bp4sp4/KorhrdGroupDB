@@ -50,13 +50,14 @@ export async function GET(request: NextRequest) {
     if (contact) query = query.ilike('contact', `%${contact}%`);
     if (status && status !== 'all') query = query.eq('status', status);
 
-    // 데이터 + 메모 카운트를 병렬로 조회
+    // 데이터 + 메모를 병렬로 조회
     const [queryResult, memoResult] = await Promise.all([
       query,
       supabaseAdmin
         .from('memo_logs')
-        .select('record_id')
-        .eq('table_name', TABLE),
+        .select('record_id, content')
+        .eq('table_name', TABLE)
+        .order('created_at', { ascending: false }),
     ]);
 
     if (queryResult.error) {
@@ -66,12 +67,18 @@ export async function GET(request: NextRequest) {
 
     const items = queryResult.data || [];
 
-    // memo_count 병합
+    // memo_count + 최신 메모 내용 병합
     const countMap: Record<string, number> = {};
+    const latestMemoMap: Record<string, string> = {};
     for (const m of memoResult.data || []) {
       countMap[m.record_id] = (countMap[m.record_id] || 0) + 1;
+      if (!latestMemoMap[m.record_id]) latestMemoMap[m.record_id] = m.content;
     }
-    const result = items.map(item => ({ ...item, memo_count: countMap[String(item.id)] || 0 }));
+    const result = items.map(item => ({
+      ...item,
+      memo_count: countMap[String(item.id)] || 0,
+      latest_memo: latestMemoMap[String(item.id)] ?? null,
+    }));
 
     return NextResponse.json(result);
   } catch (err) {
@@ -144,9 +151,20 @@ export async function PATCH(request: NextRequest) {
 
     const body = await request.json();
     const {
-      id, status, memo, manager, counsel_check, subject_cost,
+      id, ids, status, memo, manager, counsel_check, subject_cost,
       name, contact, education, reason, click_source, residence, hope_course,
     } = body;
+
+    // 일괄 담당자 배정
+    if (Array.isArray(ids) && ids.length > 0 && manager !== undefined) {
+      const { error } = await supabaseAdmin
+        .from(TABLE)
+        .update({ manager: manager || null })
+        .in('id', ids)
+      if (error) return NextResponse.json({ error: 'Failed to bulk update manager' }, { status: 500 })
+      await logAction({ user_id: user.id, user_email: user.email, action: 'update', resource: '학점은행제 상담', resource_id: ids.join(','), detail: `${ids.length}건 담당자 일괄 배정: ${manager || '없음'}`, meta: { ids, manager } })
+      return NextResponse.json({ message: 'Bulk manager updated' })
+    }
 
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
 import {
   ResponsiveContainer, ComposedChart, BarChart, AreaChart, PieChart,
   Bar, Line, Area, Pie, Cell,
@@ -1702,7 +1703,7 @@ function PCertHighlight({ text, query }: { text: string | null; query: string })
 
 // ─── 탭: 민간자격증 ──────────────────────────────────────────────────────────
 
-function PrivateCertTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode) => void }) {
+function PrivateCertTab({ setStatsNode, highlightId }: { setStatsNode: (node: React.ReactNode) => void; highlightId?: number }) {
   const [items, setItems] = useState<PrivateCert[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -1729,6 +1730,21 @@ function PrivateCertTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode
   const [deleteToastVisible, setDeleteToastVisible] = useState(false);
   const [filterDropdownPos, setFilterDropdownPos] = useState({ top: 0, left: 0 });
   const itemsPerPage = 10;
+
+  // 검색에서 직접 이동 시 해당 행 하이라이트
+  useEffect(() => {
+    if (!highlightId || items.length === 0) return;
+    const idx = items.findIndex(item => item.id === highlightId);
+    if (idx < 0) return;
+    setCurrentPage(Math.ceil((idx + 1) / itemsPerPage));
+    setTimeout(() => {
+      const el = document.querySelector(`tr[data-id="${highlightId}"]`) as HTMLElement | null;
+      if (!el) return;
+      el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      el.classList.add(styles.highlightRow);
+      setTimeout(() => el.classList.remove(styles.highlightRow), 2500);
+    }, 150);
+  }, [items, highlightId]);
 
   const fetchData = useCallback(async (background = false) => {
     if (!background) setLoading(true);
@@ -1990,6 +2006,7 @@ function PrivateCertTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode
                 ) : paginated.map((item, index) => (
                   <tr
                     key={item.id}
+                    data-id={item.id}
                     onClick={() => setSelectedItem(item)}
                     className={certStyles.pcertTr}
                     style={{
@@ -2120,7 +2137,7 @@ function PrivateCertTab({ setStatsNode }: { setStatsNode: (node: React.ReactNode
 // Application Tab (기존 신청관리)
 // ─────────────────────────────────────────────
 
-function ApplicationTab({ sourceTab }: { sourceTab: 'hakjeom' | 'edu' }) {
+function ApplicationTab({ sourceTab, highlightId }: { sourceTab: 'hakjeom' | 'edu'; highlightId?: number }) {
   const [applications, setApplications] = useState<CertApplication[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -2138,6 +2155,21 @@ function ApplicationTab({ sourceTab }: { sourceTab: 'hakjeom' | 'edu' }) {
   // 체크박스 선택 상태
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkDeleting, setBulkDeleting] = useState(false)
+
+  // 검색에서 직접 이동 시 해당 행 하이라이트
+  useEffect(() => {
+    if (!highlightId || applications.length === 0) return
+    const idx = applications.findIndex(a => a.id === String(highlightId))
+    if (idx < 0) return
+    setCurrentPage(Math.ceil((idx + 1) / PAGE_SIZE))
+    setTimeout(() => {
+      const el = document.querySelector(`tr[data-id="${highlightId}"]`) as HTMLElement | null
+      if (!el) return
+      el.scrollIntoView({ block: 'center', behavior: 'smooth' })
+      el.classList.add(styles.highlightRow)
+      setTimeout(() => el.classList.remove(styles.highlightRow), 2500)
+    }, 150)
+  }, [applications, highlightId])
 
   // ── 데이터 fetch ──────────────────────────────
   const fetchApplications = useCallback(async () => {
@@ -2402,6 +2434,7 @@ function ApplicationTab({ sourceTab }: { sourceTab: 'hakjeom' | 'edu' }) {
                   return (
                     <tr
                       key={app.id}
+                      data-id={app.id}
                       className={`${isSelected ? styles.trSelected : styles.tr}${app.is_checked && !isSelected ? ` ${certStyles.trChecked}` : ''}`}
                     >
                       {/* 체크박스 */}
@@ -3120,7 +3153,15 @@ function CertStatsTab() {
 // ─────────────────────────────────────────────
 
 export default function CertPage() {
-  const [sourceTab, setSourceTab] = useState<SourceTab>('hakjeom')
+  const searchParams = useSearchParams()
+  const urlTab = searchParams.get('tab') as SourceTab | null
+  const urlHighlight = searchParams.get('highlight') ? Number(searchParams.get('highlight')) : undefined
+
+  const initialTab: SourceTab = (['hakjeom', 'edu', 'private-cert', 'stats'] as SourceTab[]).includes(urlTab as SourceTab)
+    ? (urlTab as SourceTab)
+    : 'hakjeom'
+
+  const [sourceTab, setSourceTab] = useState<SourceTab>(initialTab)
   const [statsNode, setStatsNode] = useState<React.ReactNode>(null)
 
   const handleTabChange = (tab: SourceTab) => {
@@ -3154,8 +3195,8 @@ export default function CertPage() {
       </div>
 
       {/* 탭 컨텐츠 */}
-      {(sourceTab === 'hakjeom' || sourceTab === 'edu') && <ApplicationTab sourceTab={sourceTab} />}
-      {sourceTab === 'private-cert' && <PrivateCertTab setStatsNode={setStatsNode} />}
+      {(sourceTab === 'hakjeom' || sourceTab === 'edu') && <ApplicationTab sourceTab={sourceTab} highlightId={urlTab === sourceTab ? urlHighlight : undefined} />}
+      {sourceTab === 'private-cert' && <PrivateCertTab setStatsNode={setStatsNode} highlightId={urlTab === 'private-cert' ? urlHighlight : undefined} />}
       {sourceTab === 'stats' && <CertStatsTab />}
     </div>
   )

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Search, X, ArrowRight } from 'lucide-react'
+import { Search, X, ArrowRight, Clock } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import styles from './QuickSearch.module.css'
 
@@ -9,6 +9,7 @@ interface SearchResult {
   category: string
   categoryLabel: string
   link: string
+  tab?: string
   id: string | number
   name: string
   sub: string
@@ -31,12 +32,45 @@ const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
   'failed': { bg: '#FEE2E2', color: '#DC2626' },
 }
 
+const CATEGORY_FILTERS = [
+  { value: '', label: '전체' },
+  { value: 'hakjeom', label: '학점은행제' },
+  { value: 'cert-consult', label: '민간자격증' },
+  { value: 'agency', label: '기관협약' },
+  { value: 'cert-app', label: '자격증신청' },
+  { value: 'practice', label: '실습/취업' },
+]
+
+const RECENT_KEY = 'quicksearch_recent'
+const MAX_RECENT = 5
+
+function getRecent(): string[] {
+  try {
+    return JSON.parse(localStorage.getItem(RECENT_KEY) ?? '[]')
+  } catch {
+    return []
+  }
+}
+
+function addRecent(q: string) {
+  if (!q.trim()) return
+  const prev = getRecent().filter(r => r !== q)
+  localStorage.setItem(RECENT_KEY, JSON.stringify([q, ...prev].slice(0, MAX_RECENT)))
+}
+
+function removeRecent(q: string) {
+  const prev = getRecent().filter(r => r !== q)
+  localStorage.setItem(RECENT_KEY, JSON.stringify(prev))
+}
+
 export default function QuickSearch() {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedIdx, setSelectedIdx] = useState(-1)
+  const [categoryFilter, setCategoryFilter] = useState('')
+  const [recent, setRecent] = useState<string[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null)
   const router = useRouter()
@@ -56,14 +90,16 @@ export default function QuickSearch() {
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [])
 
-  // 열릴 때 포커스
+  // 열릴 때 포커스 + 최근 검색어 로드
   useEffect(() => {
     if (open) {
+      setRecent(getRecent())
       setTimeout(() => inputRef.current?.focus(), 50)
     } else {
       setQuery('')
       setResults([])
       setSelectedIdx(-1)
+      setCategoryFilter('')
     }
   }, [open])
 
@@ -88,28 +124,52 @@ export default function QuickSearch() {
   }
 
   const handleSelect = (r: SearchResult) => {
+    addRecent(r.name)
     setOpen(false)
-    router.push(r.link)
+    const params = new URLSearchParams()
+    params.set('highlight', String(r.id))
+    if (r.tab) params.set('tab', r.tab)
+    router.push(`${r.link}?${params.toString()}`)
+  }
+
+  const handleRecentClick = (q: string) => {
+    setQuery(q)
+    setSelectedIdx(-1)
+    doSearch(q)
+  }
+
+  const handleRemoveRecent = (e: React.MouseEvent, q: string) => {
+    e.stopPropagation()
+    removeRecent(q)
+    setRecent(getRecent())
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault()
-      setSelectedIdx(prev => Math.min(prev + 1, results.length - 1))
+      setSelectedIdx(prev => Math.min(prev + 1, filteredResults.length - 1))
     } else if (e.key === 'ArrowUp') {
       e.preventDefault()
       setSelectedIdx(prev => Math.max(prev - 1, -1))
-    } else if (e.key === 'Enter' && selectedIdx >= 0 && results[selectedIdx]) {
-      handleSelect(results[selectedIdx])
+    } else if (e.key === 'Enter' && selectedIdx >= 0 && filteredResults[selectedIdx]) {
+      handleSelect(filteredResults[selectedIdx])
     }
   }
 
+  // 카테고리 필터 적용
+  const filteredResults = categoryFilter
+    ? results.filter(r => r.category === categoryFilter)
+    : results
+
   // 카테고리별 그룹핑
-  const grouped = results.reduce<Record<string, SearchResult[]>>((acc, r) => {
+  const grouped = filteredResults.reduce<Record<string, SearchResult[]>>((acc, r) => {
     if (!acc[r.categoryLabel]) acc[r.categoryLabel] = []
     acc[r.categoryLabel].push(r)
     return acc
   }, {})
+
+  const hasResults = filteredResults.length > 0
+  const showRecent = query.length < 2 && recent.length > 0
 
   if (!open) {
     return (
@@ -152,6 +212,26 @@ export default function QuickSearch() {
           </button>
         </div>
 
+        {/* 카테고리 필터 탭 */}
+        {(hasResults || query.length >= 2) && (
+          <div className={styles.filterTabs}>
+            {CATEGORY_FILTERS.map(f => (
+              <button
+                key={f.value}
+                className={`${styles.filterTab} ${categoryFilter === f.value ? styles.filterTabActive : ''}`}
+                onClick={() => { setCategoryFilter(f.value); setSelectedIdx(-1) }}
+              >
+                {f.label}
+                {f.value && results.filter(r => r.category === f.value).length > 0 && (
+                  <span className={styles.filterTabCount}>
+                    {results.filter(r => r.category === f.value).length}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* 결과 영역 */}
         <div className={styles.resultArea}>
           {loading && (
@@ -161,25 +241,48 @@ export default function QuickSearch() {
             </div>
           )}
 
-          {!loading && query.length >= 2 && results.length === 0 && (
+          {!loading && query.length >= 2 && filteredResults.length === 0 && (
             <div className={styles.emptyWrap}>
               검색 결과가 없습니다
             </div>
           )}
 
-          {!loading && query.length < 2 && (
+          {/* 최근 검색어 */}
+          {!loading && showRecent && (
+            <div className={styles.recentWrap}>
+              <div className={styles.recentHeader}>최근 검색</div>
+              {recent.map(q => (
+                <button
+                  key={q}
+                  className={styles.recentItem}
+                  onClick={() => handleRecentClick(q)}
+                >
+                  <Clock size={13} className={styles.recentIcon} />
+                  <span className={styles.recentText}>{q}</span>
+                  <span
+                    className={styles.recentRemove}
+                    onClick={e => handleRemoveRecent(e, q)}
+                  >
+                    <X size={12} />
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {!loading && !showRecent && query.length < 2 && (
             <div className={styles.hintWrap}>
               2글자 이상 입력하세요
             </div>
           )}
 
-          {!loading && results.length > 0 && (
+          {!loading && hasResults && (
             <div className={styles.resultList}>
               {Object.entries(grouped).map(([label, items]) => (
                 <div key={label}>
                   <div className={styles.groupLabel}>{label}</div>
-                  {items.map((r, idx) => {
-                    const globalIdx = results.indexOf(r)
+                  {items.map(r => {
+                    const globalIdx = filteredResults.indexOf(r)
                     const statusStyle = r.status ? STATUS_COLORS[r.status] : undefined
                     return (
                       <button

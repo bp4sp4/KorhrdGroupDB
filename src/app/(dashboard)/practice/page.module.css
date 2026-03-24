@@ -512,3 +512,14 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* ─── 검색 하이라이트 ───────────────────────────────────────────── */
+@keyframes highlightFade {
+  0%   { background: #dbeafe; }
+  70%  { background: #dbeafe; }
+  100% { background: transparent; }
+}
+
+.highlightRow {
+  animation: highlightFade 2.5s ease forwards;
+}

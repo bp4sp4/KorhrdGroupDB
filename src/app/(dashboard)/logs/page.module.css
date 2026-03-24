@@ -372,3 +372,58 @@
   border-radius: 4px;
   white-space: nowrap;
 }
+
+/* ─── 페이지네이션 ───────────────────────────────────────────────── */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 14px 16px;
+  border-top: 1px solid var(--toss-border);
+}
+
+.pageBtn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1.5px solid var(--toss-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--toss-text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pageBtn:hover:not(:disabled) {
+  background: var(--toss-bg);
+  border-color: var(--toss-blue);
+}
+
+.pageBtn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.pageBtnActive {
+  background: var(--toss-blue);
+  border-color: var(--toss-blue);
+  color: #fff;
+}
+
+.pageBtnActive:hover:not(:disabled) {
+  background: var(--toss-blue);
+  border-color: var(--toss-blue);
+}
+
+.pageEllipsis {
+  font-size: 13px;
+  color: var(--toss-text-secondary);
+  padding: 0 4px;
+  user-select: none;
+}

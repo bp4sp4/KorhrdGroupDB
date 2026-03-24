@@ -1781,6 +1781,86 @@
   color: var(--toss-blue);
 }
 
+/* ─── 담당자 일괄 배정 드롭다운 ─────────────────────────────────────────── */
+.managerAssignDropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 9999;
+  background: #fff;
+  border: 1px solid var(--toss-border);
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  padding: 6px;
+  min-width: 200px;
+}
+
+.managerAssignOption {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--toss-text-primary);
+  text-align: left;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.1s;
+}
+
+.managerAssignOption:hover {
+  background: var(--toss-bg);
+}
+
+.managerAssignDivider {
+  height: 1px;
+  background: var(--toss-border);
+  margin: 4px 0;
+}
+
+.managerAssignInputRow {
+  display: flex;
+  gap: 4px;
+  padding: 4px 2px 2px;
+}
+
+.managerAssignInput {
+  flex: 1;
+  height: 32px;
+  padding: 0 8px;
+  border: 1.5px solid var(--toss-border);
+  border-radius: 6px;
+  font-size: 13px;
+  outline: none;
+  color: var(--toss-text-primary);
+}
+
+.managerAssignInput:focus {
+  border-color: var(--toss-blue);
+}
+
+.managerAssignConfirm {
+  height: 32px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 6px;
+  background: var(--toss-blue);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.1s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.managerAssignConfirm:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
 /* ─── 메인 페이지 ────────────────────────────────────────────────────────── */
 
 .pageHeader {
@@ -2522,4 +2602,15 @@
   padding: 14px 10px;
   border-bottom: 1px solid var(--toss-border);
   vertical-align: middle;
+}
+
+/* ─── 검색 하이라이트 ───────────────────────────────────────────── */
+@keyframes highlightFade {
+  0%   { background: #dbeafe; }
+  70%  { background: #dbeafe; }
+  100% { background: transparent; }
+}
+
+.highlightRow {
+  animation: highlightFade 2.5s ease forwards;
 }

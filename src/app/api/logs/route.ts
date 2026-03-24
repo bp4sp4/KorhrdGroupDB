@@ -2,6 +2,8 @@ import { requireAuth } from '@/lib/auth/requireAuth'
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 
+const PAGE_SIZE = 15
+
 export async function GET(request: NextRequest) {
   try {
     const { user: _user, errorResponse } = await requireAuth()
@@ -13,13 +15,15 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search') ?? ''
     const from = searchParams.get('from') ?? ''
     const to = searchParams.get('to') ?? ''
-    const limit = Math.min(parseInt(searchParams.get('limit') ?? '300'), 1000)
+    const page = Math.max(1, parseInt(searchParams.get('page') ?? '1'))
+    const from_idx = (page - 1) * PAGE_SIZE
+    const to_idx = from_idx + PAGE_SIZE - 1
 
     let query = supabaseAdmin
       .from('audit_logs')
-      .select('*')
+      .select('*', { count: 'exact' })
       .order('created_at', { ascending: false })
-      .limit(limit)
+      .range(from_idx, to_idx)
 
     if (resource) query = query.eq('resource', resource)
     if (action) query = query.eq('action', action)
@@ -27,14 +31,14 @@ export async function GET(request: NextRequest) {
     if (from) query = query.gte('created_at', from)
     if (to) query = query.lte('created_at', to + 'T23:59:59')
 
-    const { data, error } = await query
+    const { data, error, count } = await query
 
     if (error) {
       console.error('[GET /api/logs] Supabase error:', error)
       return NextResponse.json({ error: '로그를 불러오지 못했습니다.' }, { status: 500 })
     }
 
-    return NextResponse.json(data ?? [])
+    return NextResponse.json({ data: data ?? [], total: count ?? 0 })
   } catch (err) {
     console.error('[GET /api/logs] Unexpected error:', err)
     return NextResponse.json({ error: '서버 오류가 발생했습니다.' }, { status: 500 })

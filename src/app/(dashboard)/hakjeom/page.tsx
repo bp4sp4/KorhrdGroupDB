@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   ResponsiveContainer, ComposedChart, BarChart, AreaChart, PieChart,
   Bar, Line, Area, Pie, Cell,
@@ -35,6 +36,7 @@ interface HakjeomConsultation {
   created_at: string;
   updated_at: string | null;
   memo_count?: number;
+  latest_memo?: string | null;
 }
 
 // ─── 기관협약 타입 ────────────────────────────────────────────────────────────
@@ -1267,7 +1269,7 @@ function AgencyAddModal({ editTarget, onClose, onSaved, uniqueManagers }: Agency
 
 // ─── 탭: 학점은행제 ──────────────────────────────────────────────────────────
 
-function HakjeomTab({ setStatsNode, isActive }: { setStatsNode: (node: React.ReactNode) => void; isActive: boolean }) {
+function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (node: React.ReactNode) => void; isActive: boolean; highlightId?: number }) {
   const [items, setItems] = useState<HakjeomConsultation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -1295,7 +1297,38 @@ function HakjeomTab({ setStatsNode, isActive }: { setStatsNode: (node: React.Rea
   const [openFilterColumn, setOpenFilterColumn] = useState<string | null>(null);
   const [filterDropdownPos, setFilterDropdownPos] = useState({ top: 0, left: 0 });
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [showManagerAssign, setShowManagerAssign] = useState(false);
+
+  useEffect(() => { setSelectedIds([]); }, [currentPage]);
+  const [assigningManager, setAssigningManager] = useState(false);
+  const [managerAssignInput, setManagerAssignInput] = useState('');
+  const managerAssignRef = useRef<HTMLDivElement>(null);
   const itemsPerPage = 10;
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (managerAssignRef.current && !managerAssignRef.current.contains(e.target as Node)) {
+        setShowManagerAssign(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  // 검색에서 직접 이동 시 해당 행 하이라이트
+  useEffect(() => {
+    if (!highlightId || items.length === 0) return;
+    const idx = items.findIndex(item => item.id === highlightId);
+    if (idx < 0) return;
+    setCurrentPage(Math.ceil((idx + 1) / itemsPerPage));
+    setTimeout(() => {
+      const el = document.querySelector(`tr[data-id="${highlightId}"]`) as HTMLElement | null;
+      if (!el) return;
+      el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      el.classList.add(styles.highlightRow);
+      setTimeout(() => el.classList.remove(styles.highlightRow), 2500);
+    }, 150);
+  }, [items, highlightId]);
 
   const fetchData = useCallback(async (background = false) => {
     if (!background) setLoading(true);
@@ -1361,6 +1394,23 @@ function HakjeomTab({ setStatsNode, isActive }: { setStatsNode: (node: React.Rea
     setDeleting(false);
     setDeleteToastVisible(true);
     setTimeout(() => setDeleteToastVisible(false), 2500);
+  };
+
+  const handleBulkAssignManager = async (manager: string) => {
+    if (selectedIds.length === 0) return;
+    setAssigningManager(true);
+    setShowManagerAssign(false);
+    await fetch('/api/hakjeom', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: selectedIds, manager }),
+    });
+    setSelectedIds([]);
+    setManagerAssignInput('');
+    await fetchData();
+    setAssigningManager(false);
+    setToastVisible(true);
+    setTimeout(() => setToastVisible(false), 2500);
   };
 
 
@@ -1487,10 +1537,50 @@ function HakjeomTab({ setStatsNode, isActive }: { setStatsNode: (node: React.Rea
             {selectedIds.length > 0 && (
               <>
                 <span className={styles.bulkActionCount}>{selectedIds.length}건 선택됨</span>
+                <div ref={managerAssignRef} style={{ position: 'relative' }}>
+                  <button
+                    onClick={() => setShowManagerAssign(v => !v)}
+                    disabled={assigningManager}
+                    className={styles.btnPrimary}
+                  >
+                    {assigningManager ? '배정 중...' : '담당자 배정 ▾'}
+                  </button>
+                  {showManagerAssign && (
+                    <div className={styles.managerAssignDropdown}>
+                      {uniqueManagers.map(m => (
+                        <button
+                          key={m}
+                          className={styles.managerAssignOption}
+                          onClick={() => handleBulkAssignManager(m)}
+                        >
+                          {m}
+                        </button>
+                      ))}
+                      <div className={styles.managerAssignDivider} />
+                      <div className={styles.managerAssignInputRow}>
+                        <input
+                          className={styles.managerAssignInput}
+                          placeholder="직접 입력"
+                          value={managerAssignInput}
+                          onChange={e => setManagerAssignInput(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter' && managerAssignInput.trim()) handleBulkAssignManager(managerAssignInput.trim()) }}
+                          autoFocus
+                        />
+                        <button
+                          className={styles.managerAssignConfirm}
+                          disabled={!managerAssignInput.trim()}
+                          onClick={() => { if (managerAssignInput.trim()) handleBulkAssignManager(managerAssignInput.trim()) }}
+                        >
+                          확인
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
                 <button onClick={handleBulkDelete} disabled={deleting} className={styles.btnDanger}>
                   {deleting ? '삭제 중...' : '선택 삭제'}
                 </button>
-                <button onClick={() => setSelectedIds([])} className={styles.btnSecondary}>선택 해제</button>
+                <button onClick={() => { setSelectedIds([]); setShowManagerAssign(false); }} className={styles.btnSecondary}>선택 해제</button>
               </>
             )}
           </div>
@@ -1571,6 +1661,7 @@ function HakjeomTab({ setStatsNode, isActive }: { setStatsNode: (node: React.Rea
                 ) : paginated.map((item, index) => (
                   <tr
                     key={item.id}
+                    data-id={item.id}
                     onClick={() => setSelectedItem(item)}
                     style={{
                       cursor: 'pointer',
@@ -1611,7 +1702,7 @@ function HakjeomTab({ setStatsNode, isActive }: { setStatsNode: (node: React.Rea
                     </td>
                     <td className={styles.tdSecondary}>{formatCost(item.subject_cost)}</td>
                     <td className={styles.tdMemo} title={item.memo ?? ''} onClick={e => { e.stopPropagation(); setOpenTab('memo'); setSelectedItem(item); }} style={{ cursor: 'pointer' }}>
-                      {item.memo_count ? `메모 ${item.memo_count}개` : (item.memo || '-')}
+                      {item.memo || item.latest_memo || '-'}
                     </td>
                     <td className={styles.tdDateSmall}>
                       {formatDate(item.created_at)}
@@ -1760,7 +1851,7 @@ function parseAgencyCsv(text: string): Record<string, string>[] {
   }).filter(Boolean) as Record<string, string>[];
 }
 
-function AgencyTab({ setStatsNode, isActive }: { setStatsNode: (node: React.ReactNode) => void; isActive: boolean }) {
+function AgencyTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (node: React.ReactNode) => void; isActive: boolean; highlightId?: number }) {
   const [agencies, setAgencies] = useState<Agency[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -1791,6 +1882,20 @@ function AgencyTab({ setStatsNode, isActive }: { setStatsNode: (node: React.Reac
   const [fieldModal, setFieldModal] = useState<{ id: number; field: keyof Agency; label: string; value: string; multiline?: boolean } | null>(null);
   const [fieldSaving, setFieldSaving] = useState(false);
 
+  // 검색에서 직접 이동 시 해당 행 하이라이트
+  useEffect(() => {
+    if (!highlightId || agencies.length === 0) return;
+    const idx = agencies.findIndex(a => a.id === highlightId);
+    if (idx < 0) return;
+    setCurrentPage(Math.ceil((idx + 1) / ITEMS_PER_PAGE));
+    setTimeout(() => {
+      const el = document.querySelector(`tr[data-id="${highlightId}"]`) as HTMLElement | null;
+      if (!el) return;
+      el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      el.classList.add(styles.highlightRow);
+      setTimeout(() => el.classList.remove(styles.highlightRow), 2500);
+    }, 150);
+  }, [agencies, highlightId]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -2000,7 +2105,7 @@ function AgencyTab({ setStatsNode, isActive }: { setStatsNode: (node: React.Reac
                 ) : filtered.length === 0 ? (
                   <tr><td colSpan={12} className={styles.tableEmptyMsg}>등록된 기관이 없습니다.</td></tr>
                 ) : paginated.map((a, index) => (
-                  <tr key={a.id} style={{ background: selectedIds.has(a.id) ? '#f0f7ff' : 'transparent' }}>
+                  <tr key={a.id} data-id={a.id} style={{ background: selectedIds.has(a.id) ? '#f0f7ff' : 'transparent' }}>
                     <td className={styles.tdCenter}>
                       <input type="checkbox" checked={selectedIds.has(a.id)} onChange={() => toggleSelect(a.id)} className={styles.checkbox} />
                     </td>
@@ -3271,8 +3376,13 @@ const TAB_CONFIG: { key: TabKey; label: string }[] = [
 ];
 
 export default function HakjeomPage() {
-  const [activeTab, setActiveTab] = useState<TabKey>('hakjeom');
-  const [mountedTabs, setMountedTabs] = useState<Set<TabKey>>(new Set(['hakjeom']));
+  const searchParams = useSearchParams();
+  const urlTab = searchParams.get('tab') as TabKey | null;
+  const urlHighlight = searchParams.get('highlight') ? Number(searchParams.get('highlight')) : undefined;
+
+  const initialTab: TabKey = (urlTab === 'hakjeom' || urlTab === 'agency') ? urlTab : 'hakjeom';
+  const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
+  const [mountedTabs, setMountedTabs] = useState<Set<TabKey>>(new Set([initialTab]));
   const [statsNode, setStatsNode] = useState<React.ReactNode>(null);
 
   const handleTabChange = (key: TabKey) => {
@@ -3308,10 +3418,10 @@ export default function HakjeomPage() {
 
       {/* 탭 컨텐츠 - 첫 방문 시 마운트, 이후 CSS로 숨김 */}
       <div style={{ display: activeTab === 'hakjeom' ? 'block' : 'none' }}>
-        {mountedTabs.has('hakjeom') && <HakjeomTab setStatsNode={setStatsNode} isActive={activeTab === 'hakjeom'} />}
+        {mountedTabs.has('hakjeom') && <HakjeomTab setStatsNode={setStatsNode} isActive={activeTab === 'hakjeom'} highlightId={urlTab === 'hakjeom' ? urlHighlight : undefined} />}
       </div>
       <div style={{ display: activeTab === 'agency' ? 'block' : 'none' }}>
-        {mountedTabs.has('agency') && <AgencyTab setStatsNode={setStatsNode} isActive={activeTab === 'agency'} />}
+        {mountedTabs.has('agency') && <AgencyTab setStatsNode={setStatsNode} isActive={activeTab === 'agency'} highlightId={urlTab === 'agency' ? urlHighlight : undefined} />}
       </div>
       <div style={{ display: activeTab === 'bulk' ? 'block' : 'none' }}>
         {mountedTabs.has('bulk') && <BulkTab onMoveSuccess={() => handleTabChange('hakjeom')} />}

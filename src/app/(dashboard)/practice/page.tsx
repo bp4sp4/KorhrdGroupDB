@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
 import styles from '../hakjeom/page.module.css'
 import practiceStyles from './page.module.css'
 import MemoTimeline from '@/components/ui/MemoTimeline'
@@ -1524,6 +1525,9 @@ function EmploymentAddModal({ onClose, onAdd }: {
 // ─── 메인 페이지 ─────────────────────────────────────────────────────────────
 
 export default function PracticePage() {
+  const searchParams = useSearchParams()
+  const urlHighlight = searchParams.get('highlight') ? Number(searchParams.get('highlight')) : undefined
+
   const [activeTab, setActiveTab] = useState<PracticeTab>('consultation')
 
   // 상담신청
@@ -1583,6 +1587,21 @@ export default function PracticePage() {
   // 공통
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+
+  // 검색에서 직접 이동 시 해당 행 하이라이트
+  useEffect(() => {
+    if (!urlHighlight || consultations.length === 0) return
+    const idx = consultations.findIndex(c => c.id === urlHighlight)
+    if (idx < 0) return
+    setConsultationPage(Math.ceil((idx + 1) / PAGE_SIZE))
+    setTimeout(() => {
+      const el = document.querySelector(`tr[data-id="${urlHighlight}"]`) as HTMLElement | null
+      if (!el) return
+      el.scrollIntoView({ block: 'center', behavior: 'smooth' })
+      el.classList.add(styles.highlightRow)
+      setTimeout(() => el.classList.remove(styles.highlightRow), 2500)
+    }, 150)
+  }, [consultations, urlHighlight])
 
   // ─── 데이터 페칭 ───────────────────────────────────────────────────────────
 
@@ -2133,6 +2152,7 @@ export default function PracticePage() {
                   ) : consultationPaged.map((item, index) => (
                     <tr
                       key={item.id}
+                      data-id={item.id}
                       className={styles.tr}
                       onClick={() => setSelectedConsultation(item)}
                       style={{ background: selectedConsultation?.id === item.id ? 'var(--toss-blue-subtle)' : selectedConsultationIds.has(item.id) ? '#f0f7ff' : undefined }}

@@ -242,3 +242,131 @@
 .resultItemActive .resultArrow {
   opacity: 1;
 }
+
+/* ─── Category Filter Tabs ──────────────────────────────────────────────── */
+
+.filterTabs {
+  display: flex;
+  gap: 4px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--toss-border);
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  flex-shrink: 0;
+  scrollbar-width: none;
+}
+
+.filterTabs::-webkit-scrollbar {
+  display: none;
+}
+
+.filterTab {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border: 1px solid var(--toss-border);
+  border-radius: 20px;
+  background: transparent;
+  color: var(--toss-text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 100ms ease;
+}
+
+.filterTab:hover {
+  background: var(--toss-bg);
+  color: var(--toss-text-primary);
+}
+
+.filterTabActive {
+  background: var(--toss-blue);
+  border-color: var(--toss-blue);
+  color: #fff;
+}
+
+.filterTabActive:hover {
+  background: var(--toss-blue);
+  color: #fff;
+}
+
+.filterTabCount {
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 8px;
+  padding: 0 5px;
+  min-width: 16px;
+  text-align: center;
+}
+
+.filterTabActive .filterTabCount {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* ─── Recent Searches ───────────────────────────────────────────────────── */
+
+.recentWrap {
+  padding: 8px 0;
+}
+
+.recentHeader {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--toss-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 6px 16px 4px;
+}
+
+.recentItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background 100ms ease;
+}
+
+.recentItem:hover {
+  background: var(--toss-bg);
+}
+
+.recentIcon {
+  color: var(--toss-text-tertiary);
+  flex-shrink: 0;
+}
+
+.recentText {
+  flex: 1;
+  font-size: 13px;
+  color: var(--toss-text-primary);
+}
+
+.recentRemove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  color: var(--toss-text-tertiary);
+  opacity: 0;
+  transition: opacity 100ms ease;
+  flex-shrink: 0;
+}
+
+.recentItem:hover .recentRemove {
+  opacity: 1;
+}
+
+.recentRemove:hover {
+  background: var(--toss-border);
+  color: var(--toss-text-primary);
+}
