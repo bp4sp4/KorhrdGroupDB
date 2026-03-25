@@ -10,6 +10,7 @@ import {
 import styles from '../hakjeom/page.module.css'
 import certStyles from './page.module.css'
 import MemoTimeline from '@/components/ui/MemoTimeline'
+import MemoHoverBadge from '@/components/ui/MemoHoverBadge'
 import { TableSkeleton, StatsCardsSkeleton, ChartsGridSkeleton, FilterBarSkeleton } from '@/components/ui/Skeleton'
 
 // ─────────────────────────────────────────────
@@ -40,6 +41,7 @@ interface PrivateCert {
   residence: string | null;
   created_at: string;
   memo_count?: number;
+  latest_memo?: string | null;
 }
 
 interface CertApplication {
@@ -68,6 +70,7 @@ interface CertApplication {
   created_at: string
   updated_at?: string | null
   memo_count?: number
+  latest_memo?: string | null
 }
 
 interface Stats {
@@ -2060,8 +2063,8 @@ function PrivateCertTab({ setStatsNode, highlightId }: { setStatsNode: (node: Re
                         styleMap={CONSULTATION_STATUS_STYLE}
                       />
                     </td>
-                    <td className={styles.tdMemo} title={item.memo ?? ''} onClick={e => { e.stopPropagation(); setOpenTab('memo'); setSelectedItem(item); }} style={{ cursor: 'pointer' }}>
-                      {item.memo_count ? `메모 ${item.memo_count}개` : (item.memo || '-')}
+                    <td className={styles.tdMemo} onClick={e => { e.stopPropagation(); setOpenTab('memo'); setSelectedItem(item); }} style={{ cursor: 'pointer' }}>
+                      <MemoHoverBadge text={item.latest_memo || item.memo || '-'} />
                     </td>
                     <td className={styles.tdDateSmall}>{formatDate(item.created_at)}</td>
                   </tr>

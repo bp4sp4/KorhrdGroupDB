@@ -9,6 +9,7 @@ import {
 } from 'recharts';
 import styles from './page.module.css';
 import MemoTimeline from '@/components/ui/MemoTimeline'
+import MemoHoverBadge from '@/components/ui/MemoHoverBadge'
 import { TableSkeleton, StatsCardsSkeleton, ChartsGridSkeleton, FilterBarSkeleton } from '@/components/ui/Skeleton'
 
 // ─── 공통 타입 ──────────────────────────────────────────────────────────────
@@ -738,13 +739,13 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic' }: H
                           value={danggeunAddInput}
                           onChange={e => setDanggeunAddInput(e.target.value)}
                           onKeyDown={e => { if (e.key === 'Enter') handleAddDanggeun(); if (e.key === 'Escape') setShowDanggeunAdd(false); }}
-                          placeholder="지역 이름"
+                          placeholder="유입경로 이름"
                           autoFocus
                         />
                         <button type="button" className={styles.subPanelAddConfirm} onClick={handleAddDanggeun}>추가</button>
                       </>
                     ) : (
-                      <button type="button" className={styles.subPanelAddBtn} onClick={() => setShowDanggeunAdd(true)}>+ 지역</button>
+                      <button type="button" className={styles.subPanelAddBtn} onClick={() => setShowDanggeunAdd(true)}>+ 유입경로</button>
                     )}
                   </div>
                 )}
@@ -2110,8 +2111,8 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
                       />
                     </td>
                     <td className={styles.tdSecondary}>{formatCost(item.subject_cost)}</td>
-                    <td className={styles.tdMemo} title={item.memo ?? ''} onClick={e => { e.stopPropagation(); setOpenTab('memo'); setSelectedItem(item); }} style={{ cursor: 'pointer' }}>
-                      {item.memo || item.latest_memo || '-'}
+                    <td className={styles.tdMemo} onClick={e => { e.stopPropagation(); setOpenTab('memo'); setSelectedItem(item); }} style={{ cursor: 'pointer' }}>
+                      <MemoHoverBadge text={item.latest_memo || item.memo || '-'} />
                     </td>
                     <td className={styles.tdDateSmall}>
                       {formatDate(item.created_at)}

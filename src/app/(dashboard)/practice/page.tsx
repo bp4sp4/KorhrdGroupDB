@@ -49,6 +49,7 @@ interface PracticeConsultation {
   created_at: string
   updated_at: string
   memo_count?: number
+  latest_memo?: string | null
 }
 
 interface PracticeApplication {
@@ -77,6 +78,7 @@ interface PracticeApplication {
   created_at: string
   updated_at: string
   memo_count?: number
+  latest_memo?: string | null
 }
 
 interface EmploymentApplication {
@@ -102,6 +104,7 @@ interface EmploymentApplication {
   manager: string | null
   created_at: string
   memo_count?: number
+  latest_memo?: string | null
 }
 
 // ─── 상수 ────────────────────────────────────────────────────────────────────
@@ -1527,8 +1530,13 @@ function EmploymentAddModal({ onClose, onAdd }: {
 export default function PracticePage() {
   const searchParams = useSearchParams()
   const urlHighlight = searchParams.get('highlight') ? Number(searchParams.get('highlight')) : undefined
+  const urlTab = searchParams.get('tab') as PracticeTab | null
 
-  const [activeTab, setActiveTab] = useState<PracticeTab>('consultation')
+  const [activeTab, setActiveTab] = useState<PracticeTab>(
+    urlTab && (['consultation', 'practice', 'employment'] as PracticeTab[]).includes(urlTab)
+      ? urlTab
+      : 'consultation'
+  )
 
   // 상담신청
   const [consultations, setConsultations] = useState<PracticeConsultation[]>([])

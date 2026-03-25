@@ -87,8 +87,9 @@ export async function GET(request: NextRequest) {
       query,
       supabaseAdmin
         .from('memo_logs')
-        .select('record_id')
-        .eq('table_name', 'certificate_applications'),
+        .select('record_id, content')
+        .eq('table_name', 'certificate_applications')
+        .order('created_at', { ascending: false }),
     ]);
 
     if (queryResult.error) {
@@ -98,10 +99,16 @@ export async function GET(request: NextRequest) {
 
     const items = queryResult.data ?? [];
     const countMap: Record<string, number> = {};
+    const latestMemoMap: Record<string, string> = {};
     for (const m of memoResult.data || []) {
       countMap[m.record_id] = (countMap[m.record_id] || 0) + 1;
+      if (!latestMemoMap[m.record_id]) latestMemoMap[m.record_id] = m.content;
     }
-    return NextResponse.json(items.map(item => ({ ...item, memo_count: countMap[String(item.id)] || 0 })));
+    return NextResponse.json(items.map(item => ({
+      ...item,
+      memo_count: countMap[String(item.id)] || 0,
+      latest_memo: latestMemoMap[String(item.id)] ?? null,
+    })));
   } catch (err) {
     console.error('[cert GET] Unexpected error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

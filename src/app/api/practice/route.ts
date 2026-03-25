@@ -91,17 +91,36 @@ export async function GET(request: NextRequest) {
       query = query.eq('type', type)
     }
 
-    const { data, error } = await query
+    const [queryResult, memoResult] = await Promise.all([
+      query,
+      supabaseAdmin
+        .from('memo_logs')
+        .select('record_id, content')
+        .eq('table_name', 'practice_consultations')
+        .order('created_at', { ascending: false }),
+    ])
 
-    if (error) {
-      console.error('[GET /api/practice] Supabase error:', error)
+    if (queryResult.error) {
+      console.error('[GET /api/practice] Supabase error:', queryResult.error)
       return NextResponse.json(
-        { error: '데이터를 불러오는데 실패했습니다.', detail: error.message },
+        { error: '데이터를 불러오는데 실패했습니다.', detail: queryResult.error.message },
         { status: 500 }
       )
     }
 
-    return NextResponse.json(data ?? [])
+    const items = queryResult.data ?? []
+    const countMap: Record<string, number> = {}
+    const latestMemoMap: Record<string, string> = {}
+    for (const m of memoResult.data || []) {
+      countMap[m.record_id] = (countMap[m.record_id] || 0) + 1
+      if (!latestMemoMap[m.record_id]) latestMemoMap[m.record_id] = m.content
+    }
+
+    return NextResponse.json(items.map(item => ({
+      ...item,
+      memo_count: countMap[String(item.id)] || 0,
+      latest_memo: latestMemoMap[String(item.id)] ?? null,
+    })))
   } catch (err) {
     console.error('[GET /api/practice] Unexpected error:', err)
     return NextResponse.json(
