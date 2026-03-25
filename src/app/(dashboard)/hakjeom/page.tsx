@@ -235,7 +235,7 @@ const CAFE_NAMES: Record<string, string> = {
 const KNOWN_CAFE_IDS = new Set(Object.keys(CAFE_NAMES));
 const KNOWN_CAFE_KOREAN = new Set(Object.values(CAFE_NAMES));
 
-function parseClickSource(source: string | null): { major: string; minor: string; needsCheck: boolean } {
+function parseClickSource(source: string | null, customCafes: string[] = []): { major: string; minor: string; needsCheck: boolean } {
   if (!source) return { major: '', minor: '', needsCheck: false };
   const stripped = source.startsWith('바로폼_') ? source.slice(4) : source;
   const idx = stripped.indexOf('_');
@@ -244,10 +244,6 @@ function parseClickSource(source: string | null): { major: string; minor: string
   const rawMinor = stripped.slice(idx + 1);
   const cleanedMinor = rawMinor.replace(/\(확인필요\)/g, '');
   const resolvedName = CAFE_NAMES[cleanedMinor] ?? cleanedMinor;
-  let customCafes: string[] = [];
-  if (typeof window !== 'undefined') {
-    try { customCafes = JSON.parse(localStorage.getItem('hakjeom_custom_cafes') ?? '[]'); } catch {}
-  }
   const isUnknownMamcafe =
     major === '맘카페' &&
     cleanedMinor !== '확인필요' &&
@@ -458,11 +454,17 @@ interface HakjeomDetailPanelProps {
   onClose: () => void;
   onUpdate: (id: number, fields: Partial<HakjeomConsultation>) => Promise<void>;
   initialTab?: 'basic' | 'info' | 'memo';
+  customCafes: string[];
+  customDanggeun: string[];
+  onAddCafe: (name: string) => Promise<void>;
+  onDeleteCafe: (name: string) => Promise<void>;
+  onAddDanggeun: (name: string) => Promise<void>;
+  onDeleteDanggeun: (name: string) => Promise<void>;
 }
 
-function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic' }: HakjeomDetailPanelProps) {
+function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic', customCafes, customDanggeun, onAddCafe, onDeleteCafe, onAddDanggeun, onDeleteDanggeun }: HakjeomDetailPanelProps) {
   const initSource = (src: string | null) => {
-    const { major, minor } = parseClickSource(src);
+    const { major, minor } = parseClickSource(src, customCafes);
     return { major, minor: CAFE_NAMES[minor] ?? minor };
   };
 
@@ -493,21 +495,10 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic' }: H
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'basic' | 'info' | 'memo'>(initialTab);
   const [memoCount, setMemoCount] = useState<number | null>(null);
-  const [customCafes, setCustomCafes] = useState<string[]>([]);
-  const [customDanggeun, setCustomDanggeun] = useState<string[]>([]);
   const [cafeAddInput, setCafeAddInput] = useState('');
   const [showCafeAdd, setShowCafeAdd] = useState(false);
   const [danggeunAddInput, setDanggeunAddInput] = useState('');
   const [showDanggeunAdd, setShowDanggeunAdd] = useState(false);
-
-  useEffect(() => {
-    try {
-      const cafes = JSON.parse(localStorage.getItem('hakjeom_custom_cafes') ?? '[]');
-      setCustomCafes(Array.isArray(cafes) ? cafes : []);
-      const danggeun = JSON.parse(localStorage.getItem('hakjeom_custom_danggeun') ?? '[]');
-      setCustomDanggeun(Array.isArray(danggeun) ? danggeun : []);
-    } catch {}
-  }, []);
 
   const builtClickSource = editSourceMajor
     ? editSourceMinor ? `${editSourceMajor}_${editSourceMinor}` : editSourceMajor
@@ -553,39 +544,31 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic' }: H
     setEditSourceMinor(prev => prev === cafeName ? '' : cafeName);
   };
 
-  const handleAddCafe = () => {
+  const handleAddCafe = async () => {
     const name = cafeAddInput.trim();
     if (!name || CAFE_NAME_LIST.includes(name) || customCafes.includes(name)) return;
-    const next = [...customCafes, name];
-    setCustomCafes(next);
-    try { localStorage.setItem('hakjeom_custom_cafes', JSON.stringify(next)); } catch {}
+    await onAddCafe(name);
     setEditSourceMinor(name);
     setCafeAddInput('');
     setShowCafeAdd(false);
   };
 
-  const handleAddDanggeun = () => {
+  const handleAddDanggeun = async () => {
     const name = danggeunAddInput.trim();
     if (!name || customDanggeun.includes(name)) return;
-    const next = [...customDanggeun, name];
-    setCustomDanggeun(next);
-    try { localStorage.setItem('hakjeom_custom_danggeun', JSON.stringify(next)); } catch {}
+    await onAddDanggeun(name);
     setEditSourceMinor(name);
     setDanggeunAddInput('');
     setShowDanggeunAdd(false);
   };
 
-  const handleDeleteCafe = (name: string) => {
-    const next = customCafes.filter(c => c !== name);
-    setCustomCafes(next);
-    try { localStorage.setItem('hakjeom_custom_cafes', JSON.stringify(next)); } catch {}
+  const handleDeleteCafe = async (name: string) => {
+    await onDeleteCafe(name);
     if (editSourceMinor === name) setEditSourceMinor('');
   };
 
-  const handleDeleteDanggeun = (name: string) => {
-    const next = customDanggeun.filter(c => c !== name);
-    setCustomDanggeun(next);
-    try { localStorage.setItem('hakjeom_custom_danggeun', JSON.stringify(next)); } catch {}
+  const handleDeleteDanggeun = async (name: string) => {
+    await onDeleteDanggeun(name);
     if (editSourceMinor === name) setEditSourceMinor('');
   };
 
@@ -944,9 +927,15 @@ interface HakjeomAddModalProps {
   onClose: () => void;
   onSaved: () => void;
   uniqueManagers?: string[];
+  customCafes: string[];
+  customDanggeun: string[];
+  onAddCafe: (name: string) => Promise<void>;
+  onDeleteCafe: (name: string) => Promise<void>;
+  onAddDanggeun: (name: string) => Promise<void>;
+  onDeleteDanggeun: (name: string) => Promise<void>;
 }
 
-function HakjeomAddModal({ onClose, onSaved, uniqueManagers = [] }: HakjeomAddModalProps) {
+function HakjeomAddModal({ onClose, onSaved, uniqueManagers = [], customCafes, customDanggeun, onAddCafe, onDeleteCafe, onAddDanggeun, onDeleteDanggeun }: HakjeomAddModalProps) {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({
     name: '', contact: '', education: '',
@@ -962,55 +951,36 @@ function HakjeomAddModal({ onClose, onSaved, uniqueManagers = [] }: HakjeomAddMo
   const [showManagerInput, setShowManagerInput] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
   const contactRef = useRef<HTMLInputElement>(null);
-  const [modalCustomCafes, setModalCustomCafes] = useState<string[]>([]);
-  const [modalCustomDanggeun, setModalCustomDanggeun] = useState<string[]>([]);
   const [modalCafeAddInput, setModalCafeAddInput] = useState('');
   const [modalShowCafeAdd, setModalShowCafeAdd] = useState(false);
   const [modalDanggeunAddInput, setModalDanggeunAddInput] = useState('');
   const [modalShowDanggeunAdd, setModalShowDanggeunAdd] = useState(false);
 
-  useEffect(() => {
-    try {
-      const cafes = JSON.parse(localStorage.getItem('hakjeom_custom_cafes') ?? '[]');
-      setModalCustomCafes(Array.isArray(cafes) ? cafes : []);
-      const danggeun = JSON.parse(localStorage.getItem('hakjeom_custom_danggeun') ?? '[]');
-      setModalCustomDanggeun(Array.isArray(danggeun) ? danggeun : []);
-    } catch {}
-  }, []);
-
-  const handleModalAddCafe = () => {
+  const handleModalAddCafe = async () => {
     const name = modalCafeAddInput.trim();
-    if (!name || CAFE_NAME_LIST.includes(name) || modalCustomCafes.includes(name)) return;
-    const next = [...modalCustomCafes, name];
-    setModalCustomCafes(next);
-    try { localStorage.setItem('hakjeom_custom_cafes', JSON.stringify(next)); } catch {}
+    if (!name || CAFE_NAME_LIST.includes(name) || customCafes.includes(name)) return;
+    await onAddCafe(name);
     setForm(p => ({ ...p, sourceMinor: name }));
     setModalCafeAddInput('');
     setModalShowCafeAdd(false);
   };
 
-  const handleModalAddDanggeun = () => {
+  const handleModalAddDanggeun = async () => {
     const name = modalDanggeunAddInput.trim();
-    if (!name || modalCustomDanggeun.includes(name)) return;
-    const next = [...modalCustomDanggeun, name];
-    setModalCustomDanggeun(next);
-    try { localStorage.setItem('hakjeom_custom_danggeun', JSON.stringify(next)); } catch {}
+    if (!name || customDanggeun.includes(name)) return;
+    await onAddDanggeun(name);
     setForm(p => ({ ...p, sourceMinor: name }));
     setModalDanggeunAddInput('');
     setModalShowDanggeunAdd(false);
   };
 
-  const handleModalDeleteCafe = (name: string) => {
-    const next = modalCustomCafes.filter(c => c !== name);
-    setModalCustomCafes(next);
-    try { localStorage.setItem('hakjeom_custom_cafes', JSON.stringify(next)); } catch {}
+  const handleModalDeleteCafe = async (name: string) => {
+    await onDeleteCafe(name);
     if (form.sourceMinor === name) setForm(p => ({ ...p, sourceMinor: '' }));
   };
 
-  const handleModalDeleteDanggeun = (name: string) => {
-    const next = modalCustomDanggeun.filter(c => c !== name);
-    setModalCustomDanggeun(next);
-    try { localStorage.setItem('hakjeom_custom_danggeun', JSON.stringify(next)); } catch {}
+  const handleModalDeleteDanggeun = async (name: string) => {
+    await onDeleteDanggeun(name);
     if (form.sourceMinor === name) setForm(p => ({ ...p, sourceMinor: '' }));
   };
 
@@ -1274,7 +1244,7 @@ function HakjeomAddModal({ onClose, onSaved, uniqueManagers = [] }: HakjeomAddMo
                         {cafeName}
                       </button>
                     ))}
-                    {modalCustomCafes.map(cafeName => (
+                    {customCafes.map(cafeName => (
                       <span key={cafeName} className={styles.customItemWrap}>
                         <button
                           type="button"
@@ -1305,7 +1275,7 @@ function HakjeomAddModal({ onClose, onSaved, uniqueManagers = [] }: HakjeomAddMo
                 )}
                 {form.sourceMajor === '당근' && (
                   <div className={styles.clickSourceSubPanel} style={{ marginTop: 8 }}>
-                    {modalCustomDanggeun.map(area => (
+                    {customDanggeun.map(area => (
                       <span key={area} className={styles.customItemWrap}>
                         <button
                           type="button"
@@ -1543,16 +1513,19 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
   const [bulkSourceMinor, setBulkSourceMinor] = useState('');
   const [assigningSource, setAssigningSource] = useState(false);
   const sourceAssignRef = useRef<HTMLDivElement>(null);
-  const [bulkCustomCafes, setBulkCustomCafes] = useState<string[]>([]);
-  const [bulkCustomDanggeun, setBulkCustomDanggeun] = useState<string[]>([]);
+  const [customCafes, setCustomCafes] = useState<string[]>([]);
+  const [customDanggeun, setCustomDanggeun] = useState<string[]>([]);
 
   useEffect(() => {
-    try {
-      const cafes = JSON.parse(localStorage.getItem('hakjeom_custom_cafes') ?? '[]');
-      setBulkCustomCafes(Array.isArray(cafes) ? cafes : []);
-      const danggeun = JSON.parse(localStorage.getItem('hakjeom_custom_danggeun') ?? '[]');
-      setBulkCustomDanggeun(Array.isArray(danggeun) ? danggeun : []);
-    } catch {}
+    fetch('/api/hakjeom/custom-sources')
+      .then(r => r.json())
+      .then(data => {
+        const allCafes: string[] = Array.isArray(data.cafes) ? data.cafes : [];
+        const allDanggeun: string[] = Array.isArray(data.danggeun) ? data.danggeun : [];
+        setCustomCafes([...new Set(allCafes.filter(n => !CAFE_NAME_LIST.includes(n)))]);
+        setCustomDanggeun([...new Set(allDanggeun)]);
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => { setSelectedIds([]); }, [currentPage]);
@@ -1705,28 +1678,54 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
     setTimeout(() => setToastVisible(false), 2500);
   };
 
-  const handleBulkDeleteCafe = (name: string) => {
-    const next = bulkCustomCafes.filter(c => c !== name);
-    setBulkCustomCafes(next);
-    try { localStorage.setItem('hakjeom_custom_cafes', JSON.stringify(next)); } catch {}
-    if (bulkSourceMinor === name) setBulkSourceMinor('');
-  };
+  const handleAddCafe = useCallback(async (name: string) => {
+    await fetch('/api/hakjeom/custom-sources', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'mamcafe', name }),
+    });
+    setCustomCafes(prev => [...prev, name]);
+  }, []);
 
-  const handleBulkDeleteDanggeun = (name: string) => {
-    const next = bulkCustomDanggeun.filter(c => c !== name);
-    setBulkCustomDanggeun(next);
-    try { localStorage.setItem('hakjeom_custom_danggeun', JSON.stringify(next)); } catch {}
+  const handleDeleteCafe = useCallback(async (name: string) => {
+    await fetch('/api/hakjeom/custom-sources', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'mamcafe', name }),
+    });
+    setCustomCafes(prev => prev.filter(c => c !== name));
     if (bulkSourceMinor === name) setBulkSourceMinor('');
-  };
+  }, [bulkSourceMinor]);
+
+  const handleAddDanggeun = useCallback(async (name: string) => {
+    await fetch('/api/hakjeom/custom-sources', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'danggeun', name }),
+    });
+    setCustomDanggeun(prev => [...prev, name]);
+  }, []);
+
+  const handleDeleteDanggeun = useCallback(async (name: string) => {
+    await fetch('/api/hakjeom/custom-sources', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'danggeun', name }),
+    });
+    setCustomDanggeun(prev => prev.filter(c => c !== name));
+    if (bulkSourceMinor === name) setBulkSourceMinor('');
+  }, [bulkSourceMinor]);
+
+  const parseSource = useCallback((src: string | null) => parseClickSource(src, customCafes), [customCafes]);
 
   // 필터링
   const uniqueManagers = Array.from(new Set(items.map(c => c.manager).filter(Boolean))) as string[];
-  const uniqueMajorCategories = Array.from(new Set(items.map(c => parseClickSource(c.click_source).major).filter(Boolean))).sort();
-  const needsCheckCount = items.filter(c => parseClickSource(c.click_source).needsCheck).length;
+  const uniqueMajorCategories = Array.from(new Set(items.map(c => parseSource(c.click_source).major).filter(Boolean))).sort();
+  const needsCheckCount = items.filter(c => parseSource(c.click_source).needsCheck).length;
   const uniqueMinorCategories = Array.from(new Set(
     items
-      .filter(c => majorCategoryFilter.length === 0 || majorCategoryFilter.includes(parseClickSource(c.click_source).major))
-      .map(c => parseClickSource(c.click_source))
+      .filter(c => majorCategoryFilter.length === 0 || majorCategoryFilter.includes(parseSource(c.click_source).major))
+      .map(c => parseSource(c.click_source))
       .filter(p => Boolean(p.minor) && !p.needsCheck)
       .map(p => p.minor)
   )).sort();
@@ -1745,9 +1744,9 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
       const matches = (hasNone && !c.manager) || others.some(m => c.manager === m);
       if (!matches) return false;
     }
-    if (majorCategoryFilter.length > 0 && !majorCategoryFilter.includes(parseClickSource(c.click_source).major)) return false;
+    if (majorCategoryFilter.length > 0 && !majorCategoryFilter.includes(parseSource(c.click_source).major)) return false;
     if (minorCategoryFilter.length > 0) {
-      const parsed = parseClickSource(c.click_source);
+      const parsed = parseSource(c.click_source);
       const matches = minorCategoryFilter.some(f => f === '__needs_check__' ? parsed.needsCheck : parsed.minor === f);
       if (!matches) return false;
     }
@@ -1917,7 +1916,7 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
                               {name}
                             </button>
                           ))}
-                          {bulkCustomCafes.map(name => (
+                          {customCafes.map(name => (
                             <span key={name} className={styles.customItemWrap}>
                               <button
                                 type="button"
@@ -1926,14 +1925,14 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
                               >
                                 {name}
                               </button>
-                              <button type="button" className={styles.customItemDeleteBtn} onClick={() => handleBulkDeleteCafe(name)}>✕</button>
+                              <button type="button" className={styles.customItemDeleteBtn} onClick={() => handleDeleteCafe(name)}>✕</button>
                             </span>
                           ))}
                         </div>
                       )}
-                      {bulkSourceMajor === '당근' && bulkCustomDanggeun.length > 0 && (
+                      {bulkSourceMajor === '당근' && customDanggeun.length > 0 && (
                         <div className={styles.sourceAssignSubPanel}>
-                          {bulkCustomDanggeun.map(name => (
+                          {customDanggeun.map(name => (
                             <span key={name} className={styles.customItemWrap}>
                               <button
                                 type="button"
@@ -1942,7 +1941,7 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
                               >
                                 {name}
                               </button>
-                              <button type="button" className={styles.customItemDeleteBtn} onClick={() => handleBulkDeleteDanggeun(name)}>✕</button>
+                              <button type="button" className={styles.customItemDeleteBtn} onClick={() => handleDeleteDanggeun(name)}>✕</button>
                             </span>
                           ))}
                         </div>
@@ -2065,8 +2064,8 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
                       <input type="checkbox" checked={selectedIds.includes(item.id)} onChange={() => toggleSelect(item.id)} className={styles.checkbox} />
                     </td>
                     <td className={styles.tdNum}>{(currentPage - 1) * itemsPerPage + index + 1}</td>
-                    <td className={styles.tdSecondary}>{parseClickSource(item.click_source).major || '-'}</td>
-                    <td className={styles.tdSecondary} style={parseClickSource(item.click_source).needsCheck ? { color: '#ef4444', fontWeight: 600 } : undefined}>{parseClickSource(item.click_source).minor || '-'}</td>
+                    <td className={styles.tdSecondary}>{parseSource(item.click_source).major || '-'}</td>
+                    <td className={styles.tdSecondary} style={parseSource(item.click_source).needsCheck ? { color: '#ef4444', fontWeight: 600 } : undefined}>{parseSource(item.click_source).minor || '-'}</td>
                     <td className={styles.tdBold}><Highlight text={item.name} query={searchText} /></td>
                     <td
                       className={styles.tdTabular}
@@ -2154,14 +2153,35 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
 
       {/* 사이드 패널 */}
       {selectedItem && (
-        <HakjeomDetailPanel item={selectedItem} onClose={() => { setSelectedItem(null); setOpenTab('basic'); setInlineContact(null); }} onUpdate={handleUpdate} initialTab={openTab} />
+        <HakjeomDetailPanel
+          item={selectedItem}
+          onClose={() => { setSelectedItem(null); setOpenTab('basic'); setInlineContact(null); }}
+          onUpdate={handleUpdate}
+          initialTab={openTab}
+          customCafes={customCafes}
+          customDanggeun={customDanggeun}
+          onAddCafe={handleAddCafe}
+          onDeleteCafe={handleDeleteCafe}
+          onAddDanggeun={handleAddDanggeun}
+          onDeleteDanggeun={handleDeleteDanggeun}
+        />
       )}
       {toastVisible && <div className={styles.toast}>저장이 완료되었습니다</div>}
       {deleteToastVisible && <div className={styles.toast}>삭제되었습니다</div>}
 
       {/* 추가 모달 */}
       {showAddModal && (
-        <HakjeomAddModal onClose={() => setShowAddModal(false)} onSaved={fetchData} uniqueManagers={uniqueManagers} />
+        <HakjeomAddModal
+          onClose={() => setShowAddModal(false)}
+          onSaved={fetchData}
+          uniqueManagers={uniqueManagers}
+          customCafes={customCafes}
+          customDanggeun={customDanggeun}
+          onAddCafe={handleAddCafe}
+          onDeleteCafe={handleDeleteCafe}
+          onAddDanggeun={handleAddDanggeun}
+          onDeleteDanggeun={handleDeleteDanggeun}
+        />
       )}
 
       {/* 컬럼 필터 드롭다운 */}
