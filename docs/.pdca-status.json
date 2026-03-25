@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-03-25T03:42:13.773Z",
+  "lastUpdated": "2026-03-25T05:40:16.012Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -124,7 +124,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:30:16.038Z",
-        "lastUpdated": "2026-03-25T03:42:13.773Z"
+        "lastUpdated": "2026-03-25T05:40:16.012Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/hakjeom/page.tsx"
     },
@@ -813,7 +813,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-25T03:34:15.320Z",
-        "lastUpdated": "2026-03-25T03:37:16.508Z"
+        "lastUpdated": "2026-03-25T05:38:56.790Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/hakjeom/custom-sources/route.ts"
     }
@@ -826,7 +826,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-03-25T03:42:13.773Z"
+    "lastActivity": "2026-03-25T05:40:16.012Z"
   },
   "history": [
     {
@@ -9333,6 +9333,48 @@
     },
     {
       "timestamp": "2026-03-25T03:42:13.773Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-25T05:38:56.790Z",
+      "feature": "custom-sources",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-25T05:39:10.939Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-25T05:39:17.293Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-25T05:39:35.135Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-25T05:39:58.906Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-25T05:40:05.314Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-25T05:40:16.012Z",
       "feature": "hakjeom",
       "phase": "do",
       "action": "updated"

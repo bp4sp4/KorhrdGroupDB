@@ -52,7 +52,7 @@ export async function DELETE(request: NextRequest) {
   const { error } = await supabaseAdmin
     .from('channels')
     .delete()
-    .eq('id', name)
+    .eq('name', name)
     .eq('type', type);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

@@ -563,11 +563,13 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic', cus
   };
 
   const handleDeleteCafe = async (name: string) => {
+    if (!window.confirm(`"${name}" 카페를 삭제하시겠습니까?`)) return;
     await onDeleteCafe(name);
     if (editSourceMinor === name) setEditSourceMinor('');
   };
 
   const handleDeleteDanggeun = async (name: string) => {
+    if (!window.confirm(`"${name}"을(를) 삭제하시겠습니까?`)) return;
     await onDeleteDanggeun(name);
     if (editSourceMinor === name) setEditSourceMinor('');
   };
@@ -975,11 +977,13 @@ function HakjeomAddModal({ onClose, onSaved, uniqueManagers = [], customCafes, c
   };
 
   const handleModalDeleteCafe = async (name: string) => {
+    if (!window.confirm(`"${name}" 카페를 삭제하시겠습니까?`)) return;
     await onDeleteCafe(name);
     if (form.sourceMinor === name) setForm(p => ({ ...p, sourceMinor: '' }));
   };
 
   const handleModalDeleteDanggeun = async (name: string) => {
+    if (!window.confirm(`"${name}"을(를) 삭제하시겠습니까?`)) return;
     await onDeleteDanggeun(name);
     if (form.sourceMinor === name) setForm(p => ({ ...p, sourceMinor: '' }));
   };
@@ -1925,7 +1929,7 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
                               >
                                 {name}
                               </button>
-                              <button type="button" className={styles.customItemDeleteBtn} onClick={() => handleDeleteCafe(name)}>✕</button>
+                              <button type="button" className={styles.customItemDeleteBtn} onClick={() => { if (window.confirm(`"${name}" 카페를 삭제하시겠습니까?`)) handleDeleteCafe(name); }}>✕</button>
                             </span>
                           ))}
                         </div>
@@ -1941,7 +1945,7 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
                               >
                                 {name}
                               </button>
-                              <button type="button" className={styles.customItemDeleteBtn} onClick={() => handleDeleteDanggeun(name)}>✕</button>
+                              <button type="button" className={styles.customItemDeleteBtn} onClick={() => { if (window.confirm(`"${name}"을(를) 삭제하시겠습니까?`)) handleDeleteDanggeun(name); }}>✕</button>
                             </span>
                           ))}
                         </div>
