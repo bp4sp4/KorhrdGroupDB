@@ -6,6 +6,7 @@ import styles from '../hakjeom/page.module.css'
 import practiceStyles from './page.module.css'
 import MemoTimeline from '@/components/ui/MemoTimeline'
 import { TableSkeleton, FilterBarSkeleton } from '@/components/ui/Skeleton'
+import { downloadExcel } from '@/lib/excelExport'
 
 // ─── 탭 타입 ─────────────────────────────────────────────────────────────────
 
@@ -532,6 +533,7 @@ function ConsultationDetailModal({ item, onClose, onUpdate }: {
   const [editServiceEmployment, setEditServiceEmployment] = useState(item.service_employment ?? false)
   const [editEmploymentHopeTime, setEditEmploymentHopeTime] = useState(item.employment_hope_time ?? '')
   const [editEmploymentSupportFund, setEditEmploymentSupportFund] = useState<boolean | null>(item.employment_support_fund ?? null)
+  const [editName, setEditName] = useState(item.name ?? '')
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -549,6 +551,7 @@ function ConsultationDetailModal({ item, onClose, onUpdate }: {
     setEditServiceEmployment(item.service_employment ?? false)
     setEditEmploymentHopeTime(item.employment_hope_time ?? '')
     setEditEmploymentSupportFund(item.employment_support_fund ?? null)
+    setEditName(item.name ?? '')
     setActiveTab('basic')
   }, [item.id])
 
@@ -570,6 +573,7 @@ function ConsultationDetailModal({ item, onClose, onUpdate }: {
         service_employment: editServiceEmployment,
         employment_hope_time: editEmploymentHopeTime || null,
         employment_support_fund: editEmploymentSupportFund,
+        name: editName.trim() || item.name,
       })
       onClose()
     } finally {
@@ -696,6 +700,12 @@ function ConsultationDetailModal({ item, onClose, onUpdate }: {
                 <input value={editAddress} onChange={e => setEditAddress(e.target.value)} placeholder="상세 주소 입력" className={`${styles.input} ${styles.inputFull}`} />
               </div>
 
+              {/* 이름 */}
+              <div className={styles.detailFieldRow}>
+                <span className={styles.detailFieldLabel}>이름</span>
+                <input value={editName} onChange={e => setEditName(e.target.value)} placeholder="이름" className={`${styles.input} ${styles.inputFull}`} />
+              </div>
+
               {/* 유입경로 (읽기 전용) */}
               <InfoRow label="유입경로" value={item.click_source} />
             </>
@@ -811,6 +821,7 @@ function PracticeApplicationDetailModal({ item, onClose, onUpdate }: {
   const [editPaymentAmount, setEditPaymentAmount] = useState(item.payment_amount != null ? String(item.payment_amount) : '')
   const [editPaymentStatus, setEditPaymentStatus] = useState(item.payment_status ?? '')
   const [editClickSource, setEditClickSource] = useState(item.click_source ?? '')
+  const [editName, setEditName] = useState(item.name ?? '')
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -823,6 +834,7 @@ function PracticeApplicationDetailModal({ item, onClose, onUpdate }: {
     setEditPaymentAmount(item.payment_amount != null ? String(item.payment_amount) : '')
     setEditPaymentStatus(item.payment_status ?? '')
     setEditClickSource(item.click_source ?? '')
+    setEditName(item.name ?? '')
     setActiveTab('basic')
   }, [item.id])
 
@@ -830,6 +842,7 @@ function PracticeApplicationDetailModal({ item, onClose, onUpdate }: {
     setSaving(true)
     try {
       await onUpdate(item.id, {
+        name: editName.trim() || item.name,
         status: editStatus, manager: editManager, memo: editMemo,
         practice_type: editPracticeType || null,
         desired_job_field: editDesiredJobField || null,
@@ -891,6 +904,12 @@ function PracticeApplicationDetailModal({ item, onClose, onUpdate }: {
               <div className={styles.detailFieldRow}>
                 <span className={styles.detailFieldLabel}>담당자</span>
                 <input value={editManager} onChange={e => setEditManager(e.target.value)} placeholder="담당자 이름" className={`${styles.input} ${styles.inputFull}`} />
+              </div>
+
+              {/* 이름 */}
+              <div className={styles.detailFieldRow}>
+                <span className={styles.detailFieldLabel}>이름</span>
+                <input value={editName} onChange={e => setEditName(e.target.value)} placeholder="이름" className={`${styles.input} ${styles.inputFull}`} />
               </div>
 
               <InfoRow label="성별" value={item.gender} />
@@ -1947,6 +1966,87 @@ export default function PracticePage() {
   const employmentTotalPages = Math.ceil(employmentFiltered.length / PAGE_SIZE)
   const employmentPaged = employmentFiltered.slice((employmentPage - 1) * PAGE_SIZE, employmentPage * PAGE_SIZE)
 
+  // ─── Excel 다운로드 ────────────────────────────────────────────────────────
+
+  const CONSULT_HEADERS = ['번호', '이름', '연락처', '서비스', '희망취업시기', '담당자', '상태', '등록일']
+  const consultToRow = (item: PracticeConsultation, i: number) => [
+    i + 1,
+    item.name,
+    item.contact,
+    [item.service_practice && '실습', item.service_employment && '취업'].filter(Boolean).join(', '),
+    item.employment_hope_time ?? '',
+    item.manager ?? '',
+    item.status,
+    item.created_at ? new Date(item.created_at).toLocaleString('ko-KR') : '',
+  ]
+
+  const handleConsultDownloadSelected = () => {
+    const targets = consultationFiltered.filter(c => selectedConsultationIds.has(c.id))
+    downloadExcel(`상담신청_선택_${new Date().toLocaleDateString('ko-KR').replace(/\. /g,'-').replace('.','')}.xlsx`, [{
+      name: '상담신청', headers: CONSULT_HEADERS, rows: targets.map((c, i) => consultToRow(c, i)),
+    }])
+  }
+  const handleConsultDownloadAll = () => {
+    downloadExcel(`상담신청_전체_${new Date().toLocaleDateString('ko-KR').replace(/\. /g,'-').replace('.','')}.xlsx`, [{
+      name: '상담신청', headers: CONSULT_HEADERS, rows: consultationFiltered.map((c, i) => consultToRow(c, i)),
+    }])
+  }
+
+  const PRACTICE_HEADERS = ['번호', '이름', '연락처', '실습유형', '희망직무', '취업유형', '결제금액', '결제상태', '담당자', '상태', '등록일']
+  const practiceAppToRow = (item: PracticeApplication, i: number) => [
+    i + 1,
+    item.name,
+    item.contact,
+    item.practice_type ?? '',
+    item.desired_job_field ?? '',
+    item.employment_types?.join(', ') ?? '',
+    item.payment_amount ?? '',
+    item.payment_status ?? '',
+    item.manager ?? '',
+    item.status,
+    item.created_at ? new Date(item.created_at).toLocaleString('ko-KR') : '',
+  ]
+
+  const handlePracticeDownloadSelected = () => {
+    const targets = practiceFiltered.filter(a => selectedPracticeAppIds.has(a.id))
+    downloadExcel(`실습섭외신청서_선택_${new Date().toLocaleDateString('ko-KR').replace(/\. /g,'-').replace('.','')}.xlsx`, [{
+      name: '실습섭외신청서', headers: PRACTICE_HEADERS, rows: targets.map((a, i) => practiceAppToRow(a, i)),
+    }])
+  }
+  const handlePracticeDownloadAll = () => {
+    downloadExcel(`실습섭외신청서_전체_${new Date().toLocaleDateString('ko-KR').replace(/\. /g,'-').replace('.','')}.xlsx`, [{
+      name: '실습섭외신청서', headers: PRACTICE_HEADERS, rows: practiceFiltered.map((a, i) => practiceAppToRow(a, i)),
+    }])
+  }
+
+  const EMP_HEADERS = ['번호', '이름', '연락처', '희망직무', '취업유형', '이력서', '자격증', '결제금액', '결제상태', '담당자', '상태', '등록일']
+  const empToRow = (item: EmploymentApplication, i: number) => [
+    i + 1,
+    item.name,
+    item.contact,
+    item.desired_job_field ?? '',
+    item.employment_types?.join(', ') ?? '',
+    item.has_resume ? '있음' : '없음',
+    item.certifications ?? '',
+    item.payment_amount ?? '',
+    item.payment_status ?? '',
+    item.manager ?? '',
+    item.status,
+    item.created_at ? new Date(item.created_at).toLocaleString('ko-KR') : '',
+  ]
+
+  const handleEmpDownloadSelected = () => {
+    const targets = employmentFiltered.filter(a => selectedEmploymentIds.has(a.id))
+    downloadExcel(`취업신청_선택_${new Date().toLocaleDateString('ko-KR').replace(/\. /g,'-').replace('.','')}.xlsx`, [{
+      name: '취업신청', headers: EMP_HEADERS, rows: targets.map((a, i) => empToRow(a, i)),
+    }])
+  }
+  const handleEmpDownloadAll = () => {
+    downloadExcel(`취업신청_전체_${new Date().toLocaleDateString('ko-KR').replace(/\. /g,'-').replace('.','')}.xlsx`, [{
+      name: '취업신청', headers: EMP_HEADERS, rows: employmentFiltered.map((a, i) => empToRow(a, i)),
+    }])
+  }
+
   // ─── 탭 설정 ───────────────────────────────────────────────────────────────
 
   const TABS: { value: PracticeTab; label: string }[] = [
@@ -2052,6 +2152,7 @@ export default function PracticePage() {
                     <button onClick={handleDeleteConsultations} disabled={deleting} className={styles.btnDanger}>
                       {deleting ? '삭제 중...' : '선택 삭제'}
                     </button>
+                    <button onClick={handleConsultDownloadSelected} className={styles.btnDownload}>↓ 선택 다운로드</button>
                     <button onClick={() => setSelectedConsultationIds(new Set())} className={styles.btnSecondary}>선택 해제</button>
                   </>
                 )}
@@ -2060,6 +2161,7 @@ export default function PracticePage() {
               <div className={styles.actionBar}>
                 <span className={styles.actionBarCount}>총 <strong className={styles.actionBarCountBold}>{consultationFiltered.length}</strong>건</span>
                 <div className={styles.actionBarSpacer} />
+                <button onClick={handleConsultDownloadAll} className={styles.btnDownload}>↓ 전체 다운로드</button>
                 <button onClick={() => setShowAddConsultationModal(true)} className={styles.btnPrimary}>+ 추가</button>
               </div>
             </>
@@ -2272,6 +2374,7 @@ export default function PracticePage() {
                     <button onClick={handleDeletePracticeApps} disabled={deleting} className={styles.btnDanger}>
                       {deleting ? '삭제 중...' : '선택 삭제'}
                     </button>
+                    <button onClick={handlePracticeDownloadSelected} className={styles.btnDownload}>↓ 선택 다운로드</button>
                     <button onClick={() => setSelectedPracticeAppIds(new Set())} className={styles.btnSecondary}>선택 해제</button>
                   </>
                 )}
@@ -2280,6 +2383,7 @@ export default function PracticePage() {
               <div className={styles.actionBar}>
                 <span className={styles.actionBarCount}>총 <strong className={styles.actionBarCountBold}>{practiceFiltered.length}</strong>건</span>
                 <div className={styles.actionBarSpacer} />
+                <button onClick={handlePracticeDownloadAll} className={styles.btnDownload}>↓ 전체 다운로드</button>
                 <button onClick={() => setShowAddPracticeModal(true)} className={styles.btnPrimary}>+ 추가</button>
               </div>
             </>
@@ -2462,6 +2566,7 @@ export default function PracticePage() {
                     <button onClick={handleDeleteEmploymentApps} disabled={deleting} className={styles.btnDanger}>
                       {deleting ? '삭제 중...' : '선택 삭제'}
                     </button>
+                    <button onClick={handleEmpDownloadSelected} className={styles.btnDownload}>↓ 선택 다운로드</button>
                     <button onClick={() => setSelectedEmploymentIds(new Set())} className={styles.btnSecondary}>선택 해제</button>
                   </>
                 )}
@@ -2470,6 +2575,7 @@ export default function PracticePage() {
               <div className={styles.actionBar}>
                 <span className={styles.actionBarCount}>총 <strong className={styles.actionBarCountBold}>{employmentFiltered.length}</strong>건</span>
                 <div className={styles.actionBarSpacer} />
+                <button onClick={handleEmpDownloadAll} className={styles.btnDownload}>↓ 전체 다운로드</button>
                 <button onClick={() => setShowAddEmploymentModal(true)} className={styles.btnPrimary}>+ 추가</button>
               </div>
             </>

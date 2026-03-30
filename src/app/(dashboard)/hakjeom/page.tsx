@@ -11,6 +11,7 @@ import styles from './page.module.css';
 import MemoTimeline from '@/components/ui/MemoTimeline'
 import MemoHoverBadge from '@/components/ui/MemoHoverBadge'
 import { TableSkeleton, StatsCardsSkeleton, ChartsGridSkeleton, FilterBarSkeleton } from '@/components/ui/Skeleton'
+import { downloadExcel } from '@/lib/excelExport'
 
 // ─── 공통 타입 ──────────────────────────────────────────────────────────────
 
@@ -492,6 +493,7 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic', cus
   const [editResidence, setEditResidence] = useState(item.residence ?? '');
   const [editSubjectCost, setEditSubjectCost] = useState(item.subject_cost ? String(item.subject_cost) : '');
   const [editContact, setEditContact] = useState(item.contact ?? '');
+  const [editName, setEditName] = useState(item.name ?? '');
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'basic' | 'info' | 'memo'>(initialTab);
   const [memoCount, setMemoCount] = useState<number | null>(null);
@@ -520,6 +522,7 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic', cus
     setEditResidence(item.residence ?? '');
     setEditSubjectCost(item.subject_cost ? String(item.subject_cost) : '');
     setEditContact(item.contact ?? '');
+    setEditName(item.name ?? '');
   }, [item.id]);
 
   const toggleReason = (val: string) => {
@@ -591,6 +594,7 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic', cus
         residence: editResidence || null,
         subject_cost: editSubjectCost ? parseInt(editSubjectCost.replace(/,/g, ''), 10) || null : null,
         contact: editContact || item.contact,
+        name: editName.trim() || item.name,
       });
       onClose();
     } finally {
@@ -599,7 +603,7 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic', cus
   };
 
   // 이니셜: 이름 첫 글자
-  const avatarChar = item.name.charAt(0);
+  const avatarChar = (editName || item.name).charAt(0);
 
   return (
     <div
@@ -786,6 +790,17 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic', cus
                   onChange={e => setEditSubjectCost(e.target.value)}
                   placeholder="예) 580000"
                   type="number"
+                  className={`${styles.input} ${styles.inputFull}`}
+                />
+              </div>
+
+              {/* 이름 */}
+              <div className={styles.detailFieldRow}>
+                <span className={styles.detailFieldLabel}>이름</span>
+                <input
+                  value={editName}
+                  onChange={e => setEditName(e.target.value)}
+                  placeholder="이름"
                   className={`${styles.input} ${styles.inputFull}`}
                 />
               </div>
@@ -1781,6 +1796,40 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
 
   const isFiltered = searchText || statusFilter.length > 0 || managerFilter.length > 0 || majorCategoryFilter.length > 0 || minorCategoryFilter.length > 0 || reasonFilter.length > 0 || counselCheckFilter.length > 0 || startDate || endDate;
 
+  const HAKJEOM_HEADERS = ['번호', '대분류', '중분류', '이름', '연락처', '학력', '희망과정', '상담메모', '담당자', '상담확인', '상태', '과목비용', '등록일'];
+  const hakjeomToRow = (item: HakjeomConsultation, index: number) => [
+    index + 1,
+    parseSource(item.click_source).major || '',
+    parseSource(item.click_source).minor || '',
+    item.name,
+    item.contact,
+    item.education ?? '',
+    item.hope_course ?? '',
+    item.reason ?? '',
+    item.manager ?? '',
+    item.counsel_check ?? '',
+    item.status,
+    item.subject_cost ?? '',
+    item.created_at ? new Date(item.created_at).toLocaleString('ko-KR') : '',
+  ];
+
+  const handleDownloadSelected = () => {
+    const targets = filtered.filter(c => selectedIds.includes(c.id));
+    downloadExcel(`학점은행제_선택_${new Date().toLocaleDateString('ko-KR').replace(/\. /g,'-').replace('.','')}.xlsx`, [{
+      name: '학점은행제',
+      headers: HAKJEOM_HEADERS,
+      rows: targets.map((item, i) => hakjeomToRow(item, i)),
+    }]);
+  };
+
+  const handleDownloadAll = () => {
+    downloadExcel(`학점은행제_전체_${new Date().toLocaleDateString('ko-KR').replace(/\. /g,'-').replace('.','')}.xlsx`, [{
+      name: '학점은행제',
+      headers: HAKJEOM_HEADERS,
+      rows: filtered.map((item, i) => hakjeomToRow(item, i)),
+    }]);
+  };
+
   const resetFilters = () => {
     setSearchText(''); setStatusFilter([]); setManagerFilter([]);
     setMajorCategoryFilter([]); setMinorCategoryFilter([]);
@@ -1973,6 +2022,7 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
                 <button onClick={handleBulkDelete} disabled={deleting} className={styles.btnDanger}>
                   {deleting ? '삭제 중...' : '선택 삭제'}
                 </button>
+                <button onClick={handleDownloadSelected} className={styles.btnDownload}>↓ 선택 다운로드</button>
                 <button onClick={() => { setSelectedIds([]); setShowManagerAssign(false); setShowSourceAssign(false); }} className={styles.btnSecondary}>선택 해제</button>
               </>
             )}
@@ -1983,6 +2033,7 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
               총 <strong className={styles.actionBarCountBold}>{filtered.length}</strong>건
             </span>
             <div className={styles.actionBarSpacer} />
+            <button onClick={handleDownloadAll} className={styles.btnDownload}>↓ 전체 다운로드</button>
             <button onClick={() => setShowAddModal(true)} className={styles.btnPrimary}>+ 추가</button>
           </div>
         </>
@@ -2435,6 +2486,37 @@ function AgencyTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (nod
 
   const isFiltered = searchText || statusFilter !== 'all' || managerFilter !== 'all' || categoryFilter !== 'all';
 
+  const AGENCY_HEADERS = ['번호', '분류', '지역', '기관이름', '연락처', '학점커미션', '민간커미션', '담당자', '협약상태', '등록일'];
+  const agencyToRow = (a: Agency, i: number) => [
+    i + 1,
+    a.category ?? '',
+    a.address ?? '',
+    a.institution_name ?? '',
+    a.contact ?? '',
+    a.credit_commission ?? '',
+    a.private_commission ?? '',
+    a.manager ?? '',
+    a.status,
+    a.created_at ? new Date(a.created_at).toLocaleString('ko-KR') : '',
+  ];
+
+  const handleAgencyDownloadSelected = () => {
+    const targets = filtered.filter(a => selectedIds.has(a.id));
+    downloadExcel(`기관협약_선택_${new Date().toLocaleDateString('ko-KR').replace(/\. /g,'-').replace('.','')}.xlsx`, [{
+      name: '기관협약',
+      headers: AGENCY_HEADERS,
+      rows: targets.map((a, i) => agencyToRow(a, i)),
+    }]);
+  };
+
+  const handleAgencyDownloadAll = () => {
+    downloadExcel(`기관협약_전체_${new Date().toLocaleDateString('ko-KR').replace(/\. /g,'-').replace('.','')}.xlsx`, [{
+      name: '기관협약',
+      headers: AGENCY_HEADERS,
+      rows: filtered.map((a, i) => agencyToRow(a, i)),
+    }]);
+  };
+
   // 담당자별 실적 (헤더 칩)
   useEffect(() => {
     if (!isActive) { setStatsNode(null); return; }
@@ -2482,6 +2564,7 @@ function AgencyTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (nod
                   수정
                 </button>
               )}
+              <button onClick={handleAgencyDownloadSelected} className={styles.btnDownload}>↓ 선택 다운로드</button>
               <button onClick={() => setSelectedIds(new Set())} className={styles.btnSecondary}>선택 해제</button>
             </div>
           )}
@@ -2489,6 +2572,7 @@ function AgencyTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (nod
           <div className={styles.actionBar}>
             <span className={styles.actionBarCount}>총 <strong className={styles.actionBarCountBold}>{filtered.length}</strong>건</span>
             <div className={styles.actionBarSpacer} />
+            <button onClick={handleAgencyDownloadAll} className={styles.btnDownload}>↓ 전체 다운로드</button>
             <button onClick={() => { setEditTarget(null); setShowModal(true); }} className={styles.btnPrimary}>+ 기관 추가</button>
           </div>
         </>

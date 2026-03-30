@@ -137,6 +137,20 @@
   cursor: pointer;
 }
 
+.btnDownload {
+  padding: 7px 12px;
+  background: none;
+  color: var(--toss-blue);
+  border: 1.5px solid var(--toss-blue);
+  border-radius: var(--toss-radius-button);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btnDownload:hover {
+  background: #EBF3FE;
+}
+
 /* ─── 테이블 카드 ────────────────────────────────────────────────────────── */
 
 .tableCard {
@@ -2268,6 +2282,21 @@
   font-weight: 700;
   color: var(--toss-text-primary);
   margin: 0;
+}
+
+.detailModalNameInput {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--toss-text-primary);
+  margin: 0;
+  border: none;
+  border-bottom: 2px solid var(--toss-blue);
+  background: transparent;
+  outline: none;
+  padding: 0 0 2px 0;
+  width: 100%;
+  max-width: 200px;
+  font-family: inherit;
 }
 
 .detailModalSub {

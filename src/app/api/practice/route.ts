@@ -218,6 +218,8 @@ export async function PATCH(request: NextRequest) {
       'residence',
       'address',
       'study_method',
+      'name',
+      'contact',
     ]
 
     const updatePayload: Partial<PracticeConsultation> = {}

@@ -12,6 +12,7 @@ import certStyles from './page.module.css'
 import MemoTimeline from '@/components/ui/MemoTimeline'
 import MemoHoverBadge from '@/components/ui/MemoHoverBadge'
 import { TableSkeleton, StatsCardsSkeleton, ChartsGridSkeleton, FilterBarSkeleton } from '@/components/ui/Skeleton'
+import { downloadExcel } from '@/lib/excelExport'
 
 // ─────────────────────────────────────────────
 // Types
@@ -1292,6 +1293,7 @@ function PCertDetailPanel({ item, onClose, onUpdate, initialTab = 'basic' }: PCe
   const [editClickSource, setEditClickSource] = useState(item.click_source ?? '');
   const [editResidence, setEditResidence] = useState(item.residence ?? '');
   const [editSubjectCost, setEditSubjectCost] = useState(item.subject_cost ? String(item.subject_cost) : '');
+  const [editName, setEditName] = useState(item.name ?? '');
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'basic' | 'info' | 'memo'>(initialTab);
   const [memoCount, setMemoCount] = useState<number | null>(null);
@@ -1309,6 +1311,7 @@ function PCertDetailPanel({ item, onClose, onUpdate, initialTab = 'basic' }: PCe
     setEditClickSource(item.click_source ?? '');
     setEditResidence(item.residence ?? '');
     setEditSubjectCost(item.subject_cost ? String(item.subject_cost) : '');
+    setEditName(item.name ?? '');
   }, [item.id]);
 
   const toggleReason = (val: string) => {
@@ -1334,6 +1337,7 @@ function PCertDetailPanel({ item, onClose, onUpdate, initialTab = 'basic' }: PCe
         click_source: editClickSource || null,
         residence: editResidence || null,
         subject_cost: editSubjectCost ? parseInt(editSubjectCost.replace(/,/g, ''), 10) || null : null,
+        name: editName.trim() || item.name,
       });
       onClose();
     } finally {
@@ -1399,6 +1403,10 @@ function PCertDetailPanel({ item, onClose, onUpdate, initialTab = 'basic' }: PCe
               <div className={styles.detailFieldRow}>
                 <span className={styles.detailFieldLabel}>과목비용</span>
                 <input value={editSubjectCost} onChange={e => setEditSubjectCost(e.target.value)} placeholder="예) 280000" type="number" className={`${styles.input} ${styles.inputFull}`} />
+              </div>
+              <div className={styles.detailFieldRow}>
+                <span className={styles.detailFieldLabel}>이름</span>
+                <input value={editName} onChange={e => setEditName(e.target.value)} placeholder="이름" className={`${styles.input} ${styles.inputFull}`} />
               </div>
             </>
           )}
@@ -1926,6 +1934,39 @@ function PrivateCertTab({ setStatsNode, highlightId }: { setStatsNode: (node: Re
 
   const isFiltered = searchText || statusFilter !== 'all' || managerFilter !== 'all' || majorCategoryFilter !== 'all' || minorCategoryFilter !== 'all' || reasonFilter !== 'all' || counselCheckFilter !== 'all' || startDate || endDate;
 
+  const PCERT_HEADERS = ['번호', '대분류', '중분류', '이름', '연락처', '과정분류', '희망과정', '상담메모', '담당자', '상담확인', '상태', '등록일'];
+  const pcertToRow = (item: PrivateCert, i: number) => [
+    i + 1,
+    parseClickSource(item.click_source).major || '',
+    parseClickSource(item.click_source).minor || '',
+    item.name,
+    item.contact,
+    item.major_category ?? '',
+    item.hope_course ?? '',
+    item.reason ?? '',
+    item.manager ?? '',
+    item.counsel_check ?? '',
+    item.status,
+    item.created_at ? new Date(item.created_at).toLocaleString('ko-KR') : '',
+  ];
+
+  const handlePCertDownloadSelected = () => {
+    const targets = filtered.filter(c => selectedIds.includes(c.id));
+    downloadExcel(`민간자격증_선택_${new Date().toLocaleDateString('ko-KR').replace(/\. /g,'-').replace('.','')}.xlsx`, [{
+      name: '민간자격증',
+      headers: PCERT_HEADERS,
+      rows: targets.map((item, i) => pcertToRow(item, i)),
+    }]);
+  };
+
+  const handlePCertDownloadAll = () => {
+    downloadExcel(`민간자격증_전체_${new Date().toLocaleDateString('ko-KR').replace(/\. /g,'-').replace('.','')}.xlsx`, [{
+      name: '민간자격증',
+      headers: PCERT_HEADERS,
+      rows: filtered.map((item, i) => pcertToRow(item, i)),
+    }]);
+  };
+
   const resetFilters = () => {
     setSearchText(''); setStatusFilter('all'); setManagerFilter('all');
     setMajorCategoryFilter('all'); setMinorCategoryFilter('all');
@@ -1949,6 +1990,7 @@ function PrivateCertTab({ setStatsNode, highlightId }: { setStatsNode: (node: Re
                 <button onClick={handleBulkDelete} disabled={deleting} className={styles.btnDanger}>
                   {deleting ? '삭제 중...' : '선택 삭제'}
                 </button>
+                <button onClick={handlePCertDownloadSelected} className={styles.btnDownload}>↓ 선택 다운로드</button>
                 <button onClick={() => setSelectedIds([])} className={styles.btnSecondary}>선택 해제</button>
               </>
             )}
@@ -1956,6 +1998,7 @@ function PrivateCertTab({ setStatsNode, highlightId }: { setStatsNode: (node: Re
           <div className={styles.actionBar}>
             <span className={styles.actionBarCount}>총 <strong className={styles.actionBarCountBold}>{filtered.length}</strong>건</span>
             <div className={styles.actionBarSpacer} />
+            <button onClick={handlePCertDownloadAll} className={styles.btnDownload}>↓ 전체 다운로드</button>
             <button onClick={() => setShowAddModal(true)} className={styles.btnPrimary}>+ 추가</button>
           </div>
         </>
@@ -2338,6 +2381,42 @@ function ApplicationTab({ sourceTab, highlightId }: { sourceTab: 'hakjeom' | 'ed
     }
   }
 
+  const tabLabel = sourceTab === 'hakjeom' ? '학점연계신청' : '교육원'
+  const APP_HEADERS = sourceTab === 'edu'
+    ? ['번호', '이름', '연락처', '결제금액', '결제상태', '출처', '신청일']
+    : ['번호', '이름', '연락처', '신청자격증', '결제금액', '결제상태', '출처', '신청일']
+
+  const appToRow = (app: CertApplication, i: number) => {
+    const base = [
+      i + 1,
+      app.name,
+      app.contact,
+      ...(sourceTab !== 'edu' ? [app.certificates?.join(', ') ?? ''] : []),
+      app.amount ?? '',
+      app.payment_status ? (PAYMENT_STATUS_LABEL[app.payment_status] ?? app.payment_status) : '',
+      app.source ?? '',
+      app.created_at ? new Date(app.created_at).toLocaleString('ko-KR') : '',
+    ]
+    return base
+  }
+
+  const handleAppDownloadSelected = () => {
+    const targets = filtered.filter(a => selectedIds.has(a.id))
+    downloadExcel(`${tabLabel}_선택_${new Date().toLocaleDateString('ko-KR').replace(/\. /g,'-').replace('.','')}.xlsx`, [{
+      name: tabLabel,
+      headers: APP_HEADERS,
+      rows: targets.map((a, i) => appToRow(a, i)),
+    }])
+  }
+
+  const handleAppDownloadAll = () => {
+    downloadExcel(`${tabLabel}_전체_${new Date().toLocaleDateString('ko-KR').replace(/\. /g,'-').replace('.','')}.xlsx`, [{
+      name: tabLabel,
+      headers: APP_HEADERS,
+      rows: filtered.map((a, i) => appToRow(a, i)),
+    }])
+  }
+
   // ─────────────────────────────────────────────
   // Render
   // ─────────────────────────────────────────────
@@ -2369,6 +2448,7 @@ function ApplicationTab({ sourceTab, highlightId }: { sourceTab: 'hakjeom' | 'ed
                 >
                   {bulkDeleting ? '삭제 중...' : '선택 삭제'}
                 </button>
+                <button onClick={handleAppDownloadSelected} className={styles.btnDownload}>↓ 선택 다운로드</button>
                 <button onClick={() => setSelectedIds(new Set())} className={styles.btnSecondary}>선택 해제</button>
               </>
             )}
@@ -2380,6 +2460,7 @@ function ApplicationTab({ sourceTab, highlightId }: { sourceTab: 'hakjeom' | 'ed
               총 <strong className={styles.actionBarCountBold}>{filtered.length}</strong>건
             </span>
             <div className={styles.actionBarSpacer} />
+            <button onClick={handleAppDownloadAll} className={styles.btnDownload}>↓ 전체 다운로드</button>
             <button onClick={() => setShowAddModal(true)} className={styles.btnPrimary}>+ 신청 추가</button>
           </div>
         </>

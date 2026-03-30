@@ -158,6 +158,7 @@ export async function PATCH(request: NextRequest) {
       'status', 'memo', 'manager',
       'practice_type', 'desired_job_field', 'employment_types',
       'certifications', 'payment_amount', 'payment_status', 'click_source',
+      'name', 'contact',
     ]
 
     const updatePayload: Partial<PracticeApplication> = {}
