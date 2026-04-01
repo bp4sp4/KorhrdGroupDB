@@ -53,18 +53,12 @@ export async function requireAuthFull(): Promise<AuthFullResult> {
     .from('app_users')
     .select('id, display_name, role')
     .eq('username', user.email)
-    .single()
+    .maybeSingle()
 
-  if (!appUser) {
-    return {
-      user: null,
-      appUser: null,
-      errorResponse: NextResponse.json(
-        { error: '사용자 정보를 찾을 수 없습니다.' },
-        { status: 401 }
-      ),
-    }
+  // app_users에 없으면 admin 권한으로 fallback (항상 전체 열람)
+  return {
+    user,
+    appUser: appUser ?? { id: 0, display_name: null, role: 'admin' },
+    errorResponse: null,
   }
-
-  return { user, appUser, errorResponse: null }
 }
