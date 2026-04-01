@@ -15,14 +15,35 @@ export async function GET() {
     // app_users에서 role 조회 (email로 매칭)
     const { data: appUser } = await supabaseAdmin
       .from('app_users')
-      .select('role, display_name, ref_code')
+      .select('id, role, display_name, ref_code')
       .eq('username', user.email)
       .single();
 
+    const isFullAccess = appUser?.role === 'master-admin' || appUser?.role === 'admin'
+
+    let permissions: { section: string; scope: string }[] = []
+    if (appUser?.id) {
+      if (isFullAccess) {
+        permissions = [
+          { section: 'hakjeom', scope: 'all' },
+          { section: 'cert', scope: 'all' },
+          { section: 'practice', scope: 'all' },
+        ]
+      } else {
+        const { data: perms } = await supabaseAdmin
+          .from('user_permissions')
+          .select('section, scope')
+          .eq('user_id', appUser.id)
+        permissions = perms ?? []
+      }
+    }
+
     return NextResponse.json({
+      id: appUser?.id ?? null,
       role: appUser?.role ?? 'admin',
       displayName: appUser?.display_name ?? user.email,
       refCode: appUser?.ref_code ?? null,
+      permissions,
     });
   } catch {
     return NextResponse.json({ role: 'admin' });

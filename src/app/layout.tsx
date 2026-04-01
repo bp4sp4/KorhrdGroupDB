@@ -3,17 +3,17 @@ import './globals.css'
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://korhrd-group-db.vercel.app'),
-  title: '한평생그룹 - 학점은행제 통합 관리',
-  description: '학점은행제 통합 관리 시스템',
+  title: '한평생오피스',
+  description: '한평생오피스 사내 업무 통합 관리 시스템',
   openGraph: {
-    title: '한평생교육 - 학점은행제 통합 관리',
-    description: '학점은행제 통합 관리 시스템',
+    title: '한평생오피스 - 한평생오피스 사내 업무 통합 관리 시스템',
+    description: '한평생오피스 사내 업무 통합 관리 시스템',
     images: [{ url: '/og-image.png', width: 1200, height: 630 }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: '한평생그룹 - 학점은행제 통합 관리',
-    description: '학점은행제 통합 관리 시스템',
+    title: '한평생오피스 - 한평생오피스 사내 업무 통합 관리 시스템',
+    description: '한평생오피스 사내 업무 통합 관리 시스템',
     images: ['/og-image.png'],
   },
 }

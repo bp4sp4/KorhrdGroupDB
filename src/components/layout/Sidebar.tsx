@@ -2,8 +2,11 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useState, useEffect, useRef } from 'react'
-import { GraduationCap, FileText, Briefcase, ChevronLeft, ChevronRight, Users, UserCog, Trash2, HeartPulse, ClipboardList, Copy } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import {
+  GraduationCap, Briefcase, Users, UserCog, Trash2,
+  HeartPulse, ClipboardList, Copy, TrendingUp, FileCheck, BarChart2, Settings,
+} from 'lucide-react'
 import styles from './layout.module.css'
 import { createClient } from '@/lib/supabase/client'
 
@@ -12,75 +15,68 @@ interface NavItem {
   label: string
   href: string
   icon: React.ReactNode
+  activeOn?: string[]
+  groupLabel?: string
 }
 
-const ADMIN_NAV_ITEMS: NavItem[] = [
+interface NavSection {
+  sectionKey: string
+  activeOn: string[]
+  items: NavItem[]
+}
+
+const ALL_SECTIONS: NavSection[] = [
   {
-    id: 'hakjeom',
-    label: '학점은행제 사업부',
-    href: '/hakjeom',
-    icon: <GraduationCap size={18} />,
+    sectionKey: '교육운영',
+    activeOn: ['/hakjeom', '/cert', '/practice', '/allcare', '/duplicate', '/trash', '/ref-manage', '/logs'],
+    items: [
+      { id: 'education', label: '학점은행제 사업부', href: '/hakjeom', icon: <GraduationCap size={16} />, groupLabel: '학습/취업' },
+      { id: 'cert', label: '민간자격증 사업부', href: '/cert', icon: <GraduationCap size={16} /> },
+      { id: 'practice', label: '실습/취업', href: '/practice', icon: <Briefcase size={16} /> },
+      { id: 'allcare', label: '올케어 관리자', href: '/allcare', icon: <HeartPulse size={16} /> },
+      { id: 'duplicate', label: '중복 조회', href: '/duplicate', icon: <Copy size={16} />, groupLabel: '시스템' },
+      { id: 'trash', label: '삭제목록', href: '/trash', icon: <Trash2 size={16} /> },
+      { id: 'ref-manage', label: '어드민 관리', href: '/ref-manage', icon: <UserCog size={16} /> },
+      { id: 'logs', label: '로그 관리', href: '/logs', icon: <ClipboardList size={16} /> },
+    ],
   },
   {
-    id: 'cert',
-    label: '민간자격증 사업부',
-    href: '/cert',
-    icon: <FileText size={18} />,
+    sectionKey: '경영관리',
+    activeOn: ['/revenues', '/approvals', '/reports'],
+    items: [
+      { id: 'revenues', label: '매출 관리', href: '/revenues', icon: <TrendingUp size={16} />, groupLabel: '경영관리' },
+      { id: 'approvals', label: '전자결재', href: '/approvals', icon: <FileCheck size={16} /> },
+      { id: 'reports', label: '손익 리포트', href: '/reports', icon: <BarChart2 size={16} /> },
+    ],
   },
   {
-    id: 'practice',
-    label: '실습/취업',
-    href: '/practice',
-    icon: <Briefcase size={18} />,
-  },
-  {
-    id: 'allcare',
-    label: '올케어 관리자',
-    href: '/allcare',
-    icon: <HeartPulse size={18} />,
-  },
-  {
-    id: 'duplicate',
-    label: '중복 조회',
-    href: '/duplicate',
-    icon: <Copy size={18} />,
-  },
-  {
-    id: 'trash',
-    label: '삭제목록',
-    href: '/trash',
-    icon: <Trash2 size={18} />,
-  },
-  {
-    id: 'ref-manage',
-    label: '어드민 관리',
-    href: '/ref-manage',
-    icon: <UserCog size={18} />,
-  },
-  {
-    id: 'logs',
-    label: '로그 관리',
-    href: '/logs',
-    icon: <ClipboardList size={18} />,
+    sectionKey: '어드민',
+    activeOn: ['/admin'],
+    items: [
+      { id: 'admin-settings', label: '시스템 설정', href: '/admin', icon: <Settings size={16} />, groupLabel: '관리자' },
+      { id: 'admin-accounts', label: '계정 관리', href: '/admin?tab=accounts', icon: <Users size={16} /> },
+    ],
   },
 ]
 
-const MINI_ADMIN_NAV_ITEMS: NavItem[] = [
-  {
-    id: 'mini-admin',
-    label: '결제확인',
-    href: '/paymentstatus',
-    icon: <Users size={18} />,
-  },
+const MINI_ADMIN_ITEMS: NavItem[] = [
+  { id: 'mini-admin', label: '결제확인', href: '/paymentstatus', icon: <Users size={16} /> },
 ]
+
+// 섹션별 item.id 매핑
+const SECTION_ITEM_MAP: Record<string, string> = {
+  hakjeom: 'education',
+  cert: 'cert',
+  practice: 'practice',
+}
 
 interface SidebarProps {
   userRole?: string | null
+  permissions?: { section: string; scope: string }[]
 }
 
-export default function Sidebar({ userRole }: SidebarProps) {
+export default function Sidebar({ userRole, permissions = [] }: SidebarProps) {
   const pathname = usePathname()
-  const [collapsed, setCollapsed] = useState(false)
   const [trashCount, setTrashCount] = useState<number>(0)
   const channelRef = useRef<ReturnType<ReturnType<typeof createClient>['channel']> | null>(null)
 
@@ -101,87 +97,58 @@ export default function Sidebar({ userRole }: SidebarProps) {
     const tables = ['hakjeom_consultations', 'private_cert_consultations', 'certificate_applications', 'agency_agreements']
     const channel = supabase.channel('sidebar-trash-count')
     tables.forEach(table => {
-      channel.on('postgres_changes', { event: '*', schema: 'public', table }, () => {
-        fetchCount()
-      })
+      channel.on('postgres_changes', { event: '*', schema: 'public', table }, () => fetchCount())
     })
     channel.subscribe()
     channelRef.current = channel
 
     return () => {
       clearInterval(interval)
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current)
-      }
+      if (channelRef.current) supabase.removeChannel(channelRef.current)
     }
   }, [userRole])
 
-  const navItems = userRole === 'mini-admin' ? MINI_ADMIN_NAV_ITEMS : ADMIN_NAV_ITEMS
+  const activeSection = ALL_SECTIONS.find((sec) =>
+    sec.activeOn.some((p) => pathname.startsWith(p))
+  )
+  const isFullAccess = userRole === 'master-admin' || userRole === 'admin'
+  const allowedSections = new Set(permissions.map(p => p.section))
+
+  const rawItems = userRole === 'mini-admin'
+    ? MINI_ADMIN_ITEMS
+    : (activeSection?.items ?? ALL_SECTIONS[0].items)
+
+  const currentItems = isFullAccess
+    ? rawItems
+    : rawItems.filter(item => {
+        const sectionKey = Object.entries(SECTION_ITEM_MAP).find(([, id]) => id === item.id)?.[0]
+        if (!sectionKey) return true // allcare, duplicate 등 권한 제한 없는 항목
+        return allowedSections.has(sectionKey)
+      })
 
   return (
-    <aside
-      className={styles.sidebar}
-      style={{ width: collapsed ? 80 : 'var(--toss-sidebar-width)' }}
-    >
-      {/* 로고 영역 */}
-      <div className={`${styles.sidebarLogo} ${collapsed ? styles.sidebarLogoCollapsed : styles.sidebarLogoExpanded}`}>
-        {!collapsed && (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img src="/logo.png" alt="한평생교육 로고" className={styles.sidebarLogoImg} />
-        )}
-        <button
-          onClick={() => setCollapsed(v => !v)}
-          className={styles.sidebarToggleBtn}
-          title={collapsed ? '사이드바 펼치기' : '사이드바 접기'}
-        >
-          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-        </button>
-      </div>
-
-      {/* 네비게이션 메뉴 */}
-      <nav className={`${styles.sidebarNav} ${collapsed ? styles.sidebarNavCollapsed : styles.sidebarNavExpanded}`}>
-        {!collapsed && (
-          <p className={styles.sidebarMenuLabel}>메뉴</p>
-        )}
-
+    <aside className={styles.sidebar}>
+      <nav className={styles.sidebarNav}>
         <ul className={styles.sidebarList}>
-          {navItems.map((item) => {
-            const isActive = pathname.startsWith(item.href)
+          {currentItems.map((item) => {
+            const isActive = item.activeOn
+              ? item.activeOn.some(p => pathname.startsWith(p))
+              : pathname.startsWith(item.href)
             const isTrash = item.id === 'trash'
 
             return (
               <li key={item.id}>
+                {item.groupLabel && (
+                  <p className={styles.sidebarMenuLabel}>{item.groupLabel}</p>
+                )}
                 <Link
                   href={item.href}
-                  title={collapsed ? item.label : undefined}
-                  className={`${styles.sidebarLink} ${collapsed ? styles.sidebarLinkCollapsed : styles.sidebarLinkExpanded}`}
-                  style={{
-                    fontWeight: isActive ? 600 : 400,
-                    color: isActive ? 'var(--toss-blue)' : 'var(--toss-text-secondary)',
-                    background: isActive ? 'var(--toss-blue-subtle)' : 'transparent',
-                  }}
+                  className={`${styles.sidebarLink} ${isActive ? styles.sidebarLinkActive : ''}`}
                 >
-                  <span
-                    className={styles.sidebarLinkIcon}
-                    style={{ color: isActive ? 'var(--toss-blue)' : 'var(--toss-text-tertiary)' }}
-                  >
-                    {item.icon}
-                  </span>
+                  <span className={styles.sidebarLinkIcon}>{item.icon}</span>
                   <span className={styles.sidebarLinkLabel}>{item.label}</span>
-                  {isTrash && !collapsed && trashCount > 0 && (
-                    <span style={{
-                      marginLeft: 'auto',
-                      fontSize: 11,
-                      fontWeight: 600,
-                      background: '#fee2e2',
-                      color: '#dc2626',
-                      padding: '1px 6px',
-                      borderRadius: 10,
-                      minWidth: 18,
-                      textAlign: 'center',
-                    }}>
-                      {trashCount}
-                    </span>
+                  {isTrash && trashCount > 0 && (
+                    <span className={styles.sidebarBadge}>{trashCount}</span>
                   )}
                 </Link>
               </li>
@@ -190,11 +157,8 @@ export default function Sidebar({ userRole }: SidebarProps) {
         </ul>
       </nav>
 
-      {/* 하단 버전 정보 */}
-      <div className={`${styles.sidebarFooter} ${collapsed ? styles.sidebarFooterCollapsed : ''}`}>
-        {!collapsed && (
-          <p className={styles.sidebarVersion}>v1.0.0</p>
-        )}
+      <div className={styles.sidebarFooter}>
+        <p className={styles.sidebarVersion}>v1.0.0</p>
       </div>
     </aside>
   )

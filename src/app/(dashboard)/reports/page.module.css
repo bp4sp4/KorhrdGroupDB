@@ -1,0 +1,329 @@
+.page_wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.page_header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.page_title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--toss-text-primary);
+  margin: 0;
+}
+
+.header_filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter_select {
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--toss-border);
+  border-radius: var(--toss-radius-input);
+  background: var(--toss-card-bg);
+  color: var(--toss-text-primary);
+  font-size: 13px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 150ms ease;
+}
+
+.filter_select:focus { border-color: var(--toss-blue); }
+
+/* Summary Cards */
+.summary_grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.summary_card {
+  background: var(--toss-card-bg);
+  border: 1px solid var(--toss-border);
+  border-radius: var(--toss-radius-card);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: var(--toss-shadow-card);
+}
+
+.summary_card_profit {
+  background: linear-gradient(135deg, var(--toss-blue) 0%, #1b64da 100%);
+  border-color: transparent;
+}
+
+.summary_label {
+  font-size: 12px;
+  color: var(--toss-text-secondary);
+  margin: 0;
+}
+
+.summary_label_white {
+  color: rgba(255,255,255,0.8);
+}
+
+.summary_value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--toss-text-primary);
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.summary_value_blue { color: var(--toss-blue); }
+.summary_value_red { color: var(--color-danger); }
+.summary_value_green { color: #22C55E; }
+.summary_value_white { color: #fff; }
+
+.summary_sub {
+  font-size: 12px;
+  color: var(--toss-text-tertiary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sub_up { color: #22C55E; }
+.sub_down { color: var(--color-danger); }
+
+/* Content grid 2 cols */
+.content_grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .content_grid { grid-template-columns: 1fr; }
+}
+
+/* Sections */
+.section {
+  background: var(--toss-card-bg);
+  border: 1px solid var(--toss-border);
+  border-radius: var(--toss-radius-card);
+  overflow: hidden;
+}
+
+.section_header {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--toss-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.section_title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--toss-text-primary);
+  margin: 0;
+}
+
+.section_total {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--toss-blue);
+}
+
+/* PnL Table */
+.pnl_table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.pnl_table tr {
+  border-bottom: 1px solid var(--toss-border);
+}
+
+.pnl_table tr:last-child {
+  border-bottom: none;
+}
+
+.pnl_table td {
+  padding: 12px 20px;
+  font-size: 14px;
+  color: var(--toss-text-primary);
+}
+
+.pnl_table td:last-child {
+  text-align: right;
+  font-weight: 600;
+}
+
+.pnl_row_total td {
+  font-weight: 700;
+  background: var(--toss-bg);
+  font-size: 15px;
+}
+
+.pnl_row_total_blue td {
+  color: var(--toss-blue);
+  background: var(--toss-blue-subtle);
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.pnl_row_total_red td {
+  color: var(--color-danger);
+  background: #fff1f2;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+/* 지출 합계 색상 */
+.section_total_expense {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-danger);
+}
+
+/* 손익계산서 들여쓰기 */
+.pnl_indent {
+  padding-left: 40px !important;
+}
+
+/* 바 차트 라벨 */
+.pnl_bar_label {
+  min-width: 90px;
+  flex-shrink: 0;
+}
+
+.pnl_bar_wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pnl_bar {
+  flex: 1;
+  height: 6px;
+  background: var(--toss-border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.pnl_bar_fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--toss-blue);
+  transition: width 400ms ease;
+}
+
+.pnl_bar_fill_expense {
+  background: var(--color-danger);
+}
+
+.pnl_percent {
+  font-size: 12px;
+  color: var(--toss-text-tertiary);
+  width: 36px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* Dept breakdown */
+.dept_table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dept_table th {
+  padding: 10px 20px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--toss-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--toss-bg);
+  border-bottom: 1px solid var(--toss-border);
+}
+
+.dept_table td {
+  padding: 12px 20px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--toss-border);
+  color: var(--toss-text-primary);
+}
+
+.dept_table tr:last-child td { border-bottom: none; }
+
+.dept_table td:not(:first-child) {
+  text-align: right;
+  font-weight: 600;
+}
+
+.profit_positive { color: var(--toss-blue); }
+.profit_negative { color: var(--color-danger); }
+
+.empty_state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--toss-text-secondary);
+  font-size: 14px;
+}
+
+.loading_state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--toss-text-secondary);
+  font-size: 14px;
+}
+
+/* Chart area */
+.chart_body {
+  padding: 16px 8px;
+}
+
+.chart_loading {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--toss-text-secondary);
+  font-size: 14px;
+}
+
+/* 차트 2열 그리드 */
+.chart_grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .chart_grid { grid-template-columns: 1fr; }
+}
+
+/* Export button */
+.btn_secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 16px;
+  background: var(--toss-card-bg);
+  color: var(--toss-text-secondary);
+  border: 1px solid var(--toss-border);
+  border-radius: var(--toss-radius-button);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.btn_secondary:hover {
+  border-color: var(--toss-blue);
+  color: var(--toss-blue);
+}

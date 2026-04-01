@@ -1,0 +1,570 @@
+.pageWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.pageHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pageTitle {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--toss-text-primary);
+  margin: 0;
+}
+
+/* Tab Navigation */
+.tabBar {
+  display: flex;
+  gap: 0;
+  background: var(--toss-card-bg);
+  border: 1px solid var(--toss-border);
+  border-radius: var(--toss-radius-card);
+  padding: 4px;
+  width: fit-content;
+}
+
+.tabBtn {
+  height: 36px;
+  padding: 0 16px;
+  border: none;
+  border-radius: calc(var(--toss-radius-card) - 2px);
+  background: transparent;
+  color: var(--toss-text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 150ms ease;
+  white-space: nowrap;
+}
+
+.tabBtn:hover {
+  color: var(--toss-text-primary);
+}
+
+.tabBtnActive {
+  background: var(--toss-blue);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Section Card */
+.sectionCard {
+  background: var(--toss-card-bg);
+  border: 1px solid var(--toss-border);
+  border-radius: var(--toss-radius-card);
+  overflow: hidden;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--toss-border);
+}
+
+.sectionTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--toss-text-primary);
+  margin: 0;
+}
+
+/* Table */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table th {
+  padding: 10px 16px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--toss-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--toss-bg);
+  border-bottom: 1px solid var(--toss-border);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 12px 16px;
+  color: var(--toss-text-primary);
+  border-bottom: 1px solid var(--toss-border);
+  vertical-align: middle;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.table tbody tr:hover td {
+  background: var(--toss-bg);
+}
+
+/* Inactive row - 비활성 항목 흐리게 표시 */
+.rowInactive td {
+  opacity: 0.45;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--toss-text-secondary);
+  font-size: 14px;
+}
+
+/* Status Badge */
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.statusActive {
+  background: #F0FDF4;
+  color: #16a34a;
+}
+
+.statusInactive {
+  background: #F2F4F6;
+  color: var(--toss-text-tertiary);
+}
+
+/* Action Buttons */
+.actionGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btnEdit {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 26px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 6px;
+  background: var(--toss-blue-subtle);
+  color: var(--toss-blue);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 150ms ease;
+  white-space: nowrap;
+}
+
+.btnEdit:hover {
+  background: #dbeafe;
+}
+
+.btnDelete {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 26px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 6px;
+  background: #fee2e2;
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 150ms ease;
+  white-space: nowrap;
+}
+
+.btnDelete:hover {
+  background: #fecaca;
+}
+
+.btnRestore {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 26px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 6px;
+  background: #dcfce7;
+  color: #16a34a;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 150ms ease;
+  white-space: nowrap;
+}
+
+.btnRestore:hover {
+  background: #bbf7d0;
+}
+
+/* Primary / Secondary Buttons (header) */
+.btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 16px;
+  background: var(--toss-blue);
+  color: #fff;
+  border: none;
+  border-radius: var(--toss-radius-button);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 150ms ease;
+  white-space: nowrap;
+}
+
+.btnPrimary:hover {
+  background: var(--toss-blue-hover);
+}
+
+.btnSecondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 16px;
+  background: var(--toss-card-bg);
+  color: var(--toss-text-secondary);
+  border: 1px solid var(--toss-border);
+  border-radius: var(--toss-radius-button);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 150ms ease;
+  white-space: nowrap;
+}
+
+.btnSecondary:hover {
+  border-color: var(--toss-blue);
+  color: var(--toss-blue);
+}
+
+/* Modal */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal {
+  background: var(--toss-card-bg);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--toss-shadow-modal);
+}
+
+.modalLarge {
+  max-width: 680px;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 0;
+}
+
+.modalTitle {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--toss-text-primary);
+  margin: 0;
+}
+
+.modalClose {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  color: var(--toss-text-tertiary);
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background 150ms ease;
+}
+
+.modalClose:hover {
+  background: var(--toss-bg);
+}
+
+.modalBody {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.modalFooter {
+  padding: 0 24px 24px;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* Form */
+.formRow {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.formRow2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.formLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--toss-text-secondary);
+}
+
+.formLabelRequired::after {
+  content: ' *';
+  color: var(--color-danger);
+}
+
+.formInput {
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--toss-border);
+  border-radius: var(--toss-radius-input);
+  font-size: 14px;
+  color: var(--toss-text-primary);
+  background: var(--toss-card-bg);
+  outline: none;
+  transition: border-color 150ms ease;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.formInput:focus {
+  border-color: var(--toss-blue);
+}
+
+.formSelect {
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--toss-border);
+  border-radius: var(--toss-radius-input);
+  font-size: 14px;
+  color: var(--toss-text-primary);
+  background: var(--toss-card-bg);
+  outline: none;
+  cursor: pointer;
+  width: 100%;
+  transition: border-color 150ms ease;
+  box-sizing: border-box;
+}
+
+.formSelect:focus {
+  border-color: var(--toss-blue);
+}
+
+.errorMsg {
+  font-size: 12px;
+  color: var(--color-danger);
+  margin: 4px 0 0;
+}
+
+/* Approval Steps Editor */
+.stepsEditor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stepsEditorLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--toss-text-secondary);
+}
+
+.stepRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--toss-bg);
+  border: 1px solid var(--toss-border);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.stepNum {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--toss-blue);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stepNumFirst {
+  background: var(--toss-text-tertiary);
+}
+
+.stepLabel {
+  font-size: 13px;
+  color: var(--toss-text-secondary);
+  flex: 0 0 56px;
+}
+
+.stepSelect {
+  flex: 1;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--toss-border);
+  border-radius: var(--toss-radius-input);
+  font-size: 13px;
+  color: var(--toss-text-primary);
+  background: var(--toss-card-bg);
+  outline: none;
+  cursor: pointer;
+  transition: border-color 150ms ease;
+}
+
+.stepSelect:focus {
+  border-color: var(--toss-blue);
+}
+
+.stepInput {
+  flex: 1;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--toss-border);
+  border-radius: var(--toss-radius-input);
+  font-size: 13px;
+  color: var(--toss-text-primary);
+  background: var(--toss-card-bg);
+  outline: none;
+  transition: border-color 150ms ease;
+}
+
+.stepInput:focus {
+  border-color: var(--toss-blue);
+}
+
+.btnRemoveStep {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--toss-text-tertiary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 150ms ease;
+  flex-shrink: 0;
+}
+
+.btnRemoveStep:hover {
+  background: #fff1f2;
+  color: var(--color-danger);
+}
+
+.btnAddStep {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 12px;
+  border: 1px dashed var(--toss-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--toss-text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 150ms ease;
+  align-self: flex-start;
+}
+
+.btnAddStep:hover {
+  border-color: var(--toss-blue);
+  color: var(--toss-blue);
+}
+
+/* Approval steps summary */
+.stepsSummary {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.stepChip {
+  font-size: 11px;
+  color: var(--toss-text-secondary);
+  background: var(--toss-bg);
+  border: 1px solid var(--toss-border);
+  border-radius: 4px;
+  padding: 1px 7px;
+}
+
+.stepArrow {
+  font-size: 11px;
+  color: var(--toss-text-tertiary);
+}
+
+/* Role Badge (계정 관리) */
+.roleBadge {
+  background: #EBF3FE;
+  color: var(--toss-blue);
+}
+
+.categoryBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  background: #EBF3FE;
+  color: var(--toss-blue);
+}
+
+.categoryBadgeHR {
+  background: #FDF4FF;
+  color: #9333ea;
+}
+
+.categoryBadgeAccounting {
+  background: #FFF7ED;
+  color: #c2410c;
+}

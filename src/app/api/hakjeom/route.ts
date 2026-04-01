@@ -1,4 +1,4 @@
-import { requireAuth } from '@/lib/auth/requireAuth'
+import { requireAuthFull } from '@/lib/auth/requireAuth'
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { logAction } from '@/lib/audit/logAction';
@@ -28,10 +28,23 @@ const TABLE = 'hakjeom_consultations';
 
 export async function GET(request: NextRequest) {
   try {
-    const { user: _user, errorResponse } = await requireAuth()
+    const { appUser, errorResponse } = await requireAuthFull()
     if (errorResponse) return errorResponse
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
       return NextResponse.json({ error: 'Supabase configuration missing' }, { status: 500 });
+    }
+
+    const isFullAccess = appUser.role === 'master-admin' || appUser.role === 'admin'
+    let managerFilter: string | null = null
+    if (!isFullAccess) {
+      const { data: perm } = await supabaseAdmin
+        .from('user_permissions')
+        .select('scope')
+        .eq('user_id', appUser.id)
+        .eq('section', 'hakjeom')
+        .maybeSingle()
+      if (!perm) return NextResponse.json([])
+      if (perm.scope === 'own') managerFilter = appUser.display_name ?? ''
     }
 
     const { searchParams } = new URL(request.url);
@@ -46,6 +59,7 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false })
       .order('id', { ascending: false });
 
+    if (managerFilter !== null) query = query.eq('manager', managerFilter);
     if (name) query = query.ilike('name', `%${name}%`);
     if (contact) query = query.ilike('contact', `%${contact}%`);
     if (status && status !== 'all') query = query.eq('status', status);

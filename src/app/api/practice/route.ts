@@ -1,4 +1,4 @@
-import { requireAuth } from '@/lib/auth/requireAuth'
+import { requireAuthFull } from '@/lib/auth/requireAuth'
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { logAction } from '@/lib/audit/logAction'
@@ -55,8 +55,22 @@ export interface PracticeConsultation {
  */
 export async function GET(request: NextRequest) {
   try {
-    const { user: _user, errorResponse } = await requireAuth()
+    const { appUser, errorResponse } = await requireAuthFull()
     if (errorResponse) return errorResponse
+
+    const isFullAccess = appUser.role === 'master-admin' || appUser.role === 'admin'
+    let managerFilter: string | null = null
+    if (!isFullAccess) {
+      const { data: perm } = await supabaseAdmin
+        .from('user_permissions')
+        .select('scope')
+        .eq('user_id', appUser.id)
+        .eq('section', 'practice')
+        .maybeSingle()
+      if (!perm) return NextResponse.json([])
+      if (perm.scope === 'own') managerFilter = appUser.display_name ?? ''
+    }
+
     const { searchParams } = request.nextUrl
     const search = searchParams.get('search')?.trim() ?? ''
     const status = searchParams.get('status') ?? ''
@@ -66,6 +80,8 @@ export async function GET(request: NextRequest) {
       .from('practice_consultations')
       .select('*')
       .order('created_at', { ascending: false })
+
+    if (managerFilter !== null) query = query.eq('manager', managerFilter)
 
     // 이름 또는 연락처 검색 (하이픈 제거 버전 포함 OR 조건)
     if (search) {

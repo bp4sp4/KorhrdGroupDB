@@ -1,4 +1,4 @@
-import { requireAuth } from '@/lib/auth/requireAuth'
+import { requireAuthFull } from '@/lib/auth/requireAuth'
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { logAction } from '@/lib/audit/logAction';
@@ -32,10 +32,21 @@ interface CertUpdatePayload {
 //   - source: 출처 탭 필터 (hakjeom | edu | all)
 export async function GET(request: NextRequest) {
   try {
-    const { user: _user, errorResponse } = await requireAuth()
+    const { appUser, errorResponse } = await requireAuthFull()
     if (errorResponse) return errorResponse
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
       return NextResponse.json({ error: 'Supabase configuration missing' }, { status: 500 });
+    }
+
+    const isFullAccess = appUser.role === 'master-admin' || appUser.role === 'admin'
+    if (!isFullAccess) {
+      const { data: perm } = await supabaseAdmin
+        .from('user_permissions')
+        .select('scope')
+        .eq('user_id', appUser.id)
+        .eq('section', 'cert')
+        .maybeSingle()
+      if (!perm) return NextResponse.json([])
     }
 
     const { searchParams } = new URL(request.url);
