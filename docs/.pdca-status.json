@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-04-01T08:54:51.542Z",
+  "lastUpdated": "2026-04-01T08:56:22.912Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -139,7 +139,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:30:16.038Z",
-        "lastUpdated": "2026-04-01T08:38:48.954Z"
+        "lastUpdated": "2026-04-01T08:56:17.601Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/hakjeom/route.ts"
     },
@@ -152,7 +152,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:41:07.175Z",
-        "lastUpdated": "2026-04-01T08:39:18.811Z"
+        "lastUpdated": "2026-04-01T08:56:22.912Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/practice/route.ts"
     },
@@ -165,7 +165,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:41:16.658Z",
-        "lastUpdated": "2026-04-01T08:38:59.409Z"
+        "lastUpdated": "2026-04-01T08:56:09.133Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/cert/route.ts"
     },
@@ -1036,7 +1036,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-01T08:54:51.542Z"
+    "lastActivity": "2026-04-01T08:56:22.912Z"
   },
   "history": [
     {
@@ -10678,6 +10678,24 @@
     {
       "timestamp": "2026-04-01T08:54:51.542Z",
       "feature": "(dashboard)",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-01T08:56:09.133Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-01T08:56:17.601Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-01T08:56:22.912Z",
+      "feature": "practice",
       "phase": "do",
       "action": "updated"
     }
