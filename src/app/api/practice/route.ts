@@ -61,14 +61,19 @@ export async function GET(request: NextRequest) {
     const isFullAccess = appUser.role === 'master-admin' || appUser.role === 'admin'
     let managerFilter: string | null = null
     if (!isFullAccess) {
-      const { data: perm } = await supabaseAdmin
+      const { data: perm, error: permError } = await supabaseAdmin
         .from('user_permissions')
         .select('scope')
         .eq('user_id', appUser.id)
         .eq('section', 'practice')
         .maybeSingle()
-      if (!perm) return NextResponse.json([])
-      if (perm.scope === 'own') managerFilter = appUser.display_name ?? ''
+      if (permError) {
+        // 테이블 미생성 등 오류 시 전체 열람 허용
+      } else if (!perm) {
+        return NextResponse.json([])
+      } else if (perm.scope === 'own') {
+        managerFilter = appUser.display_name ?? ''
+      }
     }
 
     const { searchParams } = request.nextUrl

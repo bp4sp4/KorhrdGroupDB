@@ -40,13 +40,13 @@ export async function GET(request: NextRequest) {
 
     const isFullAccess = appUser.role === 'master-admin' || appUser.role === 'admin'
     if (!isFullAccess) {
-      const { data: perm } = await supabaseAdmin
+      const { data: perm, error: permError } = await supabaseAdmin
         .from('user_permissions')
         .select('scope')
         .eq('user_id', appUser.id)
         .eq('section', 'cert')
         .maybeSingle()
-      if (!perm) return NextResponse.json([])
+      if (!permError && !perm) return NextResponse.json([])
     }
 
     const { searchParams } = new URL(request.url);
