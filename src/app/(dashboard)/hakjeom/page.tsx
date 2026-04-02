@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
   ResponsiveContainer, ComposedChart, BarChart, AreaChart, PieChart,
@@ -330,7 +330,9 @@ function StatusSelect({
   styleMap: Record<string, { background: string; color: string }>;
 }) {
   const [open, setOpen] = useState(false);
-  const [pos, setPos] = useState({ top: 0, left: 0 });
+  const [anchor, setAnchor] = useState({ top: 0, left: 0 });
+  const [pos, setPos] = useState({ top: -9999, left: 0 });
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -339,11 +341,21 @@ function StatusSelect({
     return () => document.removeEventListener('click', close);
   }, [open]);
 
+  // 렌더 직후(페인트 전) 실제 높이로 배지 바로 위에 위치
+  useLayoutEffect(() => {
+    if (!open || !dropdownRef.current) return;
+    const dropH = dropdownRef.current.offsetHeight;
+    setPos({
+      top: Math.max(8, anchor.top - dropH - 4),
+      left: anchor.left,
+    });
+  }, [open, anchor]);
+
   const isCounselValue = COUNSEL_SUB.includes(value as ConsultationStatus);
   const s = styleMap[value] ?? { background: '#F3F4F6', color: '#6B7684' };
   const displayLabel = isCounselValue ? `상담완료 · ${COUNSEL_SUB_LABEL[value]}` : value;
 
-  // 상담완료-* 제외한 옵션, 상담중 뒤에 '상담완료' 그룹 슬롯 삽입
+  // 상담완료-* 제외한 옵션, 상담대기 뒤에 '상담완료' 그룹 슬롯 삽입
   const baseOptions = options.filter(o => !COUNSEL_SUB.includes(o as ConsultationStatus));
   const insertIdx = baseOptions.indexOf('상담대기') + 1;
   const beforeCounsel = baseOptions.slice(0, insertIdx);
@@ -357,12 +369,15 @@ function StatusSelect({
         onClick={e => {
           e.stopPropagation();
           const rect = e.currentTarget.getBoundingClientRect();
-          setPos({ top: rect.bottom + 4, left: rect.left });
-          setOpen(v => !v);
+          if (open) { setOpen(false); return; }
+          setAnchor({ top: rect.top, left: rect.left });
+          setPos({ top: -9999, left: rect.left });
+          setOpen(true);
         }}
       >{displayLabel}</span>
       {open && (
         <div
+          ref={dropdownRef}
           className={styles.statusSelectDropdown}
           style={{ top: pos.top, left: pos.left }}
           onClick={e => e.stopPropagation()}
