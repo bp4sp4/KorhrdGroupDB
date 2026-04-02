@@ -10,6 +10,7 @@ interface AuditLog {
   created_at: string
   user_id: string | null
   user_email: string | null
+  display_name: string | null
   action: string
   resource: string
   resource_id: string | null
@@ -462,7 +463,7 @@ export default function LogsPage() {
                     </div>
                   </td>
                   <td className={styles.td}>
-                    <span className={styles.userText}>{formatEmail(log.user_email)}</span>
+                    <span className={styles.userText}>{log.display_name ?? formatEmail(log.user_email)}</span>
                   </td>
                 </tr>
               )

@@ -38,7 +38,25 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: '로그를 불러오지 못했습니다.' }, { status: 500 })
     }
 
-    return NextResponse.json({ data: data ?? [], total: count ?? 0 })
+    // email → display_name 매핑
+    const emails = [...new Set((data ?? []).map(r => r.user_email).filter(Boolean))]
+    let nameMap: Record<string, string> = {}
+    if (emails.length > 0) {
+      const { data: users } = await supabaseAdmin
+        .from('app_users')
+        .select('username, display_name')
+        .in('username', emails)
+      for (const u of users ?? []) {
+        if (u.username && u.display_name) nameMap[u.username] = u.display_name
+      }
+    }
+
+    const enriched = (data ?? []).map(r => ({
+      ...r,
+      display_name: r.user_email ? (nameMap[r.user_email] ?? r.user_email) : null,
+    }))
+
+    return NextResponse.json({ data: enriched, total: count ?? 0 })
   } catch (err) {
     console.error('[GET /api/logs] Unexpected error:', err)
     return NextResponse.json({ error: '서버 오류가 발생했습니다.' }, { status: 500 })
