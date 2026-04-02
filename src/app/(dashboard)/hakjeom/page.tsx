@@ -15,7 +15,7 @@ import { downloadExcel } from '@/lib/excelExport'
 
 // ─── 공통 타입 ──────────────────────────────────────────────────────────────
 
-type ConsultationStatus = '상담대기' | '상담중' | '보류' | '등록대기' | '등록완료';
+type ConsultationStatus = '부재중' | '상담대기' | '상담중' | '상담완료-할것같음' | '상담완료-중간' | '상담완료-안할것같다' | '가망관리' | '보류' | '등록대기' | '등록완료' | '취소';
 type AgencyStatus = '협약대기' | '협약중' | '보류' | '협약완료';
 type TabKey = 'hakjeom' | 'agency' | 'bulk' | 'stats';
 
@@ -34,11 +34,15 @@ interface HakjeomConsultation {
   manager: string | null;
   residence: string | null;
   hope_course: string | null;
+  counsel_completed_at: string | null;
   counsel_check: string | null;
+  current_situation: string | null;
+  reaction_point: string | null;
   created_at: string;
   updated_at: string | null;
   memo_count?: number;
   latest_memo?: string | null;
+  latest_memo_at?: string | null;
 }
 
 // ─── 기관협약 타입 ────────────────────────────────────────────────────────────
@@ -91,15 +95,25 @@ interface CsvRow {
 
 // ─── 상수 ────────────────────────────────────────────────────────────────────
 
-const CONSULTATION_STATUS_OPTIONS: ConsultationStatus[] = ['상담대기', '상담중', '보류', '등록대기', '등록완료'];
+const CONSULTATION_STATUS_OPTIONS: ConsultationStatus[] = [
+  '부재중', '상담대기', '상담중',
+  '상담완료-할것같음', '상담완료-중간', '상담완료-안할것같다',
+  '가망관리', '보류', '등록대기', '등록완료', '취소',
+];
 const AGENCY_STATUS_OPTIONS: AgencyStatus[] = ['협약대기', '협약중', '보류', '협약완료'];
 
 const CONSULTATION_STATUS_STYLE: Record<ConsultationStatus, { background: string; color: string }> = {
-  상담대기: { background: '#EBF3FE', color: '#3182F6' },
-  상담중:   { background: '#FFF8E6', color: '#D97706' },
-  보류:     { background: '#F3F4F6', color: '#6B7684' },
-  등록대기: { background: '#FEF3C7', color: '#B45309' },
-  등록완료: { background: '#DCFCE7', color: '#16A34A' },
+  '부재중':              { background: '#F3F4F6', color: '#6B7684' },
+  '상담대기':            { background: '#EBF3FE', color: '#3182F6' },
+  '상담중':              { background: '#FFF8E6', color: '#D97706' },
+  '상담완료-할것같음':   { background: '#E0F7FA', color: '#0277BD' },
+  '상담완료-중간':       { background: '#FFFDE7', color: '#F57F17' },
+  '상담완료-안할것같다': { background: '#FCE4EC', color: '#C62828' },
+  '가망관리':            { background: '#F3E8FF', color: '#7C3AED' },
+  '보류':                { background: '#F3F4F6', color: '#6B7684' },
+  '등록대기':            { background: '#FEF3C7', color: '#B45309' },
+  '등록완료':            { background: '#DCFCE7', color: '#16A34A' },
+  '취소':                { background: '#FEE2E2', color: '#DC2626' },
 };
 
 const AGENCY_STATUS_STYLE: Record<AgencyStatus, { background: string; color: string }> = {
@@ -111,10 +125,18 @@ const AGENCY_STATUS_STYLE: Record<AgencyStatus, { background: string; color: str
 
 const CERT_MAJOR_CATEGORIES = ['전체과정', '실버과정', '아동과정', '방과후과정', '심리과정', '커피과정', '취·창업과정'];
 
-const COUNSEL_CHECK_OPTIONS = ['타기관', '자체가격', '직장', '육아', '가격비교', '기타'];
+const COUNSEL_CHECK_OPTIONS = ['비용', '주변반대', '시간부족', '의지부족', '타교육원', '연락두절', '개인사정', '당장 불필요'];
 const REASON_OPTIONS = ['즉시취업', '이직', '미래준비', '취업'];
 const EDUCATION_OPTIONS = ['고등학교 졸업', '전문대 졸업', '대학교 재학', '대학교 중퇴', '대학교 졸업', '대학원 이상'];
 const HAKJEOM_COURSE_OPTIONS = ['사회복지사', '아동학사', '평생교육사', '편입/대학원', '건강가정사', '청소년지도사', '보육교사', '심리상담사'];
+const CURRENT_SITUATION_OPTIONS = ['주부', '직장인', '자영업자', '대학생', '기타'];
+const REACTION_POINT_MAP: Record<string, string[]> = {
+  '가격': ['비싸다', '비교중', '할인에반응'],
+  '취업': ['취업연계', '노후대비'],
+  '과정': ['공부부담', '시간부족'],
+  '신뢰': ['교육원의심', '자격증효력'],
+  '실습': ['거리부담', '시간부담', '섭외부담'],
+};
 
 // ─── 검색어 하이라이트 ──────────────────────────────────────────────────────
 
@@ -292,6 +314,13 @@ function StatusBadge({ status, styleMap }: {
   );
 }
 
+const COUNSEL_SUB: ConsultationStatus[] = ['상담완료-할것같음', '상담완료-중간', '상담완료-안할것같다'];
+const COUNSEL_SUB_LABEL: Record<string, string> = {
+  '상담완료-할것같음': '할것같음',
+  '상담완료-중간': '중간',
+  '상담완료-안할것같다': '안할것같다',
+};
+
 function StatusSelect({
   value, onChange, options, styleMap,
 }: {
@@ -310,7 +339,16 @@ function StatusSelect({
     return () => document.removeEventListener('click', close);
   }, [open]);
 
+  const isCounselValue = COUNSEL_SUB.includes(value as ConsultationStatus);
   const s = styleMap[value] ?? { background: '#F3F4F6', color: '#6B7684' };
+  const displayLabel = isCounselValue ? `상담완료 · ${COUNSEL_SUB_LABEL[value]}` : value;
+
+  // 상담완료-* 제외한 옵션, 상담중 뒤에 '상담완료' 그룹 슬롯 삽입
+  const baseOptions = options.filter(o => !COUNSEL_SUB.includes(o as ConsultationStatus));
+  const insertIdx = baseOptions.indexOf('상담중') + 1;
+  const beforeCounsel = baseOptions.slice(0, insertIdx);
+  const afterCounsel = baseOptions.slice(insertIdx);
+
   return (
     <>
       <span
@@ -322,21 +360,51 @@ function StatusSelect({
           setPos({ top: rect.bottom + 4, left: rect.left });
           setOpen(v => !v);
         }}
-      >{value}</span>
+      >{displayLabel}</span>
       {open && (
         <div
           className={styles.statusSelectDropdown}
           style={{ top: pos.top, left: pos.left }}
           onClick={e => e.stopPropagation()}
         >
-          {options.map(opt => {
+          {beforeCounsel.map(opt => {
             const st = styleMap[opt] ?? { background: '#F3F4F6', color: '#6B7684' };
             return (
-              <div
-                key={opt}
-                className={`${styles.statusSelectOption}${value === opt ? ` ${styles.statusSelectOptionActive}` : ''}`}
-                onClick={() => { onChange(opt); setOpen(false); }}
-              >
+              <div key={opt} className={`${styles.statusSelectOption}${value === opt ? ` ${styles.statusSelectOptionActive}` : ''}`}
+                onClick={() => { onChange(opt); setOpen(false); }}>
+                <span className={styles.statusSelectDot} style={{ background: st.color }} />
+                {opt}
+                {value === opt && <span style={{ marginLeft: 'auto', color: st.color, fontSize: 11 }}>✓</span>}
+              </div>
+            );
+          })}
+
+          {/* 상담완료 → 호버 시 우측 플라이아웃 */}
+          <div className={`${styles.statusSelectOption} ${styles.statusSelectGroup}`}>
+            <span className={styles.statusSelectDot} style={{ background: '#0277BD' }} />
+            상담완료
+            <span style={{ marginLeft: 'auto', fontSize: 10 }}>▶</span>
+            <div className={styles.statusSelectFlyout}>
+              {COUNSEL_SUB.map(opt => {
+                const st = styleMap[opt] ?? { background: '#F3F4F6', color: '#6B7684' };
+                return (
+                  <div key={opt}
+                    className={`${styles.statusSelectOption}${value === opt ? ` ${styles.statusSelectOptionActive}` : ''}`}
+                    onClick={() => { onChange(opt); setOpen(false); }}>
+                    <span className={styles.statusSelectDot} style={{ background: st.color }} />
+                    {COUNSEL_SUB_LABEL[opt]}
+                    {value === opt && <span style={{ marginLeft: 'auto', color: st.color, fontSize: 11 }}>✓</span>}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {afterCounsel.map(opt => {
+            const st = styleMap[opt] ?? { background: '#F3F4F6', color: '#6B7684' };
+            return (
+              <div key={opt} className={`${styles.statusSelectOption}${value === opt ? ` ${styles.statusSelectOptionActive}` : ''}`}
+                onClick={() => { onChange(opt); setOpen(false); }}>
                 <span className={styles.statusSelectDot} style={{ background: st.color }} />
                 {opt}
                 {value === opt && <span style={{ marginLeft: 'auto', color: st.color, fontSize: 11 }}>✓</span>}
@@ -474,7 +542,9 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic', cus
   const [editMemo, setEditMemo] = useState(item.memo ?? '');
   const [editManager, setEditManager] = useState(item.manager ?? '');
   const [editEducation, setEditEducation] = useState(item.education ?? '');
-  const [editHopeCourse, setEditHopeCourse] = useState(item.hope_course ?? '');
+  const [editHopeCourse, setEditHopeCourse] = useState<string[]>(
+    item.hope_course ? item.hope_course.split(', ').map(s => s.trim()).filter(Boolean) : []
+  );
   const [editReason, setEditReason] = useState<string[]>(
     item.reason ? item.reason.split(', ').map(s => s.trim()).filter(Boolean) : []
   );
@@ -493,6 +563,11 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic', cus
   const [editSourceMinor, setEditSourceMinor] = useState(() => initSource(item.click_source).minor);
   const [editResidence, setEditResidence] = useState(item.residence ?? '');
   const [editSubjectCost, setEditSubjectCost] = useState(item.subject_cost ? String(item.subject_cost) : '');
+  const [editCurrentSituation, setEditCurrentSituation] = useState(item.current_situation ?? '');
+  const [editReactionPoint, setEditReactionPoint] = useState<string[]>(
+    item.reaction_point ? item.reaction_point.split(', ').map(s => s.trim()).filter(Boolean) : []
+  );
+  const [reactionParentTab, setReactionParentTab] = useState<string>('');
   const [editContact, setEditContact] = useState(item.contact ?? '');
   const [editName, setEditName] = useState(item.name ?? '');
   const [saving, setSaving] = useState(false);
@@ -513,7 +588,7 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic', cus
     setEditMemo(item.memo ?? '');
     setEditManager(item.manager ?? '');
     setEditEducation(item.education ?? '');
-    setEditHopeCourse(item.hope_course ?? '');
+    setEditHopeCourse(item.hope_course ? item.hope_course.split(', ').map(s => s.trim()).filter(Boolean) : []);
     setEditReason(item.reason ? item.reason.split(', ').map(s => s.trim()).filter(Boolean) : []);
     const counsel = parseCounselCheck(item.counsel_check);
     setEditCounselCheck(counsel.checks);
@@ -522,12 +597,19 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic', cus
     setEditSourceMinor(minor);
     setEditResidence(item.residence ?? '');
     setEditSubjectCost(item.subject_cost ? String(item.subject_cost) : '');
+    setEditCurrentSituation(item.current_situation ?? '');
+    setEditReactionPoint(item.reaction_point ? item.reaction_point.split(', ').map(s => s.trim()).filter(Boolean) : []);
+    setReactionParentTab('');
     setEditContact(item.contact ?? '');
     setEditName(item.name ?? '');
   }, [item.id]);
 
   const toggleReason = (val: string) => {
     setEditReason(prev => prev.includes(val) ? prev.filter(v => v !== val) : [...prev, val]);
+  };
+
+  const toggleHopeCourse = (val: string) => {
+    setEditHopeCourse(prev => prev.includes(val) ? prev.filter(v => v !== val) : [...prev, val]);
   };
 
   const toggleCounselCheck = (val: string) => {
@@ -586,7 +668,7 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic', cus
         memo: editMemo || null,
         manager: editManager || null,
         education: editEducation || null,
-        hope_course: editHopeCourse || null,
+        hope_course: editHopeCourse.length > 0 ? editHopeCourse.join(', ') : null,
         reason: editReason.length > 0 ? editReason.join(', ') : null,
         counsel_check: editCounselCheck.length > 0
           ? editCounselCheck.map(c => c === '기타' && editCounselCheckEtc.trim() ? `기타(${editCounselCheckEtc.trim()})` : c).join(', ')
@@ -594,6 +676,8 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic', cus
         click_source: builtClickSource || null,
         residence: editResidence || null,
         subject_cost: editSubjectCost ? parseInt(editSubjectCost.replace(/,/g, ''), 10) || null : null,
+        current_situation: editCurrentSituation || null,
+        reaction_point: editReactionPoint.length > 0 ? editReactionPoint.join(', ') : null,
         contact: editContact || item.contact,
         name: editName.trim() || item.name,
       });
@@ -623,6 +707,16 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic', cus
                 </div>
                 <p className={styles.detailModalSub}>{item.contact}</p>
                 <p className={styles.detailModalSub}>등록일: {formatDateShort(item.created_at)}</p>
+                <div className={styles.detailModalContactRow}>
+                  <span className={styles.detailModalContactBadge}>
+                    총 {item.memo_count ?? 0}회 연락
+                  </span>
+                  {item.latest_memo_at && (
+                    <span className={styles.detailModalContactSub}>
+                      마지막 연락: {formatDateShort(item.latest_memo_at)}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
             <button onClick={onClose} className={styles.detailModalCloseBtn}>✕</button>
@@ -747,28 +841,22 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic', cus
               {/* 최종학력 */}
               <div className={styles.detailFieldRow}>
                 <span className={styles.detailFieldLabel}>최종학력</span>
-                <CustomSelect
+                <input
                   value={editEducation}
-                  onChange={setEditEducation}
-                  fullWidth
-                  options={[
-                    { value: '', label: '선택 안 함' },
-                    ...EDUCATION_OPTIONS.map(o => ({ value: o, label: o })),
-                  ]}
+                  onChange={e => setEditEducation(e.target.value)}
+                  placeholder="예) 대졸, 고졸"
+                  className={`${styles.input} ${styles.inputFull}`}
                 />
               </div>
 
               {/* 희망과정 */}
               <div className={styles.detailFieldRow}>
                 <span className={styles.detailFieldLabel}>희망과정</span>
-                <CustomSelect
-                  value={editHopeCourse}
-                  onChange={setEditHopeCourse}
-                  fullWidth
-                  options={[
-                    { value: '', label: '선택 안 함' },
-                    ...HAKJEOM_COURSE_OPTIONS.map(o => ({ value: o, label: o })),
-                  ]}
+                <input
+                  value={editHopeCourse.join(', ')}
+                  onChange={e => setEditHopeCourse(e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
+                  placeholder="예) 사회복지사, 보육교사"
+                  className={`${styles.input} ${styles.inputFull}`}
                 />
               </div>
 
@@ -780,6 +868,20 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic', cus
                   onChange={e => setEditResidence(e.target.value)}
                   placeholder="예) 서울 강남구"
                   className={`${styles.input} ${styles.inputFull}`}
+                />
+              </div>
+
+              {/* 현재상황 */}
+              <div className={styles.detailFieldRow}>
+                <span className={styles.detailFieldLabel}>현재상황</span>
+                <CustomSelect
+                  value={editCurrentSituation}
+                  onChange={setEditCurrentSituation}
+                  fullWidth
+                  options={[
+                    { value: '', label: '선택 안 함' },
+                    ...CURRENT_SITUATION_OPTIONS.map(o => ({ value: o, label: o })),
+                  ]}
                 />
               </div>
 
@@ -840,9 +942,9 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic', cus
                 </div>
               </div>
 
-              {/* 고민 (다중 선택) */}
+              {/* 취소사유 (다중 선택) */}
               <div className={styles.detailChipSection}>
-                <span className={styles.detailChipSectionLabel}>고민</span>
+                <span className={styles.detailChipSectionLabel}>취소사유</span>
                 <div className={styles.detailChipRow}>
                   {COUNSEL_CHECK_OPTIONS.map(c => (
                     <button
@@ -871,33 +973,75 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic', cus
               <div className={styles.detailChipSection}>
                 <span className={styles.detailChipSectionLabel}>상태</span>
                 <div className={styles.detailChipRow}>
-                  {CONSULTATION_STATUS_OPTIONS.map(s => (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => setEditStatus(s)}
-                      style={
-                        editStatus === s
-                          ? {
-                              padding: '5px 12px', borderRadius: 20, cursor: 'pointer',
-                              border: `2px solid ${CONSULTATION_STATUS_STYLE[s].color}`,
-                              background: CONSULTATION_STATUS_STYLE[s].background,
-                              color: CONSULTATION_STATUS_STYLE[s].color,
-                              fontSize: 13, fontWeight: 600, transition: 'all 0.15s',
-                            }
-                          : {
-                              padding: '5px 12px', borderRadius: 20, cursor: 'pointer',
-                              border: '2px solid var(--toss-border)',
-                              background: 'transparent',
-                              color: 'var(--toss-text-secondary)',
-                              fontSize: 13, fontWeight: 600, transition: 'all 0.15s',
-                            }
-                      }
-                    >
-                      {s}
-                    </button>
+                  {(['부재중', '상담대기', '상담중', '가망관리', '보류', '등록대기', '등록완료', '취소'] as ConsultationStatus[]).map(s => (
+                    <button key={s} type="button" onClick={() => setEditStatus(s)}
+                      style={editStatus === s
+                        ? { padding: '5px 12px', borderRadius: 20, cursor: 'pointer', border: `2px solid ${CONSULTATION_STATUS_STYLE[s].color}`, background: CONSULTATION_STATUS_STYLE[s].background, color: CONSULTATION_STATUS_STYLE[s].color, fontSize: 13, fontWeight: 600, transition: 'all 0.15s' }
+                        : { padding: '5px 12px', borderRadius: 20, cursor: 'pointer', border: '2px solid var(--toss-border)', background: 'transparent', color: 'var(--toss-text-secondary)', fontSize: 13, fontWeight: 600, transition: 'all 0.15s' }}
+                    >{s}</button>
                   ))}
                 </div>
+                <div className={styles.detailChipRow} style={{ alignItems: 'center', marginTop: 4 }}>
+                  <span style={{ fontSize: 11, color: 'var(--toss-text-secondary)', fontWeight: 600, whiteSpace: 'nowrap', marginRight: 2 }}>상담완료 &gt;</span>
+                  {(['상담완료-할것같음', '상담완료-중간', '상담완료-안할것같다'] as ConsultationStatus[]).map(s => (
+                    <button key={s} type="button" onClick={() => setEditStatus(s)}
+                      style={editStatus === s
+                        ? { padding: '5px 12px', borderRadius: 20, cursor: 'pointer', border: `2px solid ${CONSULTATION_STATUS_STYLE[s].color}`, background: CONSULTATION_STATUS_STYLE[s].background, color: CONSULTATION_STATUS_STYLE[s].color, fontSize: 13, fontWeight: 600, transition: 'all 0.15s' }
+                        : { padding: '5px 12px', borderRadius: 20, cursor: 'pointer', border: '2px solid var(--toss-border)', background: 'transparent', color: 'var(--toss-text-secondary)', fontSize: 13, fontWeight: 600, transition: 'all 0.15s' }}
+                    >{s.replace('상담완료-', '')}</button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 반응포인트 */}
+              <div className={styles.detailChipSection}>
+                <span className={styles.detailChipSectionLabel}>반응포인트</span>
+                <div className={styles.detailChipRow}>
+                  {Object.keys(REACTION_POINT_MAP).map(parent => {
+                    const hasSelected = REACTION_POINT_MAP[parent].some(c => editReactionPoint.includes(c));
+                    const isOpen = reactionParentTab === parent;
+                    return (
+                      <button
+                        key={parent}
+                        type="button"
+                        onClick={() => setReactionParentTab(prev => prev === parent ? '' : parent)}
+                        className={isOpen || hasSelected ? styles.tagBtnActive : styles.tagBtn}
+                      >
+                        {hasSelected ? `✓ ${parent}` : parent}
+                      </button>
+                    );
+                  })}
+                </div>
+                {reactionParentTab && (
+                  <div className={styles.clickSourceSubPanel}>
+                    {REACTION_POINT_MAP[reactionParentTab].map(child => (
+                      <button
+                        key={child}
+                        type="button"
+                        onClick={() => setEditReactionPoint(prev =>
+                          prev.includes(child) ? prev.filter(v => v !== child) : [...prev, child]
+                        )}
+                        className={editReactionPoint.includes(child) ? styles.tagBtnSmActive : styles.tagBtnSm}
+                      >
+                        {editReactionPoint.includes(child) ? `✓ ${child}` : child}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {editReactionPoint.length > 0 && (
+                  <div className={styles.detailChipRow} style={{ marginTop: 6 }}>
+                    {editReactionPoint.map(v => (
+                      <button
+                        key={v}
+                        type="button"
+                        className={styles.tagBtnSmActive}
+                        onClick={() => setEditReactionPoint(prev => prev.filter(x => x !== v))}
+                      >
+                        {v} ✕
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* 담당자 */}
@@ -959,12 +1103,12 @@ function HakjeomAddModal({ onClose, onSaved, uniqueManagers = [], customCafes, c
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({
     name: '', contact: '', education: '',
-    hope_course: '',
+    hope_course: [] as string[],
     reason: [] as string[],
     counsel_check: [] as string[],
     counsel_check_etc: '',
     sourceMajor: '', sourceMinor: '',
-    subject_cost: '', manager: '', residence: '', memo: '',
+    subject_cost: '', manager: '', residence: '', memo: '', current_situation: '',
   });
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<{ name?: string; contact?: string }>({});
@@ -1041,7 +1185,7 @@ function HakjeomAddModal({ onClose, onSaved, uniqueManagers = [], customCafes, c
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
-          hope_course: form.hope_course,
+          hope_course: form.hope_course.join(', '),
           reason: form.reason.join(', '),
           counsel_check: [
             ...form.counsel_check.filter(c => c !== '기타'),
@@ -1127,16 +1271,39 @@ function HakjeomAddModal({ onClose, onSaved, uniqueManagers = [], customCafes, c
                 />
               </div>
               <div className={styles.funnelFieldGroup}>
-                <label className={styles.funnelLabel}>희망과정 <span className={styles.funnelOptional}>(선택)</span></label>
-                <CustomSelect
-                  value={form.hope_course}
-                  onChange={v => setForm(p => ({ ...p, hope_course: v }))}
-                  fullWidth
-                  options={[
-                    { value: '', label: '선택' },
-                    ...HAKJEOM_COURSE_OPTIONS.map(o => ({ value: o, label: o })),
-                  ]}
-                />
+                <label className={styles.funnelLabel}>현재상황 <span className={styles.funnelOptional}>(선택)</span></label>
+                <div className={styles.funnelTagRow} style={{ flexWrap: 'wrap' }}>
+                  {CURRENT_SITUATION_OPTIONS.map(s => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setForm(p => ({ ...p, current_situation: p.current_situation === s ? '' : s }))}
+                      className={form.current_situation === s ? styles.tagBtnV2Active : styles.tagBtnV2}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className={styles.funnelFieldGroup}>
+                <label className={styles.funnelLabel}>희망과정 <span className={styles.funnelOptional}>(복수 선택 가능)</span></label>
+                <div className={styles.funnelTagRow} style={{ flexWrap: 'wrap' }}>
+                  {HAKJEOM_COURSE_OPTIONS.map(o => (
+                    <button
+                      key={o}
+                      type="button"
+                      onClick={() => setForm(p => ({
+                        ...p,
+                        hope_course: p.hope_course.includes(o)
+                          ? p.hope_course.filter(v => v !== o)
+                          : [...p.hope_course, o],
+                      }))}
+                      className={form.hope_course.includes(o) ? styles.tagBtnV2Active : styles.tagBtnV2}
+                    >
+                      {form.hope_course.includes(o) ? `✓ ${o}` : o}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           )}
@@ -1176,7 +1343,7 @@ function HakjeomAddModal({ onClose, onSaved, uniqueManagers = [], customCafes, c
                 </div>
               </div>
               <div className={styles.funnelFieldGroup}>
-                <label className={styles.funnelLabel}>고민 <span className={styles.funnelOptional}>(복수 선택 가능)</span></label>
+                <label className={styles.funnelLabel}>취소사유 <span className={styles.funnelOptional}>(복수 선택 가능)</span></label>
                 <div className={styles.funnelTagRow} style={{ flexWrap: 'wrap' }}>
                   {COUNSEL_CHECK_OPTIONS.map(c => (
                     <button
@@ -1800,8 +1967,29 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
     return true;
   });
 
-  const totalPages = Math.ceil(filtered.length / itemsPerPage);
-  const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  // 상담완료 항목 중 KST 어제 설정된 것을 상단 우선 노출
+  const COUNSEL_DONE = ['상담완료-할것같음', '상담완료-중간', '상담완료-안할것같다'] as const;
+  const isYesterdayKST = (iso: string) => {
+    const KST = 9 * 60 * 60 * 1000;
+    const todayKST = new Date(Date.now() + KST);
+    const ymd = (d: Date) => `${d.getUTCFullYear()}-${d.getUTCMonth()}-${d.getUTCDate()}`;
+    const yesterdayKST = new Date(todayKST.getTime() - 86400000);
+    const targetKST = new Date(new Date(iso).getTime() + KST);
+    return ymd(targetKST) === ymd(yesterdayKST);
+  };
+  const isPriority = (c: HakjeomConsultation) =>
+    COUNSEL_DONE.includes(c.status as typeof COUNSEL_DONE[number]) &&
+    !!c.counsel_completed_at &&
+    isYesterdayKST(c.counsel_completed_at);
+
+  const sortedFiltered = [...filtered].sort((a, b) => {
+    const ap = isPriority(a) ? 1 : 0;
+    const bp = isPriority(b) ? 1 : 0;
+    return bp - ap;
+  });
+
+  const totalPages = Math.ceil(sortedFiltered.length / itemsPerPage);
+  const paginated = sortedFiltered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const toggleSelect = (id: number) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   const toggleSelectAll = () => setSelectedIds(prev => prev.length === paginated.length ? [] : paginated.map(c => c.id));
@@ -2094,7 +2282,7 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
                   </th>
                   <th className={styles.thFilterable}>
                     <div className={styles.thInner}>
-                      고민
+                      취소사유
                       <button className={`${styles.thFilterBtn}${counselCheckFilter.length > 0 ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'counsel') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('counsel'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
                     </div>
                   </th>
@@ -2104,8 +2292,9 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
                       <button className={`${styles.thFilterBtn}${statusFilter.length > 0 ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'status') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('status'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
                     </div>
                   </th>
+                  <th className={styles.th}>현재상황</th>
+                  <th className={styles.th}>반응포인트</th>
                   <th className={styles.th}>과목비용</th>
-                  <th className={styles.th}>메모</th>
                   <th className={styles.th}>등록일</th>
                 </tr>
               </thead>
@@ -2121,11 +2310,37 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
                     onClick={() => setSelectedItem(item)}
                     style={{
                       cursor: 'pointer',
-                      background: selectedItem?.id === item.id ? 'var(--toss-blue-subtle, #EBF3FE)' : selectedIds.includes(item.id) ? '#f0f7ff' : 'transparent',
+                      background: selectedItem?.id === item.id
+                        ? 'var(--toss-blue-subtle, #EBF3FE)'
+                        : selectedIds.includes(item.id)
+                          ? '#f0f7ff'
+                          : item.status === '상담완료-할것같음'
+                            ? '#E0F7FA'
+                            : item.status === '상담완료-중간'
+                              ? '#FFFDE7'
+                              : item.status === '상담완료-안할것같다'
+                                ? '#FCE4EC'
+                                : 'transparent',
                       transition: 'background 0.1s',
                     }}
-                    onMouseEnter={e => { if (selectedItem?.id !== item.id && !selectedIds.includes(item.id)) (e.currentTarget as HTMLTableRowElement).style.background = 'var(--toss-bg)'; }}
-                    onMouseLeave={e => { if (selectedItem?.id !== item.id && !selectedIds.includes(item.id)) (e.currentTarget as HTMLTableRowElement).style.background = 'transparent'; }}
+                    onMouseEnter={e => {
+                      if (selectedItem?.id !== item.id && !selectedIds.includes(item.id)) {
+                        const rowBg = item.status === '상담완료-할것같음' ? '#C9F0F5'
+                          : item.status === '상담완료-중간' ? '#FFF9C4'
+                          : item.status === '상담완료-안할것같다' ? '#F8BBD0'
+                          : 'var(--toss-bg)';
+                        (e.currentTarget as HTMLTableRowElement).style.background = rowBg;
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      if (selectedItem?.id !== item.id && !selectedIds.includes(item.id)) {
+                        const rowBg = item.status === '상담완료-할것같음' ? '#E0F7FA'
+                          : item.status === '상담완료-중간' ? '#FFFDE7'
+                          : item.status === '상담완료-안할것같다' ? '#FCE4EC'
+                          : 'transparent';
+                        (e.currentTarget as HTMLTableRowElement).style.background = rowBg;
+                      }
+                    }}
                   >
                     <td className={styles.tdCenter} onClick={e => e.stopPropagation()}>
                       <input type="checkbox" checked={selectedIds.includes(item.id)} onChange={() => toggleSelect(item.id)} className={styles.checkbox} />
@@ -2156,7 +2371,7 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
                       )}
                     </td>
                     <td className={styles.tdSecondary}>{item.education ?? '-'}</td>
-                    <td className={styles.tdSecondary}>{item.hope_course ?? '-'}</td>
+                    <td className={styles.tdEllipsis} title={item.hope_course ?? ''}>{item.hope_course ?? '-'}</td>
                     <td className={styles.tdEllipsis} title={item.reason ?? ''}><Highlight text={item.reason} query={searchText} /></td>
                     <td className={styles.tdSecondary}>{item.manager ?? '-'}</td>
                     <td className={styles.tdCounsel}>
@@ -2176,10 +2391,9 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
                         styleMap={CONSULTATION_STATUS_STYLE}
                       />
                     </td>
+                    <td className={styles.tdSecondary}>{item.current_situation ?? '-'}</td>
+                    <td className={styles.tdEllipsis} title={item.reaction_point ?? ''}>{item.reaction_point ?? '-'}</td>
                     <td className={styles.tdSecondary}>{formatCost(item.subject_cost)}</td>
-                    <td className={styles.tdMemo} onClick={e => { e.stopPropagation(); setOpenTab('memo'); setSelectedItem(item); }} style={{ cursor: 'pointer' }}>
-                      <MemoHoverBadge text={item.latest_memo || item.memo || '-'} />
-                    </td>
                     <td className={styles.tdDateSmall}>
                       {formatDate(item.created_at)}
                     </td>
@@ -2837,7 +3051,7 @@ const HEADER_MAP: Record<string, keyof CsvRow> = {
   '상태': 'status', 'status': 'status',
   '담당자': 'manager', 'manager': 'manager',
   '거주지': 'residence', 'residence': 'residence',
-  '상담체크': 'counsel_check', '고민': 'counsel_check', 'counsel_check': 'counsel_check',
+  '상담체크': 'counsel_check', '고민': 'counsel_check', '취소사유': 'counsel_check', 'counsel_check': 'counsel_check',
   '과목비용': 'subject_cost', 'subject_cost': 'subject_cost',
   '신청일시': 'applied_at', 'applied_at': 'applied_at',
 };
@@ -3036,8 +3250,8 @@ function BulkTab({ onMoveSuccess }: { onMoveSuccess?: () => void }) {
 
   const CONSULT_PREVIEW_COLS: (keyof CsvRow)[] = ['click_source','name','contact','education','hope_course','reason','subject_cost','manager','residence','counsel_check','applied_at','status'];
   const CERT_PREVIEW_COLS: (keyof CsvRow)[] = ['click_source','name','contact','hope_course','reason','subject_cost','manager','residence','counsel_check','applied_at'];
-  const CONSULT_HEADERS = ['유입경로','이름','연락처','최종학력','희망과정','취득사유','과목비용','담당자','거주지','고민','신청일시','상태'];
-  const CERT_HEADERS = ['유입경로','이름','연락처','희망과정','취득사유','과목비용','담당자','거주지','고민','신청일시'];
+  const CONSULT_HEADERS = ['유입경로','이름','연락처','최종학력','희망과정','취득사유','과목비용','담당자','거주지','취소사유','신청일시','상태'];
+  const CERT_HEADERS = ['유입경로','이름','연락처','희망과정','취득사유','과목비용','담당자','거주지','취소사유','신청일시'];
 
   const previewCols = uploadType === 'consult' ? CONSULT_PREVIEW_COLS : CERT_PREVIEW_COLS;
   const previewHeaders = uploadType === 'consult' ? CONSULT_HEADERS : CERT_HEADERS;
@@ -3191,7 +3405,7 @@ function BulkTab({ onMoveSuccess }: { onMoveSuccess?: () => void }) {
                 { col: '담당자', desc: '담당자 이름' },
                 { col: '거주지', desc: '지역명' },
                 { col: '메모', desc: '자유 입력' },
-                { col: '고민', desc: '타기관, 자체가격 등' },
+                { col: '취소사유', desc: '비용, 주변반대 등' },
                 { col: '신청일시', desc: '비우면 현재 시간' },
                 { col: '상태', desc: '비우면 상담대기' },
               ] : [
@@ -3205,7 +3419,7 @@ function BulkTab({ onMoveSuccess }: { onMoveSuccess?: () => void }) {
                 { col: '담당자', desc: '담당자 이름' },
                 { col: '거주지', desc: '지역명' },
                 { col: '메모', desc: '자유 입력' },
-                { col: '고민', desc: '타기관, 자체가격 등' },
+                { col: '취소사유', desc: '비용, 주변반대 등' },
                 { col: '신청일시', desc: '비우면 현재 시간' },
               ]).map(({ col, desc }) => (
                 <div key={col} className={styles.bulkGuideItem}>
@@ -3327,10 +3541,15 @@ type StatsSubTab = 'overview' | 'status' | 'source' | 'time' | 'mamcafe';
 
 // 통계 상수
 const STATS_STATUS_COLORS: Record<string, string> = {
-  '상담대기': '#94a3b8', '상담중': '#3b82f6',
-  '보류': '#f59e0b', '등록대기': '#8b5cf6', '등록완료': '#22c55e',
+  '부재중': '#94a3b8', '상담대기': '#3b82f6', '상담중': '#f97316',
+  '상담완료-할것같음': '#0ea5e9', '상담완료-중간': '#eab308', '상담완료-안할것같다': '#f43f5e',
+  '가망관리': '#8b5cf6', '보류': '#6b7280', '등록대기': '#f59e0b', '등록완료': '#22c55e', '취소': '#dc2626',
 };
-const STATS_STATUS_LIST: ConsultationStatus[] = ['상담대기', '상담중', '보류', '등록대기', '등록완료'];
+const STATS_STATUS_LIST: ConsultationStatus[] = [
+  '부재중', '상담대기', '상담중',
+  '상담완료-할것같음', '상담완료-중간', '상담완료-안할것같다',
+  '가망관리', '보류', '등록대기', '등록완료', '취소',
+];
 const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'];
 const SOURCE_COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#64748b'];
 

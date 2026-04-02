@@ -5,7 +5,9 @@ import { logAction } from '@/lib/audit/logAction';
 
 // ─── 타입 정의 ───────────────────────────────────────────────────────────────
 
-type HakjeomStatus = '상담대기' | '상담중' | '보류' | '등록대기' | '등록완료';
+type HakjeomStatus = '부재중' | '상담대기' | '상담중' | '상담완료-할것같음' | '상담완료-중간' | '상담완료-안할것같다' | '가망관리' | '보류' | '등록대기' | '등록완료' | '취소';
+
+const COUNSEL_COMPLETE_STATUSES: HakjeomStatus[] = ['상담완료-할것같음', '상담완료-중간', '상담완료-안할것같다'];
 
 interface HakjeomUpdatePayload {
   status?: HakjeomStatus;
@@ -20,6 +22,9 @@ interface HakjeomUpdatePayload {
   click_source?: string | null;
   residence?: string | null;
   hope_course?: string | null;
+  counsel_completed_at?: string | null;
+  current_situation?: string | null;
+  reaction_point?: string | null;
 }
 
 const TABLE = 'hakjeom_consultations';
@@ -74,7 +79,7 @@ export async function GET(request: NextRequest) {
       query,
       supabaseAdmin
         .from('memo_logs')
-        .select('record_id, content')
+        .select('record_id, content, created_at')
         .eq('table_name', TABLE)
         .order('created_at', { ascending: false }),
     ]);
@@ -86,17 +91,22 @@ export async function GET(request: NextRequest) {
 
     const items = queryResult.data || [];
 
-    // memo_count + 최신 메모 내용 병합
+    // memo_count + 최신 메모 내용 + 최신 메모 날짜 병합
     const countMap: Record<string, number> = {};
     const latestMemoMap: Record<string, string> = {};
+    const latestMemoAtMap: Record<string, string> = {};
     for (const m of memoResult.data || []) {
       countMap[m.record_id] = (countMap[m.record_id] || 0) + 1;
-      if (!latestMemoMap[m.record_id]) latestMemoMap[m.record_id] = m.content;
+      if (!latestMemoMap[m.record_id]) {
+        latestMemoMap[m.record_id] = m.content;
+        latestMemoAtMap[m.record_id] = m.created_at;
+      }
     }
     const result = items.map(item => ({
       ...item,
       memo_count: countMap[String(item.id)] || 0,
       latest_memo: latestMemoMap[String(item.id)] ?? null,
+      latest_memo_at: latestMemoAtMap[String(item.id)] ?? null,
     }));
 
     return NextResponse.json(result);
@@ -119,7 +129,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       name, contact, education, hope_course, reason,
-      click_source, residence, subject_cost, manager, memo, counsel_check, status,
+      click_source, residence, subject_cost, manager, memo, counsel_check, status, current_situation,
     } = body;
 
     if (!name || !contact) {
@@ -140,6 +150,7 @@ export async function POST(request: NextRequest) {
         manager: manager || null,
         memo: memo || null,
         counsel_check: counsel_check || null,
+        current_situation: current_situation || null,
         status: status || '상담대기',
       }])
       .select()
@@ -171,7 +182,7 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json();
     const {
       id, ids, status, memo, manager, counsel_check, subject_cost,
-      name, contact, education, reason, click_source, residence, hope_course,
+      name, contact, education, reason, click_source, residence, hope_course, current_situation, reaction_point,
     } = body;
 
     // 일괄 담당자 배정
@@ -202,8 +213,23 @@ export async function PATCH(request: NextRequest) {
 
     const updateData: HakjeomUpdatePayload = {};
 
-    if (status !== undefined) updateData.status = status;
-    if (memo !== undefined) updateData.memo = memo || null;
+    if (status !== undefined) {
+      updateData.status = status;
+      // 상담완료 상태로 변경 시 시각 기록, 다른 상태로 변경 시 초기화
+      if (COUNSEL_COMPLETE_STATUSES.includes(status as HakjeomStatus)) {
+        updateData.counsel_completed_at = new Date().toISOString();
+      } else {
+        updateData.counsel_completed_at = null;
+      }
+    }
+    if (memo !== undefined) {
+      updateData.memo = memo || null;
+      // 메모 작성 시 상담완료 우선노출 해제 (현재 상태 확인 필요)
+      const { data: cur } = await supabaseAdmin.from(TABLE).select('status').eq('id', id).maybeSingle();
+      if (cur && COUNSEL_COMPLETE_STATUSES.includes(cur.status as HakjeomStatus)) {
+        updateData.counsel_completed_at = null;
+      }
+    }
     if (manager !== undefined) updateData.manager = manager || null;
     if (counsel_check !== undefined) updateData.counsel_check = counsel_check || null;
     if (subject_cost !== undefined) {
@@ -218,6 +244,8 @@ export async function PATCH(request: NextRequest) {
     if (click_source !== undefined) updateData.click_source = click_source || null;
     if (residence !== undefined) updateData.residence = residence || null;
     if (hope_course !== undefined) updateData.hope_course = hope_course || null;
+    if (current_situation !== undefined) updateData.current_situation = current_situation || null;
+    if (reaction_point !== undefined) updateData.reaction_point = reaction_point || null;
 
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json({ error: 'At least one field is required for update' }, { status: 400 });

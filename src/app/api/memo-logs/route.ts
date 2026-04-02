@@ -56,6 +56,23 @@ export async function POST(req: NextRequest) {
     console.error('[memo-logs POST]', error)
     return NextResponse.json({ error: error.message, code: error.code, details: error.details }, { status: 500 })
   }
+
+  // 상담완료 우선노출 해제: 메모 작성 시 counsel_completed_at 초기화
+  const COUNSEL_COMPLETE_STATUSES = ['상담완료-할것같음', '상담완료-중간', '상담완료-안할것같다']
+  if (table_name === 'hakjeom_consultations') {
+    const { data: cur } = await supabaseAdmin
+      .from('hakjeom_consultations')
+      .select('status, counsel_completed_at')
+      .eq('id', record_id)
+      .maybeSingle()
+    if (cur && COUNSEL_COMPLETE_STATUSES.includes(cur.status) && cur.counsel_completed_at) {
+      await supabaseAdmin
+        .from('hakjeom_consultations')
+        .update({ counsel_completed_at: null })
+        .eq('id', record_id)
+    }
+  }
+
   return NextResponse.json(data)
 }
 
