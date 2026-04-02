@@ -107,9 +107,7 @@ export default function Header({ userName = '관리자', userRole }: HeaderProps
 
         <div className={styles.headerDivider} />
 
-        <div className={styles.avatar}>
-          <span className={styles.avatarInitial}>{initial}</span>
-        </div>
+     
 
         <span className={styles.headerUserName}>{userName}</span>
 

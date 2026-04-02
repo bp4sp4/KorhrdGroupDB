@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import {
   GraduationCap, Briefcase, Users, UserCog, Trash2,
-  HeartPulse, ClipboardList, Copy, TrendingUp, FileCheck, BarChart2, Settings,
+  HeartPulse, ClipboardList, Copy, TrendingUp, FileCheck, BarChart2, Settings, UserCheck,
 } from 'lucide-react'
 import styles from './layout.module.css'
 import { createClient } from '@/lib/supabase/client'
@@ -28,7 +28,7 @@ interface NavSection {
 const ALL_SECTIONS: NavSection[] = [
   {
     sectionKey: '교육운영',
-    activeOn: ['/hakjeom', '/cert', '/practice', '/allcare', '/duplicate', '/trash', '/ref-manage', '/logs'],
+    activeOn: ['/hakjeom', '/cert', '/practice', '/allcare', '/duplicate', '/trash', '/ref-manage', '/logs', '/assignment'],
     items: [
       { id: 'education', label: '학점은행제 사업부', href: '/hakjeom', icon: <GraduationCap size={16} />, groupLabel: '학습/취업' },
       { id: 'cert', label: '민간자격증 사업부', href: '/cert', icon: <GraduationCap size={16} /> },
@@ -38,6 +38,7 @@ const ALL_SECTIONS: NavSection[] = [
       { id: 'trash', label: '삭제목록', href: '/trash', icon: <Trash2 size={16} /> },
       { id: 'ref-manage', label: '어드민 관리', href: '/ref-manage', icon: <UserCog size={16} /> },
       { id: 'logs', label: '로그 관리', href: '/logs', icon: <ClipboardList size={16} /> },
+      { id: 'assignment', label: '배정 현황', href: '/assignment', icon: <UserCheck size={16} /> },
     ],
   },
   {
@@ -63,11 +64,16 @@ const MINI_ADMIN_ITEMS: NavItem[] = [
   { id: 'mini-admin', label: '결제확인', href: '/paymentstatus', icon: <Users size={16} /> },
 ]
 
-// 섹션별 item.id 매핑
+// 섹션별 item.id 매핑 (권한 체크 대상)
 const SECTION_ITEM_MAP: Record<string, string> = {
-  hakjeom: 'education',
-  cert: 'cert',
-  practice: 'practice',
+  hakjeom:    'education',
+  cert:       'cert',
+  practice:   'practice',
+  duplicate:  'duplicate',
+  trash:      'trash',
+  logs:       'logs',
+  'ref-manage': 'ref-manage',
+  assignment: 'assignment',
 }
 
 interface SidebarProps {
@@ -112,7 +118,10 @@ export default function Sidebar({ userRole, permissions = [] }: SidebarProps) {
     sec.activeOn.some((p) => pathname.startsWith(p))
   )
   const isFullAccess = userRole === 'master-admin' || userRole === 'admin'
-  const allowedSections = new Set(permissions.map(p => p.section))
+  // scope가 없거나 'none'인 섹션은 접근 불가로 처리
+  const allowedSections = new Set(
+    permissions.filter(p => p.scope && p.scope !== 'none').map(p => p.section)
+  )
 
   const rawItems = userRole === 'mini-admin'
     ? MINI_ADMIN_ITEMS
@@ -122,7 +131,7 @@ export default function Sidebar({ userRole, permissions = [] }: SidebarProps) {
     ? rawItems
     : rawItems.filter(item => {
         const sectionKey = Object.entries(SECTION_ITEM_MAP).find(([, id]) => id === item.id)?.[0]
-        if (!sectionKey) return true // allcare, duplicate 등 권한 제한 없는 항목
+        if (!sectionKey) return true // allcare 등 권한 제한 없는 항목
         return allowedSections.has(sectionKey)
       })
 

@@ -461,9 +461,10 @@ interface HakjeomDetailPanelProps {
   onDeleteCafe: (name: string) => Promise<void>;
   onAddDanggeun: (name: string) => Promise<void>;
   onDeleteDanggeun: (name: string) => Promise<void>;
+  hideManager?: boolean;
 }
 
-function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic', customCafes, customDanggeun, onAddCafe, onDeleteCafe, onAddDanggeun, onDeleteDanggeun }: HakjeomDetailPanelProps) {
+function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic', customCafes, customDanggeun, onAddCafe, onDeleteCafe, onAddDanggeun, onDeleteDanggeun, hideManager = false }: HakjeomDetailPanelProps) {
   const initSource = (src: string | null) => {
     const { major, minor } = parseClickSource(src, customCafes);
     return { major, minor: CAFE_NAMES[minor] ?? minor };
@@ -900,16 +901,18 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic', cus
               </div>
 
               {/* 담당자 */}
-              <div className={styles.detailFieldRow}>
-                <span className={styles.detailFieldLabel}>담당자</span>
-                <input
-                  type="text"
-                  value={editManager}
-                  onChange={e => setEditManager(e.target.value)}
-                  placeholder="담당자 이름"
-                  className={`${styles.input} ${styles.inputFull}`}
-                />
-              </div>
+              {!hideManager && (
+                <div className={styles.detailFieldRow}>
+                  <span className={styles.detailFieldLabel}>담당자</span>
+                  <input
+                    type="text"
+                    value={editManager}
+                    onChange={e => setEditManager(e.target.value)}
+                    placeholder="담당자 이름"
+                    className={`${styles.input} ${styles.inputFull}`}
+                  />
+                </div>
+              )}
             </>
           )}
 
@@ -1501,6 +1504,15 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
   const [items, setItems] = useState<HakjeomConsultation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isOwnScope, setIsOwnScope] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/auth/me').then(r => r.ok ? r.json() : null).then(data => {
+      if (!data) return
+      const perm = (data.permissions ?? []).find((p: { section: string; scope: string }) => p.section === 'hakjeom')
+      setIsOwnScope(perm?.scope === 'own')
+    }).catch(() => {})
+  }, [])
 
   // 필터 상태
   const [searchText, setSearchText] = useState('');
@@ -2219,6 +2231,7 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
           onDeleteCafe={handleDeleteCafe}
           onAddDanggeun={handleAddDanggeun}
           onDeleteDanggeun={handleDeleteDanggeun}
+          hideManager={isOwnScope}
         />
       )}
       {toastVisible && <div className={styles.toast}>저장이 완료되었습니다</div>}

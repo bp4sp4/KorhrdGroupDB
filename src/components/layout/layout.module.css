@@ -105,23 +105,7 @@
   gap: 10px;
 }
 
-.avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--toss-blue-subtle);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
 
-.avatarInitial {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--toss-blue);
-  line-height: 1;
-}
 
 .headerUserName {
   font-size: 13px;

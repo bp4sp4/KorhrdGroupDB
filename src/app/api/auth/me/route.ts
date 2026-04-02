@@ -28,6 +28,7 @@ export async function GET() {
           { section: 'hakjeom', scope: 'all' },
           { section: 'cert', scope: 'all' },
           { section: 'practice', scope: 'all' },
+          { section: 'assignment', scope: 'all' },
         ]
       } else {
         const { data: perms } = await supabaseAdmin

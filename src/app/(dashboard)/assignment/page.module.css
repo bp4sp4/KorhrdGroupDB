@@ -1,0 +1,247 @@
+.wrap {
+  padding: 0;
+}
+
+/* ─── 헤더 ──────────────────────────────────────────────────────── */
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  gap: 12px;
+}
+
+.headerLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--toss-text-primary);
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: var(--toss-text-secondary);
+  margin: 0;
+}
+
+.monthSelect {
+  height: 36px;
+  padding: 0 10px;
+  border: 1.5px solid var(--toss-border);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--toss-text-primary);
+  background: #fff;
+  outline: none;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.monthSelect:focus {
+  border-color: var(--toss-blue);
+}
+
+/* ─── 요약 카드 ──────────────────────────────────────────────────── */
+.summaryRow {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.summaryCard {
+  flex: 1;
+  background: var(--toss-card-bg);
+  border: 1px solid var(--toss-border);
+  border-radius: var(--toss-radius-card);
+  box-shadow: var(--toss-shadow-card);
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.summaryLabel {
+  font-size: 12px;
+  color: var(--toss-text-secondary);
+  font-weight: 500;
+}
+
+.summaryValue {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--toss-text-primary);
+}
+
+.summaryValueBlue {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--toss-blue);
+}
+
+.summaryValueRed {
+  font-size: 20px;
+  font-weight: 700;
+  color: #F04452;
+}
+
+/* ─── 테이블 카드 ────────────────────────────────────────────────── */
+.tableCard {
+  background: var(--toss-card-bg);
+  border: 1px solid var(--toss-border);
+  border-radius: var(--toss-radius-card);
+  box-shadow: var(--toss-shadow-card);
+  overflow: hidden;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.thead {
+  background: var(--toss-bg);
+  border-bottom: 1px solid var(--toss-border);
+}
+
+.th {
+  padding: 10px 16px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--toss-text-secondary);
+  white-space: nowrap;
+}
+
+.tr {
+  border-bottom: 1px solid var(--toss-border);
+  transition: background 0.1s;
+}
+
+.tr:last-child {
+  border-bottom: none;
+}
+
+.tr:hover {
+  background: var(--toss-bg);
+}
+
+.td {
+  padding: 12px 16px;
+  font-size: 14px;
+  color: var(--toss-text-primary);
+  vertical-align: middle;
+}
+
+/* ─── 순위 배지 ──────────────────────────────────────────────────── */
+.rank1,
+.rank2,
+.rank3,
+.rankN {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.rank1 {
+  background: #FFB020;
+  color: #fff;
+}
+
+.rank2 {
+  background: #8B8B8B;
+  color: #fff;
+}
+
+.rank3 {
+  background: #C97B2C;
+  color: #fff;
+}
+
+.rankN {
+  background: var(--toss-border);
+  color: var(--toss-text-secondary);
+}
+
+/* ─── 담당자 이름 ─────────────────────────────────────────────────── */
+.managerName {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--toss-text-primary);
+}
+
+/* ─── 바 차트 셀 ──────────────────────────────────────────────────── */
+.barWrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 200px;
+}
+
+.bar {
+  height: 8px;
+  min-width: 4px;
+  background: var(--toss-blue);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.countText {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--toss-text-primary);
+  white-space: nowrap;
+}
+
+/* ─── 비율 ────────────────────────────────────────────────────────── */
+.pctText {
+  font-size: 13px;
+  color: var(--toss-text-secondary);
+}
+
+/* ─── 로딩 / 빈 상태 ──────────────────────────────────────────────── */
+.loadingWrap {
+  padding: 48px 24px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--toss-text-secondary);
+}
+
+.emptyWrap {
+  padding: 56px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.emptyText {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--toss-text-primary);
+  margin: 0;
+}
+
+.emptyHint {
+  font-size: 13px;
+  color: var(--toss-text-secondary);
+  margin: 0;
+}
+
+/* ─── 주석 ────────────────────────────────────────────────────────── */
+.footNote {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--toss-text-secondary);
+}

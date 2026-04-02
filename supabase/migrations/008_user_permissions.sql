@@ -2,7 +2,7 @@
 CREATE TABLE IF NOT EXISTS public.user_permissions (
   id bigserial PRIMARY KEY,
   user_id bigint NOT NULL REFERENCES app_users(id) ON DELETE CASCADE,
-  section text NOT NULL CHECK (section IN ('hakjeom', 'cert', 'practice')),
+  section text NOT NULL CHECK (section IN ('hakjeom', 'cert', 'practice', 'duplicate', 'trash', 'logs', 'ref-manage', 'assignment')),
   scope text NOT NULL CHECK (scope IN ('all', 'own')),
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   UNIQUE(user_id, section)

@@ -1290,82 +1290,184 @@ interface UserWithPermissions {
   permissions: { section: string; scope: string }[]
 }
 
-const PERMISSION_SECTIONS: { key: string; label: string; allowOwn: boolean }[] = [
-  { key: 'hakjeom', label: '학점은행제', allowOwn: true },
-  { key: 'cert', label: '민간자격증', allowOwn: false },
-  { key: 'practice', label: '실습/취업', allowOwn: true },
+interface PermissionSection {
+  key: string
+  label: string
+  description: string
+  allowOwn: boolean
+  group: '교육운영' | '시스템'
+}
+
+const PERMISSION_SECTIONS: PermissionSection[] = [
+  { key: 'hakjeom',    label: '학점은행제 사업부', description: '상담 목록 조회·수정',     allowOwn: true,  group: '교육운영' },
+  { key: 'cert',       label: '민간자격증 사업부', description: '상담 목록 조회·수정',     allowOwn: false, group: '교육운영' },
+  { key: 'practice',   label: '실습/취업',         description: '실습·취업 상담 조회·수정', allowOwn: true,  group: '교육운영' },
+  { key: 'duplicate',  label: '중복 조회',          description: '연락처 중복 조회',        allowOwn: false, group: '시스템' },
+  { key: 'trash',      label: '삭제 목록',          description: '휴지통·영구삭제',         allowOwn: false, group: '시스템' },
+  { key: 'logs',       label: '로그 관리',          description: '작업 로그 열람',          allowOwn: false, group: '시스템' },
+  { key: 'ref-manage', label: '어드민 관리',        description: '기준 데이터 관리',        allowOwn: false, group: '시스템' },
+  { key: 'assignment', label: '배정 현황',          description: '담당자 배정 통계 열람',   allowOwn: false, group: '시스템' },
 ]
+
+const SCOPE_OPTIONS = {
+  none: { label: '접근 불가', color: 'scopeNone' },
+  all: { label: '전체 열람', color: 'scopeAll' },
+  own: { label: '담당 건만', color: 'scopeOwn' },
+} as const
+
+type ScopeKey = keyof typeof SCOPE_OPTIONS
+
+const ROLE_DISPLAY: Record<string, { label: string; cls: string }> = {
+  'master-admin': { label: '마스터', cls: 'roleMaster' },
+  admin: { label: '어드민', cls: 'roleAdmin' },
+  'mini-admin': { label: '미니어드민', cls: 'roleMini' },
+  staff: { label: '스태프', cls: 'roleStaff' },
+}
 
 function PermissionsTab() {
   const [users, setUsers] = useState<UserWithPermissions[]>([])
   const [saving, setSaving] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
 
   const fetchUsers = useCallback(async () => {
+    setLoading(true)
     const res = await fetch('/api/admin/permissions')
     if (res.ok) setUsers(await res.json())
+    setLoading(false)
   }, [])
 
   useEffect(() => { fetchUsers() }, [fetchUsers])
 
-  const getScope = (user: UserWithPermissions, section: string) => {
-    return user.permissions.find(p => p.section === section)?.scope ?? 'none'
+  const getScope = (user: UserWithPermissions, section: string): ScopeKey => {
+    return (user.permissions.find(p => p.section === section)?.scope ?? 'none') as ScopeKey
   }
 
-  const handleChange = async (userId: number, section: string, scope: string) => {
+  const handleChange = async (userId: number, section: string, scope: ScopeKey) => {
+    // 낙관적 업데이트 (롤백용 스냅샷 저장)
+    const prev = users
+    setUsers(cur => cur.map(u => {
+      if (u.id !== userId) return u
+      const filtered = u.permissions.filter(p => p.section !== section)
+      return {
+        ...u,
+        permissions: scope === 'none' ? filtered : [...filtered, { section, scope }],
+      }
+    }))
+
     const key = `${userId}-${section}`
     setSaving(key)
-    await fetch('/api/admin/permissions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: userId, section, scope: scope === 'none' ? null : scope }),
-    })
-    setSaving(null)
-    fetchUsers()
+    try {
+      const res = await fetch('/api/admin/permissions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId, section, scope: scope === 'none' ? null : scope }),
+      })
+      if (!res.ok) {
+        // 저장 실패 시 원래 상태로 되돌림
+        setUsers(prev)
+      }
+    } catch {
+      setUsers(prev)
+    } finally {
+      setSaving(null)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className={styles.permLoadingWrap}>
+        <p className={styles.permLoadingText}>불러오는 중...</p>
+      </div>
+    )
+  }
+
+  if (users.length === 0) {
+    return (
+      <div className={styles.permEmptyWrap}>
+        <p className={styles.permEmptyText}>관리할 계정이 없습니다.</p>
+        <p className={styles.permEmptyHint}>계정 관리 탭에서 스태프 계정을 먼저 추가해주세요.</p>
+      </div>
+    )
+  }
+
+  // 셀 클릭 시 순환: none → all → (own) → none
+  const cycleScope = (userId: number, sec: PermissionSection) => {
+    const current = getScope({ id: userId, display_name: null, username: '', role: '', permissions: users.find(u => u.id === userId)?.permissions ?? [] }, sec.key)
+    const scopes: ScopeKey[] = sec.allowOwn ? ['none', 'all', 'own'] : ['none', 'all']
+    const idx = scopes.indexOf(current)
+    const next = scopes[(idx + 1) % scopes.length]
+    handleChange(userId, sec.key, next)
   }
 
   return (
-    <div className={styles.sectionCard}>
-      <div className={styles.sectionHeader}>
-        <h3 className={styles.sectionTitle}>권한 관리</h3>
+    <div className={styles.permWrap}>
+      {/* 범례 */}
+      <div className={styles.permLegend}>
+        <span className={styles.permLegendTitle}>셀 클릭으로 변경</span>
+        <span className={`${styles.permCellBadge} ${styles.badgeNone}`}>불가</span>
+        <span className={`${styles.permCellBadge} ${styles.badgeAll}`}>전체</span>
+        <span className={`${styles.permCellBadge} ${styles.badgeOwn}`}>담당만</span>
       </div>
-      <table className={styles.table}>
-        <thead>
-          <tr>
-            <th>이름</th>
-            <th>역할</th>
-            {PERMISSION_SECTIONS.map(s => <th key={s.key}>{s.label}</th>)}
-          </tr>
-        </thead>
-        <tbody>
-          {users.length === 0 && (
-            <tr><td colSpan={5} className={styles.emptyState}>계정이 없습니다.</td></tr>
-          )}
-          {users.map(user => (
-            <tr key={user.id}>
-              <td>{user.display_name ?? user.username}</td>
-              <td><span className={`${styles.statusBadge} ${styles.roleBadge}`}>{user.role}</span></td>
-              {PERMISSION_SECTIONS.map(sec => {
-                const currentScope = getScope(user, sec.key)
-                const key = `${user.id}-${sec.key}`
-                return (
-                  <td key={sec.key}>
-                    <select
-                      className={styles.formSelect}
-                      value={currentScope}
-                      disabled={saving === key}
-                      onChange={e => handleChange(user.id, sec.key, e.target.value)}
-                    >
-                      <option value="none">없음</option>
-                      <option value="all">전체</option>
-                      {sec.allowOwn && <option value="own">본인</option>}
-                    </select>
-                  </td>
-                )
-              })}
+
+      {/* 매트릭스 테이블 */}
+      <div className={styles.permTableWrap}>
+        <table className={styles.permTable}>
+          <thead>
+            <tr>
+              <th className={styles.permThUser} rowSpan={2}>이름</th>
+              <th className={styles.permThGroup} colSpan={PERMISSION_SECTIONS.filter(s => s.group === '교육운영').length}>교육운영</th>
+              <th className={styles.permThGroup} colSpan={PERMISSION_SECTIONS.filter(s => s.group === '시스템').length}>시스템</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+            <tr>
+              {PERMISSION_SECTIONS.map(sec => (
+                <th key={sec.key} className={styles.permThSection}>
+                  <span className={styles.permThSectionName}>{sec.label}</span>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {users.map(user => {
+              const roleInfo = ROLE_DISPLAY[user.role] ?? { label: user.role, cls: 'roleStaff' }
+              return (
+                <tr key={user.id} className={styles.permTr}>
+                  <td className={styles.permTdUser}>
+                    <div className={styles.permUserInfo}>
+                      <div className={styles.permUserAvatar}>
+                        {(user.display_name ?? user.username).slice(0, 1)}
+                      </div>
+                      <div className={styles.permUserMeta}>
+                        <span className={styles.permUserName}>{user.display_name ?? user.username}</span>
+                        <span className={`${styles.permRoleBadge} ${styles[roleInfo.cls]}`}>{roleInfo.label}</span>
+                      </div>
+                    </div>
+                  </td>
+                  {PERMISSION_SECTIONS.map(sec => {
+                    const currentScope = getScope(user, sec.key)
+                    const savingKey = `${user.id}-${sec.key}`
+                    const isSaving = saving === savingKey
+                    return (
+                      <td
+                        key={sec.key}
+                        className={[
+                          styles.permTdCell,
+                          isSaving ? styles.permCellSaving : '',
+                        ].join(' ')}
+                        onClick={() => !isSaving && cycleScope(user.id, sec)}
+                        title={`클릭해서 변경 (현재: ${SCOPE_OPTIONS[currentScope].label})`}
+                      >
+                        <span className={`${styles.permCellBadge} ${styles[`badge${currentScope.charAt(0).toUpperCase() + currentScope.slice(1)}`]}`}>
+                          {currentScope === 'none' ? '불가' : currentScope === 'all' ? '전체' : '담당만'}
+                        </span>
+                      </td>
+                    )
+                  })}
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }

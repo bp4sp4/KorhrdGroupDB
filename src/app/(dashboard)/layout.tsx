@@ -24,6 +24,7 @@ const PAGE_META: Record<string, PageMeta> = {
   '/trash':        { title: '삭제목록',     section: '시스템' },
   '/ref-manage':   { title: '어드민 관리',  section: '시스템' },
   '/logs':         { title: '로그 관리',    section: '시스템' },
+  '/assignment':   { title: '배정 현황',    section: '시스템' },
   '/mini-admin':   { title: '결제확인' },
   '/paymentstatus':{ title: '결제확인' },
 }
@@ -41,14 +42,13 @@ export default function DashboardLayout({
   const [permissions, setPermissions] = useState<{ section: string; scope: string }[]>([])
   const supabase = createClient()
 
+  // 1) 최초 1회: 세션 확인 + 유저 정보 로드
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) {
         router.replace('/login')
         return
       }
-
-      // app_users에서 role 조회
       try {
         const res = await fetch('/api/auth/me')
         if (res.ok) {
@@ -56,35 +56,57 @@ export default function DashboardLayout({
           setUserRole(data.role ?? 'admin')
           setDisplayName(data.displayName ?? '관리자')
           setPermissions(data.permissions ?? [])
-
-          // mini-admin이 일반 페이지 접근 시 리다이렉트
-          if (data.role === 'mini-admin' && !window.location.pathname.startsWith('/mini-admin') && !window.location.pathname.startsWith('/paymentstatus')) {
-            router.replace('/paymentstatus')
-            return
-          }
-
-          // /admin 경로 접근 시 master-admin 권한 확인
-          if (window.location.pathname.startsWith('/admin') && data.role !== 'master-admin') {
-            router.replace('/hakjeom')
-            return
-          }
-
-          // 경영관리 경로 접근 시 admin 이상 권한 확인
-          const isAdminRole = data.role === 'admin' || data.role === 'master-admin'
-          const mgmtPaths = ['/revenues', '/approvals', '/reports']
-          if (!isAdminRole && mgmtPaths.some(p => window.location.pathname.startsWith(p))) {
-            router.replace('/hakjeom')
-            return
-          }
+        } else {
+          setUserRole('admin')
         }
       } catch {
-        // role 조회 실패 시 기본 admin으로
         setUserRole('admin')
       }
-
       setIsChecking(false)
     })
-  }, [router])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // 2) 페이지 이동할 때마다: 권한 기반 리다이렉트
+  useEffect(() => {
+    if (isChecking || !userRole) return
+
+    if (userRole === 'mini-admin' && !pathname.startsWith('/mini-admin') && !pathname.startsWith('/paymentstatus')) {
+      router.replace('/paymentstatus')
+      return
+    }
+
+    if (pathname.startsWith('/admin') && userRole !== 'master-admin') {
+      router.replace('/hakjeom')
+      return
+    }
+
+    const isAdminRole = userRole === 'admin' || userRole === 'master-admin'
+    const mgmtPaths = ['/revenues', '/approvals', '/reports']
+    if (!isAdminRole && mgmtPaths.some(p => pathname.startsWith(p))) {
+      router.replace('/hakjeom')
+      return
+    }
+
+    if (!isAdminRole) {
+      const PERM_PATHS: { path: string; section: string }[] = [
+        { path: '/assignment', section: 'assignment' },
+        { path: '/duplicate',  section: 'duplicate' },
+        { path: '/trash',      section: 'trash' },
+        { path: '/logs',       section: 'logs' },
+        { path: '/ref-manage', section: 'ref-manage' },
+      ]
+      for (const { path, section } of PERM_PATHS) {
+        if (pathname.startsWith(path)) {
+          const perm = permissions.find(p => p.section === section)
+          if (!perm || perm.scope === 'none' || !perm.scope) {
+            router.replace('/hakjeom')
+          }
+          break
+        }
+      }
+    }
+  }, [pathname, userRole, permissions, isChecking, router])
 
   if (isChecking) {
     return (

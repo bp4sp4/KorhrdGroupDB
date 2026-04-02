@@ -568,3 +568,240 @@
   background: #FFF7ED;
   color: #c2410c;
 }
+
+/* ─── 권한 관리 탭 ─────────────────────────────────────────────── */
+
+.permLoadingWrap,
+.permEmptyWrap {
+  padding: 56px 24px;
+  text-align: center;
+}
+
+.permLoadingText,
+.permEmptyText {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--toss-text-primary);
+  margin: 0 0 6px;
+}
+
+.permEmptyHint {
+  font-size: 13px;
+  color: var(--toss-text-secondary);
+  margin: 0;
+}
+
+.permWrap {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 범례 */
+.permLegend {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  background: var(--toss-bg);
+  border-bottom: 1px solid var(--toss-border);
+}
+
+.permLegendTitle {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--toss-text-tertiary);
+  margin-right: 2px;
+}
+
+.permLegendLabel {
+  font-size: 12px;
+  color: var(--toss-text-secondary);
+}
+
+/* 매트릭스 테이블 */
+.permTableWrap {
+  overflow-x: auto;
+}
+
+.permTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 700px;
+}
+
+/* 헤더: 사람 열 */
+.permThUser {
+  padding: 10px 20px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--toss-text-tertiary);
+  background: var(--toss-bg);
+  border-bottom: 1px solid var(--toss-border);
+  white-space: nowrap;
+  min-width: 150px;
+}
+
+/* 헤더: 그룹 구분 (colspan) — 배경 없이 텍스트만 */
+.permThGroup {
+  padding: 10px 12px 4px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--toss-text-tertiary);
+  background: var(--toss-bg);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  border-bottom: none;
+}
+
+/* 헤더: 섹션 이름 */
+.permThSection {
+  padding: 4px 8px 10px;
+  text-align: center;
+  background: var(--toss-bg);
+  border-bottom: 1px solid var(--toss-border);
+  min-width: 80px;
+}
+
+/* 교육운영 그룹의 첫 번째 섹션 헤더 — 구분선 없음 */
+.permThSectionSystem {
+  border-left: 1px solid var(--toss-border);
+}
+
+.permThSectionName {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--toss-text-secondary);
+  white-space: nowrap;
+}
+
+/* 데이터 행 */
+.permTr {
+  border-bottom: 1px solid var(--toss-border);
+  transition: background 0.1s;
+}
+
+.permTr:last-child {
+  border-bottom: none;
+}
+
+.permTr:hover {
+  background: var(--toss-bg);
+}
+
+/* 사람 열 셀 */
+.permTdUser {
+  padding: 14px 20px;
+  vertical-align: middle;
+}
+
+/* 권한 셀 */
+.permTdCell {
+  padding: 10px 6px;
+  text-align: center;
+  cursor: pointer;
+  vertical-align: middle;
+  user-select: none;
+}
+
+.permTdCell:first-of-type {
+  border-left: 1px solid var(--toss-border);
+}
+
+.permCellSaving {
+  opacity: 0.45;
+  cursor: wait;
+  pointer-events: none;
+}
+
+/* 셀 뱃지 */
+.permCellBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 0;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: opacity 0.1s;
+}
+
+.permTdCell:hover .permCellBadge {
+  opacity: 0.7;
+}
+
+.badgeNone {
+  color: #C2C7CE;
+}
+
+.badgeAll {
+  color: #3182F6;
+}
+
+.badgeOwn {
+  color: #16a34a;
+}
+
+/* 유저 정보 */
+.permUserInfo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.permUserAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #EEF4FF;
+  color: #3182F6;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.permUserMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.permUserName {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--toss-text-primary);
+  white-space: nowrap;
+}
+
+.permRoleBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  width: fit-content;
+}
+
+.roleMaster { background: #FEF3C7; color: #B45309; }
+.roleAdmin  { background: #EFF6FF; color: #1D4ED8; }
+.roleMini   { background: #F5F3FF; color: #7C3AED; }
+.roleStaff  { background: #F2F4F6; color: var(--toss-text-secondary); }
+
+/* 범례 점 (헤더에만 사용) */
+.permDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.dotNone { background: #C9CDD4; }
+.dotAll  { background: #3182F6; }
+.dotOwn  { background: #16a34a; }

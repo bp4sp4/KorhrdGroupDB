@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-04-01T09:46:59.802Z",
+  "lastUpdated": "2026-04-02T01:55:32.320Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -74,7 +74,9 @@
     "expense-categories",
     "approval-templates",
     "accounts",
-    "permissions"
+    "permissions",
+    "manager-stats",
+    "assignment"
   ],
   "primaryFeature": "supabase",
   "features": {
@@ -113,7 +115,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:20:48.298Z",
-        "lastUpdated": "2026-04-01T08:54:51.542Z"
+        "lastUpdated": "2026-04-02T01:48:42.861Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/layout.tsx"
     },
@@ -126,9 +128,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:20:57.368Z",
-        "lastUpdated": "2026-04-01T08:54:41.434Z"
+        "lastUpdated": "2026-04-02T01:33:21.349Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/components/layout/Header.tsx"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/components/layout/Sidebar.tsx"
     },
     "hakjeom": {
       "phase": "do",
@@ -139,9 +141,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:30:16.038Z",
-        "lastUpdated": "2026-04-01T09:46:43.644Z"
+        "lastUpdated": "2026-04-02T01:55:32.320Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/hakjeom/route.ts"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/hakjeom/page.tsx"
     },
     "practice": {
       "phase": "do",
@@ -243,7 +245,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T06:09:16.436Z",
-        "lastUpdated": "2026-04-01T08:42:13.144Z"
+        "lastUpdated": "2026-04-02T01:39:25.552Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/admin/page.tsx"
     },
@@ -347,7 +349,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-17T09:03:03.020Z",
-        "lastUpdated": "2026-04-01T08:38:12.838Z"
+        "lastUpdated": "2026-04-02T01:26:59.366Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/auth/me/route.ts"
     },
@@ -1026,6 +1028,32 @@
         "lastUpdated": "2026-04-01T08:46:17.787Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/admin/permissions/route.ts"
+    },
+    "manager-stats": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-02T01:09:57.887Z",
+        "lastUpdated": "2026-04-02T01:27:12.230Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/hakjeom/manager-stats/route.ts"
+    },
+    "assignment": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-02T01:10:19.078Z",
+        "lastUpdated": "2026-04-02T01:17:33.733Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/assignment/page.tsx"
     }
   },
   "pipeline": {
@@ -1036,7 +1064,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-01T09:46:59.802Z"
+    "lastActivity": "2026-04-02T01:55:32.320Z"
   },
   "history": [
     {
@@ -10720,6 +10748,198 @@
     {
       "timestamp": "2026-04-01T09:46:59.802Z",
       "feature": "practice",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T01:09:57.887Z",
+      "feature": "manager-stats",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T01:10:19.078Z",
+      "feature": "assignment",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T01:10:47.892Z",
+      "feature": "(dashboard)",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T01:10:52.650Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T01:10:57.539Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T01:11:02.887Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T01:14:23.451Z",
+      "feature": "manager-stats",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T01:17:05.204Z",
+      "feature": "manager-stats",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T01:17:15.504Z",
+      "feature": "assignment",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T01:17:23.010Z",
+      "feature": "assignment",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T01:17:28.287Z",
+      "feature": "assignment",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T01:17:33.733Z",
+      "feature": "assignment",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T01:22:06.541Z",
+      "feature": "manager-stats",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T01:26:59.366Z",
+      "feature": "me",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T01:27:12.230Z",
+      "feature": "manager-stats",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T01:27:24.453Z",
+      "feature": "(dashboard)",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T01:28:10.732Z",
+      "feature": "admin",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T01:30:58.153Z",
+      "feature": "admin",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T01:31:16.375Z",
+      "feature": "admin",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T01:31:58.764Z",
+      "feature": "admin",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T01:33:04.056Z",
+      "feature": "(dashboard)",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T01:33:10.043Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T01:33:21.349Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T01:37:08.215Z",
+      "feature": "admin",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T01:37:16.990Z",
+      "feature": "admin",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T01:39:25.552Z",
+      "feature": "admin",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T01:48:42.861Z",
+      "feature": "(dashboard)",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T01:55:03.471Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T01:55:10.769Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T01:55:17.307Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T01:55:26.431Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-02T01:55:32.320Z",
+      "feature": "hakjeom",
       "phase": "do",
       "action": "updated"
     }
