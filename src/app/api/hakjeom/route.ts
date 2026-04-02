@@ -5,9 +5,9 @@ import { logAction } from '@/lib/audit/logAction';
 
 // ─── 타입 정의 ───────────────────────────────────────────────────────────────
 
-type HakjeomStatus = '부재중' | '상담대기' | '상담중' | '상담완료-할것같음' | '상담완료-중간' | '상담완료-안할것같다' | '가망관리' | '보류' | '등록대기' | '등록완료' | '취소';
+type HakjeomStatus = '부재중/추후통화' | '상담대기' | '상담완료-높음' | '상담완료-중간' | '상담완료-낮음' | '보류' | '등록대기' | '등록완료' | '취소' | `기타(${string})` | '기타';
 
-const COUNSEL_COMPLETE_STATUSES: HakjeomStatus[] = ['상담완료-할것같음', '상담완료-중간', '상담완료-안할것같다'];
+const COUNSEL_COMPLETE_STATUSES: HakjeomStatus[] = ['상담완료-높음', '상담완료-중간', '상담완료-낮음'];
 
 interface HakjeomUpdatePayload {
   status?: HakjeomStatus;
@@ -194,6 +194,17 @@ export async function PATCH(request: NextRequest) {
       if (error) return NextResponse.json({ error: 'Failed to bulk update manager' }, { status: 500 })
       await logAction({ user_id: user.id, user_email: user.email, action: 'update', resource: '학점은행제 상담', resource_id: ids.join(','), detail: `${ids.length}건 담당자 일괄 배정: ${manager || '없음'}`, meta: { ids, manager } })
       return NextResponse.json({ message: 'Bulk manager updated' })
+    }
+
+    // 일괄 상태 변경
+    if (Array.isArray(ids) && ids.length > 0 && status !== undefined && manager === undefined && click_source === undefined) {
+      const { error } = await supabaseAdmin
+        .from(TABLE)
+        .update({ status })
+        .in('id', ids)
+      if (error) return NextResponse.json({ error: 'Failed to bulk update status' }, { status: 500 })
+      await logAction({ user_id: user.id, user_email: user.email, action: 'update', resource: '학점은행제 상담', resource_id: ids.join(','), detail: `${ids.length}건 상태 일괄 변경: ${status}`, meta: { ids, status } })
+      return NextResponse.json({ message: 'Bulk status updated' })
     }
 
     // 일괄 유입경로 배정

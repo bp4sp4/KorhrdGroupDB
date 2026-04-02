@@ -19,6 +19,7 @@ interface SearchResult {
 const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
   '상담대기': { bg: '#EBF3FE', color: '#3182F6' },
   '상담중': { bg: '#FFF8E6', color: '#D97706' },
+  '부재중/추후통화': { bg: '#F3F4F6', color: '#6B7684' },
   '보류': { bg: '#F3F4F6', color: '#6B7684' },
   '등록대기': { bg: '#FEF3C7', color: '#B45309' },
   '등록완료': { bg: '#DCFCE7', color: '#16A34A' },

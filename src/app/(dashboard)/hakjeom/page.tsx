@@ -15,7 +15,7 @@ import { downloadExcel } from '@/lib/excelExport'
 
 // ─── 공통 타입 ──────────────────────────────────────────────────────────────
 
-type ConsultationStatus = '부재중' | '상담대기' | '상담중' | '상담완료-할것같음' | '상담완료-중간' | '상담완료-안할것같다' | '가망관리' | '보류' | '등록대기' | '등록완료' | '취소';
+type ConsultationStatus = '부재중/추후통화' | '상담대기' | '상담완료-높음' | '상담완료-중간' | '상담완료-낮음' | '보류' | '등록대기' | '등록완료' | '취소' | '기타';
 type AgencyStatus = '협약대기' | '협약중' | '보류' | '협약완료';
 type TabKey = 'hakjeom' | 'agency' | 'bulk' | 'stats';
 
@@ -96,24 +96,23 @@ interface CsvRow {
 // ─── 상수 ────────────────────────────────────────────────────────────────────
 
 const CONSULTATION_STATUS_OPTIONS: ConsultationStatus[] = [
-  '부재중', '상담대기', '상담중',
-  '상담완료-할것같음', '상담완료-중간', '상담완료-안할것같다',
-  '가망관리', '보류', '등록대기', '등록완료', '취소',
+  '부재중/추후통화', '상담대기',
+  '상담완료-높음', '상담완료-중간', '상담완료-낮음',
+  '보류', '등록대기', '등록완료', '취소', '기타',
 ];
 const AGENCY_STATUS_OPTIONS: AgencyStatus[] = ['협약대기', '협약중', '보류', '협약완료'];
 
 const CONSULTATION_STATUS_STYLE: Record<ConsultationStatus, { background: string; color: string }> = {
-  '부재중':              { background: '#F3F4F6', color: '#6B7684' },
+  '부재중/추후통화':     { background: '#F3F4F6', color: '#6B7684' },
   '상담대기':            { background: '#EBF3FE', color: '#3182F6' },
-  '상담중':              { background: '#FFF8E6', color: '#D97706' },
-  '상담완료-할것같음':   { background: '#E0F7FA', color: '#0277BD' },
+  '상담완료-높음':   { background: '#E0F7FA', color: '#0277BD' },
   '상담완료-중간':       { background: '#FFFDE7', color: '#F57F17' },
-  '상담완료-안할것같다': { background: '#FCE4EC', color: '#C62828' },
-  '가망관리':            { background: '#F3E8FF', color: '#7C3AED' },
-  '보류':                { background: '#F3F4F6', color: '#6B7684' },
+  '상담완료-낮음': { background: '#FCE4EC', color: '#C62828' },
+  '보류':                { background: '#F3E8FF', color: '#7C3AED' },
   '등록대기':            { background: '#FEF3C7', color: '#B45309' },
   '등록완료':            { background: '#DCFCE7', color: '#16A34A' },
   '취소':                { background: '#FEE2E2', color: '#DC2626' },
+  '기타':                { background: '#F0FFF4', color: '#059669' },
 };
 
 const AGENCY_STATUS_STYLE: Record<AgencyStatus, { background: string; color: string }> = {
@@ -303,7 +302,8 @@ function StatusBadge({ status, styleMap }: {
   status: string;
   styleMap: Record<string, { background: string; color: string }>;
 }) {
-  const s = styleMap[status] ?? { background: '#F3F4F6', color: '#6B7684' };
+  const lookupKey = status.startsWith('기타(') ? '기타' : status;
+  const s = styleMap[lookupKey] ?? { background: '#F3F4F6', color: '#6B7684' };
   return (
     <span
       className={styles.statusBadge}
@@ -314,11 +314,11 @@ function StatusBadge({ status, styleMap }: {
   );
 }
 
-const COUNSEL_SUB: ConsultationStatus[] = ['상담완료-할것같음', '상담완료-중간', '상담완료-안할것같다'];
+const COUNSEL_SUB: ConsultationStatus[] = ['상담완료-높음', '상담완료-중간', '상담완료-낮음'];
 const COUNSEL_SUB_LABEL: Record<string, string> = {
-  '상담완료-할것같음': '할것같음',
+  '상담완료-높음': '높음',
   '상담완료-중간': '중간',
-  '상담완료-안할것같다': '안할것같다',
+  '상담완료-낮음': '낮음',
 };
 
 function StatusSelect({
@@ -345,7 +345,7 @@ function StatusSelect({
 
   // 상담완료-* 제외한 옵션, 상담중 뒤에 '상담완료' 그룹 슬롯 삽입
   const baseOptions = options.filter(o => !COUNSEL_SUB.includes(o as ConsultationStatus));
-  const insertIdx = baseOptions.indexOf('상담중') + 1;
+  const insertIdx = baseOptions.indexOf('상담대기') + 1;
   const beforeCounsel = baseOptions.slice(0, insertIdx);
   const afterCounsel = baseOptions.slice(insertIdx);
 
@@ -538,7 +538,10 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic', cus
     return { major, minor: CAFE_NAMES[minor] ?? minor };
   };
 
-  const [editStatus, setEditStatus] = useState<ConsultationStatus>(item.status);
+  const initStatusEtc = item.status.startsWith('기타(') && item.status.endsWith(')') ? item.status.slice(3, -1) : '';
+  const initStatus = item.status.startsWith('기타(') ? '기타' : item.status as ConsultationStatus;
+  const [editStatus, setEditStatus] = useState<ConsultationStatus>(initStatus);
+  const [editStatusEtc, setEditStatusEtc] = useState(initStatusEtc);
   const [editMemo, setEditMemo] = useState(item.memo ?? '');
   const [editManager, setEditManager] = useState(item.manager ?? '');
   const [editEducation, setEditEducation] = useState(item.education ?? '');
@@ -664,7 +667,7 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic', cus
     setSaving(true);
     try {
       await onUpdate(item.id, {
-        status: editStatus,
+        status: (editStatus === '기타' && editStatusEtc.trim() ? `기타(${editStatusEtc.trim()})` : editStatus) as ConsultationStatus,
         memo: editMemo || null,
         manager: editManager || null,
         education: editEducation || null,
@@ -973,17 +976,28 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic', cus
               <div className={styles.detailChipSection}>
                 <span className={styles.detailChipSectionLabel}>상태</span>
                 <div className={styles.detailChipRow}>
-                  {(['부재중', '상담대기', '상담중', '가망관리', '보류', '등록대기', '등록완료', '취소'] as ConsultationStatus[]).map(s => (
+                  {(['부재중/추후통화', '상담대기', '보류', '등록대기', '등록완료', '취소', '기타'] as ConsultationStatus[]).map(s => (
                     <button key={s} type="button" onClick={() => setEditStatus(s)}
                       style={editStatus === s
                         ? { padding: '5px 12px', borderRadius: 20, cursor: 'pointer', border: `2px solid ${CONSULTATION_STATUS_STYLE[s].color}`, background: CONSULTATION_STATUS_STYLE[s].background, color: CONSULTATION_STATUS_STYLE[s].color, fontSize: 13, fontWeight: 600, transition: 'all 0.15s' }
                         : { padding: '5px 12px', borderRadius: 20, cursor: 'pointer', border: '2px solid var(--toss-border)', background: 'transparent', color: 'var(--toss-text-secondary)', fontSize: 13, fontWeight: 600, transition: 'all 0.15s' }}
                     >{s}</button>
                   ))}
+                  {editStatus === '기타' && (
+                    <input
+                      type="text"
+                      value={editStatusEtc}
+                      onChange={e => setEditStatusEtc(e.target.value)}
+                      placeholder="기타 내용 입력"
+                      className={styles.input}
+                      style={{ flex: 1, minWidth: 120, maxWidth: 220 }}
+                      autoFocus
+                    />
+                  )}
                 </div>
                 <div className={styles.detailChipRow} style={{ alignItems: 'center', marginTop: 4 }}>
                   <span style={{ fontSize: 11, color: 'var(--toss-text-secondary)', fontWeight: 600, whiteSpace: 'nowrap', marginRight: 2 }}>상담완료 &gt;</span>
-                  {(['상담완료-할것같음', '상담완료-중간', '상담완료-안할것같다'] as ConsultationStatus[]).map(s => (
+                  {(['상담완료-높음', '상담완료-중간', '상담완료-낮음'] as ConsultationStatus[]).map(s => (
                     <button key={s} type="button" onClick={() => setEditStatus(s)}
                       style={editStatus === s
                         ? { padding: '5px 12px', borderRadius: 20, cursor: 'pointer', border: `2px solid ${CONSULTATION_STATUS_STYLE[s].color}`, background: CONSULTATION_STATUS_STYLE[s].background, color: CONSULTATION_STATUS_STYLE[s].color, fontSize: 13, fontWeight: 600, transition: 'all 0.15s' }
@@ -1705,8 +1719,12 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
   const [filterDropdownPos, setFilterDropdownPos] = useState({ top: 0, left: 0 });
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [inlineContact, setInlineContact] = useState<{ id: number; value: string } | null>(null);
+  const [showBulkMenu, setShowBulkMenu] = useState(false);
   const [showManagerAssign, setShowManagerAssign] = useState(false);
   const [showSourceAssign, setShowSourceAssign] = useState(false);
+  const [showBulkStatusAssign, setShowBulkStatusAssign] = useState(false);
+  const [assigningStatus, setAssigningStatus] = useState(false);
+  const bulkMenuRef = useRef<HTMLDivElement>(null);
   const [bulkSourceMajor, setBulkSourceMajor] = useState('');
   const [bulkSourceMinor, setBulkSourceMinor] = useState('');
   const [assigningSource, setAssigningSource] = useState(false);
@@ -1734,11 +1752,11 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (managerAssignRef.current && !managerAssignRef.current.contains(e.target as Node)) {
+      if (bulkMenuRef.current && !bulkMenuRef.current.contains(e.target as Node)) {
+        setShowBulkMenu(false);
         setShowManagerAssign(false);
-      }
-      if (sourceAssignRef.current && !sourceAssignRef.current.contains(e.target as Node)) {
         setShowSourceAssign(false);
+        setShowBulkStatusAssign(false);
       }
     };
     document.addEventListener('mousedown', handler);
@@ -1876,6 +1894,22 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
     setTimeout(() => setToastVisible(false), 2500);
   };
 
+  const handleBulkAssignStatus = async (status: string) => {
+    if (selectedIds.length === 0) return;
+    setAssigningStatus(true);
+    setShowBulkStatusAssign(false);
+    await fetch('/api/hakjeom', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: selectedIds, status }),
+    });
+    setSelectedIds([]);
+    await fetchData();
+    setAssigningStatus(false);
+    setToastVisible(true);
+    setTimeout(() => setToastVisible(false), 2500);
+  };
+
   const handleAddCafe = useCallback(async (name: string) => {
     await fetch('/api/hakjeom/custom-sources', {
       method: 'POST',
@@ -1967,8 +2001,8 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
     return true;
   });
 
-  // 상담완료 항목 중 KST 어제 설정된 것을 상단 우선 노출
-  const COUNSEL_DONE = ['상담완료-할것같음', '상담완료-중간', '상담완료-안할것같다'] as const;
+  // 상담완료 항목 중 KST 어제 설정된 것을 오전 10시 이후 상단 우선 노출
+  const COUNSEL_DONE = ['상담완료-높음', '상담완료-중간', '상담완료-낮음'] as const;
   const isYesterdayKST = (iso: string) => {
     const KST = 9 * 60 * 60 * 1000;
     const todayKST = new Date(Date.now() + KST);
@@ -1977,10 +2011,15 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
     const targetKST = new Date(new Date(iso).getTime() + KST);
     return ymd(targetKST) === ymd(yesterdayKST);
   };
-  const isPriority = (c: HakjeomConsultation) =>
-    COUNSEL_DONE.includes(c.status as typeof COUNSEL_DONE[number]) &&
-    !!c.counsel_completed_at &&
-    isYesterdayKST(c.counsel_completed_at);
+  const isPriority = (c: HakjeomConsultation) => {
+    if (!COUNSEL_DONE.includes(c.status as typeof COUNSEL_DONE[number])) return false;
+    if (!c.counsel_completed_at) return false;
+    if (!isYesterdayKST(c.counsel_completed_at)) return false;
+    // 오전 10시 이후에만 우선 노출
+    const KST = 9 * 60 * 60 * 1000;
+    const nowKST = new Date(Date.now() + KST);
+    return nowKST.getUTCHours() >= 10;
+  };
 
   const sortedFiltered = [...filtered].sort((a, b) => {
     const ap = isPriority(a) ? 1 : 0;
@@ -2094,24 +2133,25 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
             {selectedIds.length > 0 && (
               <>
                 <span className={styles.bulkActionCount}>{selectedIds.length}건 선택됨</span>
-                <div ref={managerAssignRef} style={{ position: 'relative' }}>
+                <div ref={bulkMenuRef} style={{ position: 'relative' }}>
                   <button
-                    onClick={() => setShowManagerAssign(v => !v)}
-                    disabled={assigningManager}
+                    onClick={() => { setShowBulkMenu(v => !v); setShowManagerAssign(false); setShowSourceAssign(false); setShowBulkStatusAssign(false); }}
+                    disabled={assigningManager || assigningSource || assigningStatus}
                     className={styles.btnPrimary}
                   >
-                    {assigningManager ? '배정 중...' : '담당자 배정 ▾'}
+                    {(assigningManager || assigningSource || assigningStatus) ? '처리 중...' : '일괄 변경 ▾'}
                   </button>
+                  {showBulkMenu && (
+                    <div className={styles.managerAssignDropdown}>
+                      <button className={styles.managerAssignOption} onClick={() => { setShowBulkMenu(false); setShowManagerAssign(true); }}>담당자 배정</button>
+                      <button className={styles.managerAssignOption} onClick={() => { setShowBulkMenu(false); setShowSourceAssign(true); setBulkSourceMajor(''); setBulkSourceMinor(''); }}>유입경로 배정</button>
+                      <button className={styles.managerAssignOption} onClick={() => { setShowBulkMenu(false); setShowBulkStatusAssign(true); }}>상태 변경</button>
+                    </div>
+                  )}
                   {showManagerAssign && (
                     <div className={styles.managerAssignDropdown}>
                       {uniqueManagers.map(m => (
-                        <button
-                          key={m}
-                          className={styles.managerAssignOption}
-                          onClick={() => handleBulkAssignManager(m)}
-                        >
-                          {m}
-                        </button>
+                        <button key={m} className={styles.managerAssignOption} onClick={() => handleBulkAssignManager(m)}>{m}</button>
                       ))}
                       <div className={styles.managerAssignDivider} />
                       <div className={styles.managerAssignInputRow}>
@@ -2123,61 +2163,26 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
                           onKeyDown={e => { if (e.key === 'Enter' && managerAssignInput.trim()) handleBulkAssignManager(managerAssignInput.trim()) }}
                           autoFocus
                         />
-                        <button
-                          className={styles.managerAssignConfirm}
-                          disabled={!managerAssignInput.trim()}
-                          onClick={() => { if (managerAssignInput.trim()) handleBulkAssignManager(managerAssignInput.trim()) }}
-                        >
-                          확인
-                        </button>
+                        <button className={styles.managerAssignConfirm} disabled={!managerAssignInput.trim()} onClick={() => { if (managerAssignInput.trim()) handleBulkAssignManager(managerAssignInput.trim()) }}>확인</button>
                       </div>
                     </div>
                   )}
-                </div>
-                <div ref={sourceAssignRef} style={{ position: 'relative' }}>
-                  <button
-                    onClick={() => { setShowSourceAssign(v => !v); setBulkSourceMajor(''); setBulkSourceMinor(''); }}
-                    disabled={assigningSource}
-                    className={styles.btnSecondary}
-                  >
-                    {assigningSource ? '배정 중...' : '유입경로 배정 ▾'}
-                  </button>
                   {showSourceAssign && (
                     <div className={styles.sourceAssignDropdown}>
                       <p className={styles.sourceAssignLabel}>대분류 선택</p>
                       <div className={styles.sourceAssignMajorRow}>
                         {SOURCE_MAJORS.map(m => (
-                          <button
-                            key={m}
-                            type="button"
-                            className={bulkSourceMajor === m ? styles.tagBtnSmActive : styles.tagBtnSm}
-                            onClick={() => { setBulkSourceMajor(prev => prev === m ? '' : m); setBulkSourceMinor(''); }}
-                          >
-                            {m}
-                          </button>
+                          <button key={m} type="button" className={bulkSourceMajor === m ? styles.tagBtnSmActive : styles.tagBtnSm} onClick={() => { setBulkSourceMajor(prev => prev === m ? '' : m); setBulkSourceMinor(''); }}>{m}</button>
                         ))}
                       </div>
                       {bulkSourceMajor === '맘카페' && (
                         <div className={styles.sourceAssignSubPanel}>
                           {CAFE_NAME_LIST.map(name => (
-                            <button
-                              key={name}
-                              type="button"
-                              className={bulkSourceMinor === name ? styles.tagBtnSmActive : styles.tagBtnSm}
-                              onClick={() => setBulkSourceMinor(prev => prev === name ? '' : name)}
-                            >
-                              {name}
-                            </button>
+                            <button key={name} type="button" className={bulkSourceMinor === name ? styles.tagBtnSmActive : styles.tagBtnSm} onClick={() => setBulkSourceMinor(prev => prev === name ? '' : name)}>{name}</button>
                           ))}
                           {customCafes.map(name => (
                             <span key={name} className={styles.customItemWrap}>
-                              <button
-                                type="button"
-                                className={bulkSourceMinor === name ? styles.tagBtnSmActive : styles.tagBtnSm}
-                                onClick={() => setBulkSourceMinor(prev => prev === name ? '' : name)}
-                              >
-                                {name}
-                              </button>
+                              <button type="button" className={bulkSourceMinor === name ? styles.tagBtnSmActive : styles.tagBtnSm} onClick={() => setBulkSourceMinor(prev => prev === name ? '' : name)}>{name}</button>
                               <button type="button" className={styles.customItemDeleteBtn} onClick={() => { if (window.confirm(`"${name}" 카페를 삭제하시겠습니까?`)) handleDeleteCafe(name); }}>✕</button>
                             </span>
                           ))}
@@ -2187,35 +2192,39 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
                         <div className={styles.sourceAssignSubPanel}>
                           {customDanggeun.map(name => (
                             <span key={name} className={styles.customItemWrap}>
-                              <button
-                                type="button"
-                                className={bulkSourceMinor === name ? styles.tagBtnSmActive : styles.tagBtnSm}
-                                onClick={() => setBulkSourceMinor(prev => prev === name ? '' : name)}
-                              >
-                                {name}
-                              </button>
+                              <button type="button" className={bulkSourceMinor === name ? styles.tagBtnSmActive : styles.tagBtnSm} onClick={() => setBulkSourceMinor(prev => prev === name ? '' : name)}>{name}</button>
                               <button type="button" className={styles.customItemDeleteBtn} onClick={() => { if (window.confirm(`"${name}"을(를) 삭제하시겠습니까?`)) handleDeleteDanggeun(name); }}>✕</button>
                             </span>
                           ))}
                         </div>
                       )}
                       {bulkSourceMajor && (
-                        <input
-                          className={styles.sourceAssignMinorInput}
-                          placeholder="중분류 직접 입력 (선택)"
-                          value={bulkSourceMinor}
-                          onChange={e => setBulkSourceMinor(e.target.value)}
-                        />
+                        <input className={styles.sourceAssignMinorInput} placeholder="중분류 직접 입력 (선택)" value={bulkSourceMinor} onChange={e => setBulkSourceMinor(e.target.value)} />
                       )}
                       <div className={styles.sourceAssignConfirmRow}>
-                        <button
-                          className={styles.sourceAssignConfirm}
-                          disabled={!bulkSourceMajor}
-                          onClick={handleBulkAssignSource}
-                        >
+                        <button className={styles.sourceAssignConfirm} disabled={!bulkSourceMajor} onClick={handleBulkAssignSource}>
                           {bulkSourceMajor ? `"${bulkSourceMajor}${bulkSourceMinor ? ` > ${bulkSourceMinor}` : ''}" 배정` : '대분류를 선택하세요'}
                         </button>
                       </div>
+                    </div>
+                  )}
+                  {showBulkStatusAssign && (
+                    <div className={styles.managerAssignDropdown} style={{ minWidth: 260 }}>
+                      <p className={styles.sourceAssignLabel}>상태 선택</p>
+                      {CONSULTATION_STATUS_OPTIONS.filter(s => !COUNSEL_SUB.includes(s)).map(s => (
+                        <button key={s} className={styles.managerAssignOption} onClick={() => handleBulkAssignStatus(s)}>
+                          <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: CONSULTATION_STATUS_STYLE[s]?.color, marginRight: 8 }} />
+                          {s}
+                        </button>
+                      ))}
+                      <div className={styles.managerAssignDivider} />
+                      <p className={styles.sourceAssignLabel}>상담완료</p>
+                      {COUNSEL_SUB.map(s => (
+                        <button key={s} className={styles.managerAssignOption} onClick={() => handleBulkAssignStatus(s)}>
+                          <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: CONSULTATION_STATUS_STYLE[s]?.color, marginRight: 8 }} />
+                          {COUNSEL_SUB_LABEL[s]}
+                        </button>
+                      ))}
                     </div>
                   )}
                 </div>
@@ -2223,7 +2232,7 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
                   {deleting ? '삭제 중...' : '선택 삭제'}
                 </button>
                 <button onClick={handleDownloadSelected} className={styles.btnDownload}>↓ 선택 다운로드</button>
-                <button onClick={() => { setSelectedIds([]); setShowManagerAssign(false); setShowSourceAssign(false); }} className={styles.btnSecondary}>선택 해제</button>
+                <button onClick={() => { setSelectedIds([]); setShowBulkMenu(false); setShowManagerAssign(false); setShowSourceAssign(false); setShowBulkStatusAssign(false); }} className={styles.btnSecondary}>선택 해제</button>
               </>
             )}
           </div>
@@ -2314,29 +2323,29 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
                         ? 'var(--toss-blue-subtle, #EBF3FE)'
                         : selectedIds.includes(item.id)
                           ? '#f0f7ff'
-                          : item.status === '상담완료-할것같음'
+                          : item.status === '상담완료-높음'
                             ? '#E0F7FA'
                             : item.status === '상담완료-중간'
                               ? '#FFFDE7'
-                              : item.status === '상담완료-안할것같다'
+                              : item.status === '상담완료-낮음'
                                 ? '#FCE4EC'
                                 : 'transparent',
                       transition: 'background 0.1s',
                     }}
                     onMouseEnter={e => {
                       if (selectedItem?.id !== item.id && !selectedIds.includes(item.id)) {
-                        const rowBg = item.status === '상담완료-할것같음' ? '#C9F0F5'
+                        const rowBg = item.status === '상담완료-높음' ? '#C9F0F5'
                           : item.status === '상담완료-중간' ? '#FFF9C4'
-                          : item.status === '상담완료-안할것같다' ? '#F8BBD0'
+                          : item.status === '상담완료-낮음' ? '#F8BBD0'
                           : 'var(--toss-bg)';
                         (e.currentTarget as HTMLTableRowElement).style.background = rowBg;
                       }
                     }}
                     onMouseLeave={e => {
                       if (selectedItem?.id !== item.id && !selectedIds.includes(item.id)) {
-                        const rowBg = item.status === '상담완료-할것같음' ? '#E0F7FA'
+                        const rowBg = item.status === '상담완료-높음' ? '#E0F7FA'
                           : item.status === '상담완료-중간' ? '#FFFDE7'
-                          : item.status === '상담완료-안할것같다' ? '#FCE4EC'
+                          : item.status === '상담완료-낮음' ? '#FCE4EC'
                           : 'transparent';
                         (e.currentTarget as HTMLTableRowElement).style.background = rowBg;
                       }
@@ -3541,14 +3550,14 @@ type StatsSubTab = 'overview' | 'status' | 'source' | 'time' | 'mamcafe';
 
 // 통계 상수
 const STATS_STATUS_COLORS: Record<string, string> = {
-  '부재중': '#94a3b8', '상담대기': '#3b82f6', '상담중': '#f97316',
-  '상담완료-할것같음': '#0ea5e9', '상담완료-중간': '#eab308', '상담완료-안할것같다': '#f43f5e',
-  '가망관리': '#8b5cf6', '보류': '#6b7280', '등록대기': '#f59e0b', '등록완료': '#22c55e', '취소': '#dc2626',
+  '부재중/추후통화': '#94a3b8', '상담대기': '#3b82f6',
+  '상담완료-높음': '#0ea5e9', '상담완료-중간': '#eab308', '상담완료-낮음': '#f43f5e',
+  '보류': '#8b5cf6', '등록대기': '#f59e0b', '등록완료': '#22c55e', '취소': '#dc2626', '기타': '#059669',
 };
 const STATS_STATUS_LIST: ConsultationStatus[] = [
-  '부재중', '상담대기', '상담중',
-  '상담완료-할것같음', '상담완료-중간', '상담완료-안할것같다',
-  '가망관리', '보류', '등록대기', '등록완료', '취소',
+  '부재중/추후통화', '상담대기',
+  '상담완료-높음', '상담완료-중간', '상담완료-낮음',
+  '보류', '등록대기', '등록완료', '취소', '기타',
 ];
 const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'];
 const SOURCE_COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#64748b'];

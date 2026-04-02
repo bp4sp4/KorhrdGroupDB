@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
   }
 
   // 상담완료 우선노출 해제: 메모 작성 시 counsel_completed_at 초기화
-  const COUNSEL_COMPLETE_STATUSES = ['상담완료-할것같음', '상담완료-중간', '상담완료-안할것같다']
+  const COUNSEL_COMPLETE_STATUSES = ['상담완료-높음', '상담완료-중간', '상담완료-낮음']
   if (table_name === 'hakjeom_consultations') {
     const { data: cur } = await supabaseAdmin
       .from('hakjeom_consultations')
