@@ -8,6 +8,7 @@ export type AuditAction =
   | 'bulk_delete'
   | 'restore'
   | 'hard_delete'
+  | 'confirm_draft'
 
 interface LogActionParams {
   user_id?: string | null

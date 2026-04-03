@@ -64,6 +64,13 @@ export default function MemoTimeline({ tableName, recordId, legacyMemo, defaultI
   const [loading, setLoading] = useState(true)
   const [input, setInput] = useState(defaultInput ?? '')
   const [saving, setSaving] = useState(false)
+  const prevDefaultInput = useRef(defaultInput ?? '')
+  useEffect(() => {
+    if (input === prevDefaultInput.current) {
+      setInput(defaultInput ?? '')
+    }
+    prevDefaultInput.current = defaultInput ?? ''
+  }, [defaultInput])
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editValue, setEditValue] = useState('')
   const [editSaving, setEditSaving] = useState(false)

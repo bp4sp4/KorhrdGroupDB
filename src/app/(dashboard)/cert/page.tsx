@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useSearchParams } from 'next/navigation'
 import {
   ResponsiveContainer, ComposedChart, BarChart, AreaChart, PieChart,
@@ -21,13 +22,18 @@ import { downloadExcel } from '@/lib/excelExport'
 type PaymentStatus = 'pending' | 'paid' | 'failed' | 'cancelled'
 
 // source 탭 구분: 'hakjeom' = 학점연계 신청, 'edu' = 교육원, 'private-cert' = 민간자격증
-type SourceTab = 'hakjeom' | 'edu' | 'private-cert' | 'stats' | 'student-mgmt' | 'counsel-template'
+type SourceTab = 'hakjeom' | 'edu' | 'private-cert' | 'stats' | 'student-mgmt' | 'student-bulk' | 'counsel-template'
 
 // 민간자격증 관련 타입
 type ConsultationStatus = '상담대기' | '상담중' | '보류' | '등록대기' | '등록완료'
 
 // 학생관리 타입
 type StudentStatus = '과정안내' | '수강중' | '미응시' | '수료' | '발급완료' | '취소'
+
+interface CourseItem {
+  name: string;
+  rate: number | null;
+}
 
 interface CertStudent {
   id: number;
@@ -106,6 +112,27 @@ interface Stats {
 
 const PAGE_SIZE = 10
 
+const CERT_COURSES = [
+  '병원동행매니저1급','노인돌봄생활지원사1급','방과후돌봄교실지도사1급','바리스타1급','타로심리상담사1급',
+  '심리상담사1급','아동요리지도사1급','노인심리상담사1급','다문화심리상담사1급','독서논술지도사1급',
+  '독서지도사1급','동화구연지도사1급','디지털중독예방지도사1급','미술심리상담사1급','미술심리상담사2급',
+  '방과후수학지도사1급','스토리텔링수학지도사1급','방과후아동지도사1급','방과후학교지도사1급','병원코디네이터1급',
+  '부동산권리분석사1급','부모교육상담사1급','북아트1급','산모신생아건강관리사','산후관리사',
+  '손유희지도사1급','스피치지도사1급','실버인지활동지도사1급','심리분석사1급','아동공예지도자',
+  '아동미술심리상담사','아동미술지도사','아동미술심리상담사1급','안전교육지도사','안전관리사',
+  '안전교육지도사1급','영어동화구연지도사','유튜브크리에이터','음악심리상담사','이미지메이킹스피치',
+  '인성지도사1급','인성지도사2급','자기주도학습지도사1급','자기주도학습지도사2급','자원봉사지도사1급',
+  '종이접기지도사','지역아동교육지도사1급','진로적성상담사1급','코딩지도사','클레이아트지도사',
+  '프레젠테이션스피치','학교폭력예방상담사1급','NIE지도사1급','교육마술지도사1급','POP디자인지도사',
+  'SNS마케팅전문가','ESG경영평가사','ESG인증평가사','가족상담사','간병사',
+  '네일아트코디네이터&뷰티코디네이터','데이터라벨러','도시농업전문가','독서심리상담사','디지털리터러시지도사',
+  '메이크업코디네이터&뷰티코디네이터','명리심리상담사','반려동물행동상담지도사','방역관리사','베이비시터',
+  '병원원무행정전문가','생활지원사','실버보드게임지도사','실버케어지도사','인형극공연지도사',
+  '정원관리사','조향사','집합건물관리사','초등돌봄전담사','피부미용코디네이터&뷰티코디네이터',
+  '헤어코디네이터&뷰티코디네이터','환경관리전문가','아동심리상담사','은퇴설계전문가','영농형태양광전문가',
+  '자원순환관리사','마케팅기획전문가','반려동물관리사','탐정사',
+]
+
 const PAYMENT_STATUS_LABEL: Record<string, string> = {
   paid: '결제완료',
   pending: '결제대기',
@@ -183,6 +210,7 @@ const SOURCE_TABS: { value: SourceTab; label: string }[] = [
   { value: 'edu', label: '교육원' },
   { value: 'private-cert', label: '민간자격증' },
   { value: 'student-mgmt', label: '학생관리' },
+  { value: 'student-bulk', label: '일괄등록' },
   { value: 'counsel-template', label: '상담 템플릿' },
   { value: 'stats', label: '통계' },
 ]
@@ -270,6 +298,25 @@ function sortStudents(items: CertStudent[]): CertStudent[] {
 // ─────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────
+
+/** 과목 JSON 파싱 (하위 호환: 순수 문자열이면 rate=null로 변환) */
+function parseCourseItems(val: string | null): CourseItem[] {
+  if (!val) return [];
+  try {
+    const parsed = JSON.parse(val);
+    if (Array.isArray(parsed)) return parsed;
+  } catch {}
+  return val.split(',').map(s => s.trim()).filter(Boolean).map(name => ({ name, rate: null }));
+}
+
+function serializeCourseItems(items: CourseItem[]): string {
+  if (items.length === 0) return '';
+  return JSON.stringify(items);
+}
+
+function getCourseNames(val: string | null): string {
+  return parseCourseItems(val).map(c => c.name).join(', ');
+}
 
 /** 페이지네이션 버튼 배열 계산 (hakjeom 패턴 동일) */
 function getPaginationPages(current: number, total: number): (number | '...')[] {
@@ -521,6 +568,181 @@ function CustomSelect({ value, onChange, options, placeholder, fullWidth, style 
 // ─────────────────────────────────────────────
 // Sub-components
 // ─────────────────────────────────────────────
+
+/** 수강과목 자동완성 입력 (단일, 필터용) */
+function CourseAutocomplete({
+  value,
+  onChange,
+  placeholder,
+  className,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  className?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState({ top: 0, left: 0, width: 0 });
+  const inputRef = useRef<HTMLInputElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  const suggestions = value.trim()
+    ? CERT_COURSES.filter(c => c.toLowerCase().includes(value.toLowerCase()))
+    : CERT_COURSES;
+
+  function openWithPos() {
+    if (inputRef.current) {
+      const r = inputRef.current.getBoundingClientRect();
+      setPos({ top: r.bottom + 4, left: r.left, width: r.width });
+    }
+    setOpen(true);
+  }
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  return (
+    <div ref={wrapRef} className={certStyles.courseAutoWrap}>
+      <input
+        ref={inputRef}
+        value={value}
+        onChange={e => { onChange(e.target.value); openWithPos(); }}
+        onFocus={openWithPos}
+        onClick={openWithPos}
+        placeholder={placeholder}
+        className={className}
+        autoComplete="off"
+      />
+      {open && suggestions.length > 0 && createPortal(
+        <div
+          className={certStyles.courseAutoDropdown}
+          style={{ position: 'fixed', top: pos.top, left: pos.left, width: Math.max(pos.width, 220) }}
+          onMouseDown={e => e.preventDefault()}
+        >
+          {suggestions.map(s => (
+            <div
+              key={s}
+              className={certStyles.courseAutoItem}
+              onMouseDown={() => { onChange(s); setOpen(false); }}
+            >
+              {s}
+            </div>
+          ))}
+        </div>,
+        document.body
+      )}
+    </div>
+  );
+}
+
+/** 수강과목 복수 선택 태그 입력 - 과목별 수강률 포함 (상세 패널 / 추가 모달용) */
+function CourseTagInput({
+  items,
+  onChange,
+  placeholder,
+}: {
+  items: CourseItem[];
+  onChange: (v: CourseItem[]) => void;
+  placeholder?: string;
+}) {
+  const [inputVal, setInputVal] = useState('');
+  const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState({ top: 0, left: 0, width: 0 });
+  const inputRef = useRef<HTMLInputElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  const tagNames = items.map(i => i.name);
+  const suggestions = inputVal.trim()
+    ? CERT_COURSES.filter(c => c.toLowerCase().includes(inputVal.toLowerCase()) && !tagNames.includes(c))
+    : CERT_COURSES.filter(c => !tagNames.includes(c));
+
+  function openWithPos() {
+    if (inputRef.current) {
+      const r = inputRef.current.getBoundingClientRect();
+      setPos({ top: r.bottom + 4, left: r.left, width: r.width });
+    }
+    setOpen(true);
+  }
+
+  function addItem(name: string) {
+    onChange([...items, { name, rate: 0 }]);
+    setInputVal('');
+    setOpen(false);
+    setTimeout(() => inputRef.current?.focus(), 0);
+  }
+
+  function removeItem(name: string) {
+    onChange(items.filter(i => i.name !== name));
+  }
+
+  function updateRate(name: string, rateStr: string) {
+    const parsed = rateStr === '' ? 0 : Number(rateStr);
+    const rate = isNaN(parsed) ? 0 : Math.min(100, Math.max(0, parsed));
+    onChange(items.map(i => i.name === name ? { ...i, rate } : i));
+  }
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  return (
+    <div ref={wrapRef} className={certStyles.courseTagWrap}>
+      {items.map(item => (
+        <div key={item.name} className={certStyles.courseTagRow}>
+          <span className={certStyles.courseTagName}>{item.name}</span>
+          <input
+            type="number"
+            min={0}
+            max={100}
+            value={item.rate ?? 0}
+            onChange={e => updateRate(item.name, e.target.value)}
+            placeholder="0"
+            className={certStyles.courseTagRateInput}
+          />
+          <span className={certStyles.courseTagRateUnit}>%</span>
+          <button
+            type="button"
+            className={certStyles.courseTagRemove}
+            onMouseDown={e => { e.preventDefault(); removeItem(item.name); }}
+          >×</button>
+        </div>
+      ))}
+      <input
+        ref={inputRef}
+        value={inputVal}
+        onChange={e => { setInputVal(e.target.value); openWithPos(); }}
+        onFocus={openWithPos}
+        onClick={openWithPos}
+        placeholder={items.length === 0 ? (placeholder ?? '과목 검색 후 추가...') : '+ 과목 추가'}
+        className={certStyles.courseTagInput}
+        autoComplete="off"
+      />
+      {open && suggestions.length > 0 && createPortal(
+        <div
+          className={certStyles.courseAutoDropdown}
+          style={{ position: 'fixed', top: pos.top, left: pos.left, width: Math.max(pos.width, 220) }}
+          onMouseDown={e => e.preventDefault()}
+        >
+          {suggestions.map(s => (
+            <div key={s} className={certStyles.courseAutoItem} onMouseDown={() => addItem(s)}>
+              {s}
+            </div>
+          ))}
+        </div>,
+        document.body
+      )}
+    </div>
+  );
+}
 
 /** 결제 상태 배지 */
 function PaymentBadge({ status }: { status?: PaymentStatus | null }) {
@@ -2925,8 +3147,7 @@ function CertStudentDetailPanel({ item, onClose, onUpdate, initialTab = 'basic' 
 }) {
   const [editName, setEditName] = useState(item.name);
   const [editContact, setEditContact] = useState(item.contact);
-  const [editCourse, setEditCourse] = useState(item.course ?? '');
-  const [editCompletionRate, setEditCompletionRate] = useState(item.completion_rate != null ? String(item.completion_rate) : '');
+  const [editCourseItems, setEditCourseItems] = useState<CourseItem[]>(() => parseCourseItems(item.course));
   const [editStatus, setEditStatus] = useState<StudentStatus>(item.status);
   const [editManager, setEditManager] = useState(item.manager ?? '');
   const [saving, setSaving] = useState(false);
@@ -2938,8 +3159,7 @@ function CertStudentDetailPanel({ item, onClose, onUpdate, initialTab = 'basic' 
   useEffect(() => {
     setEditName(item.name);
     setEditContact(item.contact);
-    setEditCourse(item.course ?? '');
-    setEditCompletionRate(item.completion_rate != null ? String(item.completion_rate) : '');
+    setEditCourseItems(parseCourseItems(item.course));
     setEditStatus(item.status);
     setEditManager(item.manager ?? '');
   }, [item.id]);
@@ -2947,25 +3167,21 @@ function CertStudentDetailPanel({ item, onClose, onUpdate, initialTab = 'basic' 
   const handleSave = async () => {
     setSaving(true);
     try {
-      const newCourse = editCourse || null;
-      const newRate = editCompletionRate !== '' ? Number(editCompletionRate) : null;
-
       await onUpdate(item.id, {
         name: editName.trim() || item.name,
         contact: editContact.trim() || item.contact,
-        course: newCourse,
-        completion_rate: newRate,
+        course: editCourseItems.length > 0 ? serializeCourseItems(editCourseItems) : null,
+        completion_rate: null,
         status: editStatus,
         manager: editManager || null,
       });
-
       onClose();
     } finally {
       setSaving(false);
     }
   };
 
-  const rate = item.completion_rate != null ? Number(item.completion_rate) : null;
+  const courseItems = parseCourseItems(item.course);
 
   return (
     <div className={styles.detailModalOverlay} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
@@ -3034,21 +3250,7 @@ function CertStudentDetailPanel({ item, onClose, onUpdate, initialTab = 'basic' 
               </div>
               <div className={styles.detailFieldRow}>
                 <span className={styles.detailFieldLabel}>수강과목</span>
-                <input value={editCourse} onChange={e => setEditCourse(e.target.value)} placeholder="수강 중인 과목" className={`${styles.input} ${styles.inputFull}`} />
-              </div>
-              <div className={styles.detailFieldRow}>
-                <span className={styles.detailFieldLabel}>수강률 (%)</span>
-                <input
-                  value={editCompletionRate}
-                  onChange={e => {
-                    const v = e.target.value;
-                    if (v === '' || /^\d{1,3}(\.\d*)?$/.test(v)) setEditCompletionRate(v);
-                  }}
-                  placeholder="0~100"
-                  type="text"
-                  inputMode="decimal"
-                  className={`${styles.input} ${styles.inputFull}`}
-                />
+                <CourseTagInput items={editCourseItems} onChange={setEditCourseItems} placeholder="과목 검색 후 추가..." />
               </div>
               <div className={styles.detailFieldRow}>
                 <span className={styles.detailFieldLabel}>담당자</span>
@@ -3063,19 +3265,14 @@ function CertStudentDetailPanel({ item, onClose, onUpdate, initialTab = 'basic' 
                 recordId={String(item.id)}
                 legacyMemo={item.memo}
                 defaultInput={[
-                  item.course ?? null,
-                  item.completion_rate != null ? `${item.completion_rate}%` : null,
-                ].filter(Boolean).join(' ')}
+                  editContact.trim(),
+                  editCourseItems.length > 0
+                    ? editCourseItems.map(c => `${c.name}(${c.rate ?? 0}%)`).join(', ')
+                    : null,
+                ].filter(Boolean).join(' / ')}
                 onCountChange={(count) => { setMemoCount(count); setLocalMemoCount(count); }}
                 onLastMemoAt={setLocalLastMemoAt}
-                onAdd={async (content) => {
-                  const match = content.match(/(\d+(?:\.\d+)?)\s*%/);
-                  if (match) {
-                    const newRate = Number(match[1]);
-                    await onUpdate(item.id, { completion_rate: newRate });
-                    setEditCompletionRate(String(newRate));
-                  }
-                }}
+                onAdd={async () => {}}
               />
             </>
           )}
@@ -3096,7 +3293,7 @@ function CertStudentAddModal({ onClose, onSaved }: { onClose: () => void; onSave
   const TOTAL_STEPS = 2;
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({
-    name: '', contact: '', course: '', completion_rate: '', manager: '', memo: '',
+    name: '', contact: '', courseItems: [] as CourseItem[], manager: '', memo: '',
   });
   const [errors, setErrors] = useState<{ name?: string; contact?: string }>({});
   const [saving, setSaving] = useState(false);
@@ -3130,7 +3327,11 @@ function CertStudentAddModal({ onClose, onSaved }: { onClose: () => void; onSave
       const res = await fetch('/api/cert/students', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          course: form.courseItems.length > 0 ? serializeCourseItems(form.courseItems) : null,
+          completion_rate: null,
+        }),
       });
       if (!res.ok) throw new Error('추가 실패');
       onSaved();
@@ -3189,26 +3390,10 @@ function CertStudentAddModal({ onClose, onSaved }: { onClose: () => void; onSave
               <p className={styles.funnelSubQuestion}>모두 선택사항이에요</p>
               <div className={styles.funnelFieldGroup}>
                 <label className={styles.funnelLabel}>수강과목</label>
-                <input
-                  value={form.course}
-                  onChange={e => setForm(p => ({ ...p, course: e.target.value }))}
-                  placeholder="수강 중인 과목명"
-                  className={styles.funnelInput}
-                />
-              </div>
-              <div className={styles.funnelFieldGroup}>
-                <label className={styles.funnelLabel}>수강률 (%)</label>
-                <input
-                  value={form.completion_rate}
-                  onChange={e => {
-                    const v = e.target.value;
-                    if (v === '' || (Number(v) >= 0 && Number(v) <= 100)) setForm(p => ({ ...p, completion_rate: v }));
-                  }}
-                  placeholder="0~100"
-                  type="number"
-                  min={0}
-                  max={100}
-                  className={styles.funnelInput}
+                <CourseTagInput
+                  items={form.courseItems}
+                  onChange={v => setForm(p => ({ ...p, courseItems: v }))}
+                  placeholder="과목 검색 후 추가..."
                 />
               </div>
               <div className={styles.funnelFieldGroup}>
@@ -3247,6 +3432,65 @@ function CertStudentAddModal({ onClose, onSaved }: { onClose: () => void; onSave
 }
 
 // ─────────────────────────────────────────────
+// 학생관리 일괄등록 CSV 설정
+// ─────────────────────────────────────────────
+
+const STUDENT_CSV_TEMPLATE = [
+  '\uFEFF이름,연락처,수강과목,상태,담당자,메모,등록일',
+  '홍길동,010-1234-5678,생활지원사1급:80,과정안내,김담당,,2024-03-15',
+  '김영희,010-2345-6789,아동미술지도사1급:30/생활지원사1급:50,수강중,이담당,오전 연락 요망,2024-04-01',
+  '',
+].join('\n');
+
+const STUDENT_CSV_COLUMN_MAP: Record<string, string> = {
+  '이름': 'name', 'name': 'name',
+  '연락처': 'contact', 'contact': 'contact',
+  '수강과목': 'course', 'course': 'course',
+  '상태': 'status', 'status': 'status',
+  '담당자': 'manager', 'manager': 'manager',
+  '메모': 'memo', 'memo': 'memo',
+  '등록일': 'created_at', 'created_at': 'created_at',
+};
+
+interface StudentCsvRow {
+  name: string; contact: string;
+  course: string; status: string;
+  manager: string; memo: string;
+  created_at: string;
+}
+
+// "과목명:수강률/과목명:수강률" 형식을 CourseItem JSON으로 변환
+function parseCsvCourseField(val: string): string {
+  if (!val.trim()) return '';
+  const parts = val.split('/').map(s => s.trim()).filter(Boolean);
+  const items: CourseItem[] = parts.map(part => {
+    const colonIdx = part.lastIndexOf(':');
+    if (colonIdx > 0) {
+      const name = part.slice(0, colonIdx).trim();
+      const rateStr = part.slice(colonIdx + 1).trim().replace('%', '');
+      const rate = Number(rateStr);
+      return { name, rate: isNaN(rate) ? 0 : Math.min(100, Math.max(0, rate)) };
+    }
+    return { name: part, rate: 0 };
+  });
+  return serializeCourseItems(items);
+}
+
+function parseStudentCsv(text: string): StudentCsvRow[] {
+  const lines = text.split(/\r?\n/).filter(l => l.trim());
+  if (lines.length < 2) return [];
+  const headers = lines[0].split(',').map(h => h.trim().replace(/^\uFEFF/, '').replace(/^"|"$/g, ''));
+  const mapped = headers.map(h => STUDENT_CSV_COLUMN_MAP[h] ?? null);
+  return lines.slice(1).map(line => {
+    const cols = line.split(',').map(c => c.trim().replace(/^"|"$/g, ''));
+    const row: Record<string, string> = {};
+    mapped.forEach((key, i) => { if (key) row[key] = cols[i] ?? ''; });
+    if (row.course) row.course = parseCsvCourseField(row.course);
+    return row as unknown as StudentCsvRow;
+  }).filter(r => r.name && r.contact);
+}
+
+// ─────────────────────────────────────────────
 // 학생관리 탭
 // ─────────────────────────────────────────────
 
@@ -3258,6 +3502,7 @@ function StudentMgmtTab() {
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState<StudentStatus | 'all'>('all');
   const [managerFilter, setManagerFilter] = useState('all');
+  const [courseFilter, setCourseFilter] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
@@ -3352,6 +3597,7 @@ function StudentMgmtTab() {
         (c.memo || '').toLowerCase().includes(q)
       )) return false;
     }
+    if (courseFilter && (c.course || '').toLowerCase() !== courseFilter.toLowerCase()) return false;
     if (statusFilter !== 'all' && c.status !== statusFilter) return false;
     if (managerFilter === 'none' && c.manager) return false;
     if (managerFilter !== 'all' && managerFilter !== 'none' && c.manager !== managerFilter) return false;
@@ -3370,20 +3616,23 @@ function StudentMgmtTab() {
   const toggleSelect = (id: number) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   const toggleSelectAll = () => setSelectedIds(prev => prev.length === paginated.length ? [] : paginated.map(c => c.id));
 
-  const isFiltered = searchText || statusFilter !== 'all' || managerFilter !== 'all' || startDate || endDate;
+  const isFiltered = searchText || courseFilter || statusFilter !== 'all' || managerFilter !== 'all' || startDate || endDate;
 
   const STUDENT_HEADERS = ['번호', '이름', '연락처', '수강과목', '수강률', '상태', '담당자', '메모', '등록일'];
-  const studentToRow = (item: CertStudent, i: number) => [
-    i + 1,
-    item.name,
-    item.contact,
-    item.course ?? '',
-    item.completion_rate != null ? `${item.completion_rate}%` : '',
-    item.status,
-    item.manager ?? '',
-    item.latest_memo ?? item.memo ?? '',
-    item.created_at ? new Date(item.created_at).toLocaleString('ko-KR') : '',
-  ];
+  const studentToRow = (item: CertStudent, i: number) => {
+    const ci = parseCourseItems(item.course);
+    return [
+      i + 1,
+      item.name,
+      item.contact,
+      ci.map(c => c.name).join(', '),
+      ci.map(c => c.rate != null ? `${c.rate}%` : '').join(' / '),
+      item.status,
+      item.manager ?? '',
+      item.latest_memo ?? item.memo ?? '',
+      item.created_at ? new Date(item.created_at).toLocaleString('ko-KR') : '',
+    ];
+  };
 
   const handleDownloadAll = () => {
     downloadExcel(`학생관리_전체_${new Date().toLocaleDateString('ko-KR').replace(/\. /g, '-').replace('.', '')}.xlsx`, [{
@@ -3403,7 +3652,7 @@ function StudentMgmtTab() {
   };
 
   const resetFilters = () => {
-    setSearchText(''); setStatusFilter('all'); setManagerFilter('all');
+    setSearchText(''); setCourseFilter(''); setStatusFilter('all'); setManagerFilter('all');
     setStartDate(''); setEndDate(''); setCurrentPage(1);
   };
 
@@ -3416,8 +3665,14 @@ function StudentMgmtTab() {
               type="text"
               value={searchText}
               onChange={e => { setSearchText(e.target.value); setCurrentPage(1); }}
-              placeholder="이름, 연락처, 수강과목, 메모 검색..."
+              placeholder="이름, 연락처, 메모 검색..."
               className={`${styles.input} ${certStyles.pcertSearchInput}`}
+            />
+            <CourseAutocomplete
+              value={courseFilter}
+              onChange={v => { setCourseFilter(v); setCurrentPage(1); }}
+              placeholder="수강과목 검색..."
+              className={`${styles.input} ${certStyles.courseFilterInput}`}
             />
             <input type="date" value={startDate} onChange={e => { setStartDate(e.target.value); setCurrentPage(1); }} className={`${styles.input} ${certStyles.dateInput140}`} />
             <span className={styles.dateSeparator}>~</span>
@@ -3481,7 +3736,7 @@ function StudentMgmtTab() {
                 ) : filtered.length === 0 ? (
                   <tr><td colSpan={10} className={styles.tableEmptyMsg}>검색 결과가 없습니다.</td></tr>
                 ) : paginated.map((item, index) => {
-                  const rate = item.completion_rate != null ? Number(item.completion_rate) : null;
+                  const courseItems = parseCourseItems(item.course);
                   return (
                     <tr
                       key={item.id}
@@ -3500,14 +3755,31 @@ function StudentMgmtTab() {
                       <td className={styles.tdNum}>{(currentPage - 1) * itemsPerPage + index + 1}</td>
                       <td className={styles.tdBold}><PCertHighlight text={item.name} query={searchText} /></td>
                       <td className={styles.tdTabular}><PCertHighlight text={item.contact} query={searchText} /></td>
-                      <td className={styles.tdEllipsis}><PCertHighlight text={item.course} query={searchText} /></td>
                       <td className={styles.td}>
-                        {rate != null ? (
-                          <div className={certStyles.studentRateCell}>
-                            <div className={certStyles.studentRateCellBar}>
-                              <div className={certStyles.studentRateCellBarFill} style={{ width: `${Math.min(rate, 100)}%` }} />
-                            </div>
-                            <span className={certStyles.studentRateCellText}>{rate}%</span>
+                        {courseItems.length > 0 ? (
+                          <div className={certStyles.courseTableCellList}>
+                            {courseItems.map(c => (
+                              <span key={c.name} className={certStyles.courseTableTag}>
+                                {c.name} {c.rate ?? 0}%
+                              </span>
+                            ))}
+                          </div>
+                        ) : <span className={styles.tdMuted}>-</span>}
+                      </td>
+                      <td className={styles.td}>
+                        {courseItems.length > 0 ? (
+                          <div className={certStyles.studentRateCellStack}>
+                            {courseItems.map(c => {
+                              const r = c.rate ?? 0;
+                              return (
+                                <div key={c.name} className={certStyles.studentRateCellRow}>
+                                  <div className={certStyles.studentRateCellBar}>
+                                    <div className={certStyles.studentRateCellBarFill} style={{ width: `${Math.min(r, 100)}%` }} />
+                                  </div>
+                                  <span className={certStyles.studentRateCellText}>{r}%</span>
+                                </div>
+                              );
+                            })}
                           </div>
                         ) : <span className={styles.tdMuted}>-</span>}
                       </td>
@@ -3578,6 +3850,291 @@ function StudentMgmtTab() {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// 학생관리 일괄등록 뷰
+// ─────────────────────────────────────────────
+
+function StudentBulkUploadView({ onBack }: { onBack: () => void }) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [csvRows, setCsvRows] = useState<StudentCsvRow[]>([]);
+  const [fileName, setFileName] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  // 임시저장 목록
+  const [drafts, setDrafts] = useState<CertStudent[]>([]);
+  const [draftsLoading, setDraftsLoading] = useState(true);
+  const [selectedDraftIds, setSelectedDraftIds] = useState<number[]>([]);
+  const [confirming, setConfirming] = useState(false);
+
+  const fetchDrafts = async () => {
+    setDraftsLoading(true);
+    const res = await fetch('/api/cert/students/draft');
+    if (res.ok) setDrafts(await res.json());
+    setDraftsLoading(false);
+  };
+
+  useEffect(() => { fetchDrafts(); }, []);
+
+  function handleFile(file: File) {
+    setFileName(file.name);
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const text = ev.target?.result as string;
+      setCsvRows(parseStudentCsv(text));
+    };
+    reader.readAsText(file, 'utf-8');
+  }
+
+  function downloadTemplate() {
+    const blob = new Blob([STUDENT_CSV_TEMPLATE], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = '학생관리_CSV템플릿.csv'; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function handleSave() {
+    if (!csvRows.length) return;
+    setSaving(true);
+    const res = await fetch('/api/cert/students/bulk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rows: csvRows }),
+    });
+    if (res.ok) {
+      const { count } = await res.json();
+      alert(`${count}건이 임시저장되었습니다.`);
+      setCsvRows([]); setFileName('');
+      await fetchDrafts();
+    } else {
+      const d = await res.json().catch(() => ({}));
+      alert(d.error || '저장에 실패했습니다.');
+    }
+    setSaving(false);
+  }
+
+  async function handleConfirm() {
+    if (!selectedDraftIds.length || confirming) return;
+    if (!confirm(`선택한 ${selectedDraftIds.length}건을 학생관리로 이동하시겠습니까?`)) return;
+    setConfirming(true);
+    const res = await fetch('/api/cert/students/draft', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: selectedDraftIds }),
+    });
+    if (res.ok) {
+      setSelectedDraftIds([]);
+      await fetchDrafts();
+    } else {
+      alert('이동에 실패했습니다.');
+    }
+    setConfirming(false);
+  }
+
+  function toggleDraft(id: number) {
+    setSelectedDraftIds(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  }
+
+  function toggleAllDrafts() {
+    if (selectedDraftIds.length === drafts.length) {
+      setSelectedDraftIds([]);
+    } else {
+      setSelectedDraftIds(drafts.map(d => d.id));
+    }
+  }
+
+  const PREVIEW_COLS: (keyof StudentCsvRow)[] = ['name', 'contact', 'course', 'status', 'manager', 'memo', 'created_at'];
+  const PREVIEW_HEADERS = ['이름', '연락처', '수강과목', '상태', '담당자', '메모', '등록일'];
+
+  return (
+    <div className={styles.bulkWrap}>
+      <input ref={fileInputRef} type="file" accept=".csv" style={{ display: 'none' }}
+        onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ''; }} />
+
+      <div className={styles.bulkTabBar}>
+        <span className={styles.bulkTabBtn} style={{ fontWeight: 700, color: 'var(--toss-blue)' }}>CSV 일괄등록</span>
+        <button onClick={downloadTemplate} className={styles.bulkTemplateBtn}>↓ 템플릿 다운로드</button>
+      </div>
+
+      {/* ── 섹션 1: 임시저장 목록 ── */}
+      <div className={certStyles.draftSection}>
+        <div className={certStyles.draftSectionHeader}>
+          <span className={certStyles.draftSectionTitle}>임시저장 목록</span>
+          {drafts.length > 0 && (
+            <span className={certStyles.draftSectionCount}>{drafts.length}건</span>
+          )}
+          <div className={certStyles.draftSectionSpacer} />
+          {selectedDraftIds.length > 0 && (
+            <button
+              className={styles.btnPrimary}
+              onClick={handleConfirm}
+              disabled={confirming}
+            >
+              {confirming ? '이동 중...' : `선택한 ${selectedDraftIds.length}건 학생관리로 이동`}
+            </button>
+          )}
+        </div>
+
+        {draftsLoading ? (
+          <div className={certStyles.draftEmpty}>불러오는 중...</div>
+        ) : drafts.length === 0 ? (
+          <div className={certStyles.draftEmpty}>임시저장된 항목이 없습니다. CSV를 업로드해서 임시저장해보세요.</div>
+        ) : (
+          <div className={styles.tableCard}>
+            <div className={styles.tableOverflow}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th className={styles.th}>
+                      <input
+                        type="checkbox"
+                        checked={selectedDraftIds.length === drafts.length}
+                        onChange={toggleAllDrafts}
+                      />
+                    </th>
+                    <th className={styles.th}>이름</th>
+                    <th className={styles.th}>연락처</th>
+                    <th className={styles.th}>수강과목</th>
+                    <th className={styles.th}>상태</th>
+                    <th className={styles.th}>담당자</th>
+                    <th className={styles.th}>임시등록일</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {drafts.map(item => {
+                    const courseItems = parseCourseItems(item.course);
+                    return (
+                      <tr
+                        key={item.id}
+                        className={selectedDraftIds.includes(item.id) ? certStyles.draftRowSelected : ''}
+                        onClick={() => toggleDraft(item.id)}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <td className={styles.td} onClick={e => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={selectedDraftIds.includes(item.id)}
+                            onChange={() => toggleDraft(item.id)}
+                          />
+                        </td>
+                        <td className={styles.td}>{item.name}</td>
+                        <td className={styles.tdSecondary}>{item.contact}</td>
+                        <td className={styles.td}>
+                          {courseItems.length > 0 ? (
+                            <div className={certStyles.courseTableCellList}>
+                              {courseItems.map(c => (
+                                <span key={c.name} className={certStyles.courseTableTag}>{c.name}{c.rate != null ? ` ${c.rate}%` : ''}</span>
+                              ))}
+                            </div>
+                          ) : <span className={styles.tdMuted}>-</span>}
+                        </td>
+                        <td className={styles.td}>{item.status}</td>
+                        <td className={styles.tdSecondary}>{item.manager || '-'}</td>
+                        <td className={styles.tdSecondary}>{formatDate(item.created_at)}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── 섹션 2: CSV 업로드 ── */}
+      <div className={certStyles.draftSection}>
+        <div className={certStyles.draftSectionHeader}>
+          <span className={certStyles.draftSectionTitle}>CSV 업로드</span>
+        </div>
+
+        {!csvRows.length ? (
+          <div className={styles.bulkUploadArea}>
+            <div
+              className={styles.bulkDropzone}
+              onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files?.[0]; if (f) handleFile(f); }}
+              onDragOver={e => e.preventDefault()}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <span className={styles.bulkDropzoneIcon}>📂</span>
+              <p className={styles.bulkDropzoneTitle}>학생관리 CSV 파일 업로드</p>
+              <p className={styles.bulkDropzoneSub}>파일을 드래그하거나 클릭해서 선택하세요</p>
+            </div>
+            <div className={styles.bulkGuideBox}>
+              <p className={styles.bulkGuideTitle}>컬럼 안내</p>
+              <div className={styles.bulkGuideGrid}>
+                {[
+                  { col: '이름', desc: '필수' },
+                  { col: '연락처', desc: '필수' },
+                  { col: '수강과목', desc: '아래 형식 참고' },
+                  { col: '상태', desc: '선택 (기본: 과정안내)' },
+                  { col: '담당자', desc: '선택' },
+                  { col: '메모', desc: '선택' },
+                  { col: '등록일', desc: '선택 (예: 2024-03-15, 생략 시 오늘)' },
+                ].map(({ col, desc }) => (
+                  <div key={col} className={styles.bulkGuideItem}>
+                    <span className={styles.bulkGuideCol}>{col}</span>
+                    <span className={styles.bulkGuideDesc}>{desc}</span>
+                  </div>
+                ))}
+              </div>
+              <div className={certStyles.bulkCourseGuide}>
+                <p className={certStyles.bulkCourseGuideTitle}>📌 수강과목 입력 방법</p>
+                <div className={certStyles.bulkCourseGuideRow}>
+                  <span className={certStyles.bulkCourseGuideLabel}>단일 과목</span>
+                  <code className={certStyles.bulkCourseGuideCode}>생활지원사1급:80</code>
+                  <span className={certStyles.bulkCourseGuideHint}>과목명:수강률(0~100)</span>
+                </div>
+                <div className={certStyles.bulkCourseGuideRow}>
+                  <span className={certStyles.bulkCourseGuideLabel}>여러 과목</span>
+                  <code className={certStyles.bulkCourseGuideCode}>생활지원사1급:80/아동미술지도사1급:30</code>
+                  <span className={certStyles.bulkCourseGuideHint}>슬래시(/)로 구분</span>
+                </div>
+                <div className={certStyles.bulkCourseGuideRow}>
+                  <span className={certStyles.bulkCourseGuideLabel}>수강률 없이</span>
+                  <code className={certStyles.bulkCourseGuideCode}>생활지원사1급</code>
+                  <span className={certStyles.bulkCourseGuideHint}>수강률 생략 시 0%로 저장</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className={styles.bulkUploadArea}>
+            <div className={styles.bulkPreviewCard}>
+              <div className={styles.bulkPreviewHeader}>
+                <span className={styles.bulkPreviewTitle}>{fileName}</span>
+                <span className={styles.bulkPreviewMeta}>{csvRows.length}건 파싱됨</span>
+                <div style={{ flex: 1 }} />
+                <button onClick={() => { setCsvRows([]); setFileName(''); }} className={styles.btnSecondary}>다시 선택</button>
+                <button onClick={handleSave} disabled={saving} className={styles.btnPrimary}>
+                  {saving ? '저장 중...' : `${csvRows.length}건 임시저장`}
+                </button>
+              </div>
+              <div className={styles.bulkPreviewTableWrap}>
+                <table className={styles.bulkTable}>
+                  <thead className={styles.bulkThead}>
+                    <tr>
+                      {PREVIEW_HEADERS.map(h => <th key={h} className={styles.th}>{h}</th>)}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {csvRows.map((row, i) => (
+                      <tr key={i}>
+                        {PREVIEW_COLS.map(col => <td key={col} className={styles.td}>{row[col] || '-'}</td>)}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -4513,6 +5070,7 @@ export default function CertPage() {
       {(sourceTab === 'hakjeom' || sourceTab === 'edu') && <ApplicationTab sourceTab={sourceTab} highlightId={urlTab === sourceTab ? urlHighlight : undefined} />}
       {sourceTab === 'private-cert' && <PrivateCertTab setStatsNode={setStatsNode} highlightId={urlTab === 'private-cert' ? urlHighlight : undefined} />}
       {sourceTab === 'student-mgmt' && <StudentMgmtTab />}
+      {sourceTab === 'student-bulk' && <StudentBulkUploadView onBack={() => setSourceTab('student-mgmt')} />}
       {sourceTab === 'counsel-template' && <CounselTemplateTab />}
       {sourceTab === 'stats' && <CertStatsTab />}
     </div>

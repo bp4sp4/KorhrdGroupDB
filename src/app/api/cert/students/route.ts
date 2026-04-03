@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
       .from(TABLE)
       .select('*')
       .is('deleted_at', null)
+      .or('is_draft.eq.false,is_draft.is.null')
       .order('created_at', { ascending: false })
       .order('id', { ascending: false });
 
