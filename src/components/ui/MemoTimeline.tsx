@@ -7,6 +7,7 @@ interface MemoLog {
   id: string
   content: string
   author: string | null
+  author_name: string
   created_at: string
 }
 
@@ -57,10 +58,6 @@ function renderContent(text: string) {
   })
 }
 
-function fmtAuthor(email: string | null) {
-  if (!email) return '담당자'
-  return email.split('@')[0]
-}
 
 export default function MemoTimeline({ tableName, recordId, legacyMemo, defaultInput, onCountChange, onLastMemoAt, onAdd }: Props) {
   const [logs, setLogs] = useState<MemoLog[]>([])
@@ -251,7 +248,7 @@ export default function MemoTimeline({ tableName, recordId, legacyMemo, defaultI
             <div className={styles.logDot} />
             <div className={styles.logBody}>
               <div className={styles.logHeader}>
-                <span className={styles.logAuthor}>{fmtAuthor(log.author)}</span>
+                <span className={styles.logAuthor}>{log.author_name}</span>
                 <span className={styles.logTime}>{fmtDateTime(log.created_at)}</span>
                 {editingId !== log.id && (
                   <>

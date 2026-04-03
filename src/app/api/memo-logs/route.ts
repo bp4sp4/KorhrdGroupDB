@@ -33,7 +33,26 @@ export async function GET(req: NextRequest) {
     .order('created_at', { ascending: false })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data)
+
+  // author(email) → display_name 매핑
+  const emails = [...new Set((data ?? []).map((r: { author: string | null }) => r.author).filter(Boolean))] as string[]
+  let nameMap: Record<string, string> = {}
+  if (emails.length > 0) {
+    const { data: users } = await supabaseAdmin
+      .from('app_users')
+      .select('username, display_name')
+      .in('username', emails)
+    for (const u of users ?? []) {
+      if (u.username && u.display_name) nameMap[u.username] = u.display_name
+    }
+  }
+
+  const result = (data ?? []).map((r: { author: string | null; [key: string]: unknown }) => ({
+    ...r,
+    author_name: r.author ? (nameMap[r.author] ?? r.author.split('@')[0]) : '담당자',
+  }))
+
+  return NextResponse.json(result)
 }
 
 // POST /api/memo-logs
