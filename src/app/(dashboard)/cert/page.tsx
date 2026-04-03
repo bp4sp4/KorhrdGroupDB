@@ -3204,6 +3204,15 @@ function CertStudentAddModal({ onClose, onSaved }: { onClose: () => void; onSave
                 />
               </div>
               <div className={styles.funnelFieldGroup}>
+                <label className={styles.funnelLabel}>담당자</label>
+                <input
+                  value={form.manager}
+                  onChange={e => setForm(p => ({ ...p, manager: e.target.value }))}
+                  placeholder="담당자 이름"
+                  className={styles.funnelInput}
+                />
+              </div>
+              <div className={styles.funnelFieldGroup}>
                 <label className={styles.funnelLabel}>메모</label>
                 <input
                   value={form.memo}
@@ -3240,6 +3249,7 @@ function StudentMgmtTab() {
 
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState<StudentStatus | 'all'>('all');
+  const [managerFilter, setManagerFilter] = useState('all');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
@@ -3335,6 +3345,8 @@ function StudentMgmtTab() {
       )) return false;
     }
     if (statusFilter !== 'all' && c.status !== statusFilter) return false;
+    if (managerFilter === 'none' && c.manager) return false;
+    if (managerFilter !== 'all' && managerFilter !== 'none' && c.manager !== managerFilter) return false;
     if (startDate || endDate) {
       const d = new Date(c.created_at);
       if (startDate && d < new Date(startDate + 'T00:00:00')) return false;
@@ -3343,12 +3355,14 @@ function StudentMgmtTab() {
     return true;
   });
 
+  const uniqueManagers = Array.from(new Set(items.map(c => c.manager).filter(Boolean))) as string[];
+
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
   const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   const toggleSelect = (id: number) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   const toggleSelectAll = () => setSelectedIds(prev => prev.length === paginated.length ? [] : paginated.map(c => c.id));
 
-  const isFiltered = searchText || statusFilter !== 'all' || startDate || endDate;
+  const isFiltered = searchText || statusFilter !== 'all' || managerFilter !== 'all' || startDate || endDate;
 
   const STUDENT_HEADERS = ['번호', '이름', '연락처', '수강과목', '수강률', '상태', '담당자', '메모', '등록일'];
   const studentToRow = (item: CertStudent, i: number) => [
@@ -3381,7 +3395,7 @@ function StudentMgmtTab() {
   };
 
   const resetFilters = () => {
-    setSearchText(''); setStatusFilter('all');
+    setSearchText(''); setStatusFilter('all'); setManagerFilter('all');
     setStartDate(''); setEndDate(''); setCurrentPage(1);
   };
 
@@ -3443,15 +3457,21 @@ function StudentMgmtTab() {
                       <button className={`${styles.thFilterBtn}${statusFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'status') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('status'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
                     </div>
                   </th>
+                  <th className={styles.thFilterable}>
+                    <div className={styles.thInner}>
+                      담당자
+                      <button className={`${styles.thFilterBtn}${managerFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'manager') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('manager'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
+                    </div>
+                  </th>
                   <th className={styles.th}>메모</th>
                   <th className={styles.th}>등록일</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <TableSkeleton cols={9} rows={8} />
+                  <TableSkeleton cols={10} rows={8} />
                 ) : filtered.length === 0 ? (
-                  <tr><td colSpan={9} className={styles.tableEmptyMsg}>검색 결과가 없습니다.</td></tr>
+                  <tr><td colSpan={10} className={styles.tableEmptyMsg}>검색 결과가 없습니다.</td></tr>
                 ) : paginated.map((item, index) => {
                   const rate = item.completion_rate != null ? Number(item.completion_rate) : null;
                   return (
@@ -3491,6 +3511,7 @@ function StudentMgmtTab() {
                           styleMap={STUDENT_STATUS_STYLE}
                         />
                       </td>
+                      <td className={styles.tdSecondary}>{item.manager ?? <span className={styles.tdMuted}>-</span>}</td>
                       <td className={styles.tdMemo} onClick={e => { e.stopPropagation(); setOpenTab('memo'); setSelectedItem(item); }} style={{ cursor: 'pointer' }}>
                         <MemoHoverBadge text={item.latest_memo || item.memo || '-'} />
                       </td>
@@ -3538,6 +3559,15 @@ function StudentMgmtTab() {
               ))}
             </>
           )}
+          {openFilterColumn === 'manager' && (
+            <>
+              <div className={`${styles.filterDropdownItem}${managerFilter === 'all' ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setManagerFilter('all'); setCurrentPage(1); setOpenFilterColumn(null); }}>전체</div>
+              <div className={`${styles.filterDropdownItem}${managerFilter === 'none' ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setManagerFilter('none'); setCurrentPage(1); setOpenFilterColumn(null); }}>미배정</div>
+              {uniqueManagers.map(m => (
+                <div key={m} className={`${styles.filterDropdownItem}${managerFilter === m ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setManagerFilter(m); setCurrentPage(1); setOpenFilterColumn(null); }}>{m}</div>
+              ))}
+            </>
+          )}
         </div>
       )}
     </div>
@@ -3548,8 +3578,8 @@ function StudentMgmtTab() {
 // 상담 템플릿 탭
 // ─────────────────────────────────────────────
 
-type TemplateSubTab = '첫 안내' | '수업' | '시험' | '취업' | '비용/결제' | '학생 개인고민' | '과정안내'
-const TEMPLATE_SUB_TABS: TemplateSubTab[] = ['첫 안내', '수업', '시험', '취업', '비용/결제', '학생 개인고민', '과정안내']
+type TemplateSubTab = '첫 안내' | '수업' | '시험' | '취업' | '비용/결제' | '학생 개인고민' | '과정안내'| '수강안내'
+const TEMPLATE_SUB_TABS: TemplateSubTab[] = ['첫 안내', '수업', '시험', '취업', '비용/결제', '학생 개인고민', '과정안내', '수강안내']
 
 interface TemplateBlock {
   id: number
@@ -4408,12 +4438,38 @@ export default function CertPage() {
   const urlTab = searchParams.get('tab') as SourceTab | null
   const urlHighlight = searchParams.get('highlight') ? Number(searchParams.get('highlight')) : undefined
 
-  const initialTab: SourceTab = (['hakjeom', 'edu', 'private-cert', 'stats', 'student-mgmt'] as SourceTab[]).includes(urlTab as SourceTab)
-    ? (urlTab as SourceTab)
-    : 'hakjeom'
+  const [allowedCertTabs, setAllowedCertTabs] = useState<string[] | null>(null)
+  const [tabsLoaded, setTabsLoaded] = useState(false)
 
-  const [sourceTab, setSourceTab] = useState<SourceTab>(initialTab)
+  useEffect(() => {
+    fetch('/api/auth/me').then(r => r.ok ? r.json() : null).then(data => {
+      if (data) {
+        const isFullAccess = data.role === 'admin' || data.role === 'master-admin'
+        if (!isFullAccess) {
+          const certPerm = data.permissions?.find((p: { section: string; allowed_tabs?: string[] | null }) => p.section === 'cert')
+          setAllowedCertTabs(certPerm?.allowed_tabs ?? null)
+        }
+      }
+      setTabsLoaded(true)
+    })
+  }, [])
+
+  const visibleTabs = allowedCertTabs
+    ? SOURCE_TABS.filter(t => allowedCertTabs.includes(t.value))
+    : SOURCE_TABS
+
+  const [sourceTab, setSourceTab] = useState<SourceTab>('hakjeom')
   const [statsNode, setStatsNode] = useState<React.ReactNode>(null)
+
+  useEffect(() => {
+    if (!tabsLoaded) return
+    const allowed = allowedCertTabs
+    if (urlTab && SOURCE_TABS.some(t => t.value === urlTab) && (!allowed || allowed.includes(urlTab))) {
+      setSourceTab(urlTab)
+    } else if (allowed && allowed.length > 0) {
+      setSourceTab(allowed[0] as SourceTab)
+    }
+  }, [tabsLoaded, allowedCertTabs, urlTab])
 
   const handleTabChange = (tab: SourceTab) => {
     setSourceTab(tab)
@@ -4434,7 +4490,7 @@ export default function CertPage() {
 
       {/* 탭 */}
       <div className={styles.tabNav}>
-        {SOURCE_TABS.map(({ value, label }) => (
+        {visibleTabs.map(({ value, label }) => (
           <button
             key={value}
             onClick={() => handleTabChange(value)}

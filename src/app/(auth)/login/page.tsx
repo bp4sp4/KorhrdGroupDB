@@ -17,27 +17,35 @@ export default function LoginPage() {
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session) {
-        // 캐시된 role 확인 (새로고침 시 API 호출 스킵)
-        const cachedRole = localStorage.getItem('user_role')
-        if (cachedRole) {
-          router.replace(cachedRole === 'mini-admin' ? '/mini-admin' : '/hakjeom')
-          return
-        }
         try {
           const res = await fetch('/api/auth/me')
           if (res.ok) {
             const data = await res.json()
             localStorage.setItem('user_role', data.role ?? 'admin')
-            if (data.role === 'mini-admin') {
-              router.replace('/mini-admin')
-              return
-            }
+            router.replace(getDefaultPath(data))
+            return
           }
         } catch { /* ignore */ }
         router.replace('/hakjeom')
       }
     })
   }, [])
+
+  const getDefaultPath = (data: { role: string; permissions?: { section: string; scope: string }[] }) => {
+    if (data.role === 'mini-admin') return '/mini-admin'
+    if (data.role === 'admin' || data.role === 'master-admin') return '/hakjeom'
+    const SECTION_PATHS = [
+      { section: 'hakjeom',  path: '/hakjeom' },
+      { section: 'cert',     path: '/cert' },
+      { section: 'practice', path: '/practice' },
+      { section: 'allcare',  path: '/allcare' },
+    ]
+    const perms = data.permissions ?? []
+    for (const { section, path } of SECTION_PATHS) {
+      if (perms.some(p => p.section === section && p.scope && p.scope !== 'none')) return path
+    }
+    return '/hakjeom'
+  }
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -57,10 +65,8 @@ export default function LoginPage() {
       if (res.ok) {
         const data = await res.json()
         localStorage.setItem('user_role', data.role ?? 'admin')
-        if (data.role === 'mini-admin') {
-          router.replace('/mini-admin')
-          return
-        }
+        router.replace(getDefaultPath(data))
+        return
       }
     } catch { /* ignore */ }
     router.replace('/hakjeom')

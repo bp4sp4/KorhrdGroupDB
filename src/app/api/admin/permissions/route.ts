@@ -18,12 +18,12 @@ export async function GET() {
 
   const { data: perms } = await supabaseAdmin
     .from('user_permissions')
-    .select('user_id, section, scope')
+    .select('user_id, section, scope, allowed_tabs')
 
-  const permsMap: Record<number, { section: string; scope: string }[]> = {}
+  const permsMap: Record<number, { section: string; scope: string; allowed_tabs?: string[] | null }[]> = {}
   for (const p of perms ?? []) {
     if (!permsMap[p.user_id]) permsMap[p.user_id] = []
-    permsMap[p.user_id].push({ section: p.section, scope: p.scope })
+    permsMap[p.user_id].push({ section: p.section, scope: p.scope, allowed_tabs: p.allowed_tabs ?? null })
   }
 
   const result = (users ?? []).map(u => ({
@@ -39,14 +39,27 @@ export async function POST(request: NextRequest) {
   const { errorResponse } = await requireAuth()
   if (errorResponse) return errorResponse
 
-  const body = await request.json() as { user_id: number; section: string; scope: string | null }
-  const { user_id, section, scope } = body
+  const body = await request.json() as {
+    user_id: number
+    section: string
+    scope?: string | null
+    allowed_tabs?: string[] | null
+  }
+  const { user_id, section, scope, allowed_tabs } = body
 
   if (!user_id || !section) {
     return NextResponse.json({ error: '필수 항목이 누락되었습니다.' }, { status: 400 })
   }
 
-  if (scope === null) {
+  // allowed_tabs만 업데이트 (scope 변경 없이)
+  if (scope === undefined) {
+    const { error } = await supabaseAdmin
+      .from('user_permissions')
+      .update({ allowed_tabs: allowed_tabs ?? null })
+      .eq('user_id', user_id)
+      .eq('section', section)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  } else if (scope === null) {
     // 권한 삭제
     const { error } = await supabaseAdmin
       .from('user_permissions')
@@ -55,10 +68,13 @@ export async function POST(request: NextRequest) {
       .eq('section', section)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   } else {
-    // upsert
+    // upsert (scope + allowed_tabs)
     const { error } = await supabaseAdmin
       .from('user_permissions')
-      .upsert({ user_id, section, scope }, { onConflict: 'user_id,section' })
+      .upsert(
+        { user_id, section, scope, allowed_tabs: allowed_tabs ?? null },
+        { onConflict: 'user_id,section' }
+      )
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   }
 

@@ -69,6 +69,7 @@ const SECTION_ITEM_MAP: Record<string, string> = {
   hakjeom:    'education',
   cert:       'cert',
   practice:   'practice',
+  allcare:    'allcare',
   duplicate:  'duplicate',
   trash:      'trash',
   logs:       'logs',

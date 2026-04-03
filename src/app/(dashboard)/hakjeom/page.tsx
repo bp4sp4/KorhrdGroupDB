@@ -4461,7 +4461,29 @@ export default function HakjeomPage() {
   const urlTab = searchParams.get('tab') as TabKey | null;
   const urlHighlight = searchParams.get('highlight') ? Number(searchParams.get('highlight')) : undefined;
 
-  const initialTab: TabKey = (urlTab === 'hakjeom' || urlTab === 'agency') ? urlTab : 'hakjeom';
+  const [allowedHakjeomTabs, setAllowedHakjeomTabs] = useState<string[] | null>(null);
+  useEffect(() => {
+    fetch('/api/auth/me').then(r => r.ok ? r.json() : null).then(data => {
+      if (data) {
+        const isFullAccess = data.role === 'admin' || data.role === 'master-admin';
+        if (!isFullAccess) {
+          const perm = data.permissions?.find((p: { section: string; allowed_tabs?: string[] | null }) => p.section === 'hakjeom');
+          setAllowedHakjeomTabs(perm?.allowed_tabs ?? null);
+        }
+      }
+    });
+  }, []);
+
+  const visibleTabs = allowedHakjeomTabs
+    ? TAB_CONFIG.filter(t => allowedHakjeomTabs.includes(t.key))
+    : TAB_CONFIG;
+
+  const initialTab: TabKey = (() => {
+    if (urlTab && TAB_CONFIG.some(t => t.key === urlTab) && (!allowedHakjeomTabs || allowedHakjeomTabs.includes(urlTab))) return urlTab;
+    if (allowedHakjeomTabs && allowedHakjeomTabs.length > 0) return allowedHakjeomTabs[0] as TabKey;
+    return 'hakjeom';
+  })();
+
   const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
   const [mountedTabs, setMountedTabs] = useState<Set<TabKey>>(new Set([initialTab]));
   const [statsNode, setStatsNode] = useState<React.ReactNode>(null);
@@ -4487,7 +4509,7 @@ export default function HakjeomPage() {
 
       {/* 탭 네비게이션 */}
       <div className={styles.tabNav}>
-        {TAB_CONFIG.map(({ key, label }) => (
+        {visibleTabs.map(({ key, label }) => (
           <button
             key={key}
             onClick={() => handleTabChange(key)}

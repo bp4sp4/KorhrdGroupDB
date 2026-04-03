@@ -1287,7 +1287,7 @@ interface UserWithPermissions {
   display_name: string | null
   username: string
   role: string
-  permissions: { section: string; scope: string }[]
+  permissions: { section: string; scope: string; allowed_tabs?: string[] | null }[]
 }
 
 interface PermissionSection {
@@ -1302,11 +1302,43 @@ const PERMISSION_SECTIONS: PermissionSection[] = [
   { key: 'hakjeom',    label: '학점은행제 사업부', description: '상담 목록 조회·수정',     allowOwn: true,  group: '교육운영' },
   { key: 'cert',       label: '민간자격증 사업부', description: '상담 목록 조회·수정',     allowOwn: false, group: '교육운영' },
   { key: 'practice',   label: '실습/취업',         description: '실습·취업 상담 조회·수정', allowOwn: true,  group: '교육운영' },
+  { key: 'allcare',    label: '올케어 관리자',      description: '올케어 데이터 관리',      allowOwn: false, group: '교육운영' },
   { key: 'duplicate',  label: '중복 조회',          description: '연락처 중복 조회',        allowOwn: false, group: '시스템' },
   { key: 'trash',      label: '삭제 목록',          description: '휴지통·영구삭제',         allowOwn: false, group: '시스템' },
   { key: 'logs',       label: '로그 관리',          description: '작업 로그 열람',          allowOwn: false, group: '시스템' },
   { key: 'ref-manage', label: '어드민 관리',        description: '기준 데이터 관리',        allowOwn: false, group: '시스템' },
   { key: 'assignment', label: '배정 현황',          description: '담당자 배정 통계 열람',   allowOwn: false, group: '시스템' },
+]
+
+// 탭 제한을 지원하는 섹션과 해당 탭 목록
+const TAB_RESTRICTION_SECTIONS: {
+  sectionKey: string
+  label: string
+  tabs: { value: string; label: string }[]
+}[] = [
+  {
+    sectionKey: 'cert',
+    label: '민간자격증 사업부',
+    tabs: [
+      { value: 'hakjeom',          label: '학점연계 신청' },
+      { value: 'edu',              label: '교육원' },
+      { value: 'private-cert',     label: '민간자격증' },
+      { value: 'student-mgmt',     label: '학생관리' },
+      { value: 'counsel-template', label: '상담 템플릿' },
+      { value: 'stats',            label: '통계' },
+    ],
+  },
+  {
+    sectionKey: 'hakjeom',
+    label: '학점은행제 사업부',
+    tabs: [
+      { value: 'hakjeom',      label: '학점은행제' },
+      { value: 'agency',       label: '기관협약' },
+      { value: 'bulk',         label: '일괄등록' },
+      { value: 'counsel_done', label: '상담완료' },
+      { value: 'stats',        label: '통계' },
+    ],
+  },
 ]
 
 const SCOPE_OPTIONS = {
@@ -1399,6 +1431,30 @@ function PermissionsTab() {
     handleChange(userId, sec.key, next)
   }
 
+  // 탭 제한 저장
+  const handleTabRestriction = async (userId: number, sectionKey: string, allowedTabs: string[] | null) => {
+    setUsers(cur => cur.map(u => {
+      if (u.id !== userId) return u
+      return {
+        ...u,
+        permissions: u.permissions.map(p =>
+          p.section === sectionKey ? { ...p, allowed_tabs: allowedTabs } : p
+        ),
+      }
+    }))
+    const key = `${userId}-${sectionKey}-tabs`
+    setSaving(key)
+    try {
+      await fetch('/api/admin/permissions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId, section: sectionKey, allowed_tabs: allowedTabs }),
+      })
+    } finally {
+      setSaving(null)
+    }
+  }
+
   return (
     <div className={styles.permWrap}>
       {/* 범례 */}
@@ -1468,6 +1524,63 @@ function PermissionsTab() {
           </tbody>
         </table>
       </div>
+
+      {/* 탭별 세부 제한 */}
+      {TAB_RESTRICTION_SECTIONS.map(({ sectionKey, label, tabs }) => {
+        const usersWithSection = users.filter(u =>
+          u.permissions.some(p => p.section === sectionKey && p.scope && p.scope !== 'none')
+        )
+        if (usersWithSection.length === 0) return null
+        return (
+          <div key={sectionKey} className={styles.tabRestrictWrap}>
+            <div className={styles.tabRestrictHeader}>
+              <span className={styles.tabRestrictTitle}>{label} — 탭별 세부 제한</span>
+              <span className={styles.tabRestrictHint}>체크 해제된 탭은 해당 사용자에게 숨겨집니다. 전체 체크 시 제한 없음.</span>
+            </div>
+            {usersWithSection.map(user => {
+              const perm = user.permissions.find(p => p.section === sectionKey)
+              const allowedTabs: string[] | null = perm?.allowed_tabs ?? null
+              const isSavingTabs = saving === `${user.id}-${sectionKey}-tabs`
+              return (
+                <div key={user.id} className={styles.tabRestrictRow}>
+                  <div className={styles.tabRestrictUser}>
+                    <div className={styles.permUserAvatar}>{(user.display_name ?? user.username).slice(0, 1)}</div>
+                    <span className={styles.permUserName}>{user.display_name ?? user.username}</span>
+                    {isSavingTabs && <span className={styles.tabRestrictSaving}>저장 중...</span>}
+                  </div>
+                  <div className={styles.tabRestrictCheckboxes}>
+                    {tabs.map(tab => {
+                      const isChecked = allowedTabs === null || allowedTabs.includes(tab.value)
+                      const handleToggle = () => {
+                        const currentAllowed = allowedTabs ?? tabs.map(t => t.value)
+                        let next: string[]
+                        if (isChecked) {
+                          next = currentAllowed.filter(v => v !== tab.value)
+                        } else {
+                          next = [...currentAllowed, tab.value]
+                        }
+                        const allSelected = tabs.every(t => next.includes(t.value))
+                        handleTabRestriction(user.id, sectionKey, allSelected ? null : next)
+                      }
+                      return (
+                        <label key={tab.value} className={styles.tabRestrictLabel}>
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={handleToggle}
+                            className={styles.tabRestrictCheckbox}
+                          />
+                          {tab.label}
+                        </label>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )
+      })}
     </div>
   )
 }

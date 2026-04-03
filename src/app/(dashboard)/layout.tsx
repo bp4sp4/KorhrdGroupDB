@@ -89,18 +89,37 @@ export default function DashboardLayout({
     }
 
     if (!isAdminRole) {
+      // 권한이 없는 경로 접근 시 첫 번째 허용된 페이지로 리다이렉트
+      const SECTION_PATHS = [
+        { section: 'hakjeom',  path: '/hakjeom' },
+        { section: 'cert',     path: '/cert' },
+        { section: 'practice', path: '/practice' },
+        { section: 'allcare',  path: '/allcare' },
+      ]
+      const getFirstAllowedPath = () => {
+        for (const { section, path } of SECTION_PATHS) {
+          if (permissions.some(p => p.section === section && p.scope && p.scope !== 'none')) return path
+        }
+        return '/hakjeom'
+      }
+
       const PERM_PATHS: { path: string; section: string }[] = [
         { path: '/assignment', section: 'assignment' },
         { path: '/duplicate',  section: 'duplicate' },
         { path: '/trash',      section: 'trash' },
         { path: '/logs',       section: 'logs' },
         { path: '/ref-manage', section: 'ref-manage' },
+        { path: '/allcare',    section: 'allcare' },
+        { path: '/hakjeom',    section: 'hakjeom' },
+        { path: '/cert',       section: 'cert' },
+        { path: '/practice',   section: 'practice' },
       ]
       for (const { path, section } of PERM_PATHS) {
         if (pathname.startsWith(path)) {
           const perm = permissions.find(p => p.section === section)
           if (!perm || perm.scope === 'none' || !perm.scope) {
-            router.replace('/hakjeom')
+            const fallback = getFirstAllowedPath()
+            if (fallback !== pathname) router.replace(fallback)
           }
           break
         }

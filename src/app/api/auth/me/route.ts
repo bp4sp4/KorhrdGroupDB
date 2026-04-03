@@ -33,7 +33,7 @@ export async function GET() {
       } else {
         const { data: perms } = await supabaseAdmin
           .from('user_permissions')
-          .select('section, scope')
+          .select('section, scope, allowed_tabs')
           .eq('user_id', appUser.id)
         permissions = perms ?? []
       }
