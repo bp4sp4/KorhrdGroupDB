@@ -4129,6 +4129,10 @@ function isEligibleForCounselTab(c: HakjeomConsultation): boolean {
   const refDate = c.counsel_completed_at ?? c.updated_at;
   if (!refDate) return false;
 
+  // 상담완료 이후에 메모가 없는 건만 표시
+  // latest_memo_at 이 없거나 refDate 이전이면 → 완료 후 메모 없음
+  if (c.latest_memo_at && new Date(c.latest_memo_at) >= new Date(refDate)) return false;
+
   const KST = 9 * 60 * 60 * 1000;
   const nowKST = new Date(Date.now() + KST);
   const refKST = new Date(new Date(refDate).getTime() + KST);
