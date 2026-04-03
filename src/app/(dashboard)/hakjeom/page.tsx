@@ -4137,23 +4137,13 @@ function isEligibleForCounselTab(c: HakjeomConsultation): boolean {
   const nowKST = new Date(Date.now() + KST);
   const refKST = new Date(new Date(refDate).getTime() + KST);
 
-  const ymd = (d: Date) => `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
-  const todayStr = ymd(nowKST);
-  const refStr = ymd(refKST);
-
   // 현재 월 것만
   if (
     refKST.getUTCFullYear() !== nowKST.getUTCFullYear() ||
     refKST.getUTCMonth() !== nowKST.getUTCMonth()
   ) return false;
 
-  // 오늘 변경 건은 내일 10시에 등장
-  if (refStr === todayStr) return false;
-
-  // 어제 변경 건은 오전 10시 이후에만 표시
-  const yesterdayStr = ymd(new Date(nowKST.getTime() - 86400000));
-  if (refStr === yesterdayStr && nowKST.getUTCHours() < 10) return false;
-
+  // 날짜 제한 없음: 메모 작성 전까지 모두 표시
   return true;
 }
 
