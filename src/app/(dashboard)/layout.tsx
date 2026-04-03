@@ -125,7 +125,7 @@ export default function DashboardLayout({
       <div className={styles.dashboardBody}>
         <Sidebar userRole={userRole} permissions={permissions} />
 
-        <main className={styles.mainContent}>
+        <main className={`${styles.mainContent}${pathname.startsWith('/approvals') ? ` ${styles.mainContentWhite}` : ''}`}>
           {children}
         </main>
       </div>

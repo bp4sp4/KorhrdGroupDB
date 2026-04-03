@@ -19,6 +19,11 @@
   overflow: auto;
 }
 
+.mainContentWhite {
+  background: #ffffff;
+  padding: 0;
+}
+
 .loadingWrap {
   min-height: 100vh;
   background: var(--toss-bg);

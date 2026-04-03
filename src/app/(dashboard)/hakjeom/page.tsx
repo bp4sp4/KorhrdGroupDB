@@ -17,7 +17,7 @@ import { downloadExcel } from '@/lib/excelExport'
 
 type ConsultationStatus = '부재중/추후통화' | '상담대기' | '상담완료-높음' | '상담완료-중간' | '상담완료-낮음' | '보류' | '등록대기' | '등록완료' | '취소' | '기타';
 type AgencyStatus = '협약대기' | '협약중' | '보류' | '협약완료';
-type TabKey = 'hakjeom' | 'agency' | 'bulk' | 'stats';
+type TabKey = 'hakjeom' | 'agency' | 'bulk' | 'counsel_done' | 'stats';
 
 // ─── 학점은행제 타입 ─────────────────────────────────────────────────────────
 
@@ -298,9 +298,10 @@ const CAFE_NAME_LIST = Object.values(CAFE_NAMES);
 
 // ─── 공통 서브 컴포넌트 ──────────────────────────────────────────────────────
 
-function StatusBadge({ status, styleMap }: {
+function StatusBadge({ status, styleMap, displayLabel }: {
   status: string;
   styleMap: Record<string, { background: string; color: string }>;
+  displayLabel?: string;
 }) {
   const lookupKey = status.startsWith('기타(') ? '기타' : status;
   const s = styleMap[lookupKey] ?? { background: '#F3F4F6', color: '#6B7684' };
@@ -309,7 +310,7 @@ function StatusBadge({ status, styleMap }: {
       className={styles.statusBadge}
       style={{ background: s.background, color: s.color }}
     >
-      {status}
+      {displayLabel ?? status}
     </span>
   );
 }
@@ -2016,31 +2017,7 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
     return true;
   });
 
-  // 상담완료 항목 중 KST 어제 설정된 것을 오전 10시 이후 상단 우선 노출
-  const COUNSEL_DONE = ['상담완료-높음', '상담완료-중간', '상담완료-낮음'] as const;
-  const isYesterdayKST = (iso: string) => {
-    const KST = 9 * 60 * 60 * 1000;
-    const todayKST = new Date(Date.now() + KST);
-    const ymd = (d: Date) => `${d.getUTCFullYear()}-${d.getUTCMonth()}-${d.getUTCDate()}`;
-    const yesterdayKST = new Date(todayKST.getTime() - 86400000);
-    const targetKST = new Date(new Date(iso).getTime() + KST);
-    return ymd(targetKST) === ymd(yesterdayKST);
-  };
-  const isPriority = (c: HakjeomConsultation) => {
-    if (!COUNSEL_DONE.includes(c.status as typeof COUNSEL_DONE[number])) return false;
-    if (!c.counsel_completed_at) return false;
-    if (!isYesterdayKST(c.counsel_completed_at)) return false;
-    // 오전 10시 이후에만 우선 노출
-    const KST = 9 * 60 * 60 * 1000;
-    const nowKST = new Date(Date.now() + KST);
-    return nowKST.getUTCHours() >= 10;
-  };
-
-  const sortedFiltered = [...filtered].sort((a, b) => {
-    const ap = isPriority(a) ? 1 : 0;
-    const bp = isPriority(b) ? 1 : 0;
-    return bp - ap;
-  });
+  const sortedFiltered = filtered;
 
   const totalPages = Math.ceil(sortedFiltered.length / itemsPerPage);
   const paginated = sortedFiltered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -4142,10 +4119,335 @@ function StatsTab() {
 
 // ─── 메인 페이지 컴포넌트 ────────────────────────────────────────────────────
 
+// ─── 상담완료 탭 헬퍼 ────────────────────────────────────────────────────────
+
+const COUNSEL_DONE_STATUSES = ['상담완료-높음', '상담완료-중간', '상담완료-낮음'] as const;
+
+function isEligibleForCounselTab(c: HakjeomConsultation): boolean {
+  if (!COUNSEL_DONE_STATUSES.includes(c.status as typeof COUNSEL_DONE_STATUSES[number])) return false;
+  // counsel_completed_at 없으면 updated_at 으로 대체
+  const refDate = c.counsel_completed_at ?? c.updated_at;
+  if (!refDate) return false;
+
+  const KST = 9 * 60 * 60 * 1000;
+  const nowKST = new Date(Date.now() + KST);
+  const refKST = new Date(new Date(refDate).getTime() + KST);
+
+  const ymd = (d: Date) => `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+  const todayStr = ymd(nowKST);
+  const refStr = ymd(refKST);
+
+  // 현재 월 것만
+  if (
+    refKST.getUTCFullYear() !== nowKST.getUTCFullYear() ||
+    refKST.getUTCMonth() !== nowKST.getUTCMonth()
+  ) return false;
+
+  // 오늘 변경 건은 내일 10시에 등장
+  if (refStr === todayStr) return false;
+
+  // 어제 변경 건은 오전 10시 이후에만 표시
+  const yesterdayStr = ymd(new Date(nowKST.getTime() - 86400000));
+  if (refStr === yesterdayStr && nowKST.getUTCHours() < 10) return false;
+
+  return true;
+}
+
+// ─── 탭: 상담완료 ────────────────────────────────────────────────────────────
+
+function CounselDoneTab({ isActive, onCountChange }: { isActive: boolean; onCountChange: (n: number) => void }) {
+  const [items, setItems] = useState<HakjeomConsultation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedItem, setSelectedItem] = useState<HakjeomConsultation | null>(null);
+  const [toastVisible, setToastVisible] = useState(false);
+  const [customCafes, setCustomCafes] = useState<string[]>([]);
+  const [customDanggeun, setCustomDanggeun] = useState<string[]>([]);
+  const [myDisplayName, setMyDisplayName] = useState<string | null>(null);
+  const [isOwnScope, setIsOwnScope] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  const fetchData = useCallback(async (background = false) => {
+    if (!background) setLoading(true);
+    try {
+      const res = await fetch('/api/hakjeom');
+      if (res.ok) {
+        const data: HakjeomConsultation[] = await res.json();
+        setItems(data);
+      }
+    } finally {
+      if (!background) setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { if (isActive) fetchData(true); }, [isActive, fetchData]);
+
+  useEffect(() => {
+    fetch('/api/auth/me').then(r => r.ok ? r.json() : null).then(data => {
+      if (!data) return;
+      setMyDisplayName(data.displayName ?? null);
+      setUserRole(data.role ?? null);
+      const perm = (data.permissions ?? []).find((p: { section: string; scope: string }) => p.section === 'hakjeom');
+      setIsOwnScope(perm?.scope === 'own');
+    }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetch('/api/hakjeom/custom-sources')
+      .then(r => r.json())
+      .then(data => {
+        const allCafes: string[] = Array.isArray(data.cafes) ? data.cafes : [];
+        const allDanggeun: string[] = Array.isArray(data.danggeun) ? data.danggeun : [];
+        setCustomCafes([...new Set(allCafes.filter((n: string) => !CAFE_NAME_LIST.includes(n)))]);
+        setCustomDanggeun([...new Set(allDanggeun)]);
+      })
+      .catch(() => {});
+  }, []);
+
+  const [searchText, setSearchText] = useState('');
+  const [statusFilter, setStatusFilter] = useState<ConsultationStatus[]>([]);
+  const [managerFilter, setManagerFilter] = useState<string[]>([]);
+  const [managerDropdownOpen, setManagerDropdownOpen] = useState(false);
+  const managerDropdownRef = useRef<HTMLDivElement>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  const isAdmin = userRole === 'admin' || userRole === 'master-admin';
+
+  const eligible = items.filter(c => {
+    if (!isEligibleForCounselTab(c)) return false;
+    // 담당만 권한이면 본인 건만, 전체 권한(이규준·진수린 등) 또는 관리자면 전체
+    if (isOwnScope && myDisplayName && c.manager !== myDisplayName) return false;
+    return true;
+  });
+
+  const uniqueManagers = Array.from(new Set(eligible.map(c => c.manager).filter(Boolean))) as string[];
+
+  const filtered = eligible.filter(c => {
+    if (searchText) {
+      const q = searchText.toLowerCase();
+      const contactClean = c.contact.replace(/-/g, '');
+      const searchClean = searchText.replace(/-/g, '');
+      if (!(c.name.toLowerCase().includes(q) || contactClean.includes(searchClean) || (c.memo || '').toLowerCase().includes(q))) return false;
+    }
+    if (statusFilter.length > 0 && !statusFilter.includes(c.status)) return false;
+    if (managerFilter.length > 0 && !managerFilter.includes(c.manager ?? '')) return false;
+    return true;
+  });
+
+  useEffect(() => { onCountChange(eligible.length); }, [eligible.length, onCountChange]);
+  useEffect(() => { setCurrentPage(1); }, [searchText, statusFilter, managerFilter]);
+
+  useEffect(() => {
+    if (!managerDropdownOpen) return;
+    const handleMouseDown = (e: MouseEvent) => {
+      if (managerDropdownRef.current && !managerDropdownRef.current.contains(e.target as Node)) {
+        setManagerDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleMouseDown);
+    return () => document.removeEventListener('mousedown', handleMouseDown);
+  }, [managerDropdownOpen]);
+
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const handleUpdate = async (id: number, fields: Partial<HakjeomConsultation>) => {
+    const res = await fetch('/api/hakjeom', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, ...fields }),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.error ?? '업데이트에 실패했습니다.');
+    }
+    const { data: updated } = await res.json();
+    const merged = updated ?? fields;
+    setItems(prev => prev.map(c => c.id === id ? { ...c, ...merged } : c));
+    setSelectedItem(prev => prev?.id === id ? { ...prev, ...merged } : prev);
+    setToastVisible(true);
+    setTimeout(() => setToastVisible(false), 2500);
+  };
+
+  const handleAddCafe = async (name: string) => {
+    await fetch('/api/hakjeom/custom-sources', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'mamcafe', name }) });
+    setCustomCafes(prev => [...prev, name]);
+  };
+  const handleDeleteCafe = async (name: string) => {
+    await fetch('/api/hakjeom/custom-sources', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'mamcafe', name }) });
+    setCustomCafes(prev => prev.filter(c => c !== name));
+  };
+  const handleAddDanggeun = async (name: string) => {
+    await fetch('/api/hakjeom/custom-sources', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'danggeun', name }) });
+    setCustomDanggeun(prev => [...prev, name]);
+  };
+  const handleDeleteDanggeun = async (name: string) => {
+    await fetch('/api/hakjeom/custom-sources', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'danggeun', name }) });
+    setCustomDanggeun(prev => prev.filter(c => c !== name));
+  };
+
+  return (
+    <div>
+      {/* 필터 바 */}
+      <div className={styles.filterRow}>
+        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--toss-text-primary)', whiteSpace: 'nowrap' }}>총 {filtered.length}건</span>
+        <input
+          className={styles.input}
+          style={{ width: 220 }}
+          placeholder="이름, 연락처, 메모 검색..."
+          value={searchText}
+          onChange={e => setSearchText(e.target.value)}
+        />
+        {/* 상태 필터 */}
+        {COUNSEL_DONE_STATUSES.map(s => (
+          <button
+            key={s}
+            onClick={() => setStatusFilter(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s])}
+            className={statusFilter.includes(s) ? styles.tagBtnChipActive : styles.tagBtnChip}
+          >
+            {COUNSEL_SUB_LABEL[s]}
+          </button>
+        ))}
+        {/* 담당자 필터 드롭다운 (전체 권한 이상) */}
+        {(isAdmin || !isOwnScope) && (
+          <div ref={managerDropdownRef} style={{ position: 'relative' }}>
+            <button
+              className={managerFilter.length > 0 ? styles.tagBtnChipActive : styles.tagBtnChip}
+              onClick={() => setManagerDropdownOpen(v => !v)}
+            >
+              담당자{managerFilter.length > 0 ? ` (${managerFilter.length})` : ''} ▾
+            </button>
+            {managerDropdownOpen && (
+              <div className={styles.filterColumnDropdown} style={{ top: '100%', left: 0, marginTop: 4, position: 'absolute', zIndex: 200 }}>
+                <div
+                  className={`${styles.filterDropdownItem} ${managerFilter.length === 0 ? styles.filterDropdownItemActive : ''}`}
+                  onClick={() => { setManagerFilter([]); setManagerDropdownOpen(false); }}
+                >
+                  전체
+                </div>
+                {uniqueManagers.map(m => (
+                  <div
+                    key={m}
+                    className={`${styles.filterDropdownItem} ${managerFilter.includes(m) ? styles.filterDropdownItemActive : ''}`}
+                    onClick={() => setManagerFilter(prev => prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m])}
+                  >
+                    {m}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+        {(statusFilter.length > 0 || managerFilter.length > 0 || searchText) && (
+          <button className={styles.tagBtnChip} onClick={() => { setStatusFilter([]); setManagerFilter([]); setSearchText(''); }}>
+            초기화
+          </button>
+        )}
+      </div>
+
+      <div className={styles.tableOverflow}>
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th className={styles.th}>번호</th>
+              <th className={styles.th}>이름</th>
+              <th className={styles.th}>연락처</th>
+              <th className={styles.th}>담당자</th>
+              <th className={styles.th}>상태</th>
+              <th className={styles.th}>상담완료일</th>
+              <th className={styles.th}>등록일</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <TableSkeleton cols={7} rows={5} />
+            ) : paginated.length === 0 ? (
+              <tr><td colSpan={7} className={styles.tableEmptyMsg}>해당 항목이 없습니다.</td></tr>
+            ) : paginated.map((item, index) => (
+              <tr
+                key={item.id}
+                onClick={() => setSelectedItem(item)}
+                style={{
+                  cursor: 'pointer',
+                  background: selectedItem?.id === item.id
+                    ? 'var(--toss-blue-subtle, #EBF3FE)'
+                    : item.status === '상담완료-높음' ? '#E0F7FA'
+                    : item.status === '상담완료-중간' ? '#FFFDE7'
+                    : '#FCE4EC',
+                  transition: 'background 0.1s',
+                }}
+                onMouseEnter={e => {
+                  if (selectedItem?.id !== item.id) {
+                    const bg = item.status === '상담완료-높음' ? '#C9F0F5'
+                      : item.status === '상담완료-중간' ? '#FFF9C4' : '#F8BBD0';
+                    (e.currentTarget as HTMLTableRowElement).style.background = bg;
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (selectedItem?.id !== item.id) {
+                    const bg = item.status === '상담완료-높음' ? '#E0F7FA'
+                      : item.status === '상담완료-중간' ? '#FFFDE7' : '#FCE4EC';
+                    (e.currentTarget as HTMLTableRowElement).style.background = bg;
+                  }
+                }}
+              >
+                <td className={styles.tdNum}>{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                <td className={styles.tdBold}>{item.name}</td>
+                <td className={styles.tdTabular}>{item.contact}</td>
+                <td className={styles.tdSecondary}>{item.manager ?? '-'}</td>
+                <td>
+                  <StatusBadge
+                    status={item.status}
+                    styleMap={CONSULTATION_STATUS_STYLE}
+                    displayLabel={COUNSEL_SUB_LABEL[item.status] ? `상담완료 · ${COUNSEL_SUB_LABEL[item.status]}` : item.status}
+                  />
+                </td>
+                <td className={styles.tdSecondary}>{item.counsel_completed_at ? formatDateShort(item.counsel_completed_at) : '-'}</td>
+                <td className={styles.tdSecondary}>{formatDate(item.created_at)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* 페이지네이션 */}
+      {totalPages > 1 && (
+        <div className={styles.pagination}>
+          <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className={styles.pageBtn}>‹</button>
+          {getPaginationPages(currentPage, totalPages).map((p, i) =>
+            p === '...'
+              ? <span key={`ellipsis-${i}`} className={styles.pageEllipsis}>...</span>
+              : <button key={p} onClick={() => setCurrentPage(p)} className={currentPage === p ? styles.pageBtnActive : styles.pageBtn}>{p}</button>
+          )}
+          <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className={styles.pageBtn} style={{ marginLeft: 4 }}>›</button>
+        </div>
+      )}
+
+      {selectedItem && (
+        <HakjeomDetailPanel
+          item={selectedItem}
+          onClose={() => setSelectedItem(null)}
+          onUpdate={handleUpdate}
+          initialTab="memo"
+          customCafes={customCafes}
+          customDanggeun={customDanggeun}
+          onAddCafe={handleAddCafe}
+          onDeleteCafe={handleDeleteCafe}
+          onAddDanggeun={handleAddDanggeun}
+          onDeleteDanggeun={handleDeleteDanggeun}
+        />
+      )}
+      {toastVisible && <div className={styles.toast}>저장이 완료되었습니다</div>}
+    </div>
+  );
+}
+
 const TAB_CONFIG: { key: TabKey; label: string }[] = [
   { key: 'hakjeom', label: '학점은행제' },
   { key: 'agency', label: '기관협약' },
   { key: 'bulk', label: '일괄등록' },
+  { key: 'counsel_done', label: '상담완료' },
   { key: 'stats', label: '통계' },
 ];
 
@@ -4158,6 +4460,7 @@ export default function HakjeomPage() {
   const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
   const [mountedTabs, setMountedTabs] = useState<Set<TabKey>>(new Set([initialTab]));
   const [statsNode, setStatsNode] = useState<React.ReactNode>(null);
+  const [counselDoneCount, setCounselDoneCount] = useState(0);
 
   const handleTabChange = (key: TabKey) => {
     setActiveTab(key);
@@ -4186,6 +4489,9 @@ export default function HakjeomPage() {
             className={activeTab === key ? styles.tabBtnActive : styles.tabBtn}
           >
             {label}
+            {key === 'counsel_done' && counselDoneCount > 0 && (
+              <span className={styles.tabBadge}>{counselDoneCount}</span>
+            )}
           </button>
         ))}
       </div>
@@ -4199,6 +4505,11 @@ export default function HakjeomPage() {
       </div>
       <div style={{ display: activeTab === 'bulk' ? 'block' : 'none' }}>
         {mountedTabs.has('bulk') && <BulkTab onMoveSuccess={() => handleTabChange('hakjeom')} />}
+      </div>
+      <div style={{ display: activeTab === 'counsel_done' ? 'block' : 'none' }}>
+        {mountedTabs.has('counsel_done') && (
+          <CounselDoneTab isActive={activeTab === 'counsel_done'} onCountChange={setCounselDoneCount} />
+        )}
       </div>
       <div style={{ display: activeTab === 'stats' ? 'block' : 'none' }}>
         {mountedTabs.has('stats') && <StatsTab />}

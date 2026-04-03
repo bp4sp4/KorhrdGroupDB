@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Plus, X, Check, XCircle, ChevronRight, FileText, Clock, CheckCircle, Home } from 'lucide-react'
+import { Plus, X, Check, XCircle, ChevronRight, FileText, Clock, CheckCircle, Home, MoreVertical, Info } from 'lucide-react'
 import type { Approval, ApprovalTemplate, ApprovalStep, Department } from '@/lib/management/types'
 import {
   formatDate,
@@ -47,6 +47,12 @@ interface ApprovalFormState {
 // ---------------------------------------------------------------------------
 
 const SIDEBAR_GROUPS: { label: string; items: SidebarMenu[] }[] = [
+  {
+    label: '홈',
+    items: [
+      { key: 'home', label: '홈' },
+    ],
+  },
   {
     label: '결재하기',
     items: [
@@ -119,7 +125,7 @@ function ApprovalStatusBadge({ status }: { status: string }) {
   return (
     <span
       className={styles.status_badge}
-      style={{ color: getStatusColor(status), background: getStatusBg(status) }}
+      style={{ color: getStatusColor(status) }}
     >
       {getStatusLabel(status)}
     </span>
@@ -323,6 +329,10 @@ export default function ApprovalsPage() {
   // ---------------------------------------------------------------------------
 
   const handleSidebarMenuClick = (menu: SidebarMenu) => {
+    if (menu.key === 'home') {
+      handleHomeClick()
+      return
+    }
     setActiveMenuKey(menu.key)
     if (menu.apiTab) {
       setCurrentView('list')
@@ -473,19 +483,15 @@ export default function ApprovalsPage() {
 
   const renderSidebar = () => (
     <aside className={styles.sidebar}>
+      {/* 사이드바 제목 */}
+      <div className={styles.sidebar_header}>
+        <button className={styles.sidebar_title_btn} onClick={handleHomeClick}>전자결재</button>
+        
+      </div>
+
       {/* 새 결재 버튼 */}
       <button className={styles.sidebar_new_btn} onClick={handleNewApprovalStart}>
-        <Plus size={15} />
         새 결재 진행
-      </button>
-
-      {/* 홈 */}
-      <button
-        className={`${styles.sidebar_home_btn} ${activeMenuKey === 'home' ? styles.sidebar_menu_active : ''}`}
-        onClick={handleHomeClick}
-      >
-        <Home size={14} />
-        홈
       </button>
 
       {/* 메뉴 그룹 */}
@@ -523,13 +529,14 @@ export default function ApprovalsPage() {
 
   const renderHomeView = () => (
     <div className={styles.view_home}>
+      <div className={styles.home_page_title}>전자결재 홈</div>
+
       {/* 결재할 문서 섹션 */}
       <section className={styles.home_section}>
         <div className={styles.home_section_header}>
           <div className={styles.home_section_title_row}>
-            <Clock size={16} className={styles.home_section_icon_pending} />
             <h3 className={styles.home_section_title}>결재할 문서</h3>
-            <span className={styles.home_section_count_badge}>{pendingApprovals.length}</span>
+            <Info size={14} className={styles.home_section_info_icon} />
           </div>
         </div>
         {homeLoading ? (
@@ -548,9 +555,8 @@ export default function ApprovalsPage() {
       <section className={styles.home_section}>
         <div className={styles.home_section_header}>
           <div className={styles.home_section_title_row}>
-            <FileText size={16} className={styles.home_section_icon_progress} />
             <h3 className={styles.home_section_title}>기안 진행 문서</h3>
-            <span className={styles.home_section_count_badge}>{inProgressApprovals.length}</span>
+            <Info size={14} className={styles.home_section_info_icon} />
           </div>
         </div>
         {homeLoading ? (
@@ -569,9 +575,8 @@ export default function ApprovalsPage() {
       <section className={styles.home_section}>
         <div className={styles.home_section_header}>
           <div className={styles.home_section_title_row}>
-            <CheckCircle size={16} className={styles.home_section_icon_done} />
             <h3 className={styles.home_section_title}>완료 문서</h3>
-            <span className={styles.home_section_count_badge}>{doneApprovals.length}</span>
+            <Info size={14} className={styles.home_section_info_icon} />
           </div>
         </div>
         {homeLoading ? (
@@ -1008,7 +1013,7 @@ export default function ApprovalsPage() {
     })
 
     // 현재 로그인 유저 이름
-    const myUserName = users.find(u => u.id === myUserId)?.display_name ?? '-'
+    const myUserName = users.find(u => String(u.id) === String(myUserId))?.display_name ?? '-'
 
     return (
       <div className={styles.view_new_form}>
@@ -1103,7 +1108,7 @@ export default function ApprovalsPage() {
                     <td className={styles.doc_approval_label} rowSpan={3}>결재선</td>
                     {formState.approver_ids.length > 0 ? (
                       formState.approver_ids.map((uid, idx) => {
-                        const u = users.find(x => x.id === uid)
+                        const u = users.find(x => String(x.id) === uid)
                         return (
                           <td key={idx} className={styles.doc_approval_name_cell}>
                             {u?.display_name ?? uid}
@@ -1203,7 +1208,7 @@ export default function ApprovalsPage() {
               <p className={styles.doc_approver_section_title}>결재선</p>
               <div className={styles.doc_approver_chain}>
                 {formState.approver_ids.map((uid, idx) => {
-                  const u = users.find(x => x.id === uid)
+                  const u = users.find(x => String(x.id) === uid)
                   return (
                     <div key={idx} className={styles.doc_approver_chip}>
                       <div className={styles.doc_approver_chip_step}>{idx + 1}</div>

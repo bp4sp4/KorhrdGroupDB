@@ -105,7 +105,7 @@ CREATE TABLE IF NOT EXISTS approval_steps (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   approval_id uuid REFERENCES approvals(id) ON DELETE CASCADE,
   step_number int NOT NULL,
-  approver_id uuid NOT NULL,
+  approver_id bigint NOT NULL,
   status text CHECK (status IN ('PENDING','APPROVED','REJECTED')) DEFAULT 'PENDING',
   comment text,
   acted_at timestamptz,

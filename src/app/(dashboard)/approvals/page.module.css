@@ -1,17 +1,16 @@
 /* ==========================================================================
-   전자결재 페이지 - 다우오피스 스타일
+   전자결재 페이지
    ========================================================================== */
 
 /* ---------------------------------------------------------------------------
-   최상위 레이아웃: 사이드바 + 메인 2단
+   최상위 레이아웃
    --------------------------------------------------------------------------- */
 
 .page_layout {
   display: flex;
   height: 100%;
   min-height: 0;
-  gap: 0;
-
+  padding: 0;
 }
 
 /* ---------------------------------------------------------------------------
@@ -19,78 +18,75 @@
    --------------------------------------------------------------------------- */
 
 .sidebar {
-  width: 220px;
+  max-width: 100%;
   flex-shrink: 0;
-  background: var(--toss-card-bg);
   border-right: 1px solid var(--toss-border);
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 16px 12px;
+  gap: 0;
+  padding: 0;
   overflow-y: auto;
+  background: #fff;
+}
+
+.sidebar_header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 16px 14px;
+}
+
+.sidebar_title_btn {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--toss-text-primary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.sidebar_more_icon {
+  color: var(--toss-text-tertiary);
+  cursor: pointer;
+  flex-shrink: 0;
 }
 
 .sidebar_new_btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  width: 100%;
-  height: 40px;
-  background: var(--toss-blue);
-  color: #fff;
-  border: none;
-  border-radius: var(--toss-radius-button);
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  margin-bottom: 12px;
-  transition: background 150ms ease;
-}
-
-.sidebar_new_btn:hover {
-  background: var(--toss-blue-hover);
-}
-
-.sidebar_home_btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  height: 34px;
-  padding: 0 10px;
-  border: none;
+  width: 232px;
+  margin: 0 16px 16px;
+  height: 36px;
+  background: #fff;
+  color: var(--toss-text-primary);
+  border: 1px solid #c8c8c8;
   border-radius: 6px;
   font-size: 13px;
   font-weight: 500;
-  color: var(--toss-text-secondary);
-  background: none;
   cursor: pointer;
-  text-align: left;
-  transition: background 100ms ease, color 100ms ease;
-  margin-bottom: 4px;
+  transition: background 120ms ease, border-color 120ms ease;
 }
 
-.sidebar_home_btn:hover {
-  background: var(--toss-bg);
-  color: var(--toss-text-primary);
+.sidebar_new_btn:hover {
+  background: #f7f7f7;
+  border-color: #aaa;
 }
 
 .sidebar_group {
   display: flex;
   flex-direction: column;
-  gap: 1px;
-  margin-bottom: 12px;
+  gap: 0;
+  margin-bottom: 8px;
 }
 
 .sidebar_group_label {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--toss-text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  padding: 4px 10px;
-  margin-bottom: 2px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333333;
+  padding: 8px 16px 4px;
+  margin: 0;
 }
 
 .sidebar_menu_item {
@@ -98,28 +94,26 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  height: 34px;
-  padding: 0 10px;
+  height: 32px;
+  padding: 0 24px;
   border: none;
-  border-radius: 6px;
-  font-size: 13px;
+  border-radius: 0;
+  font-size: 14px;
   font-weight: 400;
-  color: var(--toss-text-secondary);
+  color: #1c1c1c;
   background: none;
   cursor: pointer;
   text-align: left;
-  transition: background 100ms ease, color 100ms ease;
+  transition: color 80ms ease;
 }
 
 .sidebar_menu_item:hover {
-  background: var(--toss-bg);
   color: var(--toss-text-primary);
 }
 
 .sidebar_menu_active {
-  background: var(--toss-blue-subtle) !important;
-  color: var(--toss-blue) !important;
-  font-weight: 600;
+  color: var(--toss-text-primary) !important;
+  font-weight: 500;
 }
 
 .sidebar_menu_label {
@@ -134,11 +128,11 @@
   min-width: 18px;
   height: 18px;
   padding: 0 5px;
-  background: var(--toss-blue);
-  color: #fff;
+  background: #f1f1f1;
+  color: #333333;
   border-radius: 9px;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 600;
   flex-shrink: 0;
 }
 
@@ -152,7 +146,7 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  background: var(--toss-card-bg);
+  background: #fff;
 }
 
 /* ---------------------------------------------------------------------------
@@ -165,7 +159,6 @@
   justify-content: space-between;
   padding: 20px 24px 16px;
   border-bottom: 1px solid var(--toss-border);
-  background: var(--toss-card-bg);
 }
 
 .view_title {
@@ -183,11 +176,25 @@
   display: flex;
   flex-direction: column;
   gap: 0;
-  padding: 0;
+  padding: 20px 30px;
+}
+
+.home_page_title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--toss-text-primary);
+  margin-bottom: 24px;
+  
 }
 
 .home_section {
-  border-bottom: 1px solid var(--toss-border);
+  
+  border-bottom: 1px solid #1c1c1c;
+  
+}
+
+.home_section + .home_section {
+  border-top: none;
 }
 
 .home_section:last-child {
@@ -195,52 +202,28 @@
 }
 
 .home_section_header {
-  padding: 16px 24px 12px;
-  background: var(--toss-card-bg);
+  padding: 24px 0
 }
 
 .home_section_title_row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .home_section_title {
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 24px;
+  font-weight: 500;
   color: var(--toss-text-primary);
   margin: 0;
 }
 
-.home_section_count_badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 6px;
-  background: var(--toss-bg);
-  border: 1px solid var(--toss-border);
-  color: var(--toss-text-secondary);
-  border-radius: 10px;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.home_section_icon_pending {
-  color: #FFB020;
-}
-
-.home_section_icon_progress {
-  color: var(--toss-blue);
-}
-
-.home_section_icon_done {
-  color: #22C55E;
+.home_section_info_icon {
+  color: var(--toss-text-tertiary);
 }
 
 .section_loading {
-  padding: 12px 24px;
+  padding: 16px 24px;
   text-align: center;
   color: var(--toss-text-tertiary);
   font-size: 13px;
@@ -258,14 +241,13 @@
 
 .table_wrap {
   flex: 1;
-  background: var(--toss-card-bg);
 }
 
 .table_empty {
-  padding: 16px 24px;
+  padding: 24px;
   text-align: center;
   color: var(--toss-text-tertiary);
-  font-size: 14px;
+  font-size: 13px;
 }
 
 /* ---------------------------------------------------------------------------
@@ -279,32 +261,29 @@
 }
 
 .table_compact {
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .table th {
-  padding: 10px 16px;
+  padding: 8px 0px;
   text-align: left;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--toss-text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  background: var(--toss-bg);
-  border-bottom: 1px solid var(--toss-border);
+  font-size: 12px;
+  font-weight: 500;
+  color: #1c1c1c;
+  background: transparent;
+  
+  border-bottom: 1px solid #1c1c1c;
   white-space: nowrap;
 }
 
 .table td {
-  padding: 12px 16px;
-  color: var(--toss-text-primary);
-  border-bottom: 1px solid var(--toss-border);
+  color: #1c1c1c;
+  border-bottom: 1px solid #e5e7eb;
   vertical-align: middle;
+  padding: 12px 0;
 }
 
-.table_compact td {
-  padding: 10px 16px;
-}
+
 
 .table tbody tr:last-child td {
   border-bottom: none;
@@ -312,17 +291,17 @@
 
 .table_row_clickable {
   cursor: pointer;
-  transition: background 80ms ease;
+  transition: background 60ms ease;
 }
 
 .table_row_clickable:hover td {
-  background: var(--toss-bg);
+  background: #fafafa;
 }
 
 .cell_date {
-  color: var(--toss-text-tertiary);
+  color: var(--toss-text-secondary);
   white-space: nowrap;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .cell_category {
@@ -333,31 +312,32 @@
 }
 
 .cell_doc_type {
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 400;
   color: var(--toss-text-secondary);
 }
 
 .cell_title {
-  font-weight: 500;
+  font-weight: 400;
   color: var(--toss-text-primary);
 }
 
 .cell_doc_number {
-  font-family: monospace;
-  font-size: 11px;
-  color: var(--toss-text-tertiary);
+  font-size: 12px;
+  color: var(--toss-text-secondary);
   white-space: nowrap;
 }
 
 .status_badge {
   display: inline-flex;
   align-items: center;
-  padding: 3px 10px;
-  border-radius: 20px;
+  padding: 2px 8px;
+  border-radius: 4px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   white-space: nowrap;
+  border: 1px solid currentColor;
+  background: transparent;
 }
 
 /* ---------------------------------------------------------------------------
@@ -376,7 +356,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 12px 24px;
-  background: var(--toss-card-bg);
+  background: #fff;
   border-bottom: 1px solid var(--toss-border);
   flex-shrink: 0;
 }
@@ -418,7 +398,6 @@
   overflow: hidden;
 }
 
-/* 문서 내용 */
 .detail_content {
   flex: 1;
   min-width: 0;
@@ -460,7 +439,6 @@
 
 .detail_doc_number {
   font-size: 12px;
-  font-family: monospace;
   color: var(--toss-text-tertiary);
   margin: 0;
 }
@@ -511,7 +489,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 12px;
-  background: var(--toss-card-bg);
+  background: #fff;
   border: 1px solid var(--toss-border);
   border-radius: 10px;
   padding: 16px 20px;
@@ -548,7 +526,7 @@
   width: 240px;
   flex-shrink: 0;
   border-left: 1px solid var(--toss-border);
-  background: var(--toss-card-bg);
+  background: #fff;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
@@ -579,7 +557,6 @@
   position: relative;
 }
 
-/* 연결선 */
 .step_item:not(:last-child)::after {
   content: '';
   position: absolute;
@@ -683,7 +660,7 @@
   width: 180px;
   flex-shrink: 0;
   border-right: 1px solid var(--toss-border);
-  background: var(--toss-card-bg);
+  background: #fff;
   padding: 16px 12px;
   display: flex;
   flex-direction: column;
@@ -755,7 +732,7 @@
   align-items: center;
   gap: 8px;
   padding: 20px 16px;
-  background: var(--toss-card-bg);
+  background: #fff;
   border: 1px solid var(--toss-border);
   border-radius: 12px;
   cursor: pointer;
@@ -810,7 +787,7 @@
   align-items: flex-start;
   flex-direction: column;
   padding: 16px 24px;
-  background: var(--toss-card-bg);
+  background: #fff;
   border-bottom: 1px solid var(--toss-border);
   flex-shrink: 0;
 }
@@ -851,7 +828,7 @@
   flex-direction: column;
   gap: 14px;
   padding: 20px;
-  background: var(--toss-card-bg);
+  background: #fff;
   border: 1px solid var(--toss-border);
   border-radius: 12px;
 }
@@ -972,7 +949,7 @@
   border-radius: var(--toss-radius-input);
   font-size: 14px;
   color: var(--toss-text-primary);
-  background: var(--toss-card-bg);
+  background: #fff;
   outline: none;
   width: 100%;
   transition: border-color 150ms ease;
@@ -989,7 +966,7 @@
   border-radius: var(--toss-radius-input);
   font-size: 14px;
   color: var(--toss-text-primary);
-  background: var(--toss-card-bg);
+  background: #fff;
   outline: none;
   cursor: pointer;
   width: 100%;
@@ -1006,7 +983,7 @@
   border-radius: var(--toss-radius-input);
   font-size: 14px;
   color: var(--toss-text-primary);
-  background: var(--toss-card-bg);
+  background: #fff;
   outline: none;
   resize: vertical;
   min-height: 80px;
@@ -1062,7 +1039,7 @@
   gap: 6px;
   height: 36px;
   padding: 0 16px;
-  background: var(--toss-card-bg);
+  background: #fff;
   color: var(--toss-text-secondary);
   border: 1px solid var(--toss-border);
   border-radius: var(--toss-radius-button);
@@ -1112,28 +1089,22 @@
 }
 
 /* ---------------------------------------------------------------------------
-   종이 문서 공통 스타일 (다우오피스 스타일)
+   종이 문서 공통 스타일
    --------------------------------------------------------------------------- */
 
-/* 종이 문서 스크롤 래퍼 */
 .doc_scroll_area {
   flex: 1;
   min-width: 0;
   overflow-y: auto;
-  background: var(--toss-card-bg);
+  
 }
 
-/* 종이 문서 컨테이너 */
 .doc_paper {
   background: #fff;
   max-width: 800px;
-  
   padding: 60px;
-  
-  
 }
 
-/* 문서 제목 */
 .doc_title {
   text-align: center;
   font-size: 36px;
@@ -1143,7 +1114,6 @@
   letter-spacing: -0.3px;
 }
 
-/* 헤더 영역 (정보 테이블 + 결재란) */
 .doc_header_area {
   display: flex;
   justify-content: space-between;
@@ -1152,7 +1122,6 @@
   gap: 24px;
 }
 
-/* 문서 정보 테이블 */
 .doc_info_table {
   border-collapse: collapse;
   width: 320px;
@@ -1174,7 +1143,6 @@
   white-space: nowrap;
 }
 
-/* 결재란 */
 .doc_approval_box {
   border-collapse: collapse;
   flex-shrink: 0;
@@ -1215,7 +1183,6 @@
   font-size: 11px;
 }
 
-/* 본문 테이블 */
 .doc_body_table {
   border-collapse: collapse;
   width: 100%;
@@ -1228,7 +1195,6 @@
   font-size: 13px;
   color: #111;
   vertical-align: middle;
-
 }
 
 .doc_body_table .doc_field_label {
@@ -1245,16 +1211,14 @@
   color: var(--color-danger);
 }
 
-/* 본문 테이블 내 인풋 (작성 뷰) */
 .doc_body_input {
-
-      border: 1px solid #ccc;
-    background: #f9f9f9;
-    height: 26px;
+  border: 1px solid #ccc;
+  background: #f9f9f9;
+  height: 26px;
   font-size: 13px;
   color: #111;
   font-family: inherit;
-  padding: 0;
+  padding: 0 4px;
 }
 
 .doc_body_select {
@@ -1271,21 +1235,18 @@
 }
 
 .doc_body_textarea {
-  border: none;
+  border: 1px solid #ccc;
+  background: #f9f9f9;
   width: 100%;
   outline: none;
-  background: transparent;
   font-size: 13px;
   color: #111;
   font-family: inherit;
   resize: vertical;
   min-height: 64px;
   padding: 0;
-          border: 1px solid #ccc;
-    background: #f9f9f9;
 }
 
-/* 결재선 설정 섹션 (작성 뷰 하단) */
 .doc_approver_section {
   margin-top: 40px;
   border-top: 1px solid #333;
@@ -1374,7 +1335,6 @@
   background: rgba(49, 130, 246, 0.2);
 }
 
-/* 헤더 테이블 내 인풋 (작성 뷰) */
 .doc_info_input {
   border: none;
   outline: none;
@@ -1387,9 +1347,9 @@
 }
 
 .doc_info_select {
-  border: none;
-  outline: none;
-  background: transparent;
+  border: #f9f9f9;
+  border: 1px solid #ddd;
+height: 26px;
   font-size: 13px;
   color: #111;
   font-family: inherit;
@@ -1399,7 +1359,6 @@
   appearance: auto;
 }
 
-/* 상세 뷰 - 결재 의견 섹션 */
 .doc_comment_section {
   margin-top: 32px;
   border-top: 1px solid #e0e0e0;
@@ -1414,12 +1373,15 @@
   display: block;
 }
 
-/* 상세 뷰 - 우측 결재선 패널 탭 */
+/* ---------------------------------------------------------------------------
+   상세 뷰 - 우측 결재선 패널 탭
+   --------------------------------------------------------------------------- */
+
 .detail_panel {
   width: 280px;
   flex-shrink: 0;
   border-left: 1px solid var(--toss-border);
-  background: var(--toss-card-bg);
+  background: #fff;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -1459,7 +1421,6 @@
   padding: 16px 12px;
 }
 
-/* 문서정보 탭 내용 */
 .doc_info_list {
   display: flex;
   flex-direction: column;
@@ -1484,7 +1445,6 @@
   color: var(--toss-text-primary);
 }
 
-/* 문서 본문 값 (읽기 전용, 상세 뷰) */
 .doc_field_value_text {
   font-size: 13px;
   color: #111;
