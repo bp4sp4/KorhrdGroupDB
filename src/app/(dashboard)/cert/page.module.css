@@ -539,6 +539,295 @@
   border-bottom: none;
 }
 
+/* ─── 학생관리: 수강률 바 (테이블 셀) ─────────────────────────── */
+.studentRateCell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 80px;
+}
+
+.studentRateCellBar {
+  flex: 1;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.studentRateCellBarFill {
+  height: 100%;
+  background: #3182F6;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.studentRateCellText {
+  font-size: 12px;
+  color: #333d4b;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* ─── 학생관리: 수강률 바 (상세 패널 헤더) ────────────────────── */
+.studentRateBarWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.studentRateBar {
+  width: 120px;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+
+.studentRateBarFill {
+  height: 100%;
+  background: #3182F6;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.studentRateBarLabel {
+  font-size: 12px;
+  color: #3182F6;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ─── 학생관리: 메모 탭 상단 수강정보 표시 ──────────────────── */
+.studentMemoInfo {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: var(--toss-bg);
+  border: 1px solid var(--toss-border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+}
+
+.studentMemoInfoItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.studentMemoInfoLabel {
+  font-size: 12px;
+  color: var(--toss-text-secondary);
+  font-weight: 500;
+}
+
+.studentMemoInfoValue {
+  font-size: 13px;
+  color: #191f28;
+  font-weight: 600;
+}
+
+.studentMemoInfoDivider {
+  width: 1px;
+  height: 14px;
+  background: var(--toss-border);
+  margin: 0 12px;
+}
+
+.studentMemoInfoRecordBtn {
+  margin-left: auto;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--toss-blue);
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.studentMemoInfoRecordBtn:hover {
+  background: #dbeafe;
+}
+
+.memoInfoBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--toss-bg);
+  border: 1px solid var(--toss-border);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.memoInfoCourse {
+  font-size: 13px;
+  color: #191f28;
+  font-weight: 600;
+}
+
+.memoInfoRate {
+  font-size: 12px;
+  color: var(--toss-blue);
+  font-weight: 600;
+  background: #eff6ff;
+  border-radius: 4px;
+  padding: 1px 7px;
+}
+
+/* ─── 상담 템플릿 탭 ─────────────────────────────────────────────── */
+.templateHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.templateNote {
+  font-size: 12px;
+  color: #6b7684;
+  font-weight: 500;
+  margin: 0;
+}
+
+.templateEditBtn {
+  padding: 5px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1.5px solid var(--toss-border);
+  background: #fff;
+  color: var(--toss-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.templateEditBtn:hover {
+  border-color: var(--toss-blue);
+  color: var(--toss-blue);
+}
+
+.templateEditBtnActive {
+  padding: 5px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1.5px solid var(--toss-blue);
+  background: var(--toss-blue);
+  color: #fff;
+  cursor: pointer;
+}
+
+.templateSubTabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.templateSubTab {
+  padding: 7px 16px;
+  border-radius: 20px;
+  border: 1.5px solid var(--toss-border);
+  background: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--toss-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.templateSubTab:hover {
+  border-color: var(--toss-blue);
+  color: var(--toss-blue);
+}
+
+.templateSubTabActive {
+  border-color: var(--toss-blue);
+  background: var(--toss-blue);
+  color: #fff;
+}
+
+.templateBody {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.templateEmpty {
+  font-size: 13px;
+  color: #b0b8c1;
+  text-align: center;
+  padding: 48px 0;
+}
+
+.templateBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+}
+
+.templateBlockTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: #191f28;
+  margin-bottom: 16px;
+}
+
+.templateBlockContent {
+  position: relative;
+  background: #f8fafc;
+  border: 1px solid var(--toss-border);
+  border-radius: 10px;
+  padding: 24px;
+}
+
+.templateBlockText {
+  font-size: 14px;
+  line-height: 1.75;
+  color: #000;
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin: 0;
+  font-family: inherit;
+}
+
+
+
+.templateCopyBtn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--toss-border);
+  background: #fff;
+  color: #6b7684;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+
+.templateCopyBtn:hover {
+  border-color: var(--toss-blue);
+  color: var(--toss-blue);
+}
+
+.templateCopyBtnDone {
+  border-color: #16a34a;
+  color: #16a34a;
+  background: #dcfce7;
+}
+
 /* ─── 검색 하이라이트 ───────────────────────────────────────────── */
 @keyframes highlightFade {
   0%   { background: #dbeafe; }
@@ -548,4 +837,316 @@
 
 .highlightRow {
   animation: highlightFade 2.5s ease forwards;
+}
+
+/* ─── 템플릿 블록 액션/폼 ──────────────────────────────────────── */
+.templateBlockTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.templateBlockActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.templateEditBlockBtn {
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 6px;
+  border: 1px solid var(--toss-border);
+  background: #fff;
+  color: var(--toss-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.templateEditBlockBtn:hover {
+  border-color: var(--toss-blue);
+  color: var(--toss-blue);
+}
+
+.templateDeleteBtn {
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 6px;
+  border: 1px solid #fecaca;
+  background: #fff;
+  color: #ef4444;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.templateDeleteBtn:hover {
+  background: #fef2f2;
+}
+
+.templateImageRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.templateImage {
+  width: 120px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--toss-border);
+}
+
+.templateAddBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 10px;
+  border: 1.5px dashed var(--toss-border);
+  background: #f8fafc;
+  color: var(--toss-text-secondary);
+  cursor: pointer;
+  width: 100%;
+  justify-content: center;
+  transition: all 0.15s;
+  margin-top: 8px;
+}
+
+.templateAddBtn:hover {
+  border-color: var(--toss-blue);
+  color: var(--toss-blue);
+  background: #eff6ff;
+}
+
+.templateForm {
+  background: #f8fafc;
+  border: 1px solid var(--toss-border);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.templateFormTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: #191f28;
+  margin: 0;
+}
+
+.templateFormTextarea {
+  width: 100%;
+  font-size: 13px;
+  line-height: 1.7;
+  border: 1px solid var(--toss-border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  resize: vertical;
+  font-family: inherit;
+  color: #374151;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.templateFormTextarea:focus {
+  outline: none;
+  border-color: var(--toss-blue);
+}
+
+.templateImageUploadRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.templateImageThumb {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--toss-border);
+}
+
+.templateImageThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.templateImageRemove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.55);
+  color: #fff;
+  border: none;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.templateImageUploadBtn {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 8px;
+  border: 1px dashed var(--toss-border);
+  background: #fff;
+  color: var(--toss-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+  height: 64px;
+  min-width: 64px;
+}
+
+.templateImageUploadBtn:hover {
+  border-color: var(--toss-blue);
+  color: var(--toss-blue);
+}
+
+.templateImageUploadBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.templateFormActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.templateFormOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.templateFormModal {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  width: 480px;
+  max-width: 90vw;
+  max-height: 80vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+}
+
+/* ─── 템플릿 이미지 다운로드 ───────────────────────────────────── */
+.templateImageLink {
+  position: relative;
+  display: inline-block;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.templateImageLink:hover .templateImageDownloadIcon {
+  opacity: 1;
+}
+
+.templateImageDownloadIcon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.45);
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.templateImageSaveAllBtn {
+  margin-top: 8px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid var(--toss-border);
+  background: #fff;
+  color: var(--toss-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.templateImageSaveAllBtn:hover {
+  border-color: var(--toss-blue);
+  color: var(--toss-blue);
+}
+
+.templateImageSaveAllBtnDone {
+  border-color: #16a34a !important;
+  color: #16a34a !important;
+  background: #dcfce7 !important;
+}
+
+.templateImageSaveAllBtnError {
+  border-color: #ef4444 !important;
+  color: #ef4444 !important;
+  background: #fef2f2 !important;
+}
+
+.templateImageWrap {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.templateImageCopyBtn {
+  width: 100%;
+  padding: 4px 0;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid var(--toss-border);
+  background: #fff;
+  color: var(--toss-text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.templateImageCopyBtn:hover {
+  border-color: var(--toss-blue);
+  color: var(--toss-blue);
+}
+
+.templateImageCopyBtnDone {
+  border-color: #16a34a !important;
+  color: #16a34a !important;
+  background: #dcfce7 !important;
+}
+
+.templateImageCopyBtnError {
+  border-color: #ef4444 !important;
+  color: #ef4444 !important;
 }

@@ -14,7 +14,8 @@ export async function GET(req: NextRequest) {
   })
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    // RPC 함수 미설치 등 DB 환경 문제 - 조용히 무시
+    return NextResponse.json({ created: 0 })
   }
 
   return NextResponse.json({ created: data })

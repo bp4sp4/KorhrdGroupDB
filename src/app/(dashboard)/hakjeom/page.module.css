@@ -874,6 +874,20 @@
   font-size: 15px;
   font-weight: 700;
   border-radius: 12px;
+  background: var(--toss-blue);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.funnelNextBtn:hover {
+  opacity: 0.88;
+}
+
+.funnelNextBtnDisabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* ─── fieldModal (셀 편집 모달) ─────────────────────────────────────────── */

@@ -254,7 +254,7 @@ pre {
   font-family: var(--font-family-mono);
   font-size: var(--font-size-sm);
   line-height: var(--line-height-relaxed);
-  background-color: var(--color-gray-900);
+
   color: var(--color-gray-100);
   padding: var(--spacing-4);
   border-radius: var(--radius-base);

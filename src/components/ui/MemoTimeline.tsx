@@ -14,7 +14,10 @@ interface Props {
   tableName: string
   recordId: string
   legacyMemo?: string | null
+  defaultInput?: string
   onCountChange?: (count: number) => void
+  onLastMemoAt?: (at: string | null) => void
+  onAdd?: (content: string) => void
 }
 
 function fmtDateTime(iso: string) {
@@ -59,10 +62,10 @@ function fmtAuthor(email: string | null) {
   return email.split('@')[0]
 }
 
-export default function MemoTimeline({ tableName, recordId, legacyMemo, onCountChange }: Props) {
+export default function MemoTimeline({ tableName, recordId, legacyMemo, defaultInput, onCountChange, onLastMemoAt, onAdd }: Props) {
   const [logs, setLogs] = useState<MemoLog[]>([])
   const [loading, setLoading] = useState(true)
-  const [input, setInput] = useState('')
+  const [input, setInput] = useState(defaultInput ?? '')
   const [saving, setSaving] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editValue, setEditValue] = useState('')
@@ -80,6 +83,7 @@ export default function MemoTimeline({ tableName, recordId, legacyMemo, onCountC
         setLogs(data)
         const hasLegacy = legacyMemo && !data.some((l: MemoLog) => l.content === legacyMemo)
         onCountChange?.(data.length + (hasLegacy ? 1 : 0))
+        onLastMemoAt?.(data.length > 0 ? data[0].created_at : null)
       }
     } finally {
       setLoading(false)
@@ -98,6 +102,7 @@ export default function MemoTimeline({ tableName, recordId, legacyMemo, onCountC
         body: JSON.stringify({ table_name: tableName, record_id: recordId, content: input.trim() }),
       })
       if (res.ok) {
+        onAdd?.(input.trim())
         setInput('')
         setVisibleCount(3)
         await fetchLogs()

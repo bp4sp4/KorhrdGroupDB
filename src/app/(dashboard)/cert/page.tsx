@@ -21,10 +21,29 @@ import { downloadExcel } from '@/lib/excelExport'
 type PaymentStatus = 'pending' | 'paid' | 'failed' | 'cancelled'
 
 // source 탭 구분: 'hakjeom' = 학점연계 신청, 'edu' = 교육원, 'private-cert' = 민간자격증
-type SourceTab = 'hakjeom' | 'edu' | 'private-cert' | 'stats'
+type SourceTab = 'hakjeom' | 'edu' | 'private-cert' | 'stats' | 'student-mgmt' | 'counsel-template'
 
 // 민간자격증 관련 타입
 type ConsultationStatus = '상담대기' | '상담중' | '보류' | '등록대기' | '등록완료'
+
+// 학생관리 타입
+type StudentStatus = '과정안내' | '수강중' | '미응시' | '수료' | '발급완료' | '취소'
+
+interface CertStudent {
+  id: number;
+  name: string;
+  contact: string;
+  click_source: string | null;
+  course: string | null;
+  completion_rate: number | null;
+  status: StudentStatus;
+  manager: string | null;
+  memo: string | null;
+  created_at: string;
+  memo_count?: number;
+  latest_memo?: string | null;
+  latest_memo_at?: string | null;
+}
 
 interface PrivateCert {
   id: number;
@@ -163,6 +182,8 @@ const SOURCE_TABS: { value: SourceTab; label: string }[] = [
   { value: 'hakjeom', label: '학점연계 신청' },
   { value: 'edu', label: '교육원' },
   { value: 'private-cert', label: '민간자격증' },
+  { value: 'student-mgmt', label: '학생관리' },
+  { value: 'counsel-template', label: '상담 템플릿' },
   { value: 'stats', label: '통계' },
 ]
 
@@ -190,6 +211,53 @@ const KNOWN_CAFE_IDS = new Set(Object.keys(CAFE_NAMES));
 const KNOWN_CAFE_KOREAN = new Set(Object.values(CAFE_NAMES));
 const SOURCE_MAJORS = ['당근', '맘카페', '네이버', '인스타', '유튜브', '카카오', '페이스북', '지인소개', '기타'];
 const CAFE_NAME_LIST = Object.values(CAFE_NAMES);
+
+// ─── 학생관리 상수 ─────────────────────────
+const STUDENT_STATUS_OPTIONS: StudentStatus[] = ['과정안내', '수강중', '미응시', '수료', '발급완료', '취소'];
+const STUDENT_STATUS_STYLE: Record<StudentStatus, { background: string; color: string }> = {
+  과정안내: { background: '#EBF3FE', color: '#3182F6' },
+  수강중:   { background: '#FFF8E6', color: '#D97706' },
+  미응시:   { background: '#FEE2E2', color: '#991B1B' },
+  수료:     { background: '#DCFCE7', color: '#16A34A' },
+  발급완료: { background: '#D1FAE5', color: '#065F46' },
+  취소:     { background: '#F3F4F6', color: '#6B7684' },
+};
+
+// 한국시간 기준 경과 시간 계산
+function getKstElapsedHours(dateStr: string): number {
+  const now = new Date();
+  const kstNow = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
+  const created = new Date(dateStr);
+  const kstCreated = new Date(created.toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
+  return (kstNow.getTime() - kstCreated.getTime()) / (1000 * 60 * 60);
+}
+
+// 학생 목록 정렬: 상단노출 규칙 적용
+// - 과정안내/수강중: 1일(24시간) 이상 경과 시 상단 노출
+// - 미응시/수료/발급완료/취소: 7일(168시간) 이상 경과 시 상단 노출
+function sortStudents(items: CertStudent[]): CertStudent[] {
+  const TOP_STATUSES: StudentStatus[] = ['과정안내', '수강중'];
+  const TOP_THRESHOLD_HOURS = 24;
+  const DONE_STATUSES: StudentStatus[] = ['미응시', '수료', '발급완료', '취소'];
+  const DONE_THRESHOLD_HOURS = 168;
+
+  const topItems: CertStudent[] = [];
+  const doneItems: CertStudent[] = [];
+  const normalItems: CertStudent[] = [];
+
+  for (const item of items) {
+    const elapsed = getKstElapsedHours(item.created_at);
+    if (TOP_STATUSES.includes(item.status) && elapsed >= TOP_THRESHOLD_HOURS) {
+      topItems.push(item);
+    } else if (DONE_STATUSES.includes(item.status) && elapsed >= DONE_THRESHOLD_HOURS) {
+      doneItems.push(item);
+    } else {
+      normalItems.push(item);
+    }
+  }
+
+  return [...topItems, ...doneItems, ...normalItems];
+}
 
 // ─────────────────────────────────────────────
 // Helpers
@@ -2837,6 +2905,1089 @@ function CertStatsPanel({ title, sub, children, style }: {
   );
 }
 
+// ─────────────────────────────────────────────
+// 학생관리: 상세 패널
+// ─────────────────────────────────────────────
+
+function CertStudentDetailPanel({ item, onClose, onUpdate, initialTab = 'basic' }: {
+  item: CertStudent;
+  onClose: () => void;
+  onUpdate: (id: number, fields: Partial<CertStudent>) => Promise<void>;
+  initialTab?: 'basic' | 'memo';
+}) {
+  const [editName, setEditName] = useState(item.name);
+  const [editContact, setEditContact] = useState(item.contact);
+  const [editCourse, setEditCourse] = useState(item.course ?? '');
+  const [editCompletionRate, setEditCompletionRate] = useState(item.completion_rate != null ? String(item.completion_rate) : '');
+  const [editStatus, setEditStatus] = useState<StudentStatus>(item.status);
+  const [editManager, setEditManager] = useState(item.manager ?? '');
+  const [saving, setSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState<'basic' | 'memo'>(initialTab);
+  const [memoCount, setMemoCount] = useState<number | null>(null);
+  const [localMemoCount, setLocalMemoCount] = useState<number>(item.memo_count ?? 0);
+  const [localLastMemoAt, setLocalLastMemoAt] = useState<string | null>(item.latest_memo_at ?? null);
+
+  useEffect(() => {
+    setEditName(item.name);
+    setEditContact(item.contact);
+    setEditCourse(item.course ?? '');
+    setEditCompletionRate(item.completion_rate != null ? String(item.completion_rate) : '');
+    setEditStatus(item.status);
+    setEditManager(item.manager ?? '');
+  }, [item.id]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const newCourse = editCourse || null;
+      const newRate = editCompletionRate !== '' ? Number(editCompletionRate) : null;
+
+      await onUpdate(item.id, {
+        name: editName.trim() || item.name,
+        contact: editContact.trim() || item.contact,
+        course: newCourse,
+        completion_rate: newRate,
+        status: editStatus,
+        manager: editManager || null,
+      });
+
+      onClose();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const rate = item.completion_rate != null ? Number(item.completion_rate) : null;
+
+  return (
+    <div className={styles.detailModalOverlay} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className={styles.detailModal}>
+        <div className={styles.detailModalHeader}>
+          <div className={styles.detailModalHeaderTop}>
+            <div className={styles.detailModalHeaderLeft}>
+              <div>
+                <div className={styles.detailModalNameRow}>
+                  <p className={styles.detailModalName}>{item.name}</p>
+                  <StatusBadge status={editStatus} styleMap={STUDENT_STATUS_STYLE} />
+                </div>
+                <p className={styles.detailModalSub}>{item.contact}</p>
+                <p className={styles.detailModalSub}>등록일: {formatDateShort(item.created_at)}</p>
+                <div className={styles.detailModalContactRow}>
+                  <span className={styles.detailModalContactBadge}>
+                    총 {localMemoCount}회 연락
+                  </span>
+                  {localLastMemoAt && (
+                    <span className={styles.detailModalContactSub}>
+                      마지막 연락: {formatDateShort(localLastMemoAt)}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+            <button onClick={onClose} className={styles.detailModalCloseBtn}>✕</button>
+          </div>
+          <div className={styles.detailModalTabs}>
+            {(['basic', 'memo'] as const).map(tab => {
+              const labels = { basic: '기본정보', memo: '메모' };
+              return (
+                <button key={tab} type="button" onClick={() => setActiveTab(tab)}
+                  className={`${styles.detailModalTab} ${activeTab === tab ? styles.detailModalTabActive : ''}`}
+                >
+                  {tab === 'memo' && memoCount != null && memoCount > 0 ? `메모 (${memoCount})` : labels[tab]}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <div className={styles.detailModalBody}>
+          {activeTab === 'basic' && (
+            <>
+              <div className={styles.detailChipSection}>
+                <span className={styles.detailChipSectionLabel}>상태</span>
+                <div className={styles.detailChipRow}>
+                  {STUDENT_STATUS_OPTIONS.map(s => (
+                    <button key={s} type="button" onClick={() => setEditStatus(s)}
+                      className={editStatus === s ? certStyles.chipBtn : certStyles.chipBtnInactive}
+                      style={editStatus === s
+                        ? { border: `2px solid ${STUDENT_STATUS_STYLE[s].color}`, background: STUDENT_STATUS_STYLE[s].background, color: STUDENT_STATUS_STYLE[s].color }
+                        : undefined
+                      }
+                    >{s}</button>
+                  ))}
+                </div>
+              </div>
+              <div className={styles.detailFieldRow}>
+                <span className={styles.detailFieldLabel}>이름</span>
+                <input value={editName} onChange={e => setEditName(e.target.value)} className={`${styles.input} ${styles.inputFull}`} />
+              </div>
+              <div className={styles.detailFieldRow}>
+                <span className={styles.detailFieldLabel}>연락처</span>
+                <input value={editContact} onChange={e => setEditContact(e.target.value)} className={`${styles.input} ${styles.inputFull}`} />
+              </div>
+              <div className={styles.detailFieldRow}>
+                <span className={styles.detailFieldLabel}>수강과목</span>
+                <input value={editCourse} onChange={e => setEditCourse(e.target.value)} placeholder="수강 중인 과목" className={`${styles.input} ${styles.inputFull}`} />
+              </div>
+              <div className={styles.detailFieldRow}>
+                <span className={styles.detailFieldLabel}>수강률 (%)</span>
+                <input
+                  value={editCompletionRate}
+                  onChange={e => {
+                    const v = e.target.value;
+                    if (v === '' || /^\d{1,3}(\.\d*)?$/.test(v)) setEditCompletionRate(v);
+                  }}
+                  placeholder="0~100"
+                  type="text"
+                  inputMode="decimal"
+                  className={`${styles.input} ${styles.inputFull}`}
+                />
+              </div>
+              <div className={styles.detailFieldRow}>
+                <span className={styles.detailFieldLabel}>담당자</span>
+                <input value={editManager} onChange={e => setEditManager(e.target.value)} placeholder="담당자 이름" className={`${styles.input} ${styles.inputFull}`} />
+              </div>
+            </>
+          )}
+          {activeTab === 'memo' && (
+            <>
+              <MemoTimeline
+                tableName="cert_students"
+                recordId={String(item.id)}
+                legacyMemo={item.memo}
+                defaultInput={[
+                  item.course ?? null,
+                  item.completion_rate != null ? `${item.completion_rate}%` : null,
+                ].filter(Boolean).join(' ')}
+                onCountChange={(count) => { setMemoCount(count); setLocalMemoCount(count); }}
+                onLastMemoAt={setLocalLastMemoAt}
+                onAdd={async (content) => {
+                  const match = content.match(/(\d+(?:\.\d+)?)\s*%/);
+                  if (match) {
+                    const newRate = Number(match[1]);
+                    await onUpdate(item.id, { completion_rate: newRate });
+                    setEditCompletionRate(String(newRate));
+                  }
+                }}
+              />
+            </>
+          )}
+        </div>
+        <div className={styles.detailModalFooter}>
+          <button onClick={handleSave} disabled={saving} className={`${styles.panelSaveBtn} ${saving ? styles.panelSaveBtnDisabled : ''}`}>
+            {saving ? '저장 중...' : '변경사항 저장'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── 학생관리: 추가 모달 ─────────────────────────────────────────────────────
+
+function CertStudentAddModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
+  const TOTAL_STEPS = 2;
+  const [step, setStep] = useState(1);
+  const [form, setForm] = useState({
+    name: '', contact: '', course: '', completion_rate: '', manager: '', memo: '',
+  });
+  const [errors, setErrors] = useState<{ name?: string; contact?: string }>({});
+  const [saving, setSaving] = useState(false);
+  const nameRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (step === 1) setTimeout(() => nameRef.current?.focus(), 50);
+  }, [step]);
+
+  const validateStep1 = () => {
+    const newErrors: { name?: string; contact?: string } = {};
+    if (!form.name.trim()) newErrors.name = '이름을 입력해주세요';
+    if (!form.contact.trim()) newErrors.contact = '연락처를 입력해주세요';
+    else if (form.contact.replace(/-/g, '').length < 10) newErrors.contact = '연락처를 정확히 입력해주세요';
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleNext = () => {
+    if (step === 1 && !validateStep1()) return;
+    if (step < TOTAL_STEPS) setStep(s => s + 1);
+  };
+
+  const handleBack = () => {
+    if (step > 1) setStep(s => s - 1);
+  };
+
+  const handleSubmit = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch('/api/cert/students', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      if (!res.ok) throw new Error('추가 실패');
+      onSaved();
+      onClose();
+    } catch {
+      alert('추가에 실패했습니다.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div onClick={e => { if (e.target === e.currentTarget) onClose(); }} className={styles.modalOverlay}>
+      <div className={styles.funnelBox}>
+        <div className={styles.funnelHeader}>
+          <button type="button" onClick={step === 1 ? onClose : handleBack} className={styles.funnelBackBtn}>
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M14 9H4M4 9L8 5M4 9L8 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </button>
+          <span className={styles.funnelStepLabel}>{step} / {TOTAL_STEPS}</span>
+          <button type="button" onClick={onClose} className={styles.funnelCloseBtn}>✕</button>
+        </div>
+        <div className={styles.funnelProgressBar}>
+          <div className={styles.funnelProgressFill} style={{ width: `${(step / TOTAL_STEPS) * 100}%` }} />
+        </div>
+        <div className={styles.funnelBody}>
+          {step === 1 && (
+            <div className={styles.funnelStep}>
+              <p className={styles.funnelQuestion}>학생 기본 정보를 입력해주세요</p>
+              <div className={styles.funnelFieldGroup}>
+                <label className={styles.funnelLabel}>이름</label>
+                <input
+                  ref={nameRef}
+                  value={form.name}
+                  onChange={e => { setForm(p => ({ ...p, name: e.target.value })); if (errors.name) setErrors(p => ({ ...p, name: undefined })); }}
+                  placeholder="홍길동"
+                  className={`${styles.funnelInput}${errors.name ? ` ${styles.funnelInputError}` : ''}`}
+                />
+                {errors.name && <p className={styles.funnelError}>{errors.name}</p>}
+              </div>
+              <div className={styles.funnelFieldGroup}>
+                <label className={styles.funnelLabel}>연락처</label>
+                <input
+                  value={form.contact}
+                  onChange={e => { setForm(p => ({ ...p, contact: formatPhoneNumber(e.target.value) })); if (errors.contact) setErrors(p => ({ ...p, contact: undefined })); }}
+                  placeholder="010-0000-0000"
+                  inputMode="tel"
+                  className={`${styles.funnelInput}${errors.contact ? ` ${styles.funnelInputError}` : ''}`}
+                />
+                {errors.contact && <p className={styles.funnelError}>{errors.contact}</p>}
+              </div>
+            </div>
+          )}
+          {step === 2 && (
+            <div className={styles.funnelStep}>
+              <p className={styles.funnelQuestion}>수강 정보를 입력해주세요</p>
+              <p className={styles.funnelSubQuestion}>모두 선택사항이에요</p>
+              <div className={styles.funnelFieldGroup}>
+                <label className={styles.funnelLabel}>수강과목</label>
+                <input
+                  value={form.course}
+                  onChange={e => setForm(p => ({ ...p, course: e.target.value }))}
+                  placeholder="수강 중인 과목명"
+                  className={styles.funnelInput}
+                />
+              </div>
+              <div className={styles.funnelFieldGroup}>
+                <label className={styles.funnelLabel}>수강률 (%)</label>
+                <input
+                  value={form.completion_rate}
+                  onChange={e => {
+                    const v = e.target.value;
+                    if (v === '' || (Number(v) >= 0 && Number(v) <= 100)) setForm(p => ({ ...p, completion_rate: v }));
+                  }}
+                  placeholder="0~100"
+                  type="number"
+                  min={0}
+                  max={100}
+                  className={styles.funnelInput}
+                />
+              </div>
+              <div className={styles.funnelFieldGroup}>
+                <label className={styles.funnelLabel}>메모</label>
+                <input
+                  value={form.memo}
+                  onChange={e => setForm(p => ({ ...p, memo: e.target.value }))}
+                  placeholder="메모 내용"
+                  className={styles.funnelInput}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+        <div className={styles.funnelFooter}>
+          {step < TOTAL_STEPS ? (
+            <button type="button" onClick={handleNext} className={styles.funnelNextBtn}>다음</button>
+          ) : (
+            <button type="button" onClick={handleSubmit} disabled={saving} className={`${styles.funnelNextBtn}${saving ? ` ${styles.funnelNextBtnDisabled}` : ''}`}>
+              {saving ? '저장 중...' : '등록하기'}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// 학생관리 탭
+// ─────────────────────────────────────────────
+
+function StudentMgmtTab() {
+  const [items, setItems] = useState<CertStudent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const [searchText, setSearchText] = useState('');
+  const [statusFilter, setStatusFilter] = useState<StudentStatus | 'all'>('all');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
+  const [selectedItem, setSelectedItem] = useState<CertStudent | null>(null);
+  const [openTab, setOpenTab] = useState<'basic' | 'memo'>('basic');
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [deleting, setDeleting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [openFilterColumn, setOpenFilterColumn] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [toastVisible, setToastVisible] = useState(false);
+  const [deleteToastVisible, setDeleteToastVisible] = useState(false);
+  const [filterDropdownPos, setFilterDropdownPos] = useState({ top: 0, left: 0 });
+  const itemsPerPage = 10;
+
+  const fetchData = useCallback(async (background = false) => {
+    if (!background) setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/cert/students');
+      if (!res.ok) throw new Error('데이터를 불러오지 못했습니다.');
+      const data: CertStudent[] = await res.json();
+      setItems(sortStudents(data));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '알 수 없는 오류');
+    } finally {
+      if (!background) setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { setSelectedIds([]); }, [currentPage]);
+  useEffect(() => {
+    if (!openFilterColumn) return;
+    const handleMouseDown = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setOpenFilterColumn(null);
+      }
+    };
+    document.addEventListener('mousedown', handleMouseDown);
+    return () => document.removeEventListener('mousedown', handleMouseDown);
+  }, [openFilterColumn]);
+
+  const handleUpdate = async (id: number, fields: Partial<CertStudent>) => {
+    const res = await fetch('/api/cert/students', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, ...fields }),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body.error ?? '업데이트에 실패했습니다.');
+    }
+    const { data: updated } = await res.json();
+    const merged = updated ?? fields;
+    setItems(prev => sortStudents(prev.map(c => c.id === id ? { ...c, ...merged } : c)));
+    setSelectedItem(prev => prev?.id === id ? { ...prev, ...merged } : prev);
+    setToastVisible(true);
+    setTimeout(() => setToastVisible(false), 2500);
+  };
+
+  const handleStatusChange = async (id: number, status: StudentStatus) => {
+    await handleUpdate(id, { status });
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    if (!confirm(`${selectedIds.length}건을 삭제할까요?`)) return;
+    setDeleting(true);
+    await fetch('/api/cert/students', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: selectedIds }),
+    });
+    setSelectedIds([]);
+    await fetchData();
+    setDeleting(false);
+    setDeleteToastVisible(true);
+    setTimeout(() => setDeleteToastVisible(false), 2500);
+  };
+
+  const filtered = items.filter(c => {
+    if (searchText) {
+      const q = searchText.toLowerCase();
+      const contactClean = c.contact.replace(/-/g, '');
+      const searchClean = searchText.replace(/-/g, '');
+      if (!(
+        c.name.toLowerCase().includes(q) ||
+        contactClean.includes(searchClean) ||
+        (c.course || '').toLowerCase().includes(q) ||
+        (c.memo || '').toLowerCase().includes(q)
+      )) return false;
+    }
+    if (statusFilter !== 'all' && c.status !== statusFilter) return false;
+    if (startDate || endDate) {
+      const d = new Date(c.created_at);
+      if (startDate && d < new Date(startDate + 'T00:00:00')) return false;
+      if (endDate && d > new Date(endDate + 'T23:59:59')) return false;
+    }
+    return true;
+  });
+
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const toggleSelect = (id: number) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  const toggleSelectAll = () => setSelectedIds(prev => prev.length === paginated.length ? [] : paginated.map(c => c.id));
+
+  const isFiltered = searchText || statusFilter !== 'all' || startDate || endDate;
+
+  const STUDENT_HEADERS = ['번호', '이름', '연락처', '수강과목', '수강률', '상태', '담당자', '메모', '등록일'];
+  const studentToRow = (item: CertStudent, i: number) => [
+    i + 1,
+    item.name,
+    item.contact,
+    item.course ?? '',
+    item.completion_rate != null ? `${item.completion_rate}%` : '',
+    item.status,
+    item.manager ?? '',
+    item.latest_memo ?? item.memo ?? '',
+    item.created_at ? new Date(item.created_at).toLocaleString('ko-KR') : '',
+  ];
+
+  const handleDownloadAll = () => {
+    downloadExcel(`학생관리_전체_${new Date().toLocaleDateString('ko-KR').replace(/\. /g, '-').replace('.', '')}.xlsx`, [{
+      name: '학생관리',
+      headers: STUDENT_HEADERS,
+      rows: filtered.map((item, i) => studentToRow(item, i)),
+    }]);
+  };
+
+  const handleDownloadSelected = () => {
+    const targets = filtered.filter(c => selectedIds.includes(c.id));
+    downloadExcel(`학생관리_선택_${new Date().toLocaleDateString('ko-KR').replace(/\. /g, '-').replace('.', '')}.xlsx`, [{
+      name: '학생관리',
+      headers: STUDENT_HEADERS,
+      rows: targets.map((item, i) => studentToRow(item, i)),
+    }]);
+  };
+
+  const resetFilters = () => {
+    setSearchText(''); setStatusFilter('all');
+    setStartDate(''); setEndDate(''); setCurrentPage(1);
+  };
+
+  return (
+    <div>
+      {loading ? <FilterBarSkeleton /> : (
+        <>
+          <div className={styles.filterRow}>
+            <input
+              type="text"
+              value={searchText}
+              onChange={e => { setSearchText(e.target.value); setCurrentPage(1); }}
+              placeholder="이름, 연락처, 수강과목, 메모 검색..."
+              className={`${styles.input} ${certStyles.pcertSearchInput}`}
+            />
+            <input type="date" value={startDate} onChange={e => { setStartDate(e.target.value); setCurrentPage(1); }} className={`${styles.input} ${certStyles.dateInput140}`} />
+            <span className={styles.dateSeparator}>~</span>
+            <input type="date" value={endDate} onChange={e => { setEndDate(e.target.value); setCurrentPage(1); }} className={`${styles.input} ${certStyles.dateInput140}`} />
+            {isFiltered && <button onClick={resetFilters} className={styles.btnSecondary}>필터 초기화</button>}
+            {selectedIds.length > 0 && (
+              <>
+                <span className={styles.bulkActionCount}>{selectedIds.length}건 선택됨</span>
+                <button onClick={handleBulkDelete} disabled={deleting} className={styles.btnDanger}>
+                  {deleting ? '삭제 중...' : '선택 삭제'}
+                </button>
+                <button onClick={handleDownloadSelected} className={styles.btnDownload}>↓ 선택 다운로드</button>
+                <button onClick={() => setSelectedIds([])} className={styles.btnSecondary}>선택 해제</button>
+              </>
+            )}
+          </div>
+          <div className={styles.actionBar}>
+            <span className={styles.actionBarCount}>총 <strong className={styles.actionBarCountBold}>{filtered.length}</strong>건</span>
+            <div className={styles.actionBarSpacer} />
+            <button onClick={handleDownloadAll} className={styles.btnDownload}>↓ 전체 다운로드</button>
+            <button onClick={() => setShowAddModal(true)} className={styles.btnPrimary}>+ 추가</button>
+          </div>
+        </>
+      )}
+
+      <div className={styles.tableCard}>
+        {error ? (
+          <div className={styles.tableErrorMsg}>{error}</div>
+        ) : (
+          <div className={styles.tableOverflow}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th className={styles.thCenter}>
+                    <input type="checkbox" checked={paginated.length > 0 && selectedIds.length === paginated.length} onChange={toggleSelectAll} className={styles.checkbox} />
+                  </th>
+                  <th className={styles.thNum}>번호</th>
+                  <th className={styles.th}>이름</th>
+                  <th className={styles.th}>연락처</th>
+                  <th className={styles.th}>수강과목</th>
+                  <th className={styles.th}>수강률</th>
+                  <th className={styles.thFilterable}>
+                    <div className={styles.thInner}>
+                      상태
+                      <button className={`${styles.thFilterBtn}${statusFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'status') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('status'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
+                    </div>
+                  </th>
+                  <th className={styles.th}>메모</th>
+                  <th className={styles.th}>등록일</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <TableSkeleton cols={9} rows={8} />
+                ) : filtered.length === 0 ? (
+                  <tr><td colSpan={9} className={styles.tableEmptyMsg}>검색 결과가 없습니다.</td></tr>
+                ) : paginated.map((item, index) => {
+                  const rate = item.completion_rate != null ? Number(item.completion_rate) : null;
+                  return (
+                    <tr
+                      key={item.id}
+                      data-id={item.id}
+                      onClick={() => { setOpenTab('basic'); setSelectedItem(item); }}
+                      className={certStyles.pcertTr}
+                      style={{
+                        background: selectedItem?.id === item.id ? '#EBF3FE' : selectedIds.includes(item.id) ? '#f0f7ff' : 'transparent',
+                      }}
+                      onMouseEnter={e => { if (selectedItem?.id !== item.id && !selectedIds.includes(item.id)) (e.currentTarget as HTMLTableRowElement).style.background = 'var(--toss-bg)'; }}
+                      onMouseLeave={e => { if (selectedItem?.id !== item.id && !selectedIds.includes(item.id)) (e.currentTarget as HTMLTableRowElement).style.background = 'transparent'; }}
+                    >
+                      <td className={styles.tdCenter} onClick={e => e.stopPropagation()}>
+                        <input type="checkbox" checked={selectedIds.includes(item.id)} onChange={() => toggleSelect(item.id)} className={styles.checkbox} />
+                      </td>
+                      <td className={styles.tdNum}>{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                      <td className={styles.tdBold}><PCertHighlight text={item.name} query={searchText} /></td>
+                      <td className={styles.tdTabular}><PCertHighlight text={item.contact} query={searchText} /></td>
+                      <td className={styles.tdEllipsis}><PCertHighlight text={item.course} query={searchText} /></td>
+                      <td className={styles.td}>
+                        {rate != null ? (
+                          <div className={certStyles.studentRateCell}>
+                            <div className={certStyles.studentRateCellBar}>
+                              <div className={certStyles.studentRateCellBarFill} style={{ width: `${Math.min(rate, 100)}%` }} />
+                            </div>
+                            <span className={certStyles.studentRateCellText}>{rate}%</span>
+                          </div>
+                        ) : <span className={styles.tdMuted}>-</span>}
+                      </td>
+                      <td className={styles.td} onClick={e => e.stopPropagation()}>
+                        <StatusSelect
+                          value={item.status}
+                          onChange={v => handleStatusChange(item.id, v as StudentStatus)}
+                          options={STUDENT_STATUS_OPTIONS}
+                          styleMap={STUDENT_STATUS_STYLE}
+                        />
+                      </td>
+                      <td className={styles.tdMemo} onClick={e => { e.stopPropagation(); setOpenTab('memo'); setSelectedItem(item); }} style={{ cursor: 'pointer' }}>
+                        <MemoHoverBadge text={item.latest_memo || item.memo || '-'} />
+                      </td>
+                      <td className={styles.tdDateSmall}>{formatDate(item.created_at)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {totalPages > 1 && (
+        <div className={styles.pagination}>
+          <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className={`${styles.pageBtn} ${certStyles.pageBtnMr4}`}>‹</button>
+          {getPaginationPages(currentPage, totalPages).map((page, idx) =>
+            page === '...'
+              ? <span key={`ellipsis-${idx}`} className={styles.pageEllipsis}>…</span>
+              : <button key={page} onClick={() => setCurrentPage(page as number)} className={page === currentPage ? styles.pageBtnActive : styles.pageBtn}>{page}</button>
+          )}
+          <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className={`${styles.pageBtn} ${certStyles.pageBtnMl4}`}>›</button>
+        </div>
+      )}
+
+      {selectedItem && (
+        <CertStudentDetailPanel
+          item={selectedItem}
+          onClose={() => { setSelectedItem(null); setOpenTab('basic'); }}
+          onUpdate={handleUpdate}
+          initialTab={openTab}
+        />
+      )}
+      {showAddModal && <CertStudentAddModal onClose={() => setShowAddModal(false)} onSaved={fetchData} />}
+      {toastVisible && <div className={styles.toast}>저장이 완료되었습니다</div>}
+      {deleteToastVisible && <div className={styles.toast}>삭제되었습니다</div>}
+
+      {openFilterColumn && (
+        <div ref={dropdownRef} className={styles.filterColumnDropdown} style={{ top: filterDropdownPos.top, left: filterDropdownPos.left }}>
+          {openFilterColumn === 'status' && (
+            <>
+              <div className={`${styles.filterDropdownItem}${statusFilter === 'all' ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setStatusFilter('all'); setCurrentPage(1); setOpenFilterColumn(null); }}>전체</div>
+              {STUDENT_STATUS_OPTIONS.map(s => (
+                <div key={s} className={`${styles.filterDropdownItem}${statusFilter === s ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setStatusFilter(s); setCurrentPage(1); setOpenFilterColumn(null); }}>{s}</div>
+              ))}
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// 상담 템플릿 탭
+// ─────────────────────────────────────────────
+
+type TemplateSubTab = '첫 안내' | '수업' | '시험' | '취업' | '비용/결제' | '학생 개인고민' | '과정안내'
+const TEMPLATE_SUB_TABS: TemplateSubTab[] = ['첫 안내', '수업', '시험', '취업', '비용/결제', '학생 개인고민', '과정안내']
+
+interface TemplateBlock {
+  id: number
+  sub_tab: string
+  title: string
+  content: string
+  images: string[]
+  order_index: number
+}
+
+function DownloadAllImagesBtn({ urls, title }: { urls: string[]; title: string }) {
+  const [state, setState] = useState<'idle' | 'loading'>('idle')
+
+  const handleDownload = async () => {
+    setState('loading')
+    try {
+      const JSZip = (await import('jszip')).default
+      const zip = new JSZip()
+      await Promise.all(urls.map(async (url, i) => {
+        const res = await fetch(url)
+        const blob = await res.blob()
+        const ext = blob.type.split('/')[1] ?? 'jpg'
+        zip.file(`image-${i + 1}.${ext}`, blob)
+      }))
+      const zipBlob = await zip.generateAsync({ type: 'blob' })
+      const objUrl = URL.createObjectURL(zipBlob)
+      const a = document.createElement('a')
+      a.href = objUrl
+      a.download = `${title || 'images'}.zip`
+      document.body.appendChild(a); a.click(); document.body.removeChild(a)
+      URL.revokeObjectURL(objUrl)
+    } catch { /* skip */ }
+    setState('idle')
+  }
+
+  return (
+    <button type="button" className={certStyles.templateImageSaveAllBtn} onClick={handleDownload} disabled={state === 'loading'}>
+      {state === 'loading' ? 'ZIP 만드는 중...' : `이미지 ZIP 저장${urls.length > 1 ? ` (${urls.length}개)` : ''}`}
+    </button>
+  )
+}
+
+function CopyImageBtn({ url, index }: { url: string; index: number }) {
+  const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
+
+  const handleCopy = async () => {
+    setState('loading')
+    try {
+      const res = await fetch(url)
+      const blob = await res.blob()
+      await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })])
+      setState('done')
+      setTimeout(() => setState('idle'), 1500)
+    } catch {
+      setState('error')
+      setTimeout(() => setState('idle'), 1500)
+    }
+  }
+
+  return (
+    <div className={certStyles.templateImageWrap}>
+      <img src={url} alt="" className={certStyles.templateImage} />
+      <button
+        type="button"
+        className={`${certStyles.templateImageCopyBtn} ${state === 'done' ? certStyles.templateImageCopyBtnDone : state === 'error' ? certStyles.templateImageCopyBtnError : ''}`}
+        onClick={handleCopy}
+        disabled={state === 'loading'}
+        title={`이미지 ${index + 1} 복사`}
+      >
+        {state === 'loading' ? '...' : state === 'done' ? '✓' : state === 'error' ? '✕' : '복사'}
+      </button>
+    </div>
+  )
+}
+
+function CopyMergedImagesBtn({ urls }: { urls: string[] }) {
+  const [state, setState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
+
+  const handleCopy = async () => {
+    setState('loading')
+    try {
+      const images = await Promise.all(
+        urls.map(src => new Promise<HTMLImageElement>((resolve, reject) => {
+          const img = new Image()
+          img.crossOrigin = 'anonymous'
+          img.onload = () => resolve(img)
+          img.onerror = reject
+          img.src = src
+        }))
+      )
+      const width = Math.max(...images.map(img => img.naturalWidth))
+      const height = images.reduce((sum, img) => sum + img.naturalHeight, 0)
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')!
+      let y = 0
+      images.forEach(img => { ctx.drawImage(img, 0, y); y += img.naturalHeight })
+      await new Promise<void>((resolve, reject) => {
+        canvas.toBlob(async blob => {
+          if (!blob) { reject(new Error('blob null')); return }
+          await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })])
+          resolve()
+        }, 'image/png')
+      })
+      setState('done')
+      setTimeout(() => setState('idle'), 2000)
+    } catch {
+      setState('error')
+      setTimeout(() => setState('idle'), 2000)
+    }
+  }
+
+  const label = state === 'loading' ? '합치는 중...' : state === 'done' ? '✓ 복사됨' : state === 'error' ? '실패 (CORS?)' : `이미지 합쳐서 복사 (${urls.length}개)`
+
+  return (
+    <button
+      type="button"
+      className={`${certStyles.templateImageSaveAllBtn} ${state === 'done' ? certStyles.templateImageSaveAllBtnDone : state === 'error' ? certStyles.templateImageSaveAllBtnError : ''}`}
+      onClick={handleCopy}
+      disabled={state === 'loading'}
+    >
+      {label}
+    </button>
+  )
+}
+
+function CounselTemplateTab() {
+  const [activeTab, setActiveTab] = useState<TemplateSubTab>('첫 안내')
+  const [blocks, setBlocks] = useState<TemplateBlock[]>([])
+  const [loading, setLoading] = useState(true)
+  const [copiedId, setCopiedId] = useState<number | null>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
+  const barRef = useRef<HTMLDivElement>(null)
+  const [pill, setPill] = useState<{ left: number; width: number } | null>(null)
+
+  useEffect(() => {
+    fetch('/api/auth/me').then(r => r.ok ? r.json() : null).then(data => {
+      if (!data) return
+      // mini-admin만 제외, 나머지(admin/master-admin/staff) 전원 허용
+      // 단, display_name에 이사/상무 포함 시에도 허용 (mini-admin이어도)
+      const isMiniAdmin = data.role === 'mini-admin'
+      const isExec = ['이사', '상무'].some(t => data.displayName?.includes(t))
+      setIsAdmin(!isMiniAdmin || isExec)
+    })
+  }, [])
+
+  useEffect(() => {
+    const idx = TEMPLATE_SUB_TABS.indexOf(activeTab)
+    const el = tabRefs.current[idx]
+    const bar = barRef.current
+    if (!el || !bar) return
+    const barRect = bar.getBoundingClientRect()
+    const elRect = el.getBoundingClientRect()
+    setPill({ left: elRect.left - barRect.left, width: elRect.width })
+  }, [activeTab, loading])
+
+  const fetchBlocks = async () => {
+    setLoading(true)
+    const res = await fetch(`/api/cert/templates?sub_tab=${encodeURIComponent(activeTab)}`)
+    if (res.ok) setBlocks(await res.json())
+    setLoading(false)
+  }
+
+  useEffect(() => { fetchBlocks() }, [activeTab])
+
+  const handleCopy = (content: string, id: number) => {
+    navigator.clipboard.writeText(content)
+    setCopiedId(id)
+    setTimeout(() => setCopiedId(null), 1500)
+  }
+
+  const handleDelete = async (block: TemplateBlock) => {
+    if (!confirm(`"${block.title}" 템플릿을 삭제할까요?`)) return
+    const imagePaths = block.images.map(url => url.split('/cert-templates/')[1]).filter(Boolean)
+    await fetch('/api/cert/templates', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: block.id, imagePaths }),
+    })
+    setBlocks(prev => prev.filter(b => b.id !== block.id))
+  }
+
+  return (
+    <div>
+      <div className={styles.statsSourceToggleWrap}>
+        <div ref={barRef} className={styles.statsSourceBar}>
+          {pill && <div className={certStyles.srcPillBase} style={{ left: pill.left, width: pill.width }} />}
+          {TEMPLATE_SUB_TABS.map((tab, i) => (
+            <button key={tab} ref={el => { tabRefs.current[i] = el }} type="button"
+              onClick={() => setActiveTab(tab)}
+              className={`${styles.statsSourceBtn} ${activeTab === tab ? certStyles.statsSourceBtnActive : certStyles.statsSourceBtnInactive}`}
+            >{tab}</button>
+          ))}
+        </div>
+      </div>
+      <div className={certStyles.templateBody}>
+        {loading ? (
+          <p className={certStyles.templateEmpty}>불러오는 중...</p>
+        ) : (
+          <>
+            {blocks.map(block => (
+              <div key={block.id} className={certStyles.templateBlock}>
+                <div className={certStyles.templateBlockTitleRow}>
+                  <p className={certStyles.templateBlockTitle}>{block.title}</p>
+                  {isAdmin && (
+                    <div className={certStyles.templateBlockActions}>
+                      <TemplateEditModal block={block} onSaved={fetchBlocks} />
+                      <button type="button" className={certStyles.templateDeleteBtn} onClick={() => handleDelete(block)}>삭제</button>
+                    </div>
+                  )}
+                </div>
+                {block.content && (
+                  <div className={certStyles.templateBlockContent}>
+                    <pre className={certStyles.templateBlockText}>{block.content}</pre>
+                    <button type="button"
+                      className={`${certStyles.templateCopyBtn} ${copiedId === block.id ? certStyles.templateCopyBtnDone : ''}`}
+                      onClick={() => handleCopy(block.content, block.id)} title="복사"
+                    >
+                      {copiedId === block.id ? '✓' : (
+                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                          <rect x="4" y="4" width="8" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.4"/>
+                          <path d="M2 10V2.5A.5.5 0 0 1 2.5 2H10" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                )}
+                {block.images.length > 0 && (
+                  <div>
+                    <div className={certStyles.templateImageRow}>
+                      {block.images.map((url, i) => (
+                        <img key={i} src={url} alt="" className={certStyles.templateImage} />
+                      ))}
+                    </div>
+                    <DownloadAllImagesBtn urls={block.images} title={block.title} />
+                  </div>
+                )}
+              </div>
+            ))}
+            {blocks.length === 0 && (
+              <p className={certStyles.templateEmpty}>등록된 템플릿이 없습니다.</p>
+            )}
+            {isAdmin && <TemplateAddModal subTab={activeTab} onSaved={fetchBlocks} />}
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function TemplateAddModal({ subTab, onSaved }: { subTab: string; onSaved: () => void }) {
+  const [open, setOpen] = useState(false)
+  const [title, setTitle] = useState('')
+  const [content, setContent] = useState('')
+  const [images, setImages] = useState<{ path: string; url: string }[]>([])
+  const [uploading, setUploading] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  const handleImageUpload = async (files: FileList) => {
+    setUploading(true)
+    const fileData = await Promise.all(Array.from(files).map(async f => ({
+      name: f.name,
+      type: f.type,
+      data: Buffer.from(await f.arrayBuffer()).toString('base64'),
+    })))
+    const res = await fetch('/api/cert/templates/images', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ files: fileData }),
+    })
+    if (res.ok) {
+      const uploaded: { path: string; url: string }[] = await res.json()
+      setImages(prev => [...prev, ...uploaded])
+    } else {
+      const err = await res.json().catch(() => ({}))
+      alert('이미지 업로드 실패: ' + (err.error ?? res.status))
+    }
+    setUploading(false)
+    if (fileRef.current) fileRef.current.value = ''
+  }
+
+  const handleRemoveImage = async (img: { path: string; url: string }) => {
+    await fetch('/api/cert/templates/images', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: img.path }),
+    })
+    setImages(prev => prev.filter(i => i.path !== img.path))
+  }
+
+  const handleCancel = async () => {
+    // 업로드된 이미지 정리
+    for (const img of images) {
+      await fetch('/api/cert/templates/images', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path: img.path }),
+      })
+    }
+    setOpen(false); setTitle(''); setContent(''); setImages([])
+  }
+
+  const handleSave = async () => {
+    if (!title.trim()) return
+    setSaving(true)
+    const res = await fetch('/api/cert/templates', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sub_tab: subTab, title, content, images: images.map(i => i.url) }),
+    })
+    setSaving(false)
+    if (!res.ok) { alert('저장 실패'); return }
+    setOpen(false)
+    setTitle(''); setContent(''); setImages([])
+    onSaved()
+  }
+
+  if (!open) return (
+    <button type="button" className={certStyles.templateAddBtn} onClick={() => setOpen(true)}>
+      + 템플릿 추가
+    </button>
+  )
+
+  return (
+    <div className={certStyles.templateForm}>
+      <p className={certStyles.templateFormTitle}>새 템플릿 추가</p>
+      <input placeholder="제목" value={title} onChange={e => setTitle(e.target.value)} className={`${styles.input} ${styles.inputFull}`} />
+      <textarea placeholder="내용 (선택사항)" value={content} onChange={e => setContent(e.target.value)} rows={4} className={certStyles.templateFormTextarea} />
+      <div className={certStyles.templateImageUploadRow}>
+        {images.map((img, i) => (
+          <div key={i} className={certStyles.templateImageThumb}>
+            <img src={img.url} alt="" />
+            <button type="button" className={certStyles.templateImageRemove} onClick={() => handleRemoveImage(img)}>✕</button>
+          </div>
+        ))}
+        <button type="button" className={certStyles.templateImageUploadBtn} onClick={() => fileRef.current?.click()} disabled={uploading}>
+          {uploading ? '업로드 중...' : '+ 이미지'}
+        </button>
+        <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={e => e.target.files && handleImageUpload(e.target.files)} />
+      </div>
+      <div className={certStyles.templateFormActions}>
+        <button type="button" className={styles.btnSecondary} onClick={handleCancel}>취소</button>
+        <button type="button" className={styles.btnPrimary} onClick={handleSave} disabled={saving || !title.trim()}>{saving ? '저장 중...' : '저장'}</button>
+      </div>
+    </div>
+  )
+}
+
+function TemplateEditModal({ block, onSaved }: { block: TemplateBlock; onSaved: () => void }) {
+  const [open, setOpen] = useState(false)
+  const [title, setTitle] = useState(block.title)
+  const [content, setContent] = useState(block.content)
+  const [images, setImages] = useState<{ path: string; url: string }[]>(
+    block.images.map(url => ({ path: url.split('/cert-templates/')[1] ?? '', url }))
+  )
+  const [uploading, setUploading] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  const handleImageUpload = async (files: FileList) => {
+    setUploading(true)
+    const fileData = await Promise.all(Array.from(files).map(async f => ({
+      name: f.name,
+      type: f.type,
+      data: Buffer.from(await f.arrayBuffer()).toString('base64'),
+    })))
+    const res = await fetch('/api/cert/templates/images', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ files: fileData }),
+    })
+    if (res.ok) {
+      const uploaded: { path: string; url: string }[] = await res.json()
+      setImages(prev => [...prev, ...uploaded])
+    } else {
+      const err = await res.json().catch(() => ({}))
+      alert('이미지 업로드 실패: ' + (err.error ?? res.status))
+    }
+    setUploading(false)
+    if (fileRef.current) fileRef.current.value = ''
+  }
+
+  const handleRemoveImage = async (img: { path: string; url: string }) => {
+    await fetch('/api/cert/templates/images', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: img.path }),
+    })
+    setImages(prev => prev.filter(i => i.path !== img.path))
+  }
+
+  const handleSave = async () => {
+    setSaving(true)
+    const res = await fetch('/api/cert/templates', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: block.id, title, content, images: images.map(i => i.url) }),
+    })
+    setSaving(false)
+    if (!res.ok) { alert('저장 실패'); return }
+    setOpen(false)
+    onSaved()
+  }
+
+  if (!open) return (
+    <button type="button" className={certStyles.templateEditBlockBtn} onClick={() => setOpen(true)}>수정</button>
+  )
+
+  return (
+    <div className={certStyles.templateFormOverlay} onClick={e => { if (e.target === e.currentTarget) setOpen(false) }}>
+      <div className={certStyles.templateFormModal}>
+        <p className={certStyles.templateFormTitle}>템플릿 수정</p>
+        <input placeholder="제목" value={title} onChange={e => setTitle(e.target.value)} className={`${styles.input} ${styles.inputFull}`} />
+        <textarea placeholder="내용" value={content} onChange={e => setContent(e.target.value)} rows={5} className={certStyles.templateFormTextarea} />
+        <div className={certStyles.templateImageUploadRow}>
+          {images.map((img, i) => (
+            <div key={i} className={certStyles.templateImageThumb}>
+              <img src={img.url} alt="" />
+              <button type="button" className={certStyles.templateImageRemove} onClick={() => handleRemoveImage(img)}>✕</button>
+            </div>
+          ))}
+          <button type="button" className={certStyles.templateImageUploadBtn} onClick={() => fileRef.current?.click()} disabled={uploading}>
+            {uploading ? '업로드 중...' : '+ 이미지'}
+          </button>
+          <input ref={fileRef} type="file" accept="image/*" multiple hidden onChange={e => e.target.files && handleImageUpload(e.target.files)} />
+        </div>
+        <div className={certStyles.templateFormActions}>
+          <button type="button" className={styles.btnSecondary} onClick={() => setOpen(false)}>취소</button>
+          <button type="button" className={styles.btnPrimary} onClick={handleSave} disabled={saving || !title.trim()}>{saving ? '저장 중...' : '저장'}</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function CertStatsTab() {
   const [data, setData] = useState<CertStatsItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -3257,7 +4408,7 @@ export default function CertPage() {
   const urlTab = searchParams.get('tab') as SourceTab | null
   const urlHighlight = searchParams.get('highlight') ? Number(searchParams.get('highlight')) : undefined
 
-  const initialTab: SourceTab = (['hakjeom', 'edu', 'private-cert', 'stats'] as SourceTab[]).includes(urlTab as SourceTab)
+  const initialTab: SourceTab = (['hakjeom', 'edu', 'private-cert', 'stats', 'student-mgmt'] as SourceTab[]).includes(urlTab as SourceTab)
     ? (urlTab as SourceTab)
     : 'hakjeom'
 
@@ -3297,6 +4448,8 @@ export default function CertPage() {
       {/* 탭 컨텐츠 */}
       {(sourceTab === 'hakjeom' || sourceTab === 'edu') && <ApplicationTab sourceTab={sourceTab} highlightId={urlTab === sourceTab ? urlHighlight : undefined} />}
       {sourceTab === 'private-cert' && <PrivateCertTab setStatsNode={setStatsNode} highlightId={urlTab === 'private-cert' ? urlHighlight : undefined} />}
+      {sourceTab === 'student-mgmt' && <StudentMgmtTab />}
+      {sourceTab === 'counsel-template' && <CounselTemplateTab />}
       {sourceTab === 'stats' && <CertStatsTab />}
     </div>
   )
