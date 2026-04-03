@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-04-03T07:10:30.673Z",
+  "lastUpdated": "2026-04-03T07:14:21.216Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -390,9 +390,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-18T05:05:20.275Z",
-        "lastUpdated": "2026-03-19T09:34:52.967Z"
+        "lastUpdated": "2026-04-03T07:14:21.215Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/trash/route.ts"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/trash/page.tsx"
     },
     "auth": {
       "phase": "do",
@@ -1092,7 +1092,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-03T07:10:30.673Z"
+    "lastActivity": "2026-04-03T07:14:21.216Z"
   },
   "history": [
     {
@@ -12480,6 +12480,30 @@
     {
       "timestamp": "2026-04-03T07:10:30.673Z",
       "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-03T07:14:03.588Z",
+      "feature": "trash",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-03T07:14:11.348Z",
+      "feature": "trash",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-03T07:14:16.957Z",
+      "feature": "trash",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-03T07:14:21.215Z",
+      "feature": "trash",
       "phase": "do",
       "action": "updated"
     }

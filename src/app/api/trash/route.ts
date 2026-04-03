@@ -9,6 +9,7 @@ const SOURCE_LABEL: Record<string, string> = {
   private_cert_consultations: '민간자격증 상담',
   certificate_applications: '자격증 신청',
   agency_agreements: '기관협약',
+  cert_students: '민간자격증 학생관리',
 };
 
 
@@ -51,7 +52,7 @@ export async function GET() {
         }
       } else {
         const { data, error } = await supabaseAdmin
-          .from(table as 'hakjeom_consultations' | 'private_cert_consultations' | 'certificate_applications')
+          .from(table as 'hakjeom_consultations' | 'private_cert_consultations' | 'certificate_applications' | 'cert_students')
           .select('id, name, contact, deleted_at')
           .not('deleted_at', 'is', null)
           .order('deleted_at', { ascending: false });

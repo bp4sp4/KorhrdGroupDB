@@ -20,6 +20,7 @@ const SOURCE_TABLES = [
   { value: 'private_cert_consultations', label: '민간자격증 상담' },
   { value: 'certificate_applications', label: '자격증 신청' },
   { value: 'agency_agreements', label: '기관협약' },
+  { value: 'cert_students', label: '민간자격증 학생관리' },
 ]
 
 function formatDateTime(dateString: string) {
@@ -59,7 +60,7 @@ export default function TrashPage() {
     fetchTrash()
 
     const supabase = createClient()
-    const tables = ['hakjeom_consultations', 'private_cert_consultations', 'certificate_applications', 'agency_agreements']
+    const tables = ['hakjeom_consultations', 'private_cert_consultations', 'certificate_applications', 'agency_agreements', 'cert_students']
 
     const channel = supabase.channel('trash-realtime')
     tables.forEach(table => {
