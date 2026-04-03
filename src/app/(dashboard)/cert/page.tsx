@@ -232,24 +232,32 @@ function getKstElapsedHours(dateStr: string): number {
   return (kstNow.getTime() - kstCreated.getTime()) / (1000 * 60 * 60);
 }
 
+// 생성일로부터 N일째 되는 날 10시 이후인지 확인 (KST 기준)
+// N=1: 다음 날 10시, N=7: 7일 후 10시
+function isPastNthDay10AM(dateStr: string, days: number): boolean {
+  const kstNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
+  const kstCreated = new Date(new Date(dateStr).toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
+  const target = new Date(kstCreated);
+  target.setDate(target.getDate() + days);
+  target.setHours(10, 0, 0, 0);
+  return kstNow >= target;
+}
+
 // 학생 목록 정렬: 상단노출 규칙 적용
-// - 과정안내/수강중: 1일(24시간) 이상 경과 시 상단 노출
-// - 미응시/수료/발급완료/취소: 7일(168시간) 이상 경과 시 상단 노출
+// - 과정안내/수강중: 다음 날(1일 후) 10시 이후 상단 노출
+// - 미응시/수료/발급완료/취소: 7일 후 10시 이후 상단 노출
 function sortStudents(items: CertStudent[]): CertStudent[] {
   const TOP_STATUSES: StudentStatus[] = ['과정안내', '수강중'];
-  const TOP_THRESHOLD_HOURS = 24;
   const DONE_STATUSES: StudentStatus[] = ['미응시', '수료', '발급완료', '취소'];
-  const DONE_THRESHOLD_HOURS = 168;
 
   const topItems: CertStudent[] = [];
   const doneItems: CertStudent[] = [];
   const normalItems: CertStudent[] = [];
 
   for (const item of items) {
-    const elapsed = getKstElapsedHours(item.created_at);
-    if (TOP_STATUSES.includes(item.status) && elapsed >= TOP_THRESHOLD_HOURS) {
+    if (TOP_STATUSES.includes(item.status) && isPastNthDay10AM(item.created_at, 1)) {
       topItems.push(item);
-    } else if (DONE_STATUSES.includes(item.status) && elapsed >= DONE_THRESHOLD_HOURS) {
+    } else if (DONE_STATUSES.includes(item.status) && isPastNthDay10AM(item.created_at, 7)) {
       doneItems.push(item);
     } else {
       normalItems.push(item);

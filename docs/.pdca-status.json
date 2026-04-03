@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-04-03T08:00:04.836Z",
+  "lastUpdated": "2026-04-03T08:07:34.044Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -169,7 +169,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:41:16.658Z",
-        "lastUpdated": "2026-04-03T08:00:04.836Z"
+        "lastUpdated": "2026-04-03T08:07:34.044Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/cert/page.tsx"
     },
@@ -1092,7 +1092,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-03T08:00:04.836Z"
+    "lastActivity": "2026-04-03T08:07:34.044Z"
   },
   "history": [
     {
@@ -12707,6 +12707,18 @@
     },
     {
       "timestamp": "2026-04-03T08:00:04.836Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-03T08:04:29.664Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-03T08:07:34.044Z",
       "feature": "cert",
       "phase": "do",
       "action": "updated"
