@@ -21,16 +21,19 @@ export async function GET(req: NextRequest) {
   const table = req.nextUrl.searchParams.get('table')
   const id    = req.nextUrl.searchParams.get('id')
 
-  if (!table || !id || !ALLOWED_TABLES.includes(table)) {
+  if (!table || !ALLOWED_TABLES.includes(table)) {
     return NextResponse.json({ error: '잘못된 요청입니다.' }, { status: 400 })
   }
 
-  const { data, error } = await supabaseAdmin
+  let query = supabaseAdmin
     .from('memo_logs')
     .select('*')
     .eq('table_name', table)
-    .eq('record_id', id)
     .order('created_at', { ascending: false })
+
+  if (id) query = query.eq('record_id', id)
+
+  const { data, error } = await query
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 

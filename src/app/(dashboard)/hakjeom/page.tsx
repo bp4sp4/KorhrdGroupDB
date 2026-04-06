@@ -38,6 +38,7 @@ interface HakjeomConsultation {
   counsel_check: string | null;
   current_situation: string | null;
   reaction_point: string | null;
+  contact_scheduled_at: string | null;
   created_at: string;
   updated_at: string | null;
   memo_count?: number;
@@ -725,7 +726,20 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic', cus
                   <StatusBadge status={editStatus} styleMap={CONSULTATION_STATUS_STYLE} />
                 </div>
                 <p className={styles.detailModalSub}>{item.contact}</p>
-                <p className={styles.detailModalSub}>등록일: {formatDateShort(item.created_at)}</p>
+                <div className={styles.detailModalSubRow}>
+                  <span className={styles.detailModalSub}>등록일: {formatDateShort(item.created_at)}</span>
+                  {item.contact_scheduled_at ? (
+                    <button
+                      className={styles.scheduleBtn_active}
+                      onClick={() => onUpdate(item.id, { contact_scheduled_at: null })}
+                    >연락예정 해제</button>
+                  ) : (
+                    <button
+                      className={styles.scheduleBtn}
+                      onClick={() => onUpdate(item.id, { contact_scheduled_at: new Date().toISOString() })}
+                    >상담예정</button>
+                  )}
+                </div>
                 <div className={styles.detailModalContactRow}>
                   <span className={styles.detailModalContactBadge}>
                     총 {item.memo_count ?? 0}회 연락
@@ -2027,7 +2041,7 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
 
   const isFiltered = searchText || statusFilter.length > 0 || managerFilter.length > 0 || majorCategoryFilter.length > 0 || minorCategoryFilter.length > 0 || reasonFilter.length > 0 || counselCheckFilter.length > 0 || startDate || endDate;
 
-  const HAKJEOM_HEADERS = ['번호', '대분류', '중분류', '이름', '연락처', '학력', '희망과정', '상담메모', '담당자', '상담확인', '상태', '과목비용', '등록일'];
+  const HAKJEOM_HEADERS = ['번호', '대분류', '중분류', '이름', '연락처', '학력', '희망과정', '거주지', '현재상황', '취득사유', '반응포인트', '담당자', '취소사유', '상태', '과목비용', '메모', '등록일'];
   const hakjeomToRow = (item: HakjeomConsultation, index: number) => [
     index + 1,
     parseSource(item.click_source).major || '',
@@ -2036,11 +2050,15 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
     item.contact,
     item.education ?? '',
     item.hope_course ?? '',
+    item.residence ?? '',
+    item.current_situation ?? '',
     item.reason ?? '',
+    item.reaction_point ?? '',
     item.manager ?? '',
     item.counsel_check ?? '',
     item.status,
     item.subject_cost ?? '',
+    item.latest_memo ?? '',
     item.created_at ? new Date(item.created_at).toLocaleString('ko-KR') : '',
   ];
 
@@ -2053,12 +2071,32 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
     }]);
   };
 
-  const handleDownloadAll = () => {
-    downloadExcel(`학점은행제_전체_${new Date().toLocaleDateString('ko-KR').replace(/\. /g,'-').replace('.','')}.xlsx`, [{
-      name: '학점은행제',
-      headers: HAKJEOM_HEADERS,
-      rows: filtered.map((item, i) => hakjeomToRow(item, i)),
-    }]);
+  const handleDownloadAll = async () => {
+    const filename = `학점은행제_전체_${new Date().toLocaleDateString('ko-KR').replace(/\. /g,'-').replace('.','')}.xlsx`;
+    try {
+      const memoRes = await fetch('/api/memo-logs?table=hakjeom_consultations');
+      const allMemos: { record_id: string; author_name?: string; content: string; created_at: string }[] = memoRes.ok ? await memoRes.json() : [];
+      // record_id별로 메모 합치기 (최신순, 작성일+내용)
+      const memoMap: Record<string, string> = {};
+      for (const m of allMemos) {
+        const date = m.created_at ? new Date(m.created_at).toLocaleString('ko-KR') : '';
+        const line = `[${date}] ${m.author_name ?? ''}: ${m.content}`;
+        const key = String(m.record_id);
+        memoMap[key] = memoMap[key] ? `${memoMap[key]}\n${line}` : line;
+      }
+      const hakjeomToRowWithMemo = (item: HakjeomConsultation, index: number) => [
+        ...hakjeomToRow(item, index).slice(0, -2), // 메모+등록일 제외
+        memoMap[String(item.id)] ?? '',             // 전체 메모 (모든 메모 합본)
+        item.created_at ? new Date(item.created_at).toLocaleString('ko-KR') : '',
+      ];
+      downloadExcel(filename, [{
+        name: '학점은행제',
+        headers: HAKJEOM_HEADERS,
+        rows: filtered.map((item, i) => hakjeomToRowWithMemo(item, i)),
+      }]);
+    } catch {
+      downloadExcel(filename, [{ name: '학점은행제', headers: HAKJEOM_HEADERS, rows: filtered.map((item, i) => hakjeomToRow(item, i)) }]);
+    }
   };
 
   const resetFilters = () => {
@@ -2068,46 +2106,53 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
     setStartDate(''); setEndDate(''); setCurrentPage(1);
   };
 
-  // 담당자별 실적 (헤더 칩)
+  // 담당자별 실적 (헤더 칩) — 스코프와 무관하게 전체 담당자 표시
   useEffect(() => {
     if (!isActive) { setStatsNode(null); return; }
-    const mgrs = Array.from(new Set(items.map(c => c.manager).filter(Boolean))) as string[];
-    if (mgrs.length === 0) { setStatsNode(null); return; }
-    const rate = (list: HakjeomConsultation[]) => {
-      const t = list.length;
-      return t > 0 ? Math.round((list.filter(c => c.status === '등록완료').length / t) * 100) : 0;
-    };
-    const mStats = mgrs.map(name => {
-      const all = items.filter(c => c.manager === name);
-      const recent30 = [...all].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 30);
-      return { name, overall: rate(all), recent: rate(recent30) };
-    }).sort((a, b) => b.overall - a.overall);
-    const topName = mStats[0]?.overall > 0 ? mStats[0].name : null;
-    setStatsNode(
-      <div className={styles.statsInline}>
-        <span className={styles.statsInlineLabel}>담당자 실적</span>
-        {mStats.map(m => {
-          const isTop = m.name === topName;
-          return (
-            <span key={m.name} className={`${styles.statsInlineItem} ${isTop ? styles.statsInlineItemTop : ''}`}>
-              <span className={styles.statsInlineName}>
-                {isTop && '🥇 '}{m.name}
-              </span>
-              <span className={styles.statsInlineRateGroup}>
-                <span className={styles.statsInlineRateLabel}>30건</span>
-                <span className={styles.statsInlineRate}>{m.recent}%</span>
-              </span>
-              <span className={styles.statsInlineRateGroup}>
-                <span className={styles.statsInlineRateLabel}>전체</span>
-                <span className={`${styles.statsInlineRate} ${isTop ? styles.statsInlineRateTop : ''}`}>{m.overall}%</span>
-              </span>
-            </span>
-          );
-        })}
-      </div>
-    );
-    return () => setStatsNode(null);
-  }, [items, setStatsNode, isActive]);
+    let cancelled = false;
+    fetch('/api/hakjeom/perf-stats')
+      .then(r => r.ok ? r.json() : [])
+      .then((all: { manager: string; status: string; created_at: string }[]) => {
+        if (cancelled) return;
+        const mgrs = Array.from(new Set(all.map(c => c.manager).filter(Boolean))) as string[];
+        if (mgrs.length === 0) { setStatsNode(null); return; }
+        const rate = (list: typeof all) => {
+          const t = list.length;
+          return t > 0 ? Math.round((list.filter(c => c.status === '등록완료').length / t) * 100) : 0;
+        };
+        const mStats = mgrs.map(name => {
+          const rows = all.filter(c => c.manager === name);
+          const recent30 = [...rows].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 30);
+          return { name, overall: rate(rows), recent: rate(recent30) };
+        }).sort((a, b) => b.overall - a.overall);
+        const topName = mStats[0]?.overall > 0 ? mStats[0].name : null;
+        setStatsNode(
+          <div className={styles.statsInline}>
+            <span className={styles.statsInlineLabel}>담당자 실적</span>
+            {mStats.map(m => {
+              const isTop = m.name === topName;
+              return (
+                <span key={m.name} className={`${styles.statsInlineItem} ${isTop ? styles.statsInlineItemTop : ''}`}>
+                  <span className={styles.statsInlineName}>
+                    {isTop && '🥇 '}{m.name}
+                  </span>
+                  <span className={styles.statsInlineRateGroup}>
+                    <span className={styles.statsInlineRateLabel}>30건</span>
+                    <span className={styles.statsInlineRate}>{m.recent}%</span>
+                  </span>
+                  <span className={styles.statsInlineRateGroup}>
+                    <span className={styles.statsInlineRateLabel}>전체</span>
+                    <span className={`${styles.statsInlineRate} ${isTop ? styles.statsInlineRateTop : ''}`}>{m.overall}%</span>
+                  </span>
+                </span>
+              );
+            })}
+          </div>
+        );
+      })
+      .catch(() => setStatsNode(null));
+    return () => { cancelled = true; setStatsNode(null); };
+  }, [setStatsNode, isActive]);
 
   return (
     <div>
@@ -2297,13 +2342,14 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
                   <th className={styles.th}>반응포인트</th>
                   <th className={styles.th}>과목비용</th>
                   <th className={styles.th}>등록일</th>
+                  <th className={styles.th}></th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <TableSkeleton cols={15} rows={8} />
+                  <TableSkeleton cols={16} rows={8} />
                 ) : filtered.length === 0 ? (
-                  <tr><td colSpan={15} className={styles.tableEmptyMsg}>검색 결과가 없습니다.</td></tr>
+                  <tr><td colSpan={16} className={styles.tableEmptyMsg}>검색 결과가 없습니다.</td></tr>
                 ) : paginated.map((item, index) => (
                   <tr
                     key={item.id}
@@ -2397,6 +2443,19 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
                     <td className={styles.tdSecondary}>{formatCost(item.subject_cost)}</td>
                     <td className={styles.tdDateSmall}>
                       {formatDate(item.created_at)}
+                    </td>
+                    <td className={styles.tdAction} onClick={e => e.stopPropagation()}>
+                      {item.contact_scheduled_at ? (
+                        <button
+                          className={styles.scheduleBtn_active}
+                          onClick={() => handleUpdate(item.id, { contact_scheduled_at: null })}
+                        >해제</button>
+                      ) : (
+                        <button
+                          className={styles.scheduleBtn}
+                          onClick={() => handleUpdate(item.id, { contact_scheduled_at: new Date().toISOString() })}
+                        >연락예정</button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -4119,43 +4178,13 @@ function StatsTab() {
 
 // ─── 메인 페이지 컴포넌트 ────────────────────────────────────────────────────
 
-// ─── 상담완료 탭 헬퍼 ────────────────────────────────────────────────────────
+// ─── 연락예정 탭 헬퍼 ────────────────────────────────────────────────────────
 
 const COUNSEL_DONE_STATUSES = ['상담완료-높음', '상담완료-중간', '상담완료-낮음'] as const;
 
+// 상담예정 버튼을 누른 항목만 표시 (contact_scheduled_at 설정된 건)
 function isEligibleForCounselTab(c: HakjeomConsultation): boolean {
-  if (!COUNSEL_DONE_STATUSES.includes(c.status as typeof COUNSEL_DONE_STATUSES[number])) return false;
-  // counsel_completed_at 없으면 updated_at 으로 대체
-  const refDate = c.counsel_completed_at ?? c.updated_at;
-  if (!refDate) return false;
-
-  // 상담완료 이후에 메모가 없는 건만 표시
-  // latest_memo_at 이 없거나 refDate 이전이면 → 완료 후 메모 없음
-  if (c.latest_memo_at && new Date(c.latest_memo_at) >= new Date(refDate)) return false;
-
-  const KST = 9 * 60 * 60 * 1000;
-  const nowKST = new Date(Date.now() + KST);
-  const refKST = new Date(new Date(refDate).getTime() + KST);
-
-  const ymd = (d: Date) => `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
-  const todayStr = ymd(nowKST);
-  const refStr = ymd(refKST);
-
-  // 현재 월 것만
-  if (
-    refKST.getUTCFullYear() !== nowKST.getUTCFullYear() ||
-    refKST.getUTCMonth() !== nowKST.getUTCMonth()
-  ) return false;
-
-  // 오늘 변경 건은 내일 10시에 등장
-  if (refStr === todayStr) return false;
-
-  // 어제 변경 건은 오전 10시 이후에만 표시
-  const yesterdayStr = ymd(new Date(nowKST.getTime() - 86400000));
-  if (refStr === yesterdayStr && nowKST.getUTCHours() < 10) return false;
-
-  // 이후에는 메모 작성 전까지 계속 유지
-  return true;
+  return c.contact_scheduled_at !== null;
 }
 
 // ─── 탭: 상담완료 ────────────────────────────────────────────────────────────
@@ -4452,7 +4481,7 @@ const TAB_CONFIG: { key: TabKey; label: string }[] = [
   { key: 'hakjeom', label: '학점은행제' },
   { key: 'agency', label: '기관협약' },
   { key: 'bulk', label: '일괄등록' },
-  { key: 'counsel_done', label: '상담완료' },
+  { key: 'counsel_done', label: '연락예정' },
   { key: 'stats', label: '통계' },
 ];
 

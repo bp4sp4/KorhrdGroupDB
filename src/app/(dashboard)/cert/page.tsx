@@ -22,7 +22,7 @@ import { downloadExcel } from '@/lib/excelExport'
 type PaymentStatus = 'pending' | 'paid' | 'failed' | 'cancelled'
 
 // source 탭 구분: 'hakjeom' = 학점연계 신청, 'edu' = 교육원, 'private-cert' = 민간자격증
-type SourceTab = 'hakjeom' | 'edu' | 'private-cert' | 'stats' | 'student-mgmt' | 'student-bulk' | 'counsel-template'
+type SourceTab = 'hakjeom' | 'edu' | 'private-cert' | 'stats' | 'student-mgmt' | 'student-bulk' | 'counsel-template' | 'student-contact'
 
 // 민간자격증 관련 타입
 type ConsultationStatus = '상담대기' | '상담중' | '보류' | '등록대기' | '등록완료'
@@ -46,6 +46,7 @@ interface CertStudent {
   manager: string | null;
   memo: string | null;
   created_at: string;
+  contact_scheduled_at?: string | null;
   memo_count?: number;
   latest_memo?: string | null;
   latest_memo_at?: string | null;
@@ -210,6 +211,7 @@ const SOURCE_TABS: { value: SourceTab; label: string }[] = [
   { value: 'edu', label: '교육원' },
   { value: 'private-cert', label: '민간자격증' },
   { value: 'student-mgmt', label: '학생관리' },
+  { value: 'student-contact', label: '연락예정' },
   { value: 'student-bulk', label: '일괄등록' },
   { value: 'counsel-template', label: '상담 템플릿' },
   { value: 'stats', label: '통계' },
@@ -262,38 +264,6 @@ function getKstElapsedHours(dateStr: string): number {
 
 // 생성일로부터 N일째 되는 날 10시 이후인지 확인 (KST 기준)
 // N=1: 다음 날 10시, N=7: 7일 후 10시
-function isPastNthDay10AM(dateStr: string, days: number): boolean {
-  const kstNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
-  const kstCreated = new Date(new Date(dateStr).toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
-  const target = new Date(kstCreated);
-  target.setDate(target.getDate() + days);
-  target.setHours(10, 0, 0, 0);
-  return kstNow >= target;
-}
-
-// 학생 목록 정렬: 상단노출 규칙 적용
-// - 과정안내/수강중: 다음 날(1일 후) 10시 이후 상단 노출
-// - 미응시/수료/발급완료/취소: 7일 후 10시 이후 상단 노출
-function sortStudents(items: CertStudent[]): CertStudent[] {
-  const TOP_STATUSES: StudentStatus[] = ['과정안내', '수강중'];
-  const DONE_STATUSES: StudentStatus[] = ['미응시', '수료', '발급완료', '취소'];
-
-  const topItems: CertStudent[] = [];
-  const doneItems: CertStudent[] = [];
-  const normalItems: CertStudent[] = [];
-
-  for (const item of items) {
-    if (TOP_STATUSES.includes(item.status) && isPastNthDay10AM(item.created_at, 1)) {
-      topItems.push(item);
-    } else if (DONE_STATUSES.includes(item.status) && isPastNthDay10AM(item.created_at, 7)) {
-      doneItems.push(item);
-    } else {
-      normalItems.push(item);
-    }
-  }
-
-  return [...normalItems, ...topItems, ...doneItems];
-}
 
 // ─────────────────────────────────────────────
 // Helpers
@@ -3198,7 +3168,14 @@ function CertStudentDetailPanel({ item, onClose, onUpdate, initialTab = 'basic' 
                   <StatusBadge status={editStatus} styleMap={STUDENT_STATUS_STYLE} />
                 </div>
                 <p className={styles.detailModalSub}>{item.contact}</p>
-                <p className={styles.detailModalSub}>등록일: {formatDateShort(item.created_at)}</p>
+                <div className={styles.detailModalSubRow}>
+                  <span className={styles.detailModalSub}>등록일: {formatDateShort(item.created_at)}</span>
+                  {item.contact_scheduled_at ? (
+                    <button className={styles.scheduleBtn_active} onClick={() => onUpdate(item.id, { contact_scheduled_at: null })}>연락예정 해제</button>
+                  ) : (
+                    <button className={styles.scheduleBtn} onClick={() => onUpdate(item.id, { contact_scheduled_at: new Date().toISOString() })}>연락예정</button>
+                  )}
+                </div>
                 <div className={styles.detailModalContactRow}>
                   <span className={styles.detailModalContactBadge}>
                     총 {localMemoCount}회 연락
@@ -3579,7 +3556,7 @@ function StudentMgmtTab() {
       const res = await fetch('/api/cert/students');
       if (!res.ok) throw new Error('데이터를 불러오지 못했습니다.');
       const data: CertStudent[] = await res.json();
-      setItems(sortStudents(data));
+      setItems(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : '알 수 없는 오류');
     } finally {
@@ -3612,7 +3589,7 @@ function StudentMgmtTab() {
     }
     const { data: updated } = await res.json();
     const merged = updated ?? fields;
-    setItems(prev => sortStudents(prev.map(c => c.id === id ? { ...c, ...merged } : c)));
+    setItems(prev => prev.map(c => c.id === id ? { ...c, ...merged } : c));
     setSelectedItem(prev => prev?.id === id ? { ...prev, ...merged } : prev);
     setToastVisible(true);
     setTimeout(() => setToastVisible(false), 2500);
@@ -3793,13 +3770,14 @@ function StudentMgmtTab() {
                   </th>
                   <th className={styles.th}>메모</th>
                   <th className={styles.th}>등록일</th>
+                  <th className={styles.th}></th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <TableSkeleton cols={11} rows={8} />
+                  <TableSkeleton cols={12} rows={8} />
                 ) : filtered.length === 0 ? (
-                  <tr><td colSpan={11} className={styles.tableEmptyMsg}>검색 결과가 없습니다.</td></tr>
+                  <tr><td colSpan={12} className={styles.tableEmptyMsg}>검색 결과가 없습니다.</td></tr>
                 ) : paginated.map((item, index) => {
                   const courseItems = parseCourseItems(item.course);
                   return (
@@ -3862,6 +3840,13 @@ function StudentMgmtTab() {
                         <MemoHoverBadge text={item.latest_memo || item.memo || '-'} />
                       </td>
                       <td className={styles.tdDateSmall}>{formatDate(item.created_at)}</td>
+                      <td className={styles.tdAction} onClick={e => e.stopPropagation()}>
+                        {item.contact_scheduled_at ? (
+                          <button className={styles.scheduleBtn_active} onClick={() => handleUpdate(item.id, { contact_scheduled_at: null })}>해제</button>
+                        ) : (
+                          <button className={styles.scheduleBtn} onClick={() => handleUpdate(item.id, { contact_scheduled_at: new Date().toISOString() })}>연락예정</button>
+                        )}
+                      </td>
                     </tr>
                   );
                 })}
@@ -3929,6 +3914,262 @@ function StudentMgmtTab() {
 }
 
 // ─────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// 연락예정 탭
+// ─────────────────────────────────────────────
+
+function StudentContactTab() {
+  const [items, setItems] = useState<CertStudent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedItem, setSelectedItem] = useState<CertStudent | null>(null);
+  const [toastVisible, setToastVisible] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchText, setSearchText] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [managerFilter, setManagerFilter] = useState<string>('all');
+  const [clickSourceFilter, setClickSourceFilter] = useState<string[]>([]);
+  const [openFilterColumn, setOpenFilterColumn] = useState<string | null>(null);
+  const [filterDropdownPos, setFilterDropdownPos] = useState({ top: 0, left: 0 });
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const itemsPerPage = 10;
+
+  const fetchData = useCallback(async (bg = false) => {
+    if (!bg) setLoading(true);
+    try {
+      const res = await fetch('/api/cert/students');
+      if (res.ok) {
+        const data: CertStudent[] = await res.json();
+        setItems(data);
+      }
+    } finally {
+      if (!bg) setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  useEffect(() => {
+    if (!openFilterColumn) return;
+    const handleMouseDown = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setOpenFilterColumn(null);
+      }
+    };
+    document.addEventListener('mousedown', handleMouseDown);
+    return () => document.removeEventListener('mousedown', handleMouseDown);
+  }, [openFilterColumn]);
+
+  const handleUpdate = async (id: number, fields: Partial<CertStudent>) => {
+    const res = await fetch('/api/cert/students', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, ...fields }),
+    });
+    if (!res.ok) return;
+    const { data: updated } = await res.json();
+    const merged = updated ?? fields;
+    setItems(prev => prev.map(c => c.id === id ? { ...c, ...merged } : c));
+    setSelectedItem(prev => prev?.id === id ? { ...prev, ...merged } : prev);
+    setToastVisible(true);
+    setTimeout(() => setToastVisible(false), 2500);
+  };
+
+  const eligible = items.filter(c => c.contact_scheduled_at !== null);
+  const uniqueManagers = Array.from(new Set(eligible.map(c => c.manager).filter(Boolean))) as string[];
+  const uniqueClickSources = Array.from(new Set(eligible.map(c => c.click_source).filter(Boolean))).sort() as string[];
+
+  const filtered = eligible.filter(c => {
+    if (searchText) {
+      const q = searchText.toLowerCase();
+      const contactClean = c.contact.replace(/-/g, '');
+      const searchClean = searchText.replace(/-/g, '');
+      if (!(c.name.toLowerCase().includes(q) || contactClean.includes(searchClean) || (c.memo || '').toLowerCase().includes(q))) return false;
+    }
+    if (statusFilter !== 'all' && c.status !== statusFilter) return false;
+    if (managerFilter !== 'all') {
+      if (managerFilter === 'none' && c.manager) return false;
+      if (managerFilter !== 'none' && c.manager !== managerFilter) return false;
+    }
+    if (clickSourceFilter.length > 0 && !clickSourceFilter.includes(c.click_source ?? '')) return false;
+    return true;
+  });
+
+  useEffect(() => { setCurrentPage(1); }, [searchText, statusFilter, managerFilter, clickSourceFilter]);
+
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const FILTER_SVG = <svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+
+  return (
+    <div>
+      <div className={styles.filterRow}>
+        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--toss-text-primary)', whiteSpace: 'nowrap' }}>총 {filtered.length}건</span>
+        <input
+          className={styles.input}
+          style={{ width: 220 }}
+          placeholder="이름, 연락처, 메모 검색..."
+          value={searchText}
+          onChange={e => { setSearchText(e.target.value); setCurrentPage(1); }}
+        />
+        {(searchText || statusFilter !== 'all' || managerFilter !== 'all' || clickSourceFilter.length > 0) && (
+          <button className={styles.btnSecondary} onClick={() => { setSearchText(''); setStatusFilter('all'); setManagerFilter('all'); setClickSourceFilter([]); setCurrentPage(1); }}>
+            필터 초기화
+          </button>
+        )}
+      </div>
+      <div className={styles.tableWrap}>
+        <table className={styles.table}>
+          <thead>
+            <tr>
+              <th className={styles.thNum}>번호</th>
+              <th className={styles.thFilterable}>
+                <div className={styles.thInner}>
+                  유입경로
+                  <button className={`${styles.thFilterBtn}${clickSourceFilter.length > 0 ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'source') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('source'); }}>{FILTER_SVG}</button>
+                </div>
+              </th>
+              <th className={styles.th}>이름</th>
+              <th className={styles.th}>연락처</th>
+              <th className={styles.th}>수강과목</th>
+              <th className={styles.th}>수강률</th>
+              <th className={styles.thFilterable}>
+                <div className={styles.thInner}>
+                  상태
+                  <button className={`${styles.thFilterBtn}${statusFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'status') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('status'); }}>{FILTER_SVG}</button>
+                </div>
+              </th>
+              <th className={styles.thFilterable}>
+                <div className={styles.thInner}>
+                  담당자
+                  <button className={`${styles.thFilterBtn}${managerFilter !== 'all' ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'manager') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('manager'); }}>{FILTER_SVG}</button>
+                </div>
+              </th>
+              <th className={styles.th}>메모</th>
+              <th className={styles.th}>등록일</th>
+              <th className={styles.th}></th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <TableSkeleton cols={11} rows={8} />
+            ) : paginated.length === 0 ? (
+              <tr><td colSpan={11} className={styles.tableEmptyMsg}>연락예정 항목이 없습니다.</td></tr>
+            ) : paginated.map((item, idx) => (
+              <tr
+                key={item.id}
+                onClick={() => setSelectedItem(item)}
+                style={{ cursor: 'pointer', background: selectedItem?.id === item.id ? '#EBF3FE' : 'white' }}
+                onMouseEnter={e => { if (selectedItem?.id !== item.id) (e.currentTarget as HTMLTableRowElement).style.background = 'var(--toss-bg)'; }}
+                onMouseLeave={e => { if (selectedItem?.id !== item.id) (e.currentTarget as HTMLTableRowElement).style.background = 'white'; }}
+              >
+                <td className={styles.tdSecondary}>{(currentPage - 1) * itemsPerPage + idx + 1}</td>
+                <td className={styles.tdSecondary}>{item.click_source || <span className={styles.tdMuted}>-</span>}</td>
+                <td className={styles.tdBold}>{item.name}</td>
+                <td className={styles.tdSecondary}>{item.contact}</td>
+                <td className={styles.td}>
+                  {(() => {
+                    const courseItems = parseCourseItems(item.course ?? null);
+                    return courseItems.length > 0 ? (
+                      <div className={certStyles.courseTableCellList}>
+                        {courseItems.map(c => (
+                          <span key={c.name} className={certStyles.courseTableTag}>{c.name}</span>
+                        ))}
+                      </div>
+                    ) : <span className={styles.tdMuted}>-</span>;
+                  })()}
+                </td>
+                <td className={styles.td}>
+                  {(() => {
+                    const courseItems = parseCourseItems(item.course ?? null);
+                    return courseItems.length > 0 ? (
+                      <div className={certStyles.studentRateCellStack}>
+                        {courseItems.map(c => {
+                          const r = c.rate ?? 0;
+                          return (
+                            <div key={c.name} className={certStyles.studentRateCellRow}>
+                              <div className={certStyles.studentRateCellBar}>
+                                <div className={certStyles.studentRateCellBarFill} style={{ width: `${Math.min(r, 100)}%` }} />
+                              </div>
+                              <span className={certStyles.studentRateCellText}>{r}%</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : <span className={styles.tdMuted}>-</span>;
+                  })()}
+                </td>
+                <td>
+                  <StatusBadge status={item.status} styleMap={STUDENT_STATUS_STYLE} />
+                </td>
+                <td className={styles.tdSecondary}>{item.manager ?? '-'}</td>
+                <td className={styles.tdMemo}>
+                  <MemoHoverBadge text={item.latest_memo || item.memo || '-'} />
+                </td>
+                <td className={styles.tdDateSmall}>{formatDate(item.created_at)}</td>
+                <td className={styles.tdAction} onClick={e => e.stopPropagation()}>
+                  <button
+                    className={styles.scheduleBtn_active}
+                    onClick={() => handleUpdate(item.id, { contact_scheduled_at: null })}
+                  >해제</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {totalPages > 1 && (
+        <div className={styles.pagination}>
+          <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className={styles.pageBtn}>‹</button>
+          {getPaginationPages(currentPage, totalPages).map((page, idx) =>
+            page === '...'
+              ? <span key={`e-${idx}`} className={styles.pageEllipsis}>…</span>
+              : <button key={page} onClick={() => setCurrentPage(Number(page))} className={`${styles.pageBtn} ${currentPage === page ? styles.pageBtnActive : ''}`}>{page}</button>
+          )}
+          <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className={styles.pageBtn}>›</button>
+        </div>
+      )}
+      {openFilterColumn && (
+        <div ref={dropdownRef} className={styles.filterColumnDropdown} style={{ top: filterDropdownPos.top, left: filterDropdownPos.left }}>
+          {openFilterColumn === 'source' && (
+            <>
+              <div className={`${styles.filterDropdownItem}${clickSourceFilter.length === 0 ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setClickSourceFilter([]); setCurrentPage(1); setOpenFilterColumn(null); }}>전체</div>
+              {uniqueClickSources.map(s => (
+                <div key={s} className={`${styles.filterDropdownItem}${clickSourceFilter.includes(s) ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setClickSourceFilter(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]); setCurrentPage(1); }}>{s}</div>
+              ))}
+            </>
+          )}
+          {openFilterColumn === 'status' && (
+            <>
+              <div className={`${styles.filterDropdownItem}${statusFilter === 'all' ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setStatusFilter('all'); setCurrentPage(1); setOpenFilterColumn(null); }}>전체</div>
+              {STUDENT_STATUS_OPTIONS.map(s => (
+                <div key={s} className={`${styles.filterDropdownItem}${statusFilter === s ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setStatusFilter(s); setCurrentPage(1); setOpenFilterColumn(null); }}>{s}</div>
+              ))}
+            </>
+          )}
+          {openFilterColumn === 'manager' && (
+            <>
+              <div className={`${styles.filterDropdownItem}${managerFilter === 'all' ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setManagerFilter('all'); setCurrentPage(1); setOpenFilterColumn(null); }}>전체</div>
+              <div className={`${styles.filterDropdownItem}${managerFilter === 'none' ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setManagerFilter('none'); setCurrentPage(1); setOpenFilterColumn(null); }}>미배정</div>
+              {uniqueManagers.map(m => (
+                <div key={m} className={`${styles.filterDropdownItem}${managerFilter === m ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setManagerFilter(m); setCurrentPage(1); setOpenFilterColumn(null); }}>{m}</div>
+              ))}
+            </>
+          )}
+        </div>
+      )}
+      {selectedItem && (
+        <CertStudentDetailPanel
+          item={selectedItem}
+          onClose={() => setSelectedItem(null)}
+          onUpdate={handleUpdate}
+        />
+      )}
+      {toastVisible && <div className={styles.toast}>저장됐어요</div>}
+    </div>
+  );
+}
+
 // 학생관리 일괄등록 뷰
 // ─────────────────────────────────────────────
 
@@ -5157,6 +5398,7 @@ export default function CertPage() {
       {(sourceTab === 'hakjeom' || sourceTab === 'edu') && <ApplicationTab sourceTab={sourceTab} highlightId={urlTab === sourceTab ? urlHighlight : undefined} />}
       {sourceTab === 'private-cert' && <PrivateCertTab setStatsNode={setStatsNode} highlightId={urlTab === 'private-cert' ? urlHighlight : undefined} />}
       {sourceTab === 'student-mgmt' && <StudentMgmtTab />}
+      {sourceTab === 'student-contact' && <StudentContactTab />}
       {sourceTab === 'student-bulk' && <StudentBulkUploadView onBack={() => setSourceTab('student-mgmt')} />}
       {sourceTab === 'counsel-template' && <CounselTemplateTab />}
       {sourceTab === 'stats' && <CertStatsTab />}

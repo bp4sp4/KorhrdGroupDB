@@ -25,6 +25,7 @@ interface HakjeomUpdatePayload {
   counsel_completed_at?: string | null;
   current_situation?: string | null;
   reaction_point?: string | null;
+  contact_scheduled_at?: string | null;
 }
 
 const TABLE = 'hakjeom_consultations';
@@ -183,6 +184,7 @@ export async function PATCH(request: NextRequest) {
     const {
       id, ids, status, memo, manager, counsel_check, subject_cost,
       name, contact, education, reason, click_source, residence, hope_course, current_situation, reaction_point,
+      contact_scheduled_at,
     } = body;
 
     // 일괄 담당자 배정
@@ -257,6 +259,7 @@ export async function PATCH(request: NextRequest) {
     if (hope_course !== undefined) updateData.hope_course = hope_course || null;
     if (current_situation !== undefined) updateData.current_situation = current_situation || null;
     if (reaction_point !== undefined) updateData.reaction_point = reaction_point || null;
+    if (contact_scheduled_at !== undefined) updateData.contact_scheduled_at = contact_scheduled_at;
 
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json({ error: 'At least one field is required for update' }, { status: 400 });
