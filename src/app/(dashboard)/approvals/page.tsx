@@ -47,12 +47,7 @@ interface ApprovalFormState {
 // ---------------------------------------------------------------------------
 
 const SIDEBAR_GROUPS: { label: string; items: SidebarMenu[] }[] = [
-  {
-    label: '홈',
-    items: [
-      { key: 'home', label: '홈' },
-    ],
-  },
+
   {
     label: '결재하기',
     items: [
@@ -533,12 +528,12 @@ export default function ApprovalsPage() {
 
       {/* 결재할 문서 섹션 */}
       <section className={styles.home_section}>
-        <div className={styles.home_section_header}>
+        
           <div className={styles.home_section_title_row}>
-            <h3 className={styles.home_section_title}>결재할 문서</h3>
-            <Info size={14} className={styles.home_section_info_icon} />
+            
+            
           </div>
-        </div>
+      
         {homeLoading ? (
           <div className={styles.section_loading}>불러오는 중...</div>
         ) : (
@@ -556,7 +551,7 @@ export default function ApprovalsPage() {
         <div className={styles.home_section_header}>
           <div className={styles.home_section_title_row}>
             <h3 className={styles.home_section_title}>기안 진행 문서</h3>
-            <Info size={14} className={styles.home_section_info_icon} />
+            
           </div>
         </div>
         {homeLoading ? (
@@ -576,7 +571,7 @@ export default function ApprovalsPage() {
         <div className={styles.home_section_header}>
           <div className={styles.home_section_title_row}>
             <h3 className={styles.home_section_title}>완료 문서</h3>
-            <Info size={14} className={styles.home_section_info_icon} />
+            
           </div>
         </div>
         {homeLoading ? (

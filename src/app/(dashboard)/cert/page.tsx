@@ -3150,6 +3150,7 @@ function CertStudentDetailPanel({ item, onClose, onUpdate, initialTab = 'basic' 
   const [editCourseItems, setEditCourseItems] = useState<CourseItem[]>(() => parseCourseItems(item.course));
   const [editStatus, setEditStatus] = useState<StudentStatus>(item.status);
   const [editManager, setEditManager] = useState(item.manager ?? '');
+  const [editClickSource, setEditClickSource] = useState(item.click_source ?? '');
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'basic' | 'memo'>(initialTab);
   const [memoCount, setMemoCount] = useState<number | null>(null);
@@ -3162,6 +3163,7 @@ function CertStudentDetailPanel({ item, onClose, onUpdate, initialTab = 'basic' 
     setEditCourseItems(parseCourseItems(item.course));
     setEditStatus(item.status);
     setEditManager(item.manager ?? '');
+    setEditClickSource(item.click_source ?? '');
   }, [item.id]);
 
   const handleSave = async () => {
@@ -3174,6 +3176,7 @@ function CertStudentDetailPanel({ item, onClose, onUpdate, initialTab = 'basic' 
         completion_rate: null,
         status: editStatus,
         manager: editManager || null,
+        click_source: editClickSource || null,
       });
       onClose();
     } finally {
@@ -3256,6 +3259,10 @@ function CertStudentDetailPanel({ item, onClose, onUpdate, initialTab = 'basic' 
                 <span className={styles.detailFieldLabel}>담당자</span>
                 <input value={editManager} onChange={e => setEditManager(e.target.value)} placeholder="담당자 이름" className={`${styles.input} ${styles.inputFull}`} />
               </div>
+              <div className={styles.detailFieldRow}>
+                <span className={styles.detailFieldLabel}>유입경로</span>
+                <input value={editClickSource} onChange={e => setEditClickSource(e.target.value)} placeholder="예: 맘카페_광주맘" className={`${styles.input} ${styles.inputFull}`} />
+              </div>
             </>
           )}
           {activeTab === 'memo' && (
@@ -3293,7 +3300,7 @@ function CertStudentAddModal({ onClose, onSaved }: { onClose: () => void; onSave
   const TOTAL_STEPS = 2;
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({
-    name: '', contact: '', courseItems: [] as CourseItem[], manager: '', memo: '',
+    name: '', contact: '', courseItems: [] as CourseItem[], manager: '', memo: '', click_source: '',
   });
   const [errors, setErrors] = useState<{ name?: string; contact?: string }>({});
   const [saving, setSaving] = useState(false);
@@ -3406,6 +3413,15 @@ function CertStudentAddModal({ onClose, onSaved }: { onClose: () => void; onSave
                 />
               </div>
               <div className={styles.funnelFieldGroup}>
+                <label className={styles.funnelLabel}>유입경로 <span className={styles.funnelOptional}>(선택)</span></label>
+                <input
+                  value={form.click_source}
+                  onChange={e => setForm(p => ({ ...p, click_source: e.target.value }))}
+                  placeholder="예: 맘카페_광주맘"
+                  className={styles.funnelInput}
+                />
+              </div>
+              <div className={styles.funnelFieldGroup}>
                 <label className={styles.funnelLabel}>메모</label>
                 <input
                   value={form.memo}
@@ -3436,9 +3452,9 @@ function CertStudentAddModal({ onClose, onSaved }: { onClose: () => void; onSave
 // ─────────────────────────────────────────────
 
 const STUDENT_CSV_TEMPLATE = [
-  '\uFEFF이름,연락처,수강과목,상태,담당자,메모,등록일',
-  '홍길동,010-1234-5678,생활지원사1급:80,과정안내,김담당,,2024-03-15',
-  '김영희,010-2345-6789,아동미술지도사1급:30/생활지원사1급:50,수강중,이담당,오전 연락 요망,2024-04-01',
+  '\uFEFF이름,연락처,수강과목,상태,담당자,유입경로,메모,등록일',
+  '홍길동,010-1234-5678,생활지원사1급:80,과정안내,김담당,맘카페_광주맘,,2024-03-15',
+  '김영희,010-2345-6789,아동미술지도사1급:30/생활지원사1급:50,수강중,이담당,,오전 연락 요망,2024-04-01',
   '',
 ].join('\n');
 
@@ -3448,6 +3464,7 @@ const STUDENT_CSV_COLUMN_MAP: Record<string, string> = {
   '수강과목': 'course', 'course': 'course',
   '상태': 'status', 'status': 'status',
   '담당자': 'manager', 'manager': 'manager',
+  '유입경로': 'click_source', 'click_source': 'click_source',
   '메모': 'memo', 'memo': 'memo',
   '등록일': 'created_at', 'created_at': 'created_at',
 };
@@ -3455,8 +3472,8 @@ const STUDENT_CSV_COLUMN_MAP: Record<string, string> = {
 interface StudentCsvRow {
   name: string; contact: string;
   course: string; status: string;
-  manager: string; memo: string;
-  created_at: string;
+  manager: string; click_source: string;
+  memo: string; created_at: string;
 }
 
 // "과목명:수강률/과목명:수강률" 형식을 CourseItem JSON으로 변환
@@ -3476,16 +3493,51 @@ function parseCsvCourseField(val: string): string {
   return serializeCourseItems(items);
 }
 
+function normalizeKoreanDate(val: string): string {
+  // "2026-04-03 오전 3:09:19" → "2026-04-03T03:09:19"
+  // "2026-04-03 오후 1:09:19" → "2026-04-03T13:09:19"
+  const m = val.match(/^(\d{4}-\d{2}-\d{2})\s+(오전|오후)\s+(\d{1,2}):(\d{2})(?::\d{2})?/);
+  if (!m) return val;
+  let hour = parseInt(m[3], 10);
+  if (m[2] === '오후' && hour !== 12) hour += 12;
+  if (m[2] === '오전' && hour === 12) hour = 0;
+  return `${m[1]}T${String(hour).padStart(2, '0')}:${m[4]}:00`;
+}
+
+function splitCsvLine(line: string, sep: string): string[] {
+  if (sep === '\t') return line.split('\t').map(c => c.trim().replace(/^"|"$/g, ''));
+  const result: string[] = [];
+  let cur = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQuotes && line[i + 1] === '"') { cur += '"'; i++; }
+      else inQuotes = !inQuotes;
+    } else if (ch === ',' && !inQuotes) {
+      result.push(cur.trim());
+      cur = '';
+    } else {
+      cur += ch;
+    }
+  }
+  result.push(cur.trim());
+  return result;
+}
+
 function parseStudentCsv(text: string): StudentCsvRow[] {
   const lines = text.split(/\r?\n/).filter(l => l.trim());
   if (lines.length < 2) return [];
-  const headers = lines[0].split(',').map(h => h.trim().replace(/^\uFEFF/, '').replace(/^"|"$/g, ''));
+  const firstLine = lines[0].replace(/^\uFEFF/, '');
+  const sep = firstLine.includes('\t') ? '\t' : ',';
+  const headers = splitCsvLine(firstLine, sep);
   const mapped = headers.map(h => STUDENT_CSV_COLUMN_MAP[h] ?? null);
   return lines.slice(1).map(line => {
-    const cols = line.split(',').map(c => c.trim().replace(/^"|"$/g, ''));
+    const cols = splitCsvLine(line, sep);
     const row: Record<string, string> = {};
     mapped.forEach((key, i) => { if (key) row[key] = cols[i] ?? ''; });
     if (row.course) row.course = parseCsvCourseField(row.course);
+    if (row.created_at) row.created_at = normalizeKoreanDate(row.created_at);
     return row as unknown as StudentCsvRow;
   }).filter(r => r.name && r.contact);
 }
@@ -3503,6 +3555,7 @@ function StudentMgmtTab() {
   const [statusFilter, setStatusFilter] = useState<StudentStatus | 'all'>('all');
   const [managerFilter, setManagerFilter] = useState('all');
   const [courseFilter, setCourseFilter] = useState('');
+  const [sourceFilter, setSourceFilter] = useState<string[]>([]);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
@@ -3585,6 +3638,9 @@ function StudentMgmtTab() {
     setTimeout(() => setDeleteToastVisible(false), 2500);
   };
 
+  const uniqueManagers = Array.from(new Set(items.map(c => c.manager).filter(Boolean))) as string[];
+  const uniqueSources = Array.from(new Set(items.map(c => c.click_source).filter(Boolean))).sort() as string[];
+
   const filtered = items.filter(c => {
     if (searchText) {
       const q = searchText.toLowerCase();
@@ -3594,13 +3650,15 @@ function StudentMgmtTab() {
         c.name.toLowerCase().includes(q) ||
         contactClean.includes(searchClean) ||
         (c.course || '').toLowerCase().includes(q) ||
-        (c.memo || '').toLowerCase().includes(q)
+        (c.memo || '').toLowerCase().includes(q) ||
+        (c.click_source || '').toLowerCase().includes(q)
       )) return false;
     }
     if (courseFilter && (c.course || '').toLowerCase() !== courseFilter.toLowerCase()) return false;
     if (statusFilter !== 'all' && c.status !== statusFilter) return false;
     if (managerFilter === 'none' && c.manager) return false;
     if (managerFilter !== 'all' && managerFilter !== 'none' && c.manager !== managerFilter) return false;
+    if (sourceFilter.length > 0 && !sourceFilter.includes(c.click_source ?? '')) return false;
     if (startDate || endDate) {
       const d = new Date(c.created_at);
       if (startDate && d < new Date(startDate + 'T00:00:00')) return false;
@@ -3609,20 +3667,20 @@ function StudentMgmtTab() {
     return true;
   });
 
-  const uniqueManagers = Array.from(new Set(items.map(c => c.manager).filter(Boolean))) as string[];
-
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
   const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
   const toggleSelect = (id: number) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   const toggleSelectAll = () => setSelectedIds(prev => prev.length === paginated.length ? [] : paginated.map(c => c.id));
 
-  const isFiltered = searchText || courseFilter || statusFilter !== 'all' || managerFilter !== 'all' || startDate || endDate;
+  const isFiltered = searchText || courseFilter || statusFilter !== 'all' || managerFilter !== 'all' || sourceFilter.length > 0 || startDate || endDate;
 
-  const STUDENT_HEADERS = ['번호', '이름', '연락처', '수강과목', '수강률', '상태', '담당자', '메모', '등록일'];
+  const STUDENT_HEADERS = ['번호', '유입경로', '이름', '연락처', '수강과목', '수강률', '상태', '담당자', '메모', '등록일'];
   const studentToRow = (item: CertStudent, i: number) => {
     const ci = parseCourseItems(item.course);
+    const src = parseClickSource(item.click_source);
     return [
       i + 1,
+      src.minor ? `${src.major} > ${src.minor}` : src.major || '',
       item.name,
       item.contact,
       ci.map(c => c.name).join(', '),
@@ -3653,6 +3711,7 @@ function StudentMgmtTab() {
 
   const resetFilters = () => {
     setSearchText(''); setCourseFilter(''); setStatusFilter('all'); setManagerFilter('all');
+    setSourceFilter([]);
     setStartDate(''); setEndDate(''); setCurrentPage(1);
   };
 
@@ -3710,6 +3769,12 @@ function StudentMgmtTab() {
                     <input type="checkbox" checked={paginated.length > 0 && selectedIds.length === paginated.length} onChange={toggleSelectAll} className={styles.checkbox} />
                   </th>
                   <th className={styles.thNum}>번호</th>
+                  <th className={styles.thFilterable}>
+                    <div className={styles.thInner}>
+                      유입경로
+                      <button className={`${styles.thFilterBtn}${sourceFilter.length > 0 ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'source') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('source'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
+                    </div>
+                  </th>
                   <th className={styles.th}>이름</th>
                   <th className={styles.th}>연락처</th>
                   <th className={styles.th}>수강과목</th>
@@ -3732,9 +3797,9 @@ function StudentMgmtTab() {
               </thead>
               <tbody>
                 {loading ? (
-                  <TableSkeleton cols={10} rows={8} />
+                  <TableSkeleton cols={11} rows={8} />
                 ) : filtered.length === 0 ? (
-                  <tr><td colSpan={10} className={styles.tableEmptyMsg}>검색 결과가 없습니다.</td></tr>
+                  <tr><td colSpan={11} className={styles.tableEmptyMsg}>검색 결과가 없습니다.</td></tr>
                 ) : paginated.map((item, index) => {
                   const courseItems = parseCourseItems(item.course);
                   return (
@@ -3753,6 +3818,7 @@ function StudentMgmtTab() {
                         <input type="checkbox" checked={selectedIds.includes(item.id)} onChange={() => toggleSelect(item.id)} className={styles.checkbox} />
                       </td>
                       <td className={styles.tdNum}>{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                      <td className={`${styles.tdSecondary}${parseClickSource(item.click_source).needsCheck ? ` ${certStyles.tdNeedsCheck}` : ''}`}>{(() => { const s = parseClickSource(item.click_source); return s.minor ? `${s.major} > ${s.minor}` : s.major || '-'; })()}</td>
                       <td className={styles.tdBold}><PCertHighlight text={item.name} query={searchText} /></td>
                       <td className={styles.tdTabular}><PCertHighlight text={item.contact} query={searchText} /></td>
                       <td className={styles.td}>
@@ -3831,6 +3897,14 @@ function StudentMgmtTab() {
 
       {openFilterColumn && (
         <div ref={dropdownRef} className={styles.filterColumnDropdown} style={{ top: filterDropdownPos.top, left: filterDropdownPos.left }}>
+          {openFilterColumn === 'source' && (
+            <>
+              <div className={`${styles.filterDropdownItem}${sourceFilter.length === 0 ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setSourceFilter([]); setCurrentPage(1); setOpenFilterColumn(null); }}>전체</div>
+              {uniqueSources.map(s => (
+                <div key={s} className={`${styles.filterDropdownItem}${sourceFilter.includes(s) ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setSourceFilter(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]); setCurrentPage(1); }}>{s}</div>
+              ))}
+            </>
+          )}
           {openFilterColumn === 'status' && (
             <>
               <div className={`${styles.filterDropdownItem}${statusFilter === 'all' ? ` ${styles.filterDropdownItemActive}` : ''}`} onClick={() => { setStatusFilter('all'); setCurrentPage(1); setOpenFilterColumn(null); }}>전체</div>
@@ -3884,7 +3958,17 @@ function StudentBulkUploadView({ onBack }: { onBack: () => void }) {
     const reader = new FileReader();
     reader.onload = ev => {
       const text = ev.target?.result as string;
-      setCsvRows(parseStudentCsv(text));
+      const rows = parseStudentCsv(text);
+      if (rows.length === 0) {
+        // utf-8 파싱 실패 시 euc-kr 재시도
+        const reader2 = new FileReader();
+        reader2.onload = ev2 => {
+          setCsvRows(parseStudentCsv(ev2.target?.result as string));
+        };
+        reader2.readAsText(file, 'euc-kr');
+        return;
+      }
+      setCsvRows(rows);
     };
     reader.readAsText(file, 'utf-8');
   }
@@ -3949,8 +4033,8 @@ function StudentBulkUploadView({ onBack }: { onBack: () => void }) {
     }
   }
 
-  const PREVIEW_COLS: (keyof StudentCsvRow)[] = ['name', 'contact', 'course', 'status', 'manager', 'memo', 'created_at'];
-  const PREVIEW_HEADERS = ['이름', '연락처', '수강과목', '상태', '담당자', '메모', '등록일'];
+  const PREVIEW_COLS: (keyof StudentCsvRow)[] = ['name', 'contact', 'course', 'status', 'manager', 'click_source', 'memo', 'created_at'];
+  const PREVIEW_HEADERS = ['이름', '연락처', '수강과목', '상태', '담당자', '유입경로', '메모', '등록일'];
 
   return (
     <div className={styles.bulkWrap}>
@@ -4003,6 +4087,7 @@ function StudentBulkUploadView({ onBack }: { onBack: () => void }) {
                     <th className={styles.th}>수강과목</th>
                     <th className={styles.th}>상태</th>
                     <th className={styles.th}>담당자</th>
+                    <th className={styles.th}>유입경로</th>
                     <th className={styles.th}>임시등록일</th>
                   </tr>
                 </thead>
@@ -4036,6 +4121,7 @@ function StudentBulkUploadView({ onBack }: { onBack: () => void }) {
                         </td>
                         <td className={styles.td}>{item.status}</td>
                         <td className={styles.tdSecondary}>{item.manager || '-'}</td>
+                        <td className={styles.tdSecondary}>{item.click_source || '-'}</td>
                         <td className={styles.tdSecondary}>{formatDate(item.created_at)}</td>
                       </tr>
                     );
@@ -4074,6 +4160,7 @@ function StudentBulkUploadView({ onBack }: { onBack: () => void }) {
                   { col: '수강과목', desc: '아래 형식 참고' },
                   { col: '상태', desc: '선택 (기본: 과정안내)' },
                   { col: '담당자', desc: '선택' },
+                  { col: '유입경로', desc: '선택 (예: 맘카페_광주맘)' },
                   { col: '메모', desc: '선택' },
                   { col: '등록일', desc: '선택 (예: 2024-03-15, 생략 시 오늘)' },
                 ].map(({ col, desc }) => (

@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
       course: r.course || null,
       status: r.status || '과정안내',
       manager: r.manager || null,
+      click_source: r.click_source || null,
       memo: r.memo || null,
       created_at,
       is_draft: true,
