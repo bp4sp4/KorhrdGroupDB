@@ -27,9 +27,8 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-  // getSession()으로 쿠키에서 로컬 JWT 검증 (네트워크 호출 없음 → 빠름)
-  const { data: { session } } = await supabase.auth.getSession()
-  const user = session?.user ?? null
+  // getUser()로 토큰 유효성 검증 + 만료 시 자동 갱신
+  const { data: { user } } = await supabase.auth.getUser()
   const { pathname } = request.nextUrl
 
   // 인증 없이 접근 가능한 경로
