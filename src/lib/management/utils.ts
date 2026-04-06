@@ -66,7 +66,7 @@ export function getStatusColor(status: string): string {
   const map: Record<string, string> = {
     DRAFT: '#8B95A1',
     SUBMITTED: '#3182F6',
-    IN_PROGRESS: '#FFB020',
+    IN_PROGRESS: '#E09000',
     APPROVED: '#22C55E',
     REJECTED: '#F04452',
     RESUBMITTED: '#3182F6',

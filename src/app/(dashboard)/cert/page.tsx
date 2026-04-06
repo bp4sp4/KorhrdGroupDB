@@ -292,7 +292,7 @@ function sortStudents(items: CertStudent[]): CertStudent[] {
     }
   }
 
-  return [...topItems, ...doneItems, ...normalItems];
+  return [...normalItems, ...topItems, ...doneItems];
 }
 
 // ─────────────────────────────────────────────
@@ -4042,7 +4042,7 @@ function StudentBulkUploadView({ onBack }: { onBack: () => void }) {
         onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ''; }} />
 
       <div className={styles.bulkTabBar}>
-        <span className={styles.bulkTabBtn} style={{ fontWeight: 700, color: 'var(--toss-blue)' }}>CSV 일괄등록</span>
+        
         <button onClick={downloadTemplate} className={styles.bulkTemplateBtn}>↓ 템플릿 다운로드</button>
       </div>
 

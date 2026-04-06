@@ -1,0 +1,535 @@
+/* ==========================================================================
+   작성 뷰 전용 스타일
+   ========================================================================== */
+
+/* ---------------------------------------------------------------------------
+   양식 선택 뷰
+   --------------------------------------------------------------------------- */
+
+.view_new_template {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.template_selector {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.template_categories {
+  width: 180px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--toss-border);
+  background: #fff;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+}
+
+.template_categories_title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--toss-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0 8px 8px;
+  margin: 0;
+}
+
+.template_category_item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 36px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--toss-text-secondary);
+  background: none;
+  cursor: pointer;
+  transition: background 100ms ease, color 100ms ease;
+  text-align: left;
+}
+
+.template_category_item:hover {
+  background: var(--toss-bg);
+  color: var(--toss-text-primary);
+}
+
+.template_category_active {
+  background: var(--toss-blue-subtle) !important;
+  color: var(--toss-blue) !important;
+  font-weight: 600;
+}
+
+.template_list {
+  flex: 1;
+  padding: 20px 24px;
+  overflow-y: auto;
+  background: var(--toss-bg);
+}
+
+.template_list_title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--toss-text-primary);
+  margin: 0 0 16px;
+}
+
+.template_grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.template_card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 16px;
+  background: #fff;
+  border: 1px solid var(--toss-border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 150ms ease;
+  text-align: center;
+}
+
+.template_card:hover {
+  border-color: var(--toss-blue);
+  box-shadow: 0 0 0 3px var(--toss-blue-subtle);
+}
+
+.template_card_icon {
+  color: var(--toss-blue);
+}
+
+.template_card_name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--toss-text-primary);
+}
+
+.template_card_category {
+  font-size: 11px;
+  color: var(--toss-text-tertiary);
+}
+
+.template_placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  height: 200px;
+  color: var(--toss-text-tertiary);
+  font-size: 14px;
+}
+
+/* ---------------------------------------------------------------------------
+   작성 뷰
+   --------------------------------------------------------------------------- */
+
+.view_new_form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.new_form_header {
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  padding: 16px 24px;
+  background: #fff;
+  border-bottom: 1px solid var(--toss-border);
+  flex-shrink: 0;
+}
+
+.new_form_category {
+  font-size: 11px;
+  color: var(--toss-blue);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+}
+
+.new_form_title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--toss-text-primary);
+  margin: 4px 0 24px;
+}
+
+.new_form_actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.draft_editing_badge {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 2px 8px;
+  background: #FFF8EB;
+  color: #E09000;
+  border: 1px solid #E09000;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  vertical-align: middle;
+}
+
+/* ---------------------------------------------------------------------------
+   하단 액션바
+   --------------------------------------------------------------------------- */
+
+.new_form_footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  height: 52px;
+  background: #fff;
+  border-top: 1px solid var(--toss-border);
+  flex-shrink: 0;
+}
+
+.new_form_footer_left {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.new_form_footer_right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form_footer_btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 34px;
+  padding: 0 12px;
+  border: none;
+  background: none;
+  color: #444;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 100ms ease, color 100ms ease;
+  white-space: nowrap;
+}
+
+.form_footer_btn:hover {
+  background: #f2f4f6;
+  color: #111;
+}
+
+.form_footer_btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.form_footer_autosave {
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--toss-border);
+  border-radius: 6px;
+  font-size: 12px;
+  color: #555;
+  background: #fff;
+  cursor: pointer;
+  outline: none;
+}
+
+/* ---------------------------------------------------------------------------
+   파일 업로드 박스
+   --------------------------------------------------------------------------- */
+
+.doc_file_attach_label_row {
+  margin-bottom: 6px;
+}
+
+.doc_file_attach_box {
+  border: 1.5px dashed #ccc;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.doc_file_attach_box.doc_file_attach_uploading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.doc_file_drop_zone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 16px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #666;
+  border-bottom: 1px solid #eee;
+  transition: background 100ms ease;
+}
+
+.doc_file_drop_zone:hover {
+  background: #f8f9fa;
+}
+
+.doc_file_attach_input {
+  display: none;
+}
+
+.doc_file_drop_icon {
+  color: #888;
+  flex-shrink: 0;
+}
+
+.doc_file_select_link {
+  color: var(--toss-blue);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.doc_file_total_size {
+  color: #888;
+  font-size: 12px;
+}
+
+.doc_file_row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: #fff;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 13px;
+}
+
+.doc_file_row:last-child {
+  border-bottom: none;
+}
+
+.doc_file_row_icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.doc_file_row_name {
+  flex: 1;
+  font-size: 13px;
+  color: #111;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.doc_file_row_size {
+  font-size: 12px;
+  color: #888;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.doc_file_remove {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 18px;
+  cursor: pointer;
+  border-radius: 4px;
+  flex-shrink: 0;
+  line-height: 1;
+  padding: 0;
+  transition: background 100ms ease, color 100ms ease;
+}
+
+.doc_file_remove:hover {
+  background: #fee2e2;
+  color: var(--color-danger);
+}
+
+/* ---------------------------------------------------------------------------
+   결재선 설정
+   --------------------------------------------------------------------------- */
+
+.doc_approver_section {
+  margin-top: 40px;
+  border-top: 1px solid #333;
+  padding-top: 20px;
+}
+
+.doc_approver_section_title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #555;
+  margin: 0 0 12px;
+}
+
+.doc_approver_chain {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.doc_approver_add_row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.doc_approver_add_select {
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #111;
+  background: #fff;
+  outline: none;
+  cursor: pointer;
+  min-width: 160px;
+}
+
+.doc_approver_chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 8px 0 6px;
+  background: var(--toss-blue-subtle);
+  border: 1px solid var(--toss-blue);
+  border-radius: 16px;
+}
+
+.doc_approver_chip_step {
+  width: 18px;
+  height: 18px;
+  background: var(--toss-blue);
+  color: #fff;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.doc_approver_chip_name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--toss-blue);
+}
+
+.doc_approver_chip_remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  background: none;
+  border: none;
+  color: var(--toss-blue);
+  cursor: pointer;
+  border-radius: 50%;
+  padding: 0;
+}
+
+.doc_approver_chip_remove:hover {
+  background: rgba(49, 130, 246, 0.2);
+}
+
+/* ---------------------------------------------------------------------------
+   미리보기 모달
+   --------------------------------------------------------------------------- */
+
+.preview_overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 20px;
+  overflow-y: auto;
+}
+
+.preview_modal {
+  background: #f5f5f5;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 860px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+.preview_modal_header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid #ddd;
+  background: #fff;
+  border-radius: 12px 12px 0 0;
+}
+
+.preview_modal_title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111;
+}
+
+.preview_modal_close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: none;
+  color: #555;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 100ms ease;
+}
+
+.preview_modal_close:hover {
+  background: #f0f0f0;
+}
+
+.preview_modal_body {
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.preview_modal_body :global(.doc_paper) {
+  box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+  margin: 0 auto;
+}

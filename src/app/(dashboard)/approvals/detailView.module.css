@@ -1,0 +1,394 @@
+/* ==========================================================================
+   상세 뷰 전용 스타일
+   ========================================================================== */
+
+/* ---------------------------------------------------------------------------
+   레이아웃
+   --------------------------------------------------------------------------- */
+
+.view_detail {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.detail_action_bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background: #fff;
+  border-bottom: 1px solid var(--toss-border);
+  flex-shrink: 0;
+}
+
+.detail_action_bar_right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detail_back_btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 32px;
+  padding: 0 12px;
+  border: none;
+  background: none;
+  color: var(--toss-text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 100ms ease, color 100ms ease;
+}
+
+.detail_back_btn:hover {
+  background: var(--toss-bg);
+  color: var(--toss-text-primary);
+}
+
+.icon_rotate_180 {
+  transform: rotate(180deg);
+}
+
+.detail_body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ---------------------------------------------------------------------------
+   결재 의견
+   --------------------------------------------------------------------------- */
+
+.doc_comment_section {
+  margin-top: 32px;
+  border-top: 1px solid #e0e0e0;
+  padding-top: 20px;
+}
+
+.doc_comment_label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 8px;
+  display: block;
+}
+
+/* ---------------------------------------------------------------------------
+   라이트박스
+   --------------------------------------------------------------------------- */
+
+.lightbox_overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.88);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: zoom-out;
+}
+
+.lightbox_img {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 4px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+  cursor: default;
+}
+
+.lightbox_close {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 150ms ease;
+  z-index: 2001;
+}
+
+.lightbox_close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* ---------------------------------------------------------------------------
+   우측 탭 패널
+   --------------------------------------------------------------------------- */
+
+.detail_panel {
+  width: 280px;
+  flex-shrink: 0;
+  border-left: 1px solid var(--toss-border);
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.detail_panel_tabs {
+  display: flex;
+  border-bottom: 1px solid var(--toss-border);
+  flex-shrink: 0;
+}
+
+.detail_panel_tab {
+  flex: 1;
+  height: 40px;
+  border: none;
+  background: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--toss-text-tertiary);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color 150ms ease, border-color 150ms ease;
+}
+
+.detail_panel_tab:hover {
+  color: var(--toss-text-primary);
+}
+
+.detail_panel_tab_active {
+  color: var(--toss-blue);
+  border-bottom-color: var(--toss-blue);
+}
+
+.detail_panel_body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 12px;
+}
+
+/* ---------------------------------------------------------------------------
+   결재선 탭
+   --------------------------------------------------------------------------- */
+
+.steps_list {
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.step_item {
+  display: flex;
+  gap: 10px;
+  padding-bottom: 16px;
+  position: relative;
+}
+
+.step_item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 13px;
+  top: 28px;
+  bottom: 0;
+  width: 2px;
+  background: var(--toss-border);
+}
+
+.step_badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+.step_item_approved .step_badge {
+  background: #F0FDF4;
+  border: 2px solid #22C55E;
+  color: #16a34a;
+}
+
+.step_item_rejected .step_badge {
+  background: #FFF1F2;
+  border: 2px solid var(--color-danger);
+  color: var(--color-danger);
+}
+
+.step_item_active .step_badge {
+  background: var(--toss-blue-subtle);
+  border: 2px solid var(--toss-blue);
+  color: var(--toss-blue);
+}
+
+.step_item_waiting .step_badge {
+  background: var(--toss-bg);
+  border: 2px solid var(--toss-border);
+  color: var(--toss-text-tertiary);
+}
+
+.step_info {
+  flex: 1;
+  padding-top: 4px;
+}
+
+.step_approver {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--toss-text-primary);
+  margin: 0;
+}
+
+.step_status_text {
+  font-size: 11px;
+  color: var(--toss-text-tertiary);
+  margin: 2px 0 0;
+}
+
+.step_comment {
+  margin-top: 6px;
+  padding: 6px 10px;
+  background: var(--toss-bg);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--toss-text-secondary);
+}
+
+.steps_empty {
+  font-size: 12px;
+  color: var(--toss-text-tertiary);
+  text-align: center;
+  padding: 20px 0;
+}
+
+/* ---------------------------------------------------------------------------
+   문서정보 탭
+   --------------------------------------------------------------------------- */
+
+.doc_info_list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.doc_info_row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.doc_info_row_label {
+  font-size: 11px;
+  color: var(--toss-text-tertiary);
+  font-weight: 500;
+}
+
+.doc_info_row_value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--toss-text-primary);
+}
+
+/* ---------------------------------------------------------------------------
+   첨부파일 목록 (상세)
+   --------------------------------------------------------------------------- */
+
+.doc_file_list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.doc_file_item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: #f8f9fa;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+}
+
+.doc_file_thumb {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0;
+  display: block;
+}
+
+.doc_file_icon {
+  font-size: 24px;
+  width: 48px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.doc_file_link {
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.doc_file_info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.doc_file_name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #111;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.doc_file_size {
+  font-size: 11px;
+  color: #888;
+}
+
+.doc_file_thumb_btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  display: block;
+}
+
+.doc_file_thumb_btn:hover .doc_file_thumb {
+  opacity: 0.85;
+}
+
+/* ---------------------------------------------------------------------------
+   관련 문서
+   --------------------------------------------------------------------------- */
+
+.doc_related_section {
+  margin-top: 24px;
+}
+
+.doc_related_title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #333;
+  margin: 0 0 8px;
+}

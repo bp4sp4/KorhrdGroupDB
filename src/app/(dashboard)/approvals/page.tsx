@@ -1,17 +1,18 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Plus, X, Check, XCircle, ChevronRight, FileText, Clock, CheckCircle, Home, MoreVertical, Info } from 'lucide-react'
+import { Plus, X, Check, XCircle, ChevronRight, FileText, Clock, CheckCircle, Home, MoreVertical, Info, Eye, Save, Send, List, Paperclip, Download, AlignJustify } from 'lucide-react'
 import type { Approval, ApprovalTemplate, ApprovalStep, Department } from '@/lib/management/types'
 import {
   formatDate,
-  formatAmount,
   getStatusLabel,
   getStatusColor,
   getStatusBg,
-  getPaymentMethodLabel,
 } from '@/lib/management/utils'
 import styles from './page.module.css'
+import d from './detailView.module.css'
+import f from './formView.module.css'
+import { getDocTemplate, ALL_TEMPLATE_FIELDS } from './docTemplates'
 
 // ---------------------------------------------------------------------------
 // 타입 정의
@@ -42,6 +43,13 @@ interface ApprovalFormState {
   approver_ids: string[]
 }
 
+interface AttachedFile {
+  name: string
+  url: string
+  type: string
+  size: number
+}
+
 // ---------------------------------------------------------------------------
 // 상수
 // ---------------------------------------------------------------------------
@@ -66,51 +74,6 @@ const SIDEBAR_GROUPS: { label: string; items: SidebarMenu[] }[] = [
   },
 ]
 
-const EXPENSE_CONTENT_FIELDS = [
-  { key: 'expense_date', label: '지출일', type: 'date', required: true },
-  { key: 'expense_category', label: '지출 항목', type: 'text', required: true },
-  { key: 'expense_detail', label: '세부 내역', type: 'text', required: true },
-  { key: 'amount', label: '금액 (원)', type: 'number', required: true },
-  {
-    key: 'payment_method',
-    label: '결제 수단',
-    type: 'select',
-    required: true,
-    options: [
-      { value: 'CORPORATE_CARD', label: '법인카드' },
-      { value: 'BANK_TRANSFER', label: '계좌이체' },
-      { value: 'CASH', label: '현금' },
-      { value: 'OTHER', label: '기타' },
-    ],
-  },
-  { key: 'vendor', label: '거래처', type: 'text' },
-  { key: 'memo', label: '메모', type: 'textarea' },
-]
-
-const TRAVEL_CONTENT_FIELDS = [
-  { key: 'travel_start', label: '출발일', type: 'date', required: true },
-  { key: 'travel_end', label: '복귀일', type: 'date', required: true },
-  { key: 'destination', label: '목적지', type: 'text', required: true },
-  { key: 'purpose', label: '출장 목적', type: 'text', required: true },
-  { key: 'amount', label: '예상 경비 (원)', type: 'number' },
-  { key: 'memo', label: '비고', type: 'textarea' },
-]
-
-const HR_CONTENT_FIELDS = [
-  { key: 'reason', label: '사유', type: 'text', required: true },
-  { key: 'start_date', label: '시작일', type: 'date', required: true },
-  { key: 'end_date', label: '종료일', type: 'date' },
-  { key: 'memo', label: '비고', type: 'textarea' },
-]
-
-const ALL_FIELDS = [...EXPENSE_CONTENT_FIELDS, ...TRAVEL_CONTENT_FIELDS, ...HR_CONTENT_FIELDS]
-
-function getContentFields(template: ApprovalTemplate | null) {
-  if (!template) return []
-  if (template.category === '회계') return EXPENSE_CONTENT_FIELDS
-  if (template.category === '출장') return TRAVEL_CONTENT_FIELDS
-  return HR_CONTENT_FIELDS
-}
 
 // ---------------------------------------------------------------------------
 // 서브 컴포넌트: ApprovalStatusBadge
@@ -120,7 +83,7 @@ function ApprovalStatusBadge({ status }: { status: string }) {
   return (
     <span
       className={styles.status_badge}
-      style={{ color: getStatusColor(status) }}
+      style={{ background: getStatusColor(status), color: '#fff' }}
     >
       {getStatusLabel(status)}
     </span>
@@ -163,7 +126,7 @@ function ApprovalTable({ approvals, onRowClick, emptyMessage = '문서가 없습
           >
             <td className={styles.cell_date}>{formatDate(a.created_at)}</td>
             <td>
-              <span className={styles.cell_category}>{a.category}</span>
+              
               <span className={styles.cell_doc_type}>{a.document_type}</span>
             </td>
             <td className={styles.cell_title}>{a.title}</td>
@@ -287,6 +250,23 @@ export default function ApprovalsPage() {
   const [formError, setFormError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
+  // 파일 첨부
+  const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([])
+  const [uploadingFiles, setUploadingFiles] = useState(false)
+
+  // 임시저장 편집 모드
+  const [editingDraftId, setEditingDraftId] = useState<string | null>(null)
+
+  const handleContentChange = useCallback((key: string, value: string) => {
+    setFormState((prev) => ({ ...prev, content: { ...prev.content, [key]: value } }))
+  }, [])
+
+  // 미리보기
+  const [previewOpen, setPreviewOpen] = useState(false)
+
+  // 이미지 라이트박스
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
+
   // ---------------------------------------------------------------------------
   // 데이터 페치
   // ---------------------------------------------------------------------------
@@ -343,8 +323,31 @@ export default function ApprovalsPage() {
 
   const handleRowClick = async (approval: Approval) => {
     const res = await fetch(`/api/management/approvals/${approval.id}`)
-    if (res.ok) {
-      const data = await res.json()
+    if (!res.ok) return
+    const data = await res.json()
+
+    if (data.status === 'DRAFT') {
+      // 임시저장 문서 → 편집 폼으로 열기
+      const template = templates.find(t => t.id === data.template_id) ?? null
+      const rawAttachments = data.content['_attachments']
+      const existingAttachments: AttachedFile[] = Array.isArray(rawAttachments) ? (rawAttachments as AttachedFile[]) : []
+      const { _attachments, ...restContent } = data.content as Record<string, unknown>
+      void _attachments
+
+      setFormState({
+        template,
+        title: data.title,
+        department_id: String(data.department_id ?? ''),
+        content: Object.fromEntries(
+          Object.entries(restContent).map(([k, v]) => [k, String(v ?? '')])
+        ),
+        approver_ids: [],
+      })
+      setAttachedFiles(existingAttachments)
+      setEditingDraftId(data.id)
+      setFormError('')
+      setCurrentView('new_form')
+    } else {
       setSelectedApproval(data)
       setActionComment('')
       setCurrentView('detail')
@@ -380,7 +383,32 @@ export default function ApprovalsPage() {
     setSelectedCategory(null)
     setFormState({ template: null, title: '', department_id: '', content: {}, approver_ids: [] })
     setFormError('')
+    setAttachedFiles([])
+    setUploadingFiles(false)
+    setEditingDraftId(null)
     setCurrentView('new_template')
+  }
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? [])
+    if (!files.length) return
+    setUploadingFiles(true)
+    const fd = new FormData()
+    files.forEach(f => fd.append('files', f))
+    const res = await fetch('/api/management/approvals/upload', { method: 'POST', body: fd })
+    if (res.ok) {
+      const { files: uploaded } = await res.json()
+      setAttachedFiles(prev => [...prev, ...(uploaded as AttachedFile[])])
+    } else {
+      const err = await res.json()
+      alert(err.error ?? '파일 업로드 실패')
+    }
+    setUploadingFiles(false)
+    e.target.value = ''
+  }
+
+  const removeAttachedFile = (idx: number) => {
+    setAttachedFiles(prev => prev.filter((_, i) => i !== idx))
   }
 
   const handleSelectTemplate = (tpl: ApprovalTemplate) => {
@@ -401,8 +429,8 @@ export default function ApprovalsPage() {
       return
     }
 
-    const contentFields = getContentFields(template)
-    for (const f of contentFields) {
+    const templateConfig = getDocTemplate(template)
+    for (const f of (templateConfig?.fields ?? [])) {
       if (f.required && !content[f.key]) {
         setFormError(`'${f.label}'을(를) 입력해주세요.`)
         return
@@ -416,22 +444,46 @@ export default function ApprovalsPage() {
 
     setSubmitting(true)
     setFormError('')
-    const res = await fetch('/api/management/approvals', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        template_id: template.id,
-        document_type: template.document_type,
-        category: template.category,
-        title,
-        department_id: department_id || null,
-        content,
-        approver_ids: action === 'submit' ? approver_ids : [],
-        action,
-      }),
-    })
+
+    const mergedContent = attachedFiles.length > 0
+      ? { ...content, _attachments: attachedFiles }
+      : content
+
+    let res: Response
+    if (editingDraftId) {
+      // 기존 임시저장 수정
+      res = await fetch(`/api/management/approvals/${editingDraftId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          department_id: department_id || null,
+          content: mergedContent,
+          approver_ids: action === 'submit' ? approver_ids : [],
+          action,
+        }),
+      })
+    } else {
+      // 새 결재 생성
+      res = await fetch('/api/management/approvals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          template_id: template.id,
+          document_type: template.document_type,
+          category: template.category,
+          title,
+          department_id: department_id || null,
+          content: mergedContent,
+          approver_ids: action === 'submit' ? approver_ids : [],
+          action,
+        }),
+      })
+    }
+
     setSubmitting(false)
     if (res.ok) {
+      setEditingDraftId(null)
       fetchHomeData()
       setCurrentView('home')
       setActiveMenuKey('home')
@@ -470,7 +522,7 @@ export default function ApprovalsPage() {
     ['APPROVED', 'REJECTED', 'CANCELLED'].includes(a.status)
   )
 
-  const contentFields = getContentFields(formState.template)
+  const formTemplateConfig = getDocTemplate(formState.template)
 
   // ---------------------------------------------------------------------------
   // 렌더: 사이드바
@@ -627,21 +679,21 @@ export default function ApprovalsPage() {
       (selectedApproval.applicant as { display_name: string } | undefined)?.display_name ?? '-'
 
     return (
-      <div className={styles.view_detail}>
+      <div className={d.view_detail}>
         {/* 상단 액션바 */}
-        <div className={styles.detail_action_bar}>
+        <div className={d.detail_action_bar}>
           <button
-            className={styles.detail_back_btn}
+            className={d.detail_back_btn}
             onClick={() => {
               if (currentView === 'detail') {
                 setCurrentView(activeMenuKey === 'home' ? 'home' : 'list')
               }
             }}
           >
-            <ChevronRight size={14} className={styles.icon_rotate_180} />
+            <ChevronRight size={14} className={d.icon_rotate_180} />
             목록으로
           </button>
-          <div className={styles.detail_action_bar_right}>
+          <div className={d.detail_action_bar_right}>
             <ApprovalStatusBadge status={selectedApproval.status} />
             {canAct && (
               <>
@@ -676,7 +728,7 @@ export default function ApprovalsPage() {
         </div>
 
         {/* 종이 문서 + 우측 패널 */}
-        <div className={styles.detail_body}>
+        <div className={d.detail_body}>
           {/* 종이 문서 스크롤 영역 */}
           <div className={styles.doc_scroll_area}>
             <div className={styles.doc_paper}>
@@ -754,33 +806,65 @@ export default function ApprovalsPage() {
                 </table>
               </div>
 
-              {/* 본문 테이블 */}
-              {Object.keys(selectedApproval.content).length > 0 && (
-                <table className={styles.doc_body_table}>
-                  <tbody>
-                    {Object.entries(selectedApproval.content).map(([key, val]) => {
-                      const fieldDef = ALL_FIELDS.find(f => f.key === key)
-                      const label = fieldDef?.label ?? key
-                      let display = String(val)
-                      if (key === 'amount') display = formatAmount(Number(val))
-                      if (key === 'payment_method') display = getPaymentMethodLabel(String(val))
-                      return (
-                        <tr key={key}>
-                          <td className={styles.doc_field_label}>{label}</td>
-                          <td>
-                            <span className={styles.doc_field_value_text}>{display}</span>
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              )}
+              {/* 본문 테이블 — 템플릿 레지스트리에서 자동 처리 */}
+              {(() => {
+                const cfg = getDocTemplate(selectedApproval)
+                if (!cfg) return null
+                return (
+                  <cfg.BodySection
+                    content={selectedApproval.content as Record<string, unknown>}
+                  />
+                )
+              })()}
+
+              {/* 첨부파일 미리보기 */}
+              {(() => {
+                const raw = selectedApproval.content['_attachments']
+                const files: AttachedFile[] = Array.isArray(raw) ? (raw as AttachedFile[]) : []
+                if (!files.length) return null
+                return (
+                  <div className={styles.doc_file_attach_section}>
+                    <p className={styles.doc_file_attach_title}>파일첨부</p>
+                    <div className={d.doc_file_list}>
+                      {files.map((file, i) => (
+                        <div key={i} className={d.doc_file_item}>
+                          {file.type.startsWith('image/') ? (
+                            <button
+                              type="button"
+                              className={d.doc_file_thumb_btn}
+                              onClick={() => setLightboxUrl(file.url)}
+                            >
+                              <img src={file.url} alt={file.name} className={d.doc_file_thumb} />
+                            </button>
+                          ) : (
+                            <span className={d.doc_file_icon}>
+                              {file.type === 'application/pdf' ? '📕' : '📄'}
+                            </span>
+                          )}
+                          <div className={d.doc_file_info}>
+                            <span className={d.doc_file_name}>{file.name}</span>
+                            <span className={d.doc_file_size}>{(file.size / 1024).toFixed(1)} KB</span>
+                          </div>
+                          <a
+                            href={file.url}
+                            download={file.name}
+                            className={styles.doc_file_download_btn}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Download size={12} />
+                            다운로드
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })()}
 
               {/* 결재 의견 입력 (canAct 일 때) */}
               {canAct && (
-                <div className={styles.doc_comment_section}>
-                  <label className={styles.doc_comment_label}>
+                <div className={d.doc_comment_section}>
+                  <label className={d.doc_comment_label}>
                     결재 의견 (선택, 반려 시 필수)
                   </label>
                   <textarea
@@ -794,18 +878,33 @@ export default function ApprovalsPage() {
             </div>
           </div>
 
+          {/* 이미지 라이트박스 */}
+          {lightboxUrl && (
+            <div className={d.lightbox_overlay} onClick={() => setLightboxUrl(null)}>
+              <button className={d.lightbox_close} onClick={() => setLightboxUrl(null)}>
+                <X size={20} />
+              </button>
+              <img
+                src={lightboxUrl}
+                alt="미리보기"
+                className={d.lightbox_img}
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+          )}
+
           {/* 우측 결재선 패널 */}
-          <div className={styles.detail_panel}>
+          <div className={d.detail_panel}>
             {/* 탭 */}
-            <div className={styles.detail_panel_tabs}>
+            <div className={d.detail_panel_tabs}>
               <button
-                className={`${styles.detail_panel_tab} ${detailPanelTab === 'steps' ? styles.detail_panel_tab_active : ''}`}
+                className={`${d.detail_panel_tab} ${detailPanelTab === 'steps' ? d.detail_panel_tab_active : ''}`}
                 onClick={() => setDetailPanelTab('steps')}
               >
                 결재선
               </button>
               <button
-                className={`${styles.detail_panel_tab} ${detailPanelTab === 'info' ? styles.detail_panel_tab_active : ''}`}
+                className={`${d.detail_panel_tab} ${detailPanelTab === 'info' ? d.detail_panel_tab_active : ''}`}
                 onClick={() => setDetailPanelTab('info')}
               >
                 문서정보
@@ -813,10 +912,10 @@ export default function ApprovalsPage() {
             </div>
 
             {/* 탭 본문 */}
-            <div className={styles.detail_panel_body}>
+            <div className={d.detail_panel_body}>
               {detailPanelTab === 'steps' ? (
                 /* 결재선 탭 */
-                <div className={styles.steps_list}>
+                <div className={d.steps_list}>
                   {sortedSteps.map((step) => {
                     const isActive =
                       step.step_number === selectedApproval.current_step &&
@@ -824,17 +923,17 @@ export default function ApprovalsPage() {
                     return (
                       <div
                         key={step.id}
-                        className={`${styles.step_item} ${
+                        className={`${d.step_item} ${
                           step.status === 'APPROVED'
-                            ? styles.step_item_approved
+                            ? d.step_item_approved
                             : step.status === 'REJECTED'
-                            ? styles.step_item_rejected
+                            ? d.step_item_rejected
                             : isActive
-                            ? styles.step_item_active
-                            : styles.step_item_waiting
+                            ? d.step_item_active
+                            : d.step_item_waiting
                         }`}
                       >
-                        <div className={styles.step_badge}>
+                        <div className={d.step_badge}>
                           {step.status === 'APPROVED' ? (
                             <Check size={12} />
                           ) : step.status === 'REJECTED' ? (
@@ -843,11 +942,11 @@ export default function ApprovalsPage() {
                             <span>{step.step_number}</span>
                           )}
                         </div>
-                        <div className={styles.step_info}>
-                          <p className={styles.step_approver}>
+                        <div className={d.step_info}>
+                          <p className={d.step_approver}>
                             {(step.approver as { display_name: string } | undefined)?.display_name ?? '-'}
                           </p>
-                          <p className={styles.step_status_text}>
+                          <p className={d.step_status_text}>
                             {step.status === 'PENDING'
                               ? isActive
                                 ? '결재 대기 중'
@@ -857,66 +956,66 @@ export default function ApprovalsPage() {
                               : `반려 · ${step.acted_at ? formatDate(step.acted_at) : ''}`}
                           </p>
                           {step.comment && (
-                            <p className={styles.step_comment}>{step.comment}</p>
+                            <p className={d.step_comment}>{step.comment}</p>
                           )}
                         </div>
                       </div>
                     )
                   })}
                   {sortedSteps.length === 0 && (
-                    <p className={styles.steps_empty}>결재선 정보가 없습니다.</p>
+                    <p className={d.steps_empty}>결재선 정보가 없습니다.</p>
                   )}
                 </div>
               ) : (
                 /* 문서정보 탭 */
-                <div className={styles.doc_info_list}>
-                  <div className={styles.doc_info_row}>
-                    <span className={styles.doc_info_row_label}>카테고리</span>
-                    <span className={styles.doc_info_row_value}>{selectedApproval.category}</span>
+                <div className={d.doc_info_list}>
+                  <div className={d.doc_info_row}>
+                    <span className={d.doc_info_row_label}>카테고리</span>
+                    <span className={d.doc_info_row_value}>{selectedApproval.category}</span>
                   </div>
-                  <div className={styles.doc_info_row}>
-                    <span className={styles.doc_info_row_label}>문서양식</span>
-                    <span className={styles.doc_info_row_value}>{selectedApproval.document_type}</span>
+                  <div className={d.doc_info_row}>
+                    <span className={d.doc_info_row_label}>문서양식</span>
+                    <span className={d.doc_info_row_value}>{selectedApproval.document_type}</span>
                   </div>
-                  <div className={styles.doc_info_row}>
-                    <span className={styles.doc_info_row_label}>제목</span>
-                    <span className={styles.doc_info_row_value}>{selectedApproval.title}</span>
+                  <div className={d.doc_info_row}>
+                    <span className={d.doc_info_row_label}>제목</span>
+                    <span className={d.doc_info_row_value}>{selectedApproval.title}</span>
                   </div>
-                  <div className={styles.doc_info_row}>
-                    <span className={styles.doc_info_row_label}>문서번호</span>
-                    <span className={styles.doc_info_row_value}>
+                  <div className={d.doc_info_row}>
+                    <span className={d.doc_info_row_label}>문서번호</span>
+                    <span className={d.doc_info_row_value}>
                       {selectedApproval.document_number ?? '-'}
                     </span>
                   </div>
-                  <div className={styles.doc_info_row}>
-                    <span className={styles.doc_info_row_label}>기안자</span>
-                    <span className={styles.doc_info_row_value}>{applicantName}</span>
+                  <div className={d.doc_info_row}>
+                    <span className={d.doc_info_row_label}>기안자</span>
+                    <span className={d.doc_info_row_value}>{applicantName}</span>
                   </div>
-                  <div className={styles.doc_info_row}>
-                    <span className={styles.doc_info_row_label}>기안일</span>
-                    <span className={styles.doc_info_row_value}>
+                  <div className={d.doc_info_row}>
+                    <span className={d.doc_info_row_label}>기안일</span>
+                    <span className={d.doc_info_row_value}>
                       {formatDate(selectedApproval.created_at)}
                     </span>
                   </div>
                   {selectedApproval.submitted_at && (
-                    <div className={styles.doc_info_row}>
-                      <span className={styles.doc_info_row_label}>상신일</span>
-                      <span className={styles.doc_info_row_value}>
+                    <div className={d.doc_info_row}>
+                      <span className={d.doc_info_row_label}>상신일</span>
+                      <span className={d.doc_info_row_value}>
                         {formatDate(selectedApproval.submitted_at)}
                       </span>
                     </div>
                   )}
                   {selectedApproval.completed_at && (
-                    <div className={styles.doc_info_row}>
-                      <span className={styles.doc_info_row_label}>완료일</span>
-                      <span className={styles.doc_info_row_value}>
+                    <div className={d.doc_info_row}>
+                      <span className={d.doc_info_row_label}>완료일</span>
+                      <span className={d.doc_info_row_value}>
                         {formatDate(selectedApproval.completed_at)}
                       </span>
                     </div>
                   )}
-                  <div className={styles.doc_info_row}>
-                    <span className={styles.doc_info_row_label}>결재 상태</span>
-                    <span className={styles.doc_info_row_value}>
+                  <div className={d.doc_info_row}>
+                    <span className={d.doc_info_row_label}>결재 상태</span>
+                    <span className={d.doc_info_row_value}>
                       <ApprovalStatusBadge status={selectedApproval.status} />
                     </span>
                   </div>
@@ -934,7 +1033,7 @@ export default function ApprovalsPage() {
   // ---------------------------------------------------------------------------
 
   const renderNewTemplateView = () => (
-    <div className={styles.view_new_template}>
+    <div className={f.view_new_template}>
       <div className={styles.view_list_header}>
         <h2 className={styles.view_title}>결재 문서 양식 선택</h2>
         <button
@@ -949,14 +1048,14 @@ export default function ApprovalsPage() {
         </button>
       </div>
 
-      <div className={styles.template_selector}>
+      <div className={f.template_selector}>
         {/* 카테고리 좌측 트리 */}
-        <div className={styles.template_categories}>
-          <p className={styles.template_categories_title}>카테고리</p>
+        <div className={f.template_categories}>
+          <p className={f.template_categories_title}>카테고리</p>
           {Object.keys(templatesByCategory).map((cat) => (
             <button
               key={cat}
-              className={`${styles.template_category_item} ${selectedCategory === cat ? styles.template_category_active : ''}`}
+              className={`${f.template_category_item} ${selectedCategory === cat ? f.template_category_active : ''}`}
               onClick={() => setSelectedCategory(cat)}
             >
               {cat}
@@ -966,26 +1065,26 @@ export default function ApprovalsPage() {
         </div>
 
         {/* 양식 목록 우측 */}
-        <div className={styles.template_list}>
+        <div className={f.template_list}>
           {selectedCategory ? (
             <>
-              <p className={styles.template_list_title}>{selectedCategory}</p>
-              <div className={styles.template_grid}>
+              <p className={f.template_list_title}>{selectedCategory}</p>
+              <div className={f.template_grid}>
                 {(templatesByCategory[selectedCategory] ?? []).map((tpl) => (
                   <button
                     key={tpl.id}
-                    className={styles.template_card}
+                    className={f.template_card}
                     onClick={() => handleSelectTemplate(tpl)}
                   >
-                    <FileText size={20} className={styles.template_card_icon} />
-                    <span className={styles.template_card_name}>{tpl.document_type}</span>
-                    <span className={styles.template_card_category}>{tpl.category}</span>
+                    <FileText size={20} className={f.template_card_icon} />
+                    <span className={f.template_card_name}>{tpl.document_type}</span>
+                    <span className={f.template_card_category}>{tpl.category}</span>
                   </button>
                 ))}
               </div>
             </>
           ) : (
-            <div className={styles.template_placeholder}>
+            <div className={f.template_placeholder}>
               <FileText size={32} />
               <p>좌측에서 카테고리를 선택하세요.</p>
             </div>
@@ -1011,14 +1110,17 @@ export default function ApprovalsPage() {
     const myUserName = users.find(u => String(u.id) === String(myUserId))?.display_name ?? '-'
 
     return (
-      <div className={styles.view_new_form}>
+      <div className={f.view_new_form}>
         {/* 작성 헤더 */}
-        <div className={styles.new_form_header}>
+        <div className={f.new_form_header}>
           <div>
-            <p className={styles.new_form_category}>{formState.template?.category}</p>
-            <h2 className={styles.new_form_title}>{formState.template?.document_type}</h2>
+            <p className={f.new_form_category}>{formState.template?.category}</p>
+            <h2 className={f.new_form_title}>
+              {formState.template?.document_type}
+              {editingDraftId && <span className={f.draft_editing_badge}>임시저장 편집 중</span>}
+            </h2>
           </div>
-          <div className={styles.new_form_actions}>
+          <div className={f.new_form_actions}>
             <button
               className={styles.btn_primary}
               onClick={() => handleSubmitNewApproval('submit')}
@@ -1031,17 +1133,20 @@ export default function ApprovalsPage() {
               onClick={() => handleSubmitNewApproval('draft')}
               disabled={submitting}
             >
-              임시저장
+              {editingDraftId ? '수정 저장' : '임시저장'}
             </button>
             <button
               className={styles.btn_secondary}
-              onClick={() => {}}
+              onClick={() => setPreviewOpen(true)}
             >
               미리보기
             </button>
             <button
               className={styles.btn_secondary}
-              onClick={() => setCurrentView('new_template')}
+              onClick={() => {
+                setEditingDraftId(null)
+                setCurrentView(editingDraftId ? 'list' : 'new_template')
+              }}
             >
               취소
             </button>
@@ -1085,12 +1190,7 @@ export default function ApprovalsPage() {
                   <tr>
                     <td className={styles.doc_info_label}>제목</td>
                     <td>
-                      <input
-                        className={styles.doc_info_input}
-                        value={formState.title}
-                        placeholder="문서 제목 입력"
-                        onChange={(e) => setFormState({ ...formState, title: e.target.value })}
-                      />
+                      <span className={styles.doc_info_input}>{formState.title}</span>
                     </td>
                   </tr>
                 </tbody>
@@ -1136,80 +1236,59 @@ export default function ApprovalsPage() {
               </table>
             </div>
 
-            {/* 본문 테이블 */}
-            <table className={styles.doc_body_table}>
-              <tbody>
-                {contentFields.map((f) => {
-                  const isRequired = f.required === true
-                  return (
-                    <tr key={f.key}>
-                      <td
-                        className={`${styles.doc_field_label} ${isRequired ? styles.doc_field_label_required : ''}`}
-                      >
-                        {f.label}
-                      </td>
-                      <td>
-                        {f.type === 'textarea' ? (
-                          <textarea
-                            className={styles.doc_body_textarea}
-                            value={formState.content[f.key] ?? ''}
-                            placeholder={`${f.label} 입력`}
-                            onChange={(e) =>
-                              setFormState({
-                                ...formState,
-                                content: { ...formState.content, [f.key]: e.target.value },
-                              })
-                            }
-                          />
-                        ) : f.type === 'select' ? (
-                          <select
-                            className={styles.doc_body_select}
-                            value={formState.content[f.key] ?? ''}
-                            onChange={(e) =>
-                              setFormState({
-                                ...formState,
-                                content: { ...formState.content, [f.key]: e.target.value },
-                              })
-                            }
-                          >
-                            <option value="">선택</option>
-                            {(f as { options?: { value: string; label: string }[] }).options?.map((o) => (
-                              <option key={o.value} value={o.value}>{o.label}</option>
-                            ))}
-                          </select>
-                        ) : (
-                          <input
-                            type={f.type}
-                            className={styles.doc_body_input}
-                            value={formState.content[f.key] ?? ''}
-                            placeholder={`${f.label} 입력`}
-                            onChange={(e) =>
-                              setFormState({
-                                ...formState,
-                                content: { ...formState.content, [f.key]: e.target.value },
-                              })
-                            }
-                          />
-                        )}
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+            {/* 본문 테이블 — 템플릿 레지스트리에서 자동 처리 */}
+            {formTemplateConfig && (
+              <formTemplateConfig.BodySection
+                content={formState.content as Record<string, unknown>}
+                onChange={handleContentChange}
+              />
+            )}
+
+            {/* 파일첨부 (supportsAttachments 템플릿만 표시) */}
+            {formTemplateConfig?.supportsAttachments && (
+              <div className={styles.doc_file_attach_section}>
+                <div className={f.doc_file_attach_label_row}>
+                  <span className={styles.doc_file_attach_title}>파일첨부</span>
+                </div>
+                <div className={`${f.doc_file_attach_box} ${uploadingFiles ? f.doc_file_attach_uploading : ''}`}>
+                  <label className={f.doc_file_drop_zone}>
+                    <input type="file" multiple className={f.doc_file_attach_input} onChange={handleFileSelect} disabled={uploadingFiles} />
+                    <Paperclip size={14} className={f.doc_file_drop_icon} />
+                    <span>
+                      {uploadingFiles ? '업로드 중...' : (
+                        <>이 곳에 파일을 드래그 하세요. 또는 <span className={f.doc_file_select_link}>파일선택</span>
+                          {attachedFiles.length > 0 && (
+                            <span className={f.doc_file_total_size}> ({(attachedFiles.reduce((s, file) => s + file.size, 0) / 1024).toFixed(0)}KB)</span>
+                          )}
+                        </>
+                      )}
+                    </span>
+                  </label>
+                  {attachedFiles.map((file, i) => (
+                    <div key={i} className={f.doc_file_row}>
+                      <button type="button" className={f.doc_file_remove} onClick={() => removeAttachedFile(i)}><X size={12} /></button>
+                      <span className={f.doc_file_row_icon}>{file.type.startsWith('image/') ? '🖼' : file.type === 'application/pdf' ? '📕' : '📄'}</span>
+                      <span className={f.doc_file_row_name}>{file.name}</span>
+                      <span className={f.doc_file_row_size}>({(file.size / 1024).toFixed(0)}Byte)</span>
+                      <a href={file.url} download={file.name} className={styles.doc_file_download_btn}>다운로드</a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* 결재선 설정 */}
-            <div className={styles.doc_approver_section}>
-              <p className={styles.doc_approver_section_title}>결재선</p>
-              <div className={styles.doc_approver_chain}>
+            <div className={f.doc_approver_section}>
+              <p className={f.doc_approver_section_title}>결재선</p>
+              <div className={f.doc_approver_chain}>
                 {formState.approver_ids.map((uid, idx) => {
                   const u = users.find(x => String(x.id) === uid)
                   return (
-                    <div key={idx} className={styles.doc_approver_chip}>
-                      <div className={styles.doc_approver_chip_step}>{idx + 1}</div>
-                      <span className={styles.doc_approver_chip_name}>{u?.display_name ?? uid}</span>
+                    <div key={idx} className={f.doc_approver_chip}>
+                      <div className={f.doc_approver_chip_step}>{idx + 1}</div>
+                      <span className={f.doc_approver_chip_name}>{u?.display_name ?? uid}</span>
                       <button
-                        className={styles.doc_approver_chip_remove}
+                        className={f.doc_approver_chip_remove}
                         onClick={() =>
                           setFormState({
                             ...formState,
@@ -1223,9 +1302,9 @@ export default function ApprovalsPage() {
                   )
                 })}
               </div>
-              <div className={styles.doc_approver_add_row}>
+              <div className={f.doc_approver_add_row}>
                 <select
-                  className={styles.doc_approver_add_select}
+                  className={f.doc_approver_add_select}
                   value=""
                   onChange={(e) => {
                     if (e.target.value && !formState.approver_ids.includes(e.target.value)) {
@@ -1247,6 +1326,117 @@ export default function ApprovalsPage() {
             {formError && <p className={styles.error_msg}>{formError}</p>}
           </div>
         </div>
+
+        {/* 하단 액션바 */}
+        <div className={f.new_form_footer}>
+          <div className={f.new_form_footer_left}>
+            <button
+              className={styles.btn_primary}
+              onClick={() => handleSubmitNewApproval('submit')}
+              disabled={submitting || formState.approver_ids.length === 0}
+            >
+              {submitting ? '처리 중...' : '결재요청'}
+            </button>
+            <button
+              className={styles.btn_secondary}
+              onClick={() => handleSubmitNewApproval('draft')}
+              disabled={submitting}
+            >
+              {editingDraftId ? '수정 저장' : '임시저장'}
+            </button>
+            <button
+              className={styles.btn_secondary}
+              onClick={() => setPreviewOpen(true)}
+            >
+              미리보기
+            </button>
+            <button
+              className={styles.btn_secondary}
+              onClick={() => {
+                setEditingDraftId(null)
+                setCurrentView(editingDraftId ? 'list' : 'new_template')
+              }}
+            >
+              취소
+            </button>
+          </div>
+          <div className={f.new_form_footer_right}>
+            <select className={f.form_footer_autosave}>
+              <option>자동저장안함</option>
+              <option>30초마다 저장</option>
+              <option>1분마다 저장</option>
+            </select>
+            <button
+              className={styles.btn_secondary}
+              onClick={() => {
+                setEditingDraftId(null)
+                setCurrentView('home')
+                setActiveMenuKey('home')
+              }}
+            >
+              목록
+            </button>
+          </div>
+        </div>
+
+        {/* 미리보기 모달 */}
+        {previewOpen && (
+          <div className={f.preview_overlay} onClick={() => setPreviewOpen(false)}>
+            <div className={f.preview_modal} onClick={(e) => e.stopPropagation()}>
+              <div className={f.preview_modal_header}>
+                <span className={f.preview_modal_title}>미리보기</span>
+                <button className={f.preview_modal_close} onClick={() => setPreviewOpen(false)}>
+                  <X size={18} />
+                </button>
+              </div>
+              <div className={f.preview_modal_body}>
+                <div className={styles.doc_paper}>
+                  <h2 className={styles.doc_title}>{formState.template?.document_type}</h2>
+                  <div className={styles.doc_header_area}>
+                    <table className={styles.doc_info_table}>
+                      <tbody>
+                        <tr><td className={styles.doc_info_label}>작성일자</td><td>{new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' })}</td></tr>
+                        <tr><td className={styles.doc_info_label}>신청부서</td><td>{departments.find(d => String(d.id) === formState.department_id)?.name ?? '-'}</td></tr>
+                        <tr><td className={styles.doc_info_label}>신청자</td><td>{users.find(u => String(u.id) === String(myUserId))?.display_name ?? '-'}</td></tr>
+                        <tr><td className={styles.doc_info_label}>제목</td><td>{formState.title}</td></tr>
+                      </tbody>
+                    </table>
+                    <table className={styles.doc_approval_box}>
+                      <tbody>
+                        <tr>
+                          <td className={styles.doc_approval_label} rowSpan={3}>결재선</td>
+                          {formState.approver_ids.length > 0 ? formState.approver_ids.map((uid, idx) => (
+                            <td key={idx} className={styles.doc_approval_name_cell}>{users.find(u => String(u.id) === uid)?.display_name ?? '-'}</td>
+                          )) : <td className={styles.doc_approval_empty_cell}>미지정</td>}
+                        </tr>
+                        <tr>{formState.approver_ids.length > 0 ? formState.approver_ids.map((_, idx) => <td key={idx} className={styles.doc_approval_status_cell}></td>) : <td className={styles.doc_approval_status_cell}></td>}</tr>
+                        <tr>{formState.approver_ids.length > 0 ? formState.approver_ids.map((_, idx) => <td key={idx} className={styles.doc_approval_status_cell}></td>) : <td className={styles.doc_approval_status_cell}></td>}</tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  {/* 미리보기 본문 — 레지스트리에서 읽기 전용 렌더 */}
+                  {formTemplateConfig && (
+                    <formTemplateConfig.BodySection
+                      content={formState.content as Record<string, unknown>}
+                    />
+                  )}
+                  {attachedFiles.length > 0 && (
+                    <div className={styles.doc_file_attach_section}>
+                      <p className={styles.doc_file_attach_title}>파일첨부</p>
+                      {attachedFiles.map((file, i) => (
+                        <div key={i} className={f.doc_file_row}>
+                          <span className={f.doc_file_row_icon}>{file.type.startsWith('image/') ? '🖼' : '📄'}</span>
+                          <span className={f.doc_file_row_name}>{file.name}</span>
+                          <span className={f.doc_file_row_size}>({(file.size / 1024).toFixed(0)}KB)</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     )
   }

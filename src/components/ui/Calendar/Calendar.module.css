@@ -1,0 +1,261 @@
+/* ==========================================================================
+   Calendar 컴포넌트 — 클린 미니멀 디자인
+   ========================================================================== */
+
+.root {
+  display: inline-block;
+  background: #fff;
+  border-radius: 10px;
+  padding: 14px 14px 16px;
+  user-select: none;
+  font-family: inherit;
+  font-size: 13px;
+  position: relative;
+  width: 238px;
+}
+
+/* ---------------------------------------------------------------------------
+   월 레이아웃
+   --------------------------------------------------------------------------- */
+
+.months {
+  display: flex;
+  gap: 0;
+}
+
+.month {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ---------------------------------------------------------------------------
+   헤더: 드롭다운 (좌) + 네비 버튼 (우, absolute)
+   --------------------------------------------------------------------------- */
+
+.month_caption {
+  display: flex;
+  align-items: center;
+  height: 30px;
+  padding-right: 52px; /* 네비 버튼 공간 */
+  margin-bottom: 4px;
+}
+
+.caption_label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111;
+}
+
+/* ---------------------------------------------------------------------------
+   드롭다운 (연도 / 월 select)
+   --------------------------------------------------------------------------- */
+
+.dropdowns {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.dropdown_root {
+  position: relative;
+}
+
+.dropdown {
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 700;
+  color: #111;
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+  padding: 0 2px;
+  -webkit-appearance: auto;
+  appearance: auto;
+}
+
+.dropdown:focus {
+  outline: none;
+}
+
+/* ---------------------------------------------------------------------------
+   네비게이션 버튼 (absolute — root 기준 우상단)
+   --------------------------------------------------------------------------- */
+
+.nav {
+  position: absolute;
+  top: 14px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.nav_btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: none;
+  border-radius: 6px;
+  color: #bbb;
+  cursor: pointer;
+  padding: 0;
+  transition: color 120ms ease, background 120ms ease;
+}
+
+.nav_btn:hover {
+  color: #444;
+  background: #f0f0f0;
+}
+
+.nav_btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* ---------------------------------------------------------------------------
+   그리드 / 요일 헤더
+   --------------------------------------------------------------------------- */
+
+.month_grid {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.weekdays {}
+
+.weekday {
+  width: 34px;
+  height: 26px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: #bbb;
+  padding-bottom: 2px;
+}
+
+/* 일요일 */
+.weekday:first-child { color: #e03535; }
+
+/* 토요일 */
+.weekday:last-child  { color: #3182f6; }
+
+/* ---------------------------------------------------------------------------
+   날짜 셀
+   --------------------------------------------------------------------------- */
+
+.week {}
+
+.day {
+  padding: 1px 0;
+  text-align: center;
+}
+
+.day_button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: none;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 400;
+  color: #222;
+  cursor: pointer;
+  margin: 0 auto;
+  padding: 0;
+  transition: background 100ms ease;
+}
+
+.day_button:hover {
+  background: #f2f2f2;
+}
+
+/* 일요일 날짜 */
+.day:first-child .day_button { color: #e03535; }
+
+/* 토요일 날짜 */
+.day:last-child  .day_button { color: #3182f6; }
+
+/* ---------------------------------------------------------------------------
+   상태별 스타일
+   --------------------------------------------------------------------------- */
+
+/* 오늘 */
+.day_today .day_button {
+  background: #3182f6;
+  color: #fff !important;
+  font-weight: 600;
+}
+
+.day_today .day_button:hover {
+  background: #1b6de8;
+}
+
+/* 선택됨 */
+.day_selected .day_button {
+  background: #3182f6;
+  color: #fff !important;
+  font-weight: 600;
+}
+
+.day_selected .day_button:hover {
+  background: #1b6de8;
+}
+
+/* 이번달 외 날짜 */
+.day_outside .day_button               { color: #ddd; }
+.day_outside:first-child .day_button   { color: #e8b4b4; }
+.day_outside:last-child  .day_button   { color: #b4ccf5; }
+
+/* 비활성화 */
+.day_disabled .day_button {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.day_disabled .day_button:hover {
+  background: none;
+}
+
+/* 숨김 */
+.day_hidden { visibility: hidden; }
+
+/* 포커스 */
+.day_focused .day_button {
+  outline: 2px solid #3182f6;
+  outline-offset: 1px;
+}
+
+/* ---------------------------------------------------------------------------
+   범위 선택 (range mode)
+   --------------------------------------------------------------------------- */
+
+.day_range_start .day_button,
+.day_range_end   .day_button {
+  background: #3182f6;
+  color: #fff !important;
+  border-radius: 50%;
+  font-weight: 600;
+}
+
+.day_range_middle {
+  background: #e8f0fe;
+}
+
+.day_range_middle .day_button {
+  background: transparent;
+  color: #3182f6;
+  border-radius: 0;
+}
+
+.day_range_middle .day_button:hover {
+  background: rgba(49, 130, 246, 0.15);
+}

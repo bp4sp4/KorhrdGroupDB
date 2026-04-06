@@ -1,0 +1,28 @@
+/* 근태사유서 전용 스타일 */
+
+.table_4col :global(.doc_field_label) {
+  width: 80px;
+}
+
+.date_range_cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.date_sep {
+  font-size: 14px;
+  color: #333;
+  flex-shrink: 0;
+}
+
+.textarea_large {
+  min-height: 120px;
+}
+
+.note {
+  font-size: 12px;
+  color: #555;
+  margin-top: 12px;
+  padding: 0;
+}

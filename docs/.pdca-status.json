@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-04-06T01:29:19.478Z",
+  "lastUpdated": "2026-04-06T03:56:38.006Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -79,7 +79,10 @@
     "assignment",
     "students",
     "images",
-    "draft"
+    "draft",
+    "attendance",
+    "businessCard",
+    "Calendar"
   ],
   "primaryFeature": "supabase",
   "features": {
@@ -170,7 +173,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:41:16.658Z",
-        "lastUpdated": "2026-04-06T01:29:19.478Z"
+        "lastUpdated": "2026-04-06T03:56:38.006Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/cert/page.tsx"
     },
@@ -859,9 +862,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-01T06:58:08.194Z",
-        "lastUpdated": "2026-04-03T01:45:43.612Z"
+        "lastUpdated": "2026-04-06T03:20:58.601Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/approvals/page.tsx"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/approvals/docTemplates.tsx"
     },
     "reports": {
       "phase": "do",
@@ -885,9 +888,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-01T07:05:06.801Z",
-        "lastUpdated": "2026-04-01T07:37:33.987Z"
+        "lastUpdated": "2026-04-06T01:48:25.518Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/lib/management/sendEmail.ts"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/lib/management/utils.ts"
     },
     "departments": {
       "phase": "do",
@@ -911,9 +914,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-01T07:05:57.026Z",
-        "lastUpdated": "2026-04-01T07:05:57.026Z"
+        "lastUpdated": "2026-04-06T02:33:45.058Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/management/revenues/upload/route.ts"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/management/approvals/upload/route.ts"
     },
     "[id]": {
       "phase": "do",
@@ -924,9 +927,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-01T07:06:44.615Z",
-        "lastUpdated": "2026-04-01T08:18:56.867Z"
+        "lastUpdated": "2026-04-06T02:25:19.525Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/admin/accounts/[id]/route.ts"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/management/approvals/[id]/route.ts"
     },
     "templates": {
       "phase": "do",
@@ -937,9 +940,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-01T07:06:49.278Z",
-        "lastUpdated": "2026-04-03T06:09:25.310Z"
+        "lastUpdated": "2026-04-06T03:03:23.822Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/cert/templates/route.ts"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/approvals/templates/types.ts"
     },
     "audit-logs": {
       "phase": "do",
@@ -1096,6 +1099,45 @@
         "lastUpdated": "2026-04-03T09:04:14.291Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/cert/students/draft/route.ts"
+    },
+    "attendance": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-06T03:03:38.074Z",
+        "lastUpdated": "2026-04-06T03:21:09.144Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/approvals/templates/attendance/index.tsx"
+    },
+    "businessCard": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-06T03:03:57.563Z",
+        "lastUpdated": "2026-04-06T03:03:57.563Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/approvals/templates/businessCard/index.tsx"
+    },
+    "Calendar": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-06T03:18:33.025Z",
+        "lastUpdated": "2026-04-06T03:53:28.130Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/components/ui/Calendar/DateInput.tsx"
     }
   },
   "pipeline": {
@@ -1106,7 +1148,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-06T01:29:19.478Z"
+    "lastActivity": "2026-04-06T03:56:38.006Z"
   },
   "history": [
     {
@@ -13333,6 +13375,504 @@
     },
     {
       "timestamp": "2026-04-06T01:29:19.478Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T01:48:06.522Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T01:48:25.518Z",
+      "feature": "management",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T01:57:43.276Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T01:57:54.571Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T01:58:15.042Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T01:58:28.402Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T01:58:55.860Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:01:04.757Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:01:20.982Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:01:31.842Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:02:28.208Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:02:31.629Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:11:45.613Z",
+      "feature": "upload",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:11:51.594Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:12:03.992Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:12:11.567Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:12:17.625Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:12:27.872Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:12:40.258Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:25:19.525Z",
+      "feature": "[id]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:25:24.797Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:25:36.552Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:25:42.142Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:25:54.814Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:26:08.553Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:33:35.329Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:33:39.421Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:33:45.058Z",
+      "feature": "upload",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:35:41.971Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:35:46.650Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:35:54.555Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:36:09.028Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:36:42.835Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:37:36.895Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:37:48.223Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:41:03.785Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:41:14.665Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:41:19.419Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:42:40.022Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:46:09.779Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:46:17.698Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:46:39.256Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:46:53.501Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:47:13.492Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:56:23.937Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:56:31.410Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:56:47.312Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:56:52.085Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:56:58.536Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:57:07.260Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:57:27.595Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:58:11.162Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:58:47.534Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T02:58:52.339Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T03:03:23.822Z",
+      "feature": "templates",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T03:03:38.074Z",
+      "feature": "attendance",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T03:03:57.563Z",
+      "feature": "businessCard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T03:04:25.579Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T03:12:27.766Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T03:12:37.161Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T03:12:41.251Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T03:12:48.720Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T03:12:53.033Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T03:12:58.609Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T03:13:26.428Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T03:13:41.929Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T03:13:59.707Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T03:14:14.908Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T03:14:26.832Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T03:14:30.404Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T03:14:36.888Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T03:14:42.139Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T03:14:50.054Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T03:18:33.025Z",
+      "feature": "Calendar",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T03:19:15.426Z",
+      "feature": "Calendar",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T03:20:36.015Z",
+      "feature": "Calendar",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T03:20:53.375Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T03:20:58.601Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T03:21:03.649Z",
+      "feature": "attendance",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T03:21:09.144Z",
+      "feature": "attendance",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T03:52:50.238Z",
+      "feature": "Calendar",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T03:53:28.130Z",
+      "feature": "Calendar",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-06T03:56:38.006Z",
       "feature": "cert",
       "phase": "do",
       "action": "updated"

@@ -4,6 +4,73 @@ import { requireAuth } from '@/lib/auth/requireAuth'
 import { genDocNumber } from '@/lib/management/utils'
 import { writeAuditLog } from '@/lib/management/auditLog'
 
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params
+  const { user, errorResponse } = await requireAuth()
+  if (errorResponse) return errorResponse
+
+  const appUser = await supabaseAdmin
+    .from('app_users')
+    .select('id, display_name')
+    .eq('username', user.email)
+    .single()
+  const userId = appUser.data?.id ?? user.id
+
+  const { data: approval } = await supabaseAdmin
+    .from('approvals')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (!approval) return NextResponse.json({ error: '문서를 찾을 수 없습니다.' }, { status: 404 })
+  if (approval.applicant_id !== userId) return NextResponse.json({ error: '권한이 없습니다.' }, { status: 403 })
+  if (approval.status !== 'DRAFT') return NextResponse.json({ error: '임시저장 상태가 아닙니다.' }, { status: 400 })
+
+  const body = await request.json()
+  const { content, title, department_id, approver_ids, action } = body
+
+  await supabaseAdmin.from('approvals').update({
+    content: content ?? {},
+    title,
+    department_id: department_id || null,
+  }).eq('id', id)
+
+  if (action === 'submit' && approver_ids?.length) {
+    const docNumber = genDocNumber(approval.category)
+
+    await supabaseAdmin.from('approval_steps').delete().eq('approval_id', id)
+
+    const steps = (approver_ids as string[]).map((approverId, idx) => ({
+      approval_id: id,
+      step_number: idx + 1,
+      approver_id: approverId,
+      status: 'PENDING',
+    }))
+    await supabaseAdmin.from('approval_steps').insert(steps)
+
+    await supabaseAdmin.from('approvals').update({
+      status: 'IN_PROGRESS',
+      document_number: docNumber,
+      current_step: 1,
+      submitted_at: new Date().toISOString(),
+    }).eq('id', id)
+
+    await supabaseAdmin.from('notifications').insert({
+      user_id: approver_ids[0],
+      type: 'APPROVAL_SUBMITTED',
+      title: '결재 요청',
+      message: `${(appUser.data as { display_name?: string } | null)?.display_name ?? ''}님이 [${approval.document_type}]를 상신했습니다.`,
+      link: `/approvals?id=${id}`,
+    })
+  }
+
+  const { data } = await supabaseAdmin.from('approvals').select('*').eq('id', id).single()
+  return NextResponse.json(data)
+}
+
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }

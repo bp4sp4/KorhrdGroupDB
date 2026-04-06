@@ -46,9 +46,13 @@ export async function GET(request: NextRequest) {
       .in('id', ids)
       .in('status', ['SUBMITTED', 'IN_PROGRESS'])
   } else if (tab === 'completed') {
-    query = query
-      .or(`applicant_id.eq.${userId},id.in.(${await getMyApproverIds(userId)})`)
-      .in('status', ['APPROVED', 'REJECTED', 'CANCELLED'])
+    const approverIds = await getMyApproverIds(userId)
+    if (approverIds.length > 0) {
+      query = query.or(`applicant_id.eq.${userId},id.in.(${approverIds.join(',')})`)
+    } else {
+      query = query.eq('applicant_id', userId)
+    }
+    query = query.in('status', ['APPROVED', 'REJECTED', 'CANCELLED'])
   }
 
   const { data, error } = await query
@@ -57,12 +61,12 @@ export async function GET(request: NextRequest) {
   return NextResponse.json(data ?? [])
 }
 
-async function getMyApproverIds(userId: string): Promise<string> {
+async function getMyApproverIds(userId: string): Promise<string[]> {
   const { data } = await supabaseAdmin
     .from('approval_steps')
     .select('approval_id')
     .eq('approver_id', userId)
-  return (data ?? []).map((r) => r.approval_id).join(',') || 'null'
+  return (data ?? []).map((r) => r.approval_id as string)
 }
 
 export async function POST(request: NextRequest) {
