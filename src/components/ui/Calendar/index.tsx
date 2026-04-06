@@ -2,7 +2,7 @@
 
 import { DayPicker, type DateRange, type Matcher } from 'react-day-picker'
 import { ko } from 'date-fns/locale'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react'
 import styles from './Calendar.module.css'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -61,6 +61,7 @@ const classNames: React.ComponentProps<typeof DayPicker>['classNames'] = {
   range_end:       styles.day_range_end,
   range_middle:    styles.day_range_middle,
   focused:         styles.day_focused,
+  chevron:         styles.chevron,
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -68,9 +69,9 @@ const classNames: React.ComponentProps<typeof DayPicker>['classNames'] = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function NavChevron({ orientation }: { orientation?: string }) {
-  return orientation === 'left'
-    ? <ChevronLeft size={13} />
-    : <ChevronRight size={13} />
+  if (orientation === 'left') return <ChevronLeft size={13} />
+  if (orientation === 'down') return <ChevronDown size={11} className={styles.dropdown_chevron} />
+  return <ChevronRight size={13} />
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

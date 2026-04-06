@@ -14,6 +14,9 @@ import MemoTimeline from '@/components/ui/MemoTimeline'
 import MemoHoverBadge from '@/components/ui/MemoHoverBadge'
 import { TableSkeleton, StatsCardsSkeleton, ChartsGridSkeleton, FilterBarSkeleton } from '@/components/ui/Skeleton'
 import { downloadExcel } from '@/lib/excelExport'
+import { DateInput } from '@/components/ui/Calendar/DateInput'
+import { CalendarClock, X } from 'lucide-react'
+import { BorderBeam } from '@/components/ui/BorderBeam'
 
 // ─────────────────────────────────────────────
 // Types
@@ -3170,11 +3173,11 @@ function CertStudentDetailPanel({ item, onClose, onUpdate, initialTab = 'basic' 
                 <p className={styles.detailModalSub}>{item.contact}</p>
                 <div className={styles.detailModalSubRow}>
                   <span className={styles.detailModalSub}>등록일: {formatDateShort(item.created_at)}</span>
-                  {item.contact_scheduled_at ? (
-                    <button className={styles.scheduleBtn_active} onClick={() => onUpdate(item.id, { contact_scheduled_at: null })}>연락예정 해제</button>
-                  ) : (
-                    <button className={styles.scheduleBtn} onClick={() => onUpdate(item.id, { contact_scheduled_at: new Date().toISOString() })}>연락예정</button>
-                  )}
+                  <DateInput
+                    value={item.contact_scheduled_at ? item.contact_scheduled_at.slice(0, 10) : ''}
+                    onChange={(dateStr) => onUpdate(item.id, { contact_scheduled_at: dateStr ? dateStr + 'T00:00:00.000Z' : null })}
+                    variant="button"
+                  />
                 </div>
                 <div className={styles.detailModalContactRow}>
                   <span className={styles.detailModalContactBadge}>
@@ -3841,11 +3844,12 @@ function StudentMgmtTab() {
                       </td>
                       <td className={styles.tdDateSmall}>{formatDate(item.created_at)}</td>
                       <td className={styles.tdAction} onClick={e => e.stopPropagation()}>
-                        {item.contact_scheduled_at ? (
-                          <button className={styles.scheduleBtn_active} onClick={() => handleUpdate(item.id, { contact_scheduled_at: null })}>해제</button>
-                        ) : (
-                          <button className={styles.scheduleBtn} onClick={() => handleUpdate(item.id, { contact_scheduled_at: new Date().toISOString() })}>연락예정</button>
-                        )}
+                          <DateInput
+                            value={item.contact_scheduled_at ? item.contact_scheduled_at.slice(0, 10) : ''}
+                            onChange={(dateStr) => handleUpdate(item.id, { contact_scheduled_at: dateStr ? dateStr + 'T00:00:00.000Z' : null })}
+                            variant="button"
+                            align="right"
+                          />
                       </td>
                     </tr>
                   );
@@ -4108,10 +4112,12 @@ function StudentContactTab() {
                 </td>
                 <td className={styles.tdDateSmall}>{formatDate(item.created_at)}</td>
                 <td className={styles.tdAction} onClick={e => e.stopPropagation()}>
-                  <button
-                    className={styles.scheduleBtn_active}
-                    onClick={() => handleUpdate(item.id, { contact_scheduled_at: null })}
-                  >해제</button>
+                  <DateInput
+                    value={item.contact_scheduled_at ? item.contact_scheduled_at.slice(0, 10) : ''}
+                    onChange={(dateStr) => handleUpdate(item.id, { contact_scheduled_at: dateStr ? dateStr + 'T00:00:00.000Z' : null })}
+                    variant="button"
+                    align="right"
+                  />
                 </td>
               </tr>
             ))}
@@ -5353,6 +5359,13 @@ export default function CertPage() {
 
   const [sourceTab, setSourceTab] = useState<SourceTab>('hakjeom')
   const [statsNode, setStatsNode] = useState<React.ReactNode>(null)
+  const [todayScheduled, setTodayScheduled] = useState<CertStudent[]>([])
+  const [dismissedBannerIds, setDismissedBannerIds] = useState<Set<number>>(() => {
+    try {
+      const stored = sessionStorage.getItem('certBannerDismissed')
+      return stored ? new Set(JSON.parse(stored) as number[]) : new Set()
+    } catch { return new Set() }
+  })
 
   useEffect(() => {
     if (!tabsLoaded) return
@@ -5364,12 +5377,67 @@ export default function CertPage() {
     }
   }, [tabsLoaded, allowedCertTabs, urlTab])
 
+  useEffect(() => {
+    const today = new Date().toISOString().slice(0, 10)
+    fetch('/api/cert/students')
+      .then(r => r.ok ? r.json() : [])
+      .then((data: CertStudent[]) => {
+        const due = data.filter(c => c.contact_scheduled_at && c.contact_scheduled_at.slice(0, 10) <= today)
+        setTodayScheduled(due)
+      })
+      .catch(() => {})
+  }, [])
+
   const handleTabChange = (tab: SourceTab) => {
     setSourceTab(tab)
   }
 
+  const visibleBanners = todayScheduled.filter(c => !dismissedBannerIds.has(c.id))
+
   return (
     <div>
+      {/* 연락예정 배너 */}
+      {visibleBanners.length > 0 && (() => {
+        const today = new Date().toISOString().slice(0, 10)
+        const hasOverdue = visibleBanners.some(c => c.contact_scheduled_at!.slice(0, 10) < today)
+        return (
+          <div className={`${styles.scheduleBanner} ${hasOverdue ? styles.scheduleBannerOverdue : ''}`}>
+            <div className={`${styles.bannerIconBox} ${hasOverdue ? styles.bannerIconBoxRed : ''}`}>
+              <CalendarClock size={15} />
+            </div>
+            <div className={styles.bannerTextWrap}>
+              <span className={styles.bannerLabel}>
+                연락 예정 <strong>{visibleBanners.length}명</strong>
+              </span>
+              <div className={styles.bannerDetail}>
+                {visibleBanners.slice(0, 3).map((c, i) => {
+                  const date = c.contact_scheduled_at!.slice(0, 10)
+                  const isOverdue = date < today
+                  const diff = Math.round((new Date(today).getTime() - new Date(date).getTime()) / 86400000)
+                  return (
+                    <span key={c.id} className={styles.bannerPerson}>
+                      {i > 0 && <span className={styles.bannerDot} />}
+                      <span className={styles.bannerPersonName}>{c.name}</span>
+                      <span className={isOverdue ? styles.bannerDateRed : styles.bannerDateBlue}>
+                        {date.slice(5).replace('-', '/')}{isOverdue && diff > 0 ? ` D+${diff}` : ''}
+                      </span>
+                    </span>
+                  )
+                })}
+                {visibleBanners.length > 3 && <span className={styles.bannerMore}>외 {visibleBanners.length - 3}명</span>}
+              </div>
+            </div>
+            <button className={styles.scheduleBannerClose} onClick={() => {
+              const ids = visibleBanners.map(c => c.id)
+              setDismissedBannerIds(new Set(ids))
+              try { sessionStorage.setItem('certBannerDismissed', JSON.stringify(ids)) } catch { /* ignore */ }
+            }} aria-label="닫기"><X size={14} /></button>
+            <BorderBeam duration={6} size={400} colorFrom="transparent" colorTo={hasOverdue ? '#f04452' : '#3182f6'} borderRadius={8} />
+            <BorderBeam duration={6} size={400} colorFrom="transparent" colorTo={hasOverdue ? '#f04452' : '#3182f6'} borderRadius={8} reverse />
+          </div>
+        )
+      })()}
+
       {/* 페이지 헤더 */}
       <div className={styles.pageHeader}>
         <div>

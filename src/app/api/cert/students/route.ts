@@ -5,6 +5,36 @@ import { logAction } from '@/lib/audit/logAction';
 
 const TABLE = 'cert_students';
 
+// ─── 알림 헬퍼 ────────────────────────────────────────────────────────────────
+
+let _authUsersCache: { id: string; email?: string }[] | null = null
+async function getAuthUsers() {
+  if (_authUsersCache) return _authUsersCache
+  const { data, error } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 })
+  if (error) { console.error('[cert/students getAuthUsers]', error); return [] }
+  _authUsersCache = data.users
+  return data.users
+}
+
+async function getUidByEmail(email: string): Promise<string | null> {
+  const users = await getAuthUsers()
+  return users.find(u => u.email === email)?.id ?? null
+}
+
+// admin/master-admin 유저 전체 UUID 반환
+async function getAdminUids(): Promise<string[]> {
+  const { data: admins, error } = await supabaseAdmin
+    .from('app_users')
+    .select('username')
+    .in('role', ['admin', 'master-admin'])
+  if (error || !admins?.length) {
+    console.error('[cert/students getAdminUids]', error)
+    return []
+  }
+  const uids = await Promise.all(admins.map(a => getUidByEmail(a.username)))
+  return uids.filter(Boolean) as string[]
+}
+
 // ─── GET: 목록 조회 ──────────────────────────────────────────────────────────
 
 export async function GET(request: NextRequest) {
@@ -141,6 +171,27 @@ export async function PATCH(request: NextRequest) {
     }
 
     await logAction({ user_id: user.id, user_email: user.email, action: 'update', resource: '민간자격증 학생관리', resource_id: String(id), detail: '학생 정보 수정' });
+
+    // 연락예정일 설정 → 담당자 무관, admin/master-admin 전체에 알림
+    if (fields.contact_scheduled_at && data) {
+      try {
+        const adminUids = await getAdminUids()
+        const dateStr = fields.contact_scheduled_at.slice(0, 10)
+        await Promise.all(adminUids.map(uid =>
+          supabaseAdmin.from('notifications').insert({
+            user_id: uid,
+            type: 'CONTACT_SCHEDULED',
+            title: '연락 예정',
+            message: `[민간자격증] ${data.name}님 — ${dateStr} 연락 예정`,
+            link: `/cert?tab=student-contact`,
+            is_read: false,
+          })
+        ))
+      } catch (nErr) {
+        console.error('[cert/students PATCH] CONTACT_SCHEDULED 알림 실패:', nErr)
+      }
+    }
+
     return NextResponse.json({ message: 'Updated successfully', data });
   } catch (err) {
     console.error('[cert/students PATCH] Unexpected error:', err);

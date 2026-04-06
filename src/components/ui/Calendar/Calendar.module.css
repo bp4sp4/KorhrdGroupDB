@@ -5,13 +5,13 @@
 .root {
   display: inline-block;
   background: #fff;
-  border-radius: 10px;
-  padding: 14px 14px 16px;
+  border-radius: 12px;
+  padding: 12px 12px 14px;
   user-select: none;
   font-family: inherit;
   font-size: 13px;
   position: relative;
-  width: 238px;
+  width: fit-content;
 }
 
 /* ---------------------------------------------------------------------------
@@ -37,8 +37,8 @@
 .month_caption {
   display: flex;
   align-items: center;
-  height: 30px;
-  padding-right: 52px; /* 네비 버튼 공간 */
+  height: 28px;
+  padding-right: 60px; /* 네비 버튼 공간 */
   margin-bottom: 4px;
 }
 
@@ -55,30 +55,56 @@
 .dropdowns {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 10px;
 }
 
 .dropdown_root {
   position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
 }
 
+/* 실제 select — 투명 오버레이로 올려서 클릭/키보드만 담당 */
 .dropdown {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 1;
   border: none;
   background: transparent;
+  font-family: inherit;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* caption_label — 드롭다운 안에서 실제로 보이는 텍스트+화살표 */
+.caption_label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 14px;
   font-weight: 700;
   color: #111;
-  font-family: inherit;
-  cursor: pointer;
-  outline: none;
-  padding: 0 2px;
-  -webkit-appearance: auto;
-  appearance: auto;
+  pointer-events: none;
+  white-space: nowrap;
 }
 
-.dropdown:focus {
-  outline: none;
+.dropdown_root:hover .caption_label {
+  color: #3182f6;
 }
+
+/* 드롭다운 내부 chevron (down 방향) */
+.dropdown_chevron {
+  color: #888;
+  flex-shrink: 0;
+}
+
+/* nav 버튼용 chevron */
+.chevron {}
 
 /* ---------------------------------------------------------------------------
    네비게이션 버튼 (absolute — root 기준 우상단)
@@ -86,22 +112,22 @@
 
 .nav {
   position: absolute;
-  top: 14px;
+  top: 12px;
   right: 10px;
   display: flex;
   align-items: center;
-  gap: 0;
+  gap: 2px;
 }
 
 .nav_btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   border: none;
   background: none;
-  border-radius: 6px;
+  border-radius: 7px;
   color: #bbb;
   cursor: pointer;
   padding: 0;
@@ -124,19 +150,36 @@
 
 .month_grid {
   border-collapse: collapse;
+  border-spacing: 0;
   width: 100%;
+  border: none;
+  outline: none;
 }
 
-.weekdays {}
+/* 브라우저 기본 table border 완전 제거 */
+.month_grid tr,
+.month_grid th,
+.month_grid td {
+  border: none;
+  outline: none;
+  padding: 0;
+}
+
+.weekdays {
+  border: none;
+}
 
 .weekday {
-  width: 34px;
-  height: 26px;
+  width: 32px;
+  height: 24px;
   text-align: center;
-  font-size: 12px;
-  font-weight: 500;
-  color: #bbb;
-  padding-bottom: 2px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #c0c0c0;
+  letter-spacing: 0.02em;
+  padding: 0;
+  border: none;
+  outline: none;
 }
 
 /* 일요일 */
@@ -149,33 +192,38 @@
    날짜 셀
    --------------------------------------------------------------------------- */
 
-.week {}
+.week {
+  border: none;
+  outline: none;
+}
 
 .day {
-  padding: 1px 0;
+  padding: 0;
   text-align: center;
+  border: none;
+  outline: none;
 }
 
 .day_button {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   border: none;
   background: none;
   border-radius: 50%;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 400;
   color: #222;
   cursor: pointer;
   margin: 0 auto;
   padding: 0;
-  transition: background 100ms ease;
+  transition: background 120ms ease, color 120ms ease;
 }
 
 .day_button:hover {
-  background: #f2f2f2;
+  background: #f0f0f0;
 }
 
 /* 일요일 날짜 */
@@ -190,24 +238,26 @@
 
 /* 오늘 */
 .day_today .day_button {
-  background: #3182f6;
+  background: #111 !important;
   color: #fff !important;
-  font-weight: 600;
+  font-weight: 700;
+  box-shadow: none;
 }
 
 .day_today .day_button:hover {
-  background: #1b6de8;
+  background: #333 !important;
 }
 
-/* 선택됨 */
+/* 선택됨 (오늘이어도 selected 우선) */
 .day_selected .day_button {
-  background: #3182f6;
-  color: #fff !important;
+  background: #d9d9d9 !important;
+  color: #111 !important;
   font-weight: 600;
+  box-shadow: none !important;
 }
 
 .day_selected .day_button:hover {
-  background: #1b6de8;
+  background: #c8c8c8 !important;
 }
 
 /* 이번달 외 날짜 */

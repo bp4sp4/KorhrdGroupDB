@@ -3,6 +3,54 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { logAction } from '@/lib/audit/logAction';
 
+// ─── 알림 헬퍼 ────────────────────────────────────────────────────────────────
+
+// Supabase auth 유저 목록 캐시 (요청 단위)
+let _authUsersCache: { id: string; email?: string }[] | null = null
+async function getAuthUsers() {
+  if (_authUsersCache) return _authUsersCache
+  const { data, error } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 })
+  if (error) { console.error('[getAuthUsers]', error); return [] }
+  _authUsersCache = data.users
+  return data.users
+}
+
+// email → Supabase auth UUID
+async function getUidByEmail(email: string): Promise<string | null> {
+  const users = await getAuthUsers()
+  return users.find(u => u.email === email)?.id ?? null
+}
+
+// display_name → Supabase auth UUID
+async function getUidByDisplayName(displayName: string): Promise<string | null> {
+  const { data: appUser, error } = await supabaseAdmin
+    .from('app_users')
+    .select('username')
+    .eq('display_name', displayName)
+    .maybeSingle()
+  if (error || !appUser?.username) {
+    console.error('[getUidByDisplayName] app_users 조회 실패:', displayName, error)
+    return null
+  }
+  const uid = await getUidByEmail(appUser.username)
+  if (!uid) console.error('[getUidByDisplayName] auth 유저 없음:', appUser.username)
+  return uid
+}
+
+// admin/master-admin 유저 전체 UUID
+async function getAdminUids(): Promise<string[]> {
+  const { data: admins, error } = await supabaseAdmin
+    .from('app_users')
+    .select('username')
+    .in('role', ['admin', 'master-admin'])
+  if (error || !admins?.length) {
+    console.error('[getAdminUids] 조회 실패:', error)
+    return []
+  }
+  const uids = await Promise.all(admins.map(a => getUidByEmail(a.username)))
+  return uids.filter(Boolean) as string[]
+}
+
 // ─── 타입 정의 ───────────────────────────────────────────────────────────────
 
 type HakjeomStatus = '부재중/추후통화' | '상담대기' | '상담완료-높음' | '상담완료-중간' | '상담완료-낮음' | '보류' | '등록대기' | '등록완료' | '취소' | `기타(${string})` | '기타';
@@ -163,6 +211,23 @@ export async function POST(request: NextRequest) {
     }
 
     await logAction({ user_id: user.id, user_email: user.email, action: 'create', resource: '학점은행제 상담', resource_id: String(data.id), detail: `${data.name} 상담 등록` });
+
+    // 신규 신청 → 관리자 전원에게 알림 (실패해도 응답에 영향 없음)
+    getAdminUids().then(adminUids => {
+      if (adminUids.length > 0) {
+        supabaseAdmin.from('notifications').insert(
+          adminUids.map(uid => ({
+            user_id: uid,
+            type: 'NEW_CONSULTATION',
+            title: '새 학점은행제 상담 신청',
+            message: `${data.name}님이 학점은행제 상담을 신청했습니다.`,
+            link: `/hakjeom?highlight=${data.id}`,
+            is_read: false,
+          }))
+        ).then()
+      }
+    }).catch(() => {})
+
     return NextResponse.json({ message: 'Created successfully', data }, { status: 201 });
   } catch (err) {
     console.error('[hakjeom POST] Unexpected error:', err);
@@ -284,6 +349,39 @@ export async function PATCH(request: NextRequest) {
       changes[key] = { before: (current as Record<string, unknown>)?.[key] ?? null, after: newVal };
     }
     await logAction({ user_id: user.id, user_email: user.email, action: 'update', resource: '학점은행제 상담', resource_id: String(id), detail: `${current?.name ?? `ID ${id}`} 수정`, meta: { changes } });
+
+    // 연락예정일 설정 → 담당자에게 알림
+    if (contact_scheduled_at && data?.manager) {
+      const uid = await getUidByDisplayName(data.manager)
+      if (uid) {
+        const { error: nErr } = await supabaseAdmin.from('notifications').insert({
+          user_id: uid,
+          type: 'CONTACT_SCHEDULED',
+          title: '연락 예정',
+          message: `${data.name}님 — ${contact_scheduled_at.slice(0, 10)} 연락 예정`,
+          link: `/hakjeom?tab=counsel_done&highlight=${id}`,
+          is_read: false,
+        })
+        if (nErr) console.error('[PATCH] CONTACT_SCHEDULED 알림 실패:', nErr)
+      }
+    }
+
+    // 담당자 배정 → 새 담당자에게 알림
+    if (manager && data && current?.manager !== manager) {
+      const uid = await getUidByDisplayName(manager)
+      if (uid) {
+        const { error: nErr } = await supabaseAdmin.from('notifications').insert({
+          user_id: uid,
+          type: 'MANAGER_ASSIGNED',
+          title: '담당자 배정',
+          message: `${data.name}님 담당으로 배정되었습니다.`,
+          link: `/hakjeom?highlight=${id}`,
+          is_read: false,
+        })
+        if (nErr) console.error('[PATCH] MANAGER_ASSIGNED 알림 실패:', nErr)
+      }
+    }
+
     return NextResponse.json({ message: 'Updated successfully', data });
   } catch (err) {
     console.error('[hakjeom PATCH] Unexpected error:', err);

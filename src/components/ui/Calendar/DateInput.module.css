@@ -61,6 +61,98 @@
 }
 
 /* ---------------------------------------------------------------------------
+   버튼 variant 스타일
+   --------------------------------------------------------------------------- */
+
+.scheduleBtn {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  border: 1px solid #3182f6;
+  border-radius: 4px;
+  background: #fff;
+  color: #3182f6;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 100ms ease, color 100ms ease;
+}
+
+.scheduleBtn:hover {
+  background: #3182f6;
+  color: #fff;
+}
+
+/* 날짜 + X 묶음 */
+.scheduleBtnWithX {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #e03535;
+  border-radius: 4px;
+  background: #fff5f5;
+  overflow: hidden;
+}
+
+.scheduleBtnDate {
+  background: none;
+  border: none;
+  padding: 0 6px;
+  height: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: inherit;
+  color: #e03535;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.scheduleBtnDate:hover {
+  background: #ffe0e0;
+}
+
+.scheduleBtnX {
+  background: none;
+  border: none;
+  border-left: 1px solid #f5b8b8;
+  padding: 0 5px;
+  height: 20px;
+  font-size: 12px;
+  color: #e03535;
+  cursor: pointer;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+}
+
+.scheduleBtnX:hover {
+  background: #ffd0d0;
+}
+
+.scheduleBtn_active {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  border: 1px solid #e03535;
+  border-radius: 4px;
+  background: #fff5f5;
+  color: #e03535;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 100ms ease;
+}
+
+.scheduleBtn_active:hover {
+  background: #ffe0e0;
+}
+
+/* ---------------------------------------------------------------------------
    팝오버 달력
    --------------------------------------------------------------------------- */
 
@@ -68,12 +160,22 @@
   position: absolute;
   top: calc(100% + 6px);
   left: 0;
-  z-index: 500;
+  z-index: 9999;
   background: #fff;
-  border: 1px solid #ebebeb;
-  border-radius: 10px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  animation: fadeIn 100ms ease;
+  border: 1px solid #e8e8e8;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.06);
+  animation: fadeIn 120ms ease;
+}
+
+.popover_right {
+  left: auto;
+  right: 0;
+}
+
+.popover_up {
+  top: auto;
+  bottom: calc(100% + 6px);
 }
 
 @keyframes fadeIn {

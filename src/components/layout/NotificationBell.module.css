@@ -16,12 +16,25 @@
   background: transparent;
   color: var(--toss-text-secondary);
   cursor: pointer;
-  transition: all 150ms ease;
+  transition: background 150ms ease, color 150ms ease;
 }
 
 .bellBtn:hover {
   background: var(--toss-bg);
   color: var(--toss-text-primary);
+}
+
+.bellBtnActive {
+  animation: bellShake 4s ease 0.5s infinite;
+}
+
+@keyframes bellShake {
+  0%, 80%, 100% { transform: rotate(0deg); }
+  83%           { transform: rotate(12deg); }
+  86%           { transform: rotate(-10deg); }
+  89%           { transform: rotate(8deg); }
+  92%           { transform: rotate(-6deg); }
+  95%           { transform: rotate(3deg); }
 }
 
 .badge {
@@ -32,142 +45,185 @@
   height: 16px;
   padding: 0 4px;
   border-radius: 8px;
-  background: #F04452;
+  background: #f04452;
   color: #fff;
   font-size: 10px;
   font-weight: 700;
   line-height: 16px;
   text-align: center;
+  animation: badgePop 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes badgePop {
+  0%   { transform: scale(0); }
+  100% { transform: scale(1); }
 }
 
 /* ─── Dropdown ──────────────────────────────────────────────────────────── */
 
 .dropdown {
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% + 10px);
   right: 0;
-  width: 360px;
-  max-height: 480px;
-  background: var(--toss-card-bg);
-  border-radius: 12px;
-  box-shadow: var(--toss-shadow-dropdown);
-  border: 1px solid var(--toss-border);
+  width: 400px;
+  max-height: 560px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.13), 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f0f0f0;
   z-index: 1000;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  animation: dropdownFadeIn 0.18s ease;
+}
+
+@keyframes dropdownFadeIn {
+  from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .dropdownHeader {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--toss-border);
+  gap: 10px;
+  padding: 18px 20px 14px;
   flex-shrink: 0;
 }
 
 .dropdownTitle {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
-  color: var(--toss-text-primary);
+  color: #191f28;
+  letter-spacing: -0.3px;
 }
 
-.markAllBtn {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+.unreadBadge {
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: #eef3ff;
+  color: #3182f6;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.deleteAllBtn {
+  margin-left: auto;
   padding: 4px 10px;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   background: transparent;
-  color: var(--toss-blue);
+  color: #8b95a1;
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  transition: background 150ms ease;
+  transition: background 120ms ease, color 120ms ease;
 }
 
-.markAllBtn:hover {
-  background: var(--toss-blue-subtle);
+.deleteAllBtn:hover {
+  background: #fff0f0;
+  color: #f04452;
 }
 
 .dropdownBody {
   overflow-y: auto;
   flex: 1;
+  padding: 0 12px 12px;
 }
 
+.dropdownBody::-webkit-scrollbar { width: 4px; }
+.dropdownBody::-webkit-scrollbar-track { background: transparent; }
+.dropdownBody::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 4px; }
+
+/* ─── Empty ──────────────────────────────────────────────────────────────── */
+
 .empty {
-  padding: 40px 16px;
+  padding: 52px 16px 48px;
   text-align: center;
-  color: var(--toss-text-tertiary);
-  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
 }
+
+.emptyIcon { color: #d1d8e0; margin-bottom: 4px; }
+.emptyText { font-size: 14px; font-weight: 600; color: #4e5968; margin: 0; }
+.emptySubText { font-size: 12px; color: #8b95a1; margin: 0; }
 
 /* ─── Item ──────────────────────────────────────────────────────────────── */
 
 .item {
   display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  width: 100%;
-  padding: 12px 16px;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 12px;
+  border-radius: 12px;
   border: none;
-  border-bottom: 1px solid var(--toss-border);
   background: transparent;
   cursor: pointer;
   text-align: left;
-  transition: background 150ms ease;
-}
-
-.item:last-child {
-  border-bottom: none;
+  transition: background 120ms ease;
+  position: relative;
 }
 
 .item:hover {
-  background: var(--toss-bg);
+  background: #f5f6f7;
 }
 
 .itemUnread {
-  background: #f0f7ff;
+  background: #f4f8ff;
 }
 
 .itemUnread:hover {
-  background: #e4f0fd;
+  background: #ebf2ff;
 }
+
+/* hover 시 X 버튼 표시 */
+.item .itemClose { opacity: 0; }
+.item:hover .itemClose { opacity: 1; }
+
+/* ─── Type Icon ──────────────────────────────────────────────────────────── */
+
+.typeIcon {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: #f0f2f4;
+  color: #4e5968;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ─── Item Content ───────────────────────────────────────────────────────── */
 
 .itemContent {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-}
-
-.itemTitle {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--toss-text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  gap: 4px;
 }
 
 .itemMessage {
-  font-size: 12px;
-  color: var(--toss-text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  color: #191f28;
+  line-height: 1.5;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.itemTime {
-  font-size: 11px;
-  color: var(--toss-text-tertiary);
-  margin-top: 2px;
+.itemMeta {
+  font-size: 12px;
+  color: #8b95a1;
 }
 
-.readBtn {
+/* ─── Close Button ───────────────────────────────────────────────────────── */
+
+.itemClose {
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -175,15 +231,14 @@
   width: 28px;
   height: 28px;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   background: transparent;
-  color: var(--toss-text-tertiary);
+  color: #adb5bd;
   cursor: pointer;
-  transition: all 150ms ease;
-  margin-top: 2px;
+  transition: background 120ms ease, color 120ms ease, opacity 120ms ease;
 }
 
-.readBtn:hover {
-  background: var(--toss-blue-subtle);
-  color: var(--toss-blue);
+.itemClose:hover {
+  background: #e9ecef;
+  color: #495057;
 }

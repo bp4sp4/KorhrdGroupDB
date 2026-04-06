@@ -57,6 +57,139 @@
 
 /* ─── 토스트 ─────────────────────────────────────────────────────────────── */
 
+/* ─── 연락예정 개인 배너 ──────────────────────────────────────────────────── */
+
+.scheduleBanner {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 14px 10px 12px;
+  margin-bottom: 10px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  animation: bannerSlideIn 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.scheduleBannerOverdue {
+  border-left-color: #e03535;
+}
+
+@keyframes bannerSlideIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* 아이콘 박스 */
+.bannerIconBox {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #eef3ff;
+  color: #3182f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bannerIconBoxRed {
+  background: #fff0f0;
+  color: #e03535;
+}
+
+/* 텍스트 */
+.bannerTextWrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.bannerLabel {
+  font-size: 11px;
+  color: #8b95a1;
+  letter-spacing: 0.1px;
+}
+
+.bannerLabel strong {
+  color: #191f28;
+}
+
+.bannerDetail {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
+.bannerPerson {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.bannerPersonName {
+  font-size: 13px;
+  font-weight: 600;
+  color: #191f28;
+}
+
+.bannerDot {
+  display: inline-block;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #ced4da;
+  margin: 0 8px;
+  flex-shrink: 0;
+}
+
+.bannerDateBlue {
+  font-size: 13px;
+  color: #3182f6;
+  font-weight: 500;
+}
+
+.bannerDateRed {
+  font-size: 13px;
+  color: #e03535;
+  font-weight: 600;
+}
+
+.bannerMore {
+  font-size: 12px;
+  color: #8b95a1;
+  margin-left: 10px;
+  white-space: nowrap;
+}
+
+/* 닫기 버튼 */
+.scheduleBannerClose {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #adb5bd;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.scheduleBannerClose:hover {
+  background: #f1f3f5;
+  color: #495057;
+}
+
 .toast {
   position: fixed;
   bottom: 32px;
@@ -1064,6 +1197,18 @@
   font-size: 14px;
   color: #191f28;
   border-bottom: 1px solid var(--toss-border);
+}
+
+.scheduledDateUpcoming {
+  font-size: 12px;
+  font-weight: 600;
+  color: #3182f6;
+}
+
+.scheduledDateOverdue {
+  font-size: 12px;
+  font-weight: 600;
+  color: #e03535;
 }
 
 .inlineContactInput {

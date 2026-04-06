@@ -12,6 +12,10 @@ interface DateInputProps {
   placeholder?: string
   className?: string
   disabled?: boolean
+  align?: 'left' | 'right'      // 팝오버 좌우 정렬 (기본 left)
+  direction?: 'down' | 'up'    // 팝오버 열리는 방향 (기본 down)
+  variant?: 'input' | 'button' // 트리거 스타일 (기본 input)
+  label?: string               // variant="button" 일 때 버튼 텍스트 (기본 "연락예정")
 }
 
 function parseDate(str: string): Date | undefined {
@@ -25,17 +29,23 @@ function formatDisplay(str: string): string {
   return d ? format(d, 'yyyy.MM.dd') : ''
 }
 
+const CALENDAR_HEIGHT = 310 // 달력 팝오버 예상 높이 (px)
+
 export function DateInput({
   value = '',
   onChange,
   placeholder = '날짜 선택',
   className,
   disabled,
+  align = 'left',
+  direction,          // 미지정 시 자동 감지
+  variant = 'input',
+  label = '연락예정',
 }: DateInputProps) {
   const [open, setOpen] = useState(false)
+  const [autoDirection, setAutoDirection] = useState<'down' | 'up'>('down')
   const wrapRef = useRef<HTMLDivElement>(null)
 
-  // 외부 클릭 시 닫기
   useEffect(() => {
     if (!open) return
     function onDown(e: MouseEvent) {
@@ -47,6 +57,22 @@ export function DateInput({
     return () => document.removeEventListener('mousedown', onDown)
   }, [open])
 
+  function handleToggle() {
+    if (disabled) return
+    if (!open && wrapRef.current) {
+      const rect = wrapRef.current.getBoundingClientRect()
+      const spaceBelow = window.innerHeight - rect.bottom
+      const spaceAbove = rect.top
+      // direction prop이 지정된 경우 그걸 우선, 아니면 자동 감지
+      if (!direction) {
+        setAutoDirection(spaceBelow < CALENDAR_HEIGHT && spaceAbove > CALENDAR_HEIGHT ? 'up' : 'down')
+      }
+    }
+    setOpen(v => !v)
+  }
+
+  const resolvedDirection = direction ?? autoDirection
+
   const display = formatDisplay(value)
   const selected = parseDate(value)
 
@@ -55,20 +81,60 @@ export function DateInput({
     setOpen(false)
   }
 
+  const popoverClass = [
+    styles.popover,
+    align === 'right' ? styles.popover_right : '',
+    resolvedDirection === 'up' ? styles.popover_up : '',
+  ].join(' ')
+
   return (
     <div ref={wrapRef} className={`${styles.wrap} ${className ?? ''}`}>
-      <button
-        type="button"
-        className={`${styles.trigger} ${!display ? styles.trigger_placeholder : ''} ${open ? styles.trigger_open : ''}`}
-        onClick={() => !disabled && setOpen((v) => !v)}
-        disabled={disabled}
-      >
-        <CalendarDays size={13} className={styles.icon} />
-        <span>{display || placeholder}</span>
-      </button>
+      {variant === 'button' ? (
+        display ? (
+          // 날짜 있을 때: [날짜 텍스트 | ×] 한 덩어리
+          <div className={styles.scheduleBtnWithX}>
+            <button
+              type="button"
+              className={styles.scheduleBtnDate}
+              onClick={handleToggle}
+              disabled={disabled}
+            >
+              {display}
+            </button>
+            <button
+              type="button"
+              className={styles.scheduleBtnX}
+              onClick={(e) => { e.stopPropagation(); onChange?.('') }}
+              disabled={disabled}
+              aria-label="해제"
+            >×</button>
+          </div>
+        ) : (
+          // 날짜 없을 때: "연락예정" 버튼
+          <button
+            type="button"
+            className={styles.scheduleBtn}
+            onClick={handleToggle}
+            disabled={disabled}
+          >
+            {label}
+          </button>
+        )
+      ) : (
+        // 인풋 스타일 (기본)
+        <button
+          type="button"
+          className={`${styles.trigger} ${!display ? styles.trigger_placeholder : ''} ${open ? styles.trigger_open : ''}`}
+          onClick={handleToggle}
+          disabled={disabled}
+        >
+          <CalendarDays size={13} className={styles.icon} />
+          <span>{display || placeholder}</span>
+        </button>
+      )}
 
       {open && (
-        <div className={styles.popover}>
+        <div className={popoverClass}>
           <Calendar
             value={selected}
             onChange={handleSelect}
