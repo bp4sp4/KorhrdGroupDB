@@ -45,6 +45,11 @@ export async function GET(request: NextRequest) {
     query = query
       .in('id', ids)
       .in('status', ['SUBMITTED', 'IN_PROGRESS'])
+  } else if (tab === 'reference') {
+    // 내가 참조자인 문서 (진행 중)
+    query = query
+      .contains('reference_ids', [userId])
+      .in('status', ['SUBMITTED', 'IN_PROGRESS', 'APPROVED'])
   } else if (tab === 'completed') {
     const approverIds = await getMyApproverIds(userId)
     if (approverIds.length > 0) {
@@ -81,7 +86,7 @@ export async function POST(request: NextRequest) {
   const userId = appUser.data?.id ?? user.id
 
   const body = await request.json()
-  const { template_id, document_type, category, title, content, department_id, action, approver_ids } = body
+  const { template_id, document_type, category, title, content, department_id, action, approver_ids, reference_ids } = body
 
   if (!document_type || !title) {
     return NextResponse.json({ error: '필수 항목을 입력해주세요.' }, { status: 400 })
@@ -102,6 +107,7 @@ export async function POST(request: NextRequest) {
       department_id: department_id || null,
       title,
       content: content ?? {},
+      reference_ids: reference_ids ?? [],
       current_step: action === 'submit' ? 1 : 0,
       submitted_at: action === 'submit' ? new Date().toISOString() : null,
     })

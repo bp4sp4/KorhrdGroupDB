@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { Plus, X, Check, XCircle, ChevronRight, FileText, Clock, CheckCircle, Home, MoreVertical, Info, Eye, Save, Send, List, Paperclip, Download, AlignJustify } from 'lucide-react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { createPortal } from 'react-dom'
+import { Plus, X, Check, XCircle, ChevronRight, ChevronDown, ChevronsRight, FileText, Clock, CheckCircle, Home, MoreVertical, Info, Eye, Save, Send, List, Paperclip, Download, AlignJustify, ChevronsUpDown, Search, ListChecks, ChevronFirst, ChevronLast } from 'lucide-react'
 import type { Approval, ApprovalTemplate, ApprovalStep, Department } from '@/lib/management/types'
 import {
   formatDate,
@@ -22,6 +23,7 @@ type SidebarMenuKey =
   | 'home'
   | 'pending_approval'
   | 'received'
+  | 'reference'
   | 'draft_box'
   | 'temp_box'
   | 'approved_box'
@@ -32,7 +34,7 @@ type ViewType = 'home' | 'list' | 'detail' | 'new_template' | 'new_form'
 interface SidebarMenu {
   key: SidebarMenuKey
   label: string
-  apiTab?: 'mine' | 'pending' | 'completed'
+  apiTab?: 'mine' | 'pending' | 'completed' | 'reference'
 }
 
 interface ApprovalFormState {
@@ -41,6 +43,7 @@ interface ApprovalFormState {
   department_id: string
   content: Record<string, string>
   approver_ids: string[]
+  reference_ids: string[]
 }
 
 interface AttachedFile {
@@ -61,6 +64,7 @@ const SIDEBAR_GROUPS: { label: string; items: SidebarMenu[] }[] = [
     items: [
       { key: 'pending_approval', label: '결재 대기 문서', apiTab: 'pending' },
       { key: 'received', label: '결재 수신 문서', apiTab: 'pending' },
+      { key: 'reference', label: '참조/열람 대기 문서', apiTab: 'reference' as const },
     ],
   },
   {
@@ -101,39 +105,99 @@ interface ApprovalTableProps {
   compact?: boolean
 }
 
+type SortField = 'created_at' | 'completed_at' | 'category' | 'document_type' | 'title' | 'applicant' | 'document_number' | 'status'
+type SortDir = 'asc' | 'desc'
+
 function ApprovalTable({ approvals, onRowClick, emptyMessage = '문서가 없습니다.', compact = false }: ApprovalTableProps) {
-  if (approvals.length === 0) {
-    return <div className={styles.table_empty}>{emptyMessage}</div>
+  const [sortField, setSortField] = useState<SortField>('created_at')
+  const [sortDir, setSortDir] = useState<SortDir>('desc')
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortDir('asc')
+    }
+  }
+
+  const sorted = [...approvals].sort((a, b) => {
+    let va = '', vb = ''
+    if (sortField === 'created_at') { va = a.created_at; vb = b.created_at }
+    else if (sortField === 'completed_at') { va = a.completed_at ?? ''; vb = b.completed_at ?? '' }
+    else if (sortField === 'category') { va = a.category ?? ''; vb = b.category ?? '' }
+    else if (sortField === 'document_type') { va = a.document_type; vb = b.document_type }
+    else if (sortField === 'title') { va = a.title; vb = b.title }
+    else if (sortField === 'applicant') { va = (a.applicant as { display_name: string } | undefined)?.display_name ?? ''; vb = (b.applicant as { display_name: string } | undefined)?.display_name ?? '' }
+    else if (sortField === 'document_number') { va = a.document_number ?? ''; vb = b.document_number ?? '' }
+    else if (sortField === 'status') { va = a.status; vb = b.status }
+    const cmp = va < vb ? -1 : va > vb ? 1 : 0
+    return sortDir === 'asc' ? cmp : -cmp
+  })
+
+  const SortIcon = ({ field }: { field: SortField }) => {
+    if (sortField !== field) return <ChevronsUpDown size={12} className={styles.th_sort_icon} />
+    return sortDir === 'asc'
+      ? <ChevronDown size={12} className={styles.th_sort_icon_active} style={{ transform: 'rotate(180deg)' }} />
+      : <ChevronDown size={12} className={styles.th_sort_icon_active} />
+  }
+
+  const SortTh = ({ field, label }: { field: SortField; label: string }) => (
+    <th className={styles.th_sortable} onClick={() => handleSort(field)}>
+      <span className={styles.th_inner}>{label} <SortIcon field={field} /></span>
+    </th>
+  )
+
+  if (sorted.length === 0) {
+    return (
+      <div className={styles.table_empty}>
+        <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.table_empty_icon}>
+          <ellipse cx="40" cy="72" rx="24" ry="4" fill="#e5e7eb"/>
+          <rect x="18" y="16" width="44" height="52" rx="6" fill="#f3f4f6" stroke="#d1d5db" strokeWidth="1.5"/>
+          <rect x="26" y="28" width="28" height="3" rx="1.5" fill="#d1d5db"/>
+          <rect x="26" y="36" width="20" height="3" rx="1.5" fill="#d1d5db"/>
+          <rect x="26" y="44" width="24" height="3" rx="1.5" fill="#d1d5db"/>
+          <circle cx="40" cy="20" r="8" fill="#fff" stroke="#d1d5db" strokeWidth="1.5"/>
+          <circle cx="37" cy="19" r="1.5" fill="#9ca3af"/>
+          <circle cx="43" cy="19" r="1.5" fill="#9ca3af"/>
+          <path d="M37 23 Q40 25 43 23" stroke="#9ca3af" strokeWidth="1.2" strokeLinecap="round" fill="none"/>
+        </svg>
+        <p className={styles.table_empty_text}>{emptyMessage}</p>
+      </div>
+    )
   }
 
   return (
     <table className={`${styles.table} ${compact ? styles.table_compact : ''}`}>
       <thead>
         <tr>
-          <th>기안일</th>
-          <th>결재양식</th>
-          <th>제목</th>
-          <th>문서번호</th>
-          <th>결재상태</th>
+          {!compact && <th className={styles.th_check}><input type="checkbox" /></th>}
+          <SortTh field="created_at" label="기안일" />
+          {!compact && <SortTh field="completed_at" label="완료일" />}
+          {!compact && <SortTh field="category" label="구분" />}
+          <SortTh field="document_type" label="결재양식" />
+          <SortTh field="title" label="제목" />
+          {!compact && <SortTh field="applicant" label="기안자" />}
+          <SortTh field="document_number" label="문서번호" />
+          <SortTh field="status" label="결재상태" />
         </tr>
       </thead>
       <tbody>
-        {approvals.map((a) => (
+        {sorted.map((a) => (
           <tr
             key={a.id}
             className={styles.table_row_clickable}
             onClick={() => onRowClick(a)}
           >
+            {!compact && <td className={styles.td_check} onClick={e => e.stopPropagation()}><input type="checkbox" /></td>}
             <td className={styles.cell_date}>{formatDate(a.created_at)}</td>
-            <td>
-              
-              <span className={styles.cell_doc_type}>{a.document_type}</span>
-            </td>
+            {!compact && <td className={styles.cell_date}>{a.completed_at ? formatDate(a.completed_at) : '-'}</td>}
+            {!compact && <td className={styles.cell_category}>{a.category ?? '-'}</td>}
+            <td><span className={styles.cell_doc_type}>{a.document_type}</span></td>
             <td className={styles.cell_title}>{a.title}</td>
+            {!compact && <td className={styles.cell_applicant}>{(a.applicant as { display_name: string } | undefined)?.display_name ?? '-'}</td>}
             <td className={styles.cell_doc_number}>{a.document_number ?? '-'}</td>
-            <td>
-              <ApprovalStatusBadge status={a.status} />
-            </td>
+            <td><ApprovalStatusBadge status={a.status} /></td>
           </tr>
         ))}
       </tbody>
@@ -227,8 +291,9 @@ export default function ApprovalsPage() {
   // 마스터 데이터
   const [templates, setTemplates] = useState<ApprovalTemplate[]>([])
   const [departments, setDepartments] = useState<Department[]>([])
-  const [users, setUsers] = useState<{ id: string; display_name: string }[]>([])
+  const [users, setUsers] = useState<{ id: string; display_name: string; department_id?: string | null }[]>([])
   const [myUserId, setMyUserId] = useState<string | null>(null)
+  const [myDepartmentId, setMyDepartmentId] = useState<string | null>(null)
 
   // 상세 뷰
   const [selectedApproval, setSelectedApproval] = useState<Approval | null>(null)
@@ -238,6 +303,27 @@ export default function ApprovalsPage() {
   // 상세 뷰 패널 탭
   const [detailPanelTab, setDetailPanelTab] = useState<'steps' | 'info'>('steps')
 
+  // 양식 선택 모달
+  // 결재선 모달
+  const [approverModalOpen, setApproverModalOpen] = useState(false)
+  const [approverModalDraft, setApproverModalDraft] = useState<string[]>([])
+  const [orgSearch, setOrgSearch] = useState('')
+  const [expandedDepts, setExpandedDepts] = useState<Set<string>>(new Set())
+  const [apmDropBefore, setApmDropBefore] = useState<number | null>(null) // 드롭 삽입 위치
+  const [apmDraggingRowIdx, setApmDraggingRowIdx] = useState<number | null>(null) // 우측 행 드래그
+  const apmIsDragging = useRef(false) // 드래그 중 클릭 이벤트 차단용
+
+  // 참조자 모달
+  const [refModalOpen, setRefModalOpen] = useState(false)
+  const [refModalDraft, setRefModalDraft] = useState<string[]>([])
+  const refIsDragging = useRef(false)
+
+  const [templateModalOpen, setTemplateModalOpen] = useState(false)
+  const [modalCategory, setModalCategory] = useState<string | null>(null)
+  const [modalSelectedTemplate, setModalSelectedTemplate] = useState<ApprovalTemplate | null>(null)
+  const [modalSearch, setModalSearch] = useState('')
+  const [modalDepartmentId, setModalDepartmentId] = useState('')
+
   // 새 결재 플로우
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [formState, setFormState] = useState<ApprovalFormState>({
@@ -246,6 +332,7 @@ export default function ApprovalsPage() {
     department_id: '',
     content: {},
     approver_ids: [],
+    reference_ids: [],
   })
   const [formError, setFormError] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -253,9 +340,19 @@ export default function ApprovalsPage() {
   // 파일 첨부
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([])
   const [uploadingFiles, setUploadingFiles] = useState(false)
+  const [fileDragOver, setFileDragOver] = useState(false)
+
+  // 결재선 드래그 순서 변경
+  const [approverDragIdx, setApproverDragIdx] = useState<number | null>(null)
 
   // 임시저장 편집 모드
   const [editingDraftId, setEditingDraftId] = useState<string | null>(null)
+
+  // 리스트 뷰 - 검색/페이지네이션/서브탭
+  const [listPage, setListPage] = useState(1)
+  const [listSearch, setListSearch] = useState('')
+  const [listSearchField, setListSearchField] = useState<'title' | 'document_type' | 'document_number'>('title')
+  const [refSubTab, setRefSubTab] = useState<'all' | 'reference'>('all')
 
   const handleContentChange = useCallback((key: string, value: string) => {
     setFormState((prev) => ({ ...prev, content: { ...prev.content, [key]: value } }))
@@ -284,7 +381,7 @@ export default function ApprovalsPage() {
     setHomeLoading(false)
   }, [])
 
-  const fetchListData = useCallback(async (apiTab: 'mine' | 'pending' | 'completed') => {
+  const fetchListData = useCallback(async (apiTab: 'mine' | 'pending' | 'completed' | 'reference') => {
     setListLoading(true)
     const res = await fetch(`/api/management/approvals?tab=${apiTab}`)
     if (res.ok) setListApprovals(await res.json())
@@ -296,7 +393,10 @@ export default function ApprovalsPage() {
     fetch('/api/management/approvals/templates').then(r => r.json()).then(setTemplates).catch(() => {})
     fetch('/api/management/departments').then(r => r.json()).then(setDepartments).catch(() => {})
     fetch('/api/management/users').then(r => r.json()).then(setUsers).catch(() => {})
-    fetch('/api/auth/me').then(r => r.json()).then(d => setMyUserId(d.id ?? null)).catch(() => {})
+    fetch('/api/auth/me').then(r => r.json()).then(d => {
+      setMyUserId(d.id ?? null)
+      setMyDepartmentId(d.departmentId ?? null)
+    }).catch(() => {})
   }, [fetchHomeData])
 
   // ---------------------------------------------------------------------------
@@ -309,6 +409,9 @@ export default function ApprovalsPage() {
       return
     }
     setActiveMenuKey(menu.key)
+    setListPage(1)
+    setListSearch('')
+    setRefSubTab('all')
     if (menu.apiTab) {
       setCurrentView('list')
       fetchListData(menu.apiTab)
@@ -342,6 +445,7 @@ export default function ApprovalsPage() {
           Object.entries(restContent).map(([k, v]) => [k, String(v ?? '')])
         ),
         approver_ids: [],
+        reference_ids: Array.isArray(data.reference_ids) ? data.reference_ids.map(String) : [],
       })
       setAttachedFiles(existingAttachments)
       setEditingDraftId(data.id)
@@ -380,31 +484,59 @@ export default function ApprovalsPage() {
   }
 
   const handleNewApprovalStart = () => {
+    setModalCategory(null)
+    setModalSelectedTemplate(null)
+    setModalSearch('')
+    setModalDepartmentId(myDepartmentId ?? '')
+    setTemplateModalOpen(true)
+  }
+
+  const handleTemplateModalConfirm = () => {
+    if (!modalSelectedTemplate) return
+    setTemplateModalOpen(false)
     setSelectedCategory(null)
-    setFormState({ template: null, title: '', department_id: '', content: {}, approver_ids: [] })
+    setFormState({ template: modalSelectedTemplate, title: modalSelectedTemplate.document_type, department_id: modalDepartmentId, content: {}, approver_ids: [], reference_ids: [] })
     setFormError('')
     setAttachedFiles([])
     setUploadingFiles(false)
     setEditingDraftId(null)
-    setCurrentView('new_template')
+    setCurrentView('new_form')
   }
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files ?? [])
-    if (!files.length) return
+  const uploadFiles = async (files: File[]) => {
+    const validFiles = files.filter(f => f instanceof File)
+    if (!validFiles.length) return
     setUploadingFiles(true)
     const fd = new FormData()
-    files.forEach(f => fd.append('files', f))
+    validFiles.forEach(file => fd.append('files', file))
     const res = await fetch('/api/management/approvals/upload', { method: 'POST', body: fd })
     if (res.ok) {
       const { files: uploaded } = await res.json()
       setAttachedFiles(prev => [...prev, ...(uploaded as AttachedFile[])])
     } else {
-      const err = await res.json()
-      alert(err.error ?? '파일 업로드 실패')
+      const text = await res.text()
+      let msg = '파일 업로드 실패'
+      try { msg = JSON.parse(text).error ?? msg } catch { /* empty body */ }
+      alert(msg)
     }
     setUploadingFiles(false)
+  }
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? [])
+    await uploadFiles(files)
     e.target.value = ''
+  }
+
+  const handleFileDrop = async (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setFileDragOver(false)
+    const files = Array.from(e.dataTransfer.items)
+      .filter(item => item.kind === 'file')
+      .map(item => item.getAsFile())
+      .filter((file): file is File => file !== null && file.size >= 0)
+    await uploadFiles(files)
   }
 
   const removeAttachedFile = (idx: number) => {
@@ -418,12 +550,13 @@ export default function ApprovalsPage() {
       department_id: '',
       content: {},
       approver_ids: [],
+      reference_ids: [],
     })
     setCurrentView('new_form')
   }
 
   const handleSubmitNewApproval = async (action: 'draft' | 'submit') => {
-    const { template, title, content, approver_ids, department_id } = formState
+    const { template, title, content, approver_ids, reference_ids, department_id } = formState
     if (!template || !title) {
       setFormError('필수 항목을 입력해주세요.')
       return
@@ -460,6 +593,7 @@ export default function ApprovalsPage() {
           department_id: department_id || null,
           content: mergedContent,
           approver_ids: action === 'submit' ? approver_ids : [],
+          reference_ids,
           action,
         }),
       })
@@ -476,6 +610,7 @@ export default function ApprovalsPage() {
           department_id: department_id || null,
           content: mergedContent,
           approver_ids: action === 'submit' ? approver_ids : [],
+          reference_ids,
           action,
         }),
       })
@@ -549,8 +684,20 @@ export default function ApprovalsPage() {
             const isActive = activeMenuKey === item.key
             // 배지 카운트 계산
             let count = 0
-            if (item.key === 'pending_approval' || item.key === 'received') {
-              count = pendingApprovals.length
+            if (item.key === 'pending_approval') {
+              count = pendingApprovals.filter(a => {
+                const myStep = a.steps?.find(s => String(s.approver_id) === String(myUserId))
+                return myStep && myStep.step_number > a.current_step
+              }).length
+            } else if (item.key === 'received') {
+              count = pendingApprovals.filter(a => {
+                const myStep = a.steps?.find(s => String(s.approver_id) === String(myUserId))
+                return myStep && myStep.step_number === a.current_step
+              }).length
+            } else if (item.key === 'reference') {
+              count = pendingApprovals.filter(a =>
+                Array.isArray(a.reference_ids) && a.reference_ids.map(String).includes(String(myUserId))
+              ).length
             }
             return (
               <button
@@ -649,21 +796,100 @@ export default function ApprovalsPage() {
     return found?.label ?? '문서함'
   }
 
+  const filteredListApprovals = (() => {
+    if (activeMenuKey === 'pending_approval') {
+      // 내 step_number > current_step → 아직 내 차례 아님
+      return listApprovals.filter(a => {
+        const myStep = a.steps?.find(s => String(s.approver_id) === String(myUserId))
+        return myStep && myStep.step_number > a.current_step
+      })
+    }
+    if (activeMenuKey === 'received') {
+      // 내 step_number === current_step → 지금 내 차례
+      return listApprovals.filter(a => {
+        const myStep = a.steps?.find(s => String(s.approver_id) === String(myUserId))
+        return myStep && myStep.step_number === a.current_step
+      })
+    }
+    return listApprovals
+  })()
+
+  const PAGE_SIZE = 20
+
+  const searchedListApprovals = (() => {
+    let list = filteredListApprovals
+    if (listSearch.trim()) {
+      const q = listSearch.trim().toLowerCase()
+      list = list.filter(a => {
+        if (listSearchField === 'title') return a.title.toLowerCase().includes(q)
+        if (listSearchField === 'document_type') return a.document_type.toLowerCase().includes(q)
+        if (listSearchField === 'document_number') return (a.document_number ?? '').toLowerCase().includes(q)
+        return false
+      })
+    }
+    return list
+  })()
+
+  const totalPages = Math.max(1, Math.ceil(searchedListApprovals.length / PAGE_SIZE))
+  const pagedListApprovals = searchedListApprovals.slice((listPage - 1) * PAGE_SIZE, listPage * PAGE_SIZE)
+
   const renderListView = () => (
     <div className={styles.view_list}>
+      {/* 헤더 */}
       <div className={styles.view_list_header}>
         <h2 className={styles.view_title}>{getListViewTitle()}</h2>
       </div>
+
+      {/* 서브탭 (참조/열람 대기 문서) */}
+      {activeMenuKey === 'reference' && (
+        <div className={styles.list_sub_tabs}>
+          <button
+            className={`${styles.list_sub_tab} ${refSubTab === 'all' ? styles.list_sub_tab_active : ''}`}
+            onClick={() => { setRefSubTab('all'); setListPage(1) }}
+          >전체</button>
+          <button
+            className={`${styles.list_sub_tab} ${refSubTab === 'reference' ? styles.list_sub_tab_active : ''}`}
+            onClick={() => { setRefSubTab('reference'); setListPage(1) }}
+          >참조</button>
+        </div>
+      )}
+
+      {/* 테이블 */}
       <div className={styles.table_wrap}>
         {listLoading ? (
           <div className={styles.section_loading}>불러오는 중...</div>
         ) : (
           <ApprovalTable
-            approvals={listApprovals}
+            approvals={pagedListApprovals}
             onRowClick={handleRowClick}
             emptyMessage="문서가 없습니다."
           />
         )}
+      </div>
+
+      {/* 하단: 페이지네이션 + 검색 */}
+      <div className={styles.list_footer}>
+        <div className={styles.list_pagination}>
+          <button className={styles.page_btn} onClick={() => setListPage(1)} disabled={listPage === 1}><ChevronFirst size={14}/></button>
+          <button className={styles.page_btn} onClick={() => setListPage(p => Math.max(1, p - 1))} disabled={listPage === 1}><ChevronRight size={14} className={styles.icon_rotate_180}/></button>
+          <span className={styles.page_current}>{listPage}</span>
+          <button className={styles.page_btn} onClick={() => setListPage(p => Math.min(totalPages, p + 1))} disabled={listPage === totalPages}><ChevronRight size={14}/></button>
+          <button className={styles.page_btn} onClick={() => setListPage(totalPages)} disabled={listPage === totalPages}><ChevronLast size={14}/></button>
+        </div>
+        <div className={styles.list_search_bar}>
+          <select className={styles.list_search_select} value={listSearchField} onChange={e => setListSearchField(e.target.value as 'title' | 'document_type' | 'document_number')}>
+            <option value="title">제목</option>
+            <option value="document_type">결재양식</option>
+            <option value="document_number">문서번호</option>
+          </select>
+          <input
+            className={styles.list_search_input}
+            placeholder="검색"
+            value={listSearch}
+            onChange={e => { setListSearch(e.target.value); setListPage(1) }}
+          />
+          <button className={styles.list_search_btn}><Search size={14}/></button>
+        </div>
       </div>
     </div>
   )
@@ -813,6 +1039,7 @@ export default function ApprovalsPage() {
                 return (
                   <cfg.BodySection
                     content={selectedApproval.content as Record<string, unknown>}
+                    departments={departments}
                   />
                 )
               })()}
@@ -1144,6 +1371,28 @@ export default function ApprovalsPage() {
             <button
               className={styles.btn_secondary}
               onClick={() => {
+                setApproverModalDraft([...formState.approver_ids])
+                setOrgSearch('')
+                setExpandedDepts(new Set(departments.map(d => String(d.id))))
+                setApproverModalOpen(true)
+              }}
+            >
+              결재선추가
+            </button>
+            <button
+              className={styles.btn_secondary}
+              onClick={() => {
+                setRefModalDraft([...formState.reference_ids])
+                setOrgSearch('')
+                setExpandedDepts(new Set(departments.map(d => String(d.id))))
+                setRefModalOpen(true)
+              }}
+            >
+              참조자추가
+            </button>
+            <button
+              className={styles.btn_secondary}
+              onClick={() => {
                 setEditingDraftId(null)
                 setCurrentView(editingDraftId ? 'list' : 'new_template')
               }}
@@ -1187,6 +1436,27 @@ export default function ApprovalsPage() {
                     <td className={styles.doc_info_label}>신청자</td>
                     <td>{myUserName}</td>
                   </tr>
+                  {formState.reference_ids.length > 0 && (
+                    <tr>
+                      <td className={styles.doc_info_label}>참조자</td>
+                      <td>
+                        <div className={styles.doc_reference_cell}>
+                          {formState.reference_ids.map((uid, idx) => {
+                            const u = users.find(x => String(x.id) === uid)
+                            return (
+                              <span key={idx} className={styles.doc_reference_chip}>
+                                {u?.display_name ?? uid}
+                                <button
+                                  className={styles.doc_reference_chip_remove}
+                                  onClick={() => setFormState({ ...formState, reference_ids: formState.reference_ids.filter((_, i) => i !== idx) })}
+                                ><X size={10} /></button>
+                              </span>
+                            )
+                          })}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
                   <tr>
                     <td className={styles.doc_info_label}>제목</td>
                     <td>
@@ -1241,6 +1511,7 @@ export default function ApprovalsPage() {
               <formTemplateConfig.BodySection
                 content={formState.content as Record<string, unknown>}
                 onChange={handleContentChange}
+                departments={departments}
               />
             )}
 
@@ -1251,7 +1522,12 @@ export default function ApprovalsPage() {
                   <span className={styles.doc_file_attach_title}>파일첨부</span>
                 </div>
                 <div className={`${f.doc_file_attach_box} ${uploadingFiles ? f.doc_file_attach_uploading : ''}`}>
-                  <label className={f.doc_file_drop_zone}>
+                  <label
+                    className={`${f.doc_file_drop_zone} ${fileDragOver ? f.doc_file_drop_zone_over : ''}`}
+                    onDragOver={(e) => { e.preventDefault(); setFileDragOver(true) }}
+                    onDragLeave={() => setFileDragOver(false)}
+                    onDrop={handleFileDrop}
+                  >
                     <input type="file" multiple className={f.doc_file_attach_input} onChange={handleFileSelect} disabled={uploadingFiles} />
                     <Paperclip size={14} className={f.doc_file_drop_icon} />
                     <span>
@@ -1280,21 +1556,41 @@ export default function ApprovalsPage() {
             {/* 결재선 설정 */}
             <div className={f.doc_approver_section}>
               <p className={f.doc_approver_section_title}>결재선</p>
-              <div className={f.doc_approver_chain}>
+              <div className={f.doc_approver_list}>
+                {/* 기안자 */}
+                <div className={f.doc_approver_list_item}>
+                  <div className={f.doc_approver_list_name}>{myUser?.display_name ?? '-'}</div>
+                  {myDept && <div className={f.doc_approver_list_dept}>{myDept.name}</div>}
+                  <div className={f.doc_approver_list_role}>기안</div>
+                </div>
+                {/* 결재자 */}
                 {formState.approver_ids.map((uid, idx) => {
                   const u = users.find(x => String(x.id) === uid)
+                  const dept = departments.find(d => String(d.id) === String(u?.department_id))
                   return (
-                    <div key={idx} className={f.doc_approver_chip}>
-                      <div className={f.doc_approver_chip_step}>{idx + 1}</div>
-                      <span className={f.doc_approver_chip_name}>{u?.display_name ?? uid}</span>
+                    <div
+                      key={idx}
+                      className={`${f.doc_approver_list_item} ${approverDragIdx === idx ? f.doc_approver_chip_dragging : ''}`}
+                      draggable
+                      onDragStart={() => setApproverDragIdx(idx)}
+                      onDragOver={(e) => { e.preventDefault() }}
+                      onDrop={(e) => {
+                        e.preventDefault()
+                        if (approverDragIdx === null || approverDragIdx === idx) return
+                        const newIds = [...formState.approver_ids]
+                        const [moved] = newIds.splice(approverDragIdx, 1)
+                        newIds.splice(idx, 0, moved)
+                        setFormState({ ...formState, approver_ids: newIds })
+                        setApproverDragIdx(null)
+                      }}
+                      onDragEnd={() => setApproverDragIdx(null)}
+                    >
+                      <div className={f.doc_approver_list_name}>{u?.display_name ?? uid}</div>
+                      {dept && <div className={f.doc_approver_list_dept}>{dept.name}</div>}
+                      <div className={f.doc_approver_list_role}>결재 예정</div>
                       <button
                         className={f.doc_approver_chip_remove}
-                        onClick={() =>
-                          setFormState({
-                            ...formState,
-                            approver_ids: formState.approver_ids.filter((_, i) => i !== idx),
-                          })
-                        }
+                        onClick={() => setFormState({ ...formState, approver_ids: formState.approver_ids.filter((_, i) => i !== idx) })}
                       >
                         <X size={12} />
                       </button>
@@ -1302,26 +1598,8 @@ export default function ApprovalsPage() {
                   )
                 })}
               </div>
-              <div className={f.doc_approver_add_row}>
-                <select
-                  className={f.doc_approver_add_select}
-                  value=""
-                  onChange={(e) => {
-                    if (e.target.value && !formState.approver_ids.includes(e.target.value)) {
-                      setFormState({
-                        ...formState,
-                        approver_ids: [...formState.approver_ids, e.target.value],
-                      })
-                    }
-                  }}
-                >
-                  <option value="">+ 결재자 추가</option>
-                  {users.map((u) => (
-                    <option key={u.id} value={u.id}>{u.display_name}</option>
-                  ))}
-                </select>
-              </div>
             </div>
+
 
             {formError && <p className={styles.error_msg}>{formError}</p>}
           </div>
@@ -1349,6 +1627,28 @@ export default function ApprovalsPage() {
               onClick={() => setPreviewOpen(true)}
             >
               미리보기
+            </button>
+            <button
+              className={styles.btn_secondary}
+              onClick={() => {
+                setApproverModalDraft([...formState.approver_ids])
+                setOrgSearch('')
+                setExpandedDepts(new Set(departments.map(d => String(d.id))))
+                setApproverModalOpen(true)
+              }}
+            >
+              결재선추가
+            </button>
+            <button
+              className={styles.btn_secondary}
+              onClick={() => {
+                setRefModalDraft([...formState.reference_ids])
+                setOrgSearch('')
+                setExpandedDepts(new Set(departments.map(d => String(d.id))))
+                setRefModalOpen(true)
+              }}
+            >
+              참조자추가
             </button>
             <button
               className={styles.btn_secondary}
@@ -1385,9 +1685,29 @@ export default function ApprovalsPage() {
             <div className={f.preview_modal} onClick={(e) => e.stopPropagation()}>
               <div className={f.preview_modal_header}>
                 <span className={f.preview_modal_title}>미리보기</span>
-                <button className={f.preview_modal_close} onClick={() => setPreviewOpen(false)}>
-                  <X size={18} />
-                </button>
+                <div className={f.preview_modal_header_actions}>
+                  <button
+                    className={styles.btn_secondary}
+                    onClick={() => {
+                      setApproverModalDraft([...formState.approver_ids])
+                      setOrgSearch('')
+                      setExpandedDepts(new Set(departments.map(d => String(d.id))))
+                      setApproverModalOpen(true)
+                    }}
+                  >결재선추가</button>
+                  <button
+                    className={styles.btn_secondary}
+                    onClick={() => {
+                      setRefModalDraft([...formState.reference_ids])
+                      setOrgSearch('')
+                      setExpandedDepts(new Set(departments.map(d => String(d.id))))
+                      setRefModalOpen(true)
+                    }}
+                  >참조자추가</button>
+                  <button className={f.preview_modal_close} onClick={() => setPreviewOpen(false)}>
+                    <X size={18} />
+                  </button>
+                </div>
               </div>
               <div className={f.preview_modal_body}>
                 <div className={styles.doc_paper}>
@@ -1398,6 +1718,23 @@ export default function ApprovalsPage() {
                         <tr><td className={styles.doc_info_label}>작성일자</td><td>{new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' })}</td></tr>
                         <tr><td className={styles.doc_info_label}>신청부서</td><td>{departments.find(d => String(d.id) === formState.department_id)?.name ?? '-'}</td></tr>
                         <tr><td className={styles.doc_info_label}>신청자</td><td>{users.find(u => String(u.id) === String(myUserId))?.display_name ?? '-'}</td></tr>
+                        {formState.reference_ids.length > 0 && (
+                          <tr>
+                            <td className={styles.doc_info_label}>참조자</td>
+                            <td>
+                              <div className={styles.doc_reference_cell}>
+                                {formState.reference_ids.map((uid, idx) => {
+                                  const u = users.find(x => String(x.id) === uid)
+                                  return (
+                                    <span key={idx} className={styles.doc_reference_chip}>
+                                      {u?.display_name ?? uid}
+                                    </span>
+                                  )
+                                })}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
                         <tr><td className={styles.doc_info_label}>제목</td><td>{formState.title}</td></tr>
                       </tbody>
                     </table>
@@ -1418,6 +1755,7 @@ export default function ApprovalsPage() {
                   {formTemplateConfig && (
                     <formTemplateConfig.BodySection
                       content={formState.content as Record<string, unknown>}
+                      departments={departments}
                     />
                   )}
                   {attachedFiles.length > 0 && (
@@ -1456,12 +1794,535 @@ export default function ApprovalsPage() {
     }
   }
 
+  const filteredTemplates = modalSearch.trim()
+    ? templates.filter(t => t.document_type.includes(modalSearch.trim()) || t.category.includes(modalSearch.trim()))
+    : modalCategory ? (templatesByCategory[modalCategory] ?? []) : []
+
+  const templateModal = templateModalOpen && typeof document !== 'undefined' ? createPortal(
+    <div
+      className={styles.tplOverlay}
+      onMouseDown={e => { if (e.target === e.currentTarget) setTemplateModalOpen(false) }}
+    >
+      <div className={styles.tplModal}>
+        {/* 헤더 */}
+        <div className={styles.tplHeader}>
+          <span className={styles.tplTitle}>결재양식 선택</span>
+          <button className={styles.tplClose} onClick={() => setTemplateModalOpen(false)} aria-label="닫기">
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* 바디 */}
+        <div className={styles.tplBody}>
+          {/* 좌측 트리 */}
+          <div className={styles.tplLeft}>
+            <div className={styles.tplSearch}>
+              <input
+                className={styles.tplSearchInput}
+                placeholder="양식 검색"
+                value={modalSearch}
+                onChange={e => { setModalSearch(e.target.value); setModalCategory(null) }}
+              />
+            </div>
+            <div className={styles.tplTree}>
+              {modalSearch.trim() ? (
+                filteredTemplates.map(tpl => (
+                  <button
+                    key={tpl.id}
+                    className={`${styles.tplTreeLeaf} ${modalSelectedTemplate?.id === tpl.id ? styles.tplTreeLeafActive : ''}`}
+                    onClick={() => setModalSelectedTemplate(tpl)}
+                  >
+                    <FileText size={13} />
+                    {tpl.document_type}
+                  </button>
+                ))
+              ) : (
+                Object.keys(templatesByCategory).map(cat => (
+                  <div key={cat} className={styles.tplTreeGroup}>
+                    <button
+                      className={`${styles.tplTreeCategory} ${modalCategory === cat ? styles.tplTreeCategoryOpen : ''}`}
+                      onClick={() => setModalCategory(c => c === cat ? null : cat)}
+                    >
+                      <ChevronRight size={13} className={`${styles.tplChevron} ${modalCategory === cat ? styles.tplChevronOpen : ''}`} />
+                      {cat}
+                    </button>
+                    {modalCategory === cat && (templatesByCategory[cat] ?? []).map(tpl => (
+                      <button
+                        key={tpl.id}
+                        className={`${styles.tplTreeLeaf} ${modalSelectedTemplate?.id === tpl.id ? styles.tplTreeLeafActive : ''}`}
+                        onClick={() => setModalSelectedTemplate(tpl)}
+                      >
+                        <FileText size={13} />
+                        {tpl.document_type}
+                      </button>
+                    ))}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* 우측 상세 */}
+          <div className={styles.tplRight}>
+            <p className={styles.tplDetailTitle}>상세정보</p>
+            {modalSelectedTemplate ? (
+              <div className={styles.tplDetailRows}>
+                <div className={styles.tplDetailRow}>
+                  <span className={styles.tplDetailLabel}>양식명</span>
+                  <span className={styles.tplDetailValue}>{modalSelectedTemplate.document_type}</span>
+                </div>
+                <div className={styles.tplDetailRow}>
+                  <span className={styles.tplDetailLabel}>카테고리</span>
+                  <span className={styles.tplDetailValue}>{modalSelectedTemplate.category}</span>
+                </div>
+                <div className={styles.tplDetailRow}>
+                  <span className={styles.tplDetailLabel}>보존연한</span>
+                  <span className={styles.tplDetailValue}>5년</span>
+                </div>
+                <div className={styles.tplDetailRow}>
+                  <span className={styles.tplDetailLabel}>소속</span>
+                  <div className={styles.tplDetailValue}>
+                    <select
+                      className={styles.tplDetailSelect}
+                      value={modalDepartmentId}
+                      onChange={e => setModalDepartmentId(e.target.value)}
+                    >
+                      <option value="">선택</option>
+                      {departments.map(dep => (
+                        <option key={dep.id} value={String(dep.id)}>{dep.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <p className={styles.tplDetailEmpty}>좌측에서 양식을 선택하세요.</p>
+            )}
+          </div>
+        </div>
+
+        {/* 푸터 */}
+        <div className={styles.tplFooter}>
+          <button
+            className={styles.tplBtnConfirm}
+            onClick={handleTemplateModalConfirm}
+            disabled={!modalSelectedTemplate}
+          >
+            확인
+          </button>
+          <button className={styles.tplBtnCancel} onClick={() => setTemplateModalOpen(false)}>
+            취소
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  ) : null
+
+  const myUser = users.find(u => String(u.id) === String(myUserId))
+  const myDept = departments.find(d => String(d.id) === String(myUser?.department_id))
+
+  const usersByDept = departments.map(dept => ({
+    dept,
+    members: users.filter(u => String(u.department_id) === String(dept.id)),
+  })).filter(g => g.members.length > 0)
+
+  const ungrouped = users.filter(u => !u.department_id || !departments.find(d => String(d.id) === String(u.department_id)))
+
+  const searchedUsers = orgSearch.trim()
+    ? users.filter(u => u.display_name.includes(orgSearch.trim()))
+    : null
+
+  const approverModal = approverModalOpen && typeof document !== 'undefined' ? createPortal(
+    <div className={styles.apmOverlay} onMouseDown={e => { if (e.target === e.currentTarget) setApproverModalOpen(false) }}>
+      <div className={styles.apmModal}>
+        {/* 헤더 */}
+        <div className={styles.apmHeader}>
+          <span className={styles.apmTitle}>결재 정보</span>
+          <button className={styles.apmClose} onClick={() => setApproverModalOpen(false)}><X size={16} /></button>
+        </div>
+
+        {/* 바디 */}
+        <div className={styles.apmBody}>
+          {/* 좌측 조직도 */}
+          <div className={styles.apmLeft}>
+            <div className={styles.apmSearch}>
+              <input
+                className={styles.apmSearchInput}
+                placeholder="이름, 부서 검색"
+                value={orgSearch}
+                onChange={e => setOrgSearch(e.target.value)}
+              />
+            </div>
+            <div className={styles.apmTree}>
+              {searchedUsers ? (
+                searchedUsers.map(u => {
+                  const dept = departments.find(d => String(d.id) === String(u.department_id))
+                  const added = approverModalDraft.includes(String(u.id))
+                  return (
+                    <button
+                      key={u.id}
+                      draggable={!added}
+                      className={`${styles.apmTreeUser} ${added ? styles.apmTreeUserAdded : ''}`}
+                      onDragStart={(e) => { e.dataTransfer.setData('apmUserId', String(u.id)); e.dataTransfer.effectAllowed = 'copy'; apmIsDragging.current = true }}
+                      onDragEnd={() => { setTimeout(() => { apmIsDragging.current = false }, 0) }}
+                      onClick={() => { if (!added && !apmIsDragging.current) setApproverModalDraft(prev => [...prev, String(u.id)]) }}
+                    >
+                      <div className={styles.apmUserAvatar}>{u.display_name[0]}</div>
+                      <div className={styles.apmUserInfo}>
+                        <span className={styles.apmUserName}>{u.display_name}</span>
+                        {dept && <span className={styles.apmUserDept}>{dept.name}</span>}
+                      </div>
+                      {added && <CheckCircle size={14} className={styles.apmUserCheck} />}
+                    </button>
+                  )
+                })
+              ) : (
+                <>
+                  {usersByDept.map(({ dept, members }) => (
+                    <div key={dept.id} className={styles.apmTreeGroup}>
+                      <button
+                        className={styles.apmTreeDept}
+                        onClick={() => setExpandedDepts(prev => {
+                          const s = new Set(prev)
+                          s.has(String(dept.id)) ? s.delete(String(dept.id)) : s.add(String(dept.id))
+                          return s
+                        })}
+                      >
+                        <ChevronDown size={14} className={`${styles.apmChevron} ${expandedDepts.has(String(dept.id)) ? styles.apmChevronOpen : ''}`} />
+                        {dept.name}
+                        <span className={styles.apmDeptCount}>{members.length}</span>
+                      </button>
+                      {expandedDepts.has(String(dept.id)) && members.map(u => {
+                        const added = approverModalDraft.includes(String(u.id))
+                        return (
+                          <button
+                            key={u.id}
+                            draggable={!added}
+                            className={`${styles.apmTreeUser} ${added ? styles.apmTreeUserAdded : ''}`}
+                            onDragStart={(e) => { e.dataTransfer.setData('apmUserId', String(u.id)); e.dataTransfer.effectAllowed = 'copy'; apmIsDragging.current = true }}
+                      onDragEnd={() => { setTimeout(() => { apmIsDragging.current = false }, 0) }}
+                            onClick={() => { if (!added && !apmIsDragging.current) setApproverModalDraft(prev => [...prev, String(u.id)]) }}
+                          >
+                            <div className={styles.apmUserAvatar}>{u.display_name[0]}</div>
+                            <div className={styles.apmUserInfo}>
+                              <span className={styles.apmUserName}>{u.display_name}</span>
+                            </div>
+                            {added && <CheckCircle size={14} className={styles.apmUserCheck} />}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  ))}
+                  {ungrouped.map(u => {
+                    const added = approverModalDraft.includes(String(u.id))
+                    return (
+                      <button
+                        key={u.id}
+                        draggable={!added}
+                        className={`${styles.apmTreeUser} ${added ? styles.apmTreeUserAdded : ''}`}
+                        onDragStart={(e) => { e.dataTransfer.setData('apmUserId', String(u.id)); e.dataTransfer.effectAllowed = 'copy'; apmIsDragging.current = true }}
+                      onDragEnd={() => { setTimeout(() => { apmIsDragging.current = false }, 0) }}
+                        onClick={() => { if (!added && !apmIsDragging.current) setApproverModalDraft(prev => [...prev, String(u.id)]) }}
+                      >
+                        <div className={styles.apmUserAvatar}>{u.display_name[0]}</div>
+                        <div className={styles.apmUserInfo}>
+                          <span className={styles.apmUserName}>{u.display_name}</span>
+                        </div>
+                        {added && <CheckCircle size={14} className={styles.apmUserCheck} />}
+                      </button>
+                    )
+                  })}
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* 우측 결재선 테이블 */}
+          <div
+            className={styles.apmRight}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+              e.preventDefault()
+              const userId = e.dataTransfer.getData('apmUserId')
+              if (userId && !approverModalDraft.includes(userId)) {
+                setApproverModalDraft(prev => [...prev, userId])
+              }
+              setApmDropBefore(null)
+              setApmDraggingRowIdx(null)
+            }}
+          >
+            <table className={styles.apmTable}>
+              <thead>
+                <tr>
+                  <th style={{ width: 32, padding: 0 }}></th>
+                  <th>타입</th>
+                  <th>이름</th>
+                  <th>부서</th>
+                  <th>상태</th>
+                  <th style={{ width: 32, padding: 0 }}></th>
+                </tr>
+              </thead>
+              <tbody>
+                {/* 신청 */}
+                <tr className={styles.apmSectionRow}>
+                  <td colSpan={6}>신청</td>
+                </tr>
+                <tr>
+                  <td className={styles.apmArrow}><ChevronsRight size={16} /></td>
+                  <td><span className={styles.apmTypeLabel}>기안</span></td>
+                  <td>{myUser?.display_name ?? '-'}</td>
+                  <td>{myDept?.name ?? '-'}</td>
+                  <td></td>
+                  <td></td>
+                </tr>
+
+                {/* 승인 */}
+                <tr className={styles.apmSectionRow}>
+                  <td colSpan={6}>승인</td>
+                </tr>
+                {approverModalDraft.length === 0 ? (
+                  <tr
+                    onDragOver={(e) => { e.preventDefault(); setApmDropBefore(0) }}
+                    onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setApmDropBefore(null) }}
+                    onDrop={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      const userId = e.dataTransfer.getData('apmUserId')
+                      if (userId && !approverModalDraft.includes(userId)) setApproverModalDraft([userId])
+                      setApmDropBefore(null)
+                    }}
+                  >
+                    <td className={styles.apmArrow}><ChevronsRight size={16} /></td>
+                    <td colSpan={5} className={`${styles.apmEmptyRow} ${apmDropBefore === 0 ? styles.apmEmptyRowDrop : ''}`}>
+                      {apmDropBefore === 0 ? '여기에 놓으세요' : '드래그하여 결재선을 추가할 수 있습니다.'}
+                    </td>
+                  </tr>
+                ) : (
+                  <>
+                    {approverModalDraft.map((uid, idx) => {
+                      const u = users.find(x => String(x.id) === uid)
+                      const dept = departments.find(d => String(d.id) === String(u?.department_id))
+                      return (
+                        <tr
+                          key={idx}
+                          draggable
+                          className={`${apmDraggingRowIdx === idx ? styles.apmRowDragging : ''} ${apmDropBefore === idx ? styles.apmRowDropAbove : ''}`}
+                          onDragStart={(e) => { e.dataTransfer.setData('apmRowIdx', String(idx)); setApmDraggingRowIdx(idx) }}
+                          onDragEnd={() => { setApmDraggingRowIdx(null); setApmDropBefore(null) }}
+                          onDragOver={(e) => { e.preventDefault(); setApmDropBefore(idx) }}
+                          onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setApmDropBefore(null) }}
+                          onDrop={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            const userId = e.dataTransfer.getData('apmUserId')
+                            const rowIdxStr = e.dataTransfer.getData('apmRowIdx')
+                            if (userId && !approverModalDraft.includes(userId)) {
+                              const next = [...approverModalDraft]
+                              next.splice(idx, 0, userId)
+                              setApproverModalDraft(next)
+                            } else if (rowIdxStr !== '') {
+                              const fromIdx = parseInt(rowIdxStr)
+                              if (fromIdx !== idx) {
+                                const next = [...approverModalDraft]
+                                const [moved] = next.splice(fromIdx, 1)
+                                next.splice(fromIdx < idx ? idx - 1 : idx, 0, moved)
+                                setApproverModalDraft(next)
+                              }
+                            }
+                            setApmDropBefore(null)
+                            setApmDraggingRowIdx(null)
+                          }}
+                        >
+                          <td className={styles.apmArrow}><ChevronsRight size={16} /></td>
+                          <td><span className={styles.apmTypeLabel}>결재</span></td>
+                          <td>{u?.display_name ?? uid}</td>
+                          <td>{dept?.name ?? '-'}</td>
+                          <td className={styles.apmStatus}>예정</td>
+                          <td>
+                            <button
+                              className={styles.apmDeleteBtn}
+                              onClick={() => setApproverModalDraft(prev => prev.filter((_, i) => i !== idx))}
+                            >
+                              <X size={13} />
+                            </button>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                    {/* 마지막 행 아래 드롭존 */}
+                    <tr
+                      className={styles.apmDropAppendRow}
+                      onDragOver={(e) => { e.preventDefault(); setApmDropBefore(approverModalDraft.length) }}
+                      onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setApmDropBefore(null) }}
+                      onDrop={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        const userId = e.dataTransfer.getData('apmUserId')
+                        const rowIdxStr = e.dataTransfer.getData('apmRowIdx')
+                        if (userId && !approverModalDraft.includes(userId)) {
+                          setApproverModalDraft(prev => [...prev, userId])
+                        } else if (rowIdxStr !== '') {
+                          const fromIdx = parseInt(rowIdxStr)
+                          const next = [...approverModalDraft]
+                          const [moved] = next.splice(fromIdx, 1)
+                          next.push(moved)
+                          setApproverModalDraft(next)
+                        }
+                        setApmDropBefore(null)
+                        setApmDraggingRowIdx(null)
+                      }}
+                    >
+                      
+                    </tr>
+                  </>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* 푸터 */}
+        <div className={styles.apmFooter}>
+          <div />
+          <div className={styles.apmFooterRight}>
+            <button
+              className={styles.apmBtnConfirm}
+              onClick={() => {
+                setFormState({ ...formState, approver_ids: approverModalDraft })
+                setApproverModalOpen(false)
+              }}
+            >
+              확인
+            </button>
+            <button className={styles.apmBtnCancel} onClick={() => setApproverModalOpen(false)}>취소</button>
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body
+  ) : null
+
+  const refModal = refModalOpen && typeof document !== 'undefined' ? createPortal(
+    <div className={styles.apmOverlay} onMouseDown={e => { if (e.target === e.currentTarget) setRefModalOpen(false) }}>
+      <div className={styles.apmModal}>
+        <div className={styles.apmHeader}>
+          <span className={styles.apmTitle}>참조자 추가</span>
+          <button className={styles.apmClose} onClick={() => setRefModalOpen(false)}><X size={16} /></button>
+        </div>
+        <div className={styles.apmBody}>
+          {/* 좌측 조직도 */}
+          <div className={styles.apmLeft}>
+            <div className={styles.apmSearch}>
+              <input
+                className={styles.apmSearchInput}
+                placeholder="이름, 부서 검색"
+                value={orgSearch}
+                onChange={e => setOrgSearch(e.target.value)}
+              />
+            </div>
+            <div className={styles.apmTree}>
+              {usersByDept.map(({ dept, members }) => (
+                <div key={dept.id} className={styles.apmTreeGroup}>
+                  <button
+                    className={styles.apmTreeDept}
+                    onClick={() => setExpandedDepts(prev => {
+                      const s = new Set(prev); s.has(String(dept.id)) ? s.delete(String(dept.id)) : s.add(String(dept.id)); return s
+                    })}
+                  >
+                    <ChevronDown size={14} className={`${styles.apmChevron} ${expandedDepts.has(String(dept.id)) ? styles.apmChevronOpen : ''}`} />
+                    {dept.name}
+                    <span className={styles.apmDeptCount}>{members.length}</span>
+                  </button>
+                  {expandedDepts.has(String(dept.id)) && members.map(u => {
+                    const added = refModalDraft.includes(String(u.id))
+                    return (
+                      <button
+                        key={u.id}
+                        draggable={!added}
+                        className={`${styles.apmTreeUser} ${added ? styles.apmTreeUserAdded : ''}`}
+                        onDragStart={(e) => { e.dataTransfer.setData('apmUserId', String(u.id)); e.dataTransfer.effectAllowed = 'copy'; refIsDragging.current = true }}
+                        onDragEnd={() => { setTimeout(() => { refIsDragging.current = false }, 0) }}
+                        onClick={() => { if (!added && !refIsDragging.current) setRefModalDraft(prev => [...prev, String(u.id)]) }}
+                      >
+                        <div className={styles.apmUserAvatar}>{u.display_name[0]}</div>
+                        <div className={styles.apmUserInfo}>
+                          <span className={styles.apmUserName}>{u.display_name}</span>
+                        </div>
+                        {added && <CheckCircle size={14} className={styles.apmUserCheck} />}
+                      </button>
+                    )
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+          {/* 우측 참조자 목록 */}
+          <div
+            className={styles.apmRight}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+              e.preventDefault()
+              const userId = e.dataTransfer.getData('apmUserId')
+              if (userId && !refModalDraft.includes(userId)) setRefModalDraft(prev => [...prev, userId])
+            }}
+          >
+            <table className={styles.apmTable}>
+              <thead>
+                <tr>
+                  <th style={{ width: 32, padding: 0 }}></th>
+                  <th>이름</th>
+                  <th>부서</th>
+                  <th style={{ width: 32, padding: 0 }}></th>
+                </tr>
+              </thead>
+              <tbody>
+                {refModalDraft.length === 0 ? (
+                  <tr>
+                    <td><ChevronsRight size={16} /></td>
+                    <td colSpan={3} className={styles.apmEmptyRow}>드래그하여 참조자를 추가할 수 있습니다.</td>
+                  </tr>
+                ) : refModalDraft.map((uid, idx) => {
+                  const u = users.find(x => String(x.id) === uid)
+                  const dept = departments.find(d => String(d.id) === String(u?.department_id))
+                  return (
+                    <tr key={idx}>
+                      <td className={styles.apmArrow}><ChevronsRight size={16} /></td>
+                      <td>{u?.display_name ?? uid}</td>
+                      <td>{dept?.name ?? '-'}</td>
+                      <td>
+                        <button className={styles.apmDeleteBtn} onClick={() => setRefModalDraft(prev => prev.filter((_, i) => i !== idx))}>
+                          <X size={13} />
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div className={styles.apmFooter}>
+          <div />
+          <div className={styles.apmFooterRight}>
+            <button className={styles.apmBtnConfirm} onClick={() => { setFormState({ ...formState, reference_ids: refModalDraft }); setRefModalOpen(false) }}>확인</button>
+            <button className={styles.apmBtnCancel} onClick={() => setRefModalOpen(false)}>취소</button>
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body
+  ) : null
+
   return (
     <div className={styles.page_layout}>
       {renderSidebar()}
       <main className={styles.main_area}>
         {renderMainContent()}
       </main>
+      {templateModal}
+      {approverModal}
+      {refModal}
     </div>
   )
 }

@@ -47,6 +47,7 @@
   cursor: not-allowed;
 }
 
+
 .trigger_placeholder span {
   color: #aaa;
 }
@@ -162,10 +163,18 @@
   left: 0;
   z-index: 9999;
   background: #fff;
-  border: 1px solid #e8e8e8;
   border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.06);
   animation: fadeIn 120ms ease;
+}
+
+/* 부모 테이블 스타일이 캘린더 내부 셀까지 침투하지 않도록 초기화 */
+.popover td,
+.popover th,
+.popover tr {
+  border: none !important;
+  padding: 0 !important;
+  background: transparent !important;
 }
 
 .popover_right {

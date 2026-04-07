@@ -1,0 +1,38 @@
+/* 사원증 신청서 전용 스타일 */
+
+.input_full {
+  width: 100%;
+}
+
+.notes_section {
+  margin-top: 20px;
+  font-size: 12.5px;
+  color: #333;
+  line-height: 1.8;
+}
+
+.notes_title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.notes_group {
+  margin-bottom: 12px;
+}
+
+.notes_group_title {
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.notes_item {
+  padding-left: 4px;
+  color: #444;
+}
+
+.notes_footer {
+  margin-top: 16px;
+  font-size: 12.5px;
+  color: #333;
+  line-height: 1.8;
+}

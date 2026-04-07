@@ -3,6 +3,17 @@ import styles from './page.module.css'
 import type { FieldDef, DocBodyProps, DocTemplateConfig } from './templates/types'
 import { AttendanceBody, ATTENDANCE_FIELDS } from './templates/attendance'
 import { BusinessCardBody, BUSINESS_CARD_FIELDS } from './templates/businessCard'
+import { EmployeeIdBody, EMPLOYEE_ID_FIELDS } from './templates/employeeId'
+import { HandoverBody, HANDOVER_FIELDS } from './templates/handover'
+import { ResignationBody, RESIGNATION_FIELDS } from './templates/resignation'
+import { VacationBody, VACATION_FIELDS } from './templates/vacation'
+import { BusinessTripReportBody, BUSINESS_TRIP_REPORT_FIELDS } from './templates/businessTripReport'
+import { BusinessTripApplicationBody, BUSINESS_TRIP_APPLICATION_FIELDS } from './templates/businessTripApplication'
+import { CorporateCardBody, CORPORATE_CARD_FIELDS } from './templates/corporateCard'
+import { ExpenseResolutionBody, EXPENSE_RESOLUTION_FIELDS } from './templates/expenseResolution'
+import { ExpenseProposalBody, EXPENSE_PROPOSAL_FIELDS } from './templates/expenseProposal'
+import { AffiliatePaymentBody, AFFILIATE_PAYMENT_FIELDS } from './templates/affiliatePayment'
+import { PointResolutionBody, POINT_RESOLUTION_FIELDS } from './templates/pointResolution'
 import { DateInput } from '@/components/ui/Calendar/DateInput'
 
 export type { FieldDef, DocBodyProps, DocTemplateConfig }
@@ -135,10 +146,72 @@ const HR_FIELDS: FieldDef[] = [
 
 export const DOC_TEMPLATE_REGISTRY: DocTemplateConfig[] = [
   {
+    id: 'point-resolution',
+    match: (doc) => doc.document_type.replace(/\s/g, '') === '[적립금]지출결의서',
+    fields: POINT_RESOLUTION_FIELDS,
+    BodySection: PointResolutionBody,
+    supportsAttachments: true,
+  },
+  {
+    id: 'affiliate-payment',
+    match: (doc) => doc.document_type.replace(/\s/g, '') === '[제휴]입금요청서',
+    fields: AFFILIATE_PAYMENT_FIELDS,
+    BodySection: AffiliatePaymentBody,
+    supportsAttachments: true,
+  },
+  {
+    id: 'expense-proposal',
+    match: (doc) => doc.document_type.replace(/\s/g, '') === '[품의서]지출품의서',
+    fields: EXPENSE_PROPOSAL_FIELDS,
+    BodySection: ExpenseProposalBody,
+    supportsAttachments: true,
+  },
+  {
+    id: 'expense-resolution',
+    match: (doc) => doc.document_type.replace(/\s/g, '') === '[결의서]지출결의서',
+    fields: EXPENSE_RESOLUTION_FIELDS,
+    BodySection: ExpenseResolutionBody,
+    supportsAttachments: true,
+  },
+  {
+    id: 'corporate-card',
+    match: (doc) => doc.document_type.replace(/\s/g, '') === '법인카드사용내역제출서',
+    fields: CORPORATE_CARD_FIELDS,
+    BodySection: CorporateCardBody,
+    supportsAttachments: true,
+  },
+  {
     id: 'business-card',
     match: (doc) => doc.document_type.replace(/\s/g, '') === '명함신청서',
     fields: BUSINESS_CARD_FIELDS,
     BodySection: BusinessCardBody,
+  },
+  {
+    id: 'resignation',
+    match: (doc) => doc.document_type.replace(/\s/g, '') === '퇴사확정일요청서',
+    fields: RESIGNATION_FIELDS,
+    BodySection: ResignationBody,
+    supportsAttachments: true,
+  },
+  {
+    id: 'handover',
+    match: (doc) => doc.document_type.replace(/\s/g, '') === '인수인계요청서',
+    fields: HANDOVER_FIELDS,
+    BodySection: HandoverBody,
+  },
+  {
+    id: 'employee-id',
+    match: (doc) => doc.document_type.replace(/\s/g, '') === '사원증신청서',
+    fields: EMPLOYEE_ID_FIELDS,
+    BodySection: EmployeeIdBody,
+    supportsAttachments: true,
+  },
+  {
+    id: 'vacation',
+    match: (doc) => doc.document_type.replace(/\s/g, '') === '휴가신청서',
+    fields: VACATION_FIELDS,
+    BodySection: VacationBody,
+    supportsAttachments: true,
   },
   {
     id: 'attendance',
@@ -155,6 +228,20 @@ export const DOC_TEMPLATE_REGISTRY: DocTemplateConfig[] = [
     match: (doc) => doc.category === '회계',
     fields: EXPENSE_FIELDS,
     BodySection: makeGenericBody(EXPENSE_FIELDS),
+  },
+  {
+    id: 'business-trip-application',
+    match: (doc) => doc.document_type.replace(/\s/g, '') === '출장신청서',
+    fields: BUSINESS_TRIP_APPLICATION_FIELDS,
+    BodySection: BusinessTripApplicationBody,
+    supportsAttachments: false,
+  },
+  {
+    id: 'business-trip-report',
+    match: (doc) => doc.document_type.replace(/\s/g, '') === '출장업무보고서',
+    fields: BUSINESS_TRIP_REPORT_FIELDS,
+    BodySection: BusinessTripReportBody,
+    supportsAttachments: true,
   },
   {
     id: 'travel',
@@ -184,4 +271,15 @@ export const ALL_TEMPLATE_FIELDS: FieldDef[] = [
   ...HR_FIELDS,
   ...ATTENDANCE_FIELDS,
   ...BUSINESS_CARD_FIELDS,
+  ...EMPLOYEE_ID_FIELDS,
+  ...HANDOVER_FIELDS,
+  ...RESIGNATION_FIELDS,
+  ...VACATION_FIELDS,
+  ...BUSINESS_TRIP_REPORT_FIELDS,
+  ...BUSINESS_TRIP_APPLICATION_FIELDS,
+  ...CORPORATE_CARD_FIELDS,
+  ...EXPENSE_RESOLUTION_FIELDS,
+  ...EXPENSE_PROPOSAL_FIELDS,
+  ...AFFILIATE_PAYMENT_FIELDS,
+  ...POINT_RESOLUTION_FIELDS,
 ]

@@ -82,6 +82,7 @@ export interface Approval {
   applicant?: { id: string; display_name: string }
   department?: Department
   steps?: ApprovalStep[]
+  reference_ids?: string[]
 }
 
 export interface Expense {

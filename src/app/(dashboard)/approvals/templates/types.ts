@@ -10,6 +10,7 @@ export interface FieldDef {
 export interface DocBodyProps {
   content: Record<string, unknown>
   onChange?: (key: string, value: string) => void
+  departments?: { id: string; name: string }[]
 }
 
 export interface DocTemplateConfig {

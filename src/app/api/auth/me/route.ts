@@ -15,7 +15,7 @@ export async function GET() {
     // app_users에서 role 조회 (email로 매칭)
     const { data: appUser } = await supabaseAdmin
       .from('app_users')
-      .select('id, role, display_name, ref_code')
+      .select('id, role, display_name, ref_code, department_id')
       .eq('username', user.email)
       .single();
 
@@ -44,6 +44,7 @@ export async function GET() {
       role: appUser?.role ?? 'admin',
       displayName: appUser?.display_name ?? user.email,
       refCode: appUser?.ref_code ?? null,
+      departmentId: appUser?.department_id ?? null,
       permissions,
     });
   } catch {

@@ -1,0 +1,146 @@
+/* 퇴사확정일 요청서 전용 스타일 */
+
+.section_header {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 24px;
+  margin-bottom: 0;
+}
+
+.section_header td {
+  border: 1px solid #333;
+  padding: 8px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  background: #ddd;
+  color: #111;
+}
+
+.table_main {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0;
+}
+
+.table_main td {
+  border: 1px solid #333;
+  padding: 8px 10px;
+  font-size: 13px;
+  color: #111;
+  vertical-align: middle;
+}
+
+.label_cell {
+  background: #f0f0f0;
+  font-weight: 700;
+  text-align: center;
+  width: 110px;
+  white-space: nowrap;
+}
+
+.value_cell {
+  background: #fff;
+}
+
+.input_full {
+  width: 100%;
+  border: 1px solid #ccc;
+  background: #f9f9f9;
+  height: 26px;
+  font-size: 13px;
+  color: #111;
+  font-family: inherit;
+  padding: 0 4px;
+  box-sizing: border-box;
+}
+
+.input_full::placeholder {
+  color: #bbb;
+}
+
+.select_full {
+  width: 100%;
+  border: 1px solid #ddd;
+  background: transparent;
+  font-size: 13px;
+  height: 26px;
+  color: #111;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.textarea_full {
+  width: 100%;
+  border: 1px solid #ccc;
+  background: #f9f9f9;
+  font-size: 13px;
+  color: #111;
+  font-family: inherit;
+  padding: 6px;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 48px;
+  outline: none;
+}
+
+/* 점검사항 테이블 */
+.table_check {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0;
+}
+
+.table_check td {
+  border: 1px solid #333;
+  padding: 7px 10px;
+  font-size: 13px;
+  color: #111;
+  vertical-align: middle;
+}
+
+.check_label {
+  background: #fff;
+  text-align: center;
+  font-weight: 500;
+}
+
+.check_value {
+  background: #fff;
+  width: 160px;
+}
+
+.radio_group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: center;
+}
+
+.radio_group label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.note {
+  margin-top: 16px;
+  font-size: 12.5px;
+  color: #333;
+}
+
+.table_gap {
+  margin-top: 12px;
+}
+
+.date_range {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pre_wrap {
+  white-space: pre-wrap;
+}

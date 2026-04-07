@@ -1,0 +1,91 @@
+/* 휴가신청서 전용 스타일 */
+
+.table_main {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+}
+
+.table_main td {
+  border: 1px solid #333;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #111;
+  vertical-align: middle;
+}
+
+.label_cell {
+  background: #dddddd;
+  font-weight: 700;
+  width: 110px;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.label_cell_top {
+  vertical-align: top;
+  padding-top: 14px;
+}
+
+.required {
+  color: #e03535;
+  margin-right: 2px;
+}
+
+.value_cell {
+  background: #fff;
+}
+
+.select_full {
+  width: 220px;
+  border: 1px solid #ddd;
+  background: transparent;
+  font-size: 13px;
+  height: 28px;
+  color: #111;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.period_row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tilde {
+  color: #555;
+  font-size: 14px;
+}
+
+.days_badge {
+  font-size: 12.5px;
+  color: #444;
+  margin-left: 6px;
+}
+
+.textarea_full {
+  width: 100%;
+  border: 1px solid #ccc;
+  background: #f9f9f9;
+  font-size: 13px;
+  color: #111;
+  font-family: inherit;
+  padding: 8px;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 80px;
+  outline: none;
+}
+
+.pre_wrap {
+  white-space: pre-wrap;
+}
+
+.notes {
+  margin-top: 14px;
+  font-size: 12px;
+  color: #444;
+  line-height: 2;
+}

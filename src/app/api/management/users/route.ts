@@ -4,7 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin'
 export async function GET() {
   const { data, error } = await supabaseAdmin
     .from('app_users')
-    .select('id, display_name, role')
+    .select('id, display_name, role, department_id')
     .eq('is_active', true)
     .order('display_name')
 

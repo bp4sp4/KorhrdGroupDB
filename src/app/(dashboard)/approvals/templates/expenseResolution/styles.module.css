@@ -1,0 +1,157 @@
+.table_main {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 13px;
+  margin-bottom: 0;
+}
+
+.table_main th,
+.table_main td {
+  border: 1px solid #333;
+  padding: 7px 10px;
+  vertical-align: middle;
+}
+
+.th_title {
+  background: #dddddd;
+  font-weight: 600;
+  text-align: center;
+  font-size: 13px;
+}
+
+.label_cell {
+  background: #f4f4f4;
+  font-weight: 700;
+  text-align: center;
+  width: 130px;
+  white-space: nowrap;
+}
+
+.value_cell {
+  min-width: 0;
+}
+
+.value_cell_num {
+  min-width: 0;
+  text-align: right;
+}
+
+/* Inputs */
+.input_full {
+  color: rgb(17, 17, 17);
+  box-sizing: border-box;
+  background: rgb(249, 249, 249);
+  border: 1px solid rgb(204, 204, 204);
+  width: 100%;
+  height: 26px;
+  padding: 0px 6px;
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+}
+
+.input_num {
+  color: rgb(17, 17, 17);
+  box-sizing: border-box;
+  background: rgb(249, 249, 249);
+  border: 1px solid rgb(204, 204, 204);
+  width: 100%;
+  height: 26px;
+  padding: 0px 6px;
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+  text-align: right;
+}
+
+.select_full {
+  color: rgb(17, 17, 17);
+  box-sizing: border-box;
+  background: rgb(249, 249, 249);
+  border: 1px solid rgb(204, 204, 204);
+  width: 100%;
+  height: 26px;
+  padding: 0px 6px;
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+}
+
+/* Radio group */
+.radio_group {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.radio_label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.radio_label input[type='radio'] {
+  cursor: pointer;
+  accent-color: #1a56db;
+}
+
+/* 특이사항 */
+.table_special {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 13px;
+  border-top: none;
+}
+
+.table_special td {
+  border: 1px solid #333;
+  border-top: none;
+  vertical-align: top;
+}
+
+.special_label {
+  background: #f4f4f4;
+  font-weight: 700;
+  text-align: center;
+  width: 130px;
+  padding: 10px;
+  vertical-align: middle !important;
+}
+
+.special_value {
+  padding: 6px 8px;
+  min-height: 80px;
+}
+
+.textarea_full {
+  color: rgb(17, 17, 17);
+  box-sizing: border-box;
+  background: rgb(249, 249, 249);
+  border: 1px solid rgb(204, 204, 204);
+  width: 100%;
+  min-height: 80px;
+  padding: 6px;
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+  resize: vertical;
+}
+
+.pre_wrap {
+  white-space: pre-wrap;
+  display: block;
+  min-height: 60px;
+}
+
+/* Note */
+.note {
+  margin-top: 16px;
+  font-size: 12px;
+  color: #555;
+}

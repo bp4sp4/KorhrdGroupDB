@@ -1,0 +1,76 @@
+.period_row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tilde {
+  font-size: 13px;
+  color: #333;
+}
+
+/* 선발행 / 공제 월 공통 섹션 테이블 */
+.table_section {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 13px;
+  border-top: none;
+}
+
+.table_section th,
+.table_section td {
+  border: 1px solid #333;
+  border-top: none;
+}
+
+.section_title {
+  background: #dddddd;
+  font-weight: 600;
+  text-align: center;
+  padding: 6px 10px;
+  font-size: 13px;
+}
+
+/* 선발행 유무 행 */
+.radio_cell {
+  padding: 8px 12px;
+  width: 340px;
+}
+
+.reason_cell {
+  padding: 6px 8px;
+}
+
+/* 공제 적용 월 */
+.months_cell {
+  padding: 8px 12px;
+}
+
+.months_row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+}
+
+.month_label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.month_label input[type='checkbox'] {
+  cursor: pointer;
+  accent-color: #1a56db;
+}
+
+/* Notes */
+.notes {
+  margin-top: 16px;
+  font-size: 12px;
+  color: #555;
+  line-height: 1.9;
+}

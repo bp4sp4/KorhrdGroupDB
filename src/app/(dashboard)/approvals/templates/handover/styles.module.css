@@ -1,0 +1,85 @@
+/* 인수인계 요청서 전용 스타일 */
+
+.section_header {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 24px;
+  margin-bottom: 30px;
+}
+
+.section_header td {
+  border: 1px solid #333;
+  padding: 8px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 700;
+  background: #ddd;
+  color: #111;
+}
+
+.table_handover {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0;
+}
+
+.table_handover td {
+  border: 1px solid #333;
+  padding: 6px 10px;
+  font-size: 13px;
+  color: #111;
+  vertical-align: middle;
+}
+
+.role_cell {
+  background: #ddd;
+  font-weight: 700;
+  text-align: center;
+  width: 56px;
+  white-space: nowrap;
+}
+
+.label_cell {
+  background: #f0f0f0;
+  font-weight: 600;
+  text-align: center;
+  width: 70px;
+  white-space: nowrap;
+}
+
+.value_cell {
+  background: #fff;
+  width: calc(50% - 126px);
+}
+
+.input_full {
+  width: 100%;
+  border: 1px solid #ccc;
+  background: #f9f9f9;
+  height: 26px;
+  font-size: 13px;
+  color: #111;
+  font-family: inherit;
+  padding: 0 4px;
+  box-sizing: border-box;
+}
+
+.input_full::placeholder {
+  color: #bbb;
+}
+
+.notes_section {
+  margin-top: 24px;
+  font-size: 12.5px;
+  color: #333;
+  line-height: 2;
+}
+
+.notes_title {
+  margin-bottom: 8px;
+}
+
+.notes_item {
+  padding-left: 0;
+  color: #444;
+}

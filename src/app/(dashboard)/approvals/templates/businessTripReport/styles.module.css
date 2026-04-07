@@ -1,0 +1,279 @@
+/* 출장 업무 보고서 전용 스타일 */
+
+.section_title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #111;
+  margin: 20px 0 0;
+}
+
+.section_title_mt {
+  margin-top: 24px;
+}
+
+/* ── 공통 셀 ── */
+.label_cell {
+  background: #f0f0f0;
+  font-weight: 700;
+  font-size: 13px;
+  text-align: center;
+  white-space: nowrap;
+  color: #111;
+  vertical-align: middle;
+}
+
+.label_cell_top {
+  vertical-align: top;
+  padding-top: 12px;
+}
+
+.value_cell {
+  background: #fff;
+  font-size: 13px;
+  color: #111;
+  vertical-align: middle;
+}
+
+.input_full {
+  width: 100%;
+  border: 1px solid #ccc;
+  background: #f9f9f9;
+  height: 26px;
+  font-size: 13px;
+  color: #111;
+  font-family: inherit;
+  padding: 0 6px;
+  box-sizing: border-box;
+}
+
+.input_full::placeholder {
+  color: #bbb;
+}
+
+.input_num {
+  width: 100%;
+  border: 1px solid #ccc;
+  background: #f9f9f9;
+  height: 26px;
+  font-size: 13px;
+  color: #111;
+  font-family: inherit;
+  padding: 0 6px;
+  box-sizing: border-box;
+  text-align: right;
+}
+
+.textarea_full {
+  width: 100%;
+  border: 1px solid #ccc;
+  background: #f9f9f9;
+  font-size: 13px;
+  color: #111;
+  font-family: inherit;
+  padding: 8px;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 88px;
+  outline: none;
+}
+
+.pre_wrap {
+  white-space: pre-wrap;
+  font-size: 13px;
+}
+
+/* ── 출장 정보 ── */
+.table_info {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 6px;
+}
+
+.table_info td {
+  border: 1px solid #333;
+  padding: 7px 10px;
+  font-size: 13px;
+  color: #111;
+  vertical-align: middle;
+}
+
+.table_info .label_cell {
+  width: 90px;
+}
+
+.period_row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tilde {
+  color: #555;
+  font-size: 14px;
+}
+
+/* ── 출장자 정보 ── */
+.table_persons {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  margin-top: 6px;
+}
+
+.table_persons th,
+.table_persons td {
+  border: 1px solid #333;
+  padding: 6px 10px;
+  width: 25%;
+  font-size: 13px;
+  color: #111;
+  vertical-align: middle;
+}
+
+.th_person {
+  background: #f0f0f0;
+  font-weight: 700;
+  text-align: center;
+  padding: 6px 10px;
+}
+
+.td_person {
+  background: #fff;
+  height: 36px;
+  padding: 5px 8px;
+}
+
+.person_item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.person_input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  color: #111;
+  font-family: inherit;
+  outline: none;
+  min-width: 0;
+}
+
+.person_input::placeholder {
+  color: #bbb;
+}
+
+/* ── 출장 상세 내용 ── */
+.table_detail {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 6px;
+}
+
+.table_detail td {
+  border: 1px solid #333;
+  padding: 7px 10px;
+  font-size: 13px;
+  color: #111;
+  vertical-align: middle;
+}
+
+.table_detail .label_cell {
+  width: 90px;
+}
+
+/* ── 출장 시 사용 경비 ── */
+.table_expense {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  margin-top: 6px;
+}
+
+.table_expense th,
+.table_expense td {
+  border: 1px solid #333;
+  padding: 7px 10px;
+  font-size: 13px;
+  color: #111;
+  vertical-align: middle;
+}
+
+.table_expense th {
+  background: #f0f0f0;
+  font-weight: 700;
+  text-align: center;
+}
+
+.expense_th_name { width: 140px; }
+.expense_th_amt  { width: 130px; text-align: center; }
+.expense_th_note { }
+
+.expense_name {
+  background: #fff;
+}
+
+.expense_amt {
+  background: #fff;
+  text-align: right;
+}
+
+.expense_note {
+  background: #fff;
+}
+
+.note_row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn_del {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: none;
+  color: #bbb;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: color 100ms, background 100ms;
+}
+
+.btn_del:hover {
+  color: #e03535;
+  background: #fff0f0;
+}
+
+.btn_add {
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 12px;
+  border: 1px dashed #bbb;
+  border-radius: 6px;
+  background: none;
+  font-size: 12.5px;
+  color: #666;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 100ms, color 100ms, background 100ms;
+}
+
+.btn_add:hover {
+  border-color: #3182f6;
+  color: #3182f6;
+  background: #f0f6ff;
+}
+
+.note {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #444;
+}
