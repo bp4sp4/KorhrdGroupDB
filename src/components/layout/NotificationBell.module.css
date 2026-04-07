@@ -1,4 +1,4 @@
-/* ─── NotificationBell ───────────────────────────────────────────────────── */
+/* ─── Bell Button ─────────────────────────────────────────────────────────── */
 
 .wrap {
   position: relative;
@@ -59,86 +59,209 @@
   100% { transform: scale(1); }
 }
 
-/* ─── Dropdown ──────────────────────────────────────────────────────────── */
+/* ─── Overlay ─────────────────────────────────────────────────────────────── */
 
-.dropdown {
-  position: absolute;
-  top: calc(100% + 10px);
-  right: 0;
-  width: 400px;
-  max-height: 560px;
-  background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.13), 0 2px 8px rgba(0, 0, 0, 0.06);
-  border: 1px solid #f0f0f0;
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  animation: dropdownFadeIn 0.18s ease;
-}
-
-@keyframes dropdownFadeIn {
-  from { opacity: 0; transform: translateY(-6px) scale(0.98); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-.dropdownHeader {
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 2000;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 18px 20px 14px;
-  flex-shrink: 0;
+  justify-content: center;
+  animation: overlayIn 0.15s ease;
 }
 
-.dropdownTitle {
-  font-size: 16px;
+@keyframes overlayIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ─── Modal ───────────────────────────────────────────────────────────────── */
+
+.modal {
+  position: relative;
+  display: flex;
+  width: 760px;
+  height: 560px;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18), 0 4px 16px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  animation: modalIn 0.18s cubic-bezier(0.34, 1.3, 0.64, 1);
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ─── Sidebar ─────────────────────────────────────────────────────────────── */
+
+.sidebar {
+  width: 200px;
+  flex-shrink: 0;
+  background: #fff;
+  border-right: 1px solid #f0f0f0;
+  display: flex;
+  flex-direction: column;
+  padding: 28px 0 20px;
+}
+
+.sidebarTitle {
+  font-size: 20px;
   font-weight: 700;
   color: #191f28;
-  letter-spacing: -0.3px;
+  letter-spacing: -0.5px;
+  padding: 0 24px 20px;
 }
 
-.unreadBadge {
-  padding: 2px 8px;
-  border-radius: 20px;
+.sidebarNav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 12px;
+}
+
+.sidebarItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #4e5968;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.sidebarItem:hover {
+  background: #ececec;
+  color: #191f28;
+}
+
+.sidebarItemActive {
+  background: #ececec;
+  color: #191f28;
+  font-weight: 600;
+}
+
+.sidebarCount {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 10px;
   background: #eef3ff;
   color: #3182f6;
   font-size: 11px;
   font-weight: 600;
+  line-height: 20px;
+  text-align: center;
 }
 
-.deleteAllBtn {
-  margin-left: auto;
-  padding: 4px 10px;
+.sidebarCountUnread {
+  background: #eef3ff;
+  color: #3182f6;
+}
+
+/* ─── Content ─────────────────────────────────────────────────────────────── */
+
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.contentHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 28px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  flex-shrink: 0;
+}
+
+.contentTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: #191f28;
+  letter-spacing: -0.3px;
+  flex: 1;
+}
+
+.contentActions {
+  display: flex;
+  gap: 6px;
+}
+
+.actionBtn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  background: transparent;
+  color: #4e5968;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+}
+
+.actionBtn:hover {
+  background: #f5f6f7;
+  color: #191f28;
+}
+
+.actionBtnDanger:hover {
+  background: #fff0f0;
+  color: #f04452;
+  border-color: #ffd0d4;
+}
+
+.contentBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 16px 16px;
+}
+
+.contentBody::-webkit-scrollbar { width: 4px; }
+.contentBody::-webkit-scrollbar-track { background: transparent; }
+.contentBody::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 4px; }
+
+/* ─── Close Button ────────────────────────────────────────────────────────── */
+
+.closeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
   border: none;
   border-radius: 8px;
   background: transparent;
   color: #8b95a1;
-  font-size: 12px;
-  font-weight: 500;
   cursor: pointer;
+  flex-shrink: 0;
+  margin-left: 4px;
   transition: background 120ms ease, color 120ms ease;
 }
 
-.deleteAllBtn:hover {
-  background: #fff0f0;
-  color: #f04452;
+.closeBtn:hover {
+  background: #f0f2f4;
+  color: #191f28;
 }
 
-.dropdownBody {
-  overflow-y: auto;
-  flex: 1;
-  padding: 0 12px 12px;
-}
-
-.dropdownBody::-webkit-scrollbar { width: 4px; }
-.dropdownBody::-webkit-scrollbar-track { background: transparent; }
-.dropdownBody::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 4px; }
-
-/* ─── Empty ──────────────────────────────────────────────────────────────── */
+/* ─── Empty ───────────────────────────────────────────────────────────────── */
 
 .empty {
-  padding: 52px 16px 48px;
+  padding: 60px 16px;
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -150,7 +273,7 @@
 .emptyText { font-size: 14px; font-weight: 600; color: #4e5968; margin: 0; }
 .emptySubText { font-size: 12px; color: #8b95a1; margin: 0; }
 
-/* ─── Item ──────────────────────────────────────────────────────────────── */
+/* ─── Notification Item ───────────────────────────────────────────────────── */
 
 .item {
   display: flex;
@@ -164,6 +287,7 @@
   text-align: left;
   transition: background 120ms ease;
   position: relative;
+  width: 100%;
 }
 
 .item:hover {
@@ -178,11 +302,10 @@
   background: #ebf2ff;
 }
 
-/* hover 시 X 버튼 표시 */
 .item .itemClose { opacity: 0; }
 .item:hover .itemClose { opacity: 1; }
 
-/* ─── Type Icon ──────────────────────────────────────────────────────────── */
+/* ─── Type Icon ───────────────────────────────────────────────────────────── */
 
 .typeIcon {
   flex-shrink: 0;
@@ -196,7 +319,7 @@
   justify-content: center;
 }
 
-/* ─── Item Content ───────────────────────────────────────────────────────── */
+/* ─── Item Content ────────────────────────────────────────────────────────── */
 
 .itemContent {
   flex: 1;
@@ -221,8 +344,6 @@
   color: #8b95a1;
 }
 
-/* ─── Close Button ───────────────────────────────────────────────────────── */
-
 .itemClose {
   flex-shrink: 0;
   display: flex;
@@ -241,4 +362,125 @@
 .itemClose:hover {
   background: #e9ecef;
   color: #495057;
+}
+
+/* ─── Announcement Timeline ───────────────────────────────────────────────── */
+
+.announcementList {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 4px 8px 8px;
+}
+
+.announcementItem {
+  display: flex;
+  gap: 16px;
+  position: relative;
+}
+
+/* 왼쪽 타임라인 트랙 */
+.timelineTrack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  width: 16px;
+  padding-top: 4px;
+}
+
+.timelineDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 2px solid currentColor;
+}
+
+.timelineLine {
+  width: 2px;
+  flex: 1;
+  min-height: 20px;
+  background: #e9ecef;
+  margin: 4px 0;
+}
+
+.timelineDot {
+  background: #ced4da;
+  border-color: #ced4da;
+}
+
+/* 오른쪽 콘텐츠 */
+.announcementContent {
+  flex: 1;
+  padding-bottom: 24px;
+  min-width: 0;
+}
+
+.announcementMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.announcementBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  background: #3182f6;
+  color: #fff;
+}
+
+.announcementDate {
+  font-size: 12px;
+  color: #adb5bd;
+  font-weight: 400;
+}
+
+.announcementEntry {
+  margin-bottom: 14px;
+}
+
+.announcementEntry:last-child {
+  margin-bottom: 0;
+}
+
+.announcementTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #191f28;
+  margin: 0 0 8px;
+  line-height: 1.4;
+}
+
+.announcementBody {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.announcementBody li {
+  font-size: 13px;
+  color: #4e5968;
+  line-height: 1.6;
+  padding-left: 12px;
+  position: relative;
+}
+
+.announcementBody li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 9px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #ced4da;
 }

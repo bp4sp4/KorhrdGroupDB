@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Bell, CalendarClock, UserCheck, ClipboardList, CheckCircle, XCircle, FileText, X, UserPlus } from 'lucide-react'
+import { createPortal } from 'react-dom'
+import { Bell, CalendarClock, UserCheck, ClipboardList, CheckCircle, XCircle, FileText, X, UserPlus, Megaphone } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import ANNOUNCEMENTS from '@/lib/announcements'
 import styles from './NotificationBell.module.css'
 
 interface Notification {
@@ -15,6 +17,8 @@ interface Notification {
   created_at: string
 }
 
+type TabKey = 'all' | 'unread' | 'announcements'
+
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime()
   const mins = Math.floor(diff / 60000)
@@ -26,13 +30,17 @@ function timeAgo(dateStr: string): string {
   return `${days}일 전`
 }
 
+function isNewAnnouncement(date: string): boolean {
+  return (Date.now() - new Date(date).getTime()) < 86400000
+}
+
 function TypeIcon({ type }: { type: string }) {
   const icons: Record<string, React.ReactNode> = {
-    NEW_CONSULTATION:  <UserPlus size={20} />,
-    CONTACT_SCHEDULED: <CalendarClock size={20} />,
-    MANAGER_ASSIGNED:  <UserCheck size={20} />,
-    APPROVAL_APPROVED: <CheckCircle size={20} />,
-    APPROVAL_REJECTED: <XCircle size={20} />,
+    NEW_CONSULTATION:   <UserPlus size={20} />,
+    CONTACT_SCHEDULED:  <CalendarClock size={20} />,
+    MANAGER_ASSIGNED:   <UserCheck size={20} />,
+    APPROVAL_APPROVED:  <CheckCircle size={20} />,
+    APPROVAL_REJECTED:  <XCircle size={20} />,
     APPROVAL_SUBMITTED: <FileText size={20} />,
   }
   return (
@@ -42,11 +50,19 @@ function TypeIcon({ type }: { type: string }) {
   )
 }
 
+// 24시간 이내 NEW 공지 id 목록
+const NEW_ANNOUNCEMENT_IDS = ANNOUNCEMENTS.filter(a => isNewAnnouncement(a.date)).map(a => a.id)
+
+function getSeenIds(): number[] {
+  try { return JSON.parse(localStorage.getItem('seenAnnouncementIds') ?? '[]') } catch { return [] }
+}
+
 export default function NotificationBell() {
   const [open, setOpen] = useState(false)
+  const [tab, setTab] = useState<TabKey>('all')
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
-  const ref = useRef<HTMLDivElement>(null)
+  const [unseenCount, setUnseenCount] = useState(0)
   const channelRef = useRef<ReturnType<ReturnType<typeof createClient>['channel']> | null>(null)
 
   const fetchNotifications = useCallback(async () => {
@@ -80,17 +96,17 @@ export default function NotificationBell() {
   }, [])
 
   const deleteOne = useCallback(async (id: number) => {
-    setNotifications(prev => prev.filter(n => n.id !== id))
-    setUnreadCount(prev => {
-      const target = notifications.find(n => n.id === id)
-      return target && !target.is_read ? Math.max(0, prev - 1) : prev
+    setNotifications(prev => {
+      const target = prev.find(n => n.id === id)
+      if (target && !target.is_read) setUnreadCount(c => Math.max(0, c - 1))
+      return prev.filter(n => n.id !== id)
     })
     await fetch('/api/notifications', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ids: [id] }),
     })
-  }, [notifications])
+  }, [])
 
   useEffect(() => {
     if (!open) return
@@ -119,13 +135,27 @@ export default function NotificationBell() {
     }
   }, [fetchNotifications])
 
+  // 마운트 시 unseen 공지 수 계산
+  useEffect(() => {
+    const seen = getSeenIds()
+    const count = NEW_ANNOUNCEMENT_IDS.filter(id => !seen.includes(id)).length
+    setUnseenCount(count)
+  }, [])
+
+  // 공지 탭 열면 seen 처리
+  useEffect(() => {
+    if (tab !== 'announcements' || !open) return
+    const seen = getSeenIds()
+    const merged = Array.from(new Set([...seen, ...NEW_ANNOUNCEMENT_IDS]))
+    try { localStorage.setItem('seenAnnouncementIds', JSON.stringify(merged)) } catch { /* ignore */ }
+    setUnseenCount(0)
+  }, [tab, open])
+
   useEffect(() => {
     if (!open) return
-    const handleClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
+    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
   }, [open])
 
   const handleClickNotification = (n: Notification) => {
@@ -133,38 +163,124 @@ export default function NotificationBell() {
     setOpen(false)
   }
 
-  return (
-    <div className={styles.wrap} ref={ref}>
-      <button
-        className={`${styles.bellBtn} ${unreadCount > 0 ? styles.bellBtnActive : ''}`}
-        onClick={() => setOpen(v => !v)}
-        title="알림"
-      >
-        <Bell size={18} />
-        {unreadCount > 0 && (
-          <span className={styles.badge}>{unreadCount > 99 ? '99+' : unreadCount}</span>
-        )}
-      </button>
+  const visibleNotifications = tab === 'unread'
+    ? notifications.filter(n => !n.is_read)
+    : notifications
 
-      {open && (
-        <div className={styles.dropdown}>
-          <div className={styles.dropdownHeader}>
-            <span className={styles.dropdownTitle}>알림</span>
-            {unreadCount > 0 && <span className={styles.unreadBadge}>{unreadCount}개 읽지 않음</span>}
-            {notifications.length > 0 && (
-              <button className={styles.deleteAllBtn} onClick={deleteAll}>모두 삭제</button>
-            )}
+  const modal = open ? (
+    <div className={styles.overlay} onMouseDown={(e) => { if (e.target === e.currentTarget) setOpen(false) }}>
+      <div className={styles.modal} role="dialog" aria-modal="true" aria-label="알림">
+
+        {/* 좌측 사이드바 */}
+        <aside className={styles.sidebar}>
+          <div className={styles.sidebarTitle}>알림</div>
+          <nav className={styles.sidebarNav}>
+            <button
+              className={`${styles.sidebarItem} ${tab === 'all' ? styles.sidebarItemActive : ''}`}
+              onClick={() => setTab('all')}
+            >
+              전체 알림
+              {notifications.length > 0 && <span className={styles.sidebarCount}>{notifications.length}</span>}
+            </button>
+            <button
+              className={`${styles.sidebarItem} ${tab === 'unread' ? styles.sidebarItemActive : ''}`}
+              onClick={() => setTab('unread')}
+            >
+              안읽은 알림
+              {unreadCount > 0 && <span className={`${styles.sidebarCount} ${styles.sidebarCountUnread}`}>{unreadCount}</span>}
+            </button>
+            <button
+              className={`${styles.sidebarItem} ${tab === 'announcements' ? styles.sidebarItemActive : ''}`}
+              onClick={() => setTab('announcements')}
+            >
+              공지
+              {unseenCount > 0 && <span className={`${styles.sidebarCount} ${styles.sidebarCountUnread}`}>{unseenCount}</span>}
+            </button>
+          </nav>
+        </aside>
+
+        {/* 우측 콘텐츠 */}
+        <div className={styles.content}>
+          <div className={styles.contentHeader}>
+            <span className={styles.contentTitle}>
+              {tab === 'all' && '전체 알림'}
+              {tab === 'unread' && '안읽은 알림'}
+              {tab === 'announcements' && '공지'}
+            </span>
+            <div className={styles.contentActions}>
+              {tab !== 'announcements' && (
+                <>
+                  <button className={styles.actionBtn} onClick={markAllRead}>
+                    <CheckCircle size={14} />
+                    전체 읽음
+                  </button>
+                  <button className={`${styles.actionBtn} ${styles.actionBtnDanger}`} onClick={deleteAll}>
+                    <X size={14} />
+                    전체 삭제
+                  </button>
+                </>
+              )}
+              <button className={styles.closeBtn} onClick={() => setOpen(false)} aria-label="닫기">
+                <X size={16} />
+              </button>
+            </div>
           </div>
 
-          <div className={styles.dropdownBody}>
-            {notifications.length === 0 ? (
+          <div className={styles.contentBody}>
+            {tab === 'announcements' ? (
+              ANNOUNCEMENTS.length === 0 ? (
+                <div className={styles.empty}>
+                  <Megaphone size={32} className={styles.emptyIcon} />
+                  <p className={styles.emptyText}>등록된 공지가 없어요</p>
+                </div>
+              ) : (
+                <div className={styles.announcementList}>
+                  {(() => {
+                    const groups = ANNOUNCEMENTS.reduce<{ date: string; entries: typeof ANNOUNCEMENTS }[]>((acc, a) => {
+                      const last = acc[acc.length - 1]
+                      if (last && last.date === a.date) { last.entries.push(a) }
+                      else acc.push({ date: a.date, entries: [a] })
+                      return acc
+                    }, [])
+                    return groups.map((g, gi) => (
+                      <div key={g.date} className={styles.announcementItem}>
+                        <div className={styles.timelineTrack}>
+                          <div className={styles.timelineDot} />
+                          {gi < groups.length - 1 && <div className={styles.timelineLine} />}
+                        </div>
+                        <div className={styles.announcementContent}>
+                          <div className={styles.announcementMeta}>
+                            {isNewAnnouncement(g.date) && (
+                              <span className={styles.announcementBadge}>NEW</span>
+                            )}
+                            <span className={styles.announcementDate}>{g.date}</span>
+                          </div>
+                          {g.entries.map(a => (
+                            <div key={a.id} className={styles.announcementEntry}>
+                              <p className={styles.announcementTitle}>{a.title}</p>
+                              <ul className={styles.announcementBody}>
+                                {a.items.map((item, i) => (
+                                  <li key={i}>{item}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))
+                  })()}
+                </div>
+              )
+            ) : visibleNotifications.length === 0 ? (
               <div className={styles.empty}>
                 <Bell size={32} className={styles.emptyIcon} />
-                <p className={styles.emptyText}>새로운 알림이 없어요</p>
+                <p className={styles.emptyText}>
+                  {tab === 'unread' ? '읽지 않은 알림이 없어요' : '새로운 알림이 없어요'}
+                </p>
                 <p className={styles.emptySubText}>알림이 오면 여기에 표시돼요</p>
               </div>
             ) : (
-              notifications.map(n => (
+              visibleNotifications.map(n => (
                 <div
                   key={n.id}
                   role="button"
@@ -190,7 +306,25 @@ export default function NotificationBell() {
             )}
           </div>
         </div>
-      )}
+
+      </div>
+    </div>
+  ) : null
+
+  return (
+    <div className={styles.wrap}>
+      <button
+        className={`${styles.bellBtn} ${(unreadCount + unseenCount) > 0 ? styles.bellBtnActive : ''}`}
+        onClick={() => setOpen(v => !v)}
+        title="알림"
+      >
+        <Bell size={18} />
+        {(unreadCount + unseenCount) > 0 && (
+          <span className={styles.badge}>{(unreadCount + unseenCount) > 99 ? '99+' : unreadCount + unseenCount}</span>
+        )}
+      </button>
+
+      {typeof document !== 'undefined' && modal && createPortal(modal, document.body)}
     </div>
   )
 }
