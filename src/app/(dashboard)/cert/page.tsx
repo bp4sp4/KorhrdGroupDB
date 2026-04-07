@@ -55,6 +55,8 @@ interface CertStudent {
   latest_memo_at?: string | null;
 }
 
+let _certBannerCache: { date: string; data: CertStudent[] } | null = null
+
 interface PrivateCert {
   id: number;
   name: string;
@@ -5379,9 +5381,14 @@ export default function CertPage() {
 
   useEffect(() => {
     const today = new Date().toISOString().slice(0, 10)
+    if (_certBannerCache?.date === today) {
+      const due = _certBannerCache.data.filter(c => c.contact_scheduled_at && c.contact_scheduled_at.slice(0, 10) <= today)
+      setTodayScheduled(due)
+    }
     fetch('/api/cert/students')
       .then(r => r.ok ? r.json() : [])
       .then((data: CertStudent[]) => {
+        _certBannerCache = { date: today, data }
         const due = data.filter(c => c.contact_scheduled_at && c.contact_scheduled_at.slice(0, 10) <= today)
         setTodayScheduled(due)
       })

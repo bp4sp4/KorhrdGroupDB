@@ -49,6 +49,8 @@ interface HakjeomConsultation {
   latest_memo_at?: string | null;
 }
 
+let _hakjeomBannerCache: { date: string; data: HakjeomConsultation[] } | null = null
+
 // ─── 기관협약 타입 ────────────────────────────────────────────────────────────
 
 interface Agency {
@@ -4532,9 +4534,14 @@ export default function HakjeomPage() {
 
   useEffect(() => {
     const today = new Date().toISOString().slice(0, 10);
+    if (_hakjeomBannerCache?.date === today) {
+      const due = _hakjeomBannerCache.data.filter(c => c.contact_scheduled_at && c.contact_scheduled_at.slice(0, 10) <= today);
+      setTodayScheduled(due);
+    }
     fetch('/api/hakjeom')
       .then(r => r.ok ? r.json() : [])
       .then((data: HakjeomConsultation[]) => {
+        _hakjeomBannerCache = { date: today, data };
         const due = data.filter(c => c.contact_scheduled_at && c.contact_scheduled_at.slice(0, 10) <= today);
         setTodayScheduled(due);
       })
