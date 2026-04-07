@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { Plus, X, Check, XCircle, ChevronRight, ChevronDown, ChevronsRight, FileText, Clock, CheckCircle, Home, MoreVertical, Info, Eye, Save, Send, List, Paperclip, Download, AlignJustify, ChevronsUpDown, Search, ListChecks, ChevronFirst, ChevronLast } from 'lucide-react'
+import { MdOutlineKeyboardArrowLeft, MdOutlineKeyboardArrowRight } from 'react-icons/md'
 import type { Approval, ApprovalTemplate, ApprovalStep, Department } from '@/lib/management/types'
 import {
   formatDate,
@@ -107,6 +108,8 @@ interface ApprovalTableProps {
 
 type SortField = 'created_at' | 'completed_at' | 'category' | 'document_type' | 'title' | 'applicant' | 'document_number' | 'status'
 type SortDir = 'asc' | 'desc'
+
+const PAGE_SIZE = 10
 
 function ApprovalTable({ approvals, onRowClick, emptyMessage = '문서가 없습니다.', compact = false }: ApprovalTableProps) {
   const [sortField, setSortField] = useState<SortField>('created_at')
@@ -650,6 +653,7 @@ export default function ApprovalsPage() {
     selectedApproval?.applicant_id === myUserId &&
     ['DRAFT', 'SUBMITTED'].includes(selectedApproval?.status ?? '')
 
+  const HOME_LIMIT = 5
   const inProgressApprovals = mineApprovals.filter(a =>
     ['SUBMITTED', 'IN_PROGRESS'].includes(a.status)
   )
@@ -750,14 +754,21 @@ export default function ApprovalsPage() {
         <div className={styles.home_section_header}>
           <div className={styles.home_section_title_row}>
             <h3 className={styles.home_section_title}>기안 진행 문서</h3>
-            
+            {inProgressApprovals.length > HOME_LIMIT && (
+              <button
+                className={styles.btn_more}
+                onClick={() => handleSidebarMenuClick({ key: 'draft_box', label: '기안 문서함', apiTab: 'mine' })}
+              >
+                더보기 →
+              </button>
+            )}
           </div>
         </div>
         {homeLoading ? (
           <div className={styles.section_loading}>불러오는 중...</div>
         ) : (
           <ApprovalTable
-            approvals={inProgressApprovals}
+            approvals={inProgressApprovals.slice(0, HOME_LIMIT)}
             onRowClick={handleRowClick}
             emptyMessage="진행 중인 기안 문서가 없습니다."
             compact
@@ -770,14 +781,21 @@ export default function ApprovalsPage() {
         <div className={styles.home_section_header}>
           <div className={styles.home_section_title_row}>
             <h3 className={styles.home_section_title}>완료 문서</h3>
-            
+            {doneApprovals.length > HOME_LIMIT && (
+              <button
+                className={styles.btn_more}
+                onClick={() => handleSidebarMenuClick({ key: 'approved_box', label: '결재 문서함', apiTab: 'completed' })}
+              >
+                더보기 →
+              </button>
+            )}
           </div>
         </div>
         {homeLoading ? (
           <div className={styles.section_loading}>불러오는 중...</div>
         ) : (
           <ApprovalTable
-            approvals={doneApprovals}
+            approvals={doneApprovals.slice(0, HOME_LIMIT)}
             onRowClick={handleRowClick}
             emptyMessage="완료된 문서가 없습니다."
             compact
@@ -814,7 +832,7 @@ export default function ApprovalsPage() {
     return listApprovals
   })()
 
-  const PAGE_SIZE = 20
+  const PAGE_SIZE = 10
 
   const searchedListApprovals = (() => {
     let list = filteredListApprovals
@@ -830,14 +848,28 @@ export default function ApprovalsPage() {
     return list
   })()
 
-  const totalPages = Math.max(1, Math.ceil(searchedListApprovals.length / PAGE_SIZE))
+  const totalListPages = Math.max(1, Math.ceil(searchedListApprovals.length / PAGE_SIZE))
   const pagedListApprovals = searchedListApprovals.slice((listPage - 1) * PAGE_SIZE, listPage * PAGE_SIZE)
 
   const renderListView = () => (
     <div className={styles.view_list}>
-      {/* 헤더 */}
+      {/* 헤더 + 검색 */}
       <div className={styles.view_list_header}>
         <h2 className={styles.view_title}>{getListViewTitle()}</h2>
+        <div className={styles.list_search_bar}>
+          <select className={styles.list_search_select} value={listSearchField} onChange={e => setListSearchField(e.target.value as 'title' | 'document_type' | 'document_number')}>
+            <option value="title">제목</option>
+            <option value="document_type">결재양식</option>
+            <option value="document_number">문서번호</option>
+          </select>
+          <input
+            className={styles.list_search_input}
+            placeholder="검색"
+            value={listSearch}
+            onChange={e => { setListSearch(e.target.value); setListPage(1) }}
+          />
+          <button className={styles.list_search_btn}><Search size={14}/></button>
+        </div>
       </div>
 
       {/* 서브탭 (참조/열람 대기 문서) */}
@@ -867,29 +899,24 @@ export default function ApprovalsPage() {
         )}
       </div>
 
-      {/* 하단: 페이지네이션 + 검색 */}
-      <div className={styles.list_footer}>
-        <div className={styles.list_pagination}>
-          <button className={styles.page_btn} onClick={() => setListPage(1)} disabled={listPage === 1}><ChevronFirst size={14}/></button>
-          <button className={styles.page_btn} onClick={() => setListPage(p => Math.max(1, p - 1))} disabled={listPage === 1}><ChevronRight size={14} className={styles.icon_rotate_180}/></button>
-          <span className={styles.page_current}>{listPage}</span>
-          <button className={styles.page_btn} onClick={() => setListPage(p => Math.min(totalPages, p + 1))} disabled={listPage === totalPages}><ChevronRight size={14}/></button>
-          <button className={styles.page_btn} onClick={() => setListPage(totalPages)} disabled={listPage === totalPages}><ChevronLast size={14}/></button>
-        </div>
-        <div className={styles.list_search_bar}>
-          <select className={styles.list_search_select} value={listSearchField} onChange={e => setListSearchField(e.target.value as 'title' | 'document_type' | 'document_number')}>
-            <option value="title">제목</option>
-            <option value="document_type">결재양식</option>
-            <option value="document_number">문서번호</option>
-          </select>
-          <input
-            className={styles.list_search_input}
-            placeholder="검색"
-            value={listSearch}
-            onChange={e => { setListSearch(e.target.value); setListPage(1) }}
-          />
-          <button className={styles.list_search_btn}><Search size={14}/></button>
-        </div>
+      {/* 페이지네이션 */}
+      <div className={styles.list_pagination}>
+        <button className={styles.page_btn} onClick={() => setListPage(1)} disabled={listPage === 1}><ChevronFirst size={14}/></button>
+        <button className={styles.page_btn} onClick={() => setListPage(p => Math.max(1, p - 1))} disabled={listPage === 1}><MdOutlineKeyboardArrowLeft size={16}/></button>
+        {Array.from({ length: totalListPages }, (_, i) => i + 1)
+          .filter(p => p === 1 || p === totalListPages || Math.abs(p - listPage) <= 2)
+          .reduce<(number | '...')[]>((acc, p, i, arr) => {
+            if (i > 0 && (p as number) - (arr[i - 1] as number) > 1) acc.push('...')
+            acc.push(p)
+            return acc
+          }, [])
+          .map((p, i) =>
+            p === '...'
+              ? <span key={`e${i}`} className={styles.page_ellipsis}>…</span>
+              : <button key={p} className={`${styles.page_btn} ${listPage === p ? styles.page_current : ''}`} onClick={() => setListPage(p as number)}>{p}</button>
+          )}
+        <button className={styles.page_btn} onClick={() => setListPage(p => Math.min(totalListPages, p + 1))} disabled={listPage === totalListPages}><MdOutlineKeyboardArrowRight size={16}/></button>
+        <button className={styles.page_btn} onClick={() => setListPage(totalListPages)} disabled={listPage === totalListPages}><ChevronLast size={14}/></button>
       </div>
     </div>
   )

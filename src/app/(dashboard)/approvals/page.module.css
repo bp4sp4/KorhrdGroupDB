@@ -204,8 +204,23 @@
 .home_section_title_row {
   display: flex;
   align-items: center;
-  gap: 6px;
-  
+  justify-content: space-between;
+}
+
+.btn_more {
+  font-size: 13px;
+  color: #262626;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.btn_more:hover {
+  color: #333;
 }
 
 .home_section_title {
@@ -229,14 +244,10 @@
    --------------------------------------------------------------------------- */
 
 .view_list {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
   padding: 20px 30px;
 }
 
 .table_wrap {
-  flex: 1;
 }
 
 .table_empty {
@@ -307,19 +318,21 @@
   color: #fff;
 }
 
-/* 하단 푸터 (페이지네이션 + 검색) */
+/* 검색 */
 .list_footer {
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 20px 0 10px;
-  position: relative;
+  justify-content: flex-end;
+  padding: 0 0 8px;
 }
 
+/* 페이지네이션 */
 .list_pagination {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
+  padding: 12px 0 0;
 }
 
 .page_btn {
@@ -333,6 +346,7 @@
   background: #fff;
   cursor: pointer;
   color: #374151;
+  font-size: 13px;
   transition: background 80ms ease;
 }
 
@@ -359,9 +373,29 @@
   font-weight: 600;
 }
 
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 16px 0 4px;
+}
+
+.page_btn_active {
+  background: #111 !important;
+  color: #fff !important;
+  border-color: #111 !important;
+  font-weight: 600;
+}
+
+.page_ellipsis {
+  width: 28px;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 13px;
+}
+
 .list_search_bar {
-  position: absolute;
-  right: 0;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -471,8 +505,10 @@
 .table th:nth-child(1) { width: 36px; }
 .table th:nth-child(2) { width: 90px; }
 .table th:nth-child(3) { width: 90px; }
-.table th:nth-child(4) { width: 80px; }
-.table th:nth-child(5) { width: 110px; }
+.table th:nth-child(4) { width: 70px; }
+.table th:nth-child(5) { width: 170px; }
+.table th:nth-child(6) { width: 260px; }
+.table th:nth-child(7) { width: 70px; }
 .table th:nth-child(8) { width: 130px; }
 .table th:nth-child(9) { width: 90px; }
 
@@ -535,11 +571,16 @@
   font-size: 14px;
   font-weight: 500;
   color: #1d1d1d;
+  white-space: nowrap;
 }
 
 .cell_title {
   font-weight: 400;
   color: var(--toss-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 0;
 }
 
 .cell_doc_number {

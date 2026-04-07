@@ -82,11 +82,6 @@ export default function DashboardLayout({
     }
 
     const isAdminRole = userRole === 'admin' || userRole === 'master-admin'
-    const mgmtPaths = ['/revenues', '/approvals', '/reports']
-    if (!isAdminRole && mgmtPaths.some(p => pathname.startsWith(p))) {
-      router.replace('/hakjeom')
-      return
-    }
 
     if (!isAdminRole) {
       // 권한이 없는 경로 접근 시 첫 번째 허용된 페이지로 리다이렉트
@@ -95,6 +90,8 @@ export default function DashboardLayout({
         { section: 'cert',     path: '/cert' },
         { section: 'practice', path: '/practice' },
         { section: 'allcare',  path: '/allcare' },
+        { section: 'approvals', path: '/approvals' },
+        { section: 'revenues',  path: '/revenues' },
       ]
       const getFirstAllowedPath = () => {
         for (const { section, path } of SECTION_PATHS) {
@@ -113,6 +110,9 @@ export default function DashboardLayout({
         { path: '/hakjeom',    section: 'hakjeom' },
         { path: '/cert',       section: 'cert' },
         { path: '/practice',   section: 'practice' },
+        { path: '/approvals',  section: 'approvals' },
+        { path: '/revenues',   section: 'revenues' },
+        { path: '/reports',    section: 'reports' },
       ]
       for (const { path, section } of PERM_PATHS) {
         if (pathname.startsWith(path)) {
@@ -139,7 +139,7 @@ export default function DashboardLayout({
 
   return (
     <div className={styles.dashboardWrap}>
-      <Header userName={displayName} userRole={userRole} />
+      <Header userName={displayName} userRole={userRole} permissions={permissions} />
 
       <div className={styles.dashboardBody}>
         <Sidebar userRole={userRole} permissions={permissions} />

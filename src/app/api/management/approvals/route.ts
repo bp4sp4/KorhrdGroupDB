@@ -145,15 +145,30 @@ export async function POST(request: NextRequest) {
   return NextResponse.json(approval, { status: 201 })
 }
 
+// app_users.id → auth UUID 변환 (hakjeom과 동일 패턴)
+async function getAuthUidByAppUserId(appUserId: string | number): Promise<string | null> {
+  const { data: appUser } = await supabaseAdmin
+    .from('app_users')
+    .select('username')
+    .eq('id', appUserId)
+    .single()
+  if (!appUser?.username) return null
+  const { data, error } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 })
+  if (error) return null
+  return data.users.find(u => u.email === appUser.username)?.id ?? null
+}
+
 async function createNotification(
-  userId: string,
+  appUserId: string | number,
   type: string,
   title: string,
   message: string,
   link: string
 ) {
+  const authUid = await getAuthUidByAppUserId(appUserId)
+  if (!authUid) return
   await supabaseAdmin.from('notifications').insert({
-    user_id: userId,
+    user_id: authUid,
     type,
     title,
     message,

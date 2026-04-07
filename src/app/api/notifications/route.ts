@@ -76,7 +76,6 @@ export async function PATCH(req: NextRequest) {
         .from('notifications')
         .update({ is_read: true })
         .or(`user_id.eq.${userId},user_id.is.null`)
-        .eq('is_read', false)
 
       if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     } else if (ids?.length) {

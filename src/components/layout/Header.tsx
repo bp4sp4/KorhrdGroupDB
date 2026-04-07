@@ -35,18 +35,18 @@ const SECTION_NAV: NavSection[] = [
 interface HeaderProps {
   userName?: string
   userRole?: string | null
+  permissions?: { section: string; scope: string }[]
 }
 
-function getInitial(name: string): string {
-  const trimmed = name.trim()
-  if (!trimmed) return '?'
-  if (/[\uAC00-\uD7A3]/.test(trimmed[0])) return trimmed[0]
-  const words = trimmed.split(/\s+/)
-  if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase()
-  return trimmed[0].toUpperCase()
+
+function hasPermission(permissions: { section: string; scope: string }[], sections: string[]): boolean {
+  return sections.some(s => permissions.some(p => p.section === s && p.scope !== 'none'))
 }
 
-export default function Header({ userName = '관리자', userRole }: HeaderProps) {
+const EDUCATION_SECTIONS = ['hakjeom', 'cert', 'practice', 'allcare', 'duplicate', 'trash', 'logs', 'ref-manage', 'assignment']
+const MGMT_SECTIONS = ['approvals', 'revenues', 'reports']
+
+export default function Header({ userName = '관리자', userRole, permissions = [] }: HeaderProps) {
   const router = useRouter()
   const pathname = usePathname()
   const supabase = createClient()
@@ -56,18 +56,27 @@ export default function Header({ userName = '관리자', userRole }: HeaderProps
     router.replace('/login')
   }
 
-  const initial = getInitial(userName)
   const isMiniAdmin = userRole === 'mini-admin'
   const isMasterAdmin = userRole === 'master-admin'
+  const isAdminRole = userRole === 'admin' || isMasterAdmin
 
-  // admin 이상인 경우 어드민 탭 표시 (접근 제한은 서버에서 처리)
-  const isAdmin = userRole === 'admin' || isMasterAdmin
+  const showEducation = isAdminRole || hasPermission(permissions, EDUCATION_SECTIONS)
+  const showMgmt = isAdminRole || hasPermission(permissions, MGMT_SECTIONS)
+  const showAdmin = isAdminRole
+
+  // 경영관리 탭 클릭 시 이동할 첫 번째 허용된 경로
+  const mgmtHref = isAdminRole
+    ? '/revenues'
+    : hasPermission(permissions, ['approvals']) ? '/approvals'
+    : hasPermission(permissions, ['revenues']) ? '/revenues'
+    : '/approvals'
 
   const visibleSectionNav = SECTION_NAV.filter((sec) => {
-    if (sec.href === '/admin') return isAdmin
-    if (sec.href === '/revenues') return isAdmin
+    if (sec.href === '/admin') return showAdmin
+    if (sec.href === '/revenues') return showMgmt
+    if (sec.href === '/hakjeom') return showEducation
     return true
-  })
+  }).map(sec => sec.href === '/revenues' ? { ...sec, href: mgmtHref } : sec)
 
   return (
     <header className={styles.header}>

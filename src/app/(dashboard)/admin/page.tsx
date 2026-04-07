@@ -1295,7 +1295,7 @@ interface PermissionSection {
   label: string
   description: string
   allowOwn: boolean
-  group: '교육운영' | '시스템'
+  group: '교육운영' | '시스템' | '경영관리'
 }
 
 const PERMISSION_SECTIONS: PermissionSection[] = [
@@ -1308,6 +1308,9 @@ const PERMISSION_SECTIONS: PermissionSection[] = [
   { key: 'logs',       label: '로그 관리',          description: '작업 로그 열람',          allowOwn: false, group: '시스템' },
   { key: 'ref-manage', label: '어드민 관리',        description: '기준 데이터 관리',        allowOwn: false, group: '시스템' },
   { key: 'assignment', label: '배정 현황',          description: '담당자 배정 통계 열람',   allowOwn: false, group: '시스템' },
+  { key: 'approvals',  label: '전자결재',           description: '전자결재 열람·처리',      allowOwn: false, group: '경영관리' },
+  { key: 'revenues',   label: '매출 관리',          description: '매출 데이터 열람·수정',   allowOwn: false, group: '경영관리' },
+  { key: 'reports',    label: '손익 리포트',        description: '손익 리포트 열람',        allowOwn: false, group: '경영관리' },
 ]
 
 // 탭 제한을 지원하는 섹션과 해당 탭 목록
@@ -1423,15 +1426,6 @@ function PermissionsTab() {
     )
   }
 
-  // 셀 클릭 시 순환: none → all → (own) → none
-  const cycleScope = (userId: number, sec: PermissionSection) => {
-    const current = getScope({ id: userId, display_name: null, username: '', role: '', permissions: users.find(u => u.id === userId)?.permissions ?? [] }, sec.key)
-    const scopes: ScopeKey[] = sec.allowOwn ? ['none', 'all', 'own'] : ['none', 'all']
-    const idx = scopes.indexOf(current)
-    const next = scopes[(idx + 1) % scopes.length]
-    handleChange(userId, sec.key, next)
-  }
-
   // 탭 제한 저장
   const handleTabRestriction = async (userId: number, sectionKey: string, allowedTabs: string[] | null) => {
     setUsers(cur => cur.map(u => {
@@ -1456,74 +1450,63 @@ function PermissionsTab() {
     }
   }
 
+  const PERM_GROUPS: { key: '교육운영' | '시스템' | '경영관리' }[] = [
+    { key: '교육운영' },
+    { key: '시스템' },
+    { key: '경영관리' },
+  ]
+
   return (
     <div className={styles.permWrap}>
-      {/* 범례 */}
-      <div className={styles.permLegend}>
-        <span className={styles.permLegendTitle}>셀 클릭으로 변경</span>
-        <span className={`${styles.permCellBadge} ${styles.badgeNone}`}>불가</span>
-        <span className={`${styles.permCellBadge} ${styles.badgeAll}`}>전체</span>
-        <span className={`${styles.permCellBadge} ${styles.badgeOwn}`}>담당만</span>
-      </div>
+      {/* 카드 그리드 */}
+      <div className={styles.permCardGrid}>
+        {users.map(user => {
+          const roleInfo = ROLE_DISPLAY[user.role] ?? { label: user.role, cls: 'roleStaff' }
+          return (
+            <div key={user.id} className={styles.permCard}>
+              {/* 유저 헤더 */}
+              <div className={styles.permCardHeader}>
+                <div className={styles.permUserAvatar}>
+                  {(user.display_name ?? user.username).slice(0, 1)}
+                </div>
+                <div className={styles.permUserMeta}>
+                  <span className={styles.permUserName}>{user.display_name ?? user.username}</span>
+                  <span className={`${styles.permRoleBadge} ${styles[roleInfo.cls]}`}>{roleInfo.label}</span>
+                </div>
+              </div>
 
-      {/* 매트릭스 테이블 */}
-      <div className={styles.permTableWrap}>
-        <table className={styles.permTable}>
-          <thead>
-            <tr>
-              <th className={styles.permThUser} rowSpan={2}>이름</th>
-              <th className={styles.permThGroup} colSpan={PERMISSION_SECTIONS.filter(s => s.group === '교육운영').length}>교육운영</th>
-              <th className={styles.permThGroup} colSpan={PERMISSION_SECTIONS.filter(s => s.group === '시스템').length}>시스템</th>
-            </tr>
-            <tr>
-              {PERMISSION_SECTIONS.map(sec => (
-                <th key={sec.key} className={styles.permThSection}>
-                  <span className={styles.permThSectionName}>{sec.label}</span>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {users.map(user => {
-              const roleInfo = ROLE_DISPLAY[user.role] ?? { label: user.role, cls: 'roleStaff' }
-              return (
-                <tr key={user.id} className={styles.permTr}>
-                  <td className={styles.permTdUser}>
-                    <div className={styles.permUserInfo}>
-                      <div className={styles.permUserAvatar}>
-                        {(user.display_name ?? user.username).slice(0, 1)}
-                      </div>
-                      <div className={styles.permUserMeta}>
-                        <span className={styles.permUserName}>{user.display_name ?? user.username}</span>
-                        <span className={`${styles.permRoleBadge} ${styles[roleInfo.cls]}`}>{roleInfo.label}</span>
-                      </div>
-                    </div>
-                  </td>
-                  {PERMISSION_SECTIONS.map(sec => {
-                    const currentScope = getScope(user, sec.key)
-                    const savingKey = `${user.id}-${sec.key}`
-                    const isSaving = saving === savingKey
-                    return (
-                      <td
-                        key={sec.key}
-                        className={[
-                          styles.permTdCell,
-                          isSaving ? styles.permCellSaving : '',
-                        ].join(' ')}
-                        onClick={() => !isSaving && cycleScope(user.id, sec)}
-                        title={`클릭해서 변경 (현재: ${SCOPE_OPTIONS[currentScope].label})`}
-                      >
-                        <span className={`${styles.permCellBadge} ${styles[`badge${currentScope.charAt(0).toUpperCase() + currentScope.slice(1)}`]}`}>
-                          {currentScope === 'none' ? '불가' : currentScope === 'all' ? '전체' : '담당만'}
-                        </span>
-                      </td>
-                    )
-                  })}
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
+              {/* 그룹별 섹션 */}
+              {PERM_GROUPS.map(group => {
+                const groupSections = PERMISSION_SECTIONS.filter(s => s.group === group.key)
+                return (
+                  <div key={group.key} className={styles.permCardGroup}>
+                    <div className={styles.permCardGroupLabel}>{group.key}</div>
+                    {groupSections.map(sec => {
+                      const currentScope = getScope(user, sec.key)
+                      const isSaving = saving === `${user.id}-${sec.key}`
+                      return (
+                        <div key={sec.key} className={styles.permCardRow}>
+                          <span className={styles.permCardRowLabel}>{sec.label}</span>
+                          <select
+                            className={styles.permScopeSelect}
+                            data-scope={currentScope}
+                            value={currentScope}
+                            disabled={isSaving}
+                            onChange={(e) => handleChange(user.id, sec.key, e.target.value as ScopeKey)}
+                          >
+                            <option value="none">접근 불가</option>
+                            <option value="all">전체 열람</option>
+                            {sec.allowOwn && <option value="own">담당 건만</option>}
+                          </select>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              })}
+            </div>
+          )
+        })}
       </div>
 
       {/* 탭별 세부 제한 */}
@@ -1535,50 +1518,60 @@ function PermissionsTab() {
         return (
           <div key={sectionKey} className={styles.tabRestrictWrap}>
             <div className={styles.tabRestrictHeader}>
-              <span className={styles.tabRestrictTitle}>{label} — 탭별 세부 제한</span>
-              <span className={styles.tabRestrictHint}>체크 해제된 탭은 해당 사용자에게 숨겨집니다. 전체 체크 시 제한 없음.</span>
+              <div className={styles.tabRestrictTitleRow}>
+                <span className={styles.tabRestrictTitle}>{label}</span>
+                <span className={styles.tabRestrictBadge}>탭 제한</span>
+              </div>
+              <span className={styles.tabRestrictHint}>비활성 탭은 해당 사용자에게 숨겨집니다</span>
             </div>
-            {usersWithSection.map(user => {
-              const perm = user.permissions.find(p => p.section === sectionKey)
-              const allowedTabs: string[] | null = perm?.allowed_tabs ?? null
-              const isSavingTabs = saving === `${user.id}-${sectionKey}-tabs`
-              return (
-                <div key={user.id} className={styles.tabRestrictRow}>
-                  <div className={styles.tabRestrictUser}>
-                    <div className={styles.permUserAvatar}>{(user.display_name ?? user.username).slice(0, 1)}</div>
-                    <span className={styles.permUserName}>{user.display_name ?? user.username}</span>
-                    {isSavingTabs && <span className={styles.tabRestrictSaving}>저장 중...</span>}
-                  </div>
-                  <div className={styles.tabRestrictCheckboxes}>
-                    {tabs.map(tab => {
-                      const isChecked = allowedTabs === null || allowedTabs.includes(tab.value)
-                      const handleToggle = () => {
-                        const currentAllowed = allowedTabs ?? tabs.map(t => t.value)
-                        let next: string[]
-                        if (isChecked) {
-                          next = currentAllowed.filter(v => v !== tab.value)
-                        } else {
-                          next = [...currentAllowed, tab.value]
+            <div className={styles.tabRestrictList}>
+              {usersWithSection.map(user => {
+                const perm = user.permissions.find(p => p.section === sectionKey)
+                const allowedTabs: string[] | null = perm?.allowed_tabs ?? null
+                const isSavingTabs = saving === `${user.id}-${sectionKey}-tabs`
+                return (
+                  <div key={user.id} className={styles.tabRestrictRow}>
+                    <div className={styles.tabRestrictUser}>
+                      <div className={styles.permUserAvatar}>{(user.display_name ?? user.username).slice(0, 1)}</div>
+                      <div className={styles.tabRestrictUserInfo}>
+                        <span className={styles.permUserName}>{user.display_name ?? user.username}</span>
+                        {isSavingTabs && <span className={styles.tabRestrictSaving}>저장 중...</span>}
+                      </div>
+                    </div>
+                    <div className={styles.tabPillGroup}>
+                      {tabs.map(tab => {
+                        const isChecked = allowedTabs === null || allowedTabs.includes(tab.value)
+                        const handleToggle = () => {
+                          const currentAllowed = allowedTabs ?? tabs.map(t => t.value)
+                          let next: string[]
+                          if (isChecked) {
+                            next = currentAllowed.filter(v => v !== tab.value)
+                          } else {
+                            next = [...currentAllowed, tab.value]
+                          }
+                          const allSelected = tabs.every(t => next.includes(t.value))
+                          handleTabRestriction(user.id, sectionKey, allSelected ? null : next)
                         }
-                        const allSelected = tabs.every(t => next.includes(t.value))
-                        handleTabRestriction(user.id, sectionKey, allSelected ? null : next)
-                      }
-                      return (
-                        <label key={tab.value} className={styles.tabRestrictLabel}>
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={handleToggle}
-                            className={styles.tabRestrictCheckbox}
-                          />
-                          {tab.label}
-                        </label>
-                      )
-                    })}
+                        return (
+                          <label
+                            key={tab.value}
+                            className={`${styles.tabPill} ${isChecked ? styles.tabPillOn : styles.tabPillOff}`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={handleToggle}
+                              className={styles.tabPillInput}
+                            />
+                            {tab.label}
+                          </label>
+                        )
+                      })}
+                    </div>
                   </div>
-                </div>
-              )
-            })}
+                )
+              })}
+            </div>
           </div>
         )
       })}

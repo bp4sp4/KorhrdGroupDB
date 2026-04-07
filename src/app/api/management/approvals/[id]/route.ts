@@ -4,6 +4,24 @@ import { requireAuth } from '@/lib/auth/requireAuth'
 import { genDocNumber } from '@/lib/management/utils'
 import { writeAuditLog } from '@/lib/management/auditLog'
 
+async function getAuthUid(appUserId: string | number): Promise<string | null> {
+  const { data: appUser } = await supabaseAdmin
+    .from('app_users')
+    .select('username')
+    .eq('id', appUserId)
+    .single()
+  if (!appUser?.username) return null
+  const { data, error } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 })
+  if (error) return null
+  return data.users.find(u => u.email === appUser.username)?.id ?? null
+}
+
+async function notifyUser(appUserId: string | number, type: string, title: string, message: string, link: string) {
+  const authUid = await getAuthUid(appUserId)
+  if (!authUid) return
+  await supabaseAdmin.from('notifications').insert({ user_id: authUid, type, title, message, link })
+}
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -58,13 +76,13 @@ export async function PATCH(
       submitted_at: new Date().toISOString(),
     }).eq('id', id)
 
-    await supabaseAdmin.from('notifications').insert({
-      user_id: approver_ids[0],
-      type: 'APPROVAL_SUBMITTED',
-      title: '결재 요청',
-      message: `${(appUser.data as { display_name?: string } | null)?.display_name ?? ''}님이 [${approval.document_type}]를 상신했습니다.`,
-      link: `/approvals?id=${id}`,
-    })
+    await notifyUser(
+      approver_ids[0],
+      'APPROVAL_SUBMITTED',
+      '결재 요청',
+      `${(appUser.data as { display_name?: string } | null)?.display_name ?? ''}님이 [${approval.document_type}]를 상신했습니다.`,
+      `/approvals?id=${id}`
+    )
   }
 
   const { data } = await supabaseAdmin.from('approvals').select('*').eq('id', id).single()
@@ -188,13 +206,13 @@ export async function POST(
       .eq('id', id)
 
     // 신청자에게 반려 알림
-    await supabaseAdmin.from('notifications').insert({
-      user_id: approval.applicant_id,
-      type: 'APPROVAL_REJECTED',
-      title: '결재 반려',
-      message: `[${approval.document_type}]가 반려되었습니다. 사유: ${comment ?? '없음'}`,
-      link: `/approvals?id=${id}`,
-    })
+    await notifyUser(
+      approval.applicant_id,
+      'APPROVAL_REJECTED',
+      '결재 반려',
+      `[${approval.document_type}]가 반려되었습니다. 사유: ${comment ?? '없음'}`,
+      `/approvals?id=${id}`
+    )
 
     // 감사 로그 기록
     await writeAuditLog({
@@ -220,22 +238,22 @@ export async function POST(
       .eq('id', id)
 
     // 다음 결재자 알림
-    await supabaseAdmin.from('notifications').insert({
-      user_id: nextStep.approver_id,
-      type: 'APPROVAL_SUBMITTED',
-      title: '결재 요청',
-      message: `[${approval.document_type}] 결재를 요청합니다. (${approval.current_step + 1}단계)`,
-      link: `/approvals?id=${id}`,
-    })
+    await notifyUser(
+      nextStep.approver_id,
+      'APPROVAL_SUBMITTED',
+      '결재 요청',
+      `[${approval.document_type}] 결재를 요청합니다. (${approval.current_step + 1}단계)`,
+      `/approvals?id=${id}`
+    )
 
     // 신청자에게 중간 승인 알림
-    await supabaseAdmin.from('notifications').insert({
-      user_id: approval.applicant_id,
-      type: 'APPROVAL_APPROVED',
-      title: '결재 진행',
-      message: `[${approval.document_type}] ${approval.current_step}단계 승인. 다음 결재자에게 전달되었습니다.`,
-      link: `/approvals?id=${id}`,
-    })
+    await notifyUser(
+      approval.applicant_id,
+      'APPROVAL_APPROVED',
+      '결재 진행',
+      `[${approval.document_type}] ${approval.current_step}단계 승인. 다음 결재자에게 전달되었습니다.`,
+      `/approvals?id=${id}`
+    )
 
     // 감사 로그 기록
     await writeAuditLog({
@@ -255,13 +273,13 @@ export async function POST(
       .eq('id', id)
 
     // 최종 승인 알림
-    await supabaseAdmin.from('notifications').insert({
-      user_id: approval.applicant_id,
-      type: 'APPROVAL_APPROVED',
-      title: '결재 승인',
-      message: `[${approval.document_type}]가 최종 승인되었습니다.`,
-      link: `/approvals?id=${id}`,
-    })
+    await notifyUser(
+      approval.applicant_id,
+      'APPROVAL_APPROVED',
+      '결재 승인',
+      `[${approval.document_type}]가 최종 승인되었습니다.`,
+      `/approvals?id=${id}`
+    )
 
     // 감사 로그 기록
     await writeAuditLog({

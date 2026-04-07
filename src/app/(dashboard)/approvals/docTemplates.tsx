@@ -14,6 +14,7 @@ import { ExpenseResolutionBody, EXPENSE_RESOLUTION_FIELDS } from './templates/ex
 import { ExpenseProposalBody, EXPENSE_PROPOSAL_FIELDS } from './templates/expenseProposal'
 import { AffiliatePaymentBody, AFFILIATE_PAYMENT_FIELDS } from './templates/affiliatePayment'
 import { PointResolutionBody, POINT_RESOLUTION_FIELDS } from './templates/pointResolution'
+import { AffiliateRefundBody, AFFILIATE_REFUND_FIELDS } from './templates/affiliateRefund'
 import { DateInput } from '@/components/ui/Calendar/DateInput'
 
 export type { FieldDef, DocBodyProps, DocTemplateConfig }
@@ -145,6 +146,13 @@ const HR_FIELDS: FieldDef[] = [
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const DOC_TEMPLATE_REGISTRY: DocTemplateConfig[] = [
+  {
+    id: 'affiliate-refund',
+    match: (doc) => doc.document_type.replace(/\s/g, '') === '[제휴]환불요청서',
+    fields: AFFILIATE_REFUND_FIELDS,
+    BodySection: AffiliateRefundBody,
+    supportsAttachments: true,
+  },
   {
     id: 'point-resolution',
     match: (doc) => doc.document_type.replace(/\s/g, '') === '[적립금]지출결의서',
@@ -282,4 +290,5 @@ export const ALL_TEMPLATE_FIELDS: FieldDef[] = [
   ...EXPENSE_PROPOSAL_FIELDS,
   ...AFFILIATE_PAYMENT_FIELDS,
   ...POINT_RESOLUTION_FIELDS,
+  ...AFFILIATE_REFUND_FIELDS,
 ]
