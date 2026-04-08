@@ -20,7 +20,7 @@ export function TableSkeleton({ cols = 6, rows = 8 }: { cols?: number; rows?: nu
   )
 }
 
-/** 통계 카드 스켈레톤 */
+/** 통계 카드 스켈레톤 입니다. */
 export function StatsCardsSkeleton({ count = 5 }: { count?: number }) {
   return (
     <div className={styles.statsGrid}>
