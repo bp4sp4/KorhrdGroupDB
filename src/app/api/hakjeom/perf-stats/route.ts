@@ -25,7 +25,7 @@ export async function GET() {
 
     const { data, error } = await supabaseAdmin
       .from('hakjeom_consultations')
-      .select('manager, status, created_at')
+      .select('manager, status, created_at, click_source')
       .is('deleted_at', null)
       .not('manager', 'is', null)
       .neq('manager', '')
@@ -35,7 +35,15 @@ export async function GET() {
       return NextResponse.json({ error: '데이터를 불러오지 못했습니다.' }, { status: 500 })
     }
 
-    return NextResponse.json(data ?? [])
+    // 지인소개 대분류는 실적에서 제외
+    const filtered = (data ?? []).filter(r => {
+      if (!r.click_source) return true
+      const stripped = r.click_source.startsWith('바로폼_') ? r.click_source.slice(4) : r.click_source
+      const major = stripped.split('_')[0]
+      return major !== '지인소개'
+    })
+
+    return NextResponse.json(filtered)
   } catch (err) {
     console.error('[perf-stats GET] Unexpected error:', err)
     return NextResponse.json({ error: '서버 오류가 발생했습니다.' }, { status: 500 })

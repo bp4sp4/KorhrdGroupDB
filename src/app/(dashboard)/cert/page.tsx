@@ -2073,16 +2073,17 @@ function PrivateCertTab({ setStatsNode, highlightId }: { setStatsNode: (node: Re
     return () => document.removeEventListener('mousedown', handleMouseDown);
   }, [openFilterColumn]);
 
-  // 담당자별 실적 (헤더 칩)
+  // 담당자별 실적 (헤더 칩) — 지인소개 대분류 제외
   useEffect(() => {
-    const mgrs = Array.from(new Set(items.map(c => c.manager).filter(Boolean))) as string[];
+    const statsItems = items.filter(c => c.major_category !== '지인소개');
+    const mgrs = Array.from(new Set(statsItems.map(c => c.manager).filter(Boolean))) as string[];
     if (mgrs.length === 0) { setStatsNode(null); return; }
     const rate = (list: PrivateCert[]) => {
       const t = list.length;
       return t > 0 ? Math.round((list.filter(c => c.status === '등록완료').length / t) * 100) : 0;
     };
     const mStats = mgrs.map(name => {
-      const all = items.filter(c => c.manager === name);
+      const all = statsItems.filter(c => c.manager === name);
       const recent30 = [...all].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 30);
       return { name, overall: rate(all), recent: rate(recent30) };
     }).sort((a, b) => b.overall - a.overall);

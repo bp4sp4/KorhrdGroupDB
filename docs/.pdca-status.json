@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-04-07T09:08:26.564Z",
+  "lastUpdated": "2026-04-08T09:45:38.812Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -186,7 +186,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:41:16.658Z",
-        "lastUpdated": "2026-04-07T01:03:35.084Z"
+        "lastUpdated": "2026-04-08T09:42:42.411Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/cert/page.tsx"
     },
@@ -498,7 +498,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-19T03:56:50.293Z",
-        "lastUpdated": "2026-03-24T09:20:53.824Z"
+        "lastUpdated": "2026-04-08T09:45:38.812Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/allcare/page.tsx"
     },
@@ -1148,7 +1148,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-06T03:18:33.025Z",
-        "lastUpdated": "2026-04-07T05:41:34.697Z"
+        "lastUpdated": "2026-04-08T09:39:53.484Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/components/ui/Calendar/DateInput.tsx"
     },
@@ -1161,7 +1161,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-06T05:05:07.428Z",
-        "lastUpdated": "2026-04-06T05:05:07.428Z"
+        "lastUpdated": "2026-04-08T09:42:33.834Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/hakjeom/perf-stats/route.ts"
     },
@@ -1330,7 +1330,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-07T09:08:26.564Z"
+    "lastActivity": "2026-04-08T09:45:38.812Z"
   },
   "history": [
     {
@@ -16786,6 +16786,60 @@
     {
       "timestamp": "2026-04-07T09:08:26.564Z",
       "feature": "notifications",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-08T09:39:47.012Z",
+      "feature": "Calendar",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-08T09:39:53.484Z",
+      "feature": "Calendar",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-08T09:42:33.834Z",
+      "feature": "perf-stats",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-08T09:42:42.411Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-08T09:45:14.261Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-08T09:45:19.318Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-08T09:45:25.576Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-08T09:45:29.897Z",
+      "feature": "allcare",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-08T09:45:38.812Z",
+      "feature": "allcare",
       "phase": "do",
       "action": "updated"
     }

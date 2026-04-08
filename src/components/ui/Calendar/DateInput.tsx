@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useEffect } from 'react'
+import React, { useRef, useState, useEffect } from 'react'
 import { parse, format, isValid } from 'date-fns'
 import { CalendarDays } from 'lucide-react'
 import { Calendar } from './index'
@@ -43,7 +43,7 @@ export function DateInput({
   label = '연락예정',
 }: DateInputProps) {
   const [open, setOpen] = useState(false)
-  const [autoDirection, setAutoDirection] = useState<'down' | 'up'>('down')
+  const [popoverStyle, setPopoverStyle] = useState<React.CSSProperties>({})
   const wrapRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -63,15 +63,23 @@ export function DateInput({
       const rect = wrapRef.current.getBoundingClientRect()
       const spaceBelow = window.innerHeight - rect.bottom
       const spaceAbove = rect.top
-      // direction prop이 지정된 경우 그걸 우선, 아니면 자동 감지
-      if (!direction) {
-        setAutoDirection(spaceBelow < CALENDAR_HEIGHT && spaceAbove > CALENDAR_HEIGHT ? 'up' : 'down')
+      const resolvedDirection = direction ?? (spaceBelow < CALENDAR_HEIGHT && spaceAbove > CALENDAR_HEIGHT ? 'up' : 'down')
+
+      const style: React.CSSProperties = { position: 'fixed', zIndex: 9999 }
+      if (resolvedDirection === 'up') {
+        style.bottom = window.innerHeight - rect.top + 6
+      } else {
+        style.top = rect.bottom + 6
       }
+      if (align === 'right') {
+        style.right = window.innerWidth - rect.right
+      } else {
+        style.left = rect.left
+      }
+      setPopoverStyle(style)
     }
     setOpen(v => !v)
   }
-
-  const resolvedDirection = direction ?? autoDirection
 
   const display = formatDisplay(value)
   const selected = parseDate(value)
@@ -80,12 +88,6 @@ export function DateInput({
     onChange?.(date ? format(date, 'yyyy-MM-dd') : '')
     setOpen(false)
   }
-
-  const popoverClass = [
-    styles.popover,
-    align === 'right' ? styles.popover_right : '',
-    resolvedDirection === 'up' ? styles.popover_up : '',
-  ].join(' ')
 
   return (
     <div ref={wrapRef} className={`${styles.wrap} ${className ?? ''}`}>
@@ -134,7 +136,7 @@ export function DateInput({
       )}
 
       {open && (
-        <div className={popoverClass}>
+        <div className={styles.popoverFixed} style={popoverStyle}>
           <Calendar
             value={selected}
             onChange={handleSelect}

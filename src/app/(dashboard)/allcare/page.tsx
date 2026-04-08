@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import styles from './page.module.css'
 import { TableSkeleton, FilterBarSkeleton } from '@/components/ui/Skeleton'
 import {
@@ -451,6 +451,8 @@ export default function AllcarePage() {
   const [userTotal, setUserTotal] = useState(0)
   const [userPage, setUserPage] = useState(1)
   const [userSearch, setUserSearch] = useState('')
+  const [debouncedUserSearch, setDebouncedUserSearch] = useState('')
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const [usersLoading, setUsersLoading] = useState(true)
 
@@ -514,7 +516,7 @@ export default function AllcarePage() {
     setUsersLoading(true)
     const params = new URLSearchParams({
       page: String(userPage),
-      search: userSearch,
+      search: debouncedUserSearch,
     })
     fetch(`/api/allcare/users?${params}`)
       .then(r => r.ok ? r.json() : null)
@@ -526,7 +528,7 @@ export default function AllcarePage() {
       })
       .catch(() => {})
       .finally(() => setUsersLoading(false))
-  }, [userPage, userSearch])
+  }, [userPage, debouncedUserSearch])
 
   useEffect(() => {
     if (activeTab === 'users') fetchUsers()
@@ -845,25 +847,27 @@ export default function AllcarePage() {
       {/* 회원 탭 */}
       {activeTab === 'users' && (
         <>
-          {usersLoading ? (
-            <FilterBarSkeleton />
-          ) : (
-            <div className={styles.filterRow}>
-              <span className={styles.actionBarCount}>총 <strong>{userTotal.toLocaleString()}</strong>건</span>
-              <div className={styles.searchBox}>
-                <svg className={styles.searchIcon} viewBox="0 0 20 20" fill="none">
-                  <circle cx="9" cy="9" r="6" stroke="currentColor" strokeWidth="1.5"/>
-                  <path d="M14 14l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
-                <input
-                  className={styles.searchInput}
-                  placeholder="이름, 이메일, 전화번호 검색"
-                  value={userSearch}
-                  onChange={e => { setUserSearch(e.target.value); setUserPage(1) }}
-                />
-              </div>
+          <div className={styles.filterRow}>
+            <span className={styles.actionBarCount}>총 <strong>{userTotal.toLocaleString()}</strong>건</span>
+            <div className={styles.searchBox}>
+              <svg className={styles.searchIcon} viewBox="0 0 20 20" fill="none">
+                <circle cx="9" cy="9" r="6" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M14 14l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+              <input
+                className={styles.searchInput}
+                placeholder="이름, 이메일, 전화번호 검색"
+                value={userSearch}
+                onChange={e => {
+                  const val = e.target.value
+                  setUserSearch(val)
+                  setUserPage(1)
+                  if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current)
+                  searchDebounceRef.current = setTimeout(() => setDebouncedUserSearch(val), 300)
+                }}
+              />
             </div>
-          )}
+          </div>
           <div className={styles.tableWrap}>
             <table className={styles.table}>
               <thead>
