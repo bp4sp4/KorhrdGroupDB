@@ -1303,6 +1303,7 @@ const PERMISSION_SECTIONS: PermissionSection[] = [
   { key: 'cert',       label: '민간자격증 사업부', description: '상담 목록 조회·수정',     allowOwn: false, group: '교육운영' },
   { key: 'practice',   label: '실습/취업',         description: '실습·취업 상담 조회·수정', allowOwn: true,  group: '교육운영' },
   { key: 'allcare',    label: '올케어 관리자',      description: '올케어 데이터 관리',      allowOwn: false, group: '교육운영' },
+  { key: 'abroad',     label: '한평생유학',         description: '유학 신청·결제 관리',     allowOwn: false, group: '교육운영' },
   { key: 'duplicate',  label: '중복 조회',          description: '연락처 중복 조회',        allowOwn: false, group: '시스템' },
   { key: 'trash',      label: '삭제 목록',          description: '휴지통·영구삭제',         allowOwn: false, group: '시스템' },
   { key: 'logs',       label: '로그 관리',          description: '작업 로그 열람',          allowOwn: false, group: '시스템' },

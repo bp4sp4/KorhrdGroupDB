@@ -1,0 +1,288 @@
+.loadingWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  color: var(--toss-text-secondary);
+  font-size: 14px;
+}
+
+.pageWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── 탭 (언더라인 스타일) ── */
+.tabNav {
+  display: flex;
+  gap: 0;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid var(--toss-border);
+  padding: 0;
+}
+
+.tabBtn {
+  padding: 10px 18px;
+  border-radius: 0;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  background: transparent;
+  color: var(--toss-text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.tabBtn:hover {
+  color: #191f28;
+}
+
+.tabBtnActive {
+  padding: 10px 18px;
+  border-radius: 0;
+  border: none;
+  border-bottom: 2px solid var(--toss-blue);
+  margin-bottom: -2px;
+  background: transparent;
+  color: var(--toss-blue);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+/* ── 테이블 카드 ── */
+.tableCard {
+  background: var(--toss-card-bg);
+  border: 1px solid var(--toss-border);
+  border-radius: var(--toss-radius-card);
+  box-shadow: var(--toss-shadow-card);
+  overflow: hidden;
+}
+
+.tableScroll {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.th {
+  padding: 14px 10px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--toss-text-secondary);
+  white-space: nowrap;
+  background: #fafafa;
+  border-bottom: 1px solid var(--toss-border);
+}
+
+.tr {
+  border-bottom: 1px solid var(--toss-border);
+  transition: background 0.1s;
+}
+
+.tr:last-child {
+  border-bottom: none;
+}
+
+.tr:hover td {
+  background: var(--toss-bg);
+}
+
+.td {
+  padding: 14px 10px;
+  font-size: 13px;
+  color: #191f28;
+}
+
+.tdDate {
+  padding: 14px 10px;
+  font-size: 12px;
+  color: #4e5968;
+  white-space: nowrap;
+}
+
+.tdEmpty {
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--toss-text-tertiary);
+  font-size: 14px;
+}
+
+/* ── 뱃지 ── */
+.badge_admin {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  background: #EBF3FF;
+  color: var(--toss-blue);
+  border-radius: 999px;
+}
+
+.badge_user {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  background: var(--toss-bg);
+  color: var(--toss-text-tertiary);
+  border-radius: 999px;
+}
+
+.badge_draft {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  background: var(--toss-bg);
+  color: var(--toss-text-tertiary);
+  border-radius: 999px;
+}
+
+.badge_pending {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  background: #FFF8E8;
+  color: #E08A00;
+  border-radius: 999px;
+}
+
+.badge_submitted {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  background: #EBF3FF;
+  color: var(--toss-blue);
+  border-radius: 999px;
+}
+
+.badge_reviewing {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  background: #FFF8E8;
+  color: #E08A00;
+  border-radius: 999px;
+}
+
+.badge_approved {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  background: #E8F9F0;
+  color: #0A8A4A;
+  border-radius: 999px;
+}
+
+.badge_rejected {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  background: #FFF0F0;
+  color: #D93025;
+  border-radius: 999px;
+}
+
+/* ── 클릭 가능한 행 ── */
+.trClickable {
+  cursor: pointer;
+}
+
+.trLoading {
+  opacity: 0.7;
+  cursor: wait !important;
+}
+
+.badge_loading {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  background: #EBF3FF;
+  color: var(--toss-blue);
+  border-radius: 999px;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ── 결제 승인 버튼 ── */
+.btnApprove {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 6px;
+  background: #E8F9F0;
+  color: #0A8A4A;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.btnApprove:hover {
+  background: #c6f0da;
+}
+
+.btnApprove:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.btnRevoke {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 6px;
+  background: #FFF0F0;
+  color: #D93025;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.btnRevoke:hover {
+  background: #ffd9d9;
+}
+
+.approveNone {
+  color: var(--toss-text-tertiary);
+  font-size: 13px;
+}

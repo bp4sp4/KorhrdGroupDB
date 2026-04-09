@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import {
   GraduationCap, Briefcase, Users, UserCog, Trash2,
-  HeartPulse, ClipboardList, Copy, TrendingUp, FileCheck, BarChart2, Settings, UserCheck,
+  HeartPulse, ClipboardList, Copy, TrendingUp, FileCheck, BarChart2, Settings, UserCheck, Plane,
 } from 'lucide-react'
 import styles from './layout.module.css'
 import { createClient } from '@/lib/supabase/client'
@@ -28,10 +28,11 @@ interface NavSection {
 const ALL_SECTIONS: NavSection[] = [
   {
     sectionKey: '교육운영',
-    activeOn: ['/hakjeom', '/cert', '/practice', '/allcare', '/duplicate', '/trash', '/ref-manage', '/logs', '/assignment'],
+    activeOn: ['/hakjeom', '/cert', '/practice', '/allcare', '/abroad', '/duplicate', '/trash', '/ref-manage', '/logs', '/assignment'],
     items: [
       { id: 'education', label: '학점은행제 사업부', href: '/hakjeom', icon: <GraduationCap size={16} />, groupLabel: '학습/취업' },
       { id: 'cert', label: '민간자격증 사업부', href: '/cert', icon: <GraduationCap size={16} /> },
+      { id: 'abroad', label: '한평생유학', href: '/abroad', icon: <Plane size={16} /> },
       { id: 'practice', label: '실습/취업', href: '/practice', icon: <Briefcase size={16} /> },
       { id: 'allcare', label: '올케어 관리자', href: '/allcare', icon: <HeartPulse size={16} /> },
       { id: 'duplicate', label: '중복 조회', href: '/duplicate', icon: <Copy size={16} />, groupLabel: '시스템' },
