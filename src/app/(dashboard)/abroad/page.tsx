@@ -44,7 +44,13 @@ type Consultation = {
   desired_start: string
   message: string
   status: string
+  type: string
   created_at: string
+}
+
+const CONSULT_TYPE_LABEL: Record<string, string> = {
+  consult:  '간편상담',
+  estimate: '견적문의',
 }
 
 const TAB_ITEMS = [
@@ -91,6 +97,7 @@ export default function AbroadPage() {
   const [applications, setApplications] = useState<Application[]>([])
   const [consultations, setConsultations] = useState<Consultation[]>([])
   const [payments, setPayments] = useState<Payment[]>([])
+  const [consultFilter, setConsultFilter] = useState<string>('all')
 
   const fetchData = useCallback(() => {
     fetch('/api/abroad')
@@ -193,10 +200,22 @@ export default function AbroadPage() {
       {/* 간편상담 */}
       {tab === 'consult' && (
         <div className={styles.tableCard}>
+          <div className={styles.filterBar}>
+            {['all', 'consult', 'estimate'].map(f => (
+              <button
+                key={f}
+                className={consultFilter === f ? styles.filterBtnActive : styles.filterBtn}
+                onClick={() => setConsultFilter(f)}
+              >
+                {f === 'all' ? '전체' : CONSULT_TYPE_LABEL[f]}
+              </button>
+            ))}
+          </div>
           <div className={styles.tableScroll}>
             <table className={styles.table}>
               <thead>
                 <tr>
+                  <th className={styles.th}>유형</th>
                   <th className={styles.th}>이름</th>
                   <th className={styles.th}>연락처</th>
                   <th className={styles.th}>거주지역</th>
@@ -206,10 +225,15 @@ export default function AbroadPage() {
                 </tr>
               </thead>
               <tbody>
-                {consultations.length === 0 ? (
-                  <tr><td colSpan={6} className={styles.tdEmpty}>간편상담 신청 내역이 없습니다.</td></tr>
-                ) : consultations.map(c => (
+                {consultations.filter(c => consultFilter === 'all' || c.type === consultFilter).length === 0 ? (
+                  <tr><td colSpan={7} className={styles.tdEmpty}>간편상담 신청 내역이 없습니다.</td></tr>
+                ) : consultations.filter(c => consultFilter === 'all' || c.type === consultFilter).map(c => (
                   <tr key={c.id} className={styles.tr}>
+                    <td className={styles.td}>
+                      <span className={c.type === 'estimate' ? styles.badge_submitted : styles.badge_draft}>
+                        {CONSULT_TYPE_LABEL[c.type] ?? c.type}
+                      </span>
+                    </td>
                     <td className={styles.td}>{c.name}</td>
                     <td className={styles.td}>{c.phone}</td>
                     <td className={styles.td}>{c.region}</td>

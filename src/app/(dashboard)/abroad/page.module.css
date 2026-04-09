@@ -57,6 +57,43 @@
   white-space: nowrap;
 }
 
+/* ── 필터 바 ── */
+.filterBar {
+  display: flex;
+  gap: 6px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--toss-border);
+}
+
+.filterBtn {
+  padding: 5px 14px;
+  border: 1px solid var(--toss-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--toss-text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.filterBtn:hover {
+  background: var(--toss-bg);
+  color: #191f28;
+}
+
+.filterBtnActive {
+  padding: 5px 14px;
+  border: 1px solid var(--toss-blue);
+  border-radius: 999px;
+  background: #EBF3FF;
+  color: var(--toss-blue);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
 /* ── 테이블 카드 ── */
 .tableCard {
   background: var(--toss-card-bg);

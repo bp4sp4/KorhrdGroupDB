@@ -22,7 +22,7 @@ export async function GET() {
       .order('created_at', { ascending: false }),
     supabaseAdmin
       .from('consultations')
-      .select('*')
+      .select('id, user_id, name, phone, region, desired_start, message, status, type, created_at')
       .order('created_at', { ascending: false }),
     supabaseAdmin
       .from('payments')

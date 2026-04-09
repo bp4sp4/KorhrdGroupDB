@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-04-09T03:03:36.247Z",
+  "lastUpdated": "2026-04-09T06:40:33.888Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -135,7 +135,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:20:48.298Z",
-        "lastUpdated": "2026-04-09T02:26:45.032Z"
+        "lastUpdated": "2026-04-09T06:40:33.888Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/layout.tsx"
     },
@@ -148,7 +148,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:20:57.368Z",
-        "lastUpdated": "2026-04-09T03:03:36.246Z"
+        "lastUpdated": "2026-04-09T06:36:41.124Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/components/layout/Sidebar.tsx"
     },
@@ -1331,7 +1331,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-09T01:58:58.611Z",
-        "lastUpdated": "2026-04-09T02:52:39.263Z"
+        "lastUpdated": "2026-04-09T04:02:08.487Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/abroad/page.tsx"
     }
@@ -1344,7 +1344,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-09T03:03:36.247Z"
+    "lastActivity": "2026-04-09T06:40:33.888Z"
   },
   "history": [
     {
@@ -17010,6 +17010,54 @@
     {
       "timestamp": "2026-04-09T03:03:36.247Z",
       "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-09T04:00:40.456Z",
+      "feature": "abroad",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-09T04:00:46.648Z",
+      "feature": "abroad",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-09T04:01:55.353Z",
+      "feature": "abroad",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-09T04:02:08.487Z",
+      "feature": "abroad",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-09T06:36:29.702Z",
+      "feature": "(dashboard)",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-09T06:36:41.124Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-09T06:39:37.031Z",
+      "feature": "(dashboard)",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-09T06:40:33.888Z",
+      "feature": "(dashboard)",
       "phase": "do",
       "action": "updated"
     }

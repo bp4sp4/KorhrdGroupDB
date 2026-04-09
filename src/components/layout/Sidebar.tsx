@@ -69,6 +69,7 @@ const MINI_ADMIN_ITEMS: NavItem[] = [
 const SECTION_ITEM_MAP: Record<string, string> = {
   hakjeom:    'education',
   cert:       'cert',
+  abroad:     'abroad',
   practice:   'practice',
   allcare:    'allcare',
   duplicate:  'duplicate',
