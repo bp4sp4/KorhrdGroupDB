@@ -1,0 +1,123 @@
+.container {
+  padding: 32px;
+  max-width: 900px;
+}
+
+.header {
+  margin-bottom: 28px;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--toss-text-primary);
+  margin: 0 0 4px;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: var(--toss-text-tertiary);
+  margin: 0;
+}
+
+.groups {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.group {
+  border: 1px solid var(--toss-border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--toss-card-bg);
+}
+
+.groupHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--toss-border);
+}
+
+.groupCategory {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.groupCount {
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+/* 카테고리 색상 */
+.color_blue  { background: #eff6ff; color: #2563eb; }
+.color_green { background: #f0fdf4; color: #16a34a; }
+.color_purple{ background: #f5f3ff; color: #7c3aed; }
+.color_orange{ background: #fff7ed; color: #ea580c; }
+.color_gray  { background: var(--toss-bg); color: var(--toss-text-secondary); }
+
+.cards {
+  display: flex;
+  flex-direction: column;
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  text-decoration: none;
+  border-bottom: 1px solid var(--toss-border);
+  transition: background 120ms ease;
+  gap: 12px;
+}
+
+.card:last-child {
+  border-bottom: none;
+}
+
+.card:hover {
+  background: var(--toss-bg);
+}
+
+.card:hover .cardIcon {
+  opacity: 1;
+  transform: translate(1px, -1px);
+}
+
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cardLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--toss-text-primary);
+}
+
+.cardDesc {
+  font-size: 12px;
+  color: var(--toss-text-tertiary);
+}
+
+.cardUrl {
+  font-size: 11px;
+  color: var(--toss-text-tertiary);
+  opacity: 0.6;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cardIcon {
+  flex-shrink: 0;
+  color: var(--toss-text-tertiary);
+  opacity: 0.4;
+  transition: opacity 120ms ease, transform 120ms ease;
+}

@@ -18,7 +18,7 @@ const SECTION_NAV: NavSection[] = [
   {
     label: '교육운영',
     href: '/hakjeom',
-    activeOn: ['/hakjeom', '/cert', '/practice', '/allcare', '/duplicate', '/trash', '/ref-manage', '/logs'],
+    activeOn: ['/hakjeom', '/cert', '/practice', '/allcare', '/duplicate', '/trash', '/ref-manage', '/logs', '/links'],
   },
   {
     label: '경영관리',
@@ -75,16 +75,16 @@ export default function Header({ userName = '관리자', userRole, permissions =
     if (sec.href === '/admin') return showAdmin
     if (sec.href === '/revenues') return showMgmt
     if (sec.href === '/hakjeom') return showEducation
-    return true
+return true
   }).map(sec => sec.href === '/revenues' ? { ...sec, href: mgmtHref } : sec)
 
   return (
     <header className={styles.header}>
       {/* 로고 */}
-      <div className={styles.headerLogo}>
+      <Link href="/hakjeom" className={styles.headerLogo}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/logo.png" alt="한평생교육 로고" className={styles.headerLogoImg} />
-      </div>
+      </Link>
 
       {/* 섹션 네비게이션 */}
       {!isMiniAdmin && (

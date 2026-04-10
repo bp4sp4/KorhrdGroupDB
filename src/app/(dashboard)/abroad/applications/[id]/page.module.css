@@ -21,6 +21,12 @@
   margin-bottom: 4px;
 }
 
+.topBarRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .backBtn {
   display: flex;
   align-items: center;
@@ -172,6 +178,159 @@
   color: #F04452;
 }
 
+/* ── 수정 버튼 ── */
+.btnEdit {
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--toss-text-secondary);
+  background: var(--toss-card-bg);
+  border: 1px solid var(--toss-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.btnEdit:hover {
+  background: var(--toss-bg);
+  border-color: var(--toss-text-tertiary);
+  color: var(--toss-text-primary);
+}
+
+.btnSave {
+  padding: 7px 18px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--toss-blue);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btnSave:hover:not(:disabled) {
+  background: var(--toss-blue-hover);
+}
+
+.btnSave:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btnCancel {
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--toss-text-secondary);
+  background: var(--toss-card-bg);
+  border: 1px solid var(--toss-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btnCancel:hover:not(:disabled) {
+  background: var(--toss-bg);
+}
+
+.btnCancel:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.saveError {
+  font-size: 12px;
+  color: #F04452;
+  font-weight: 500;
+}
+
+/* ── 타이틀카드 수정 상태 행 ── */
+.editStatusRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.editStatusLabel {
+  font-size: 13px;
+  color: var(--toss-text-secondary);
+  font-weight: 500;
+}
+
+/* ── 수정 모드 필드 행 ── */
+.fieldRowEdit {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--toss-border);
+  gap: 16px;
+}
+
+.fieldRowEdit:last-child {
+  border-bottom: none;
+}
+
+.fieldInput {
+  flex: 1;
+  font-size: 13px;
+  color: #191f28;
+  font-weight: 500;
+  background: var(--toss-bg);
+  border: 1px solid var(--toss-border);
+  border-radius: 6px;
+  padding: 5px 10px;
+  text-align: right;
+  min-width: 0;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.fieldInput:focus {
+  border-color: var(--toss-blue);
+}
+
+.fieldTextarea {
+  flex: 1;
+  font-size: 13px;
+  color: #191f28;
+  font-weight: 400;
+  background: var(--toss-bg);
+  border: 1px solid var(--toss-border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  text-align: right;
+  min-width: 0;
+  resize: vertical;
+  line-height: 1.6;
+  outline: none;
+  transition: border-color 0.15s;
+  font-family: inherit;
+}
+
+.fieldTextarea:focus {
+  border-color: var(--toss-blue);
+}
+
+.fieldSelect {
+  flex: 1;
+  font-size: 13px;
+  color: #191f28;
+  font-weight: 500;
+  background: var(--toss-bg);
+  border: 1px solid var(--toss-border);
+  border-radius: 6px;
+  padding: 5px 10px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.fieldSelect:focus {
+  border-color: var(--toss-blue);
+}
+
 /* ── 이미지 섹션 ── */
 .imagesSection {
   padding: 16px 20px 20px;
@@ -234,6 +393,16 @@
   background: var(--toss-bg);
   border-color: var(--toss-text-tertiary);
   color: var(--toss-text-primary);
+}
+
+.imgBtnUploading {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.hiddenInput {
+  display: none;
 }
 
 /* ── 모달 ── */

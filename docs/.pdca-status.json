@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-04-09T06:40:33.888Z",
+  "lastUpdated": "2026-04-10T08:44:00.305Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -96,7 +96,8 @@
     "affiliatePayment",
     "pointResolution",
     "affiliateRefund",
-    "abroad"
+    "abroad",
+    "links"
   ],
   "primaryFeature": "supabase",
   "features": {
@@ -148,9 +149,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:20:57.368Z",
-        "lastUpdated": "2026-04-09T06:36:41.124Z"
+        "lastUpdated": "2026-04-10T05:50:30.552Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/components/layout/Sidebar.tsx"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/components/layout/Header.tsx"
     },
     "hakjeom": {
       "phase": "do",
@@ -928,9 +929,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-01T07:05:57.026Z",
-        "lastUpdated": "2026-04-06T02:33:45.058Z"
+        "lastUpdated": "2026-04-10T08:42:48.811Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/management/approvals/upload/route.ts"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/abroad/applications/[id]/upload/route.ts"
     },
     "[id]": {
       "phase": "do",
@@ -941,9 +942,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-01T07:06:44.615Z",
-        "lastUpdated": "2026-04-09T02:22:53.774Z"
+        "lastUpdated": "2026-04-10T08:44:00.305Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/abroad/payments/[id]/route.ts"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/abroad/applications/[id]/page.tsx"
     },
     "templates": {
       "phase": "do",
@@ -1334,6 +1335,19 @@
         "lastUpdated": "2026-04-09T04:02:08.487Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/abroad/page.tsx"
+    },
+    "links": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-10T05:37:15.467Z",
+        "lastUpdated": "2026-04-10T05:51:32.925Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/links/page.tsx"
     }
   },
   "pipeline": {
@@ -1344,7 +1358,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-09T06:40:33.888Z"
+    "lastActivity": "2026-04-10T08:44:00.305Z"
   },
   "history": [
     {
@@ -17058,6 +17072,138 @@
     {
       "timestamp": "2026-04-09T06:40:33.888Z",
       "feature": "(dashboard)",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-10T05:32:10.694Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-10T05:33:27.457Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-10T05:33:33.889Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-10T05:36:57.511Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-10T05:37:06.235Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-10T05:37:11.988Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-10T05:37:15.467Z",
+      "feature": "links",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-10T05:40:05.127Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-10T05:40:08.519Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-10T05:40:26.355Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-10T05:40:38.108Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-10T05:40:42.460Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-10T05:44:04.323Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-10T05:45:43.116Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-10T05:45:47.488Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-10T05:46:03.126Z",
+      "feature": "links",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-10T05:50:30.552Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-10T05:51:32.925Z",
+      "feature": "links",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-10T08:32:28.499Z",
+      "feature": "[id]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-10T08:35:47.541Z",
+      "feature": "[id]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-10T08:42:48.811Z",
+      "feature": "upload",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-10T08:44:00.305Z",
+      "feature": "[id]",
       "phase": "do",
       "action": "updated"
     }

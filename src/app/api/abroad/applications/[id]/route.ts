@@ -10,6 +10,46 @@ async function signed(path: string | null) {
   return data?.signedUrl ?? null
 }
 
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { errorResponse } = await requireAuth()
+  if (errorResponse) return errorResponse
+
+  const { id } = await params
+  const body = await request.json()
+
+  const ALLOWED_FIELDS = [
+    'status', 'program',
+    'name', 'english_name', 'gender', 'blood_type', 'birth_date', 'birth_city',
+    'email', 'phone', 'school_type', 'school', 'school_grade', 'address', 'address_detail',
+    'passport_name', 'passport_number', 'passport_expiry',
+    'guardian_name', 'guardian_phone', 'guardian_email', 'guardian_birth_city',
+    'english_level', 'swim_level', 'allergies',
+    'self_intro', 'family_intro', 'homestay_notes', 'personality',
+    'hobbies', 'special_notes', 'health_notes', 'extra_notes',
+  ]
+
+  const updates: Record<string, unknown> = {}
+  for (const key of ALLOWED_FIELDS) {
+    if (key in body) updates[key] = body[key]
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from('applications')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 400 })
+  }
+
+  return NextResponse.json({ app: data })
+}
+
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
