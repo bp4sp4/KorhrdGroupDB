@@ -1,0 +1,203 @@
+.page_wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.page_header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.page_title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--toss-text-primary);
+  margin: 0;
+}
+
+/* Filter Bar */
+.filter_bar {
+  background: var(--toss-card-bg);
+  border: 1px solid var(--toss-border);
+  border-radius: var(--toss-radius-card);
+  padding: 16px 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.filter_group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filter_label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--toss-text-secondary);
+  white-space: nowrap;
+}
+
+.filter_select {
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--toss-border);
+  border-radius: var(--toss-radius-input);
+  background: var(--toss-bg);
+  color: var(--toss-text-primary);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* Summary Cards */
+.summary_grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .summary_grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.summary_card {
+  background: var(--toss-card-bg);
+  border: 1px solid var(--toss-border);
+  border-radius: var(--toss-radius-card);
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.summary_label {
+  font-size: 12px;
+  color: var(--toss-text-secondary);
+  font-weight: 500;
+}
+
+.summary_value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--toss-text-primary);
+}
+
+/* Teams */
+.teams_wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.team_block {
+  background: var(--toss-card-bg);
+  border: 1px solid var(--toss-border);
+  border-radius: var(--toss-radius-card);
+  overflow: hidden;
+}
+
+.team_header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--toss-text-primary);
+  transition: background 0.15s;
+}
+
+.team_header:hover {
+  background: var(--toss-hover-bg, rgba(0,0,0,0.03));
+}
+
+.team_toggle_icon {
+  color: var(--toss-text-secondary);
+  display: flex;
+  align-items: center;
+}
+
+.team_icon {
+  color: var(--toss-blue, #3182F6);
+}
+
+.team_name {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.team_summary {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--toss-text-primary);
+}
+
+.team_count {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--toss-text-secondary);
+}
+
+/* Manager Table */
+.manager_table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.manager_table thead tr {
+  background: var(--toss-table-head-bg, #F9FAFB);
+  border-top: 1px solid var(--toss-border);
+}
+
+.manager_table th {
+  padding: 10px 20px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--toss-text-secondary);
+}
+
+.manager_table td {
+  padding: 11px 20px;
+  border-top: 1px solid var(--toss-border);
+  color: var(--toss-text-primary);
+}
+
+.manager_table tbody tr:hover {
+  background: var(--toss-hover-bg, rgba(0,0,0,0.02));
+}
+
+.amount_cell {
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+.team_subtotal {
+  background: var(--toss-table-head-bg, #F2F4F6);
+  font-weight: 700;
+}
+
+/* States */
+.loading,
+.empty {
+  text-align: center;
+  padding: 48px 0;
+  font-size: 14px;
+  color: var(--toss-text-secondary);
+}

@@ -16,6 +16,7 @@ interface NavItem {
   href: string
   icon: React.ReactNode
   activeOn?: string[]
+  exactMatch?: boolean
   groupLabel?: string
 }
 
@@ -47,7 +48,8 @@ const ALL_SECTIONS: NavSection[] = [
     sectionKey: '경영관리',
     activeOn: ['/revenues', '/approvals', '/reports'],
     items: [
-      { id: 'revenues', label: '매출 관리', href: '/revenues', icon: <TrendingUp size={16} />, groupLabel: '경영관리' },
+      { id: 'revenues', label: '매출 관리', href: '/revenues', icon: <TrendingUp size={16} />, groupLabel: '경영관리', exactMatch: true },
+      { id: 'nms-sales', label: 'NMS 팀별 매출', href: '/revenues/nms-sales', icon: <TrendingUp size={16} /> },
       { id: 'approvals', label: '전자결재', href: '/approvals', icon: <FileCheck size={16} /> },
       { id: 'reports', label: '손익 리포트', href: '/reports', icon: <BarChart2 size={16} /> },
     ],
@@ -142,9 +144,11 @@ export default function Sidebar({ userRole, permissions = [] }: SidebarProps) {
       <nav className={styles.sidebarNav}>
         <ul className={styles.sidebarList}>
           {currentItems.map((item) => {
-            const isActive = item.activeOn
-              ? item.activeOn.some(p => pathname.startsWith(p))
-              : pathname.startsWith(item.href)
+            const isActive = item.exactMatch
+              ? pathname === item.href
+              : item.activeOn
+                ? item.activeOn.some(p => pathname.startsWith(p))
+                : pathname.startsWith(item.href)
             const isTrash = item.id === 'trash'
 
             return (
