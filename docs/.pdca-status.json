@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-04-10T08:44:00.305Z",
+  "lastUpdated": "2026-04-13T06:26:42.016Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -110,7 +110,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:18:02.059Z",
-        "lastUpdated": "2026-03-19T05:03:31.141Z"
+        "lastUpdated": "2026-04-13T06:26:42.016Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/lib/supabase/allcare.ts"
     },
@@ -1358,7 +1358,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-10T08:44:00.305Z"
+    "lastActivity": "2026-04-13T06:26:42.016Z"
   },
   "history": [
     {
@@ -17204,6 +17204,30 @@
     {
       "timestamp": "2026-04-10T08:44:00.305Z",
       "feature": "[id]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T06:25:08.777Z",
+      "feature": "supabase",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T06:26:31.188Z",
+      "feature": "supabase",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T06:26:34.985Z",
+      "feature": "supabase",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T06:26:42.016Z",
+      "feature": "supabase",
       "phase": "do",
       "action": "updated"
     }
