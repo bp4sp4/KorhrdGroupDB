@@ -4,6 +4,10 @@
   gap: 20px;
 }
 
+.tabHidden {
+  display: none;
+}
+
 .pageHeader {
   display: flex;
   align-items: center;

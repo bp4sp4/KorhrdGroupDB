@@ -60,9 +60,11 @@
 /* ── 필터 바 ── */
 .filterBar {
   display: flex;
+  align-items: center;
   gap: 6px;
-  padding: 12px 16px;
+  padding: 10px 16px;
   border-bottom: 1px solid var(--toss-border);
+  flex-wrap: wrap;
 }
 
 .filterBtn {
@@ -92,6 +94,71 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s;
+}
+
+.filterRow {
+  background: var(--toss-card-bg);
+  border: 1px solid var(--toss-border);
+  border-radius: var(--toss-radius-card);
+  padding: 10px 12px;
+  box-shadow: var(--toss-shadow-card);
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.searchInput {
+  padding: 12px 14px;
+  border: 1.5px solid var(--toss-border);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--toss-text-primary);
+  background: #fff;
+  outline: none;
+  transition: border-color 0.15s;
+  width: 280px;
+}
+
+.searchInput:focus {
+  border-color: var(--toss-blue);
+}
+
+.dateInput {
+  padding: 12px 14px;
+  border: 1.5px solid var(--toss-border);
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--toss-text-primary);
+  background: #fff;
+  outline: none;
+  transition: border-color 0.15s;
+  width: 150px;
+}
+
+.dateInput:focus {
+  border-color: var(--toss-blue);
+}
+
+.dateSeparator {
+  color: var(--toss-text-secondary);
+  font-size: 13px;
+}
+
+.resetBtn {
+  padding: 10px 14px;
+  border: 1.5px solid var(--toss-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--toss-text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.resetBtn:hover {
+  background: var(--toss-bg);
+  color: #191f28;
 }
 
 /* ── 테이블 카드 ── */

@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-04-13T07:30:21.130Z",
+  "lastUpdated": "2026-04-13T08:57:26.722Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -270,7 +270,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T06:09:16.436Z",
-        "lastUpdated": "2026-04-09T02:26:37.155Z"
+        "lastUpdated": "2026-04-13T08:38:42.344Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/admin/page.tsx"
     },
@@ -1336,7 +1336,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-09T01:58:58.611Z",
-        "lastUpdated": "2026-04-09T04:02:08.487Z"
+        "lastUpdated": "2026-04-13T08:57:26.722Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/abroad/page.tsx"
     },
@@ -1362,7 +1362,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-13T06:31:44.434Z",
-        "lastUpdated": "2026-04-13T07:30:21.130Z"
+        "lastUpdated": "2026-04-13T08:48:51.756Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/revenues/nms-sales/page.tsx"
     },
@@ -1388,7 +1388,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-13T06:48:43.126Z",
-        "lastUpdated": "2026-04-13T06:48:43.126Z"
+        "lastUpdated": "2026-04-13T08:48:10.275Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/management/abroad-sales/route.ts"
     },
@@ -1414,7 +1414,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-13T07:30:21.130Z"
+    "lastActivity": "2026-04-13T08:57:26.722Z"
   },
   "history": [
     {
@@ -17578,6 +17578,174 @@
     {
       "timestamp": "2026-04-13T07:30:21.130Z",
       "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T08:38:36.104Z",
+      "feature": "admin",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T08:38:42.344Z",
+      "feature": "admin",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T08:41:09.814Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T08:41:12.460Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T08:41:18.425Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T08:48:10.275Z",
+      "feature": "abroad-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T08:48:22.322Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T08:48:51.756Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T08:52:33.261Z",
+      "feature": "abroad",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T08:52:45.826Z",
+      "feature": "abroad",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T08:52:52.722Z",
+      "feature": "abroad",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T08:53:00.954Z",
+      "feature": "abroad",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T08:53:06.088Z",
+      "feature": "abroad",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T08:53:10.902Z",
+      "feature": "abroad",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T08:53:15.264Z",
+      "feature": "abroad",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T08:53:20.528Z",
+      "feature": "abroad",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T08:55:30.058Z",
+      "feature": "abroad",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T08:55:38.161Z",
+      "feature": "abroad",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T08:55:44.757Z",
+      "feature": "abroad",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T08:55:57.472Z",
+      "feature": "abroad",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T08:56:04.117Z",
+      "feature": "abroad",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T08:56:09.660Z",
+      "feature": "abroad",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T08:56:16.513Z",
+      "feature": "abroad",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T08:56:57.176Z",
+      "feature": "abroad",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T08:57:06.222Z",
+      "feature": "abroad",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T08:57:15.156Z",
+      "feature": "abroad",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T08:57:21.819Z",
+      "feature": "abroad",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T08:57:26.722Z",
+      "feature": "abroad",
       "phase": "do",
       "action": "updated"
     }

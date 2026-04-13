@@ -19,16 +19,32 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await supabaseAdmin
     .from('payments')
-    .select('amount, program, created_at')
+    .select('id, user_id, amount, program, status, created_at')
     .eq('status', 'completed')
     .gte('created_at', startDate)
     .lte('created_at', endDate)
+    .order('created_at', { ascending: false })
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
   const rows = data ?? []
+
+  // 프로필 정보 조회 (이름, 이메일)
+  const userIds = [...new Set(rows.map(r => r.user_id).filter(Boolean))] as string[]
+  let profileMap = new Map<string, { full_name: string | null; email: string | null }>()
+
+  if (userIds.length > 0) {
+    const { data: profiles } = await supabaseAdmin
+      .from('profiles')
+      .select('id, full_name, email')
+      .in('id', userIds)
+    for (const p of profiles ?? []) {
+      profileMap.set(p.id, { full_name: p.full_name, email: p.email })
+    }
+  }
+
   const totalAmount = rows.reduce((s, r) => s + (r.amount || 0), 0)
   const count = rows.length
   const avgAmount = count > 0 ? Math.round(totalAmount / count) : 0
@@ -47,5 +63,24 @@ export async function GET(request: NextRequest) {
     .map(([day, s]) => ({ day, ...s }))
     .sort((a, b) => a.day - b.day)
 
-  return NextResponse.json({ year, month, total: { paymentAmount: totalAmount, count, avgAmount }, byDay })
+  // 개별 결제 행
+  const paymentRows = rows.map(r => {
+    const profile = r.user_id ? profileMap.get(r.user_id) : null
+    return {
+      id: r.id,
+      name: profile?.full_name ?? null,
+      email: profile?.email ?? null,
+      program: r.program,
+      amount: r.amount,
+      created_at: r.created_at,
+    }
+  })
+
+  return NextResponse.json({
+    year,
+    month,
+    total: { paymentAmount: totalAmount, count, avgAmount },
+    byDay,
+    rows: paymentRows,
+  })
 }

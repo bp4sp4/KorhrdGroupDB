@@ -124,9 +124,11 @@ export default function AdminPage() {
     tabParam === 'accounts' ? 'accounts' : 'departments'
 
   const [activeTab, setActiveTab] = useState<TabKey>(initialTab)
+  const [visitedTabs, setVisitedTabs] = useState<Set<TabKey>>(new Set([initialTab]))
 
   const handleTabChange = (key: TabKey) => {
     setActiveTab(key)
+    setVisitedTabs(prev => new Set([...prev, key]))
     // accounts 탭 선택 시 URL에 파라미터 반영
     if (key === 'accounts') {
       router.replace('/admin?tab=accounts', { scroll: false })
@@ -153,12 +155,36 @@ export default function AdminPage() {
         ))}
       </div>
 
-      {activeTab === 'departments' && <DepartmentsTab />}
-      {activeTab === 'positions' && <PositionsTab />}
-      {activeTab === 'expense-categories' && <ExpenseCategoriesTab />}
-      {activeTab === 'approval-templates' && <ApprovalTemplatesTab />}
-      {activeTab === 'accounts' && <AccountsTab />}
-      {activeTab === 'permissions' && <PermissionsTab />}
+      {visitedTabs.has('departments') && (
+        <div className={activeTab !== 'departments' ? styles.tabHidden : undefined}>
+          <DepartmentsTab />
+        </div>
+      )}
+      {visitedTabs.has('positions') && (
+        <div className={activeTab !== 'positions' ? styles.tabHidden : undefined}>
+          <PositionsTab />
+        </div>
+      )}
+      {visitedTabs.has('expense-categories') && (
+        <div className={activeTab !== 'expense-categories' ? styles.tabHidden : undefined}>
+          <ExpenseCategoriesTab />
+        </div>
+      )}
+      {visitedTabs.has('approval-templates') && (
+        <div className={activeTab !== 'approval-templates' ? styles.tabHidden : undefined}>
+          <ApprovalTemplatesTab />
+        </div>
+      )}
+      {visitedTabs.has('accounts') && (
+        <div className={activeTab !== 'accounts' ? styles.tabHidden : undefined}>
+          <AccountsTab />
+        </div>
+      )}
+      {visitedTabs.has('permissions') && (
+        <div className={activeTab !== 'permissions' ? styles.tabHidden : undefined}>
+          <PermissionsTab />
+        </div>
+      )}
     </div>
   )
 }

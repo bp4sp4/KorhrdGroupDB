@@ -98,6 +98,20 @@ export default function AbroadPage() {
   const [consultations, setConsultations] = useState<Consultation[]>([])
   const [payments, setPayments] = useState<Payment[]>([])
   const [consultFilter, setConsultFilter] = useState<string>('all')
+  const [userSearch, setUserSearch] = useState('')
+  const [consultSearch, setConsultSearch] = useState('')
+  const [appSearch, setAppSearch] = useState('')
+  const [paymentSearch, setPaymentSearch] = useState('')
+
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
+
+  const matchesDate = (createdAt: string) => {
+    const d = new Date(createdAt)
+    if (startDate && d < new Date(startDate + 'T00:00:00')) return false
+    if (endDate && d > new Date(endDate + 'T23:59:59')) return false
+    return true
+  }
 
   const fetchData = useCallback(() => {
     fetch('/api/abroad')
@@ -166,6 +180,15 @@ export default function AbroadPage() {
       {/* 회원 목록 */}
       {tab === 'users' && (
         <div className={styles.tableCard}>
+          <div className={styles.filterRow}>
+            <input className={styles.searchInput} placeholder="이름, 이메일 검색" value={userSearch} onChange={e => setUserSearch(e.target.value)} />
+            <input type="date" className={styles.dateInput} value={startDate} onChange={e => setStartDate(e.target.value)} />
+            <span className={styles.dateSeparator}>~</span>
+            <input type="date" className={styles.dateInput} value={endDate} onChange={e => setEndDate(e.target.value)} />
+            {(userSearch || startDate || endDate) && (
+              <button className={styles.resetBtn} onClick={() => { setUserSearch(''); setStartDate(''); setEndDate('') }}>초기화</button>
+            )}
+          </div>
           <div className={styles.tableScroll}>
             <table className={styles.table}>
               <thead>
@@ -177,9 +200,19 @@ export default function AbroadPage() {
                 </tr>
               </thead>
               <tbody>
-                {users.length === 0 ? (
+                {users.filter(u => {
+                  if (!matchesDate(u.created_at)) return false
+                  const kw = userSearch.trim().toLowerCase()
+                  if (!kw) return true
+                  return (u.full_name ?? '').toLowerCase().includes(kw) || (u.email ?? '').toLowerCase().includes(kw)
+                }).length === 0 ? (
                   <tr><td colSpan={4} className={styles.tdEmpty}>회원이 없습니다.</td></tr>
-                ) : users.map(u => (
+                ) : users.filter(u => {
+                  if (!matchesDate(u.created_at)) return false
+                  const kw = userSearch.trim().toLowerCase()
+                  if (!kw) return true
+                  return (u.full_name ?? '').toLowerCase().includes(kw) || (u.email ?? '').toLowerCase().includes(kw)
+                }).map(u => (
                   <tr key={u.id} className={styles.tr}>
                     <td className={styles.td}>{u.full_name ?? '-'}</td>
                     <td className={styles.td}>{u.email}</td>
@@ -200,16 +233,19 @@ export default function AbroadPage() {
       {/* 간편상담 */}
       {tab === 'consult' && (
         <div className={styles.tableCard}>
-          <div className={styles.filterBar}>
+          <div className={styles.filterRow}>
+            <input className={styles.searchInput} placeholder="이름, 연락처 검색" value={consultSearch} onChange={e => setConsultSearch(e.target.value)} />
+            <input type="date" className={styles.dateInput} value={startDate} onChange={e => setStartDate(e.target.value)} />
+            <span className={styles.dateSeparator}>~</span>
+            <input type="date" className={styles.dateInput} value={endDate} onChange={e => setEndDate(e.target.value)} />
             {['all', 'consult', 'estimate'].map(f => (
-              <button
-                key={f}
-                className={consultFilter === f ? styles.filterBtnActive : styles.filterBtn}
-                onClick={() => setConsultFilter(f)}
-              >
+              <button key={f} className={consultFilter === f ? styles.filterBtnActive : styles.filterBtn} onClick={() => setConsultFilter(f)}>
                 {f === 'all' ? '전체' : CONSULT_TYPE_LABEL[f]}
               </button>
             ))}
+            {(consultSearch || startDate || endDate || consultFilter !== 'all') && (
+              <button className={styles.resetBtn} onClick={() => { setConsultSearch(''); setStartDate(''); setEndDate(''); setConsultFilter('all') }}>초기화</button>
+            )}
           </div>
           <div className={styles.tableScroll}>
             <table className={styles.table}>
@@ -225,9 +261,21 @@ export default function AbroadPage() {
                 </tr>
               </thead>
               <tbody>
-                {consultations.filter(c => consultFilter === 'all' || c.type === consultFilter).length === 0 ? (
+                {consultations.filter(c => {
+                  if (!matchesDate(c.created_at)) return false
+                  if (consultFilter !== 'all' && c.type !== consultFilter) return false
+                  const kw = consultSearch.trim().toLowerCase()
+                  if (!kw) return true
+                  return c.name.toLowerCase().includes(kw) || c.phone.toLowerCase().includes(kw)
+                }).length === 0 ? (
                   <tr><td colSpan={7} className={styles.tdEmpty}>간편상담 신청 내역이 없습니다.</td></tr>
-                ) : consultations.filter(c => consultFilter === 'all' || c.type === consultFilter).map(c => (
+                ) : consultations.filter(c => {
+                  if (!matchesDate(c.created_at)) return false
+                  if (consultFilter !== 'all' && c.type !== consultFilter) return false
+                  const kw = consultSearch.trim().toLowerCase()
+                  if (!kw) return true
+                  return c.name.toLowerCase().includes(kw) || c.phone.toLowerCase().includes(kw)
+                }).map(c => (
                   <tr key={c.id} className={styles.tr}>
                     <td className={styles.td}>
                       <span className={c.type === 'estimate' ? styles.badge_submitted : styles.badge_draft}>
@@ -255,6 +303,15 @@ export default function AbroadPage() {
       {/* 신청서 목록 */}
       {tab === 'applications' && (
         <div className={styles.tableCard}>
+          <div className={styles.filterRow}>
+            <input className={styles.searchInput} placeholder="이름, 연락처, 이메일 검색" value={appSearch} onChange={e => setAppSearch(e.target.value)} />
+            <input type="date" className={styles.dateInput} value={startDate} onChange={e => setStartDate(e.target.value)} />
+            <span className={styles.dateSeparator}>~</span>
+            <input type="date" className={styles.dateInput} value={endDate} onChange={e => setEndDate(e.target.value)} />
+            {(appSearch || startDate || endDate) && (
+              <button className={styles.resetBtn} onClick={() => { setAppSearch(''); setStartDate(''); setEndDate('') }}>초기화</button>
+            )}
+          </div>
           <div className={styles.tableScroll}>
             <table className={styles.table}>
               <thead>
@@ -269,9 +326,19 @@ export default function AbroadPage() {
                 </tr>
               </thead>
               <tbody>
-                {applications.length === 0 ? (
+                {applications.filter(a => {
+                  if (!matchesDate(a.created_at)) return false
+                  const kw = appSearch.trim().toLowerCase()
+                  if (!kw) return true
+                  return (a.name ?? '').toLowerCase().includes(kw) || (a.phone ?? '').toLowerCase().includes(kw) || (a.email ?? '').toLowerCase().includes(kw)
+                }).length === 0 ? (
                   <tr><td colSpan={7} className={styles.tdEmpty}>신청서가 없습니다.</td></tr>
-                ) : applications.map(a => {
+                ) : applications.filter(a => {
+                  if (!matchesDate(a.created_at)) return false
+                  const kw = appSearch.trim().toLowerCase()
+                  if (!kw) return true
+                  return (a.name ?? '').toLowerCase().includes(kw) || (a.phone ?? '').toLowerCase().includes(kw) || (a.email ?? '').toLowerCase().includes(kw)
+                }).map(a => {
                   const payStatus = a.user_id ? userPaymentMap.get(a.user_id) : undefined
                   return (
                     <tr
@@ -314,6 +381,15 @@ export default function AbroadPage() {
       {/* 결제 목록 */}
       {tab === 'payments' && (
         <div className={styles.tableCard}>
+          <div className={styles.filterRow}>
+            <input className={styles.searchInput} placeholder="이름, 프로그램 검색" value={paymentSearch} onChange={e => setPaymentSearch(e.target.value)} />
+            <input type="date" className={styles.dateInput} value={startDate} onChange={e => setStartDate(e.target.value)} />
+            <span className={styles.dateSeparator}>~</span>
+            <input type="date" className={styles.dateInput} value={endDate} onChange={e => setEndDate(e.target.value)} />
+            {(paymentSearch || startDate || endDate) && (
+              <button className={styles.resetBtn} onClick={() => { setPaymentSearch(''); setStartDate(''); setEndDate('') }}>초기화</button>
+            )}
+          </div>
           <div className={styles.tableScroll}>
             <table className={styles.table}>
               <thead>
@@ -328,9 +404,19 @@ export default function AbroadPage() {
                 </tr>
               </thead>
               <tbody>
-                {payments.length === 0 ? (
+                {payments.filter(p => {
+                  const kw = paymentSearch.trim().toLowerCase()
+                  if (!kw) return true
+                  const name = p.user_id ? (userNameMap.get(p.user_id) ?? '') : ''
+                  return name.toLowerCase().includes(kw) || (PROGRAM_LABEL[p.program] ?? p.program).toLowerCase().includes(kw)
+                }).length === 0 ? (
                   <tr><td colSpan={7} className={styles.tdEmpty}>결제 내역이 없습니다.</td></tr>
-                ) : payments.map(p => (
+                ) : payments.filter(p => {
+                  const kw = paymentSearch.trim().toLowerCase()
+                  if (!kw) return true
+                  const name = p.user_id ? (userNameMap.get(p.user_id) ?? '') : ''
+                  return name.toLowerCase().includes(kw) || (PROGRAM_LABEL[p.program] ?? p.program).toLowerCase().includes(kw)
+                }).map(p => (
                   <tr key={p.id} className={styles.tr}>
                     <td className={styles.td}>{p.user_id ? (userNameMap.get(p.user_id) ?? '-') : '-'}</td>
                     <td className={styles.td}>{PROGRAM_LABEL[p.program] ?? p.program}</td>
