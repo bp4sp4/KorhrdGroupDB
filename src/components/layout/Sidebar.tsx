@@ -33,7 +33,7 @@ const ALL_SECTIONS: NavSection[] = [
     items: [
       { id: 'education', label: '학점은행제 사업부', href: '/hakjeom', icon: <GraduationCap size={16} />, groupLabel: '학습/취업' },
       { id: 'cert', label: '민간자격증 사업부', href: '/cert', icon: <GraduationCap size={16} /> },
-      { id: 'abroad', label: '한평생유학', href: '/abroad', icon: <Plane size={16} /> },
+      { id: 'abroad', label: '유학 사업부', href: '/abroad', icon: <Plane size={16} /> },
       { id: 'practice', label: '실습/취업', href: '/practice', icon: <Briefcase size={16} /> },
       { id: 'allcare', label: '올케어 관리자', href: '/allcare', icon: <HeartPulse size={16} /> },
       { id: 'duplicate', label: '중복 조회', href: '/duplicate', icon: <Copy size={16} />, groupLabel: '시스템' },
@@ -48,8 +48,7 @@ const ALL_SECTIONS: NavSection[] = [
     sectionKey: '경영관리',
     activeOn: ['/revenues', '/approvals', '/reports'],
     items: [
-      { id: 'revenues', label: '매출 관리', href: '/revenues', icon: <TrendingUp size={16} />, groupLabel: '경영관리', exactMatch: true },
-      { id: 'nms-sales', label: 'NMS 팀별 매출', href: '/revenues/nms-sales', icon: <TrendingUp size={16} /> },
+      { id: 'nms-sales', label: '팀별 매출 관리', href: '/revenues/nms-sales', icon: <TrendingUp size={16} /> },
       { id: 'approvals', label: '전자결재', href: '/approvals', icon: <FileCheck size={16} /> },
       { id: 'reports', label: '손익 리포트', href: '/reports', icon: <BarChart2 size={16} /> },
     ],

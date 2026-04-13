@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-04-13T06:26:42.016Z",
+  "lastUpdated": "2026-04-13T07:30:21.130Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -97,7 +97,11 @@
     "pointResolution",
     "affiliateRefund",
     "abroad",
-    "links"
+    "links",
+    "nms-sales",
+    "cert-sales",
+    "abroad-sales",
+    "sales-stats"
   ],
   "primaryFeature": "supabase",
   "features": {
@@ -149,9 +153,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:20:57.368Z",
-        "lastUpdated": "2026-04-10T05:50:30.552Z"
+        "lastUpdated": "2026-04-13T06:47:08.032Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/components/layout/Header.tsx"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/components/layout/Sidebar.tsx"
     },
     "hakjeom": {
       "phase": "do",
@@ -864,9 +868,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-01T06:58:06.391Z",
-        "lastUpdated": "2026-04-01T07:36:30.237Z"
+        "lastUpdated": "2026-04-13T06:45:56.194Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/management/revenues/route.ts"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/revenues/page.tsx"
     },
     "approvals": {
       "phase": "do",
@@ -1348,6 +1352,58 @@
         "lastUpdated": "2026-04-10T05:51:32.925Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/links/page.tsx"
+    },
+    "nms-sales": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-13T06:31:44.434Z",
+        "lastUpdated": "2026-04-13T07:30:21.130Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/revenues/nms-sales/page.tsx"
+    },
+    "cert-sales": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-13T06:37:55.024Z",
+        "lastUpdated": "2026-04-13T06:43:14.404Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/management/cert-sales/route.ts"
+    },
+    "abroad-sales": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-13T06:48:43.126Z",
+        "lastUpdated": "2026-04-13T06:48:43.126Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/management/abroad-sales/route.ts"
+    },
+    "sales-stats": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-13T06:57:55.155Z",
+        "lastUpdated": "2026-04-13T06:57:55.155Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/management/sales-stats/route.ts"
     }
   },
   "pipeline": {
@@ -1358,7 +1414,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-13T06:26:42.016Z"
+    "lastActivity": "2026-04-13T07:30:21.130Z"
   },
   "history": [
     {
@@ -17228,6 +17284,300 @@
     {
       "timestamp": "2026-04-13T06:26:42.016Z",
       "feature": "supabase",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T06:29:07.844Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T06:31:44.434Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T06:34:32.813Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T06:34:38.056Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T06:34:58.867Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T06:35:02.019Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T06:35:05.142Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T06:35:08.581Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T06:35:13.473Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T06:35:17.259Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T06:37:55.024Z",
+      "feature": "cert-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T06:38:55.248Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T06:39:21.717Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T06:40:37.720Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T06:41:51.752Z",
+      "feature": "cert-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T06:41:56.374Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T06:42:16.252Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T06:42:20.325Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T06:43:14.404Z",
+      "feature": "cert-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T06:43:18.694Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T06:43:39.347Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T06:45:52.534Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T06:45:56.194Z",
+      "feature": "revenues",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T06:47:08.032Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T06:48:43.126Z",
+      "feature": "abroad-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T06:48:47.723Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T06:48:51.614Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T06:49:09.885Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T06:49:16.108Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T06:49:20.146Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T06:57:55.155Z",
+      "feature": "sales-stats",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T06:58:03.156Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T06:58:06.498Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T06:58:46.291Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T06:58:52.738Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T06:58:57.095Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T07:01:35.468Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T07:01:39.565Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T07:03:14.325Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T07:12:31.187Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T07:20:31.482Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T07:20:37.363Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T07:20:41.145Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T07:20:57.239Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T07:21:11.465Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T07:27:53.350Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T07:27:55.908Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T07:30:16.908Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-13T07:30:21.130Z",
+      "feature": "nms-sales",
       "phase": "do",
       "action": "updated"
     }
