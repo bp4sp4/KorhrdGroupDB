@@ -5,7 +5,7 @@ import { usePathname, useSearchParams } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import {
   GraduationCap, Briefcase, Users, UserCog, Trash2,
-  HeartPulse, ClipboardList, Copy, TrendingUp, FileCheck, BarChart2, Settings, UserCheck, Plane, Link2, ChevronRight,
+  HeartPulse, ClipboardList, Copy, TrendingUp, FileCheck, BarChart2, Settings, UserCheck, Plane, Link2, ChevronRight, Upload,
 } from 'lucide-react'
 import styles from './layout.module.css'
 import { createClient } from '@/lib/supabase/client'
@@ -36,7 +36,7 @@ interface NavSection {
 const ALL_SECTIONS: NavSection[] = [
   {
     sectionKey: '교육운영',
-    activeOn: ['/hakjeom', '/cert', '/practice', '/allcare', '/abroad', '/duplicate', '/trash', '/ref-manage', '/logs', '/assignment', '/links', '/revenues', '/approvals', '/reports'],
+    activeOn: ['/hakjeom', '/cert', '/practice', '/allcare', '/abroad', '/duplicate', '/trash', '/ref-manage', '/logs', '/assignment', '/links', '/revenues', '/revenue-upload', '/approvals', '/reports'],
     items: [
       {
         id: 'education', label: '학점은행제 사업부', href: '/hakjeom', icon: <GraduationCap size={16} />, groupLabel: '학습/취업',
@@ -100,6 +100,7 @@ const ALL_SECTIONS: NavSection[] = [
           { id: 'nms-sales-tab-stats',  label: '통합 통계',  href: '/revenues/nms-sales?tab=stats' },
         ],
       },
+      { id: 'revenue-upload', label: '매출 데이터 관리', href: '/revenue-upload', icon: <Upload size={16} /> },
       { id: 'approvals', label: '전자결재', href: '/approvals', icon: <FileCheck size={16} /> },
       { id: 'reports', label: '손익 리포트', href: '/reports', icon: <BarChart2 size={16} /> },
     ],
@@ -130,6 +131,7 @@ const SECTION_ITEM_MAP: Record<string, string> = {
   'ref-manage': 'ref-manage',
   assignment: 'assignment',
   revenues:   'nms-sales',
+  'revenue-upload': 'revenue-upload',
   approvals:  'approvals',
   reports:    'reports',
 }

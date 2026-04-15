@@ -1,7 +1,7 @@
 .page_wrap {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
 }
 
 .page_header {
@@ -40,53 +40,56 @@
 
 .filter_select:focus { border-color: var(--toss-blue); }
 
-/* Summary Cards */
-.summary_grid {
+/* ─── KPI Cards ─── */
+.kpiGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 12px;
 }
 
-.summary_card {
+@media (max-width: 900px) { .kpiGrid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 520px) { .kpiGrid { grid-template-columns: 1fr; } }
+
+.kpiCard {
   background: var(--toss-card-bg);
   border: 1px solid var(--toss-border);
   border-radius: var(--toss-radius-card);
-  padding: 20px;
+  padding: 20px 18px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   box-shadow: var(--toss-shadow-card);
 }
 
-.summary_card_profit {
+.kpiHighlight {
   background: linear-gradient(135deg, var(--toss-blue) 0%, #1b64da 100%);
   border-color: transparent;
 }
 
-.summary_label {
+.kpiLabel {
   font-size: 12px;
+  font-weight: 500;
   color: var(--toss-text-secondary);
   margin: 0;
 }
 
-.summary_label_white {
-  color: rgba(255,255,255,0.8);
-}
+.kpiLabelLight { color: rgba(255,255,255,0.8); }
 
-.summary_value {
-  font-size: 24px;
+.kpiValue {
+  font-size: 26px;
   font-weight: 700;
   color: var(--toss-text-primary);
   margin: 0;
   letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums;
 }
 
-.summary_value_blue { color: var(--toss-blue); }
-.summary_value_red { color: var(--color-danger); }
-.summary_value_green { color: #22C55E; }
-.summary_value_white { color: #fff; }
+.kpiBlue { color: var(--toss-blue); }
+.kpiRed { color: #F04452; }
+.kpiGreen { color: #22C55E; }
+.kpiValueWhite { color: #fff; }
 
-.summary_sub {
+.kpiDiff {
   font-size: 12px;
   color: var(--toss-text-tertiary);
   margin: 0;
@@ -95,21 +98,11 @@
   gap: 4px;
 }
 
-.sub_up { color: #22C55E; }
-.sub_down { color: var(--color-danger); }
+.diffUp { color: #22C55E; }
+.diffDown { color: #F04452; }
+.diffLabel { color: var(--toss-text-tertiary); }
 
-/* Content grid 2 cols */
-.content_grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-@media (max-width: 900px) {
-  .content_grid { grid-template-columns: 1fr; }
-}
-
-/* Sections */
+/* ─── Section ─── */
 .section {
   background: var(--toss-card-bg);
   border: 1px solid var(--toss-border);
@@ -138,22 +131,119 @@
   color: var(--toss-blue);
 }
 
-/* PnL Table */
+/* ─── Collapse ─── */
+.collapseBtn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--toss-text-primary);
+  transition: background 0.15s;
+}
+
+.collapseBtn:hover { background: var(--toss-bg); }
+
+.collapseInner {
+  border-top: 1px solid var(--toss-border);
+}
+
+/* ─── Chart Body ─── */
+.chartBody {
+  padding: 16px 12px;
+}
+
+/* ─── 2열 미니 차트 그리드 ─── */
+.chartGrid2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 768px) { .chartGrid2 { grid-template-columns: 1fr; } }
+
+/* ─── 3열 미니 차트 그리드 ─── */
+.chartGrid3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 1100px) { .chartGrid3 { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 640px) { .chartGrid3 { grid-template-columns: 1fr; } }
+
+.miniSection {
+  background: var(--toss-card-bg);
+  border: 1px solid var(--toss-border);
+  border-radius: var(--toss-radius-card);
+  padding: 14px 10px 8px;
+  overflow: hidden;
+}
+
+.miniTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--toss-text-secondary);
+  margin: 0 0 4px 8px;
+}
+
+/* ─── Detail Grid ─── */
+.detailGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+
+@media (max-width: 900px) { .detailGrid { grid-template-columns: 1fr; } }
+
+.detailSection {
+  padding: 0;
+}
+
+.detailSection:first-child {
+  border-right: 1px solid var(--toss-border);
+}
+
+@media (max-width: 900px) {
+  .detailSection:first-child {
+    border-right: none;
+    border-bottom: 1px solid var(--toss-border);
+  }
+}
+
+.detailTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--toss-text-secondary);
+  margin: 0;
+  padding: 12px 20px 0;
+}
+
+.compDotInline {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+/* ─── PnL Table ─── */
 .pnl_table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.pnl_table tr {
-  border-bottom: 1px solid var(--toss-border);
-}
-
-.pnl_table tr:last-child {
-  border-bottom: none;
-}
+.pnl_table tr { border-bottom: 1px solid var(--toss-border); }
+.pnl_table tr:last-child { border-bottom: none; }
 
 .pnl_table td {
-  padding: 12px 20px;
+  padding: 11px 20px;
   font-size: 14px;
   color: var(--toss-text-primary);
 }
@@ -161,6 +251,7 @@
 .pnl_table td:last-child {
   text-align: right;
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .pnl_row_total td {
@@ -177,97 +268,48 @@
 }
 
 .pnl_row_total_red td {
-  color: var(--color-danger);
+  color: #F04452;
   background: #fff1f2;
   font-weight: 700;
   font-size: 15px;
 }
 
-/* 지출 합계 색상 */
-.section_total_expense {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--color-danger);
+.pnl_indent { padding-left: 40px !important; }
+
+/* ─── Prev Month ─── */
+.prevMonthWrap {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
 }
 
-/* 손익계산서 들여쓰기 */
-.pnl_indent {
-  padding-left: 40px !important;
-}
+@media (max-width: 640px) { .prevMonthWrap { grid-template-columns: 1fr; } }
 
-/* 바 차트 라벨 */
-.pnl_bar_label {
-  min-width: 90px;
-  flex-shrink: 0;
-}
-
-.pnl_bar_wrap {
+.prevMonthCard {
+  background: var(--toss-card-bg);
+  border: 1px solid var(--toss-border);
+  border-radius: var(--toss-radius-card);
+  padding: 14px 18px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: space-between;
 }
 
-.pnl_bar {
-  flex: 1;
-  height: 6px;
-  background: var(--toss-border);
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.pnl_bar_fill {
-  height: 100%;
-  border-radius: 3px;
-  background: var(--toss-blue);
-  transition: width 400ms ease;
-}
-
-.pnl_bar_fill_expense {
-  background: var(--color-danger);
-}
-
-.pnl_percent {
-  font-size: 12px;
-  color: var(--toss-text-tertiary);
-  width: 36px;
-  text-align: right;
-  flex-shrink: 0;
-}
-
-/* Dept breakdown */
-.dept_table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.dept_table th {
-  padding: 10px 20px;
-  text-align: left;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--toss-text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  background: var(--toss-bg);
-  border-bottom: 1px solid var(--toss-border);
-}
-
-.dept_table td {
-  padding: 12px 20px;
+.prevMonthLabel {
   font-size: 13px;
-  border-bottom: 1px solid var(--toss-border);
+  color: var(--toss-text-secondary);
+}
+
+.prevMonthValue {
+  font-size: 15px;
+  font-weight: 700;
   color: var(--toss-text-primary);
+  font-variant-numeric: tabular-nums;
 }
 
-.dept_table tr:last-child td { border-bottom: none; }
-
-.dept_table td:not(:first-child) {
-  text-align: right;
-  font-weight: 600;
-}
-
+/* ─── Utils ─── */
 .profit_positive { color: var(--toss-blue); }
-.profit_negative { color: var(--color-danger); }
+.profit_negative { color: #F04452; }
 
 .empty_state {
   text-align: center;
@@ -283,30 +325,6 @@
   font-size: 14px;
 }
 
-/* Chart area */
-.chart_body {
-  padding: 16px 8px;
-}
-
-.chart_loading {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--toss-text-secondary);
-  font-size: 14px;
-}
-
-/* 차트 2열 그리드 */
-.chart_grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-@media (max-width: 900px) {
-  .chart_grid { grid-template-columns: 1fr; }
-}
-
-/* Export button */
 .btn_secondary {
   display: inline-flex;
   align-items: center;
@@ -326,4 +344,29 @@
 .btn_secondary:hover {
   border-color: var(--toss-blue);
   color: var(--toss-blue);
+}
+
+/* ─── Word Cloud ─── */
+.wordCloudWrap {
+  width: 100%;
+  min-height: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wordCloudWrap svg {
+  display: block;
+  max-width: 100%;
+}
+
+.wordCloudText {
+  font-weight: 700;
+  cursor: default;
+  transition: opacity 0.15s ease;
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.wordCloudText:hover {
+  opacity: 0.7;
 }

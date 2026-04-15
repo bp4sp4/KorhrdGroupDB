@@ -120,3 +120,32 @@ export interface ReportData {
   revenue_by_dept: { dept: string; amount: number }[]
   expense_by_dept: { dept: string; amount: number }[]
 }
+
+export interface DashboardData {
+  month: string
+  nms_sales: number
+  cert_sales: number
+  abroad_sales: number
+  allcare_sales: number
+  uploaded_revenue: { card: number; bank_transfer: number; other: number }
+  manual_expenses: number
+  approved_expenses: number
+  total_revenue: number
+  total_expense: number
+  profit: number
+  profit_rate: number
+  prev_month: { revenue: number; expense: number; profit: number }
+  revenue_by_source: { source: string; amount: number }[]
+  expense_by_category: { category: string; amount: number }[]
+  revenue_by_dept: { dept: string; amount: number }[]
+  expense_by_dept: { dept: string; amount: number }[]
+  trend: { label: string; revenue: number; expense: number; profit: number }[]
+}
+
+export interface UploadBatch {
+  batch_id: string
+  uploaded_at: string
+  count: number
+  total_amount: number
+  revenue_types: string[]
+}

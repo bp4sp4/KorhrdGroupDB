@@ -9,10 +9,13 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@ant-design/charts": "^2.6.7",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.4",
     "@types/bcryptjs": "^2.4.6",
+    "@types/d3-cloud": "^1.2.9",
     "bcryptjs": "^3.0.3",
+    "d3-cloud": "^1.2.9",
     "date-fns": "^4.1.0",
     "dotenv": "^17.4.1",
     "jszip": "^3.10.1",

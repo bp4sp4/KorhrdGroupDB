@@ -138,6 +138,7 @@ const REACTION_POINT_MAP: Record<string, string[]> = {
   '과정': ['공부부담', '시간부족'],
   '신뢰': ['교육원의심', '자격증효력'],
   '실습': ['거리부담', '시간부담', '섭외부담'],
+  '무반응': ['무반응'],
 };
 
 // ─── 검색어 하이라이트 ──────────────────────────────────────────────────────
@@ -294,7 +295,7 @@ function formatClickSourceDisplay(source: string | null): string {
 }
 
 // 유입경로 대분류 목록
-const SOURCE_MAJORS = ['당근', '맘카페', '네이버', '인스타', '유튜브', '카카오', '페이스북', '지인소개', '기타'];
+const SOURCE_MAJORS = ['당근', '맘카페', '네이버', '인스타', '유튜브', '카카오', '페이스북','토스', '지인소개', '기타'];
 
 // 맘카페 한글 이름 목록 (칩 버튼용)
 const CAFE_NAME_LIST = Object.values(CAFE_NAMES);
@@ -806,6 +807,16 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic', cus
                 />
               </div>
 
+              {/* 메모 */}
+              <div className={styles.detailMemoSection}>
+                <MemoTimeline
+                  tableName="hakjeom_consultations"
+                  recordId={String(item.id)}
+                  legacyMemo={item.memo}
+                  onCountChange={setMemoCount}
+                />
+              </div>
+
               {/* 이름 */}
               <div className={styles.detailFieldRow}>
                 <span className={styles.detailFieldLabel}>이름</span>
@@ -826,16 +837,6 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic', cus
                   placeholder="010-0000-0000"
                   inputMode="tel"
                   className={`${styles.input} ${styles.inputFull}`}
-                />
-              </div>
-
-              {/* 메모 */}
-              <div className={styles.detailMemoSection}>
-                <MemoTimeline
-                  tableName="hakjeom_consultations"
-                  recordId={String(item.id)}
-                  legacyMemo={item.memo}
-                  onCountChange={setMemoCount}
                 />
               </div>
             </>
@@ -2298,12 +2299,7 @@ function HakjeomTab({ isActive, highlightId }: { isActive: boolean; highlightId?
                       <button className={`${styles.thFilterBtn}${managerFilter.length > 0 ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'manager') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('manager'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
                     </div>
                   </th>
-                  <th className={styles.thFilterable}>
-                    <div className={styles.thInner}>
-                      취소사유
-                      <button className={`${styles.thFilterBtn}${counselCheckFilter.length > 0 ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'counsel') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('counsel'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
-                    </div>
-                  </th>
+     
                   <th className={styles.thFilterable}>
                     <div className={styles.thInner}>
                       상태
@@ -2391,15 +2387,7 @@ function HakjeomTab({ isActive, highlightId }: { isActive: boolean; highlightId?
                     <td className={styles.tdEllipsis} title={item.hope_course ?? ''}>{item.hope_course ?? '-'}</td>
                     <td className={styles.tdEllipsis} title={item.reason ?? ''}><Highlight text={item.reason} query={searchText} /></td>
                     <td className={styles.tdSecondary}>{item.manager ?? '-'}</td>
-                    <td className={styles.tdCounsel}>
-                      {item.counsel_check ? (
-                        <div className={styles.counselChipRow}>
-                          {item.counsel_check.split(', ').map(c => c.trim()).filter(Boolean).map(c => (
-                            <span key={c} className={styles.counselChip}>{c}</span>
-                          ))}
-                        </div>
-                      ) : <span className={styles.tdMuted}>-</span>}
-                    </td>
+              
                     <td className={styles.td} onClick={e => e.stopPropagation()}>
                       <StatusSelect
                         value={item.status}

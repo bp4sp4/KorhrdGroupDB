@@ -1,0 +1,448 @@
+.pageWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.pageHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.pageTitle {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--toss-text-primary);
+  margin: 0 0 4px;
+}
+
+.pageSubtitle {
+  font-size: 13px;
+  color: var(--toss-text-secondary);
+  margin: 0;
+}
+
+/* Tabs */
+.tabRow {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--toss-border);
+}
+
+.tabBtn {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--toss-text-secondary);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.tabBtn:hover {
+  color: var(--toss-text-primary);
+}
+
+.tabBtnActive {
+  color: var(--toss-blue);
+  border-bottom-color: var(--toss-blue);
+  font-weight: 600;
+}
+
+/* Upload Section */
+.card {
+  background: var(--toss-card-bg);
+  border: 1px solid var(--toss-border);
+  border-radius: var(--toss-radius-card);
+  padding: 24px;
+}
+
+.cardHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.cardTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--toss-text-primary);
+  margin: 0;
+}
+
+.cardDesc {
+  font-size: 13px;
+  color: var(--toss-text-secondary);
+  margin: 0 0 16px;
+}
+
+.formRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.formLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--toss-text-secondary);
+  min-width: 80px;
+}
+
+.select {
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--toss-border);
+  border-radius: var(--toss-radius-input);
+  background: var(--toss-bg);
+  color: var(--toss-text-primary);
+  font-size: 13px;
+  min-width: 160px;
+}
+
+.templateBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--toss-border);
+  border-radius: var(--toss-radius-input);
+  background: var(--toss-card-bg);
+  color: var(--toss-text-primary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.templateBtn:hover {
+  background: var(--toss-bg);
+}
+
+/* Dropzone */
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 40px 20px;
+  border: 2px dashed var(--toss-border);
+  border-radius: var(--toss-radius-card);
+  background: var(--toss-bg);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dropzone:hover,
+.dropzoneActive {
+  border-color: var(--toss-blue);
+  background: rgba(51, 129, 255, 0.04);
+}
+
+.dropzoneIcon {
+  color: var(--toss-text-secondary);
+}
+
+.dropzoneText {
+  font-size: 14px;
+  color: var(--toss-text-secondary);
+  margin: 0;
+}
+
+.dropzoneHint {
+  font-size: 12px;
+  color: var(--toss-text-tertiary);
+  margin: 0;
+}
+
+.fileInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--toss-bg);
+  border-radius: var(--toss-radius-input);
+  margin-top: 12px;
+}
+
+.fileName {
+  font-size: 13px;
+  color: var(--toss-text-primary);
+  flex: 1;
+}
+
+.fileRemoveBtn {
+  background: none;
+  border: none;
+  color: var(--toss-text-secondary);
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+}
+
+.fileRemoveBtn:hover {
+  color: var(--toss-red);
+}
+
+/* Preview Table */
+.previewWrap {
+  margin-top: 20px;
+}
+
+.previewHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.previewTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--toss-text-primary);
+  margin: 0;
+}
+
+.previewCount {
+  font-size: 13px;
+  color: var(--toss-text-secondary);
+}
+
+.tableWrap {
+  overflow-x: auto;
+  border: 1px solid var(--toss-border);
+  border-radius: var(--toss-radius-card);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table th {
+  padding: 10px 12px;
+  background: var(--toss-bg);
+  color: var(--toss-text-secondary);
+  font-weight: 500;
+  text-align: left;
+  border-bottom: 1px solid var(--toss-border);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 10px 12px;
+  color: var(--toss-text-primary);
+  border-bottom: 1px solid var(--toss-border);
+  white-space: nowrap;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.tdRight {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.tdError {
+  color: var(--toss-red);
+  font-size: 12px;
+}
+
+/* Action Buttons */
+.actionRow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 24px;
+  border: none;
+  border-radius: var(--toss-radius-input);
+  background: var(--toss-blue);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.btnPrimary:hover {
+  opacity: 0.9;
+}
+
+.btnPrimary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btnSecondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 20px;
+  border: 1px solid var(--toss-border);
+  border-radius: var(--toss-radius-input);
+  background: var(--toss-card-bg);
+  color: var(--toss-text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btnSecondary:hover {
+  background: var(--toss-bg);
+}
+
+/* Upload History */
+.batchCard {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  background: var(--toss-card-bg);
+  border: 1px solid var(--toss-border);
+  border-radius: var(--toss-radius-card);
+}
+
+.batchInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.batchDate {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--toss-text-primary);
+}
+
+.batchMeta {
+  font-size: 12px;
+  color: var(--toss-text-secondary);
+  display: flex;
+  gap: 12px;
+}
+
+.batchAmount {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--toss-text-primary);
+  font-variant-numeric: tabular-nums;
+  min-width: 120px;
+  text-align: right;
+}
+
+.batchDeleteBtn {
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--toss-border);
+  border-radius: var(--toss-radius-input);
+  background: var(--toss-card-bg);
+  color: var(--toss-red);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.batchDeleteBtn:hover {
+  background: #fef3f2;
+}
+
+.batchList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.typeBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.typeBadgeCard {
+  background: #EFF6FF;
+  color: #2563EB;
+}
+
+.typeBadgeBank {
+  background: #ECFDF5;
+  color: #059669;
+}
+
+.typeBadgeOther {
+  background: #F3F4F6;
+  color: #6B7280;
+}
+
+/* Result */
+.resultWrap {
+  padding: 16px 20px;
+  border-radius: var(--toss-radius-card);
+  background: #ECFDF5;
+  border: 1px solid #A7F3D0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.resultTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: #065F46;
+  margin: 0;
+}
+
+.resultDetail {
+  font-size: 13px;
+  color: #047857;
+  margin: 0;
+}
+
+/* Empty */
+.emptyWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 60px 20px;
+  color: var(--toss-text-secondary);
+}
+
+.emptyText {
+  font-size: 14px;
+  margin: 0;
+}
+
+/* Loading */
+.loadingWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: var(--toss-text-secondary);
+  font-size: 14px;
+}
