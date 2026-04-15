@@ -162,10 +162,10 @@ function NmsTab({ year, month }: { year: number; month: number }) {
   const [expandedTeams, setExpandedTeams] = useState<Set<string>>(new Set())
   const [allcareData, setAllcareData] = useState<AllcareSalesData | null>(null)
   const [allcarePage, setAllcarePage] = useState(1)
-  const [allcareTypeFilter, setAllcareTypeFilter] = useState<string | null>(null)
+  const [allcareTypeFilter, setAllcareTypeFilter] = useState<Set<string>>(new Set())
   const [typeDropdownOpen, setTypeDropdownOpen] = useState(false)
-  const [typeDropdownPos, setTypeDropdownPos] = useState({ top: 0, left: 0 })
   const typeDropdownRef = useRef<HTMLDivElement>(null)
+  const typeFilterBtnRef = useRef<HTMLButtonElement>(null)
 
   const fetch_ = useCallback(async () => {
     setLoading(true)
@@ -177,7 +177,7 @@ function NmsTab({ year, month }: { year: number; month: number }) {
         fetch(`/api/management/allcare-sales?year=${year}&month=${month}`),
       ])
       setAllcarePage(1)
-      setAllcareTypeFilter(null)
+      setAllcareTypeFilter(new Set())
       if (nmsRes && nmsRes.ok) {
         const json = await nmsRes.json()
         setData(json)
@@ -206,9 +206,10 @@ function NmsTab({ year, month }: { year: number; month: number }) {
   useEffect(() => {
     if (!typeDropdownOpen) return
     const handler = (e: MouseEvent) => {
-      if (typeDropdownRef.current && !typeDropdownRef.current.contains(e.target as Node)) {
-        setTypeDropdownOpen(false)
-      }
+      const target = e.target as Node
+      if (typeDropdownRef.current?.contains(target)) return
+      if (typeFilterBtnRef.current?.contains(target)) return
+      setTypeDropdownOpen(false)
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
@@ -255,53 +256,73 @@ function NmsTab({ year, month }: { year: number; month: number }) {
         <div className={styles.loading}><div className={styles.spinner} /><span>불러오는 중...</span></div>
       ) : teamFilter === 'allcare' ? (
         <div className={styles.allcare_wrap}>
-          {/* 유형별 요약 */}
-          {/* 결제 목록 */}
           {(() => {
-            const allPayments = (allcareData?.payments ?? []).filter(p => !allcareTypeFilter || p.type === allcareTypeFilter)
+            const typeKeys = Object.keys(allcareData?.byType ?? {})
+            const isAll = allcareTypeFilter.size === 0
+            const toggleType = (type: string) => {
+              setAllcareTypeFilter(prev => {
+                const next = new Set(prev)
+                if (next.has(type)) next.delete(type)
+                else next.add(type)
+                return next
+              })
+              setAllcarePage(1)
+            }
+            const toggleAll = () => {
+              if (isAll) return
+              setAllcareTypeFilter(new Set())
+              setAllcarePage(1)
+            }
+            const allPayments = (allcareData?.payments ?? []).filter(p => isAll || allcareTypeFilter.has(p.type))
             const totalPages = Math.ceil(allPayments.length / ALLCARE_PAGE_SIZE)
             const paginated = allPayments.slice((allcarePage - 1) * ALLCARE_PAGE_SIZE, allcarePage * ALLCARE_PAGE_SIZE)
             return (
               <>
-                {typeDropdownOpen && (
-                  <div
-                    ref={typeDropdownRef}
-                    className={styles.allcare_filterDropdown}
-                    style={{ top: typeDropdownPos.top, left: typeDropdownPos.left }}
-                  >
-                    <div
-                      className={`${styles.allcare_filterItem}${!allcareTypeFilter ? ` ${styles.allcare_filterItemActive}` : ''}`}
-                      onClick={() => { setAllcareTypeFilter(null); setAllcarePage(1); setTypeDropdownOpen(false) }}
-                    >전체</div>
-                    {Object.keys(allcareData?.byType ?? {}).map(type => (
-                      <div
-                        key={type}
-                        className={`${styles.allcare_filterItem}${allcareTypeFilter === type ? ` ${styles.allcare_filterItemActive}` : ''}`}
-                        onClick={() => { setAllcareTypeFilter(type); setAllcarePage(1); setTypeDropdownOpen(false) }}
-                      >{type}</div>
-                    ))}
-                  </div>
-                )}
                 <div className={styles.allcare_table_card}>
                   <table className={styles.allcare_table}>
                     <thead>
                       <tr>
                         <th className={styles.allcare_thFilterable}>
-                        <div className={styles.allcare_thInner}>
-                          유형
-                          <button
-                            className={`${styles.allcare_thFilterBtn}${allcareTypeFilter ? ` ${styles.allcare_thFilterBtnActive}` : ''}`}
-                            onClick={e => {
-                              e.stopPropagation()
-                              const rect = e.currentTarget.getBoundingClientRect()
-                              setTypeDropdownPos({ top: rect.bottom + 4, left: rect.left })
-                              setTypeDropdownOpen(v => !v)
-                            }}
-                          >
-                            <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                          </button>
-                        </div>
-                      </th>
+                          <div className={styles.allcare_thInner}>
+                            유형
+                            <button
+                              ref={typeFilterBtnRef}
+                              className={`${styles.allcare_thFilterBtn}${!isAll ? ` ${styles.allcare_thFilterBtnActive}` : ''}`}
+                              onClick={e => { e.stopPropagation(); setTypeDropdownOpen(v => !v) }}
+                            >
+                              <ChevronDown size={10} />
+                            </button>
+                          </div>
+                          {typeDropdownOpen && (() => {
+                            const rect = typeFilterBtnRef.current?.getBoundingClientRect()
+                            return (
+                              <div
+                                ref={typeDropdownRef}
+                                className={styles.allcare_filterDropdown}
+                                style={rect ? { top: rect.bottom + 4, left: rect.left } : undefined}
+                                onMouseDown={e => e.stopPropagation()}
+                              >
+                                <div className={styles.allcare_checkItem} onClick={toggleAll}>
+                                  <span className={`${styles.allcare_checkbox}${isAll ? ` ${styles.allcare_checkboxChecked}` : ''}`}>
+                                    {isAll && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                                  </span>
+                                  전체
+                                </div>
+                                {typeKeys.map(type => {
+                                  const checked = allcareTypeFilter.has(type)
+                                  return (
+                                    <div key={type} className={styles.allcare_checkItem} onClick={() => toggleType(type)}>
+                                      <span className={`${styles.allcare_checkbox}${checked ? ` ${styles.allcare_checkboxChecked}` : ''}`}>
+                                        {checked && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                                      </span>
+                                      {type}
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            )
+                          })()}
+                        </th>
                         <th className={styles.allcare_th}>이름</th>
                         <th className={styles.allcare_th}>이메일</th>
                         <th className={styles.allcare_th}>상품명</th>

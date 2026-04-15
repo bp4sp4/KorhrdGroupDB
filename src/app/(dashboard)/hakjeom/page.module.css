@@ -368,6 +368,8 @@
   font-size: 12px;
   font-weight: 600;
   color: var(--toss-text-secondary);
+  width: 44px;
+  min-width: 44px;
   white-space: nowrap;
   background: #fafafa;
   border-bottom: 1px solid var(--toss-border);
@@ -382,12 +384,12 @@
 }
 
 .tdCenter {
-  padding: 14px 10px;
+  width: 36px;
   font-size: 14px;
   color: #191f28;
   border-bottom: 1px solid var(--toss-border);
   text-align: center;
-  width: 36px;
+
 }
 
 /* ─── 태그 버튼 (동적 active 상태) ──────────────────────────────────────── */
@@ -1180,6 +1182,8 @@
 .checkbox {
   cursor: pointer;
   accent-color: #3182f6;
+  width: 16px;
+  height: 16px;
 }
 
 /* ─── 테이블 td 변형 ─────────────────────────────────────────────────────── */
@@ -2592,6 +2596,13 @@
   flex-direction: column;
   gap: 16px;
 }
+
+.detailMemoSection {
+  margin-top: 8px;
+  border-top: 1px solid var(--toss-border);
+  padding-top: 16px;
+}
+
 
 /* Field row: label left, control right */
 .detailFieldRow {

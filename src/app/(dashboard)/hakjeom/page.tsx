@@ -16,7 +16,7 @@ import { DateInput } from '@/components/ui/Calendar/DateInput'
 
 // ─── 공통 타입 ──────────────────────────────────────────────────────────────
 
-type ConsultationStatus = '부재중/추후통화' | '상담대기' | '상담완료-높음' | '상담완료-중간' | '상담완료-낮음' | '보류' | '등록대기' | '등록완료' | '취소' | '기타';
+type ConsultationStatus = '부재중/추후통화' | '상담대기' | '상담완료-높음' | '상담완료-중간' | '상담완료-낮음' | '보류' | '등록완료' | '취소' | '기타';
 type AgencyStatus = '협약대기' | '협약중' | '보류' | '협약완료';
 type TabKey = 'hakjeom' | 'agency' | 'bulk' | 'counsel_done' | 'stats';
 
@@ -102,7 +102,7 @@ interface CsvRow {
 const CONSULTATION_STATUS_OPTIONS: ConsultationStatus[] = [
   '부재중/추후통화', '상담대기',
   '상담완료-높음', '상담완료-중간', '상담완료-낮음',
-  '보류', '등록대기', '등록완료', '취소', '기타',
+  '보류', '등록완료', '취소', '기타',
 ];
 const AGENCY_STATUS_OPTIONS: AgencyStatus[] = ['협약대기', '협약중', '보류', '협약완료'];
 
@@ -113,7 +113,6 @@ const CONSULTATION_STATUS_STYLE: Record<ConsultationStatus, { background: string
   '상담완료-중간':       { background: '#FFFDE7', color: '#F57F17' },
   '상담완료-낮음': { background: '#FCE4EC', color: '#C62828' },
   '보류':                { background: '#F3E8FF', color: '#7C3AED' },
-  '등록대기':            { background: '#FEF3C7', color: '#B45309' },
   '등록완료':            { background: '#DCFCE7', color: '#16A34A' },
   '취소':                { background: '#FEE2E2', color: '#DC2626' },
   '기타':                { background: '#F0FFF4', color: '#059669' },
@@ -542,7 +541,7 @@ interface HakjeomDetailPanelProps {
   item: HakjeomConsultation;
   onClose: () => void;
   onUpdate: (id: number, fields: Partial<HakjeomConsultation>) => Promise<void>;
-  initialTab?: 'basic' | 'info' | 'memo';
+  initialTab?: 'basic' | 'info';
   customCafes: string[];
   customDanggeun: string[];
   onAddCafe: (name: string) => Promise<void>;
@@ -594,7 +593,7 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic', cus
   const [editContact, setEditContact] = useState(item.contact ?? '');
   const [editName, setEditName] = useState(item.name ?? '');
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'basic' | 'info' | 'memo'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'basic' | 'info'>(initialTab);
   const [memoCount, setMemoCount] = useState<number | null>(null);
   const [cafeAddInput, setCafeAddInput] = useState('');
   const [showCafeAdd, setShowCafeAdd] = useState(false);
@@ -754,8 +753,8 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic', cus
 
           {/* 탭 바 */}
           <div className={styles.detailModalTabs}>
-            {(['basic', 'info', 'memo'] as const).map(tab => {
-              const labels = { basic: '기본정보', info: '취득정보', memo: '메모' };
+            {(['basic', 'info'] as const).map(tab => {
+              const labels = { basic: '기본정보', info: '취득정보' };
               return (
                 <button
                   key={tab}
@@ -763,9 +762,7 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic', cus
                   onClick={() => setActiveTab(tab)}
                   className={`${styles.detailModalTab} ${activeTab === tab ? styles.detailModalTabActive : ''}`}
                 >
-                  {tab === 'memo' && memoCount != null && memoCount > 0
-                    ? `메모 (${memoCount})`
-                    : labels[tab]}
+                  {labels[tab]}
                 </button>
               );
             })}
@@ -776,98 +773,6 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic', cus
         <div className={styles.detailModalBody}>
           {activeTab === 'basic' && (
             <>
-              {/* 유입경로 */}
-              <div className={styles.detailChipSection}>
-                <span className={styles.detailChipSectionLabel}>유입경로</span>
-                <div className={styles.detailChipRow}>
-                  {SOURCE_MAJORS.map(m => (
-                    <button
-                      key={m}
-                      type="button"
-                      onClick={() => handleMajorSelect(m)}
-                      className={editSourceMajor === m ? styles.tagBtnActive : styles.tagBtn}
-                    >
-                      {m}
-                    </button>
-                  ))}
-                </div>
-                {editSourceMajor === '맘카페' && (
-                  <div className={styles.clickSourceSubPanel}>
-                    {CAFE_NAME_LIST.map(cafeName => (
-                      <button
-                        key={cafeName}
-                        type="button"
-                        onClick={() => handleMinorSelect(cafeName)}
-                        className={editSourceMinor === cafeName ? styles.tagBtnSmActive : styles.tagBtnSm}
-                      >
-                        {cafeName}
-                      </button>
-                    ))}
-                    {customCafes.map(cafeName => (
-                      <span key={cafeName} className={styles.customItemWrap}>
-                        <button
-                          type="button"
-                          onClick={() => handleMinorSelect(cafeName)}
-                          className={editSourceMinor === cafeName ? styles.tagBtnSmActive : styles.tagBtnSm}
-                        >
-                          {cafeName}
-                        </button>
-                        <button type="button" className={styles.customItemDeleteBtn} onClick={() => handleDeleteCafe(cafeName)}>✕</button>
-                      </span>
-                    ))}
-                    {showCafeAdd ? (
-                      <>
-                        <input
-                          className={styles.subPanelAddInput}
-                          value={cafeAddInput}
-                          onChange={e => setCafeAddInput(e.target.value)}
-                          onKeyDown={e => { if (e.key === 'Enter') handleAddCafe(); if (e.key === 'Escape') setShowCafeAdd(false); }}
-                          placeholder="카페 이름"
-                          autoFocus
-                        />
-                        <button type="button" className={styles.subPanelAddConfirm} onClick={handleAddCafe}>추가</button>
-                      </>
-                    ) : (
-                      <button type="button" className={styles.subPanelAddBtn} onClick={() => setShowCafeAdd(true)}>+ 카페</button>
-                    )}
-                  </div>
-                )}
-                {editSourceMajor === '당근' && (
-                  <div className={styles.clickSourceSubPanel}>
-                    {customDanggeun.map(area => (
-                      <span key={area} className={styles.customItemWrap}>
-                        <button
-                          type="button"
-                          onClick={() => handleMinorSelect(area)}
-                          className={editSourceMinor === area ? styles.tagBtnSmActive : styles.tagBtnSm}
-                        >
-                          {area}
-                        </button>
-                        <button type="button" className={styles.customItemDeleteBtn} onClick={() => handleDeleteDanggeun(area)}>✕</button>
-                      </span>
-                    ))}
-                    {showDanggeunAdd ? (
-                      <>
-                        <input
-                          className={styles.subPanelAddInput}
-                          value={danggeunAddInput}
-                          onChange={e => setDanggeunAddInput(e.target.value)}
-                          onKeyDown={e => { if (e.key === 'Enter') handleAddDanggeun(); if (e.key === 'Escape') setShowDanggeunAdd(false); }}
-                          placeholder="유입경로 이름"
-                          autoFocus
-                        />
-                        <button type="button" className={styles.subPanelAddConfirm} onClick={handleAddDanggeun}>추가</button>
-                      </>
-                    ) : (
-                      <button type="button" className={styles.subPanelAddBtn} onClick={() => setShowDanggeunAdd(true)}>+ 유입경로</button>
-                    )}
-                  </div>
-                )}
-                {builtClickSource && (
-                  <p className={styles.clickSourcePreview}>{formatClickSourceDisplay(builtClickSource)}</p>
-                )}
-              </div>
-
               {/* 최종학력 */}
               <div className={styles.detailFieldRow}>
                 <span className={styles.detailFieldLabel}>최종학력</span>
@@ -901,32 +806,6 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic', cus
                 />
               </div>
 
-              {/* 현재상황 */}
-              <div className={styles.detailFieldRow}>
-                <span className={styles.detailFieldLabel}>현재상황</span>
-                <CustomSelect
-                  value={editCurrentSituation}
-                  onChange={setEditCurrentSituation}
-                  fullWidth
-                  options={[
-                    { value: '', label: '선택 안 함' },
-                    ...CURRENT_SITUATION_OPTIONS.map(o => ({ value: o, label: o })),
-                  ]}
-                />
-              </div>
-
-              {/* 과목비용 */}
-              <div className={styles.detailFieldRow}>
-                <span className={styles.detailFieldLabel}>과목비용</span>
-                <input
-                  value={editSubjectCost}
-                  onChange={e => setEditSubjectCost(e.target.value)}
-                  placeholder="예) 580000"
-                  type="number"
-                  className={`${styles.input} ${styles.inputFull}`}
-                />
-              </div>
-
               {/* 이름 */}
               <div className={styles.detailFieldRow}>
                 <span className={styles.detailFieldLabel}>이름</span>
@@ -950,11 +829,88 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic', cus
                 />
               </div>
 
+              {/* 메모 */}
+              <div className={styles.detailMemoSection}>
+                <MemoTimeline
+                  tableName="hakjeom_consultations"
+                  recordId={String(item.id)}
+                  legacyMemo={item.memo}
+                  onCountChange={setMemoCount}
+                />
+              </div>
             </>
           )}
 
           {activeTab === 'info' && (
             <>
+              {/* 유입경로 */}
+              <div className={styles.detailChipSection}>
+                <span className={styles.detailChipSectionLabel}>유입경로</span>
+                <div className={styles.detailChipRow}>
+                  {SOURCE_MAJORS.map(m => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => handleMajorSelect(m)}
+                      className={editSourceMajor === m ? styles.tagBtnActive : styles.tagBtn}
+                    >
+                      {editSourceMajor === m ? `✓ ${m}` : m}
+                    </button>
+                  ))}
+                </div>
+                {editSourceMajor === '맘카페' && (
+                  <div className={styles.clickSourceSubPanel}>
+                    {CAFE_NAME_LIST.map(cafeName => (
+                      <button key={cafeName} type="button" onClick={() => handleMinorSelect(cafeName)}
+                        className={editSourceMinor === cafeName ? styles.tagBtnSmActive : styles.tagBtnSm}
+                      >{cafeName}</button>
+                    ))}
+                    {customCafes.map(cafeName => (
+                      <span key={cafeName} className={styles.customItemWrap}>
+                        <button type="button" onClick={() => handleMinorSelect(cafeName)}
+                          className={editSourceMinor === cafeName ? styles.tagBtnSmActive : styles.tagBtnSm}
+                        >{cafeName}</button>
+                        <button type="button" className={styles.customItemDeleteBtn} onClick={() => handleDeleteCafe(cafeName)}>✕</button>
+                      </span>
+                    ))}
+                    {showCafeAdd ? (
+                      <>
+                        <input className={styles.subPanelAddInput} value={cafeAddInput}
+                          onChange={e => setCafeAddInput(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter') handleAddCafe(); if (e.key === 'Escape') setShowCafeAdd(false); }}
+                          placeholder="카페 이름" autoFocus />
+                        <button type="button" className={styles.subPanelAddConfirm} onClick={handleAddCafe}>추가</button>
+                      </>
+                    ) : (
+                      <button type="button" className={styles.subPanelAddBtn} onClick={() => setShowCafeAdd(true)}>+ 카페</button>
+                    )}
+                  </div>
+                )}
+                {editSourceMajor === '당근' && (
+                  <div className={styles.clickSourceSubPanel}>
+                    {customDanggeun.map(area => (
+                      <span key={area} className={styles.customItemWrap}>
+                        <button type="button" onClick={() => handleMinorSelect(area)}
+                          className={editSourceMinor === area ? styles.tagBtnSmActive : styles.tagBtnSm}
+                        >{area}</button>
+                        <button type="button" className={styles.customItemDeleteBtn} onClick={() => handleDeleteDanggeun(area)}>✕</button>
+                      </span>
+                    ))}
+                    {showDanggeunAdd ? (
+                      <>
+                        <input className={styles.subPanelAddInput} value={danggeunAddInput}
+                          onChange={e => setDanggeunAddInput(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter') handleAddDanggeun(); if (e.key === 'Escape') setShowDanggeunAdd(false); }}
+                          placeholder="지역 이름" autoFocus />
+                        <button type="button" className={styles.subPanelAddConfirm} onClick={handleAddDanggeun}>추가</button>
+                      </>
+                    ) : (
+                      <button type="button" className={styles.subPanelAddBtn} onClick={() => setShowDanggeunAdd(true)}>+ 지역</button>
+                    )}
+                  </div>
+                )}
+              </div>
+
               {/* 취득사유 */}
               <div className={styles.detailChipSection}>
                 <span className={styles.detailChipSectionLabel}>취득사유</span>
@@ -972,66 +928,79 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic', cus
                 </div>
               </div>
 
-              {/* 취소사유 (다중 선택) */}
-              <div className={styles.detailChipSection}>
-                <span className={styles.detailChipSectionLabel}>취소사유</span>
-                <div className={styles.detailChipRow}>
-                  {COUNSEL_CHECK_OPTIONS.map(c => (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => toggleCounselCheck(c)}
-                      className={editCounselCheck.includes(c) ? styles.tagBtnActive : styles.tagBtn}
-                    >
-                      {editCounselCheck.includes(c) ? `✓ ${c}` : c}
-                    </button>
+              {/* 현재상황 */}
+              <div className={styles.detailFieldRow}>
+                <span className={styles.detailFieldLabel}>현재상황</span>
+                <select
+                  value={editCurrentSituation}
+                  onChange={e => setEditCurrentSituation(e.target.value)}
+                  className={`${styles.input} ${styles.inputFull}`}
+                >
+                  <option value="">선택</option>
+                  {CURRENT_SITUATION_OPTIONS.map(o => (
+                    <option key={o} value={o}>{o}</option>
                   ))}
-                </div>
-                {editCounselCheck.includes('기타') && (
-                  <input
-                    value={editCounselCheckEtc}
-                    onChange={e => setEditCounselCheckEtc(e.target.value)}
-                    placeholder="기타 내용 입력"
-                    className={`${styles.input} ${styles.inputFull}`}
-                    style={{ marginTop: 8 }}
-                    autoFocus
-                  />
-                )}
+                </select>
               </div>
 
               {/* 상태 */}
               <div className={styles.detailChipSection}>
                 <span className={styles.detailChipSectionLabel}>상태</span>
                 <div className={styles.detailChipRow}>
-                  {(['부재중/추후통화', '상담대기', '보류', '등록대기', '등록완료', '취소', '기타'] as ConsultationStatus[]).map(s => (
-                    <button key={s} type="button" onClick={() => setEditStatus(s)}
-                      style={editStatus === s
-                        ? { padding: '5px 12px', borderRadius: 20, cursor: 'pointer', border: `2px solid ${CONSULTATION_STATUS_STYLE[s].color}`, background: CONSULTATION_STATUS_STYLE[s].background, color: CONSULTATION_STATUS_STYLE[s].color, fontSize: 13, fontWeight: 600, transition: 'all 0.15s' }
-                        : { padding: '5px 12px', borderRadius: 20, cursor: 'pointer', border: '2px solid var(--toss-border)', background: 'transparent', color: 'var(--toss-text-secondary)', fontSize: 13, fontWeight: 600, transition: 'all 0.15s' }}
-                    >{s}</button>
-                  ))}
-                  {editStatus === '기타' && (
+                  {(['부재중/추후통화', '상담대기', '상담완료', '보류', '등록완료', '취소', '기타'] as string[]).map(s => {
+                    const isConsultDone = s === '상담완료';
+                    const isCancel = s === '취소';
+                    const isActive = isConsultDone ? editStatus.startsWith('상담완료') : editStatus === s;
+                    const styleKey = isConsultDone ? '상담완료-높음' : s;
+                    const colors = CONSULTATION_STATUS_STYLE[styleKey as ConsultationStatus];
+                    return (
+                      <button key={s} type="button"
+                        onClick={() => {
+                          if (isConsultDone) { if (!editStatus.startsWith('상담완료')) setEditStatus('상담완료-높음'); }
+                          else if (isCancel) { setEditStatus('취소'); }
+                          else { setEditStatus(s as ConsultationStatus); }
+                        }}
+                        style={isActive
+                          ? { padding: '5px 12px', borderRadius: 20, cursor: 'pointer', border: `2px solid ${colors?.color ?? '#333'}`, background: colors?.background ?? '#f3f4f6', color: colors?.color ?? '#333', fontSize: 13, fontWeight: 600, transition: 'all 0.15s' }
+                          : { padding: '5px 12px', borderRadius: 20, cursor: 'pointer', border: '2px solid var(--toss-border)', background: 'transparent', color: 'var(--toss-text-secondary)', fontSize: 13, fontWeight: 600, transition: 'all 0.15s' }}
+                      >{s}</button>
+                    );
+                  })}
+                </div>
+                {editStatus === '기타' && (
+                  <div className={styles.clickSourceSubPanel}>
                     <input
                       type="text"
                       value={editStatusEtc}
                       onChange={e => setEditStatusEtc(e.target.value)}
                       placeholder="기타 내용 입력"
-                      className={styles.input}
-                      style={{ flex: 1, minWidth: 120, maxWidth: 220 }}
+                      className={styles.subPanelAddInput}
+                      style={{ width: '100%' }}
                       autoFocus
                     />
-                  )}
-                </div>
-                <div className={styles.detailChipRow} style={{ alignItems: 'center', marginTop: 4 }}>
-                  <span style={{ fontSize: 11, color: 'var(--toss-text-secondary)', fontWeight: 600, whiteSpace: 'nowrap', marginRight: 2 }}>상담완료 &gt;</span>
-                  {(['상담완료-높음', '상담완료-중간', '상담완료-낮음'] as ConsultationStatus[]).map(s => (
-                    <button key={s} type="button" onClick={() => setEditStatus(s)}
-                      style={editStatus === s
-                        ? { padding: '5px 12px', borderRadius: 20, cursor: 'pointer', border: `2px solid ${CONSULTATION_STATUS_STYLE[s].color}`, background: CONSULTATION_STATUS_STYLE[s].background, color: CONSULTATION_STATUS_STYLE[s].color, fontSize: 13, fontWeight: 600, transition: 'all 0.15s' }
-                        : { padding: '5px 12px', borderRadius: 20, cursor: 'pointer', border: '2px solid var(--toss-border)', background: 'transparent', color: 'var(--toss-text-secondary)', fontSize: 13, fontWeight: 600, transition: 'all 0.15s' }}
-                    >{s.replace('상담완료-', '')}</button>
-                  ))}
-                </div>
+                  </div>
+                )}
+                {editStatus.startsWith('상담완료') && (
+                  <div className={styles.clickSourceSubPanel}>
+                    {(['상담완료-높음', '상담완료-중간', '상담완료-낮음'] as ConsultationStatus[]).map(s => (
+                      <button key={s} type="button" onClick={() => setEditStatus(s)}
+                        className={editStatus === s ? styles.tagBtnSmActive : styles.tagBtnSm}
+                      >{s.replace('상담완료-', '')}</button>
+                    ))}
+                  </div>
+                )}
+                {editStatus === '취소' && (
+                  <div className={styles.clickSourceSubPanel}>
+                    {COUNSEL_CHECK_OPTIONS.map(c => (
+                      <button key={c} type="button" onClick={() => toggleCounselCheck(c)}
+                        className={editCounselCheck.includes(c) ? styles.tagBtnSmActive : styles.tagBtnSm}
+                      >{editCounselCheck.includes(c) ? `✓ ${c}` : c}</button>
+                    ))}
+                    {editCounselCheck.includes('기타') && (
+                      <input value={editCounselCheckEtc} onChange={e => setEditCounselCheckEtc(e.target.value)} placeholder="기타 내용 입력" className={styles.subPanelAddInput} autoFocus />
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* 반응포인트 */}
@@ -1085,6 +1054,18 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic', cus
                 )}
               </div>
 
+              {/* 과목당비용 */}
+              <div className={styles.detailFieldRow}>
+                <span className={styles.detailFieldLabel}>과목당비용</span>
+                <input
+                  type="text"
+                  value={editSubjectCost}
+                  onChange={e => setEditSubjectCost(e.target.value.replace(/[^0-9,]/g, ''))}
+                  placeholder="예) 150000"
+                  className={`${styles.input} ${styles.inputFull}`}
+                />
+              </div>
+
               {/* 담당자 */}
               {!hideManager && (
                 <div className={styles.detailFieldRow}>
@@ -1099,15 +1080,6 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic', cus
                 </div>
               )}
             </>
-          )}
-
-          {activeTab === 'memo' && (
-            <MemoTimeline
-              tableName="hakjeom_consultations"
-              recordId={String(item.id)}
-              legacyMemo={item.memo}
-              onCountChange={setMemoCount}
-            />
           )}
         </div>
 
@@ -1738,7 +1710,7 @@ function HakjeomTab({ isActive, highlightId }: { isActive: boolean; highlightId?
 
   // UI 상태
   const [selectedItem, setSelectedItem] = useState<HakjeomConsultation | null>(null);
-  const [openTab, setOpenTab] = useState<'basic' | 'info' | 'memo'>('basic');
+  const [openTab, setOpenTab] = useState<'basic' | 'info'>('basic');
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [deleting, setDeleting] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -2338,18 +2310,16 @@ function HakjeomTab({ isActive, highlightId }: { isActive: boolean; highlightId?
                       <button className={`${styles.thFilterBtn}${statusFilter.length > 0 ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'status') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('status'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
                     </div>
                   </th>
-                  <th className={styles.th}>현재상황</th>
-                  <th className={styles.th}>반응포인트</th>
-                  <th className={styles.th}>과목비용</th>
+                  <th className={styles.th}>메모</th>
                   <th className={styles.th}>등록일</th>
                   <th className={styles.th}></th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
-                  <TableSkeleton cols={16} rows={8} />
+                  <TableSkeleton cols={15} rows={8} />
                 ) : filtered.length === 0 ? (
-                  <tr><td colSpan={16} className={styles.tableEmptyMsg}>검색 결과가 없습니다.</td></tr>
+                  <tr><td colSpan={15} className={styles.tableEmptyMsg}>검색 결과가 없습니다.</td></tr>
                 ) : paginated.map((item, index) => (
                   <tr
                     key={item.id}
@@ -2389,8 +2359,8 @@ function HakjeomTab({ isActive, highlightId }: { isActive: boolean; highlightId?
                       }
                     }}
                   >
-                    <td className={styles.tdCenter} onClick={e => e.stopPropagation()}>
-                      <input type="checkbox" checked={selectedIds.includes(item.id)} onChange={() => toggleSelect(item.id)} className={styles.checkbox} />
+                    <td className={styles.tdCenter} onClick={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()}>
+                      <input type="checkbox" checked={selectedIds.includes(item.id)} onChange={() => toggleSelect(item.id)} onClick={e => e.stopPropagation()} className={styles.checkbox} />
                     </td>
                     <td className={styles.tdNum}>{(currentPage - 1) * itemsPerPage + index + 1}</td>
                     <td className={styles.tdSecondary}>{parseSource(item.click_source).major || '-'}</td>
@@ -2438,9 +2408,7 @@ function HakjeomTab({ isActive, highlightId }: { isActive: boolean; highlightId?
                         styleMap={CONSULTATION_STATUS_STYLE}
                       />
                     </td>
-                    <td className={styles.tdSecondary}>{item.current_situation ?? '-'}</td>
-                    <td className={styles.tdEllipsis} title={item.reaction_point ?? ''}>{item.reaction_point ?? '-'}</td>
-                    <td className={styles.tdSecondary}>{formatCost(item.subject_cost)}</td>
+                    <td className={styles.tdEllipsis} title={item.latest_memo ?? item.memo ?? ''}>{item.latest_memo ?? item.memo ?? '-'}</td>
                     <td className={styles.tdDateSmall}>
                       {formatDate(item.created_at)}
                     </td>
@@ -3601,12 +3569,12 @@ type StatsSubTab = 'overview' | 'status' | 'source' | 'time' | 'mamcafe';
 const STATS_STATUS_COLORS: Record<string, string> = {
   '부재중/추후통화': '#94a3b8', '상담대기': '#3b82f6',
   '상담완료-높음': '#0ea5e9', '상담완료-중간': '#eab308', '상담완료-낮음': '#f43f5e',
-  '보류': '#8b5cf6', '등록대기': '#f59e0b', '등록완료': '#22c55e', '취소': '#dc2626', '기타': '#059669',
+  '보류': '#8b5cf6', '등록완료': '#22c55e', '취소': '#dc2626', '기타': '#059669',
 };
 const STATS_STATUS_LIST: ConsultationStatus[] = [
   '부재중/추후통화', '상담대기',
   '상담완료-높음', '상담완료-중간', '상담완료-낮음',
-  '보류', '등록대기', '등록완료', '취소', '기타',
+  '보류', '등록완료', '취소', '기타',
 ];
 const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'];
 const SOURCE_COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#64748b'];
@@ -4282,9 +4250,7 @@ function CounselDoneTab({ isActive, onCountChange }: { isActive: boolean; onCoun
   }, [managerDropdownOpen]);
 
   const sorted = [...filtered].sort((a, b) => {
-    const da = a.contact_scheduled_at ?? '9999';
-    const db = b.contact_scheduled_at ?? '9999';
-    return da.localeCompare(db);
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
   const totalPages = Math.ceil(sorted.length / itemsPerPage);
   const paginated = sorted.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -4474,7 +4440,7 @@ function CounselDoneTab({ isActive, onCountChange }: { isActive: boolean; onCoun
           item={selectedItem}
           onClose={() => setSelectedItem(null)}
           onUpdate={handleUpdate}
-          initialTab="memo"
+          initialTab="basic"
           customCafes={customCafes}
           customDanggeun={customDanggeun}
           onAddCafe={handleAddCafe}
