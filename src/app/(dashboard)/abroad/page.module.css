@@ -1,3 +1,29 @@
+/* ── 페이지 헤더 ── */
+.pageHeader {
+  padding-bottom: 4px;
+}
+
+.pageTitle {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--toss-text-primary);
+  margin: 0 0 4px;
+}
+
+.pageSubtitle {
+  font-size: 13px;
+  color: var(--toss-text-secondary);
+  margin: 0;
+}
+
+/* ── 검색 하이라이트 ── */
+.highlight {
+  background: #fff59d;
+  color: inherit;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
 .loadingWrap {
   display: flex;
   align-items: center;
@@ -310,6 +336,39 @@
   padding: 2px 8px;
   background: #FFF0F0;
   color: #D93025;
+  border-radius: 999px;
+}
+
+.badge_email {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  background: var(--toss-bg);
+  color: var(--toss-text-tertiary);
+  border-radius: 999px;
+}
+
+.badge_google {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  background: #FFF0F0;
+  color: #D93025;
+  border-radius: 999px;
+}
+
+.badge_kakao {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  background: #FFF8C5;
+  color: #7B5A00;
   border-radius: 999px;
 }
 

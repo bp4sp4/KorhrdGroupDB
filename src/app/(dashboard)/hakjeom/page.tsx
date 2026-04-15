@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useLayoutEffect, useCallback, useRef } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import {
   ResponsiveContainer, ComposedChart, BarChart, AreaChart, PieChart,
   Bar, Line, Area, Pie, Cell,
@@ -4493,6 +4493,7 @@ const TAB_CONFIG: { key: TabKey; label: string }[] = [
 ];
 
 export default function HakjeomPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const urlTab = searchParams.get('tab') as TabKey | null;
   const urlHighlight = searchParams.get('highlight') ? Number(searchParams.get('highlight')) : undefined;
@@ -4551,7 +4552,14 @@ export default function HakjeomPage() {
   const handleTabChange = (key: TabKey) => {
     setActiveTab(key);
     setMountedTabs(prev => new Set([...prev, key]));
+    router.replace(`/hakjeom?tab=${key}`, { scroll: false });
   };
+
+  useEffect(() => {
+    if (urlTab && TAB_CONFIG.some(t => t.key === urlTab) && (!allowedHakjeomTabs || allowedHakjeomTabs.includes(urlTab))) {
+      handleTabChange(urlTab);
+    }
+  }, [urlTab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const visibleBanners = todayScheduled.filter(c => !dismissedBannerIds.has(c.id));
 

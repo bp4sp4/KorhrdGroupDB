@@ -245,6 +245,84 @@
   text-align: center;
 }
 
+/* ─── Sidebar Accordion ─────────────────────────────────────────────────── */
+
+.sidebarParentBtn {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--toss-text-secondary);
+  cursor: pointer;
+  text-align: left;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.sidebarParentBtn:hover {
+  background: var(--toss-bg);
+  color: var(--toss-text-primary);
+}
+
+.sidebarParentBtnActive {
+  font-weight: 600;
+  color: var(--toss-blue);
+}
+
+.sidebarParentBtnActive .sidebarLinkIcon {
+  color: var(--toss-blue);
+}
+
+.sidebarChevron {
+  display: flex;
+  align-items: center;
+  color: var(--toss-text-tertiary);
+  transition: transform 200ms ease;
+  flex-shrink: 0;
+}
+
+.sidebarChevronOpen {
+  transform: rotate(90deg);
+}
+
+.sidebarSubList {
+  list-style: none;
+  margin: 1px 0 2px 0;
+  padding: 0 0 0 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.sidebarSubLink {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--toss-text-secondary);
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.sidebarSubLink:hover {
+  background: var(--toss-bg);
+  color: var(--toss-text-primary);
+}
+
+.sidebarSubLinkActive {
+  font-weight: 600;
+  color: var(--toss-blue);
+  background: var(--toss-blue-subtle);
+}
+
 .sidebarFooter {
   border-top: 1px solid var(--toss-border);
   flex-shrink: 0;

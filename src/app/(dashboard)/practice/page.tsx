@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import styles from '../hakjeom/page.module.css'
 import practiceStyles from './page.module.css'
 import MemoTimeline from '@/components/ui/MemoTimeline'
@@ -1547,6 +1547,7 @@ function EmploymentAddModal({ onClose, onAdd }: {
 // ─── 메인 페이지 ─────────────────────────────────────────────────────────────
 
 export default function PracticePage() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const urlHighlight = searchParams.get('highlight') ? Number(searchParams.get('highlight')) : undefined
   const urlTab = searchParams.get('tab') as PracticeTab | null
@@ -1556,6 +1557,11 @@ export default function PracticePage() {
       ? urlTab
       : 'consultation'
   )
+
+  useEffect(() => {
+    const valid: PracticeTab[] = ['consultation', 'practice', 'employment']
+    if (urlTab && valid.includes(urlTab)) setActiveTab(urlTab)
+  }, [urlTab])
 
   // 상담신청
   const [consultations, setConsultations] = useState<PracticeConsultation[]>([])
@@ -1879,6 +1885,7 @@ export default function PracticePage() {
     setSelectedPracticeApp(null)
     setSelectedEmploymentApp(null)
     setError('')
+    router.replace(`/practice?tab=${tab}`, { scroll: false })
   }
 
   // ─── 통계 ──────────────────────────────────────────────────────────────────

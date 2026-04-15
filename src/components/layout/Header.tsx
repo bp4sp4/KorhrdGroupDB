@@ -18,12 +18,7 @@ const SECTION_NAV: NavSection[] = [
   {
     label: '교육운영',
     href: '/hakjeom',
-    activeOn: ['/hakjeom', '/cert', '/practice', '/allcare', '/duplicate', '/trash', '/ref-manage', '/logs', '/links'],
-  },
-  {
-    label: '경영관리',
-    href: '/revenues',
-    activeOn: ['/revenues', '/approvals', '/reports'],
+    activeOn: ['/hakjeom', '/cert', '/practice', '/allcare', '/duplicate', '/trash', '/ref-manage', '/logs', '/links', '/revenues', '/approvals', '/reports'],
   },
   {
     label: '어드민',
@@ -43,8 +38,7 @@ function hasPermission(permissions: { section: string; scope: string }[], sectio
   return sections.some(s => permissions.some(p => p.section === s && p.scope !== 'none'))
 }
 
-const EDUCATION_SECTIONS = ['hakjeom', 'cert', 'practice', 'allcare', 'duplicate', 'trash', 'logs', 'ref-manage', 'assignment']
-const MGMT_SECTIONS = ['approvals', 'revenues', 'reports']
+const EDUCATION_SECTIONS = ['hakjeom', 'cert', 'practice', 'allcare', 'duplicate', 'trash', 'logs', 'ref-manage', 'assignment', 'approvals', 'revenues', 'reports']
 
 export default function Header({ userName = '관리자', userRole, permissions = [] }: HeaderProps) {
   const router = useRouter()
@@ -61,22 +55,13 @@ export default function Header({ userName = '관리자', userRole, permissions =
   const isAdminRole = userRole === 'admin' || isMasterAdmin
 
   const showEducation = isAdminRole || hasPermission(permissions, EDUCATION_SECTIONS)
-  const showMgmt = isAdminRole || hasPermission(permissions, MGMT_SECTIONS)
   const showAdmin = isAdminRole
-
-  // 경영관리 탭 클릭 시 이동할 첫 번째 허용된 경로
-  const mgmtHref = isAdminRole
-    ? '/revenues'
-    : hasPermission(permissions, ['approvals']) ? '/approvals'
-    : hasPermission(permissions, ['revenues']) ? '/revenues'
-    : '/approvals'
 
   const visibleSectionNav = SECTION_NAV.filter((sec) => {
     if (sec.href === '/admin') return showAdmin
-    if (sec.href === '/revenues') return showMgmt
     if (sec.href === '/hakjeom') return showEducation
-return true
-  }).map(sec => sec.href === '/revenues' ? { ...sec, href: mgmtHref } : sec)
+    return true
+  })
 
   return (
     <header className={styles.header}>

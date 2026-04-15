@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import styles from './page.module.css'
 
 type User = {
@@ -11,6 +11,7 @@ type User = {
   target_country: string | null
   created_at: string
   is_admin: boolean | null
+  login_provider: string | null
 }
 
 type Application = {
@@ -89,7 +90,15 @@ const PAYMENT_STATUS_CLASS: Record<string, string> = {
 
 export default function AbroadPage() {
   const router = useRouter()
-  const [tab, setTab] = useState('users')
+  const searchParams = useSearchParams()
+  const urlTab = searchParams.get('tab')
+  const [tab, setTab] = useState(() =>
+    urlTab && TAB_ITEMS.some(t => t.id === urlTab) ? urlTab : 'users'
+  )
+
+  useEffect(() => {
+    if (urlTab && TAB_ITEMS.some(t => t.id === urlTab)) setTab(urlTab)
+  }, [urlTab])
   const [loading, setLoading] = useState(true)
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const [approvingId, setApprovingId] = useState<string | null>(null)
@@ -158,19 +167,39 @@ export default function AbroadPage() {
     fetchData()
   }
 
+  const highlight = (text: string, keyword: string) => {
+    const kw = keyword.trim()
+    if (!kw) return <>{text}</>
+    const idx = text.toLowerCase().indexOf(kw.toLowerCase())
+    if (idx === -1) return <>{text}</>
+    return (
+      <>
+        {text.slice(0, idx)}
+        <mark className={styles.highlight}>{text.slice(idx, idx + kw.length)}</mark>
+        {text.slice(idx + kw.length)}
+      </>
+    )
+  }
+
   if (loading) {
     return <div className={styles.loadingWrap}>불러오는 중...</div>
   }
 
   return (
     <div className={styles.pageWrap}>
+      {/* 페이지 타이틀 */}
+      <div className={styles.pageHeader}>
+        <h1 className={styles.pageTitle}>유학 사업부</h1>
+        <p className={styles.pageSubtitle}>유학 회원, 상담, 신청서, 결제 내역을 관리합니다.</p>
+      </div>
+
       {/* 탭 */}
       <nav className={styles.tabNav}>
         {TAB_ITEMS.map(t => (
           <button
             key={t.id}
             className={tab === t.id ? styles.tabBtnActive : styles.tabBtn}
-            onClick={() => setTab(t.id)}
+            onClick={() => { setTab(t.id); router.replace(`/abroad?tab=${t.id}`, { scroll: false }) }}
           >
             {t.label}
           </button>
@@ -195,6 +224,7 @@ export default function AbroadPage() {
                 <tr>
                   <th className={styles.th}>이름</th>
                   <th className={styles.th}>이메일</th>
+                  <th className={styles.th}>가입방식</th>
                   <th className={styles.th}>가입일</th>
                   <th className={styles.th}>권한</th>
                 </tr>
@@ -206,7 +236,7 @@ export default function AbroadPage() {
                   if (!kw) return true
                   return (u.full_name ?? '').toLowerCase().includes(kw) || (u.email ?? '').toLowerCase().includes(kw)
                 }).length === 0 ? (
-                  <tr><td colSpan={4} className={styles.tdEmpty}>회원이 없습니다.</td></tr>
+                  <tr><td colSpan={5} className={styles.tdEmpty}>회원이 없습니다.</td></tr>
                 ) : users.filter(u => {
                   if (!matchesDate(u.created_at)) return false
                   const kw = userSearch.trim().toLowerCase()
@@ -214,8 +244,15 @@ export default function AbroadPage() {
                   return (u.full_name ?? '').toLowerCase().includes(kw) || (u.email ?? '').toLowerCase().includes(kw)
                 }).map(u => (
                   <tr key={u.id} className={styles.tr}>
-                    <td className={styles.td}>{u.full_name ?? '-'}</td>
-                    <td className={styles.td}>{u.email}</td>
+                    <td className={styles.td}>{highlight(u.full_name ?? '-', userSearch)}</td>
+                    <td className={styles.td}>{highlight(u.email ?? '', userSearch)}</td>
+                    <td className={styles.td}>
+                      {u.login_provider === 'google'
+                        ? <span className={styles.badge_google}>Google</span>
+                        : u.login_provider === 'kakao'
+                        ? <span className={styles.badge_kakao}>카카오</span>
+                        : <span className={styles.badge_email}>이메일</span>}
+                    </td>
                     <td className={styles.tdDate}>{new Date(u.created_at).toLocaleDateString('ko-KR')}</td>
                     <td className={styles.td}>
                       {u.is_admin
@@ -282,8 +319,8 @@ export default function AbroadPage() {
                         {CONSULT_TYPE_LABEL[c.type] ?? c.type}
                       </span>
                     </td>
-                    <td className={styles.td}>{c.name}</td>
-                    <td className={styles.td}>{c.phone}</td>
+                    <td className={styles.td}>{highlight(c.name, consultSearch)}</td>
+                    <td className={styles.td}>{highlight(c.phone, consultSearch)}</td>
                     <td className={styles.td}>{c.region}</td>
                     <td className={styles.td}>{c.desired_start}</td>
                     <td className={styles.td}>
@@ -350,9 +387,9 @@ export default function AbroadPage() {
                         router.push(`/abroad/applications/${a.id}`)
                       }}
                     >
-                      <td className={styles.td}>{a.name ?? '-'}</td>
-                      <td className={styles.td}>{a.phone ?? '-'}</td>
-                      <td className={styles.td}>{a.email ?? '-'}</td>
+                      <td className={styles.td}>{highlight(a.name ?? '-', appSearch)}</td>
+                      <td className={styles.td}>{highlight(a.phone ?? '-', appSearch)}</td>
+                      <td className={styles.td}>{highlight(a.email ?? '-', appSearch)}</td>
                       <td className={styles.td}>{PROGRAM_LABEL[a.program ?? ''] ?? a.program ?? '-'}</td>
                       <td className={styles.td}>
                         {loadingId === a.id ? (
@@ -418,8 +455,8 @@ export default function AbroadPage() {
                   return name.toLowerCase().includes(kw) || (PROGRAM_LABEL[p.program] ?? p.program).toLowerCase().includes(kw)
                 }).map(p => (
                   <tr key={p.id} className={styles.tr}>
-                    <td className={styles.td}>{p.user_id ? (userNameMap.get(p.user_id) ?? '-') : '-'}</td>
-                    <td className={styles.td}>{PROGRAM_LABEL[p.program] ?? p.program}</td>
+                    <td className={styles.td}>{highlight(p.user_id ? (userNameMap.get(p.user_id) ?? '-') : '-', paymentSearch)}</td>
+                    <td className={styles.td}>{highlight(PROGRAM_LABEL[p.program] ?? p.program, paymentSearch)}</td>
                     <td className={styles.td}>{p.amount.toLocaleString('ko-KR')}원</td>
                     <td className={styles.td}>
                       <span className={styles[PAYMENT_STATUS_CLASS[p.status] ?? 'badge_draft']}>

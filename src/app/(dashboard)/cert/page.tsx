@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import {
   ResponsiveContainer, ComposedChart, BarChart, AreaChart, PieChart,
   Bar, Line, Area, Pie, Cell,
@@ -5336,6 +5336,7 @@ function CertStatsTab() {
 // ─────────────────────────────────────────────
 
 export default function CertPage() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const urlTab = searchParams.get('tab') as SourceTab | null
   const urlHighlight = searchParams.get('highlight') ? Number(searchParams.get('highlight')) : undefined
@@ -5398,6 +5399,7 @@ export default function CertPage() {
 
   const handleTabChange = (tab: SourceTab) => {
     setSourceTab(tab)
+    router.replace(`/cert?tab=${tab}`, { scroll: false })
   }
 
   const visibleBanners = todayScheduled.filter(c => !dismissedBannerIds.has(c.id))

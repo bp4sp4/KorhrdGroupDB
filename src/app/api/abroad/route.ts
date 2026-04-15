@@ -14,7 +14,7 @@ export async function GET() {
   ] = await Promise.all([
     supabaseAdmin
       .from('profiles')
-      .select('id, full_name, email, target_country, created_at, is_admin')
+      .select('id, full_name, email, target_country, created_at, is_admin, login_provider')
       .order('created_at', { ascending: false }),
     supabaseAdmin
       .from('applications')

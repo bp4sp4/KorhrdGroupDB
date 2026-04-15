@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback, useRef } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import styles from './page.module.css'
 import { TableSkeleton, FilterBarSkeleton } from '@/components/ui/Skeleton'
 import {
@@ -442,9 +443,21 @@ function AllcareStatsTab({ stats, chartData }: { stats: Stats | null; chartData:
 // ─── 컴포넌트 ─────────────────────────────────────────────────────────────────
 
 export default function AllcarePage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const urlTab = searchParams.get('tab') as Tab | null
+
   const [stats, setStats] = useState<Stats | null>(null)
   const [chartData, setChartData] = useState<ChartData | null>(null)
-  const [activeTab, setActiveTab] = useState<Tab>('users')
+  const [activeTab, setActiveTab] = useState<Tab>(() => {
+    const valid: Tab[] = ['users', 'payments', 'stats']
+    return urlTab && valid.includes(urlTab) ? urlTab : 'users'
+  })
+
+  useEffect(() => {
+    const valid: Tab[] = ['users', 'payments', 'stats']
+    if (urlTab && valid.includes(urlTab)) setActiveTab(urlTab)
+  }, [urlTab])
 
   // 회원
   const [users, setUsers] = useState<UserData[]>([])
@@ -837,7 +850,7 @@ export default function AllcarePage() {
           <button
             key={t}
             className={`${styles.tab} ${activeTab === t ? styles.tabActive : ''}`}
-            onClick={() => setActiveTab(t)}
+            onClick={() => { setActiveTab(t); router.replace(`/allcare?tab=${t}`, { scroll: false }) }}
           >
             {t === 'users' ? '회원 목록' : t === 'payments' ? '결제 내역' : '통계'}
           </button>

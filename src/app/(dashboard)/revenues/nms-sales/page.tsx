@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { ChevronDown, ChevronRight, ChevronLeft, TrendingUp, Users, CheckCircle, CalendarDays, Award, Plane, BarChart2 } from 'lucide-react'
 import { getThisMonth, formatAmount } from '@/lib/management/utils'
 import {
@@ -779,11 +780,28 @@ function StatsTab() {
 // ─── 메인 페이지 ─────────────────────────────────────────────────────────────
 
 export default function NmsSalesPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const urlTab = searchParams.get('tab') as TabKey | null
+
   const thisMonth = getThisMonth()
   const [selectedYear, setSelectedYear] = useState(thisMonth.year)
   const [selectedMonth, setSelectedMonth] = useState(thisMonth.month)
-  const [activeTab, setActiveTab] = useState<TabKey>('nms')
-  const [visitedTabs, setVisitedTabs] = useState<Set<TabKey>>(new Set(['nms']))
+  const [activeTab, setActiveTab] = useState<TabKey>(() => {
+    const valid: TabKey[] = ['nms', 'cert', 'abroad', 'stats']
+    return urlTab && valid.includes(urlTab) ? urlTab : 'nms'
+  })
+  const [visitedTabs, setVisitedTabs] = useState<Set<TabKey>>(new Set([
+    urlTab && (['nms', 'cert', 'abroad', 'stats'] as TabKey[]).includes(urlTab) ? urlTab : 'nms'
+  ]))
+
+  useEffect(() => {
+    const valid: TabKey[] = ['nms', 'cert', 'abroad', 'stats']
+    if (urlTab && valid.includes(urlTab)) {
+      setActiveTab(urlTab)
+      setVisitedTabs(prev => new Set([...prev, urlTab]))
+    }
+  }, [urlTab])
 
   const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
     { key: 'nms',    label: '학점은행제 사업부', icon: <TrendingUp size={15} /> },
@@ -813,7 +831,7 @@ export default function NmsSalesPage() {
           <button
             key={tab.key}
             className={`${styles.div_tab} ${activeTab === tab.key ? styles.div_tab_active : ''}`}
-            onClick={() => { setActiveTab(tab.key); setVisitedTabs(prev => new Set([...prev, tab.key])) }}
+            onClick={() => { setActiveTab(tab.key); setVisitedTabs(prev => new Set([...prev, tab.key])); router.replace(`/revenues/nms-sales?tab=${tab.key}`, { scroll: false }) }}
           >
             {tab.icon}
             {tab.label}
