@@ -2117,26 +2117,6 @@ export default function PracticePage() {
       {toastVisible && <div className={styles.toast}>저장이 완료되었습니다</div>}
       {deleteToastVisible && <div className={styles.toast}>삭제되었습니다</div>}
 
-      {/* 페이지 헤더 */}
-      <div style={{ marginBottom: 20 }}>
-        <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--toss-text-primary)', margin: 0 }}>실습/취업</h2>
-        <p style={{ fontSize: 14, color: 'var(--toss-text-secondary)', margin: '4px 0 0' }}>
-          실습 및 취업 관련 신청 내역을 관리합니다.
-        </p>
-      </div>
-
-      {/* 탭 */}
-      <div style={{ display: 'flex', gap: 0, borderBottom: '2px solid var(--toss-border)', marginBottom: 20 }}>
-        {TABS.map(tab => (
-          <button
-            key={tab.value}
-            onClick={() => handleTabChange(tab.value)}
-            className={`${styles.tabBtn} ${activeTab === tab.value ? styles.tabBtnActive : ''}`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
 
       {/* ===== 상담신청 탭 ===== */}
       {activeTab === 'consultation' && (

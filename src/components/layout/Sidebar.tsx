@@ -143,12 +143,43 @@ export default function Sidebar({ userRole, permissions = [] }: SidebarProps) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [trashCount, setTrashCount] = useState<number>(0)
+  const [counselCount, setCounselCount] = useState<number>(0)
+  const [certCounselCount, setCertCounselCount] = useState<number>(0)
   const [openItems, setOpenItems] = useState<Set<string>>(new Set())
   const channelRef = useRef<ReturnType<ReturnType<typeof createClient>['channel']> | null>(null)
 
   const toggleItem = (id: string) => {
     setOpenItems(prev => prev.has(id) ? new Set() : new Set([id]))
   }
+
+  useEffect(() => {
+    if (userRole === 'mini-admin') return
+
+    const fetchHakjeomCount = () => {
+      fetch('/api/hakjeom/counsel-count')
+        .then(r => r.ok ? r.json() : { count: 0 })
+        .then((data: { count: number }) => setCounselCount(data.count ?? 0))
+        .catch(() => {})
+    }
+
+    const fetchCertCount = () => {
+      fetch('/api/cert/students/counsel-count')
+        .then(r => r.ok ? r.json() : { count: 0 })
+        .then((data: { count: number }) => setCertCounselCount(data.count ?? 0))
+        .catch(() => {})
+    }
+
+    fetchHakjeomCount()
+    fetchCertCount()
+
+    const supabase = createClient()
+    const channel = supabase.channel('sidebar-counsel-count')
+    channel.on('postgres_changes', { event: '*', schema: 'public', table: 'hakjeom_consultations' }, fetchHakjeomCount)
+    channel.on('postgres_changes', { event: '*', schema: 'public', table: 'cert_students' }, fetchCertCount)
+    channel.subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [userRole])
 
   useEffect(() => {
     if (userRole === 'mini-admin') return
@@ -254,6 +285,8 @@ export default function Sidebar({ userRole, permissions = [] }: SidebarProps) {
                       <ul className={styles.sidebarSubList}>
                         {item.children!.map(child => {
                           const isChildActive = activeChildHref === child.href && isPathActive
+                          const isCounselDone = child.id === 'hakjeom-tab-counsel_done'
+                          const isCertCounsel = child.id === 'cert-tab-student-contact'
                           return (
                             <li key={child.id}>
                               <Link
@@ -261,6 +294,12 @@ export default function Sidebar({ userRole, permissions = [] }: SidebarProps) {
                                 className={`${styles.sidebarSubLink} ${isChildActive ? styles.sidebarSubLinkActive : ''}`}
                               >
                                 {child.label}
+                                {isCounselDone && counselCount > 0 && (
+                                  <span className={styles.sidebarBadge}>{counselCount}</span>
+                                )}
+                                {isCertCounsel && certCounselCount > 0 && (
+                                  <span className={styles.sidebarBadge}>{certCounselCount}</span>
+                                )}
                               </Link>
                             </li>
                           )

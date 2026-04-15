@@ -129,22 +129,64 @@ function MonthPicker({ year, month, onChange }: {
 
 // ─── NMS 탭 콘텐츠 ───────────────────────────────────────────────────────────
 
+interface AllcarePaymentRow {
+  id: string
+  type: string
+  order_id: string
+  good_name: string | null
+  amount: number
+  payment_method: string | null
+  approved_at: string | null
+  user_name: string | null
+  user_email: string | null
+}
+
+interface AllcareSalesData {
+  totalRevenue: number
+  count: number
+  byType: Record<string, { count: number; revenue: number }>
+  payments: AllcarePaymentRow[]
+}
+
+const ALLCARE_PAGE_SIZE = 20
+
+const toKSTDate = (s: string | null) => {
+  if (!s) return '-'
+  return new Date(s).toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' })
+}
+
 function NmsTab({ year, month }: { year: number; month: number }) {
   const [teamFilter, setTeamFilter] = useState('')
   const [data, setData] = useState<NmsSalesData | null>(null)
   const [loading, setLoading] = useState(false)
   const [expandedTeams, setExpandedTeams] = useState<Set<string>>(new Set())
+  const [allcareData, setAllcareData] = useState<AllcareSalesData | null>(null)
+  const [allcarePage, setAllcarePage] = useState(1)
+  const [allcareTypeFilter, setAllcareTypeFilter] = useState<string | null>(null)
+  const [typeDropdownOpen, setTypeDropdownOpen] = useState(false)
+  const [typeDropdownPos, setTypeDropdownPos] = useState({ top: 0, left: 0 })
+  const typeDropdownRef = useRef<HTMLDivElement>(null)
 
   const fetch_ = useCallback(async () => {
     setLoading(true)
     try {
       const params = new URLSearchParams({ year: String(year), month: String(month) })
-      if (teamFilter) params.set('team', teamFilter)
-      const res = await fetch(`/api/management/nms-sales?${params}`)
-      if (res.ok) {
-        const json = await res.json()
+      if (teamFilter && teamFilter !== 'allcare') params.set('team', teamFilter)
+      const [nmsRes, allcareRes] = await Promise.all([
+        teamFilter === 'allcare' ? Promise.resolve(null) : fetch(`/api/management/nms-sales?${params}`),
+        fetch(`/api/management/allcare-sales?year=${year}&month=${month}`),
+      ])
+      setAllcarePage(1)
+      setAllcareTypeFilter(null)
+      if (nmsRes && nmsRes.ok) {
+        const json = await nmsRes.json()
         setData(json)
         setExpandedTeams(new Set(json.byTeam?.map((t: TeamStat) => t.team) ?? []))
+      } else if (teamFilter === 'allcare') {
+        setData(null)
+      }
+      if (allcareRes.ok) {
+        setAllcareData(await allcareRes.json())
       }
     } finally {
       setLoading(false)
@@ -161,8 +203,17 @@ function NmsTab({ year, month }: { year: number; month: number }) {
     })
   }
 
-  const rate = data && data.total.totalCount > 0
-    ? Math.round((data.total.completedCount / data.total.totalCount) * 100) : 0
+  useEffect(() => {
+    if (!typeDropdownOpen) return
+    const handler = (e: MouseEvent) => {
+      if (typeDropdownRef.current && !typeDropdownRef.current.contains(e.target as Node)) {
+        setTypeDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [typeDropdownOpen])
+
 
   return (
     <div className={styles.tab_content}>
@@ -172,31 +223,29 @@ function NmsTab({ year, month }: { year: number; month: number }) {
         {NMS_TEAMS.map(t => (
           <button key={t} className={`${styles.team_tab} ${teamFilter === t ? styles.team_tab_active : ''}`} onClick={() => setTeamFilter(t)}>{t}</button>
         ))}
+        <button className={`${styles.team_tab} ${teamFilter === 'allcare' ? styles.team_tab_active : ''}`} onClick={() => setTeamFilter('allcare')}>올케어</button>
       </div>
 
       {/* 요약 카드 */}
       {data && (
         <div className={styles.summary_grid}>
-          <div className={`${styles.summary_card} ${styles.card_blue}`}>
+          <div className={`${styles.summary_card} ${styles.card_indigo}`}>
             <div className={styles.card_icon_wrap}><TrendingUp size={18} /></div>
             <span className={styles.summary_label}>총 매출</span>
+            <span className={styles.summary_value}>{formatAmount((data.total.paymentAmount) + (allcareData?.totalRevenue ?? 0))}</span>
+            <span className={styles.summary_sub}>NMS + 올케어 합산</span>
+          </div>
+          <div className={`${styles.summary_card} ${styles.card_blue}`}>
+            <div className={styles.card_icon_wrap}><TrendingUp size={18} /></div>
+            <span className={styles.summary_label}>NMS 매출</span>
             <span className={styles.summary_value}>{formatAmount(data.total.paymentAmount)}</span>
+            <span className={styles.summary_sub}>NMS 등록 합산</span>
           </div>
-          <div className={`${styles.summary_card} ${styles.card_purple}`}>
-            <div className={styles.card_icon_wrap}><CheckCircle size={18} /></div>
-            <span className={styles.summary_label}>등록완료</span>
-            <span className={styles.summary_value}>{data.total.completedCount}<span className={styles.unit}>건</span></span>
-            <div className={styles.progress_wrap}>
-              <div className={styles.progress_bar}>
-                <div className={styles.progress_fill} style={{ width: `${rate}%` }} />
-              </div>
-              <span className={styles.progress_label}>{rate}%</span>
-            </div>
-          </div>
-          <div className={`${styles.summary_card} ${styles.card_gray}`}>
-            <div className={styles.card_icon_wrap}><Users size={18} /></div>
-            <span className={styles.summary_label}>전체 건수</span>
-            <span className={styles.summary_value}>{data.total.totalCount}<span className={styles.unit}>건</span></span>
+          <div className={`${styles.summary_card} ${styles.card_green}`}>
+            <div className={styles.card_icon_wrap}><TrendingUp size={18} /></div>
+            <span className={styles.summary_label}>올케어 매출</span>
+            <span className={styles.summary_value}>{formatAmount(allcareData?.totalRevenue ?? 0)}</span>
+            <span className={styles.summary_sub}>{allcareData?.count ?? 0}건 결제완료</span>
           </div>
         </div>
       )}
@@ -204,12 +253,100 @@ function NmsTab({ year, month }: { year: number; month: number }) {
       {/* 팀별 목록 */}
       {loading ? (
         <div className={styles.loading}><div className={styles.spinner} /><span>불러오는 중...</span></div>
+      ) : teamFilter === 'allcare' ? (
+        <div className={styles.allcare_wrap}>
+          {/* 유형별 요약 */}
+          {/* 결제 목록 */}
+          {(() => {
+            const allPayments = (allcareData?.payments ?? []).filter(p => !allcareTypeFilter || p.type === allcareTypeFilter)
+            const totalPages = Math.ceil(allPayments.length / ALLCARE_PAGE_SIZE)
+            const paginated = allPayments.slice((allcarePage - 1) * ALLCARE_PAGE_SIZE, allcarePage * ALLCARE_PAGE_SIZE)
+            return (
+              <>
+                {typeDropdownOpen && (
+                  <div
+                    ref={typeDropdownRef}
+                    className={styles.allcare_filterDropdown}
+                    style={{ top: typeDropdownPos.top, left: typeDropdownPos.left }}
+                  >
+                    <div
+                      className={`${styles.allcare_filterItem}${!allcareTypeFilter ? ` ${styles.allcare_filterItemActive}` : ''}`}
+                      onClick={() => { setAllcareTypeFilter(null); setAllcarePage(1); setTypeDropdownOpen(false) }}
+                    >전체</div>
+                    {Object.keys(allcareData?.byType ?? {}).map(type => (
+                      <div
+                        key={type}
+                        className={`${styles.allcare_filterItem}${allcareTypeFilter === type ? ` ${styles.allcare_filterItemActive}` : ''}`}
+                        onClick={() => { setAllcareTypeFilter(type); setAllcarePage(1); setTypeDropdownOpen(false) }}
+                      >{type}</div>
+                    ))}
+                  </div>
+                )}
+                <div className={styles.allcare_table_card}>
+                  <table className={styles.allcare_table}>
+                    <thead>
+                      <tr>
+                        <th className={styles.allcare_thFilterable}>
+                        <div className={styles.allcare_thInner}>
+                          유형
+                          <button
+                            className={`${styles.allcare_thFilterBtn}${allcareTypeFilter ? ` ${styles.allcare_thFilterBtnActive}` : ''}`}
+                            onClick={e => {
+                              e.stopPropagation()
+                              const rect = e.currentTarget.getBoundingClientRect()
+                              setTypeDropdownPos({ top: rect.bottom + 4, left: rect.left })
+                              setTypeDropdownOpen(v => !v)
+                            }}
+                          >
+                            <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                          </button>
+                        </div>
+                      </th>
+                        <th className={styles.allcare_th}>이름</th>
+                        <th className={styles.allcare_th}>이메일</th>
+                        <th className={styles.allcare_th}>상품명</th>
+                        <th className={`${styles.allcare_th} ${styles.th_right}`}>금액</th>
+                        <th className={`${styles.allcare_th} ${styles.th_center}`}>결제수단</th>
+                        <th className={`${styles.allcare_th} ${styles.th_center}`}>결제일</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {paginated.length === 0 ? (
+                        <tr><td colSpan={7} className={styles.allcare_empty_td}>데이터 없음</td></tr>
+                      ) : paginated.map(p => (
+                        <tr key={p.id} className={styles.allcare_tr}>
+                          <td className={styles.allcare_td}><span className={`${styles.allcare_type_chip} ${styles[`chip_${p.type}`]}`}>{p.type}</span></td>
+                          <td className={`${styles.allcare_td} ${styles.manager_name}`}>{p.user_name ?? '-'}</td>
+                          <td className={styles.allcare_td}>{p.user_email ?? '-'}</td>
+                          <td className={styles.allcare_td}>{p.good_name ?? '-'}</td>
+                          <td className={`${styles.allcare_td} ${styles.td_right}`}>{formatAmount(p.amount)}</td>
+                          <td className={`${styles.allcare_td} ${styles.td_center}`}>{p.payment_method ?? '-'}</td>
+                          <td className={`${styles.allcare_td} ${styles.td_center}`}>{toKSTDate(p.approved_at)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {totalPages > 1 && (
+                  <div className={styles.allcare_pagination}>
+                    <button className={styles.page_btn} disabled={allcarePage === 1} onClick={() => setAllcarePage(p => p - 1)}>
+                      <ChevronLeft size={14} />
+                    </button>
+                    <span className={styles.page_info}>{allcarePage} / {totalPages}</span>
+                    <button className={styles.page_btn} disabled={allcarePage === totalPages} onClick={() => setAllcarePage(p => p + 1)}>
+                      <ChevronRight size={14} />
+                    </button>
+                  </div>
+                )}
+              </>
+            )
+          })()}
+        </div>
       ) : !data || data.byTeam.length === 0 ? (
         <div className={styles.empty}>해당 기간에 데이터가 없습니다.</div>
       ) : (
         <div className={styles.teams_wrap}>
           {data.byTeam.map(team => {
-            const tRate = team.totalCount > 0 ? Math.round((team.completedCount / team.totalCount) * 100) : 0
             const isExpanded = expandedTeams.has(team.team)
             return (
               <div key={team.team} className={styles.team_block}>
@@ -220,10 +357,6 @@ function NmsTab({ year, month }: { year: number; month: number }) {
                     <span className={styles.team_amount}>{formatAmount(team.paymentAmount)}</span>
                     <span className={styles.team_divider} />
                     <span className={styles.team_stat}>완료 {team.completedCount}/{team.totalCount}건</span>
-                    <span className={styles.team_rate_badge} style={{
-                      background: tRate >= 70 ? 'var(--color-green-bg)' : tRate >= 40 ? 'var(--color-orange-bg)' : 'var(--color-red-bg)',
-                      color: tRate >= 70 ? 'var(--color-green)' : tRate >= 40 ? 'var(--color-orange)' : 'var(--color-red)',
-                    }}>{tRate}%</span>
                   </div>
                 </button>
                 {isExpanded && (
@@ -234,32 +367,22 @@ function NmsTab({ year, month }: { year: number; month: number }) {
                         <th className={styles.th_right}>매출</th>
                         <th className={styles.th_center}>등록완료</th>
                         <th className={styles.th_center}>전체</th>
-                        <th className={styles.th_center}>달성률</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {team.managers.map(mgr => {
-                        const mRate = mgr.totalCount > 0 ? Math.round((mgr.completedCount / mgr.totalCount) * 100) : 0
-                        return (
-                          <tr key={mgr.manager}>
-                            <td className={styles.manager_name}>{mgr.manager}</td>
-                            <td className={styles.td_right}>{formatAmount(mgr.paymentAmount)}</td>
-                            <td className={styles.td_center}>{mgr.completedCount}건</td>
-                            <td className={styles.td_center}>{mgr.totalCount}건</td>
-                            <td className={styles.td_center}>
-                              <span className={`${styles.rate_chip} ${mRate >= 70 ? styles.rate_green : mRate >= 40 ? styles.rate_orange : styles.rate_red}`}>{mRate}%</span>
-                            </td>
-                          </tr>
-                        )
-                      })}
+                      {team.managers.map(mgr => (
+                        <tr key={mgr.manager}>
+                          <td className={styles.manager_name}>{mgr.manager}</td>
+                          <td className={styles.td_right}>{formatAmount(mgr.paymentAmount)}</td>
+                          <td className={styles.td_center}>{mgr.completedCount}건</td>
+                          <td className={styles.td_center}>{mgr.totalCount}건</td>
+                        </tr>
+                      ))}
                       <tr className={styles.team_subtotal}>
                         <td>소계</td>
                         <td className={styles.td_right}>{formatAmount(team.paymentAmount)}</td>
                         <td className={styles.td_center}>{team.completedCount}건</td>
                         <td className={styles.td_center}>{team.totalCount}건</td>
-                        <td className={styles.td_center}>
-                          <span className={`${styles.rate_chip} ${tRate >= 70 ? styles.rate_green : tRate >= 40 ? styles.rate_orange : styles.rate_red}`}>{tRate}%</span>
-                        </td>
                       </tr>
                     </tbody>
                   </table>

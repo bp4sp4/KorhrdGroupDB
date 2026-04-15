@@ -844,18 +844,6 @@ export default function AllcarePage() {
         </div>
       )}
 
-      {/* 탭 */}
-      <div className={styles.tabs}>
-        {(['users', 'payments', 'stats'] as Tab[]).map(t => (
-          <button
-            key={t}
-            className={`${styles.tab} ${activeTab === t ? styles.tabActive : ''}`}
-            onClick={() => { setActiveTab(t); router.replace(`/allcare?tab=${t}`, { scroll: false }) }}
-          >
-            {t === 'users' ? '회원 목록' : t === 'payments' ? '결제 내역' : '통계'}
-          </button>
-        ))}
-      </div>
 
       {/* 회원 탭 */}
       {activeTab === 'users' && (

@@ -187,24 +187,6 @@ export default function AbroadPage() {
 
   return (
     <div className={styles.pageWrap}>
-      {/* 페이지 타이틀 */}
-      <div className={styles.pageHeader}>
-        <h1 className={styles.pageTitle}>유학 사업부</h1>
-        <p className={styles.pageSubtitle}>유학 회원, 상담, 신청서, 결제 내역을 관리합니다.</p>
-      </div>
-
-      {/* 탭 */}
-      <nav className={styles.tabNav}>
-        {TAB_ITEMS.map(t => (
-          <button
-            key={t.id}
-            className={tab === t.id ? styles.tabBtnActive : styles.tabBtn}
-            onClick={() => { setTab(t.id); router.replace(`/abroad?tab=${t.id}`, { scroll: false }) }}
-          >
-            {t.label}
-          </button>
-        ))}
-      </nav>
 
       {/* 회원 목록 */}
       {tab === 'users' && (

@@ -13,8 +13,6 @@ import MemoHoverBadge from '@/components/ui/MemoHoverBadge'
 import { TableSkeleton, StatsCardsSkeleton, ChartsGridSkeleton, FilterBarSkeleton } from '@/components/ui/Skeleton'
 import { downloadExcel } from '@/lib/excelExport'
 import { DateInput } from '@/components/ui/Calendar/DateInput'
-import { CalendarClock, X } from 'lucide-react'
-import { BorderBeam } from '@/components/ui/BorderBeam'
 
 // ─── 공통 타입 ──────────────────────────────────────────────────────────────
 
@@ -1710,7 +1708,7 @@ function AgencyAddModal({ editTarget, onClose, onSaved, uniqueManagers }: Agency
 
 // ─── 탭: 학점은행제 ──────────────────────────────────────────────────────────
 
-function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (node: React.ReactNode) => void; isActive: boolean; highlightId?: number }) {
+function HakjeomTab({ isActive, highlightId }: { isActive: boolean; highlightId?: number }) {
   const [items, setItems] = useState<HakjeomConsultation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -1734,6 +1732,9 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
   const [counselCheckFilter, setCounselCheckFilter] = useState<string[]>([]);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+
+  // 담당자 실적 (검색영역 표시용)
+  const [managerStatsNode, setManagerStatsNode] = useState<React.ReactNode>(null);
 
   // UI 상태
   const [selectedItem, setSelectedItem] = useState<HakjeomConsultation | null>(null);
@@ -2105,16 +2106,16 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
     setStartDate(''); setEndDate(''); setCurrentPage(1);
   };
 
-  // 담당자별 실적 (헤더 칩) — 스코프와 무관하게 전체 담당자 표시
+  // 담당자별 실적 (검색영역 표시) — 스코프와 무관하게 전체 담당자 표시
   useEffect(() => {
-    if (!isActive) { setStatsNode(null); return; }
+    if (!isActive) { setManagerStatsNode(null); return; }
     let cancelled = false;
     fetch('/api/hakjeom/perf-stats')
       .then(r => r.ok ? r.json() : [])
       .then((all: { manager: string; status: string; created_at: string }[]) => {
         if (cancelled) return;
         const mgrs = Array.from(new Set(all.map(c => c.manager).filter(Boolean))) as string[];
-        if (mgrs.length === 0) { setStatsNode(null); return; }
+        if (mgrs.length === 0) { setManagerStatsNode(null); return; }
         const rate = (list: typeof all) => {
           const t = list.length;
           return t > 0 ? Math.round((list.filter(c => c.status === '등록완료').length / t) * 100) : 0;
@@ -2125,7 +2126,7 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
           return { name, overall: rate(rows), recent: rate(recent30) };
         }).sort((a, b) => b.overall - a.overall);
         const topName = mStats[0]?.overall > 0 ? mStats[0].name : null;
-        setStatsNode(
+        setManagerStatsNode(
           <div className={styles.statsInline}>
             <span className={styles.statsInlineLabel}>담당자 실적</span>
             {mStats.map(m => {
@@ -2149,9 +2150,9 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
           </div>
         );
       })
-      .catch(() => setStatsNode(null));
-    return () => { cancelled = true; setStatsNode(null); };
-  }, [setStatsNode, isActive]);
+      .catch(() => setManagerStatsNode(null));
+    return () => { cancelled = true; setManagerStatsNode(null); };
+  }, [isActive]);
 
   return (
     <div>
@@ -2271,6 +2272,8 @@ function HakjeomTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (no
                 <button onClick={() => { setSelectedIds([]); setShowBulkMenu(false); setShowManagerAssign(false); setShowSourceAssign(false); setShowBulkStatusAssign(false); }} className={styles.btnSecondary}>선택 해제</button>
               </>
             )}
+            {/* 담당자 실적 - 오른쪽 정렬 */}
+            {managerStatsNode && <div style={{ marginLeft: 'auto' }}>{managerStatsNode}</div>}
           </div>
           {/* 액션 바 */}
           <div className={styles.actionBar}>
@@ -2617,10 +2620,13 @@ function parseAgencyCsv(text: string): Record<string, string>[] {
   }).filter(Boolean) as Record<string, string>[];
 }
 
-function AgencyTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (node: React.ReactNode) => void; isActive: boolean; highlightId?: number }) {
+function AgencyTab({ isActive, highlightId }: { isActive: boolean; highlightId?: number }) {
   const [agencies, setAgencies] = useState<Agency[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // 담당자 협약 실적 (검색영역 표시용)
+  const [agencyStatsNode, setAgencyStatsNode] = useState<React.ReactNode>(null);
 
   // 필터
   const [searchText, setSearchText] = useState('');
@@ -2798,16 +2804,16 @@ function AgencyTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (nod
     }]);
   };
 
-  // 담당자별 실적 (헤더 칩)
+  // 담당자별 협약 실적 (검색영역 표시)
   useEffect(() => {
-    if (!isActive) { setStatsNode(null); return; }
+    if (!isActive) { setAgencyStatsNode(null); return; }
     const mgrs = Array.from(new Set(agencies.map(a => a.manager).filter(Boolean))) as string[];
-    if (mgrs.length === 0) { setStatsNode(null); return; }
+    if (mgrs.length === 0) { setAgencyStatsNode(null); return; }
     const mStats = mgrs.map(name => {
       const all = agencies.filter(a => a.manager === name);
       return { name, total: all.length, completed: all.filter(a => a.status === '협약완료').length };
     }).sort((a, b) => b.total - a.total);
-    setStatsNode(
+    setAgencyStatsNode(
       <div className={styles.statsInline}>
         <span className={styles.statsInlineLabel}>담당자 협약</span>
         {mStats.map(m => (
@@ -2817,13 +2823,15 @@ function AgencyTab({ setStatsNode, isActive, highlightId }: { setStatsNode: (nod
         ))}
       </div>
     );
-    return () => setStatsNode(null);
-  }, [agencies, setStatsNode, isActive]);
+    return () => setAgencyStatsNode(null);
+  }, [agencies, isActive]);
 
   return (
     <div>
       {loading ? <FilterBarSkeleton /> : (
         <>
+          {/* 담당자 협약 실적 */}
+          {agencyStatsNode}
           <div className={styles.filterRow}>
             <input type="text" value={searchText} onChange={e => setSearchText(e.target.value)} placeholder="기관명, 지역, 분류, 담당자 검색..." className={styles.input} style={{ width: 300 }} />
             {isFiltered && <button onClick={() => { setSearchText(''); setStatusFilter('all'); setManagerFilter('all'); setCategoryFilter('all'); }} className={styles.btnSecondary}>필터 초기화</button>}
@@ -4523,31 +4531,6 @@ export default function HakjeomPage() {
 
   const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
   const [mountedTabs, setMountedTabs] = useState<Set<TabKey>>(new Set([initialTab]));
-  const [statsNode, setStatsNode] = useState<React.ReactNode>(null);
-  const [counselDoneCount, setCounselDoneCount] = useState(0);
-  const [todayScheduled, setTodayScheduled] = useState<HakjeomConsultation[]>([]);
-  const [dismissedBannerIds, setDismissedBannerIds] = useState<Set<number>>(() => {
-    try {
-      const stored = sessionStorage.getItem('hakjeomBannerDismissed')
-      return stored ? new Set(JSON.parse(stored) as number[]) : new Set()
-    } catch { return new Set() }
-  });
-
-  useEffect(() => {
-    const today = new Date().toISOString().slice(0, 10);
-    if (_hakjeomBannerCache?.date === today) {
-      const due = _hakjeomBannerCache.data.filter(c => c.contact_scheduled_at && c.contact_scheduled_at.slice(0, 10) <= today);
-      setTodayScheduled(due);
-    }
-    fetch('/api/hakjeom')
-      .then(r => r.ok ? r.json() : [])
-      .then((data: HakjeomConsultation[]) => {
-        _hakjeomBannerCache = { date: today, data };
-        const due = data.filter(c => c.contact_scheduled_at && c.contact_scheduled_at.slice(0, 10) <= today);
-        setTodayScheduled(due);
-      })
-      .catch(() => {});
-  }, []);
 
   const handleTabChange = (key: TabKey) => {
     setActiveTab(key);
@@ -4561,96 +4544,21 @@ export default function HakjeomPage() {
     }
   }, [urlTab]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const visibleBanners = todayScheduled.filter(c => !dismissedBannerIds.has(c.id));
-
   return (
     <div>
-      {/* 연락예정 배너 */}
-      {visibleBanners.length > 0 && (() => {
-        const today = new Date().toISOString().slice(0, 10);
-        const AVATAR_COLORS = ['#3182f6','#00b560','#7048e8','#f56c00','#e03535','#0099e5'];
-        const hasOverdue = visibleBanners.some(c => c.contact_scheduled_at!.slice(0, 10) < today);
-        return (
-          <div className={`${styles.scheduleBanner} ${hasOverdue ? styles.scheduleBannerOverdue : ''}`}>
-            {/* 아이콘 */}
-            <div className={`${styles.bannerIconBox} ${hasOverdue ? styles.bannerIconBoxRed : ''}`}>
-              <CalendarClock size={15} />
-            </div>
-            {/* 텍스트 */}
-            <div className={styles.bannerTextWrap}>
-              <span className={styles.bannerLabel}>
-                연락 예정 <strong>{visibleBanners.length}명</strong>
-              </span>
-              <div className={styles.bannerDetail}>
-                {visibleBanners.slice(0, 3).map((c, i) => {
-                  const date = c.contact_scheduled_at!.slice(0, 10);
-                  const isOverdue = date < today;
-                  const diff = Math.round((new Date(today).getTime() - new Date(date).getTime()) / 86400000);
-                  return (
-                    <span key={c.id} className={styles.bannerPerson}>
-                      {i > 0 && <span className={styles.bannerDot} />}
-                      <span className={styles.bannerPersonName}>{c.name}</span>
-                      <span className={isOverdue ? styles.bannerDateRed : styles.bannerDateBlue}>
-                        {date.slice(5).replace('-', '/')}{isOverdue && diff > 0 ? ` D+${diff}` : ''}
-                      </span>
-                    </span>
-                  );
-                })}
-                {visibleBanners.length > 3 && <span className={styles.bannerMore}>외 {visibleBanners.length - 3}명</span>}
-              </div>
-            </div>
-            <button className={styles.scheduleBannerClose} onClick={() => {
-              const ids = visibleBanners.map(c => c.id)
-              const next = new Set(ids)
-              setDismissedBannerIds(next)
-              try { sessionStorage.setItem('hakjeomBannerDismissed', JSON.stringify(ids)) } catch { /* ignore */ }
-            }} aria-label="닫기"><X size={14} /></button>
-            <BorderBeam duration={6} size={400} colorFrom="transparent" colorTo={hasOverdue ? '#f04452' : '#3182f6'} borderRadius={8} />
-            <BorderBeam duration={6} size={400} colorFrom="transparent" colorTo={hasOverdue ? '#f04452' : '#3182f6'} borderRadius={8} reverse />
-          </div>
-        );
-      })()}
-
-      {/* 페이지 헤더 */}
-      <div className={styles.pageHeader}>
-        <div>
-          <h2 className={styles.pageTitle}>학점은행제 사업부</h2>
-          <p className={styles.pageSubTitle}>
-            학점은행제, 기관협약 상담 내역을 통합 관리합니다.
-          </p>
-        </div>
-        {statsNode}
-      </div>
-
-      {/* 탭 네비게이션 */}
-      <div className={styles.tabNav}>
-        {visibleTabs.map(({ key, label }) => (
-          <button
-            key={key}
-            onClick={() => handleTabChange(key)}
-            className={activeTab === key ? styles.tabBtnActive : styles.tabBtn}
-          >
-            {label}
-            {key === 'counsel_done' && counselDoneCount > 0 && (
-              <span className={styles.tabBadge}>{counselDoneCount}</span>
-            )}
-          </button>
-        ))}
-      </div>
-
       {/* 탭 컨텐츠 - 첫 방문 시 마운트, 이후 CSS로 숨김 */}
       <div style={{ display: activeTab === 'hakjeom' ? 'block' : 'none' }}>
-        {mountedTabs.has('hakjeom') && <HakjeomTab setStatsNode={setStatsNode} isActive={activeTab === 'hakjeom'} highlightId={urlTab === 'hakjeom' ? urlHighlight : undefined} />}
+        {mountedTabs.has('hakjeom') && <HakjeomTab isActive={activeTab === 'hakjeom'} highlightId={urlTab === 'hakjeom' ? urlHighlight : undefined} />}
       </div>
       <div style={{ display: activeTab === 'agency' ? 'block' : 'none' }}>
-        {mountedTabs.has('agency') && <AgencyTab setStatsNode={setStatsNode} isActive={activeTab === 'agency'} highlightId={urlTab === 'agency' ? urlHighlight : undefined} />}
+        {mountedTabs.has('agency') && <AgencyTab isActive={activeTab === 'agency'} highlightId={urlTab === 'agency' ? urlHighlight : undefined} />}
       </div>
       <div style={{ display: activeTab === 'bulk' ? 'block' : 'none' }}>
         {mountedTabs.has('bulk') && <BulkTab onMoveSuccess={() => handleTabChange('hakjeom')} />}
       </div>
       <div style={{ display: activeTab === 'counsel_done' ? 'block' : 'none' }}>
         {mountedTabs.has('counsel_done') && (
-          <CounselDoneTab isActive={activeTab === 'counsel_done'} onCountChange={setCounselDoneCount} />
+          <CounselDoneTab isActive={activeTab === 'counsel_done'} onCountChange={() => {}} />
         )}
       </div>
       <div style={{ display: activeTab === 'stats' ? 'block' : 'none' }}>

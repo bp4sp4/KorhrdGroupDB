@@ -15,8 +15,6 @@ import MemoHoverBadge from '@/components/ui/MemoHoverBadge'
 import { TableSkeleton, StatsCardsSkeleton, ChartsGridSkeleton, FilterBarSkeleton } from '@/components/ui/Skeleton'
 import { downloadExcel } from '@/lib/excelExport'
 import { DateInput } from '@/components/ui/Calendar/DateInput'
-import { CalendarClock, X } from 'lucide-react'
-import { BorderBeam } from '@/components/ui/BorderBeam'
 
 // ─────────────────────────────────────────────
 // Types
@@ -2003,10 +2001,11 @@ function PCertHighlight({ text, query }: { text: string | null; query: string })
 
 // ─── 탭: 민간자격증 ──────────────────────────────────────────────────────────
 
-function PrivateCertTab({ setStatsNode, highlightId }: { setStatsNode: (node: React.ReactNode) => void; highlightId?: number }) {
+function PrivateCertTab({ highlightId }: { highlightId?: number }) {
   const [items, setItems] = useState<PrivateCert[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [managerStatsNode, setManagerStatsNode] = useState<React.ReactNode>(null);
 
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState<ConsultationStatus | 'all'>('all');
@@ -2073,11 +2072,11 @@ function PrivateCertTab({ setStatsNode, highlightId }: { setStatsNode: (node: Re
     return () => document.removeEventListener('mousedown', handleMouseDown);
   }, [openFilterColumn]);
 
-  // 담당자별 실적 (헤더 칩) — 지인소개 대분류 제외
+  // 담당자별 실적 (검색영역 표시) — 지인소개 대분류 제외
   useEffect(() => {
     const statsItems = items.filter(c => c.major_category !== '지인소개');
     const mgrs = Array.from(new Set(statsItems.map(c => c.manager).filter(Boolean))) as string[];
-    if (mgrs.length === 0) { setStatsNode(null); return; }
+    if (mgrs.length === 0) { setManagerStatsNode(null); return; }
     const rate = (list: PrivateCert[]) => {
       const t = list.length;
       return t > 0 ? Math.round((list.filter(c => c.status === '등록완료').length / t) * 100) : 0;
@@ -2088,7 +2087,7 @@ function PrivateCertTab({ setStatsNode, highlightId }: { setStatsNode: (node: Re
       return { name, overall: rate(all), recent: rate(recent30) };
     }).sort((a, b) => b.overall - a.overall);
     const topName = mStats[0]?.overall > 0 ? mStats[0].name : null;
-    setStatsNode(
+    setManagerStatsNode(
       <div className={styles.statsInline}>
         <span className={styles.statsInlineLabel}>담당자 실적</span>
         {mStats.map(m => {
@@ -2111,8 +2110,7 @@ function PrivateCertTab({ setStatsNode, highlightId }: { setStatsNode: (node: Re
         })}
       </div>
     );
-    return () => setStatsNode(null);
-  }, [items, setStatsNode]);
+  }, [items]);
 
   const handleUpdate = async (id: number, fields: Partial<PrivateCert>) => {
     const res = await fetch('/api/hakjeom/private-cert', {
@@ -2268,6 +2266,7 @@ function PrivateCertTab({ setStatsNode, highlightId }: { setStatsNode: (node: Re
                 <button onClick={() => setSelectedIds([])} className={styles.btnSecondary}>선택 해제</button>
               </>
             )}
+            {managerStatsNode && <div style={{ marginLeft: 'auto' }}>{managerStatsNode}</div>}
           </div>
           <div className={styles.actionBar}>
             <span className={styles.actionBarCount}>총 <strong className={styles.actionBarCountBold}>{filtered.length}</strong>건</span>
@@ -5362,14 +5361,6 @@ export default function CertPage() {
     : SOURCE_TABS
 
   const [sourceTab, setSourceTab] = useState<SourceTab>('hakjeom')
-  const [statsNode, setStatsNode] = useState<React.ReactNode>(null)
-  const [todayScheduled, setTodayScheduled] = useState<CertStudent[]>([])
-  const [dismissedBannerIds, setDismissedBannerIds] = useState<Set<number>>(() => {
-    try {
-      const stored = sessionStorage.getItem('certBannerDismissed')
-      return stored ? new Set(JSON.parse(stored) as number[]) : new Set()
-    } catch { return new Set() }
-  })
 
   useEffect(() => {
     if (!tabsLoaded) return
@@ -5381,100 +5372,16 @@ export default function CertPage() {
     }
   }, [tabsLoaded, allowedCertTabs, urlTab])
 
-  useEffect(() => {
-    const today = new Date().toISOString().slice(0, 10)
-    if (_certBannerCache?.date === today) {
-      const due = _certBannerCache.data.filter(c => c.contact_scheduled_at && c.contact_scheduled_at.slice(0, 10) <= today)
-      setTodayScheduled(due)
-    }
-    fetch('/api/cert/students')
-      .then(r => r.ok ? r.json() : [])
-      .then((data: CertStudent[]) => {
-        _certBannerCache = { date: today, data }
-        const due = data.filter(c => c.contact_scheduled_at && c.contact_scheduled_at.slice(0, 10) <= today)
-        setTodayScheduled(due)
-      })
-      .catch(() => {})
-  }, [])
-
   const handleTabChange = (tab: SourceTab) => {
     setSourceTab(tab)
     router.replace(`/cert?tab=${tab}`, { scroll: false })
   }
 
-  const visibleBanners = todayScheduled.filter(c => !dismissedBannerIds.has(c.id))
-
   return (
     <div>
-      {/* 연락예정 배너 */}
-      {visibleBanners.length > 0 && (() => {
-        const today = new Date().toISOString().slice(0, 10)
-        const hasOverdue = visibleBanners.some(c => c.contact_scheduled_at!.slice(0, 10) < today)
-        return (
-          <div className={`${styles.scheduleBanner} ${hasOverdue ? styles.scheduleBannerOverdue : ''}`}>
-            <div className={`${styles.bannerIconBox} ${hasOverdue ? styles.bannerIconBoxRed : ''}`}>
-              <CalendarClock size={15} />
-            </div>
-            <div className={styles.bannerTextWrap}>
-              <span className={styles.bannerLabel}>
-                연락 예정 <strong>{visibleBanners.length}명</strong>
-              </span>
-              <div className={styles.bannerDetail}>
-                {visibleBanners.slice(0, 3).map((c, i) => {
-                  const date = c.contact_scheduled_at!.slice(0, 10)
-                  const isOverdue = date < today
-                  const diff = Math.round((new Date(today).getTime() - new Date(date).getTime()) / 86400000)
-                  return (
-                    <span key={c.id} className={styles.bannerPerson}>
-                      {i > 0 && <span className={styles.bannerDot} />}
-                      <span className={styles.bannerPersonName}>{c.name}</span>
-                      <span className={isOverdue ? styles.bannerDateRed : styles.bannerDateBlue}>
-                        {date.slice(5).replace('-', '/')}{isOverdue && diff > 0 ? ` D+${diff}` : ''}
-                      </span>
-                    </span>
-                  )
-                })}
-                {visibleBanners.length > 3 && <span className={styles.bannerMore}>외 {visibleBanners.length - 3}명</span>}
-              </div>
-            </div>
-            <button className={styles.scheduleBannerClose} onClick={() => {
-              const ids = visibleBanners.map(c => c.id)
-              setDismissedBannerIds(new Set(ids))
-              try { sessionStorage.setItem('certBannerDismissed', JSON.stringify(ids)) } catch { /* ignore */ }
-            }} aria-label="닫기"><X size={14} /></button>
-            <BorderBeam duration={6} size={400} colorFrom="transparent" colorTo={hasOverdue ? '#f04452' : '#3182f6'} borderRadius={8} />
-            <BorderBeam duration={6} size={400} colorFrom="transparent" colorTo={hasOverdue ? '#f04452' : '#3182f6'} borderRadius={8} reverse />
-          </div>
-        )
-      })()}
-
-      {/* 페이지 헤더 */}
-      <div className={styles.pageHeader}>
-        <div>
-          <h2 className={styles.pageTitle}>민간자격증 사업부</h2>
-          <p className={styles.pageSubTitle}>
-            민간자격증 신청 및 상담 내역을 관리합니다.
-          </p>
-        </div>
-        {statsNode}
-      </div>
-
-      {/* 탭 */}
-      <div className={styles.tabNav}>
-        {visibleTabs.map(({ value, label }) => (
-          <button
-            key={value}
-            onClick={() => handleTabChange(value)}
-            className={sourceTab === value ? styles.tabBtnActive : styles.tabBtn}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
       {/* 탭 컨텐츠 */}
       {(sourceTab === 'hakjeom' || sourceTab === 'edu') && <ApplicationTab sourceTab={sourceTab} highlightId={urlTab === sourceTab ? urlHighlight : undefined} />}
-      {sourceTab === 'private-cert' && <PrivateCertTab setStatsNode={setStatsNode} highlightId={urlTab === 'private-cert' ? urlHighlight : undefined} />}
+      {sourceTab === 'private-cert' && <PrivateCertTab highlightId={urlTab === 'private-cert' ? urlHighlight : undefined} />}
       {sourceTab === 'student-mgmt' && <StudentMgmtTab />}
       {sourceTab === 'student-contact' && <StudentContactTab />}
       {sourceTab === 'student-bulk' && <StudentBulkUploadView onBack={() => setSourceTab('student-mgmt')} />}
