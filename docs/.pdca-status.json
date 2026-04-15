@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-04-15T05:26:45.591Z",
+  "lastUpdated": "2026-04-15T05:41:38.495Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -168,7 +168,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:30:16.038Z",
-        "lastUpdated": "2026-04-15T03:55:16.337Z"
+        "lastUpdated": "2026-04-15T05:41:04.681Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/hakjeom/page.tsx"
     },
@@ -181,7 +181,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:41:07.175Z",
-        "lastUpdated": "2026-04-15T03:49:16.384Z"
+        "lastUpdated": "2026-04-15T05:41:38.495Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/practice/page.tsx"
     },
@@ -194,7 +194,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:41:16.658Z",
-        "lastUpdated": "2026-04-15T03:49:04.467Z"
+        "lastUpdated": "2026-04-15T05:41:21.812Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/cert/page.tsx"
     },
@@ -1416,7 +1416,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-15T03:32:55.877Z",
-        "lastUpdated": "2026-04-15T05:15:51.232Z"
+        "lastUpdated": "2026-04-15T05:38:58.404Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/management/allcare-sales/route.ts"
     },
@@ -1442,7 +1442,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-15T05:26:45.591Z"
+    "lastActivity": "2026-04-15T05:41:38.495Z"
   },
   "history": [
     {
@@ -18464,6 +18464,72 @@
     {
       "timestamp": "2026-04-15T05:26:45.591Z",
       "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-15T05:38:58.404Z",
+      "feature": "allcare-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-15T05:40:04.986Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-15T05:40:09.253Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-15T05:41:00.973Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-15T05:41:04.681Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-15T05:41:11.488Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-15T05:41:17.046Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-15T05:41:21.812Z",
+      "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-15T05:41:27.016Z",
+      "feature": "practice",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-15T05:41:32.171Z",
+      "feature": "practice",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-15T05:41:38.495Z",
+      "feature": "practice",
       "phase": "do",
       "action": "updated"
     }

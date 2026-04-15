@@ -2135,12 +2135,10 @@ export default function PracticePage() {
                 />
                 {selectedConsultationIds.size > 0 && (
                   <>
-                    <span className={styles.bulkActionCount}>{selectedConsultationIds.size}건 선택됨</span>
                     <button onClick={handleDeleteConsultations} disabled={deleting} className={styles.btnDanger}>
                       {deleting ? '삭제 중...' : '선택 삭제'}
                     </button>
                     <button onClick={handleConsultDownloadSelected} className={styles.btnDownload}>↓ 선택 다운로드</button>
-                    <button onClick={() => setSelectedConsultationIds(new Set())} className={styles.btnSecondary}>선택 해제</button>
                   </>
                 )}
               </div>
@@ -2357,12 +2355,10 @@ export default function PracticePage() {
                 />
                 {selectedPracticeAppIds.size > 0 && (
                   <>
-                    <span className={styles.bulkActionCount}>{selectedPracticeAppIds.size}건 선택됨</span>
                     <button onClick={handleDeletePracticeApps} disabled={deleting} className={styles.btnDanger}>
                       {deleting ? '삭제 중...' : '선택 삭제'}
                     </button>
                     <button onClick={handlePracticeDownloadSelected} className={styles.btnDownload}>↓ 선택 다운로드</button>
-                    <button onClick={() => setSelectedPracticeAppIds(new Set())} className={styles.btnSecondary}>선택 해제</button>
                   </>
                 )}
               </div>
@@ -2549,12 +2545,10 @@ export default function PracticePage() {
                 />
                 {selectedEmploymentIds.size > 0 && (
                   <>
-                    <span className={styles.bulkActionCount}>{selectedEmploymentIds.size}건 선택됨</span>
                     <button onClick={handleDeleteEmploymentApps} disabled={deleting} className={styles.btnDanger}>
                       {deleting ? '삭제 중...' : '선택 삭제'}
                     </button>
                     <button onClick={handleEmpDownloadSelected} className={styles.btnDownload}>↓ 선택 다운로드</button>
-                    <button onClick={() => setSelectedEmploymentIds(new Set())} className={styles.btnSecondary}>선택 해제</button>
                   </>
                 )}
               </div>

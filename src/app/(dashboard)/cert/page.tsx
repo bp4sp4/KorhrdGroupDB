@@ -2258,12 +2258,10 @@ function PrivateCertTab({ highlightId }: { highlightId?: number }) {
             {isFiltered && <button onClick={resetFilters} className={styles.btnSecondary}>필터 초기화</button>}
             {selectedIds.length > 0 && (
               <>
-                <span className={styles.bulkActionCount}>{selectedIds.length}건 선택됨</span>
                 <button onClick={handleBulkDelete} disabled={deleting} className={styles.btnDanger}>
                   {deleting ? '삭제 중...' : '선택 삭제'}
                 </button>
                 <button onClick={handlePCertDownloadSelected} className={styles.btnDownload}>↓ 선택 다운로드</button>
-                <button onClick={() => setSelectedIds([])} className={styles.btnSecondary}>선택 해제</button>
               </>
             )}
             {managerStatsNode && <div style={{ marginLeft: 'auto' }}>{managerStatsNode}</div>}
@@ -2713,7 +2711,6 @@ function ApplicationTab({ sourceTab, highlightId }: { sourceTab: 'hakjeom' | 'ed
             )}
             {selectedIds.size > 0 && (
               <>
-                <span className={styles.bulkActionCount}>{selectedIds.size}건 선택됨</span>
                 <button
                   onClick={handleBulkDelete}
                   disabled={bulkDeleting}
@@ -2722,7 +2719,6 @@ function ApplicationTab({ sourceTab, highlightId }: { sourceTab: 'hakjeom' | 'ed
                   {bulkDeleting ? '삭제 중...' : '선택 삭제'}
                 </button>
                 <button onClick={handleAppDownloadSelected} className={styles.btnDownload}>↓ 선택 다운로드</button>
-                <button onClick={() => setSelectedIds(new Set())} className={styles.btnSecondary}>선택 해제</button>
               </>
             )}
           </div>
@@ -3721,12 +3717,10 @@ function StudentMgmtTab() {
             {isFiltered && <button onClick={resetFilters} className={styles.btnSecondary}>필터 초기화</button>}
             {selectedIds.length > 0 && (
               <>
-                <span className={styles.bulkActionCount}>{selectedIds.length}건 선택됨</span>
                 <button onClick={handleBulkDelete} disabled={deleting} className={styles.btnDanger}>
                   {deleting ? '삭제 중...' : '선택 삭제'}
                 </button>
                 <button onClick={handleDownloadSelected} className={styles.btnDownload}>↓ 선택 다운로드</button>
-                <button onClick={() => setSelectedIds([])} className={styles.btnSecondary}>선택 해제</button>
               </>
             )}
           </div>

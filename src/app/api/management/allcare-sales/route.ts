@@ -58,8 +58,8 @@ export async function GET(request: NextRequest) {
     amount: p.amount,
     payment_method: p.payment_method,
     approved_at: p.approved_at,
-    user_name: (p.users as { name: string; email: string } | null)?.name ?? null,
-    user_email: (p.users as { name: string; email: string } | null)?.email ?? null,
+    user_name: (p.users as unknown as { name: string; email: string } | null)?.name ?? null,
+    user_email: (p.users as unknown as { name: string; email: string } | null)?.email ?? null,
   }))
 
   return NextResponse.json({ year, month, totalRevenue, count, byType, payments })

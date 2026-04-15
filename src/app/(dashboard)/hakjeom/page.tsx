@@ -2169,7 +2169,6 @@ function HakjeomTab({ isActive, highlightId }: { isActive: boolean; highlightId?
             )}
             {selectedIds.length > 0 && (
               <>
-                <span className={styles.bulkActionCount}>{selectedIds.length}건 선택됨</span>
                 <div ref={bulkMenuRef} style={{ position: 'relative' }}>
                   <button
                     onClick={() => { setShowBulkMenu(v => !v); setShowManagerAssign(false); setShowSourceAssign(false); setShowBulkStatusAssign(false); }}
@@ -2269,7 +2268,6 @@ function HakjeomTab({ isActive, highlightId }: { isActive: boolean; highlightId?
                   {deleting ? '삭제 중...' : '선택 삭제'}
                 </button>
                 <button onClick={handleDownloadSelected} className={styles.btnDownload}>↓ 선택 다운로드</button>
-                <button onClick={() => { setSelectedIds([]); setShowBulkMenu(false); setShowManagerAssign(false); setShowSourceAssign(false); setShowBulkStatusAssign(false); }} className={styles.btnSecondary}>선택 해제</button>
               </>
             )}
             {/* 담당자 실적 - 오른쪽 정렬 */}
@@ -2840,7 +2838,6 @@ function AgencyTab({ isActive, highlightId }: { isActive: boolean; highlightId?:
           {/* 일괄 선택 액션 바 */}
           {selectedIds.size > 0 && (
             <div className={styles.bulkActionBar}>
-              <span className={styles.bulkActionCount}>{selectedIds.size}건 선택됨</span>
               <button onClick={handleDeleteSelected} disabled={deleting} className={styles.btnDanger}>
                 {deleting ? '삭제 중...' : '선택 삭제'}
               </button>
@@ -2854,7 +2851,6 @@ function AgencyTab({ isActive, highlightId }: { isActive: boolean; highlightId?:
                 </button>
               )}
               <button onClick={handleAgencyDownloadSelected} className={styles.btnDownload}>↓ 선택 다운로드</button>
-              <button onClick={() => setSelectedIds(new Set())} className={styles.btnSecondary}>선택 해제</button>
             </div>
           )}
 
