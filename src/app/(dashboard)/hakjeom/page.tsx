@@ -2093,10 +2093,21 @@ function HakjeomTab({ isActive, highlightId }: { isActive: boolean; highlightId?
           const t = list.length;
           return t > 0 ? Math.round((list.filter(c => c.status === '등록완료').length / t) * 100) : 0;
         };
+        // 한국시간(KST) 기준 4월 1일 ~ 4월 30일
+        const now = new Date();
+        const kstYear = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Seoul' })).getFullYear();
+        const kstMonth = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Seoul' })).getMonth(); // 0-based
+        const monthStart = new Date(`${kstYear}-${String(kstMonth + 1).padStart(2, '0')}-01T00:00:00+09:00`);
+        const monthEnd = new Date(kstYear, kstMonth + 1, 0); // 해당 월 마지막 날
+        const monthEndKST = new Date(`${kstYear}-${String(kstMonth + 1).padStart(2, '0')}-${String(monthEnd.getDate()).padStart(2, '0')}T23:59:59+09:00`);
+
         const mStats = mgrs.map(name => {
           const rows = all.filter(c => c.manager === name);
-          const recent30 = [...rows].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).slice(0, 30);
-          return { name, overall: rate(rows), recent: rate(recent30) };
+          const monthlyRows = rows.filter(c => {
+            const d = new Date(c.created_at);
+            return d >= monthStart && d <= monthEndKST;
+          });
+          return { name, overall: rate(rows), monthly: rate(monthlyRows) };
         }).sort((a, b) => b.overall - a.overall);
         const topName = mStats[0]?.overall > 0 ? mStats[0].name : null;
         setManagerStatsNode(
@@ -2110,8 +2121,8 @@ function HakjeomTab({ isActive, highlightId }: { isActive: boolean; highlightId?
                     {isTop && '🥇 '}{m.name}
                   </span>
                   <span className={styles.statsInlineRateGroup}>
-                    <span className={styles.statsInlineRateLabel}>30건</span>
-                    <span className={styles.statsInlineRate}>{m.recent}%</span>
+                    <span className={styles.statsInlineRateLabel}>{kstMonth + 1}월</span>
+                    <span className={styles.statsInlineRate}>{m.monthly}%</span>
                   </span>
                   <span className={styles.statsInlineRateGroup}>
                     <span className={styles.statsInlineRateLabel}>전체</span>
@@ -2298,7 +2309,7 @@ function HakjeomTab({ isActive, highlightId }: { isActive: boolean; highlightId?
                       담당자
                       <button className={`${styles.thFilterBtn}${managerFilter.length > 0 ? ` ${styles.thFilterBtnActive}` : ''}`} onClick={e => { e.stopPropagation(); if (openFilterColumn === 'manager') { setOpenFilterColumn(null); return; } const rect = e.currentTarget.getBoundingClientRect(); setFilterDropdownPos({ top: rect.bottom + 4, left: rect.left }); setOpenFilterColumn('manager'); }}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></button>
                     </div>
-                  </th>
+                 </th>
      
                   <th className={styles.thFilterable}>
                     <div className={styles.thInner}>
