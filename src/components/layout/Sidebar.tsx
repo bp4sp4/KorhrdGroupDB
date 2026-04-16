@@ -138,7 +138,7 @@ const SECTION_ITEM_MAP: Record<string, string> = {
 
 interface SidebarProps {
   userRole?: string | null
-  permissions?: { section: string; scope: string }[]
+  permissions?: { section: string; scope: string; allowed_tabs?: string[] | null }[]
 }
 
 export default function Sidebar({ userRole, permissions = [] }: SidebarProps) {
@@ -223,22 +223,24 @@ export default function Sidebar({ userRole, permissions = [] }: SidebarProps) {
     ? MINI_ADMIN_ITEMS
     : (activeSection?.items ?? ALL_SECTIONS[0].items)
 
-  const currentItems = isFullAccess
+  const baseItems = isFullAccess
     ? rawItems
     : rawItems.filter(item => {
         const sectionKey = Object.entries(SECTION_ITEM_MAP).find(([, id]) => id === item.id)?.[0]
         if (!sectionKey) return true
         return allowedSections.has(sectionKey)
       })
+  const currentItems = baseItems
 
   // 현재 경로에 맞는 아이템 자동 펼치기
   useEffect(() => {
-    const currentTab = searchParams.get('tab')
     for (const item of currentItems) {
       if (!item.children) continue
       const isParentActive = pathname.startsWith(item.href.split('?')[0])
       if (isParentActive) {
-        setOpenItems(prev => new Set([...prev, item.id]))
+        setTimeout(() => {
+          setOpenItems(prev => new Set([...prev, item.id]))
+        }, 0)
         break
       }
     }

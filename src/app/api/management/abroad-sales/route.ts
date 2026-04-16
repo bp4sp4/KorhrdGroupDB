@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
-import { requireAuth } from '@/lib/auth/requireAuth'
+import { requireManagementAccess } from '@/lib/auth/managementAccess'
 
 // 유학 사업부 - 결제완료(completed) 월 매출 조회
 // GET /api/management/abroad-sales?year=2026&month=4
 export async function GET(request: NextRequest) {
-  const { errorResponse } = await requireAuth()
-  if (errorResponse) return errorResponse
+  const access = await requireManagementAccess('revenues', { emptyBody: { year: 0, month: 0, total: { paymentAmount: 0, count: 0, avgAmount: 0 }, byDay: [], rows: [] } })
+  if (!access.ok) return access.response
 
   const sp = request.nextUrl.searchParams
   const year = parseInt(sp.get('year') ?? String(new Date().getFullYear()))
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
 
   // 프로필 정보 조회 (이름, 이메일)
   const userIds = [...new Set(rows.map(r => r.user_id).filter(Boolean))] as string[]
-  let profileMap = new Map<string, { full_name: string | null; email: string | null }>()
+  const profileMap = new Map<string, { full_name: string | null; email: string | null }>()
 
   if (userIds.length > 0) {
     const { data: profiles } = await supabaseAdmin

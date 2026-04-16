@@ -1833,13 +1833,23 @@ function HakjeomTab({ isActive, highlightId }: { isActive: boolean; highlightId?
 
   const handleBulkDelete = async () => {
     if (selectedIds.length === 0) return;
-    if (!confirm(`${selectedIds.length}건을 삭제할까요?`)) return;
+    const reason = window.prompt(`${selectedIds.length}건을 삭제합니다.\n삭제 사유를 입력해주세요.`, '')?.trim();
+    if (!reason) {
+      if (reason === '') alert('삭제 사유를 입력해야 삭제할 수 있습니다.');
+      return;
+    }
     setDeleting(true);
-    await fetch('/api/hakjeom', {
+    const res = await fetch('/api/hakjeom', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ids: selectedIds }),
+      body: JSON.stringify({ ids: selectedIds, reason }),
     });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      alert(body.error ?? '삭제에 실패했습니다.');
+      setDeleting(false);
+      return;
+    }
     setSelectedIds([]);
     await fetchData();
     setDeleting(false);
@@ -2693,14 +2703,24 @@ function AgencyTab({ isActive, highlightId }: { isActive: boolean; highlightId?:
 
   const handleDeleteSelected = async () => {
     if (selectedIds.size === 0) return;
-    if (!confirm(`${selectedIds.size}건을 삭제할까요?`)) return;
+    const reason = window.prompt(`${selectedIds.size}건을 삭제합니다.\n삭제 사유를 입력해주세요.`, '')?.trim();
+    if (!reason) {
+      if (reason === '') alert('삭제 사유를 입력해야 삭제할 수 있습니다.');
+      return;
+    }
     setDeleting(true);
     const ids = Array.from(selectedIds);
-    await fetch('/api/hakjeom/agency', {
+    const res = await fetch('/api/hakjeom/agency', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ids }),
+      body: JSON.stringify({ ids, reason }),
     });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      alert(body.error ?? '삭제에 실패했습니다.');
+      setDeleting(false);
+      return;
+    }
     setSelectedIds(new Set());
     await fetchData();
     setDeleting(false);
@@ -3188,6 +3208,9 @@ function BulkTab({ onMoveSuccess }: { onMoveSuccess?: () => void }) {
       setCsvRows([]); setFileName('');
       await fetchStaging();
       setView('staging');
+    } else {
+      const body = await res.json().catch(() => ({} as { error?: string }));
+      alert(`임시 저장 실패: ${body.error ?? res.status}`);
     }
     setSaving(false);
   }

@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { nmsAdmin } from '@/lib/supabase/nms'
-import { requireAuth } from '@/lib/auth/requireAuth'
+import { requireManagementAccess } from '@/lib/auth/managementAccess'
 
 // 최근 N개월 3사업부 통합 월별 매출 통계
 // GET /api/management/sales-stats?months=6
 export async function GET(request: NextRequest) {
-  const { errorResponse } = await requireAuth()
-  if (errorResponse) return errorResponse
+  const access = await requireManagementAccess('revenues', { emptyBody: { months: [] } })
+  if (!access.ok) return access.response
 
   const sp = request.nextUrl.searchParams
   const months = Math.min(parseInt(sp.get('months') ?? '6'), 12)

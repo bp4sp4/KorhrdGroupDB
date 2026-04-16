@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
-import { requireAuth } from '@/lib/auth/requireAuth'
 import { writeAuditLog } from '@/lib/management/auditLog'
+import { requireManagementAccess } from '@/lib/auth/managementAccess'
 
 export async function GET(request: NextRequest) {
-  const { user, errorResponse } = await requireAuth()
-  if (errorResponse) return errorResponse
+  const access = await requireManagementAccess('revenue-upload', { emptyBody: { data: [], total: 0, page: 1, pageSize: 50 } })
+  if (!access.ok) return access.response
 
   const sp = request.nextUrl.searchParams
   const dateStart = sp.get('date_start')
@@ -20,8 +20,7 @@ export async function GET(request: NextRequest) {
     .from('revenues')
     .select(`
       *,
-      department:departments(id, code, name),
-      manager:app_users(id, display_name)
+      department:departments(id, code, name)
     `, { count: 'exact' })
     .eq('is_deleted', false)
 
@@ -49,16 +48,10 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const { user, errorResponse } = await requireAuth()
-  if (errorResponse) return errorResponse
+  const access = await requireManagementAccess('revenue-upload')
+  if (!access.ok) return access.response
 
-  const appUser = await supabaseAdmin
-    .from('app_users')
-    .select('id')
-    .eq('username', user.email)
-    .single()
-
-  const userId = appUser.data?.id ?? user.id
+  const userId = access.user.id
 
   const body = await request.json()
   const { revenue_date, department_id, revenue_type, customer_name, amount, product_name, manager_id, memo } = body
@@ -76,7 +69,7 @@ export async function POST(request: NextRequest) {
       customer_name,
       amount: Number(amount),
       product_name: product_name || null,
-      manager_id: manager_id || userId,
+      manager_id: manager_id || null,
       memo: memo || null,
       source: 'MANUAL',
       created_by: userId,

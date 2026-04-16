@@ -602,6 +602,224 @@
   padding: 16px 0;
 }
 
+.permIntroCard,
+.permDetailCard {
+  border: 1px solid var(--toss-border);
+  border-radius: 16px;
+  background: #fff;
+}
+
+.permIntroCard {
+  padding: 20px 22px;
+}
+
+.permIntroTitle,
+.permDetailTitle {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--toss-text-primary);
+}
+
+.permIntroText,
+.permDetailText {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--toss-text-secondary);
+}
+
+.positionGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.positionCard {
+  text-align: left;
+  padding: 18px;
+  border: 1px solid var(--toss-border);
+  border-radius: 14px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+}
+
+.positionCard:hover {
+  border-color: #c8d8ff;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+  transform: translateY(-1px);
+}
+
+.positionCardActive {
+  border-color: #9fc0ff;
+  box-shadow: 0 12px 28px rgba(49, 130, 246, 0.12);
+}
+
+.positionCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.positionCardTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--toss-text-primary);
+}
+
+.positionCardCount {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--toss-blue);
+  background: #eef4ff;
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+
+.positionCardText {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--toss-text-secondary);
+}
+
+.permDetailHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 24px;
+  border-bottom: 1px solid var(--toss-border);
+}
+
+.permDetailMeta {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--toss-blue);
+  background: #eef4ff;
+  border-radius: 999px;
+  padding: 6px 11px;
+}
+
+.positionSection {
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--toss-border);
+}
+
+.positionSectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.positionSectionTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--toss-text-primary);
+}
+
+.positionSectionHint {
+  font-size: 12px;
+  color: var(--toss-text-tertiary);
+}
+
+.positionPermissionList {
+  display: grid;
+  gap: 10px;
+}
+
+.positionPermissionRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--toss-bg);
+}
+
+.positionPermissionLabelWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.positionPermissionLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--toss-text-primary);
+}
+
+.positionPermissionHint {
+  font-size: 12px;
+  color: var(--toss-text-tertiary);
+}
+
+.positionPermissionBadge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.scopeBadgeNone {
+  background: #f2f4f6;
+  color: #8b95a1;
+}
+
+.scopeBadgeAll {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.scopeBadgeOwn {
+  background: #f0fdf4;
+  color: #15803d;
+}
+
+.userOverrideSection {
+  padding: 18px 24px 24px;
+}
+
+.userOverrideList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 16px;
+}
+
+.userOverrideCard {
+  border: 1px solid var(--toss-border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.userTabRestrict {
+  padding: 14px 16px 16px;
+  border-top: 1px solid var(--toss-border);
+}
+
+.userTabRestrictHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.userTabRestrictTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--toss-text-primary);
+}
+
 /* ── 카드 그리드 ── */
 .permCardGrid {
   display: grid;
@@ -647,12 +865,32 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   padding: 5px 0;
+}
+
+.permCardRowLabelWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
 .permCardRowLabel {
   font-size: 13px;
   color: var(--toss-text-secondary);
+}
+
+.permCardRowHint {
+  font-size: 11px;
+  color: var(--toss-text-tertiary);
+}
+
+.permCardRowActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .permScopeSelect {
@@ -874,6 +1112,11 @@
   font-weight: 600;
   color: var(--toss-text-primary);
   white-space: nowrap;
+}
+
+.permUserEmail {
+  font-size: 12px;
+  color: var(--toss-text-tertiary);
 }
 
 .permRoleBadge {

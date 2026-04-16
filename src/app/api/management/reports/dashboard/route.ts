@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { nmsAdmin } from '@/lib/supabase/nms'
 import { allcareAdmin } from '@/lib/supabase/allcare'
-import { requireAuth } from '@/lib/auth/requireAuth'
+import { requireManagementAccess } from '@/lib/auth/managementAccess'
 import { getMonthRange } from '@/lib/management/utils'
 
 export async function GET(request: NextRequest) {
-  const { errorResponse } = await requireAuth()
-  if (errorResponse) return errorResponse
+  const access = await requireManagementAccess('reports')
+  if (!access.ok) return access.response
 
   const sp = request.nextUrl.searchParams
   const year = parseInt(sp.get('year') ?? String(new Date().getFullYear()))
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
   const TEST_USER_ID = '94832325-c5ec-4b21-bc74-00ae0763cbda'
 
   // ── 병렬 쿼리 (당월) ──
-  const [nmsRes, certRes, abroadRes, allcareRes, revenuesRes, expensesRes, approvalsRes] =
+  const [nmsRes, certRes, abroadRes, allcareRes, revenuesRes, expensesRes] =
     await Promise.allSettled([
       // NMS
       nmsAdmin.from('customers')
@@ -61,15 +61,9 @@ export async function GET(request: NextRequest) {
         .eq('is_deleted', false),
       // 지출
       supabaseAdmin.from('expenses')
-        .select('amount, vendor, category:expense_categories(name), department:departments(name)')
+        .select('amount, approval_id, vendor, category:expense_categories(name), department:departments(name)')
         .gte('expense_date', start).lte('expense_date', end)
         .eq('is_deleted', false),
-      // 전자결재 승인 지출
-      supabaseAdmin.from('approvals')
-        .select('content, document_type')
-        .in('document_type', ['expenseProposal', 'expenseResolution', 'corporateCard'])
-        .eq('status', 'APPROVED')
-        .gte('completed_at', start).lte('completed_at', end),
     ])
 
   // ── 집계 ──
@@ -94,29 +88,14 @@ export async function GET(request: NextRequest) {
 
   // 지출
   const expRows = expensesRes.status === 'fulfilled' ? (expensesRes.value.data ?? []) : []
-  const manual_expenses = expRows.reduce((s, e: { amount: number }) => s + (e.amount || 0), 0)
-
-  // 전자결재 승인 지출 (이미 expenses에 등록된 건 제외)
-  let approved_expenses = 0
-  if (approvalsRes.status === 'fulfilled' && approvalsRes.value.data) {
-    for (const a of approvalsRes.value.data) {
-      const content = (a as { content: Record<string, unknown> }).content
-      const docType = (a as { document_type: string }).document_type
-      if (docType === 'corporateCard') {
-        const items = content.card_items as string | undefined
-        if (items) {
-          try {
-            const parsed = typeof items === 'string' ? JSON.parse(items) : items
-            if (Array.isArray(parsed)) {
-              approved_expenses += parsed.reduce((s: number, i: { amount?: string }) => s + (Number(i.amount) || 0), 0)
-            }
-          } catch { /* skip */ }
-        }
-      } else {
-        approved_expenses += Number(content.amount) || 0
-      }
-    }
-  }
+  const manual_expenses = expRows.reduce((sum, row) => {
+    const expense = row as { amount: number; approval_id?: string | null }
+    return expense.approval_id ? sum : sum + (expense.amount || 0)
+  }, 0)
+  const approved_expenses = expRows.reduce((sum, row) => {
+    const expense = row as { amount: number; approval_id?: string | null }
+    return expense.approval_id ? sum + (expense.amount || 0) : sum
+  }, 0)
 
   const total_revenue = nms_sales + cert_sales + abroad_sales + allcare_sales +
     uploaded_revenue.bank_transfer + uploaded_revenue.other
@@ -139,9 +118,6 @@ export async function GET(request: NextRequest) {
     const catVal = (e as unknown as { category?: { name: string } | null }).category
     const cat = catVal && typeof catVal === 'object' && 'name' in catVal ? catVal.name : '기타'
     expByCategory[cat] = (expByCategory[cat] ?? 0) + ((e as { amount: number }).amount || 0)
-  }
-  if (approved_expenses > 0) {
-    expByCategory['전자결재 승인'] = (expByCategory['전자결재 승인'] ?? 0) + approved_expenses
   }
   if (uploaded_revenue.card > 0) {
     expByCategory['카드 지출'] = (expByCategory['카드 지출'] ?? 0) + uploaded_revenue.card

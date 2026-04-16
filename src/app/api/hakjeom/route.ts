@@ -99,7 +99,7 @@ export async function GET(request: NextRequest) {
         .maybeSingle()
       if (permError) {
         // 테이블 미생성 등 오류 시 전체 열람 허용
-      } else if (!perm) {
+      } else if (!perm || perm.scope === 'none') {
         return NextResponse.json([])
       } else if (perm.scope === 'own') {
         managerFilter = appUser.display_name ?? ''
@@ -400,15 +400,20 @@ export async function DELETE(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { ids } = body;
+    const { ids, reason } = body as { ids: (number | string)[]; reason?: string };
 
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
       return NextResponse.json({ error: 'IDs array is required' }, { status: 400 });
     }
 
+    const trimmedReason = typeof reason === 'string' ? reason.trim() : '';
+    if (!trimmedReason) {
+      return NextResponse.json({ error: '삭제 사유를 입력해주세요.' }, { status: 400 });
+    }
+
     const { data, error } = await supabaseAdmin
       .from(TABLE)
-      .update({ deleted_at: new Date().toISOString() })
+      .update({ deleted_at: new Date().toISOString(), delete_reason: trimmedReason })
       .in('id', ids)
       .select();
 
@@ -417,7 +422,15 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to move to trash' }, { status: 500 });
     }
 
-    await logAction({ user_id: user.id, user_email: user.email, action: 'delete', resource: '학점은행제 상담', resource_id: ids.join(','), detail: `${ids.length}건 휴지통 이동`, meta: { ids } });
+    await logAction({
+      user_id: user.id,
+      user_email: user.email,
+      action: 'delete',
+      resource: '학점은행제 상담',
+      resource_id: ids.join(','),
+      detail: `${ids.length}건 휴지통 이동 (사유: ${trimmedReason})`,
+      meta: { ids, reason: trimmedReason },
+    });
     return NextResponse.json({ message: 'Moved to trash', data });
   } catch (err) {
     console.error('[hakjeom DELETE] Unexpected error:', err);

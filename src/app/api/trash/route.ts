@@ -28,13 +28,14 @@ export async function GET() {
       name: string;
       contact: string | null;
       deleted_at: string;
+      delete_reason: string | null;
     }[] = [];
 
     for (const table of TABLES) {
       if (table === 'agency_agreements') {
         const { data, error } = await supabaseAdmin
           .from('agency_agreements')
-          .select('id, institution_name, contact, deleted_at')
+          .select('id, institution_name, contact, deleted_at, delete_reason')
           .not('deleted_at', 'is', null)
           .order('deleted_at', { ascending: false });
 
@@ -48,12 +49,13 @@ export async function GET() {
             name: row.institution_name ?? '-',
             contact: row.contact ?? null,
             deleted_at: row.deleted_at,
+            delete_reason: row.delete_reason ?? null,
           });
         }
       } else {
         const { data, error } = await supabaseAdmin
           .from(table as 'hakjeom_consultations' | 'private_cert_consultations' | 'certificate_applications' | 'cert_students')
-          .select('id, name, contact, deleted_at')
+          .select('id, name, contact, deleted_at, delete_reason')
           .not('deleted_at', 'is', null)
           .order('deleted_at', { ascending: false });
 
@@ -67,6 +69,7 @@ export async function GET() {
             name: row.name ?? '-',
             contact: row.contact ?? null,
             deleted_at: row.deleted_at,
+            delete_reason: row.delete_reason ?? null,
           });
         }
       }
@@ -101,7 +104,7 @@ export async function PATCH(request: NextRequest) {
 
     const { error } = await supabaseAdmin
       .from(source_table)
-      .update({ deleted_at: null })
+      .update({ deleted_at: null, delete_reason: null })
       .in('id', ids);
 
     if (error) {

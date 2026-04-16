@@ -1313,6 +1313,10 @@ interface UserWithPermissions {
   display_name: string | null
   username: string
   role: string
+  position_id?: string | null
+  position_name?: string | null
+  base_permissions?: { section: string; scope: string; allowed_tabs?: string[] | null }[]
+  overrides?: { section: string; scope: string; allowed_tabs?: string[] | null }[]
   permissions: { section: string; scope: string; allowed_tabs?: string[] | null }[]
 }
 
@@ -1336,7 +1340,8 @@ const PERMISSION_SECTIONS: PermissionSection[] = [
   { key: 'ref-manage', label: '어드민 관리',        description: '기준 데이터 관리',        allowOwn: false, group: '시스템' },
   { key: 'assignment', label: '배정 현황',          description: '담당자 배정 통계 열람',   allowOwn: false, group: '시스템' },
   { key: 'approvals',  label: '전자결재',           description: '전자결재 열람·처리',      allowOwn: false, group: '경영관리' },
-  { key: 'revenues',   label: '매출 관리',          description: '매출 데이터 열람·수정',   allowOwn: false, group: '경영관리' },
+  { key: 'revenues',   label: '팀별 매출 관리',      description: '사업부별 매출 현황 열람',  allowOwn: false, group: '경영관리' },
+  { key: 'revenue-upload', label: '매출 데이터 관리', description: '매출 데이터 업로드·관리', allowOwn: false, group: '경영관리' },
   { key: 'reports',    label: '손익 리포트',        description: '손익 리포트 열람',        allowOwn: false, group: '경영관리' },
 ]
 
@@ -1389,8 +1394,10 @@ const ROLE_DISPLAY: Record<string, { label: string; cls: string }> = {
 
 function PermissionsTab() {
   const [users, setUsers] = useState<UserWithPermissions[]>([])
+  const [positions, setPositions] = useState<Position[]>([])
   const [saving, setSaving] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [selectedPosition, setSelectedPosition] = useState<string | null>(null)
 
   const fetchUsers = useCallback(async () => {
     setLoading(true)
@@ -1399,10 +1406,23 @@ function PermissionsTab() {
     setLoading(false)
   }, [])
 
-  useEffect(() => { fetchUsers() }, [fetchUsers])
+  useEffect(() => {
+    setTimeout(() => {
+      fetchUsers()
+      fetch('/api/admin/positions').then(r => r.ok ? r.json() : []).then(setPositions).catch(() => {})
+    }, 0)
+  }, [fetchUsers])
 
   const getScope = (user: UserWithPermissions, section: string): ScopeKey => {
     return (user.permissions.find(p => p.section === section)?.scope ?? 'none') as ScopeKey
+  }
+
+  const getBaseScope = (user: UserWithPermissions, section: string): ScopeKey => {
+    return (user.base_permissions?.find(p => p.section === section)?.scope ?? 'none') as ScopeKey
+  }
+
+  const hasOverride = (user: UserWithPermissions, section: string) => {
+    return Boolean(user.overrides?.some(p => p.section === section))
   }
 
   const handleChange = async (userId: number, section: string, scope: ScopeKey) => {
@@ -1410,10 +1430,12 @@ function PermissionsTab() {
     const prev = users
     setUsers(cur => cur.map(u => {
       if (u.id !== userId) return u
-      const filtered = u.permissions.filter(p => p.section !== section)
+      const filteredPermissions = u.permissions.filter(p => p.section !== section)
+      const filteredOverrides = (u.overrides ?? []).filter(p => p.section !== section)
       return {
         ...u,
-        permissions: scope === 'none' ? filtered : [...filtered, { section, scope }],
+        permissions: [...filteredPermissions, { section, scope }],
+        overrides: [...filteredOverrides, { section, scope }],
       }
     }))
 
@@ -1423,12 +1445,78 @@ function PermissionsTab() {
       const res = await fetch('/api/admin/permissions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: userId, section, scope: scope === 'none' ? null : scope }),
+        body: JSON.stringify({ user_id: userId, section, scope }),
       })
       if (!res.ok) {
         // 저장 실패 시 원래 상태로 되돌림
         setUsers(prev)
       }
+    } catch {
+      setUsers(prev)
+    } finally {
+      setSaving(null)
+    }
+  }
+
+  const handleResetOverride = async (userId: number, section: string) => {
+    const prev = users
+    setUsers(cur => cur.map(u => {
+      if (u.id !== userId) return u
+      const basePermission = u.base_permissions?.find(p => p.section === section)
+      const nextPermissions = u.permissions.filter(p => p.section !== section)
+      return {
+        ...u,
+        permissions: basePermission ? [...nextPermissions, basePermission] : nextPermissions,
+        overrides: (u.overrides ?? []).filter(p => p.section !== section),
+      }
+    }))
+
+    const key = `${userId}-${section}-reset`
+    setSaving(key)
+    try {
+      const res = await fetch('/api/admin/permissions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId, section, clear_override: true }),
+      })
+      if (!res.ok) setUsers(prev)
+    } catch {
+      setUsers(prev)
+    } finally {
+      setSaving(null)
+    }
+  }
+
+  const handleBasePermissionChange = async (positionId: string, section: string, scope: ScopeKey) => {
+    const prev = users
+    setUsers(cur => cur.map(user => {
+      if (user.position_id !== positionId) return user
+      const nextBasePermissions = (user.base_permissions ?? []).map(permission =>
+        permission.section === section ? { ...permission, scope } : permission
+      )
+      const overridden = Boolean(user.overrides?.some(permission => permission.section === section))
+      const nextPermissions = overridden
+        ? user.permissions
+        : user.permissions.map(permission =>
+            permission.section === section ? { ...permission, scope } : permission
+          )
+
+      return {
+        ...user,
+        base_permissions: nextBasePermissions,
+        permissions: nextPermissions,
+      }
+    }))
+
+    const key = `position-${positionId}-${section}`
+    setSaving(key)
+    try {
+      const res = await fetch('/api/admin/position-permissions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ position_id: positionId, section, scope }),
+      })
+      if (!res.ok) setUsers(prev)
     } catch {
       setUsers(prev)
     } finally {
@@ -1478,53 +1566,236 @@ function PermissionsTab() {
   }
 
   const PERM_GROUPS: { key: '교육운영' | '시스템' | '경영관리' }[] = [
+    { key: '경영관리' },
     { key: '교육운영' },
     { key: '시스템' },
-    { key: '경영관리' },
   ]
+
+  const positionNames = positions
+    .filter(position => position.is_active)
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map(position => position.name)
+
+  const groupedPositions = [
+    ...positionNames.map(positionName => ({
+      name: positionName,
+      positionId: positions.find(position => position.name === positionName)?.id ?? null,
+      users: users.filter(user => (user.position_name ?? '직급 미지정') === positionName),
+    })),
+    {
+      name: '직급 미지정',
+      positionId: null,
+      users: users.filter(user => !user.position_name),
+    },
+  ].filter(group => group.users.length > 0)
+
+  const activePositionName = selectedPosition && groupedPositions.some(group => group.name === selectedPosition)
+    ? selectedPosition
+    : groupedPositions[0]?.name ?? null
+
+  const activeGroup = groupedPositions.find(group => group.name === activePositionName) ?? null
+  const basePermissionSource = activeGroup?.users[0]?.base_permissions ?? []
 
   return (
     <div className={styles.permWrap}>
-      {/* 카드 그리드 */}
-      <div className={styles.permCardGrid}>
-        {users.map(user => {
-          const roleInfo = ROLE_DISPLAY[user.role] ?? { label: user.role, cls: 'roleStaff' }
-          return (
-            <div key={user.id} className={styles.permCard}>
-              {/* 유저 헤더 */}
-              <div className={styles.permCardHeader}>
-                <div className={styles.permUserAvatar}>
-                  {(user.display_name ?? user.username).slice(0, 1)}
-                </div>
-                <div className={styles.permUserMeta}>
-                  <span className={styles.permUserName}>{user.display_name ?? user.username}</span>
-                  <span className={`${styles.permRoleBadge} ${styles[roleInfo.cls]}`}>{roleInfo.label}</span>
-                </div>
-              </div>
+      <div className={styles.permIntroCard}>
+        <div>
+          <h3 className={styles.permIntroTitle}>직급별 권한 기준</h3>
+          <p className={styles.permIntroText}>
+            권한은 직급 기본값을 기준으로 보고, 필요한 사람만 상세에서 개별 예외를 주는 방식으로 관리합니다.
+          </p>
+        </div>
+      </div>
 
-              {/* 그룹별 섹션 */}
-              {PERM_GROUPS.map(group => {
-                const groupSections = PERMISSION_SECTIONS.filter(s => s.group === group.key)
-                return (
-                  <div key={group.key} className={styles.permCardGroup}>
-                    <div className={styles.permCardGroupLabel}>{group.key}</div>
-                    {groupSections.map(sec => {
-                      const currentScope = getScope(user, sec.key)
-                      const isSaving = saving === `${user.id}-${sec.key}`
-                      return (
-                        <div key={sec.key} className={styles.permCardRow}>
-                          <span className={styles.permCardRowLabel}>{sec.label}</span>
+      <div className={styles.positionGrid}>
+        {groupedPositions.map(group => {
+          const overrideCount = group.users.reduce((count, user) => count + (user.overrides?.length ?? 0), 0)
+          return (
+            <button
+              key={group.name}
+              type="button"
+              className={`${styles.positionCard} ${activePositionName === group.name ? styles.positionCardActive : ''}`}
+              onClick={() => setSelectedPosition(group.name)}
+            >
+              <div className={styles.positionCardHeader}>
+                <span className={styles.positionCardTitle}>{group.name}</span>
+                <span className={styles.positionCardCount}>{group.users.length}명</span>
+              </div>
+              <p className={styles.positionCardText}>
+                기본 권한 {group.users[0]?.base_permissions?.filter(permission => permission.scope !== 'none').length ?? 0}개
+              </p>
+              <p className={styles.positionCardText}>
+                개별 예외 {overrideCount}건
+              </p>
+            </button>
+          )
+        })}
+      </div>
+
+      {activeGroup && (
+        <div className={styles.permDetailCard}>
+          <div className={styles.permDetailHeader}>
+            <div>
+              <h3 className={styles.permDetailTitle}>{activeGroup.name} 권한 상세</h3>
+              <p className={styles.permDetailText}>
+                이 직급의 기본권한과 사용자별 개별 예외를 한 화면에서 관리합니다.
+              </p>
+            </div>
+            <span className={styles.permDetailMeta}>대상 사용자 {activeGroup.users.length}명</span>
+          </div>
+
+          {PERM_GROUPS.map(group => {
+            const groupSections = PERMISSION_SECTIONS.filter(section => section.group === group.key)
+            return (
+              <div key={group.key} className={styles.positionSection}>
+                <div className={styles.positionSectionHeader}>
+                  <span className={styles.positionSectionTitle}>{group.key}</span>
+                </div>
+                <div className={styles.positionPermissionList}>
+                  {groupSections.map(section => {
+                    const baseScope = (basePermissionSource.find(permission => permission.section === section.key)?.scope ?? 'none') as ScopeKey
+                    const isSavingBase = activeGroup.positionId ? saving === `position-${activeGroup.positionId}-${section.key}` : false
+                    return (
+                      <div key={section.key} className={styles.positionPermissionRow}>
+                        <div className={styles.positionPermissionLabelWrap}>
+                          <span className={styles.positionPermissionLabel}>{section.label}</span>
+                          <span className={styles.positionPermissionHint}>{section.description}</span>
+                        </div>
+                        {activeGroup.positionId ? (
                           <select
                             className={styles.permScopeSelect}
-                            data-scope={currentScope}
-                            value={currentScope}
-                            disabled={isSaving}
-                            onChange={(e) => handleChange(user.id, sec.key, e.target.value as ScopeKey)}
+                            data-scope={baseScope}
+                            value={baseScope}
+                            disabled={isSavingBase}
+                            onChange={(e) => handleBasePermissionChange(activeGroup.positionId as string, section.key, e.target.value as ScopeKey)}
                           >
                             <option value="none">접근 불가</option>
                             <option value="all">전체 열람</option>
-                            {sec.allowOwn && <option value="own">담당 건만</option>}
+                            {section.allowOwn && <option value="own">담당 건만</option>}
                           </select>
+                        ) : (
+                          <span className={`${styles.positionPermissionBadge} ${styles[`scopeBadge${baseScope === 'all' ? 'All' : baseScope === 'own' ? 'Own' : 'None'}`]}`}>
+                            기본값 {SCOPE_OPTIONS[baseScope].label}
+                          </span>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })}
+
+          <div className={styles.userOverrideSection}>
+            <div className={styles.positionSectionHeader}>
+              <span className={styles.positionSectionTitle}>사용자별 개별 예외</span>
+              <span className={styles.positionSectionHint}>기본값과 다르게 보여야 하는 사람만 수정하면 됩니다.</span>
+            </div>
+            <div className={styles.userOverrideList}>
+              {activeGroup.users.map(user => {
+                const roleInfo = ROLE_DISPLAY[user.role] ?? { label: user.role, cls: 'roleStaff' }
+                return (
+                  <div key={user.id} className={styles.userOverrideCard}>
+                    <div className={styles.permCardHeader}>
+                      <div className={styles.permUserAvatar}>
+                        {(user.display_name ?? user.username).slice(0, 1)}
+                      </div>
+                      <div className={styles.permUserMeta}>
+                        <span className={styles.permUserName}>{user.display_name ?? user.username}</span>
+                        <span className={`${styles.permRoleBadge} ${styles[roleInfo.cls]}`}>{roleInfo.label}</span>
+                        <span className={styles.permUserEmail}>{user.username}</span>
+                      </div>
+                    </div>
+
+                    {PERM_GROUPS.map(group => {
+                      const groupSections = PERMISSION_SECTIONS.filter(section => section.group === group.key)
+                      return (
+                        <div key={`${user.id}-${group.key}`} className={styles.permCardGroup}>
+                          <div className={styles.permCardGroupLabel}>{group.key}</div>
+                          {groupSections.map(sec => {
+                            const currentScope = getScope(user, sec.key)
+                            const baseScope = getBaseScope(user, sec.key)
+                            const overridden = hasOverride(user, sec.key)
+                            const isSaving = saving === `${user.id}-${sec.key}` || saving === `${user.id}-${sec.key}-reset`
+                            return (
+                              <div key={`${user.id}-${sec.key}`} className={styles.permCardRow}>
+                                <div className={styles.permCardRowLabelWrap}>
+                                  <span className={styles.permCardRowLabel}>{sec.label}</span>
+                                  <span className={styles.permCardRowHint}>
+                                    기본값 {SCOPE_OPTIONS[baseScope].label}{overridden ? ' · 개별예외 적용중' : ''}
+                                  </span>
+                                </div>
+                                <div className={styles.permCardRowActions}>
+                                  <select
+                                    className={styles.permScopeSelect}
+                                    data-scope={currentScope}
+                                    value={currentScope}
+                                    disabled={isSaving}
+                                    onChange={(e) => handleChange(user.id, sec.key, e.target.value as ScopeKey)}
+                                  >
+                                    <option value="none">접근 불가</option>
+                                    <option value="all">전체 열람</option>
+                                    {sec.allowOwn && <option value="own">담당 건만</option>}
+                                  </select>
+                                  {overridden && (
+                                    <button
+                                      type="button"
+                                      className={styles.btnSecondary}
+                                      onClick={() => handleResetOverride(user.id, sec.key)}
+                                      disabled={isSaving}
+                                    >
+                                      기본값 복원
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )
+                    })}
+
+                    {TAB_RESTRICTION_SECTIONS.map(({ sectionKey, label, tabs }) => {
+                      const perm = user.permissions.find(permission => permission.section === sectionKey)
+                      if (!perm || perm.scope === 'none') return null
+                      const allowedTabs: string[] | null = perm.allowed_tabs ?? null
+                      const isSavingTabs = saving === `${user.id}-${sectionKey}-tabs`
+                      return (
+                        <div key={`${user.id}-${sectionKey}-tabs`} className={styles.userTabRestrict}>
+                          <div className={styles.userTabRestrictHeader}>
+                            <span className={styles.userTabRestrictTitle}>{label} 탭 제한</span>
+                            {isSavingTabs && <span className={styles.tabRestrictSaving}>저장 중...</span>}
+                          </div>
+                          <div className={styles.tabPillGroup}>
+                            {tabs.map(tab => {
+                              const isChecked = allowedTabs === null || allowedTabs.includes(tab.value)
+                              const handleToggle = () => {
+                                const currentAllowed = allowedTabs ?? tabs.map(t => t.value)
+                                let next: string[]
+                                if (isChecked) {
+                                  next = currentAllowed.filter(value => value !== tab.value)
+                                } else {
+                                  next = [...currentAllowed, tab.value]
+                                }
+                                const allSelected = tabs.every(item => next.includes(item.value))
+                                handleTabRestriction(user.id, sectionKey, allSelected ? null : next)
+                              }
+                              return (
+                                <label
+                                  key={`${user.id}-${sectionKey}-${tab.value}`}
+                                  className={`${styles.tabPill} ${isChecked ? styles.tabPillOn : styles.tabPillOff}`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={isChecked}
+                                    onChange={handleToggle}
+                                    className={styles.tabPillInput}
+                                  />
+                                  {tab.label}
+                                </label>
+                              )
+                            })}
+                          </div>
                         </div>
                       )
                     })}
@@ -1532,76 +1803,9 @@ function PermissionsTab() {
                 )
               })}
             </div>
-          )
-        })}
-      </div>
-
-      {/* 탭별 세부 제한 */}
-      {TAB_RESTRICTION_SECTIONS.map(({ sectionKey, label, tabs }) => {
-        const usersWithSection = users.filter(u =>
-          u.permissions.some(p => p.section === sectionKey && p.scope && p.scope !== 'none')
-        )
-        if (usersWithSection.length === 0) return null
-        return (
-          <div key={sectionKey} className={styles.tabRestrictWrap}>
-            <div className={styles.tabRestrictHeader}>
-              <div className={styles.tabRestrictTitleRow}>
-                <span className={styles.tabRestrictTitle}>{label}</span>
-                <span className={styles.tabRestrictBadge}>탭 제한</span>
-              </div>
-              <span className={styles.tabRestrictHint}>비활성 탭은 해당 사용자에게 숨겨집니다</span>
-            </div>
-            <div className={styles.tabRestrictList}>
-              {usersWithSection.map(user => {
-                const perm = user.permissions.find(p => p.section === sectionKey)
-                const allowedTabs: string[] | null = perm?.allowed_tabs ?? null
-                const isSavingTabs = saving === `${user.id}-${sectionKey}-tabs`
-                return (
-                  <div key={user.id} className={styles.tabRestrictRow}>
-                    <div className={styles.tabRestrictUser}>
-                      <div className={styles.permUserAvatar}>{(user.display_name ?? user.username).slice(0, 1)}</div>
-                      <div className={styles.tabRestrictUserInfo}>
-                        <span className={styles.permUserName}>{user.display_name ?? user.username}</span>
-                        {isSavingTabs && <span className={styles.tabRestrictSaving}>저장 중...</span>}
-                      </div>
-                    </div>
-                    <div className={styles.tabPillGroup}>
-                      {tabs.map(tab => {
-                        const isChecked = allowedTabs === null || allowedTabs.includes(tab.value)
-                        const handleToggle = () => {
-                          const currentAllowed = allowedTabs ?? tabs.map(t => t.value)
-                          let next: string[]
-                          if (isChecked) {
-                            next = currentAllowed.filter(v => v !== tab.value)
-                          } else {
-                            next = [...currentAllowed, tab.value]
-                          }
-                          const allSelected = tabs.every(t => next.includes(t.value))
-                          handleTabRestriction(user.id, sectionKey, allSelected ? null : next)
-                        }
-                        return (
-                          <label
-                            key={tab.value}
-                            className={`${styles.tabPill} ${isChecked ? styles.tabPillOn : styles.tabPillOff}`}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={isChecked}
-                              onChange={handleToggle}
-                              className={styles.tabPillInput}
-                            />
-                            {tab.label}
-                          </label>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
           </div>
-        )
-      })}
+        </div>
+      )}
     </div>
   )
 }

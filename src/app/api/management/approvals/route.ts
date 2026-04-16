@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
-import { requireAuth } from '@/lib/auth/requireAuth'
 import { genDocNumber } from '@/lib/management/utils'
+import { requireManagementAccess } from '@/lib/auth/managementAccess'
 
 export async function GET(request: NextRequest) {
-  const { user, errorResponse } = await requireAuth()
-  if (errorResponse) return errorResponse
+  const access = await requireManagementAccess('approvals', { emptyBody: [] })
+  if (!access.ok) return access.response
 
+  const user = access.user
   const appUser = await supabaseAdmin
     .from('app_users')
     .select('id')
@@ -75,9 +76,10 @@ async function getMyApproverIds(userId: string): Promise<string[]> {
 }
 
 export async function POST(request: NextRequest) {
-  const { user, errorResponse } = await requireAuth()
-  if (errorResponse) return errorResponse
+  const access = await requireManagementAccess('approvals')
+  if (!access.ok) return access.response
 
+  const user = access.user
   const appUser = await supabaseAdmin
     .from('app_users')
     .select('id')

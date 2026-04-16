@@ -12,6 +12,7 @@ interface TrashItem {
   name: string
   contact: string | null
   deleted_at: string
+  delete_reason: string | null
 }
 
 const SOURCE_TABLES = [
@@ -288,6 +289,7 @@ export default function TrashPage() {
                 <th className={styles.th}>이름</th>
                 <th className={styles.th}>연락처</th>
                 <th className={styles.th}>분류</th>
+                <th className={styles.th}>삭제사유</th>
                 <th className={styles.th}>삭제일</th>
                 <th className={styles.th}>작업</th>
               </tr>
@@ -295,19 +297,19 @@ export default function TrashPage() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={6} className={styles.td} style={{ textAlign: 'center', padding: 60, color: 'var(--toss-text-secondary)' }}>
+                  <td colSpan={7} className={styles.td} style={{ textAlign: 'center', padding: 60, color: 'var(--toss-text-secondary)' }}>
                     불러오는 중...
                   </td>
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan={6} className={styles.td} style={{ textAlign: 'center', padding: 40, color: '#dc2626' }}>
+                  <td colSpan={7} className={styles.td} style={{ textAlign: 'center', padding: 40, color: '#dc2626' }}>
                     {error}
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className={styles.td} style={{ textAlign: 'center', padding: 60 }}>
+                  <td colSpan={7} className={styles.td} style={{ textAlign: 'center', padding: 60 }}>
                     <Trash2 size={32} color="var(--toss-text-tertiary)" style={{ marginBottom: 12, display: 'block', margin: '0 auto 12px' }} />
                     <p style={{ color: 'var(--toss-text-secondary)', fontSize: 14, margin: 0 }}>휴지통이 비어 있습니다.</p>
                   </td>
@@ -336,6 +338,9 @@ export default function TrashPage() {
                       <span className={styles.statusBadge} style={{ background: '#f3f4f6', color: '#374151' }}>
                         {item.source_label}
                       </span>
+                    </td>
+                    <td className={styles.td} style={{ color: item.delete_reason ? 'var(--toss-text-primary)' : 'var(--toss-text-tertiary)' }}>
+                      {item.delete_reason ?? '-'}
                     </td>
                     <td className={styles.td} style={{ color: 'var(--toss-text-secondary)' }}>
                       {formatDateTime(item.deleted_at)}

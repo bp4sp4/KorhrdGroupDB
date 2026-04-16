@@ -18,7 +18,7 @@ const SECTION_NAV: NavSection[] = [
   {
     label: '교육운영',
     href: '/hakjeom',
-    activeOn: ['/hakjeom', '/cert', '/practice', '/allcare', '/duplicate', '/trash', '/ref-manage', '/logs', '/links', '/revenues', '/approvals', '/reports'],
+    activeOn: ['/hakjeom', '/cert', '/practice', '/allcare', '/duplicate', '/trash', '/ref-manage', '/logs', '/links', '/revenues', '/revenue-upload', '/approvals', '/reports'],
   },
   {
     label: '어드민',
@@ -36,6 +36,7 @@ const PATH_LABELS: Record<string, string> = {
   '/assignment': '배정 현황',
   '/links':      '링크모음',
   '/approvals':  '전자결재',
+  '/revenue-upload': '매출 데이터 관리',
   '/reports':    '손익 리포트',
 }
 
@@ -84,7 +85,7 @@ const PATH_TAB_LABELS: Record<string, Record<string, string>> = {
 interface HeaderProps {
   userName?: string
   userRole?: string | null
-  permissions?: { section: string; scope: string }[]
+  permissions?: { section: string; scope: string; allowed_tabs?: string[] | null }[]
 }
 
 
@@ -92,7 +93,7 @@ function hasPermission(permissions: { section: string; scope: string }[], sectio
   return sections.some(s => permissions.some(p => p.section === s && p.scope !== 'none'))
 }
 
-const EDUCATION_SECTIONS = ['hakjeom', 'cert', 'practice', 'allcare', 'duplicate', 'trash', 'logs', 'ref-manage', 'assignment', 'approvals', 'revenues', 'reports']
+const EDUCATION_SECTIONS = ['hakjeom', 'cert', 'practice', 'allcare', 'duplicate', 'trash', 'logs', 'ref-manage', 'assignment', 'approvals', 'revenues', 'revenue-upload', 'reports']
 
 export default function Header({ userName = '관리자', userRole, permissions = [] }: HeaderProps) {
   const router = useRouter()

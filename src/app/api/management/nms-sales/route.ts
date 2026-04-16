@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { nmsAdmin } from '@/lib/supabase/nms'
-import { requireAuth } from '@/lib/auth/requireAuth'
+import { requireManagementAccess } from '@/lib/auth/managementAccess'
 
 // NMS 시스템 customers 테이블에서 팀별 월매출 조회
 // customers.team 이 아닌 users.team 기준으로 팀을 판단 (담당자의 소속팀)
 // GET /api/management/nms-sales?year=2026&month=4&team=본사
 export async function GET(request: NextRequest) {
-  const { errorResponse } = await requireAuth()
-  if (errorResponse) return errorResponse
+  const access = await requireManagementAccess('revenues', { emptyBody: { year: 0, month: 0, total: { paymentAmount: 0, commission: 0, totalCount: 0, completedCount: 0 }, byTeam: [] } })
+  if (!access.ok) return access.response
 
   const sp = request.nextUrl.searchParams
   const year = parseInt(sp.get('year') ?? String(new Date().getFullYear()))

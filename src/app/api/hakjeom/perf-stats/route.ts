@@ -19,8 +19,8 @@ export async function GET() {
         .eq('user_id', appUser.id)
         .eq('section', 'hakjeom')
         .maybeSingle()
-      // 권한 없으면 빈 배열 반환
-      if (!perm) return NextResponse.json([])
+      // 권한 없거나 접근 불가면 빈 배열 반환
+      if (!perm || perm.scope === 'none') return NextResponse.json([])
     }
 
     const { data, error } = await supabaseAdmin

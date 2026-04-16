@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 
+const MASTER_ADMIN_EMAIL = 'bp4sp4@naver.com'
+
 export async function POST(request: NextRequest) {
   try {
     const { username, password } = await request.json()
@@ -37,7 +39,7 @@ export async function POST(request: NextRequest) {
         id: user.id,
         username: user.username,
         displayName: user.display_name,
-        role: user.role,
+        role: user.username === MASTER_ADMIN_EMAIL ? 'master-admin' : user.role,
       },
     })
   } catch (err) {

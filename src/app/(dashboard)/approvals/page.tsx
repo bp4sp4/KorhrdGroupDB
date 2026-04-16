@@ -297,11 +297,13 @@ export default function ApprovalsPage() {
   const [users, setUsers] = useState<{ id: string; display_name: string; department_id?: string | null }[]>([])
   const [myUserId, setMyUserId] = useState<string | null>(null)
   const [myDepartmentId, setMyDepartmentId] = useState<string | null>(null)
+  const [myRole, setMyRole] = useState<string | null>(null)
 
   // 상세 뷰
   const [selectedApproval, setSelectedApproval] = useState<Approval | null>(null)
   const [actionComment, setActionComment] = useState('')
   const [actioning, setActioning] = useState(false)
+  const [resyncingExpense, setResyncingExpense] = useState(false)
 
   // 상세 뷰 패널 탭
   const [detailPanelTab, setDetailPanelTab] = useState<'steps' | 'info'>('steps')
@@ -399,6 +401,7 @@ export default function ApprovalsPage() {
     fetch('/api/auth/me').then(r => r.json()).then(d => {
       setMyUserId(d.id ?? null)
       setMyDepartmentId(d.departmentId ?? null)
+      setMyRole(d.role ?? null)
     }).catch(() => {})
   }, [fetchHomeData])
 
@@ -652,6 +655,10 @@ export default function ApprovalsPage() {
   const canCancel =
     selectedApproval?.applicant_id === myUserId &&
     ['DRAFT', 'SUBMITTED'].includes(selectedApproval?.status ?? '')
+  const canResyncExpense =
+    !!selectedApproval &&
+    selectedApproval.status === 'APPROVED' &&
+    ['admin', 'master-admin'].includes(myRole ?? '')
 
   const HOME_LIMIT = 5
   const inProgressApprovals = mineApprovals.filter(a =>
@@ -931,6 +938,33 @@ export default function ApprovalsPage() {
     const applicantName =
       (selectedApproval.applicant as { display_name: string } | undefined)?.display_name ?? '-'
 
+    const handleResyncExpense = async () => {
+      if (!selectedApproval) return
+      setResyncingExpense(true)
+      try {
+        const res = await fetch('/api/management/approvals/resync-expenses', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ approvalId: selectedApproval.id }),
+        })
+        const json = await res.json()
+        if (!res.ok) {
+          alert(json.error ?? '손익 재반영에 실패했습니다.')
+          return
+        }
+        const result = Array.isArray(json.results) ? json.results[0] : null
+        if (result?.synced) {
+          alert(`손익 재반영이 완료되었습니다. 반영 건수: ${result.count ?? 0}건`)
+        } else {
+          alert(result?.error ?? '반영된 지출 항목이 없습니다.')
+        }
+      } catch {
+        alert('손익 재반영 중 오류가 발생했습니다.')
+      } finally {
+        setResyncingExpense(false)
+      }
+    }
+
     return (
       <div className={d.view_detail}>
         {/* 상단 액션바 */}
@@ -975,6 +1009,15 @@ export default function ApprovalsPage() {
                 disabled={actioning}
               >
                 취소
+              </button>
+            )}
+            {canResyncExpense && (
+              <button
+                className={styles.btn_secondary}
+                onClick={handleResyncExpense}
+                disabled={resyncingExpense}
+              >
+                {resyncingExpense ? '재반영 중...' : '손익 재반영'}
               </button>
             )}
           </div>

@@ -26,7 +26,7 @@ export async function GET() {
         .eq('user_id', appUser.id)
         .eq('section', 'hakjeom')
         .maybeSingle()
-      if (!perm) return NextResponse.json({ count: 0 })
+      if (!perm || perm.scope === 'none') return NextResponse.json({ count: 0 })
       if (perm.scope === 'own') {
         query = query.eq('manager', appUser.display_name ?? '')
       }

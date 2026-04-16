@@ -14,6 +14,26 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
+  const getDefaultPath = (data: { role: string; permissions?: { section: string; scope: string; allowed_tabs?: string[] | null }[] }) => {
+    if (data.role === 'mini-admin') return '/mini-admin'
+    if (data.role === 'admin' || data.role === 'master-admin') return '/hakjeom'
+    const SECTION_PATHS = [
+      { section: 'hakjeom',  path: '/hakjeom' },
+      { section: 'cert',     path: '/cert' },
+      { section: 'practice', path: '/practice' },
+      { section: 'allcare',  path: '/allcare' },
+      { section: 'revenue-upload', path: '/revenue-upload' },
+      { section: 'revenues', path: '/revenues/nms-sales' },
+      { section: 'approvals', path: '/approvals' },
+      { section: 'reports', path: '/reports' },
+    ]
+    const perms = data.permissions ?? []
+    for (const { section, path } of SECTION_PATHS) {
+      if (perms.some(p => p.section === section && p.scope && p.scope !== 'none')) return path
+    }
+    return '/hakjeom'
+  }
+
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session) {
@@ -29,23 +49,7 @@ export default function LoginPage() {
         router.replace('/hakjeom')
       }
     })
-  }, [])
-
-  const getDefaultPath = (data: { role: string; permissions?: { section: string; scope: string }[] }) => {
-    if (data.role === 'mini-admin') return '/mini-admin'
-    if (data.role === 'admin' || data.role === 'master-admin') return '/hakjeom'
-    const SECTION_PATHS = [
-      { section: 'hakjeom',  path: '/hakjeom' },
-      { section: 'cert',     path: '/cert' },
-      { section: 'practice', path: '/practice' },
-      { section: 'allcare',  path: '/allcare' },
-    ]
-    const perms = data.permissions ?? []
-    for (const { section, path } of SECTION_PATHS) {
-      if (perms.some(p => p.section === section && p.scope && p.scope !== 'none')) return path
-    }
-    return '/hakjeom'
-  }
+  }, [router, supabase.auth])
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()

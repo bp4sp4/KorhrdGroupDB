@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/auth/requireAuth'
+import { requireManagementAccess } from '@/lib/auth/managementAccess'
 import { allcareAdmin } from '@/lib/supabase/allcare'
 
 // 올케어 월별 매출 조회 (학점은행제 사업부 포함)
 // GET /api/management/allcare-sales?year=2026&month=4
 export async function GET(request: NextRequest) {
-  const { errorResponse } = await requireAuth()
-  if (errorResponse) return errorResponse
+  const access = await requireManagementAccess('revenues', { emptyBody: { year: 0, month: 0, totalRevenue: 0, count: 0, byType: {}, payments: [] } })
+  if (!access.ok) return access.response
 
   const sp = request.nextUrl.searchParams
   const year = parseInt(sp.get('year') ?? String(new Date().getFullYear()))

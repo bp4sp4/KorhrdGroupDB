@@ -7,30 +7,6 @@ import Header from '@/components/layout/Header'
 import { createClient } from '@/lib/supabase/client'
 import styles from '@/components/layout/layout.module.css'
 
-interface PageMeta {
-  title: string
-  section?: string
-}
-
-const PAGE_META: Record<string, PageMeta> = {
-  '/hakjeom':      { title: '교육운영',     section: '교육운영' },
-  '/cert':         { title: '교육운영',     section: '교육운영' },
-  '/practice':     { title: '실습/취업',    section: '교육운영' },
-  '/allcare':      { title: '올케어 관리자', section: '교육운영' },
-  '/abroad':       { title: '한평생유학',   section: '교육운영' },
-  '/revenues':         { title: '매출 관리',      section: '경영관리' },
-  '/revenues/nms-sales': { title: 'NMS 팀별 매출', section: '경영관리' },
-  '/approvals':    { title: '전자결재',     section: '경영관리' },
-  '/reports':      { title: '손익 리포트',  section: '경영관리' },
-  '/duplicate':    { title: '중복 조회',    section: '시스템' },
-  '/trash':        { title: '삭제목록',     section: '시스템' },
-  '/ref-manage':   { title: '어드민 관리',  section: '시스템' },
-  '/logs':         { title: '로그 관리',    section: '시스템' },
-  '/assignment':   { title: '배정 현황',    section: '시스템' },
-  '/mini-admin':   { title: '결제확인' },
-  '/paymentstatus':{ title: '결제확인' },
-}
-
 export default function DashboardLayout({
   children,
 }: {
@@ -41,7 +17,7 @@ export default function DashboardLayout({
   const [isChecking, setIsChecking] = useState(true)
   const [userRole, setUserRole] = useState<string | null>(null)
   const [displayName, setDisplayName] = useState<string>('관리자')
-  const [permissions, setPermissions] = useState<{ section: string; scope: string }[]>([])
+  const [permissions, setPermissions] = useState<{ section: string; scope: string; allowed_tabs?: string[] | null }[]>([])
   const supabase = createClient()
 
   // 1) 최초 1회: 세션 확인 + 유저 정보 로드
@@ -52,7 +28,7 @@ export default function DashboardLayout({
         return
       }
       let role = 'admin'
-      let perms: { section: string; scope: string }[] = []
+      let perms: { section: string; scope: string; allowed_tabs?: string[] | null }[] = []
       let name = '관리자'
       try {
         const res = await fetch('/api/auth/me')
@@ -85,6 +61,7 @@ export default function DashboardLayout({
       { section: 'abroad',    path: '/abroad' },
       { section: 'approvals', path: '/approvals' },
       { section: 'revenues',  path: '/revenues' },
+      { section: 'revenue-upload', path: '/revenue-upload' },
     ]
     const PERM_PATHS: { path: string; section: string }[] = [
       { path: '/assignment', section: 'assignment' },
@@ -99,6 +76,7 @@ export default function DashboardLayout({
       { path: '/practice',   section: 'practice' },
       { path: '/approvals',  section: 'approvals' },
       { path: '/revenues',   section: 'revenues' },
+      { path: '/revenue-upload', section: 'revenue-upload' },
       { path: '/reports',    section: 'reports' },
     ]
 
@@ -146,8 +124,6 @@ export default function DashboardLayout({
       </div>
     )
   }
-
-  const meta = PAGE_META[pathname] ?? { title: '관리' }
 
   return (
     <div className={styles.dashboardWrap}>

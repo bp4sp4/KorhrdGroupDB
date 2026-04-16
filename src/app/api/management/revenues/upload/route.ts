@@ -6,12 +6,7 @@ export async function POST(request: NextRequest) {
   const { user, errorResponse } = await requireAuth()
   if (errorResponse) return errorResponse
 
-  const appUser = await supabaseAdmin
-    .from('app_users')
-    .select('id')
-    .eq('username', user.email)
-    .single()
-  const userId = appUser.data?.id ?? user.id
+  const userId = user.id
 
   const body = await request.json()
   const { rows } = body as { rows: Record<string, unknown>[] }
@@ -29,7 +24,7 @@ export async function POST(request: NextRequest) {
     customer_name: row.customer_name as string,
     amount: Number(row.amount),
     product_name: (row.product_name as string) || null,
-    manager_id: (row.manager_id as string) || userId,
+    manager_id: (row.manager_id as string) || null,
     memo: (row.memo as string) || null,
     source: 'EXCEL_UPLOAD',
     upload_batch_id: batchId,

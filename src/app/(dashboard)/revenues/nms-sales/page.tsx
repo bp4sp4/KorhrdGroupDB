@@ -71,6 +71,12 @@ interface StatMonth {
   total: number
 }
 
+interface HeroSummary {
+  amount: number
+  label: string
+  sublabel: string
+}
+
 // ─── 월 피커 ─────────────────────────────────────────────────────────────────
 
 function MonthPicker({ year, month, onChange }: {
@@ -181,7 +187,7 @@ function NmsTab({ year, month }: { year: number; month: number }) {
       if (nmsRes && nmsRes.ok) {
         const json = await nmsRes.json()
         setData(json)
-        setExpandedTeams(new Set(json.byTeam?.map((t: TeamStat) => t.team) ?? []))
+        setExpandedTeams(new Set())
       } else if (teamFilter === 'allcare') {
         setData(null)
       }
@@ -218,13 +224,14 @@ function NmsTab({ year, month }: { year: number; month: number }) {
 
   return (
     <div className={styles.tab_content}>
-      {/* 팀 필터 */}
-      <div className={styles.team_tabs}>
-        <button className={`${styles.team_tab} ${teamFilter === '' ? styles.team_tab_active : ''}`} onClick={() => setTeamFilter('')}>전체 팀</button>
-        {NMS_TEAMS.map(t => (
-          <button key={t} className={`${styles.team_tab} ${teamFilter === t ? styles.team_tab_active : ''}`} onClick={() => setTeamFilter(t)}>{t}</button>
-        ))}
-        <button className={`${styles.team_tab} ${teamFilter === 'allcare' ? styles.team_tab_active : ''}`} onClick={() => setTeamFilter('allcare')}>올케어</button>
+      <div className={styles.filter_panel}>
+        <div className={styles.team_tabs}>
+          <button className={`${styles.team_tab} ${teamFilter === '' ? styles.team_tab_active : ''}`} onClick={() => setTeamFilter('')}>전체 팀</button>
+          {NMS_TEAMS.map(t => (
+            <button key={t} className={`${styles.team_tab} ${teamFilter === t ? styles.team_tab_active : ''}`} onClick={() => setTeamFilter(t)}>{t}</button>
+          ))}
+          <button className={`${styles.team_tab} ${teamFilter === 'allcare' ? styles.team_tab_active : ''}`} onClick={() => setTeamFilter('allcare')}>올케어</button>
+        </div>
       </div>
 
       {/* 요약 카드 */}
@@ -234,13 +241,13 @@ function NmsTab({ year, month }: { year: number; month: number }) {
             <div className={styles.card_icon_wrap}><TrendingUp size={18} /></div>
             <span className={styles.summary_label}>총 매출</span>
             <span className={styles.summary_value}>{formatAmount((data.total.paymentAmount) + (allcareData?.totalRevenue ?? 0))}</span>
-            <span className={styles.summary_sub}>NMS + 올케어 합산</span>
+            <span className={styles.summary_sub}>학점은행제 + 올케어 합산</span>
           </div>
           <div className={`${styles.summary_card} ${styles.card_blue}`}>
             <div className={styles.card_icon_wrap}><TrendingUp size={18} /></div>
-            <span className={styles.summary_label}>NMS 매출</span>
+            <span className={styles.summary_label}>학점은행제 매출</span>
             <span className={styles.summary_value}>{formatAmount(data.total.paymentAmount)}</span>
-            <span className={styles.summary_sub}>NMS 등록 합산</span>
+            <span className={styles.summary_sub}>학점은행제 등록 합산</span>
           </div>
           <div className={`${styles.summary_card} ${styles.card_green}`}>
             <div className={styles.card_icon_wrap}><TrendingUp size={18} /></div>
@@ -367,17 +374,20 @@ function NmsTab({ year, month }: { year: number; month: number }) {
         <div className={styles.empty}>해당 기간에 데이터가 없습니다.</div>
       ) : (
         <div className={styles.teams_wrap}>
+          <div className={styles.section_heading}>
+            <strong className={styles.section_title}>팀별 상세 현황</strong>
+          </div>
           {data.byTeam.map(team => {
             const isExpanded = expandedTeams.has(team.team)
             return (
               <div key={team.team} className={styles.team_block}>
                 <button className={styles.team_header} onClick={() => toggleTeam(team.team)}>
                   <span className={styles.team_toggle_icon}>{isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
-                  <span className={styles.team_badge}>{team.team}</span>
+                  <div className={styles.team_heading}>
+                    <span className={styles.team_badge}>{team.team}</span>
+                  </div>
                   <div className={styles.team_meta}>
                     <span className={styles.team_amount}>{formatAmount(team.paymentAmount)}</span>
-                    <span className={styles.team_divider} />
-                    <span className={styles.team_stat}>완료 {team.completedCount}/{team.totalCount}건</span>
                   </div>
                 </button>
                 {isExpanded && (
@@ -500,7 +510,6 @@ function CertTab({ year, month }: { year: number; month: number }) {
 function AbroadTab({ year, month }: { year: number; month: number }) {
   const [data, setData] = useState<AbroadSalesData | null>(null)
   const [loading, setLoading] = useState(false)
-  const [search, setSearch] = useState('')
 
   const fetch_ = useCallback(async () => {
     setLoading(true)
@@ -519,15 +528,6 @@ function AbroadTab({ year, month }: { year: number; month: number }) {
   if (!data) return null
 
   const maxAmount = Math.max(...(data.byDay.map(d => d.amount)), 1)
-
-  const keyword = search.trim().toLowerCase()
-  const filteredRows = keyword
-    ? data.rows.filter(r =>
-        (r.name ?? '').toLowerCase().includes(keyword) ||
-        (r.email ?? '').toLowerCase().includes(keyword) ||
-        r.program.toLowerCase().includes(keyword)
-      )
-    : data.rows
 
   return (
     <div className={styles.tab_content}>
@@ -579,18 +579,10 @@ function AbroadTab({ year, month }: { year: number; month: number }) {
       <div className={styles.team_block}>
         <div className={styles.cert_chart_header}>
           <span className={styles.cert_chart_title}>결제 내역</span>
-          <span className={styles.cert_chart_sub}>{filteredRows.length}건</span>
+          <span className={styles.cert_chart_sub}>{data.rows.length}건</span>
         </div>
-        <div className={styles.abroad_search_wrap}>
-          <input
-            className={styles.abroad_search_input}
-            placeholder="이름, 이메일, 프로그램 검색"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
-        </div>
-        {filteredRows.length === 0 ? (
-          <div className={styles.empty}>{keyword ? '검색 결과가 없습니다.' : '결제 내역이 없습니다.'}</div>
+        {data.rows.length === 0 ? (
+          <div className={styles.empty}>결제 내역이 없습니다.</div>
         ) : (
           <table className={styles.manager_table}>
             <thead>
@@ -603,7 +595,7 @@ function AbroadTab({ year, month }: { year: number; month: number }) {
               </tr>
             </thead>
             <tbody>
-              {filteredRows.map(r => (
+              {data.rows.map(r => (
                 <tr key={r.id}>
                   <td className={styles.manager_name}>{r.name ?? '-'}</td>
                   <td>{r.email ?? '-'}</td>
@@ -626,10 +618,6 @@ const DC = { nms: '#3182F6', cert: '#7C3AED', abroad: '#12B76A', total: '#F59E0B
 const DL = { nms: '학점은행제', cert: '민간자격증', abroad: '유학' }
 
 function fmt(n: number) {
-  if (n >= 100_000_000) return `${(n / 100_000_000).toFixed(1)}억`
-  if (n >= 10_000_000)  return `${(n / 10_000_000).toFixed(1)}천만`
-  if (n >= 1_000_000)   return `${(n / 1_000_000).toFixed(1)}백만`
-  if (n >= 10_000)      return `${Math.round(n / 10_000)}만`
   return formatAmount(n)
 }
 
@@ -921,89 +909,171 @@ function StatsTab() {
   )
 }
 
+function TopRevenueHero({
+  year,
+  month,
+  activeTab,
+  onChangeMonth,
+}: {
+  year: number
+  month: number
+  activeTab: TabKey
+  onChangeMonth: (y: number, m: number) => void
+}) {
+  const [summary, setSummary] = useState<HeroSummary | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+
+    const fetchSummary = async () => {
+      setLoading(true)
+      try {
+        const params = new URLSearchParams({ year: String(year), month: String(month) })
+
+        if (activeTab === 'nms') {
+          const [nmsRes, allcareRes] = await Promise.all([
+            fetch(`/api/management/nms-sales?${params}`),
+            fetch(`/api/management/allcare-sales?year=${year}&month=${month}`),
+          ])
+          if (!nmsRes.ok || !allcareRes.ok) return
+          const [nms, allcare] = await Promise.all([nmsRes.json(), allcareRes.json()])
+          if (cancelled) return
+          setSummary({
+            amount: (nms.total?.paymentAmount ?? 0) + (allcare.totalRevenue ?? 0),
+            label: '이번 달 총 매출',
+            sublabel: '학점은행제 + 올케어 합산',
+          })
+          return
+        }
+
+        if (activeTab === 'cert') {
+          const res = await fetch(`/api/management/cert-sales?${params}`)
+          if (!res.ok) return
+          const data = await res.json()
+          if (cancelled) return
+          setSummary({
+            amount: data.total?.paymentAmount ?? 0,
+            label: '이번 달 민간자격증 매출',
+            sublabel: '결제완료 기준',
+          })
+          return
+        }
+
+        if (activeTab === 'abroad') {
+          const res = await fetch(`/api/management/abroad-sales?${params}`)
+          if (!res.ok) return
+          const data = await res.json()
+          if (cancelled) return
+          setSummary({
+            amount: data.total?.paymentAmount ?? 0,
+            label: '이번 달 유학 매출',
+            sublabel: '결제완료 기준',
+          })
+          return
+        }
+
+        const [nmsRes, certRes, abroadRes] = await Promise.all([
+          fetch(`/api/management/nms-sales?${params}`),
+          fetch(`/api/management/cert-sales?${params}`),
+          fetch(`/api/management/abroad-sales?${params}`),
+        ])
+        if (!nmsRes.ok || !certRes.ok || !abroadRes.ok) return
+        const [nms, cert, abroad] = await Promise.all([nmsRes.json(), certRes.json(), abroadRes.json()])
+        if (cancelled) return
+        setSummary({
+          amount: (nms.total?.paymentAmount ?? 0) + (cert.total?.paymentAmount ?? 0) + (abroad.total?.paymentAmount ?? 0),
+          label: '이번 달 통합 매출',
+          sublabel: '학점은행제 + 민간자격증 + 유학 합산',
+        })
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    fetchSummary()
+    return () => { cancelled = true }
+  }, [year, month, activeTab])
+
+  return (
+    <>
+      <div className={styles.hero_amount_block}>
+        <span className={styles.hero_amount_label}>{summary?.label ?? '이번 달 매출'}</span>
+        <strong className={styles.hero_amount_value}>
+          {loading && !summary ? '불러오는 중...' : formatAmount(summary?.amount ?? 0)}
+        </strong>
+        <span className={styles.hero_amount_sub}>
+          {summary?.sublabel ?? `${year}년 ${month}월 기준`}
+        </span>
+      </div>
+      <div className={styles.page_header}>
+        <div className={styles.page_heading}>
+          <h1 className={styles.page_title}>팀별 매출 관리</h1>
+          <p className={styles.page_subtitle}>{year}년 {month}월 기준 사업부별·담당자별 월 매출 현황</p>
+        </div>
+        <div className={styles.page_header_side}>
+          <MonthPicker
+            year={year}
+            month={month}
+            onChange={onChangeMonth}
+          />
+        </div>
+      </div>
+    </>
+  )
+}
+
 // ─── 메인 페이지 ─────────────────────────────────────────────────────────────
 
 export default function NmsSalesPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const urlTab = searchParams.get('tab') as TabKey | null
+  const validTabs: TabKey[] = ['stats', 'nms', 'cert', 'abroad']
 
   const thisMonth = getThisMonth()
   const [selectedYear, setSelectedYear] = useState(thisMonth.year)
   const [selectedMonth, setSelectedMonth] = useState(thisMonth.month)
-  const [activeTab, setActiveTab] = useState<TabKey>(() => {
-    const valid: TabKey[] = ['nms', 'cert', 'abroad', 'stats']
-    return urlTab && valid.includes(urlTab) ? urlTab : 'nms'
-  })
-  const [visitedTabs, setVisitedTabs] = useState<Set<TabKey>>(new Set([
-    urlTab && (['nms', 'cert', 'abroad', 'stats'] as TabKey[]).includes(urlTab) ? urlTab : 'nms'
-  ]))
-
-  useEffect(() => {
-    const valid: TabKey[] = ['nms', 'cert', 'abroad', 'stats']
-    if (urlTab && valid.includes(urlTab)) {
-      setActiveTab(urlTab)
-      setVisitedTabs(prev => new Set([...prev, urlTab]))
-    }
-  }, [urlTab])
+  const activeTab: TabKey = urlTab && validTabs.includes(urlTab) ? urlTab : 'stats'
 
   const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
+    { key: 'stats',  label: '통합 통계',         icon: <BarChart2 size={15} /> },
     { key: 'nms',    label: '학점은행제 사업부', icon: <TrendingUp size={15} /> },
     { key: 'cert',   label: '민간자격증 사업부', icon: <Award size={15} /> },
     { key: 'abroad', label: '유학 사업부',       icon: <Plane size={15} /> },
-    { key: 'stats',  label: '통합 통계',         icon: <BarChart2 size={15} /> },
   ]
 
   return (
     <div className={styles.page_wrap}>
-      {/* 헤더 */}
-      <div className={styles.page_header}>
-        <div>
-          <h1 className={styles.page_title}>팀별 매출 관리</h1>
-          <p className={styles.page_subtitle}>사업부별·담당자별 월 매출 현황</p>
-        </div>
-        <MonthPicker
+      <div className={styles.hero_card}>
+        <TopRevenueHero
           year={selectedYear}
           month={selectedMonth}
-          onChange={(y, m) => { setSelectedYear(y); setSelectedMonth(m) }}
+          activeTab={activeTab}
+          onChangeMonth={(y, m) => { setSelectedYear(y); setSelectedMonth(m) }}
         />
       </div>
 
-      {/* 사업부 탭 */}
-      <div className={styles.div_tabs}>
-        {TABS.map(tab => (
-          <button
-            key={tab.key}
-            className={`${styles.div_tab} ${activeTab === tab.key ? styles.div_tab_active : ''}`}
-            onClick={() => { setActiveTab(tab.key); setVisitedTabs(prev => new Set([...prev, tab.key])); router.replace(`/revenues/nms-sales?tab=${tab.key}`, { scroll: false }) }}
-          >
-            {tab.icon}
-            {tab.label}
-          </button>
-        ))}
+      <div className={styles.div_tabs_shell}>
+        <div className={styles.div_tabs}>
+          {TABS.map(tab => (
+            <button
+              key={tab.key}
+              className={`${styles.div_tab} ${activeTab === tab.key ? styles.div_tab_active : ''}`}
+              onClick={() => { router.replace(`/revenues/nms-sales?tab=${tab.key}`, { scroll: false }) }}
+            >
+              {tab.icon}
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* 탭 콘텐츠 */}
-      {visitedTabs.has('nms') && (
-        <div className={activeTab !== 'nms' ? styles.tab_hidden : undefined}>
-          <NmsTab year={selectedYear} month={selectedMonth} />
-        </div>
-      )}
-      {visitedTabs.has('cert') && (
-        <div className={activeTab !== 'cert' ? styles.tab_hidden : undefined}>
-          <CertTab year={selectedYear} month={selectedMonth} />
-        </div>
-      )}
-      {visitedTabs.has('abroad') && (
-        <div className={activeTab !== 'abroad' ? styles.tab_hidden : undefined}>
-          <AbroadTab year={selectedYear} month={selectedMonth} />
-        </div>
-      )}
-      {visitedTabs.has('stats') && (
-        <div className={activeTab !== 'stats' ? styles.tab_hidden : undefined}>
-          <StatsTab />
-        </div>
-      )}
+      {activeTab === 'nms' && <NmsTab year={selectedYear} month={selectedMonth} />}
+      {activeTab === 'cert' && <CertTab year={selectedYear} month={selectedMonth} />}
+      {activeTab === 'abroad' && <AbroadTab year={selectedYear} month={selectedMonth} />}
+      {activeTab === 'stats' && <StatsTab />}
     </div>
   )
 }

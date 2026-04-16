@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { Download, TrendingUp, TrendingDown, ChevronDown, ChevronRight } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import dynamic from 'next/dynamic'
@@ -77,23 +77,37 @@ export default function ReportsPage() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(false)
 
-  const fetchDashboard = useCallback(async () => {
-    setLoading(true)
-    try {
-      const params = new URLSearchParams({ year: String(selectedYear), month: String(selectedMonth) })
-      const res = await fetch(`/api/management/reports/dashboard?${params}`)
-      if (res.ok) setData(await res.json())
-    } catch { /* */ }
-    setLoading(false)
-  }, [selectedYear, selectedMonth])
+  useEffect(() => {
+    let cancelled = false
 
-  useEffect(() => { fetchDashboard() }, [fetchDashboard])
+    const loadDashboard = async () => {
+      setLoading(true)
+      try {
+        const params = new URLSearchParams({ year: String(selectedYear), month: String(selectedMonth) })
+        const res = await fetch(`/api/management/reports/dashboard?${params}`)
+        if (!cancelled && res.ok) setData(await res.json())
+      } catch {
+        if (!cancelled) setData(null)
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    void loadDashboard()
+
+    return () => {
+      cancelled = true
+    }
+  }, [selectedYear, selectedMonth])
 
   const revDiff = data && data.prev_month.revenue > 0
     ? Math.round(((data.total_revenue - data.prev_month.revenue) / data.prev_month.revenue) * 1000) / 10
     : null
   const expDiff = data && data.prev_month.expense > 0
     ? Math.round(((data.total_expense - data.prev_month.expense) / data.prev_month.expense) * 1000) / 10
+    : null
+  const profitDiff = data && data.prev_month.profit !== 0
+    ? Math.round(((data.profit - data.prev_month.profit) / Math.abs(data.prev_month.profit)) * 1000) / 10
     : null
 
   /* 차트 데이터 */
@@ -142,29 +156,78 @@ export default function ReportsPage() {
     XLSX.writeFile(wb, `손익리포트_${data.month}.xlsx`)
   }
 
+  const selectedLabel = getMonthLabel(selectedYear, selectedMonth)
+  const headlineText = !data
+    ? ''
+    : data.profit >= 0
+      ? `${selectedLabel} 기준 순이익은 ${formatAmount(data.profit)}입니다.`
+      : `${selectedLabel} 기준 손실은 ${formatAmount(Math.abs(data.profit))}입니다.`
+  const summaryText = !data
+    ? ''
+    : `매출 ${formatAmount(data.total_revenue)} · 지출 ${formatAmount(data.total_expense)} · 이익률 ${data.profit_rate}%`
+
   return (
     <div className={styles.page_wrap}>
-      {/* Header */}
-      <div className={styles.page_header}>
-        <h2 className={styles.page_title}>손익 리포트</h2>
-        <div className={styles.header_filters}>
-          <select
-            className={styles.filter_select}
-            value={`${selectedYear}-${selectedMonth}`}
-            onChange={(e) => {
-              const [y, m] = e.target.value.split('-').map(Number)
-              setSelectedYear(y); setSelectedMonth(m)
-            }}
-          >
-            {months.map((m) => (
-              <option key={m.label} value={`${m.year}-${m.month}`}>{m.label}</option>
-            ))}
-          </select>
-          <button className={styles.btn_secondary} onClick={handleExport} disabled={!data}>
-            <Download size={14} /> 엑셀 다운로드
-          </button>
+      <section className={styles.heroSection}>
+        <div className={styles.heroCard}>
+          <div className={styles.page_header}>
+            <div>
+              <span className={styles.heroEyebrow}>한평생그룹 재무현황</span>
+              <h2 className={styles.page_title}>한평생그룹 손익리포트</h2>
+            </div>
+            <div className={styles.header_filters}>
+              <select
+                className={styles.filter_select}
+                value={`${selectedYear}-${selectedMonth}`}
+                onChange={(e) => {
+                  const [y, m] = e.target.value.split('-').map(Number)
+                  setSelectedYear(y); setSelectedMonth(m)
+                }}
+              >
+                {months.map((m) => (
+                  <option key={m.label} value={`${m.year}-${m.month}`}>{m.label}</option>
+                ))}
+              </select>
+              <button className={styles.btn_secondary} onClick={handleExport} disabled={!data}>
+                <Download size={14} /> 엑셀 다운로드
+              </button>
+            </div>
+          </div>
+
+          <div className={styles.heroContent}>
+            <div className={styles.heroTextBlock}>
+              <div className={styles.periodBadge}>분석 기준 {selectedLabel}</div>
+              <p className={styles.heroHeadline}>{headlineText || '손익 데이터를 불러오고 있어요.'}</p>
+              <p className={styles.heroDescription}>
+                {summaryText || '매출, 지출, 순이익 흐름을 한 화면에서 확인할 수 있어요.'}
+              </p>
+            </div>
+          </div>
+
+          {data && (
+            <div className={styles.heroMetaRow}>
+              <div className={styles.heroMetaItem}>
+                <span>전월 매출</span>
+                <strong>{formatAmount(data.prev_month.revenue)}</strong>
+              </div>
+              <div className={styles.heroMetaItem}>
+                <span>전월 지출</span>
+                <strong>{formatAmount(data.prev_month.expense)}</strong>
+              </div>
+              <div className={styles.heroMetaItem}>
+                <span>전월 순이익</span>
+                <strong className={data.prev_month.profit >= 0 ? styles.profit_positive : styles.profit_negative}>
+                  {formatAmount(data.prev_month.profit)}
+                </strong>
+              </div>
+              <div className={styles.heroMetaItem}>
+                <span>순이익 증감</span>
+                <strong>{profitDiff === null ? '-' : `${profitDiff > 0 ? '+' : ''}${profitDiff}%`}</strong>
+              </div>
+            </div>
+          )}
         </div>
-      </div>
+      </section>
 
       {loading ? (
         <div className={styles.loading_state}>데이터를 불러오는 중...</div>
@@ -172,18 +235,20 @@ export default function ReportsPage() {
         <>
           {/* ① KPI Cards */}
           <div className={styles.kpiGrid}>
+            <KpiCard label="순이익" value={data.profit} highlight={data.profit >= 0} color={data.profit >= 0 ? 'default' : 'red'} />
             <KpiCard label="총 매출" value={data.total_revenue} color="blue" diff={revDiff} />
             <KpiCard label="총 지출" value={data.total_expense} color="red" diff={expDiff} />
-            <KpiCard label="순이익" value={data.profit} highlight={data.profit >= 0} color={data.profit >= 0 ? 'default' : 'red'} />
             <KpiCard label="이익률" value={data.profit_rate} format="percent" color={data.profit_rate >= 0 ? 'green' : 'red'} />
           </div>
 
           {/* ② 간이 손익계산서 */}
           <div className={styles.section}>
             <div className={styles.section_header}>
-              <h3 className={styles.section_title}>
-                간이 손익계산서 — {getMonthLabel(selectedYear, selectedMonth)}
-              </h3>
+              <div>
+                <span className={styles.section_eyebrow}>손익 요약</span>
+                <h3 className={styles.section_title}>간이 손익계산서</h3>
+              </div>
+              <span className={styles.section_caption}>{selectedLabel}</span>
             </div>
             <table className={styles.pnl_table}>
               <tbody>
@@ -217,29 +282,14 @@ export default function ReportsPage() {
             </table>
           </div>
 
-          {/* ③ 전월 비교 */}
-          <div className={styles.prevMonthWrap}>
-            <div className={styles.prevMonthCard}>
-              <span className={styles.prevMonthLabel}>전월 매출</span>
-              <span className={styles.prevMonthValue}>{formatAmount(data.prev_month.revenue)}</span>
-            </div>
-            <div className={styles.prevMonthCard}>
-              <span className={styles.prevMonthLabel}>전월 지출</span>
-              <span className={styles.prevMonthValue}>{formatAmount(data.prev_month.expense)}</span>
-            </div>
-            <div className={styles.prevMonthCard}>
-              <span className={styles.prevMonthLabel}>전월 순이익</span>
-              <span className={`${styles.prevMonthValue} ${data.prev_month.profit >= 0 ? styles.profit_positive : styles.profit_negative}`}>
-                {formatAmount(data.prev_month.profit)}
-              </span>
-            </div>
-          </div>
-
-          {/* ④ 추이 + 매출 구성 (2열) */}
+          {/* ③ 추이 + 매출 구성 (2열) */}
           <div className={styles.chartGrid2}>
             {trendData.length > 0 && (
               <div className={styles.miniSection}>
-                <p className={styles.miniTitle}>매출/지출 추이 (6개월)</p>
+                <div className={styles.miniHeader}>
+                  <span className={styles.section_eyebrow}>추이</span>
+                  <p className={styles.miniTitle}>매출/지출 추이</p>
+                </div>
                 <Area
                   data={trendData}
                   xField="month"
@@ -257,7 +307,10 @@ export default function ReportsPage() {
             )}
             {revenueDonut.length > 0 && (
               <div className={styles.miniSection}>
-                <p className={styles.miniTitle}>매출 구성</p>
+                <div className={styles.miniHeader}>
+                  <span className={styles.section_eyebrow}>비중</span>
+                  <p className={styles.miniTitle}>매출 구성</p>
+                </div>
                 <Pie
                   data={revenueDonut}
                   angleField="amount"
@@ -286,7 +339,10 @@ export default function ReportsPage() {
           <div className={styles.chartGrid2}>
             {expenseDonut.length > 0 && (
               <div className={styles.miniSection}>
-                <p className={styles.miniTitle}>지출 구성</p>
+                <div className={styles.miniHeader}>
+                  <span className={styles.section_eyebrow}>비중</span>
+                  <p className={styles.miniTitle}>지출 구성</p>
+                </div>
                 <Pie
                   data={expenseDonut}
                   angleField="amount"
@@ -310,7 +366,10 @@ export default function ReportsPage() {
             )}
             {deptColumnData.length > 0 && (
               <div className={styles.miniSection}>
-                <p className={styles.miniTitle}>사업부별 매출/지출</p>
+                <div className={styles.miniHeader}>
+                  <span className={styles.section_eyebrow}>부서 비교</span>
+                  <p className={styles.miniTitle}>사업부별 매출/지출</p>
+                </div>
                 <Column
                   data={deptColumnData}
                   xField="dept"

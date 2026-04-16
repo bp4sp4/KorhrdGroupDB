@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
         .eq('user_id', appUser.id)
         .eq('section', 'cert')
         .maybeSingle()
-      if (!permError && !perm) return NextResponse.json([])
+      if (!permError && (!perm || perm.scope === 'none')) return NextResponse.json([])
     }
 
     const { searchParams } = new URL(request.url);

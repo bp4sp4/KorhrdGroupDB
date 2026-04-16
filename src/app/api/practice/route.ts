@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
         .maybeSingle()
       if (permError) {
         // 테이블 미생성 등 오류 시 전체 열람 허용
-      } else if (!perm) {
+      } else if (!perm || perm.scope === 'none') {
         return NextResponse.json([])
       } else if (perm.scope === 'own') {
         managerFilter = appUser.display_name ?? ''
