@@ -4,7 +4,7 @@ import { writeAuditLog } from '@/lib/management/auditLog'
 import { requireManagementAccess } from '@/lib/auth/managementAccess'
 
 export async function GET(request: NextRequest) {
-  const access = await requireManagementAccess('revenue-upload', { emptyBody: { data: [], total: 0, page: 1, pageSize: 50 } })
+  const access = await requireManagementAccess('revenue-upload', { allowOwn: true, emptyBody: { data: [], total: 0, page: 1, pageSize: 50 } })
   if (!access.ok) return access.response
 
   const sp = request.nextUrl.searchParams
@@ -16,6 +16,17 @@ export async function GET(request: NextRequest) {
   const page = parseInt(sp.get('page') ?? '1')
   const pageSize = 50
 
+  // 'own' 스코프: 본인 사업부만 조회 허용 (사업부 미지정 시 빈 결과)
+  if (access.scope === 'own') {
+    const ownDept = access.appUser.department_id
+    if (!ownDept) {
+      return NextResponse.json({ data: [], total: 0, page, pageSize })
+    }
+    if (deptId && deptId !== ownDept) {
+      return NextResponse.json({ data: [], total: 0, page, pageSize })
+    }
+  }
+
   let query = supabaseAdmin
     .from('revenues')
     .select(`
@@ -23,6 +34,10 @@ export async function GET(request: NextRequest) {
       department:departments(id, code, name)
     `, { count: 'exact' })
     .eq('is_deleted', false)
+
+  if (access.scope === 'own' && access.appUser.department_id) {
+    query = query.eq('department_id', access.appUser.department_id)
+  }
 
   if (dateStart) query = query.gte('revenue_date', dateStart)
   if (dateEnd) query = query.lte('revenue_date', dateEnd)
@@ -48,7 +63,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const access = await requireManagementAccess('revenue-upload')
+  const access = await requireManagementAccess('revenue-upload', { allowOwn: true })
   if (!access.ok) return access.response
 
   const userId = access.user.id
@@ -60,11 +75,24 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: '필수 항목을 입력해주세요.' }, { status: 400 })
   }
 
+  // 'own' 스코프: 본인 사업부로 강제
+  let effectiveDeptId: string | null = department_id || null
+  if (access.scope === 'own') {
+    const ownDept = access.appUser.department_id
+    if (!ownDept) {
+      return NextResponse.json({ error: '사업부가 지정되지 않아 등록할 수 없습니다.' }, { status: 403 })
+    }
+    if (department_id && department_id !== ownDept) {
+      return NextResponse.json({ error: '본인 사업부 데이터만 등록할 수 있습니다.' }, { status: 403 })
+    }
+    effectiveDeptId = ownDept
+  }
+
   const { data, error } = await supabaseAdmin
     .from('revenues')
     .insert({
       revenue_date,
-      department_id: department_id || null,
+      department_id: effectiveDeptId,
       revenue_type: revenue_type ?? 'CARD',
       customer_name,
       amount: Number(amount),

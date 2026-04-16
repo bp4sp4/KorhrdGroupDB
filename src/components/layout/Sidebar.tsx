@@ -94,10 +94,10 @@ const ALL_SECTIONS: NavSection[] = [
       {
         id: 'nms-sales', label: '팀별 매출 관리', href: '/revenues/nms-sales', icon: <TrendingUp size={16} />, groupLabel: '경영관리',
         children: [
+          { id: 'nms-sales-tab-stats',  label: '통합 통계',  href: '/revenues/nms-sales?tab=stats' },
           { id: 'nms-sales-tab-nms',    label: '학점은행제', href: '/revenues/nms-sales?tab=nms' },
           { id: 'nms-sales-tab-cert',   label: '민간자격증', href: '/revenues/nms-sales?tab=cert' },
           { id: 'nms-sales-tab-abroad', label: '유학',       href: '/revenues/nms-sales?tab=abroad' },
-          { id: 'nms-sales-tab-stats',  label: '통합 통계',  href: '/revenues/nms-sales?tab=stats' },
         ],
       },
       { id: 'revenue-upload', label: '매출 데이터 관리', href: '/revenue-upload', icon: <Upload size={16} /> },

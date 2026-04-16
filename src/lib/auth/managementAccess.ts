@@ -10,6 +10,21 @@ import {
 } from '@/lib/auth/permissions'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 
+// 팀별 매출(team-wise revenue) 데이터에 접근 가능한 사업부 코드
+// 매출 소스(NMS/자격증/유학/올케어)는 모두 사업본부(BIZ) 소속이므로,
+// 다른 본부(개발/경영지원) 소속 사용자는 'own' 스코프에서 빈 결과
+const REVENUE_OWN_ALLOWED_DEPT_CODES = ['BIZ']
+
+export async function isRevenueOwnAllowedForDepartment(departmentId: string | null | undefined): Promise<boolean> {
+  if (!departmentId) return false
+  const { data } = await supabaseAdmin
+    .from('departments')
+    .select('code')
+    .eq('id', departmentId)
+    .maybeSingle()
+  return Boolean(data?.code && REVENUE_OWN_ALLOWED_DEPT_CODES.includes(data.code))
+}
+
 export async function requireManagementAccess(
   section: PermissionSection,
   options?: { allowOwn?: boolean; deniedStatus?: number; emptyBody?: unknown }

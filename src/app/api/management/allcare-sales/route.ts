@@ -1,12 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireManagementAccess } from '@/lib/auth/managementAccess'
+import { requireManagementAccess, isRevenueOwnAllowedForDepartment } from '@/lib/auth/managementAccess'
 import { allcareAdmin } from '@/lib/supabase/allcare'
 
 // 올케어 월별 매출 조회 (학점은행제 사업부 포함)
 // GET /api/management/allcare-sales?year=2026&month=4
 export async function GET(request: NextRequest) {
-  const access = await requireManagementAccess('revenues', { emptyBody: { year: 0, month: 0, totalRevenue: 0, count: 0, byType: {}, payments: [] } })
+  const emptyBody = { year: 0, month: 0, totalRevenue: 0, count: 0, byType: {}, payments: [] }
+  const access = await requireManagementAccess('revenues', { allowOwn: true, emptyBody })
   if (!access.ok) return access.response
+
+  // 'own' 스코프: 사업본부(BIZ) 소속만 열람 가능
+  if (access.scope === 'own') {
+    const allowed = await isRevenueOwnAllowedForDepartment(access.appUser.department_id)
+    if (!allowed) return NextResponse.json(emptyBody)
+  }
 
   const sp = request.nextUrl.searchParams
   const year = parseInt(sp.get('year') ?? String(new Date().getFullYear()))

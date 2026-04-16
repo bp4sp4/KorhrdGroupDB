@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-04-16T06:01:06.235Z",
+  "lastUpdated": "2026-04-16T07:13:32.585Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -158,7 +158,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:20:57.368Z",
-        "lastUpdated": "2026-04-15T08:24:39.603Z"
+        "lastUpdated": "2026-04-16T07:13:32.585Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/components/layout/Sidebar.tsx"
     },
@@ -275,7 +275,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T06:09:16.436Z",
-        "lastUpdated": "2026-04-13T08:38:42.344Z"
+        "lastUpdated": "2026-04-16T07:07:59.411Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/admin/page.tsx"
     },
@@ -431,9 +431,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-18T09:51:47.807Z",
-        "lastUpdated": "2026-04-01T08:58:44.824Z"
+        "lastUpdated": "2026-04-16T07:06:35.112Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/lib/auth/requireAuth.ts"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/lib/auth/managementAccess.ts"
     },
     "public": {
       "phase": "do",
@@ -873,7 +873,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-01T06:58:06.391Z",
-        "lastUpdated": "2026-04-15T09:47:08.075Z"
+        "lastUpdated": "2026-04-16T06:33:50.640Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/management/revenues/route.ts"
     },
@@ -938,7 +938,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-01T07:05:57.026Z",
-        "lastUpdated": "2026-04-15T09:43:45.883Z"
+        "lastUpdated": "2026-04-16T06:34:22.666Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/management/revenues/upload/route.ts"
     },
@@ -951,7 +951,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-01T07:06:44.615Z",
-        "lastUpdated": "2026-04-15T09:47:19.042Z"
+        "lastUpdated": "2026-04-16T06:34:09.540Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/management/revenues/[id]/route.ts"
     },
@@ -1367,9 +1367,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-13T06:31:44.434Z",
-        "lastUpdated": "2026-04-15T07:32:45.015Z"
+        "lastUpdated": "2026-04-16T07:06:52.990Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/revenues/nms-sales/page.tsx"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/management/nms-sales/route.ts"
     },
     "cert-sales": {
       "phase": "do",
@@ -1380,7 +1380,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-13T06:37:55.024Z",
-        "lastUpdated": "2026-04-13T06:43:14.404Z"
+        "lastUpdated": "2026-04-16T07:07:07.151Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/management/cert-sales/route.ts"
     },
@@ -1393,7 +1393,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-13T06:48:43.126Z",
-        "lastUpdated": "2026-04-13T08:48:10.275Z"
+        "lastUpdated": "2026-04-16T07:07:16.756Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/management/abroad-sales/route.ts"
     },
@@ -1406,7 +1406,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-13T06:57:55.155Z",
-        "lastUpdated": "2026-04-13T06:57:55.155Z"
+        "lastUpdated": "2026-04-16T07:06:44.201Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/management/sales-stats/route.ts"
     },
@@ -1419,7 +1419,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-15T03:32:55.877Z",
-        "lastUpdated": "2026-04-15T05:38:58.404Z"
+        "lastUpdated": "2026-04-16T07:07:26.987Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/management/allcare-sales/route.ts"
     },
@@ -1445,7 +1445,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-15T08:20:57.538Z",
-        "lastUpdated": "2026-04-15T08:20:57.538Z"
+        "lastUpdated": "2026-04-16T06:34:31.232Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/management/revenues/batches/route.ts"
     },
@@ -1458,7 +1458,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-15T08:20:59.223Z",
-        "lastUpdated": "2026-04-15T08:20:59.223Z"
+        "lastUpdated": "2026-04-16T06:34:38.047Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/management/revenues/batches/[batchId]/route.ts"
     },
@@ -1484,7 +1484,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-16T06:01:06.235Z"
+    "lastActivity": "2026-04-16T07:13:32.585Z"
   },
   "history": [
     {
@@ -19478,6 +19478,114 @@
     {
       "timestamp": "2026-04-16T06:01:06.235Z",
       "feature": "trash",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-16T06:33:16.873Z",
+      "feature": "auth",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-16T06:33:24.244Z",
+      "feature": "auth",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-16T06:33:29.035Z",
+      "feature": "admin",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-16T06:33:40.827Z",
+      "feature": "revenues",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-16T06:33:50.640Z",
+      "feature": "revenues",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-16T06:34:02.169Z",
+      "feature": "[id]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-16T06:34:09.540Z",
+      "feature": "[id]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-16T06:34:22.666Z",
+      "feature": "upload",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-16T06:34:31.232Z",
+      "feature": "batches",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-16T06:34:38.047Z",
+      "feature": "[batchId]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-16T07:06:35.112Z",
+      "feature": "auth",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-16T07:06:44.201Z",
+      "feature": "sales-stats",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-16T07:06:52.990Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-16T07:07:07.151Z",
+      "feature": "cert-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-16T07:07:16.756Z",
+      "feature": "abroad-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-16T07:07:26.987Z",
+      "feature": "allcare-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-16T07:07:59.411Z",
+      "feature": "admin",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-16T07:13:32.585Z",
+      "feature": "layout",
       "phase": "do",
       "action": "updated"
     }

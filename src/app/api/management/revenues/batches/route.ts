@@ -1,17 +1,25 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
-import { requireAuth } from '@/lib/auth/requireAuth'
+import { requireManagementAccess } from '@/lib/auth/managementAccess'
 
 export async function GET() {
-  const { errorResponse } = await requireAuth()
-  if (errorResponse) return errorResponse
+  const access = await requireManagementAccess('revenue-upload', { allowOwn: true, emptyBody: { batches: [] } })
+  if (!access.ok) return access.response
 
-  const { data, error } = await supabaseAdmin
+  let query = supabaseAdmin
     .from('revenues')
-    .select('upload_batch_id, created_at, amount, revenue_type')
+    .select('upload_batch_id, created_at, amount, revenue_type, department_id')
     .not('upload_batch_id', 'is', null)
     .eq('is_deleted', false)
     .order('created_at', { ascending: false })
+
+  if (access.scope === 'own') {
+    const ownDept = access.appUser.department_id
+    if (!ownDept) return NextResponse.json({ batches: [] })
+    query = query.eq('department_id', ownDept)
+  }
+
+  const { data, error } = await query
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })

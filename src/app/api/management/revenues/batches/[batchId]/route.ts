@@ -1,21 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
-import { requireAuth } from '@/lib/auth/requireAuth'
+import { requireManagementAccess } from '@/lib/auth/managementAccess'
 
 export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ batchId: string }> }
 ) {
-  const { errorResponse } = await requireAuth()
-  if (errorResponse) return errorResponse
+  const access = await requireManagementAccess('revenue-upload', { allowOwn: true })
+  if (!access.ok) return access.response
 
   const { batchId } = await params
 
-  const { error, count } = await supabaseAdmin
+  let query = supabaseAdmin
     .from('revenues')
     .update({ is_deleted: true })
     .eq('upload_batch_id', batchId)
     .eq('is_deleted', false)
+
+  // 'own' 스코프: 본인 사업부 배치만 삭제 가능
+  if (access.scope === 'own') {
+    const ownDept = access.appUser.department_id
+    if (!ownDept) {
+      return NextResponse.json({ error: '사업부가 지정되지 않아 삭제할 수 없습니다.' }, { status: 403 })
+    }
+    query = query.eq('department_id', ownDept)
+  }
+
+  const { error, count } = await query
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })

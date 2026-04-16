@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Sidebar from '@/components/layout/Sidebar'
 import Header from '@/components/layout/Header'
@@ -20,6 +20,26 @@ export default function DashboardLayout({
   const [permissions, setPermissions] = useState<{ section: string; scope: string; allowed_tabs?: string[] | null }[]>([])
   const supabase = createClient()
 
+  const refreshMe = useCallback(async () => {
+    let role = 'admin'
+    let perms: { section: string; scope: string; allowed_tabs?: string[] | null }[] = []
+    let name = '관리자'
+    try {
+      const res = await fetch('/api/auth/me', { cache: 'no-store' })
+      if (res.ok) {
+        const data = await res.json()
+        role = data.role ?? 'admin'
+        perms = data.permissions ?? []
+        name = data.displayName ?? '관리자'
+      }
+    } catch {
+      // keep defaults
+    }
+    setUserRole(role)
+    setDisplayName(name)
+    setPermissions(perms)
+  }, [])
+
   // 1) 최초 1회: 세션 확인 + 유저 정보 로드
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -27,27 +47,22 @@ export default function DashboardLayout({
         router.replace('/login')
         return
       }
-      let role = 'admin'
-      let perms: { section: string; scope: string; allowed_tabs?: string[] | null }[] = []
-      let name = '관리자'
-      try {
-        const res = await fetch('/api/auth/me')
-        if (res.ok) {
-          const data = await res.json()
-          role = data.role ?? 'admin'
-          perms = data.permissions ?? []
-          name = data.displayName ?? '관리자'
-        }
-      } catch {
-        // keep defaults
-      }
-      setUserRole(role)
-      setDisplayName(name)
-      setPermissions(perms)
+      await refreshMe()
       // isChecking은 effect 2에서 처리
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [refreshMe])
+
+  useEffect(() => {
+    const handlePermissionsUpdated = () => {
+      void refreshMe()
+    }
+
+    window.addEventListener('permissions-updated', handlePermissionsUpdated)
+    return () => {
+      window.removeEventListener('permissions-updated', handlePermissionsUpdated)
+    }
+  }, [refreshMe])
 
   // 2) 권한 체크 + 리다이렉트 — userRole/permissions/pathname 바뀔 때마다 실행
   useEffect(() => {

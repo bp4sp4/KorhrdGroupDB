@@ -31,6 +31,7 @@ interface AppUser {
   display_name: string | null
   role: string
   position_id?: string | null
+  department_id?: string | null
 }
 
 type AuthFullResult =
@@ -54,7 +55,7 @@ export async function requireAuthFull(): Promise<AuthFullResult> {
 
   const { data: appUser } = await supabaseAdmin
     .from('app_users')
-    .select('id, display_name, role, position_id')
+    .select('id, display_name, role, position_id, department_id')
     .eq('username', user.email)
     .maybeSingle()
 
@@ -66,6 +67,7 @@ export async function requireAuthFull(): Promise<AuthFullResult> {
         display_name: appUser?.display_name ?? user.email,
         role: 'master-admin',
         position_id: appUser?.position_id ?? null,
+        department_id: appUser?.department_id ?? null,
       },
       errorResponse: null,
     }
@@ -74,7 +76,7 @@ export async function requireAuthFull(): Promise<AuthFullResult> {
   // app_users에 없으면 admin 권한으로 fallback (항상 전체 열람)
   return {
     user,
-    appUser: appUser ?? { id: 0, display_name: null, role: 'admin', position_id: null },
+    appUser: appUser ?? { id: 0, display_name: null, role: 'admin', position_id: null, department_id: null },
     errorResponse: null,
   }
 }

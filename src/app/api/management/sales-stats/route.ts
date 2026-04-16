@@ -1,13 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { nmsAdmin } from '@/lib/supabase/nms'
-import { requireManagementAccess } from '@/lib/auth/managementAccess'
+import { requireManagementAccess, isRevenueOwnAllowedForDepartment } from '@/lib/auth/managementAccess'
 
 // 최근 N개월 3사업부 통합 월별 매출 통계
 // GET /api/management/sales-stats?months=6
 export async function GET(request: NextRequest) {
-  const access = await requireManagementAccess('revenues', { emptyBody: { months: [] } })
+  const access = await requireManagementAccess('revenues', { allowOwn: true, emptyBody: { months: [] } })
   if (!access.ok) return access.response
+
+  // 'own' 스코프: 사업본부(BIZ) 소속만 열람 가능
+  if (access.scope === 'own') {
+    const allowed = await isRevenueOwnAllowedForDepartment(access.appUser.department_id)
+    if (!allowed) return NextResponse.json({ months: [] })
+  }
 
   const sp = request.nextUrl.searchParams
   const months = Math.min(parseInt(sp.get('months') ?? '6'), 12)

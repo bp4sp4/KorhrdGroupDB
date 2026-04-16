@@ -1,12 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
-import { requireManagementAccess } from '@/lib/auth/managementAccess'
+import { requireManagementAccess, isRevenueOwnAllowedForDepartment } from '@/lib/auth/managementAccess'
 
 // 민간자격증사업부 - 학점연계신청 결제완료 월 매출 조회
 // GET /api/management/cert-sales?year=2026&month=4
 export async function GET(request: NextRequest) {
-  const access = await requireManagementAccess('revenues', { emptyBody: { year: 0, month: 0, total: { paymentAmount: 0, count: 0, avgAmount: 0 }, byDay: [] } })
+  const emptyBody = { year: 0, month: 0, total: { paymentAmount: 0, count: 0, avgAmount: 0 }, byDay: [] }
+  const access = await requireManagementAccess('revenues', { allowOwn: true, emptyBody })
   if (!access.ok) return access.response
+
+  // 'own' 스코프: 사업본부(BIZ) 소속만 열람 가능
+  if (access.scope === 'own') {
+    const allowed = await isRevenueOwnAllowedForDepartment(access.appUser.department_id)
+    if (!allowed) return NextResponse.json(emptyBody)
+  }
 
   const sp = request.nextUrl.searchParams
   const year = parseInt(sp.get('year') ?? String(new Date().getFullYear()))
