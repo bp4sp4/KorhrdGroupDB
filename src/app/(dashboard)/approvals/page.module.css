@@ -514,6 +514,32 @@
 
 .table_compact {
   font-size: 13px;
+  table-layout: fixed;
+}
+
+.table_compact th:nth-child(1) { width: 16%; }
+.table_compact th:nth-child(2) { width: 20%; }
+.table_compact th:nth-child(3) { width: 20%; }
+.table_compact th:nth-child(4) { width: 24%; }
+.table_compact th:nth-child(5) { width: 20%; }
+
+.table_compact th,
+.table_compact td {
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+.table_compact td:nth-child(1),
+.table_compact td:nth-child(2),
+.table_compact td:nth-child(4),
+.table_compact td:nth-child(5) {
+  white-space: nowrap;
+}
+
+.table_compact .cell_title,
+.table_compact .cell_doc_number {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .table th {
