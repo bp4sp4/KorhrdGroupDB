@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { nmsAdmin } from '@/lib/supabase/nms'
-import { requireManagementAccess, isRevenueOwnAllowedForDepartment } from '@/lib/auth/managementAccess'
+import { allcareAdmin } from '@/lib/supabase/allcare'
+import { getRevenueOwnAccessibleDivisions, requireManagementAccess } from '@/lib/auth/managementAccess'
 
 // 최근 N개월 3사업부 통합 월별 매출 통계
 // GET /api/management/sales-stats?months=6
@@ -9,16 +10,17 @@ export async function GET(request: NextRequest) {
   const access = await requireManagementAccess('revenues', { allowOwn: true, emptyBody: { months: [] } })
   if (!access.ok) return access.response
 
-  // 'own' 스코프: 사업본부(BIZ) 소속만 열람 가능
-  if (access.scope === 'own') {
-    const allowed = await isRevenueOwnAllowedForDepartment(access.appUser.department_id)
-    if (!allowed) return NextResponse.json({ months: [] })
+  const ownDivisions = access.scope === 'own'
+    ? await getRevenueOwnAccessibleDivisions(access.appUser.department_id, access.appUser.position_id)
+    : null
+
+  if (access.scope === 'own' && (!ownDivisions || ownDivisions.length === 0)) {
+    return NextResponse.json({ months: [] })
   }
 
   const sp = request.nextUrl.searchParams
   const months = Math.min(parseInt(sp.get('months') ?? '6'), 12)
 
-  // 조회 범위: 최근 N개월
   const now = new Date()
   const ranges: { year: number; month: number; label: string }[] = []
   for (let i = months - 1; i >= 0; i--) {
@@ -36,14 +38,12 @@ export async function GET(request: NextRequest) {
   const lastDay = new Date(lastRange.year, lastRange.month, 0).getDate()
   const rangeEnd = `${lastRange.year}-${pad(lastRange.month)}-${pad(lastDay)}T23:59:59+09:00`
 
-  // 월 키 계산 헬퍼
   const monthKey = (dateStr: string) => {
     const d = new Date(dateStr)
     return `${d.getFullYear()}-${d.getMonth() + 1}`
   }
 
-  // 3사업부 동시 조회
-  const [nmsRes, certRes, abroadRes] = await Promise.allSettled([
+  const [nmsRes, certRes, abroadRes, allcareRes] = await Promise.allSettled([
     nmsAdmin
       .from('customers')
       .select('payment_amount, created_at')
@@ -64,16 +64,21 @@ export async function GET(request: NextRequest) {
       .eq('status', 'completed')
       .gte('created_at', rangeStart)
       .lte('created_at', rangeEnd),
+    allcareAdmin
+      .from('payments')
+      .select('amount, approved_at, user_id')
+      .eq('status', 'completed')
+      .gte('approved_at', rangeStart)
+      .lte('approved_at', rangeEnd)
+      .neq('user_id', '94832325-c5ec-4b21-bc74-00ae0763cbda'),
   ])
 
-  // 월별 집계 초기화
   const monthly: Record<string, { label: string; nms: number; cert: number; abroad: number }> = {}
   for (const r of ranges) {
     const key = `${r.year}-${r.month}`
     monthly[key] = { label: r.label, nms: 0, cert: 0, abroad: 0 }
   }
 
-  // NMS
   if (nmsRes.status === 'fulfilled' && nmsRes.value.data) {
     for (const row of nmsRes.value.data) {
       const k = monthKey(row.created_at)
@@ -81,7 +86,6 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // 민간자격증
   if (certRes.status === 'fulfilled' && certRes.value.data) {
     for (const row of certRes.value.data) {
       const k = monthKey(row.created_at)
@@ -89,7 +93,6 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // 유학
   if (abroadRes.status === 'fulfilled' && abroadRes.value.data) {
     for (const row of abroadRes.value.data) {
       const k = monthKey(row.created_at)
@@ -97,14 +100,27 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  const result = Object.entries(monthly).map(([key, v]) => ({
-    key,
-    label: v.label,
-    nms: v.nms,
-    cert: v.cert,
-    abroad: v.abroad,
-    total: v.nms + v.cert + v.abroad,
-  }))
+  if (allcareRes.status === 'fulfilled' && allcareRes.value.data) {
+    for (const row of allcareRes.value.data) {
+      const k = monthKey(row.approved_at)
+      if (monthly[k]) monthly[k].nms += row.amount || 0
+    }
+  }
+
+  const result = Object.entries(monthly).map(([key, v]) => {
+    const nms = !ownDivisions || ownDivisions.includes('nms') ? v.nms : 0
+    const cert = !ownDivisions || ownDivisions.includes('cert') ? v.cert : 0
+    const abroad = !ownDivisions || ownDivisions.includes('abroad') ? v.abroad : 0
+
+    return {
+      key,
+      label: v.label,
+      nms,
+      cert,
+      abroad,
+      total: nms + cert + abroad,
+    }
+  })
 
   return NextResponse.json({ months: result })
 }

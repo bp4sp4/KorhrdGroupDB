@@ -1340,7 +1340,7 @@ const PERMISSION_SECTIONS: PermissionSection[] = [
   { key: 'ref-manage', label: '어드민 관리',        description: '기준 데이터 관리',        allowOwn: false, group: '시스템' },
   { key: 'assignment', label: '배정 현황',          description: '담당자 배정 통계 열람',   allowOwn: false, group: '시스템' },
   { key: 'approvals',  label: '전자결재',           description: '전자결재 열람·처리',      allowOwn: false, group: '경영관리' },
-  { key: 'revenues',   label: '팀별 매출 관리',      description: '사업부별 매출 현황 열람 (담당: 사업본부 소속만)',  allowOwn: true,  group: '경영관리' },
+  { key: 'revenues',   label: '팀별 매출 관리',      description: '사업부별 매출 현황 열람 (담당: 사원/주임은 본인 사업부만, 대리 이상은 전체)',  allowOwn: true,  group: '경영관리' },
   { key: 'revenue-upload', label: '매출 데이터 관리', description: '매출 데이터 업로드·관리 (담당: 본인 사업부만)', allowOwn: true,  group: '경영관리' },
   { key: 'reports',    label: '손익 리포트',        description: '손익 리포트 열람',        allowOwn: false, group: '경영관리' },
 ]

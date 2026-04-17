@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireManagementAccess, isRevenueOwnAllowedForDepartment } from '@/lib/auth/managementAccess'
+import { requireManagementAccess, isRevenueOwnAllowedForDivision } from '@/lib/auth/managementAccess'
 import { allcareAdmin } from '@/lib/supabase/allcare'
 
 // 올케어 월별 매출 조회 (학점은행제 사업부 포함)
@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
 
   // 'own' 스코프: 사업본부(BIZ) 소속만 열람 가능
   if (access.scope === 'own') {
-    const allowed = await isRevenueOwnAllowedForDepartment(access.appUser.department_id)
+    const allowed = await isRevenueOwnAllowedForDivision(access.appUser.department_id, 'nms', access.appUser.position_id)
     if (!allowed) return NextResponse.json(emptyBody)
   }
 

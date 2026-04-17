@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { nmsAdmin } from '@/lib/supabase/nms'
-import { requireManagementAccess, isRevenueOwnAllowedForDepartment } from '@/lib/auth/managementAccess'
+import { requireManagementAccess, isRevenueOwnAllowedForDivision } from '@/lib/auth/managementAccess'
 
 // NMS 시스템 customers 테이블에서 팀별 월매출 조회
 // customers.team 이 아닌 users.team 기준으로 팀을 판단 (담당자의 소속팀)
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 
   // 'own' 스코프: 사업본부(BIZ) 소속만 열람 가능
   if (access.scope === 'own') {
-    const allowed = await isRevenueOwnAllowedForDepartment(access.appUser.department_id)
+    const allowed = await isRevenueOwnAllowedForDivision(access.appUser.department_id, 'nms', access.appUser.position_id)
     if (!allowed) return NextResponse.json(emptyBody)
   }
 

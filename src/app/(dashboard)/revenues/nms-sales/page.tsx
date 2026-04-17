@@ -61,6 +61,8 @@ interface AbroadSalesData {
 const NMS_TEAMS = ['본사', '프리랜서']
 const MONTH_LABELS = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월']
 type TabKey = 'nms' | 'cert' | 'abroad' | 'stats'
+type RevenueDivision = 'nms' | 'cert' | 'abroad'
+const VALID_TABS: TabKey[] = ['stats', 'nms', 'cert', 'abroad']
 
 interface StatMonth {
   key: string
@@ -973,16 +975,17 @@ function TopRevenueHero({
           return
         }
 
-        const [nmsRes, certRes, abroadRes] = await Promise.all([
+        const [nmsRes, certRes, abroadRes, allcareRes] = await Promise.all([
           fetch(`/api/management/nms-sales?${params}`),
           fetch(`/api/management/cert-sales?${params}`),
           fetch(`/api/management/abroad-sales?${params}`),
+          fetch(`/api/management/allcare-sales?year=${year}&month=${month}`),
         ])
-        if (!nmsRes.ok || !certRes.ok || !abroadRes.ok) return
-        const [nms, cert, abroad] = await Promise.all([nmsRes.json(), certRes.json(), abroadRes.json()])
+        if (!nmsRes.ok || !certRes.ok || !abroadRes.ok || !allcareRes.ok) return
+        const [nms, cert, abroad, allcare] = await Promise.all([nmsRes.json(), certRes.json(), abroadRes.json(), allcareRes.json()])
         if (cancelled) return
         setSummary({
-          amount: (nms.total?.paymentAmount ?? 0) + (cert.total?.paymentAmount ?? 0) + (abroad.total?.paymentAmount ?? 0),
+          amount: (nms.total?.paymentAmount ?? 0) + (allcare.totalRevenue ?? 0) + (cert.total?.paymentAmount ?? 0) + (abroad.total?.paymentAmount ?? 0),
           label: '이번 달 통합 매출',
           sublabel: '학점은행제 + 민간자격증 + 유학 합산',
         })
@@ -1029,12 +1032,54 @@ export default function NmsSalesPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const urlTab = searchParams.get('tab') as TabKey | null
-  const validTabs: TabKey[] = ['stats', 'nms', 'cert', 'abroad']
+  const [availableTabs, setAvailableTabs] = useState<TabKey[]>(VALID_TABS)
 
   const thisMonth = getThisMonth()
   const [selectedYear, setSelectedYear] = useState(thisMonth.year)
   const [selectedMonth, setSelectedMonth] = useState(thisMonth.month)
-  const activeTab: TabKey = urlTab && validTabs.includes(urlTab) ? urlTab : 'stats'
+  const activeTab: TabKey = urlTab && availableTabs.includes(urlTab) ? urlTab : (availableTabs[0] ?? 'stats')
+
+  useEffect(() => {
+    let cancelled = false
+
+    const fetchTabs = async () => {
+      try {
+        const res = await fetch('/api/auth/me', { cache: 'no-store' })
+        if (!res.ok) return
+        const data = await res.json()
+        if (cancelled) return
+
+        const revenueScope = Array.isArray(data.permissions)
+          ? data.permissions.find((permission: { section?: string; scope?: string }) => permission.section === 'revenues')?.scope
+          : null
+
+        if (revenueScope !== 'own') {
+          setAvailableTabs(VALID_TABS)
+          return
+        }
+
+        const ownDivisions = Array.isArray(data.revenueOwnDivisions)
+          ? data.revenueOwnDivisions.filter((division: string): division is RevenueDivision => (
+              division === 'nms' || division === 'cert' || division === 'abroad'
+            ))
+          : []
+
+        const nextTabs: TabKey[] = ownDivisions.length > 1 ? ['stats', ...ownDivisions] : ownDivisions
+        setAvailableTabs(nextTabs.length > 0 ? Array.from(new Set(nextTabs)) : ['stats'])
+      } catch {
+        // keep defaults
+      }
+    }
+
+    void fetchTabs()
+    return () => { cancelled = true }
+  }, [])
+
+  useEffect(() => {
+    if (!availableTabs.includes(activeTab)) {
+      router.replace(`/revenues/nms-sales?tab=${availableTabs[0] ?? 'stats'}`, { scroll: false })
+    }
+  }, [activeTab, availableTabs, router])
 
   const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
     { key: 'stats',  label: '통합 통계',         icon: <BarChart2 size={15} /> },
@@ -1056,7 +1101,7 @@ export default function NmsSalesPage() {
 
       <div className={styles.div_tabs_shell}>
         <div className={styles.div_tabs}>
-          {TABS.map(tab => (
+          {TABS.filter(tab => availableTabs.includes(tab.key)).map(tab => (
             <button
               key={tab.key}
               className={`${styles.div_tab} ${activeTab === tab.key ? styles.div_tab_active : ''}`}

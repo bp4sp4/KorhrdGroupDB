@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
-import { requireManagementAccess, isRevenueOwnAllowedForDepartment } from '@/lib/auth/managementAccess'
+import { requireManagementAccess, isRevenueOwnAllowedForDivision } from '@/lib/auth/managementAccess'
 
 // 유학 사업부 - 결제완료(completed) 월 매출 조회
 // GET /api/management/abroad-sales?year=2026&month=4
@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
 
   // 'own' 스코프: 사업본부(BIZ) 소속만 열람 가능
   if (access.scope === 'own') {
-    const allowed = await isRevenueOwnAllowedForDepartment(access.appUser.department_id)
+    const allowed = await isRevenueOwnAllowedForDivision(access.appUser.department_id, 'abroad', access.appUser.position_id)
     if (!allowed) return NextResponse.json(emptyBody)
   }
 

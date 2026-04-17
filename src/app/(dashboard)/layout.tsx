@@ -18,12 +18,14 @@ export default function DashboardLayout({
   const [userRole, setUserRole] = useState<string | null>(null)
   const [displayName, setDisplayName] = useState<string>('관리자')
   const [permissions, setPermissions] = useState<{ section: string; scope: string; allowed_tabs?: string[] | null }[]>([])
+  const [revenueOwnDivisions, setRevenueOwnDivisions] = useState<('nms' | 'cert' | 'abroad')[]>([])
   const supabase = createClient()
 
   const refreshMe = useCallback(async () => {
     let role = 'admin'
     let perms: { section: string; scope: string; allowed_tabs?: string[] | null }[] = []
     let name = '관리자'
+    let divisions: ('nms' | 'cert' | 'abroad')[] = []
     try {
       const res = await fetch('/api/auth/me', { cache: 'no-store' })
       if (res.ok) {
@@ -31,6 +33,11 @@ export default function DashboardLayout({
         role = data.role ?? 'admin'
         perms = data.permissions ?? []
         name = data.displayName ?? '관리자'
+        divisions = Array.isArray(data.revenueOwnDivisions)
+          ? data.revenueOwnDivisions.filter((division: string): division is 'nms' | 'cert' | 'abroad' => (
+              division === 'nms' || division === 'cert' || division === 'abroad'
+            ))
+          : []
       }
     } catch {
       // keep defaults
@@ -38,6 +45,7 @@ export default function DashboardLayout({
     setUserRole(role)
     setDisplayName(name)
     setPermissions(perms)
+    setRevenueOwnDivisions(divisions)
   }, [])
 
   // 1) 최초 1회: 세션 확인 + 유저 정보 로드
@@ -142,10 +150,10 @@ export default function DashboardLayout({
 
   return (
     <div className={styles.dashboardWrap}>
-      <Header userName={displayName} userRole={userRole} permissions={permissions} />
+      <Header userName={displayName} userRole={userRole} permissions={permissions} revenueOwnDivisions={revenueOwnDivisions} />
 
       <div className={styles.dashboardBody}>
-        <Sidebar userRole={userRole} permissions={permissions} />
+        <Sidebar userRole={userRole} permissions={permissions} revenueOwnDivisions={revenueOwnDivisions} />
 
         <main className={`${styles.mainContent}${pathname.startsWith('/approvals') ? ` ${styles.mainContentWhite}` : ''}`}>
           {children}

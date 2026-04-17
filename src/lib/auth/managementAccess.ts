@@ -10,19 +10,116 @@ import {
 } from '@/lib/auth/permissions'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 
-// 팀별 매출(team-wise revenue) 데이터에 접근 가능한 사업부 코드
-// 매출 소스(NMS/자격증/유학/올케어)는 모두 사업본부(BIZ) 소속이므로,
-// 다른 본부(개발/경영지원) 소속 사용자는 'own' 스코프에서 빈 결과
-const REVENUE_OWN_ALLOWED_DEPT_CODES = ['BIZ']
+export type RevenueDivision = 'nms' | 'cert' | 'abroad'
 
-export async function isRevenueOwnAllowedForDepartment(departmentId: string | null | undefined): Promise<boolean> {
-  if (!departmentId) return false
+type DepartmentRecord = {
+  code: string | null
+  name: string | null
+}
+
+const HIGHER_REVENUE_POSITION_KEYWORDS = ['대리', '과장', '차장', '부장', '이사', '대표', '원장', '실장', '본부장', '팀장']
+
+function normalizeDepartmentToken(value: string | null | undefined) {
+  return String(value ?? '')
+    .toUpperCase()
+    .replace(/\s+/g, '')
+    .replace(/[^A-Z0-9가-힣]/g, '')
+}
+
+function isHigherRevenuePosition(positionName: string | null | undefined) {
+  const normalized = String(positionName ?? '').replace(/\s+/g, '')
+  return HIGHER_REVENUE_POSITION_KEYWORDS.some(keyword => normalized.includes(keyword))
+}
+
+function inferRevenueDivision(department: DepartmentRecord): RevenueDivision | null {
+  const code = normalizeDepartmentToken(department.code)
+  const name = normalizeDepartmentToken(department.name)
+  const token = `${code} ${name}`
+
+  // 사업본부(BIZ)는 학점은행제 사업부로 취급한다.
+  if (
+    code === 'BIZ' ||
+    name.includes('사업본부') ||
+    token.includes('NMS') ||
+    token.includes('HAKJEOM') ||
+    token.includes('학점은행제') ||
+    token.includes('학점')
+  ) {
+    return 'nms'
+  }
+
+  if (
+    token.includes('CERT') ||
+    token.includes('PRIVATE') ||
+    token.includes('민간자격증') ||
+    token.includes('민간') ||
+    token.includes('자격증')
+  ) {
+    return 'cert'
+  }
+
+  if (
+    token.includes('ABROAD') ||
+    token.includes('STUDY') ||
+    token.includes('유학')
+  ) {
+    return 'abroad'
+  }
+
+  return null
+}
+
+async function getDepartmentRecord(departmentId: string | null | undefined): Promise<DepartmentRecord | null> {
+  if (!departmentId) return null
   const { data } = await supabaseAdmin
     .from('departments')
-    .select('code')
+    .select('code, name')
     .eq('id', departmentId)
     .maybeSingle()
-  return Boolean(data?.code && REVENUE_OWN_ALLOWED_DEPT_CODES.includes(data.code))
+  return data ?? null
+}
+
+async function getPositionName(positionId: string | null | undefined): Promise<string | null> {
+  if (!positionId) return null
+  const { data } = await supabaseAdmin
+    .from('positions')
+    .select('name')
+    .eq('id', positionId)
+    .maybeSingle()
+  return data?.name ?? null
+}
+
+export async function getRevenueOwnAccessibleDivisions(
+  departmentId: string | null | undefined,
+  positionId?: string | null | undefined
+): Promise<RevenueDivision[]> {
+  const positionName = await getPositionName(positionId)
+  if (isHigherRevenuePosition(positionName)) {
+    return ['nms', 'cert', 'abroad']
+  }
+
+  const department = await getDepartmentRecord(departmentId)
+  if (!department) return []
+
+  const division = inferRevenueDivision(department)
+  return division ? [division] : []
+}
+
+export async function isRevenueOwnAllowedForDepartment(
+  departmentId: string | null | undefined,
+  positionId?: string | null | undefined
+): Promise<boolean> {
+  const divisions = await getRevenueOwnAccessibleDivisions(departmentId, positionId)
+  return divisions.length > 0
+}
+
+export async function isRevenueOwnAllowedForDivision(
+  departmentId: string | null | undefined,
+  division: RevenueDivision,
+  positionId?: string | null | undefined
+): Promise<boolean> {
+  const divisions = await getRevenueOwnAccessibleDivisions(departmentId, positionId)
+  return divisions.includes(division)
 }
 
 export async function requireManagementAccess(

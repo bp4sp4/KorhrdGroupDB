@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { completePermissions, getEffectivePermissions, getEffectivePermissionsFromBase, getFullAccessPermissions, normalizePermissionRecords } from '@/lib/auth/permissions';
+import { completePermissions, getEffectivePermissions, getEffectivePermissionsFromBase, getFullAccessPermissions, getPermissionScope, normalizePermissionRecords } from '@/lib/auth/permissions';
+import { getRevenueOwnAccessibleDivisions } from '@/lib/auth/managementAccess';
 
 const MASTER_ADMIN_EMAIL = 'bp4sp4@naver.com';
 
@@ -23,6 +24,8 @@ export async function GET() {
       .single();
 
     let positionName: string | null = null
+    let departmentCode: string | null = null
+    let departmentName: string | null = null
     if (appUser?.position_id) {
       const { data: position } = await supabaseAdmin
         .from('positions')
@@ -30,6 +33,16 @@ export async function GET() {
         .eq('id', appUser.position_id)
         .single()
       positionName = position?.name ?? null
+    }
+
+    if (appUser?.department_id) {
+      const { data: department } = await supabaseAdmin
+        .from('departments')
+        .select('code, name')
+        .eq('id', appUser.department_id)
+        .maybeSingle()
+      departmentCode = department?.code ?? null
+      departmentName = department?.name ?? null
     }
 
     const effectiveRole = user.email === MASTER_ADMIN_EMAIL
@@ -77,17 +90,25 @@ export async function GET() {
       overridePermissions = effectivePermissions.overridePermissions
     }
 
+    const revenueScope = isFullAccess ? 'all' : getPermissionScope(permissions, 'revenues')
+    const revenueOwnDivisions = revenueScope === 'own'
+      ? await getRevenueOwnAccessibleDivisions(appUser?.department_id ?? null, appUser?.position_id ?? null)
+      : []
+
     return NextResponse.json({
       id: appUser?.id ?? null,
       role: effectiveRole,
       displayName: appUser?.display_name ?? user.email,
       refCode: appUser?.ref_code ?? null,
       departmentId: appUser?.department_id ?? null,
+      departmentCode,
+      departmentName,
       positionId: appUser?.position_id ?? null,
       positionName,
       basePermissions,
       overridePermissions,
       permissions,
+      revenueOwnDivisions,
     });
   } catch {
     return NextResponse.json({ role: 'admin' });

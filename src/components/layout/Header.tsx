@@ -86,6 +86,7 @@ interface HeaderProps {
   userName?: string
   userRole?: string | null
   permissions?: { section: string; scope: string; allowed_tabs?: string[] | null }[]
+  revenueOwnDivisions?: ('nms' | 'cert' | 'abroad')[]
 }
 
 
@@ -95,7 +96,7 @@ function hasPermission(permissions: { section: string; scope: string }[], sectio
 
 const EDUCATION_SECTIONS = ['hakjeom', 'cert', 'practice', 'allcare', 'duplicate', 'trash', 'logs', 'ref-manage', 'assignment', 'approvals', 'revenues', 'revenue-upload', 'reports']
 
-export default function Header({ userName = '관리자', userRole, permissions = [] }: HeaderProps) {
+export default function Header({ userName = '관리자', userRole, permissions = [], revenueOwnDivisions = [] }: HeaderProps) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -117,6 +118,13 @@ export default function Header({ userName = '관리자', userRole, permissions =
 
     const currentTab = searchParams.get('tab')
     const tabLabels = PATH_TAB_LABELS[matchedPath]
+    if (matchedPath === '/revenues/nms-sales' && pathname.startsWith('/revenues/nms-sales')) {
+      const revenueScope = permissions.find(permission => permission.section === 'revenues')?.scope ?? 'none'
+      if (revenueScope === 'own' && revenueOwnDivisions.length === 1) {
+        const onlyDivision = revenueOwnDivisions[0]
+        if (tabLabels[onlyDivision]) return tabLabels[onlyDivision]
+      }
+    }
     if (currentTab && tabLabels[currentTab]) return tabLabels[currentTab]
     return sec.label
   }

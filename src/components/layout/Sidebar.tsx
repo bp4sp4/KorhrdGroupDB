@@ -139,9 +139,10 @@ const SECTION_ITEM_MAP: Record<string, string> = {
 interface SidebarProps {
   userRole?: string | null
   permissions?: { section: string; scope: string; allowed_tabs?: string[] | null }[]
+  revenueOwnDivisions?: ('nms' | 'cert' | 'abroad')[]
 }
 
-export default function Sidebar({ userRole, permissions = [] }: SidebarProps) {
+export default function Sidebar({ userRole, permissions = [], revenueOwnDivisions = [] }: SidebarProps) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [trashCount, setTrashCount] = useState<number>(0)
@@ -218,6 +219,7 @@ export default function Sidebar({ userRole, permissions = [] }: SidebarProps) {
   const allowedSections = new Set(
     permissions.filter(p => p.scope && p.scope !== 'none').map(p => p.section)
   )
+  const revenueScope = permissions.find(p => p.section === 'revenues')?.scope ?? 'none'
 
   const rawItems = userRole === 'mini-admin'
     ? MINI_ADMIN_ITEMS
@@ -231,6 +233,19 @@ export default function Sidebar({ userRole, permissions = [] }: SidebarProps) {
         return allowedSections.has(sectionKey)
       })
   const currentItems = baseItems
+    .map(item => {
+      if (item.id !== 'nms-sales' || !item.children) return item
+      if (isFullAccess || revenueScope !== 'own') return item
+
+      const allowedRevenueTabs = new Set(
+        revenueOwnDivisions.length > 1
+          ? ['nms-sales-tab-stats', ...revenueOwnDivisions.map(division => `nms-sales-tab-${division}`)]
+          : revenueOwnDivisions.map(division => `nms-sales-tab-${division}`)
+      )
+      const filteredChildren = item.children.filter(child => allowedRevenueTabs.has(child.id))
+      return { ...item, children: filteredChildren }
+    })
+    .filter(item => !item.children || item.children.length > 0)
 
   // 현재 경로에 맞는 아이템 자동 펼치기
   useEffect(() => {
