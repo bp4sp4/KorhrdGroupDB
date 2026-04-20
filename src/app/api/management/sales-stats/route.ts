@@ -21,10 +21,15 @@ export async function GET(request: NextRequest) {
   const sp = request.nextUrl.searchParams
   const months = Math.min(parseInt(sp.get('months') ?? '6'), 12)
 
+  const yearParam = parseInt(sp.get('year') ?? '')
+  const monthParam = parseInt(sp.get('month') ?? '')
   const now = new Date()
+  const refYear = Number.isFinite(yearParam) && yearParam > 0 ? yearParam : now.getFullYear()
+  const refMonth = Number.isFinite(monthParam) && monthParam >= 1 && monthParam <= 12 ? monthParam : now.getMonth() + 1
+
   const ranges: { year: number; month: number; label: string }[] = []
   for (let i = months - 1; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    const d = new Date(refYear, refMonth - 1 - i, 1)
     ranges.push({
       year: d.getFullYear(),
       month: d.getMonth() + 1,
@@ -122,5 +127,12 @@ export async function GET(request: NextRequest) {
     }
   })
 
-  return NextResponse.json({ months: result })
+  return NextResponse.json(
+    { months: result },
+    {
+      headers: {
+        'Cache-Control': 'private, s-maxage=60, stale-while-revalidate=300',
+      },
+    }
+  )
 }

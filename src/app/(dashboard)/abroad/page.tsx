@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { X, Plus, Pencil, Trash2 } from 'lucide-react'
 import styles from './page.module.css'
 
 type User = {
@@ -46,6 +47,7 @@ type Consultation = {
   message: string
   status: string
   type: string
+  program: string | null
   created_at: string
 }
 
@@ -114,6 +116,119 @@ export default function AbroadPage() {
 
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
+
+  // 간편상담 추가/수정 모달
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [editTarget, setEditTarget] = useState<Consultation | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set())
+  const [selectedConsultIds, setSelectedConsultIds] = useState<string[]>([])
+  const [consultPage, setConsultPage] = useState(1)
+  const CONSULT_PER_PAGE = 20
+  const [form, setForm] = useState({
+    name: '',
+    phone: '',
+    region: '',
+    desired_start: '',
+    program: '',
+    type: 'consult',
+    message: '',
+  })
+
+  const resetForm = () => {
+    setForm({ name: '', phone: '', region: '', desired_start: '', program: '', type: 'consult', message: '' })
+  }
+
+  const openAdd = () => {
+    setEditTarget(null)
+    resetForm()
+    setShowAddModal(true)
+  }
+
+  const openEdit = (c: Consultation) => {
+    setEditTarget(c)
+    setForm({
+      name: c.name || '',
+      phone: c.phone || '',
+      region: c.region || '',
+      desired_start: c.desired_start || '',
+      program: c.program || '',
+      type: c.type || 'consult',
+      message: c.message || '',
+    })
+    setShowAddModal(true)
+  }
+
+  const handleFormSubmit = async () => {
+    if (submitting) return
+    setSubmitting(true)
+    try {
+      const url = editTarget
+        ? `/api/abroad/consultations/${editTarget.id}`
+        : '/api/abroad/consultations'
+      const method = editTarget ? 'PATCH' : 'POST'
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        alert(data.error || '저장에 실패했습니다.')
+        return
+      }
+      setShowAddModal(false)
+      setEditTarget(null)
+      resetForm()
+      fetchData()
+    } catch {
+      alert('저장에 실패했습니다.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('이 간편상담을 삭제할까요?')) return
+    setDeletingIds(prev => new Set(prev).add(id))
+    try {
+      const res = await fetch(`/api/abroad/consultations/${id}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        alert(data.error || '삭제에 실패했습니다.')
+        return
+      }
+      fetchData()
+      setSelectedConsultIds(prev => prev.filter(sid => sid !== id))
+    } finally {
+      setDeletingIds(prev => {
+        const next = new Set(prev)
+        next.delete(id)
+        return next
+      })
+    }
+  }
+
+  const handleBulkDelete = async () => {
+    if (selectedConsultIds.length === 0) return
+    if (!confirm(`선택된 ${selectedConsultIds.length}건을 삭제할까요?`)) return
+    try {
+      const res = await fetch('/api/abroad/consultations', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: selectedConsultIds }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        alert(data.error || '삭제에 실패했습니다.')
+        return
+      }
+      setSelectedConsultIds([])
+      fetchData()
+    } catch {
+      alert('삭제에 실패했습니다.')
+    }
+  }
 
   const matchesDate = (createdAt: string) => {
     const d = new Date(createdAt)
@@ -250,74 +365,143 @@ export default function AbroadPage() {
       )}
 
       {/* 간편상담 */}
-      {tab === 'consult' && (
-        <div className={styles.tableCard}>
-          <div className={styles.filterRow}>
-            <input className={styles.searchInput} placeholder="이름, 연락처 검색" value={consultSearch} onChange={e => setConsultSearch(e.target.value)} />
-            <input type="date" className={styles.dateInput} value={startDate} onChange={e => setStartDate(e.target.value)} />
-            <span className={styles.dateSeparator}>~</span>
-            <input type="date" className={styles.dateInput} value={endDate} onChange={e => setEndDate(e.target.value)} />
-            {['all', 'consult', 'estimate'].map(f => (
-              <button key={f} className={consultFilter === f ? styles.filterBtnActive : styles.filterBtn} onClick={() => setConsultFilter(f)}>
-                {f === 'all' ? '전체' : CONSULT_TYPE_LABEL[f]}
+      {tab === 'consult' && (() => {
+        const filteredConsult = consultations.filter(c => {
+          if (!matchesDate(c.created_at)) return false
+          if (consultFilter !== 'all' && c.type !== consultFilter) return false
+          const kw = consultSearch.trim().toLowerCase()
+          if (!kw) return true
+          return c.name.toLowerCase().includes(kw) || c.phone.toLowerCase().includes(kw)
+        })
+        const totalPages = Math.max(1, Math.ceil(filteredConsult.length / CONSULT_PER_PAGE))
+        const currentPage = Math.min(consultPage, totalPages)
+        const paginated = filteredConsult.slice((currentPage - 1) * CONSULT_PER_PAGE, currentPage * CONSULT_PER_PAGE)
+        const paginatedIds = paginated.map(c => c.id)
+        const allSelected = paginated.length > 0 && paginatedIds.every(id => selectedConsultIds.includes(id))
+
+        const toggleAllInPage = () => {
+          if (allSelected) {
+            setSelectedConsultIds(prev => prev.filter(id => !paginatedIds.includes(id)))
+          } else {
+            setSelectedConsultIds(prev => Array.from(new Set([...prev, ...paginatedIds])))
+          }
+        }
+        const toggleOne = (id: string) => {
+          setSelectedConsultIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
+        }
+
+        return (
+          <>
+            <div className={styles.topActionBar}>
+              <span className={styles.topActionCount}>
+                총 <strong className={styles.topActionCountBold}>{filteredConsult.length}</strong>건
+                {selectedConsultIds.length > 0 && ` · 선택 ${selectedConsultIds.length}건`}
+              </span>
+              <div className={styles.topActionSpacer} />
+              {selectedConsultIds.length > 0 && (
+                <button className={styles.btnBulkDanger} onClick={handleBulkDelete}>
+                  <Trash2 size={14} /> 선택 삭제
+                </button>
+              )}
+              <button className={styles.btnAdd} onClick={openAdd}>
+                <Plus size={14} /> 추가
               </button>
-            ))}
-            {(consultSearch || startDate || endDate || consultFilter !== 'all') && (
-              <button className={styles.resetBtn} onClick={() => { setConsultSearch(''); setStartDate(''); setEndDate(''); setConsultFilter('all') }}>초기화</button>
-            )}
-          </div>
-          <div className={styles.tableScroll}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th className={styles.th}>유형</th>
-                  <th className={styles.th}>이름</th>
-                  <th className={styles.th}>연락처</th>
-                  <th className={styles.th}>거주지역</th>
-                  <th className={styles.th}>희망 시작일</th>
-                  <th className={styles.th}>회원여부</th>
-                  <th className={styles.th}>신청일</th>
-                </tr>
-              </thead>
-              <tbody>
-                {consultations.filter(c => {
-                  if (!matchesDate(c.created_at)) return false
-                  if (consultFilter !== 'all' && c.type !== consultFilter) return false
-                  const kw = consultSearch.trim().toLowerCase()
-                  if (!kw) return true
-                  return c.name.toLowerCase().includes(kw) || c.phone.toLowerCase().includes(kw)
-                }).length === 0 ? (
-                  <tr><td colSpan={7} className={styles.tdEmpty}>간편상담 신청 내역이 없습니다.</td></tr>
-                ) : consultations.filter(c => {
-                  if (!matchesDate(c.created_at)) return false
-                  if (consultFilter !== 'all' && c.type !== consultFilter) return false
-                  const kw = consultSearch.trim().toLowerCase()
-                  if (!kw) return true
-                  return c.name.toLowerCase().includes(kw) || c.phone.toLowerCase().includes(kw)
-                }).map(c => (
-                  <tr key={c.id} className={styles.tr}>
-                    <td className={styles.td}>
-                      <span className={c.type === 'estimate' ? styles.badge_submitted : styles.badge_draft}>
-                        {CONSULT_TYPE_LABEL[c.type] ?? c.type}
-                      </span>
-                    </td>
-                    <td className={styles.td}>{highlight(c.name, consultSearch)}</td>
-                    <td className={styles.td}>{highlight(c.phone, consultSearch)}</td>
-                    <td className={styles.td}>{c.region}</td>
-                    <td className={styles.td}>{c.desired_start}</td>
-                    <td className={styles.td}>
-                      {c.user_id
-                        ? <span className={styles.badge_admin}>회원</span>
-                        : <span className={styles.badge_user}>비회원</span>}
-                    </td>
-                    <td className={styles.tdDate}>{new Date(c.created_at).toLocaleDateString('ko-KR')}</td>
-                  </tr>
+            </div>
+            <div className={styles.tableCard}>
+              <div className={styles.filterRow}>
+                <input className={styles.searchInput} placeholder="이름, 연락처 검색" value={consultSearch} onChange={e => { setConsultSearch(e.target.value); setConsultPage(1) }} />
+                <input type="date" className={styles.dateInput} value={startDate} onChange={e => { setStartDate(e.target.value); setConsultPage(1) }} />
+                <span className={styles.dateSeparator}>~</span>
+                <input type="date" className={styles.dateInput} value={endDate} onChange={e => { setEndDate(e.target.value); setConsultPage(1) }} />
+                {['all', 'consult', 'estimate'].map(f => (
+                  <button key={f} className={consultFilter === f ? styles.filterBtnActive : styles.filterBtn} onClick={() => { setConsultFilter(f); setConsultPage(1) }}>
+                    {f === 'all' ? '전체' : CONSULT_TYPE_LABEL[f]}
+                  </button>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+                {(consultSearch || startDate || endDate || consultFilter !== 'all') && (
+                  <button className={styles.resetBtn} onClick={() => { setConsultSearch(''); setStartDate(''); setEndDate(''); setConsultFilter('all'); setConsultPage(1) }}>초기화</button>
+                )}
+              </div>
+              <div className={styles.tableScroll}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th className={styles.thCenter}>
+                        <input type="checkbox" checked={allSelected} onChange={toggleAllInPage} className={styles.checkbox} />
+                      </th>
+                      <th className={styles.thNum}>번호</th>
+                      <th className={styles.th}>유형</th>
+                      <th className={styles.th}>이름</th>
+                      <th className={styles.th}>연락처</th>
+                      <th className={styles.th}>거주지역</th>
+                      <th className={styles.th}>희망 시작일</th>
+                      <th className={styles.th}>희망 프로그램</th>
+                      <th className={styles.th}>회원여부</th>
+                      <th className={styles.th}>신청일</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredConsult.length === 0 ? (
+                      <tr><td colSpan={10} className={styles.tdEmpty}>간편상담 신청 내역이 없습니다.</td></tr>
+                    ) : paginated.map((c, idx) => {
+                      const isChecked = selectedConsultIds.includes(c.id)
+                      return (
+                        <tr key={c.id} className={styles.tr}>
+                          <td className={styles.tdCenter} onClick={e => e.stopPropagation()}>
+                            <input type="checkbox" checked={isChecked} onChange={() => toggleOne(c.id)} className={styles.checkbox} />
+                          </td>
+                          <td className={styles.tdNum}>{(currentPage - 1) * CONSULT_PER_PAGE + idx + 1}</td>
+                          <td className={styles.td}>
+                            <div className={styles.typeCellInner}>
+                              <span className={c.type === 'estimate' ? styles.badge_submitted : styles.badge_draft}>
+                                {CONSULT_TYPE_LABEL[c.type] ?? c.type}
+                              </span>
+                              {isChecked && (
+                                <span className={styles.rowInlineActions}>
+                                  <button className={styles.rowActionBtn} onClick={() => openEdit(c)}>
+                                    <Pencil size={12} /> 수정
+                                  </button>
+                                  <button
+                                    className={`${styles.rowActionBtn} ${styles.rowActionBtnDanger}`}
+                                    onClick={() => handleDelete(c.id)}
+                                    disabled={deletingIds.has(c.id)}
+                                  >
+                                    <Trash2 size={12} /> {deletingIds.has(c.id) ? '삭제 중' : '삭제'}
+                                  </button>
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className={styles.tdBold}>{highlight(c.name, consultSearch)}</td>
+                          <td className={styles.td}>{highlight(c.phone || '-', consultSearch)}</td>
+                          <td className={styles.td}>{c.region || '-'}</td>
+                          <td className={styles.td}>{c.desired_start || '-'}</td>
+                          <td className={styles.td}>{PROGRAM_LABEL[c.program ?? ''] ?? c.program ?? '-'}</td>
+                          <td className={styles.td}>
+                            {c.user_id
+                              ? <span className={styles.badge_admin}>회원</span>
+                              : <span className={styles.badge_user}>비회원</span>}
+                          </td>
+                          <td className={styles.tdDate}>{new Date(c.created_at).toLocaleDateString('ko-KR')}</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            {totalPages > 1 && (
+              <div className={styles.pagination}>
+                <button onClick={() => setConsultPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className={styles.pageBtn}>‹</button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                  <button key={p} onClick={() => setConsultPage(p)} className={p === currentPage ? styles.pageBtnActive : styles.pageBtn}>{p}</button>
+                ))}
+                <button onClick={() => setConsultPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className={styles.pageBtn}>›</button>
+              </div>
+            )}
+          </>
+        )
+      })()}
 
       {/* 신청서 목록 */}
       {tab === 'applications' && (
@@ -393,6 +577,64 @@ export default function AbroadPage() {
                 })}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* 간편상담 추가/수정 모달 */}
+      {showAddModal && (
+        <div className={styles.modalOverlay} onClick={() => !submitting && setShowAddModal(false)}>
+          <div className={styles.modalCard} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2 className={styles.modalTitle}>{editTarget ? '간편상담 수정' : '간편상담 추가'}</h2>
+              <button className={styles.modalClose} onClick={() => !submitting && setShowAddModal(false)}>
+                <X size={16} />
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              <div className={styles.fieldRow}>
+                <label className={styles.fieldLabel}>유형</label>
+                <select className={styles.fieldSelect} value={form.type} onChange={e => setForm({ ...form, type: e.target.value })}>
+                  <option value="consult">간편상담</option>
+                  <option value="estimate">견적문의</option>
+                </select>
+              </div>
+              <div className={styles.fieldRow}>
+                <label className={styles.fieldLabel}>이름</label>
+                <input className={styles.fieldInput} placeholder="이름" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+              </div>
+              <div className={styles.fieldRow}>
+                <label className={styles.fieldLabel}>연락처</label>
+                <input className={styles.fieldInput} placeholder="010-0000-0000" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
+              </div>
+              <div className={styles.fieldRow}>
+                <label className={styles.fieldLabel}>거주지역</label>
+                <input className={styles.fieldInput} placeholder="예: 서울 강남구" value={form.region} onChange={e => setForm({ ...form, region: e.target.value })} />
+              </div>
+              <div className={styles.fieldRow}>
+                <label className={styles.fieldLabel}>희망 시작일</label>
+                <input className={styles.fieldInput} placeholder="예: 2026-06" value={form.desired_start} onChange={e => setForm({ ...form, desired_start: e.target.value })} />
+              </div>
+              <div className={styles.fieldRow}>
+                <label className={styles.fieldLabel}>희망 프로그램</label>
+                <select className={styles.fieldSelect} value={form.program} onChange={e => setForm({ ...form, program: e.target.value })}>
+                  <option value="">선택 안함</option>
+                  {Object.entries(PROGRAM_LABEL).map(([key, label]) => (
+                    <option key={key} value={key}>{label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className={styles.fieldRow}>
+                <label className={styles.fieldLabel}>메모</label>
+                <textarea className={styles.fieldTextarea} placeholder="상담 내용 메모 (선택)" value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} />
+              </div>
+            </div>
+            <div className={styles.modalFooter}>
+              <button className={styles.btnCancel} onClick={() => !submitting && setShowAddModal(false)} disabled={submitting}>취소</button>
+              <button className={styles.btnSubmit} onClick={handleFormSubmit} disabled={submitting}>
+                {submitting ? '저장 중...' : '저장'}
+              </button>
+            </div>
           </div>
         </div>
       )}

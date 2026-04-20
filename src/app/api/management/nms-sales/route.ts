@@ -130,5 +130,12 @@ export async function GET(request: NextRequest) {
     completedCount: byTeam.reduce((s, t) => s + t.completedCount, 0),
   }
 
-  return NextResponse.json({ year, month, total: grandTotal, byTeam })
+  return NextResponse.json(
+    { year, month, total: grandTotal, byTeam },
+    {
+      headers: {
+        'Cache-Control': 'private, s-maxage=60, stale-while-revalidate=300',
+      },
+    }
+  )
 }

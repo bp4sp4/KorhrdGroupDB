@@ -15,6 +15,7 @@ export type PermissionSection =
   | 'revenues'
   | 'revenue-upload'
   | 'reports'
+  | 'bankaccount'
 
 export interface PermissionRecord {
   section: PermissionSection
@@ -43,17 +44,18 @@ export const ALL_PERMISSION_SECTIONS: PermissionSection[] = [
   'revenues',
   'revenue-upload',
   'reports',
+  'bankaccount',
 ]
 
 const MANAGEMENT_ACCESS_BY_POSITION: Record<string, PermissionSection[]> = {
   사원: [],
   주임: ['revenue-upload', 'approvals'],
   대리: ['revenues', 'revenue-upload', 'approvals'],
-  이사: ['revenues', 'revenue-upload', 'approvals', 'reports'],
-  상무: ['revenues', 'revenue-upload', 'approvals', 'reports'],
-  본부장: [],
-  대표이사: ['revenues', 'revenue-upload', 'approvals', 'reports'],
-  임원: ['revenues', 'revenue-upload', 'approvals', 'reports'],
+  이사: ['revenues', 'revenue-upload', 'approvals', 'reports', 'bankaccount'],
+  상무: ['revenues', 'revenue-upload', 'approvals', 'reports', 'bankaccount'],
+  본부장: ['bankaccount'],
+  대표이사: ['revenues', 'revenue-upload', 'approvals', 'reports', 'bankaccount'],
+  임원: ['revenues', 'revenue-upload', 'approvals', 'reports', 'bankaccount'],
 }
 
 function isPermissionSection(section: string): section is PermissionSection {

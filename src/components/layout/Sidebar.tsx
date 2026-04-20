@@ -5,7 +5,7 @@ import { usePathname, useSearchParams } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import {
   GraduationCap, Briefcase, Users, UserCog, Trash2,
-  HeartPulse, ClipboardList, Copy, TrendingUp, FileCheck, BarChart2, Settings, UserCheck, Plane, Link2, ChevronRight, Upload,
+  HeartPulse, ClipboardList, Copy, TrendingUp, FileCheck, BarChart2, Settings, UserCheck, Plane, Link2, ChevronRight, Upload, Landmark,
 } from 'lucide-react'
 import styles from './layout.module.css'
 import { createClient } from '@/lib/supabase/client'
@@ -36,7 +36,7 @@ interface NavSection {
 const ALL_SECTIONS: NavSection[] = [
   {
     sectionKey: '교육운영',
-    activeOn: ['/hakjeom', '/cert', '/practice', '/allcare', '/abroad', '/duplicate', '/trash', '/ref-manage', '/logs', '/assignment', '/links', '/revenues', '/revenue-upload', '/approvals', '/reports'],
+    activeOn: ['/hakjeom', '/cert', '/practice', '/allcare', '/abroad', '/duplicate', '/trash', '/ref-manage', '/logs', '/assignment', '/links', '/revenues', '/revenue-upload', '/approvals', '/reports', '/bankaccount'],
     items: [
       {
         id: 'education', label: '학점은행제 사업부', href: '/hakjeom', icon: <GraduationCap size={16} />, groupLabel: '학습/취업',
@@ -45,6 +45,7 @@ const ALL_SECTIONS: NavSection[] = [
           { id: 'hakjeom-tab-agency',       label: '기관협약',   href: '/hakjeom?tab=agency' },
           { id: 'hakjeom-tab-bulk',         label: '일괄등록',   href: '/hakjeom?tab=bulk' },
           { id: 'hakjeom-tab-counsel_done', label: '연락예정',   href: '/hakjeom?tab=counsel_done' },
+          { id: 'hakjeom-tab-edu-students', label: '교육원 학생',   href: '/hakjeom?tab=edu-students' },
           { id: 'hakjeom-tab-stats',        label: '통계',       href: '/hakjeom?tab=stats' },
         ],
       },
@@ -101,6 +102,7 @@ const ALL_SECTIONS: NavSection[] = [
         ],
       },
       { id: 'revenue-upload', label: '매출 데이터 관리', href: '/revenue-upload', icon: <Upload size={16} /> },
+      { id: 'bankaccount', label: '계좌조회', href: '/bankaccount', icon: <Landmark size={16} /> },
       { id: 'approvals', label: '전자결재', href: '/approvals', icon: <FileCheck size={16} /> },
       { id: 'reports', label: '손익 리포트', href: '/reports', icon: <BarChart2 size={16} /> },
     ],
@@ -132,8 +134,9 @@ const SECTION_ITEM_MAP: Record<string, string> = {
   assignment: 'assignment',
   revenues:   'nms-sales',
   'revenue-upload': 'revenue-upload',
-  approvals:  'approvals',
-  reports:    'reports',
+  approvals:    'approvals',
+  reports:      'reports',
+  bankaccount:  'bankaccount',
 }
 
 interface SidebarProps {

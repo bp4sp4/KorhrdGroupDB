@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-04-20T03:24:34.076Z",
+  "lastUpdated": "2026-04-20T09:18:35.715Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -106,7 +106,12 @@
     "counsel-count",
     "batches",
     "[batchId]",
-    "revenue-upload"
+    "revenue-upload",
+    "bankaccount",
+    "education-center",
+    "allcare-check",
+    "cb-search",
+    "plan"
   ],
   "primaryFeature": "supabase",
   "features": {
@@ -132,7 +137,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:18:14.828Z",
-        "lastUpdated": "2026-04-06T09:31:47.989Z"
+        "lastUpdated": "2026-04-20T05:03:42.790Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(auth)/login/page.tsx"
     },
@@ -145,7 +150,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:20:48.298Z",
-        "lastUpdated": "2026-04-09T06:40:33.888Z"
+        "lastUpdated": "2026-04-20T09:01:45.510Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/layout.tsx"
     },
@@ -158,7 +163,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:20:57.368Z",
-        "lastUpdated": "2026-04-16T07:13:32.585Z"
+        "lastUpdated": "2026-04-20T08:49:29.216Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/components/layout/Sidebar.tsx"
     },
@@ -171,7 +176,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:30:16.038Z",
-        "lastUpdated": "2026-04-20T03:24:34.076Z"
+        "lastUpdated": "2026-04-20T08:48:36.087Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/hakjeom/page.tsx"
     },
@@ -275,7 +280,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T06:09:16.436Z",
-        "lastUpdated": "2026-04-16T07:07:59.411Z"
+        "lastUpdated": "2026-04-20T09:18:35.715Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/admin/page.tsx"
     },
@@ -301,9 +306,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T09:41:18.714Z",
-        "lastUpdated": "2026-04-15T07:47:58.088Z"
+        "lastUpdated": "2026-04-20T08:06:29.861Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/lib/announcements.ts"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/lib/edu-logger.ts"
     },
     "scripts": {
       "phase": "do",
@@ -431,9 +436,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-18T09:51:47.807Z",
-        "lastUpdated": "2026-04-16T07:06:35.112Z"
+        "lastUpdated": "2026-04-20T09:01:40.430Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/lib/auth/managementAccess.ts"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/lib/auth/permissions.ts"
     },
     "public": {
       "phase": "do",
@@ -470,9 +475,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-19T01:53:46.254Z",
-        "lastUpdated": "2026-03-19T02:20:46.784Z"
+        "lastUpdated": "2026-04-20T05:55:57.241Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/korhrdsocial_copy/app/api/consultations/route.ts"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/abroad/consultations/route.ts"
     },
     "users": {
       "phase": "do",
@@ -951,9 +956,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-01T07:06:44.615Z",
-        "lastUpdated": "2026-04-16T06:34:09.540Z"
+        "lastUpdated": "2026-04-20T08:44:41.298Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/management/revenues/[id]/route.ts"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/hakjeom/education-center/students/[id]/page.tsx"
     },
     "templates": {
       "phase": "do",
@@ -1341,7 +1346,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-09T01:58:58.611Z",
-        "lastUpdated": "2026-04-15T03:49:10.444Z"
+        "lastUpdated": "2026-04-20T05:59:44.852Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/abroad/page.tsx"
     },
@@ -1367,9 +1372,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-13T06:31:44.434Z",
-        "lastUpdated": "2026-04-16T07:06:52.990Z"
+        "lastUpdated": "2026-04-20T04:59:07.275Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/management/nms-sales/route.ts"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/revenues/nms-sales/page.tsx"
     },
     "cert-sales": {
       "phase": "do",
@@ -1380,7 +1385,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-13T06:37:55.024Z",
-        "lastUpdated": "2026-04-16T07:07:07.151Z"
+        "lastUpdated": "2026-04-20T04:58:27.062Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/management/cert-sales/route.ts"
     },
@@ -1393,7 +1398,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-13T06:48:43.126Z",
-        "lastUpdated": "2026-04-16T07:07:16.756Z"
+        "lastUpdated": "2026-04-20T04:58:32.725Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/management/abroad-sales/route.ts"
     },
@@ -1406,7 +1411,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-13T06:57:55.155Z",
-        "lastUpdated": "2026-04-16T07:06:44.201Z"
+        "lastUpdated": "2026-04-20T04:58:10.674Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/management/sales-stats/route.ts"
     },
@@ -1419,7 +1424,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-15T03:32:55.877Z",
-        "lastUpdated": "2026-04-16T07:07:26.987Z"
+        "lastUpdated": "2026-04-20T04:58:38.498Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/management/allcare-sales/route.ts"
     },
@@ -1474,6 +1479,71 @@
         "lastUpdated": "2026-04-20T01:56:39.364Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/revenue-upload/page.tsx"
+    },
+    "bankaccount": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-20T06:45:24.089Z",
+        "lastUpdated": "2026-04-20T09:04:06.968Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/bankaccount/page.tsx"
+    },
+    "education-center": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-20T08:01:43.414Z",
+        "lastUpdated": "2026-04-20T08:51:00.703Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/hakjeom/education-center/EduStudentsTab.tsx"
+    },
+    "allcare-check": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-20T08:09:35.897Z",
+        "lastUpdated": "2026-04-20T08:09:35.897Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/edu/allcare-check/route.ts"
+    },
+    "cb-search": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-20T08:09:48.144Z",
+        "lastUpdated": "2026-04-20T08:09:48.144Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/edu/cb-search/route.ts"
+    },
+    "plan": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-20T08:24:29.812Z",
+        "lastUpdated": "2026-04-20T08:44:34.362Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/hakjeom/education-center/students/[id]/plan/page.tsx"
     }
   },
   "pipeline": {
@@ -1484,7 +1554,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-20T03:24:34.076Z"
+    "lastActivity": "2026-04-20T09:18:35.715Z"
   },
   "history": [
     {
@@ -19610,6 +19680,696 @@
     {
       "timestamp": "2026-04-20T03:24:34.076Z",
       "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T03:46:07.552Z",
+      "feature": "sales-stats",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T03:46:15.192Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T03:46:17.907Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T03:59:19.480Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T03:59:25.491Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T03:59:31.889Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T03:59:50.903Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T04:00:07.074Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T04:00:13.974Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T04:00:19.679Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T04:00:29.378Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T04:01:39.546Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T04:18:12.937Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T04:56:18.218Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T04:58:10.674Z",
+      "feature": "sales-stats",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T04:58:21.540Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T04:58:27.062Z",
+      "feature": "cert-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T04:58:32.725Z",
+      "feature": "abroad-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T04:58:38.498Z",
+      "feature": "allcare-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T04:59:07.275Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T05:03:42.790Z",
+      "feature": "login",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T05:39:03.930Z",
+      "feature": "consultations",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T05:39:08.238Z",
+      "feature": "abroad",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T05:39:49.708Z",
+      "feature": "abroad",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T05:39:57.775Z",
+      "feature": "abroad",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T05:40:05.374Z",
+      "feature": "abroad",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T05:40:30.530Z",
+      "feature": "abroad",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T05:40:42.234Z",
+      "feature": "abroad",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T05:55:44.874Z",
+      "feature": "[id]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T05:55:57.241Z",
+      "feature": "consultations",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T05:56:57.002Z",
+      "feature": "abroad",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T05:57:34.883Z",
+      "feature": "abroad",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T05:57:38.906Z",
+      "feature": "abroad",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T05:57:44.731Z",
+      "feature": "abroad",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T05:57:50.063Z",
+      "feature": "abroad",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T05:59:44.852Z",
+      "feature": "abroad",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T06:45:05.301Z",
+      "feature": "hakjeom-bank-web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T06:45:24.089Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T06:46:14.556Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T06:46:53.404Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T06:46:57.310Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T06:47:02.079Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T06:47:05.408Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T07:49:32.052Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T07:51:39.569Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T07:51:51.088Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T07:52:26.064Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T07:52:37.070Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T07:54:56.172Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T07:55:04.073Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T07:55:44.496Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T07:58:00.179Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T07:58:55.206Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T07:59:09.156Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T07:59:20.295Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T07:59:36.820Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T07:59:57.824Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:00:30.085Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:00:46.168Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:00:51.765Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:00:57.369Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:01:06.381Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:01:16.383Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:01:43.414Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:01:50.156Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:01:54.702Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:02:04.439Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:02:49.794Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:03:43.667Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:06:04.623Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:06:29.861Z",
+      "feature": "hakjeom-bank-web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:07:45.019Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:08:34.529Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:08:39.407Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:08:49.977Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:08:52.830Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:08:54.300Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:09:28.671Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:09:35.897Z",
+      "feature": "allcare-check",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:09:48.144Z",
+      "feature": "cb-search",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:11:13.328Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:12:50.167Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:12:58.843Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:15:30.405Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:16:23.275Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:16:30.664Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:16:48.313Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:19:52.499Z",
+      "feature": "[id]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:20:43.204Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:20:55.248Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:24:29.812Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:25:16.723Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:44:34.362Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:44:41.298Z",
+      "feature": "[id]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:47:39.725Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:47:45.035Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:47:50.058Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:47:57.885Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:48:05.711Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:48:13.032Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:48:17.394Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:48:26.678Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:48:36.087Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:49:29.216Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:50:34.352Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:50:43.580Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:50:48.217Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:50:54.832Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T08:51:00.703Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T09:01:30.500Z",
+      "feature": "auth",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T09:01:34.747Z",
+      "feature": "auth",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T09:01:40.430Z",
+      "feature": "auth",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T09:01:45.510Z",
+      "feature": "(dashboard)",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T09:04:06.968Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T09:18:35.715Z",
+      "feature": "admin",
       "phase": "do",
       "action": "updated"
     }

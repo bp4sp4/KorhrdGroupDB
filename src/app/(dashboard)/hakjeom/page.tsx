@@ -13,12 +13,13 @@ import MemoHoverBadge from '@/components/ui/MemoHoverBadge'
 import { TableSkeleton, StatsCardsSkeleton, ChartsGridSkeleton, FilterBarSkeleton } from '@/components/ui/Skeleton'
 import { downloadExcel } from '@/lib/excelExport'
 import { DateInput } from '@/components/ui/Calendar/DateInput'
+import EduStudentsTab from './education-center/EduStudentsTab'
 
 // ─── 공통 타입 ──────────────────────────────────────────────────────────────
 
 type ConsultationStatus = '부재중/추후통화' | '상담대기' | '상담완료-높음' | '상담완료-중간' | '상담완료-낮음' | '보류' | '등록완료' | '취소' | '기타';
 type AgencyStatus = '협약대기' | '협약중' | '보류' | '협약완료';
-type TabKey = 'hakjeom' | 'agency' | 'bulk' | 'counsel_done' | 'stats';
+type TabKey = 'hakjeom' | 'agency' | 'bulk' | 'counsel_done' | 'edu-students' | 'stats';
 
 // ─── 학점은행제 타입 ─────────────────────────────────────────────────────────
 
@@ -4501,6 +4502,7 @@ const TAB_CONFIG: { key: TabKey; label: string }[] = [
   { key: 'agency', label: '기관협약' },
   { key: 'bulk', label: '일괄등록' },
   { key: 'counsel_done', label: '연락예정' },
+  { key: 'edu-students', label: '교육원 학생' },
   { key: 'stats', label: '통계' },
 ];
 
@@ -4564,6 +4566,9 @@ export default function HakjeomPage() {
         {mountedTabs.has('counsel_done') && (
           <CounselDoneTab isActive={activeTab === 'counsel_done'} onCountChange={() => {}} />
         )}
+      </div>
+      <div style={{ display: activeTab === 'edu-students' ? 'block' : 'none' }}>
+        {mountedTabs.has('edu-students') && <EduStudentsTab isActive={activeTab === 'edu-students'} />}
       </div>
       <div style={{ display: activeTab === 'stats' ? 'block' : 'none' }}>
         {mountedTabs.has('stats') && <StatsTab />}

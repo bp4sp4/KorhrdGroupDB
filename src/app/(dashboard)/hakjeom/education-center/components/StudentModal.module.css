@@ -1,0 +1,479 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-y: auto;
+  padding: 20px;
+  backdrop-filter: blur(2px);
+}
+
+.modal {
+  background: #FFFFFF;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 640px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+  margin: auto 0;
+  flex-shrink: 0;
+}
+
+.modal_header {
+  padding: 24px 28px 20px;
+  border-bottom: 1px solid #F2F4F6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.modal_title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #191F28;
+  letter-spacing: -0.3px;
+}
+
+.modal_close {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: #F9FAFB;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #4E5968;
+  transition: background-color 0.15s;
+}
+
+.modal_close:hover {
+  background: #E5E8EB;
+}
+
+.modal_body {
+  padding: 24px 28px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modal_body::-webkit-scrollbar {
+  width: 4px;
+}
+
+.modal_body::-webkit-scrollbar-thumb {
+  background: #E5E8EB;
+  border-radius: 2px;
+}
+
+.form_grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form_field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form_field_full {
+  grid-column: 1 / -1;
+}
+
+.form_label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #4E5968;
+}
+
+.form_required {
+  color: #F04438;
+  margin-left: 2px;
+}
+
+.form_input {
+  height: 44px;
+  padding: 0 14px;
+  border: 1.5px solid #E5E8EB;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #191F28;
+  background: #FFFFFF;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.form_input:focus {
+  border-color: #3182F6;
+}
+
+.form_input::placeholder {
+  color: #8B95A1;
+}
+
+.input_suffix_wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input_suffix_wrap .form_input {
+  width: 100%;
+  padding-right: 36px;
+}
+
+.input_suffix {
+  position: absolute;
+  right: 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #4E5968;
+  pointer-events: none;
+}
+
+.form_select {
+  height: 44px;
+  padding: 0 32px 0 14px;
+  border: 1.5px solid #E5E8EB;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #191F28;
+  background: #FFFFFF;
+  outline: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238B95A1' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.form_select:focus {
+  border-color: #3182F6;
+}
+
+.form_textarea {
+  padding: 12px 14px;
+  border: 1.5px solid #E5E8EB;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #191F28;
+  background: #FFFFFF;
+  outline: none;
+  resize: vertical;
+  min-height: 80px;
+  transition: border-color 0.15s;
+  line-height: 1.5;
+}
+
+.form_textarea:focus {
+  border-color: #3182F6;
+}
+
+.form_textarea::placeholder {
+  color: #8B95A1;
+}
+
+/* 올케어 토글 */
+.allcare_group {
+  display: flex;
+  gap: 8px;
+}
+
+.allcare_btn {
+  flex: 1;
+  height: 44px;
+  border: 1.5px solid #E5E8EB;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  background: #FFFFFF;
+  color: #4E5968;
+  transition: all 0.15s;
+}
+
+.allcare_btn_active_o {
+  border-color: #16A34A;
+  background-color: #F0FDF4;
+  color: #16A34A;
+}
+
+.allcare_btn_active_x {
+  border-color: #F04438;
+  background-color: #FEF2F2;
+  color: #F04438;
+}
+
+.modal_footer {
+  padding: 16px 28px 24px;
+  border-top: 1px solid #F2F4F6;
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.cancel_btn {
+  height: 44px;
+  padding: 0 20px;
+  border: 1.5px solid #E5E8EB;
+  border-radius: 8px;
+  background: #FFFFFF;
+  font-size: 14px;
+  font-weight: 500;
+  color: #4E5968;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.cancel_btn:hover {
+  border-color: #4E5968;
+  color: #191F28;
+}
+
+.submit_btn {
+  height: 44px;
+  padding: 0 24px;
+  background-color: #3182F6;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.submit_btn:hover {
+  background-color: #1B64DA;
+}
+
+.submit_btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ── 올케어 실시간 상태 뱃지 ── */
+.allcare_badge_checking {
+  margin-left: 8px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #8B95A1;
+}
+
+.allcare_badge_active {
+  margin-left: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #059669;
+}
+
+.allcare_badge_inactive {
+  margin-left: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #D97706;
+}
+
+.allcare_badge_notfound {
+  margin-left: 8px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #8B95A1;
+}
+
+/* ── 학과(전공) 콤보박스 ── */
+.major_wrap {
+  position: relative;
+  width: 100%;
+}
+
+.major_input {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 44px;
+  padding: 0 36px 0 14px;
+  border: 1.5px solid #E5E8EB;
+  border-radius: 8px;
+  background: #FFFFFF;
+  font-size: 14px;
+  color: #191F28;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.major_input:focus {
+  border-color: #3182F6;
+}
+
+.major_input::placeholder {
+  color: #8B95A1;
+  font-weight: 400;
+}
+
+.major_chevron {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #8B95A1;
+  pointer-events: none;
+  transition: transform 0.2s, color 0.15s;
+}
+
+.major_chevron_open {
+  transform: translateY(-50%) rotate(180deg);
+  color: #3182F6;
+}
+
+.major_dropdown {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  width: 100%;
+  background: #FFFFFF;
+  border: 1px solid #E5E8EB;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  z-index: 500;
+  padding: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+  animation: major_in 0.12s ease;
+}
+
+@keyframes major_in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.major_option {
+  padding: 9px 12px;
+  font-size: 14px;
+  color: #191F28;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.1s;
+}
+
+.major_option:hover {
+  background-color: #F2F4F6;
+}
+
+.major_option_active {
+  color: #3182F6;
+  font-weight: 600;
+}
+
+.major_option_active:hover {
+  background-color: #EBF3FE;
+}
+
+.major_option_empty {
+  color: #8B95A1;
+  cursor: default;
+}
+
+.major_option_add {
+  color: #3182F6;
+  font-weight: 600;
+}
+
+/* ── 교육원 태그 표시 ── */
+.center_tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+/* ── 개강반 태그 입력 ── */
+.class_start_wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 6px 10px;
+  border: 1px solid #E5E8EB;
+  border-radius: 8px;
+  background: #FFFFFF;
+  cursor: text;
+  transition: border-color 0.15s;
+}
+
+.class_start_wrap:focus-within {
+  border-color: #3182F6;
+}
+
+.class_start_tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #EFF6FF;
+  color: #1D4ED8;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.class_start_tag_remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #93C5FD;
+  font-size: 11px;
+  padding: 0;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+}
+
+.class_start_tag_remove:hover {
+  color: #1D4ED8;
+}
+
+.class_start_input {
+  flex: 1;
+  min-width: 160px;
+  border: none;
+  outline: none;
+  font-size: 13px;
+  color: #191F28;
+  background: transparent;
+  padding: 2px 0;
+}
+
+.class_start_input::placeholder {
+  color: #8B95A1;
+}
+
+.class_start_add_btn {
+  background: #3182F6;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 6px;
+  width: 24px;
+  height: 24px;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 1;
+}

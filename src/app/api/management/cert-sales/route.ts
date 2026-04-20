@@ -56,9 +56,16 @@ export async function GET(request: NextRequest) {
     .map(([day, s]) => ({ day, ...s }))
     .sort((a, b) => a.day - b.day)
 
-  return NextResponse.json({
-    year, month,
-    total: { paymentAmount: totalAmount, count, avgAmount },
-    byDay,
-  })
+  return NextResponse.json(
+    {
+      year, month,
+      total: { paymentAmount: totalAmount, count, avgAmount },
+      byDay,
+    },
+    {
+      headers: {
+        'Cache-Control': 'private, s-maxage=60, stale-while-revalidate=300',
+      },
+    }
+  )
 }

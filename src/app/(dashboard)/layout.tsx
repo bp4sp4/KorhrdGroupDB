@@ -100,7 +100,8 @@ export default function DashboardLayout({
       { path: '/approvals',  section: 'approvals' },
       { path: '/revenues',   section: 'revenues' },
       { path: '/revenue-upload', section: 'revenue-upload' },
-      { path: '/reports',    section: 'reports' },
+      { path: '/reports',      section: 'reports' },
+      { path: '/bankaccount',  section: 'bankaccount' },
     ]
 
     if (userRole === 'mini-admin' && !pathname.startsWith('/mini-admin') && !pathname.startsWith('/paymentstatus')) {

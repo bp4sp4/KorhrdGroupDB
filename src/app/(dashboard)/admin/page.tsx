@@ -1342,7 +1342,8 @@ const PERMISSION_SECTIONS: PermissionSection[] = [
   { key: 'approvals',  label: '전자결재',           description: '전자결재 열람·처리',      allowOwn: false, group: '경영관리' },
   { key: 'revenues',   label: '팀별 매출 관리',      description: '사업부별 매출 현황 열람 (담당: 사원/주임은 본인 사업부만, 대리 이상은 전체)',  allowOwn: true,  group: '경영관리' },
   { key: 'revenue-upload', label: '매출 데이터 관리', description: '매출 데이터 업로드·관리 (담당: 본인 사업부만)', allowOwn: true,  group: '경영관리' },
-  { key: 'reports',    label: '손익 리포트',        description: '손익 리포트 열람',        allowOwn: false, group: '경영관리' },
+  { key: 'reports',      label: '손익 리포트',        description: '손익 리포트 열람',              allowOwn: false, group: '경영관리' },
+  { key: 'bankaccount', label: '계좌조회',           description: '팝빌 계좌 거래내역 조회 (이사 이상)', allowOwn: false, group: '경영관리' },
 ]
 
 // 탭 제한을 지원하는 섹션과 해당 탭 목록

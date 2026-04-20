@@ -69,5 +69,12 @@ export async function GET(request: NextRequest) {
     user_email: (p.users as unknown as { name: string; email: string } | null)?.email ?? null,
   }))
 
-  return NextResponse.json({ year, month, totalRevenue, count, byType, payments })
+  return NextResponse.json(
+    { year, month, totalRevenue, count, byType, payments },
+    {
+      headers: {
+        'Cache-Control': 'private, s-maxage=60, stale-while-revalidate=300',
+      },
+    }
+  )
 }

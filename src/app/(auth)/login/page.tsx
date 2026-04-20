@@ -22,6 +22,7 @@ export default function LoginPage() {
       { section: 'cert',     path: '/cert' },
       { section: 'practice', path: '/practice' },
       { section: 'allcare',  path: '/allcare' },
+      { section: 'abroad',   path: '/abroad' },
       { section: 'revenue-upload', path: '/revenue-upload' },
       { section: 'revenues', path: '/revenues/nms-sales' },
       { section: 'approvals', path: '/approvals' },

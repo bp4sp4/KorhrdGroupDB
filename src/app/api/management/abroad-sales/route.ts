@@ -83,11 +83,18 @@ export async function GET(request: NextRequest) {
     }
   })
 
-  return NextResponse.json({
-    year,
-    month,
-    total: { paymentAmount: totalAmount, count, avgAmount },
-    byDay,
-    rows: paymentRows,
-  })
+  return NextResponse.json(
+    {
+      year,
+      month,
+      total: { paymentAmount: totalAmount, count, avgAmount },
+      byDay,
+      rows: paymentRows,
+    },
+    {
+      headers: {
+        'Cache-Control': 'private, s-maxage=60, stale-while-revalidate=300',
+      },
+    }
+  )
 }
