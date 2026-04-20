@@ -2583,10 +2583,10 @@ const AGENCY_CSV_TEMPLATE = '\uFEFF기관명,분류,지역,연락처,학점수�
 function parseAgencyCsv(text: string): Record<string, string>[] {
   const lines = text.split(/\r?\n/).filter(l => l.trim());
   if (lines.length < 2) return [];
-  const headers = lines[0].split(',').map(h => h.trim().replace(/^\uFEFF/, '').replace(/^"|"$/g, ''));
+  const headers = parseCsvLine(lines[0]).map(h => h.replace(/^\uFEFF/, ''));
   const colMap = headers.map((h, i) => ({ field: AGENCY_HEADER_MAP[h], idx: i })).filter(({ field }) => field);
   return lines.slice(1).map(line => {
-    const cols = line.split(',').map(c => c.trim().replace(/^"|"$/g, ''));
+    const cols = parseCsvLine(line);
     if (cols.every(c => !c)) return null;
     const row: Record<string, string> = {};
     colMap.forEach(({ field, idx }) => { if (cols[idx] !== undefined) row[field] = cols[idx]; });
@@ -3115,16 +3115,36 @@ const CERT_TEMPLATE = [
   '',
 ].join('\n');
 
+function parseCsvLine(line: string): string[] {
+  const cols: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
+      else { inQuotes = !inQuotes; }
+    } else if (ch === ',' && !inQuotes) {
+      cols.push(current.trim());
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  cols.push(current.trim());
+  return cols;
+}
+
 function parseCsv(text: string): CsvRow[] {
   const lines = text.split(/\r?\n/).filter(l => l.trim());
   if (lines.length < 2) return [];
-  const headers = lines[0].split(',').map(h => h.trim().replace(/^\uFEFF/, '').replace(/^"|"$/g, ''));
+  const headers = parseCsvLine(lines[0]).map(h => h.replace(/^\uFEFF/, ''));
   const majorIdx = headers.findIndex(h => h === '대분류');
   const minorIdx = headers.findIndex(h => h === '중분류');
   const colMap = headers.map((h, i) => ({ field: HEADER_MAP[h], idx: i }))
     .filter(({ field, idx }) => field && idx !== majorIdx && idx !== minorIdx);
   return lines.slice(1).map(line => {
-    const cols = line.split(',').map(c => c.trim().replace(/^"|"$/g, ''));
+    const cols = parseCsvLine(line);
     if (cols.every(c => !c)) return null;
     const row: CsvRow = { name: '', contact: '', education: '', major_category: '', hope_course: '', click_source: '', reason: '', memo: '', status: '', manager: '', residence: '', counsel_check: '', subject_cost: '', applied_at: '' };
     colMap.forEach(({ field, idx }) => { if (cols[idx] !== undefined) row[field] = cols[idx]; });

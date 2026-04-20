@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-04-16T07:13:32.585Z",
+  "lastUpdated": "2026-04-20T03:24:34.076Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -171,9 +171,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:30:16.038Z",
-        "lastUpdated": "2026-04-16T06:00:27.214Z"
+        "lastUpdated": "2026-04-20T03:24:34.076Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/hakjeom/route.ts"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/hakjeom/page.tsx"
     },
     "practice": {
       "phase": "do",
@@ -1471,7 +1471,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-15T08:26:22.685Z",
-        "lastUpdated": "2026-04-15T09:47:50.382Z"
+        "lastUpdated": "2026-04-20T01:56:39.364Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/revenue-upload/page.tsx"
     }
@@ -1484,7 +1484,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-16T07:13:32.585Z"
+    "lastActivity": "2026-04-20T03:24:34.076Z"
   },
   "history": [
     {
@@ -19586,6 +19586,30 @@
     {
       "timestamp": "2026-04-16T07:13:32.585Z",
       "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T01:54:39.514Z",
+      "feature": "revenue-upload",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T01:56:39.364Z",
+      "feature": "revenue-upload",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T03:24:26.635Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-20T03:24:34.076Z",
+      "feature": "hakjeom",
       "phase": "do",
       "action": "updated"
     }

@@ -83,30 +83,10 @@ export default function RevenueUploadPage() {
 
   return (
     <div className={styles.pageWrap}>
-      <div className={styles.heroCard}>
-        <div className={styles.pageHeader}>
-          <div className={styles.pageHeading}>
-            <span className={styles.pageEyebrow}>Revenue Admin</span>
-            <div>
-          <h1 className={styles.pageTitle}>매출 데이터 관리</h1>
-              <p className={styles.pageSubtitle}>매출 데이터를 조회, 업로드, 수정, 삭제할 수 있습니다.</p>
-            </div>
-          </div>
-          <div className={styles.heroMeta}>
-            <span className={styles.heroMetaLabel}>현재 작업</span>
-            <strong className={styles.heroMetaValue}>
-              {tab === 'data' ? '데이터 조회' : tab === 'upload' ? '파일 업로드' : '업로드 이력'}
-            </strong>
-          </div>
-        </div>
-      </div>
-
-      <div className={styles.tabShell}>
-        <div className={styles.tabRow}>
-          <button className={`${styles.tabBtn} ${tab === 'data' ? styles.tabBtnActive : ''}`} onClick={() => setTab('data')}>데이터 조회</button>
-          <button className={`${styles.tabBtn} ${tab === 'upload' ? styles.tabBtnActive : ''}`} onClick={() => setTab('upload')}>업로드</button>
-          <button className={`${styles.tabBtn} ${tab === 'history' ? styles.tabBtnActive : ''}`} onClick={() => setTab('history')}>업로드 이력</button>
-        </div>
+      <div className={styles.tabRow}>
+        <button className={`${styles.tabBtn} ${tab === 'data' ? styles.tabBtnActive : ''}`} onClick={() => setTab('data')}>데이터 조회</button>
+        <button className={`${styles.tabBtn} ${tab === 'upload' ? styles.tabBtnActive : ''}`} onClick={() => setTab('upload')}>업로드</button>
+        <button className={`${styles.tabBtn} ${tab === 'history' ? styles.tabBtnActive : ''}`} onClick={() => setTab('history')}>업로드 이력</button>
       </div>
 
       {tab === 'data' && <DataTab departments={departments} />}
