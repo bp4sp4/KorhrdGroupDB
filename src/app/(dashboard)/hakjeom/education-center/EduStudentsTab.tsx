@@ -8,7 +8,6 @@ import StudentModal from './components/StudentModal';
 import FilterDropdown from './components/FilterDropdown';
 import EduSubjectsTab from './EduSubjectsTab';
 import EduManagersTab from './EduManagersTab';
-import EduLogsTab from './EduLogsTab';
 import type { EduStudent, EduCourse, EduEducationCenter, EduStudentFormData, EduMonthlyEnrollment } from './types';
 import styles from './EduStudentsTab.module.css';
 
@@ -31,9 +30,9 @@ function getLogActionType(action: string): { label: string; color: string; bg: s
   return { label: '기타', color: '#6B7684', bg: '#F2F4F6' };
 }
 
-type SubTab = '학생관리' | '활동로그' | '환불목록' | '삭제목록' | '교육원 과목' | '교육원 관리자' | '교육원 로그';
+type SubTab = '학생관리' | '활동로그' | '환불목록' | '삭제목록' | '교육원 과목' | '교육원 관리자';
 
-const MANAGER_ONLY_TABS: SubTab[] = ['삭제목록', '교육원 과목', '교육원 관리자', '교육원 로그'];
+const MANAGER_ONLY_TABS: SubTab[] = ['삭제목록', '교육원 과목', '교육원 관리자'];
 
 // 대리 이상 직급 키워드 (lib/auth/managementAccess.ts 와 동일)
 const HIGHER_POSITION_KEYWORDS = ['대리', '과장', '차장', '부장', '이사', '대표', '원장', '실장', '본부장', '팀장'];
@@ -247,11 +246,28 @@ export default function EduStudentsTab({ isActive }: Props) {
     await fetchAll();
   }
 
+  async function handleStatusChange(id: string, newStatus: EduStudent['status']) {
+    const target = students.find((s) => s.id === id);
+    if (!target || target.status === newStatus) return;
+    const { error } = await supabase
+      .from('edu_students')
+      .update({ status: newStatus, updated_at: new Date().toISOString() })
+      .eq('id', id);
+    if (error) { alert(`상태 변경 실패: ${error.message}`); return; }
+    logEduActivity({
+      action: '학생 상태 변경',
+      target_type: 'student',
+      target_name: target.name,
+      detail: `${target.status} → ${newStatus}`,
+    });
+    await fetchAll();
+  }
+
   return (
     <>
       {/* 탭 네비게이션 */}
       <div className={styles.tab_bar}>
-        {((['학생관리', '활동로그', '환불목록', '삭제목록', '교육원 과목', '교육원 관리자', '교육원 로그'] as const).filter((tab) => !MANAGER_ONLY_TABS.includes(tab) || canManage)).map((tab) => (
+        {((['학생관리', '활동로그', '환불목록', '삭제목록', '교육원 과목', '교육원 관리자'] as const).filter((tab) => !MANAGER_ONLY_TABS.includes(tab) || canManage)).map((tab) => (
           <button
             key={tab}
             className={`${styles.tab_btn} ${activeTab === tab ? styles.tab_btn_active : ''}`}
@@ -394,7 +410,15 @@ export default function EduStudentsTab({ isActive }: Props) {
                       <td className={`${styles.table_td} ${styles.table_phone}`}>{formatPhone(s.phone)}</td>
                       <td className={`${styles.table_td} ${styles.table_course}`}>{s.edu_courses?.name ?? '-'}</td>
                       <td className={styles.table_td}>
-                        <span className={`${styles.badge} ${status?.cls ?? ''}`}>{status?.label ?? s.status}</span>
+                        <select
+                          className={`${styles.status_select} ${status?.cls ?? ''}`}
+                          value={s.status}
+                          onChange={(e) => handleStatusChange(s.id, e.target.value as EduStudent['status'])}
+                        >
+                          <option value="등록">등록</option>
+                          <option value="수료">수료</option>
+                          <option value="환불">환불</option>
+                        </select>
                       </td>
                       <td className={`${styles.table_td} ${styles.table_manager}`}>{s.manager_name ?? '-'}</td>
                       <td className={`${styles.table_td} ${styles.table_manager}`}>{s.education_center_name ?? '-'}</td>
@@ -725,11 +749,6 @@ export default function EduStudentsTab({ isActive }: Props) {
       {/* ── 교육원 관리자 (대리 이상) ── */}
       {activeTab === '교육원 관리자' && canManage && (
         <EduManagersTab isActive={activeTab === '교육원 관리자'} />
-      )}
-
-      {/* ── 교육원 로그 (대리 이상) ── */}
-      {activeTab === '교육원 로그' && canManage && (
-        <EduLogsTab isActive={activeTab === '교육원 로그'} />
       )}
 
       {modalOpen && (

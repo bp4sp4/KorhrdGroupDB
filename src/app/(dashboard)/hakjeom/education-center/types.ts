@@ -1,6 +1,6 @@
 export type EduStudentStatus = '등록' | '사회복지사-실습예정' | '수료' | '환불' | '삭제예정';
 export type EducationLevel = '고졸' | '2년제중퇴' | '2년제졸업' | '3년제중퇴' | '3년제졸업' | '4년제중퇴' | '4년제졸업';
-export type DesiredDegree = '없음' | '전문학사' | '학사';
+export type DesiredDegree = '학사 X' | '전문학사' | '전문학사(타전공)' | '학사' | '학사(타전공)';
 
 export interface EduEducationCenter {
   id: number;

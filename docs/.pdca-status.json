@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-04-20T09:18:35.715Z",
+  "lastUpdated": "2026-04-21T07:18:41.650Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -111,7 +111,8 @@
     "education-center",
     "allcare-check",
     "cb-search",
-    "plan"
+    "plan",
+    "tmp"
   ],
   "primaryFeature": "supabase",
   "features": {
@@ -163,7 +164,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:20:57.368Z",
-        "lastUpdated": "2026-04-20T08:49:29.216Z"
+        "lastUpdated": "2026-04-21T07:18:41.650Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/components/layout/Sidebar.tsx"
     },
@@ -1502,7 +1503,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-20T08:01:43.414Z",
-        "lastUpdated": "2026-04-20T08:51:00.703Z"
+        "lastUpdated": "2026-04-21T03:55:28.814Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/hakjeom/education-center/EduStudentsTab.tsx"
     },
@@ -1541,9 +1542,22 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-20T08:24:29.812Z",
-        "lastUpdated": "2026-04-20T08:44:34.362Z"
+        "lastUpdated": "2026-04-21T03:50:46.203Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/hakjeom/education-center/students/[id]/plan/page.tsx"
+    },
+    "tmp": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-21T02:44:26.611Z",
+        "lastUpdated": "2026-04-21T02:54:38.628Z"
+      },
+      "lastFile": "/tmp/json_to_csv.py"
     }
   },
   "pipeline": {
@@ -1554,7 +1568,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-20T09:18:35.715Z"
+    "lastActivity": "2026-04-21T07:18:41.650Z"
   },
   "history": [
     {
@@ -20370,6 +20384,138 @@
     {
       "timestamp": "2026-04-20T09:18:35.715Z",
       "feature": "admin",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-21T02:44:26.611Z",
+      "feature": "tmp",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-21T02:45:03.543Z",
+      "feature": "tmp",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-21T02:54:38.628Z",
+      "feature": "tmp",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-21T03:34:11.633Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-21T03:34:16.012Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-21T03:34:19.980Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-21T03:34:25.749Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-21T03:34:31.121Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-21T03:48:45.843Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-21T03:49:00.523Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-21T03:49:05.784Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-21T03:49:13.092Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-21T03:49:19.159Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-21T03:49:24.734Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-21T03:50:23.606Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-21T03:50:34.253Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-21T03:50:46.203Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-21T03:52:28.476Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-21T03:52:47.188Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-21T03:55:23.483Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-21T03:55:28.814Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-21T07:18:41.650Z",
+      "feature": "layout",
       "phase": "do",
       "action": "updated"
     }

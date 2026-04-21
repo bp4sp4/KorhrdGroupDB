@@ -54,6 +54,7 @@ type Consultation = {
 const CONSULT_TYPE_LABEL: Record<string, string> = {
   consult:  '간편상담',
   estimate: '견적문의',
+  form:     '상담폼',
 }
 
 const TAB_ITEMS = [
@@ -413,7 +414,7 @@ export default function AbroadPage() {
                 <input type="date" className={styles.dateInput} value={startDate} onChange={e => { setStartDate(e.target.value); setConsultPage(1) }} />
                 <span className={styles.dateSeparator}>~</span>
                 <input type="date" className={styles.dateInput} value={endDate} onChange={e => { setEndDate(e.target.value); setConsultPage(1) }} />
-                {['all', 'consult', 'estimate'].map(f => (
+                {['all', 'consult', 'estimate', 'form'].map(f => (
                   <button key={f} className={consultFilter === f ? styles.filterBtnActive : styles.filterBtn} onClick={() => { setConsultFilter(f); setConsultPage(1) }}>
                     {f === 'all' ? '전체' : CONSULT_TYPE_LABEL[f]}
                   </button>
@@ -597,6 +598,7 @@ export default function AbroadPage() {
                 <select className={styles.fieldSelect} value={form.type} onChange={e => setForm({ ...form, type: e.target.value })}>
                   <option value="consult">간편상담</option>
                   <option value="estimate">견적문의</option>
+                  <option value="form">상담폼</option>
                 </select>
               </div>
               <div className={styles.fieldRow}>

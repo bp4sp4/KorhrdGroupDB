@@ -145,8 +145,11 @@ function getPlanConfig(
   }
 
   const level = educationLevel ?? '';
+  const isGubeop = !!courseName?.includes('구법');
+  const isSinbeop = !!courseName?.includes('신법');
 
-  // 중퇴군 + 학사 → 140학점
+  // ── 고졸/중퇴군 ───────────────────────────────────────────────
+  // · 학사 → 140학점 (전공 60 / 교양 30 / 일반 50)
   if (JUNGTAE_GROUP.includes(level) && desiredDegree === '학사') {
     return {
       isHighSchool: true,
@@ -160,7 +163,7 @@ function getPlanConfig(
     };
   }
 
-  // 중퇴군 → 없음/전문학사 → 80학점
+  // · 학사 X / 전문학사 → 80학점 (전공 45 / 교양 15 / 일반 20)
   if (JUNGTAE_GROUP.includes(level)) {
     return {
       isHighSchool: true,
@@ -174,7 +177,8 @@ function getPlanConfig(
     };
   }
 
-  // 2년제/3년제 졸업 + 학사 → 140학점
+  // ── 2/3년제 졸업 ─────────────────────────────────────────────
+  // · 학사 → 140학점
   if (TWOTHREE_GRAD.includes(level) && desiredDegree === '학사') {
     return {
       isHighSchool: true,
@@ -188,8 +192,57 @@ function getPlanConfig(
     };
   }
 
-  // 2년제졸업 + 구법 → 42학점 전공 + 전적대이수과목 표시
-  if (level === '2년제졸업' && courseName?.includes('구법')) {
+  // · 학사 X / 전문학사(타전공) → 구법 42, 신법 51 (전적대 이수과목 필요)
+  if (TWOTHREE_GRAD.includes(level) && isGubeop) {
+    return {
+      isHighSchool: false,
+      totalTarget: 42,
+      subjectTarget: 8,
+      targets: [
+        { label: '전공', categories: ['전공'], target: 42, color: '#3182F6' },
+      ],
+      showPrevSubjects: true,
+    };
+  }
+  if (TWOTHREE_GRAD.includes(level) && isSinbeop) {
+    return {
+      isHighSchool: false,
+      totalTarget: 51,
+      subjectTarget: 8,
+      targets: [
+        { label: '전공', categories: ['전공'], target: 51, color: '#3182F6' },
+      ],
+      showPrevSubjects: true,
+    };
+  }
+
+  // ── 4년제 졸업 ───────────────────────────────────────────────
+  // · 학사(타전공) + 구법 → 48학점
+  if (level === '4년제졸업' && desiredDegree === '학사(타전공)' && isGubeop) {
+    return {
+      isHighSchool: false,
+      totalTarget: 48,
+      subjectTarget: 8,
+      targets: [
+        { label: '전공', categories: ['전공'], target: 48, color: '#3182F6' },
+      ],
+      showPrevSubjects: true,
+    };
+  }
+  // · 학사 X / 학사(타전공) + 신법 → 51학점
+  if (level === '4년제졸업' && isSinbeop) {
+    return {
+      isHighSchool: false,
+      totalTarget: 51,
+      subjectTarget: 8,
+      targets: [
+        { label: '전공', categories: ['전공'], target: 51, color: '#3182F6' },
+      ],
+      showPrevSubjects: true,
+    };
+  }
+  // · 학사 X + 구법 → 42학점
+  if (level === '4년제졸업' && isGubeop) {
     return {
       isHighSchool: false,
       totalTarget: 42,
@@ -201,33 +254,7 @@ function getPlanConfig(
     };
   }
 
-  // 2년제졸업 + 신법 → 51학점 전공 + 전적대이수과목 표시
-  if (level === '2년제졸업' && courseName?.includes('신법')) {
-    return {
-      isHighSchool: false,
-      totalTarget: 51,
-      subjectTarget: 8,
-      targets: [
-        { label: '전공', categories: ['전공'], target: 51, color: '#3182F6' },
-      ],
-      showPrevSubjects: true,
-    };
-  }
-
-  // 4년제졸업 + 신법 → 51학점 전공 + 전적대이수과목 표시
-  if (level === '4년제졸업' && courseName?.includes('신법')) {
-    return {
-      isHighSchool: false,
-      totalTarget: 51,
-      subjectTarget: 8,
-      targets: [
-        { label: '전공', categories: ['전공'], target: 51, color: '#3182F6' },
-      ],
-      showPrevSubjects: true,
-    };
-  }
-
-  // 졸업군 → 없음 → 51학점 전공만 (전적대 불필요)
+  // ── 졸업군 + 과정 미지정 기본값 → 51 ─────────────────────────
   if (GRAD_ALL.includes(level)) {
     return {
       isHighSchool: false,
@@ -1453,7 +1480,7 @@ export default function PlanPage() {
           </svg>
           <span className={styles.edu_banner_text}>
             <strong>{student.education_level ?? ''}</strong>
-            {student.desired_degree && student.desired_degree !== '없음' && (
+            {student.desired_degree && student.desired_degree !== '학사 X' && (
               <span> / 희망학위: {student.desired_degree}</span>
             )}
             {' — '}

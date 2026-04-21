@@ -589,6 +589,33 @@
   border-color: #FECACA;
 }
 
+/* ── 상태 인라인 드롭다운 ── */
+.status_select {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 22px 3px 9px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%234E5968' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  transition: filter 0.15s;
+}
+
+.status_select:hover {
+  filter: brightness(0.97);
+}
+
+.status_select:focus {
+  box-shadow: 0 0 0 2px rgba(49, 130, 246, 0.15);
+}
+
 /* ── 환불 목록 섹션 ── */
 .refund_section {
   display: flex;

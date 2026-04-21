@@ -40,6 +40,22 @@
   letter-spacing: -0.3px;
 }
 
+.status_inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  margin-right: 12px;
+  min-width: 180px;
+}
+
+.status_inline_label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #4E5968;
+  white-space: nowrap;
+}
+
 .modal_close {
   width: 32px;
   height: 32px;

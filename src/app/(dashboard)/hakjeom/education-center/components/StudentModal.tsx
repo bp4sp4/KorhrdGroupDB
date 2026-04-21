@@ -24,10 +24,18 @@ const EDUCATION_LEVELS_WITH_MAJOR: EducationLevel[] = [
   '2년제졸업', '3년제졸업', '4년제졸업',
 ];
 
+const ALL_DESIRED_DEGREES: DesiredDegree[] = [
+  '학사 X',
+  '전문학사',
+  '전문학사(타전공)',
+  '학사',
+  '학사(타전공)',
+];
+
 function getDesiredDegreeOptions(level: EducationLevel | ''): DesiredDegree[] {
-  if (!level || level === '4년제졸업') return [];
-  if (level === '2년제졸업' || level === '3년제졸업') return ['없음', '학사'];
-  return ['전문학사', '학사'];
+  if (!level) return [];
+  // 학력과 무관하게 5가지 모두 노출 (학점은 plan 페이지에서 학력+법 조합으로 결정)
+  return ALL_DESIRED_DEGREES;
 }
 
 interface Props {
@@ -256,12 +264,25 @@ export default function StudentModal({ student, courses, centers, managers = [],
                   onChange={(val) => {
                     set('education_level', val as EducationLevel | '');
                     if (!EDUCATION_LEVELS_WITH_MAJOR.includes(val as EducationLevel)) set('major', '');
-                    if (val === '4년제졸업') set('desired_degree', '');
+                    set('desired_degree', '');
                   }}
                 />
               </div>
 
-              {/* 학과(전공) */}
+              {/* 희망학위과정 */}
+              {showDesiredDegree && (
+                <div className={styles.form_field}>
+                  <label className={styles.form_label}>희망학위과정</label>
+                  <ModalSelect
+                    value={form.desired_degree}
+                    placeholder="선택"
+                    options={degreeOptions.map((d) => ({ value: d, label: d }))}
+                    onChange={(val) => set('desired_degree', val as DesiredDegree | '')}
+                  />
+                </div>
+              )}
+
+              {/* 학과(전공) - 2/3/4년제 졸업 시 표시 */}
               {EDUCATION_LEVELS_WITH_MAJOR.includes(form.education_level as EducationLevel) && (
                 <div className={styles.form_field}>
                   <label className={styles.form_label}>학과 (전공)</label>
@@ -305,17 +326,6 @@ export default function StudentModal({ student, courses, centers, managers = [],
                 </div>
               )}
 
-              {/* 상태 */}
-              <div className={styles.form_field}>
-                <label className={styles.form_label}>상태<span className={styles.form_required}>*</span></label>
-                <ModalSelect
-                  value={form.status}
-                  placeholder="선택"
-                  options={STATUSES.map((s) => ({ value: s, label: s }))}
-                  onChange={(val) => val && set('status', val as EduStudentFormData['status'])}
-                />
-              </div>
-
               {/* 희망자격증과정 */}
               <div className={styles.form_field}>
                 <label className={styles.form_label}>희망자격증과정<span className={styles.form_required}>*</span></label>
@@ -330,19 +340,6 @@ export default function StudentModal({ student, courses, centers, managers = [],
                   }}
                 />
               </div>
-
-              {/* 희망학위과정 */}
-              {showDesiredDegree && (
-                <div className={styles.form_field}>
-                  <label className={styles.form_label}>희망학위과정</label>
-                  <ModalSelect
-                    value={form.desired_degree}
-                    placeholder="선택"
-                    options={degreeOptions.map((d) => ({ value: d, label: d }))}
-                    onChange={(val) => set('desired_degree', val as DesiredDegree | '')}
-                  />
-                </div>
-              )}
 
               {/* 담당자 */}
               <div className={styles.form_field}>

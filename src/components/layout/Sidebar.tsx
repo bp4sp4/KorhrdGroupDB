@@ -41,11 +41,11 @@ const ALL_SECTIONS: NavSection[] = [
       {
         id: 'education', label: '학점은행제 사업부', href: '/hakjeom', icon: <GraduationCap size={16} />, groupLabel: '학습/취업',
         children: [
-          { id: 'hakjeom-tab-hakjeom',      label: '학점은행제', href: '/hakjeom?tab=hakjeom' },
+          { id: 'hakjeom-tab-hakjeom',      label: '문의DB',     href: '/hakjeom?tab=hakjeom' },
+          { id: 'hakjeom-tab-edu-students', label: '등록학생',   href: '/hakjeom?tab=edu-students' },
           { id: 'hakjeom-tab-agency',       label: '기관협약',   href: '/hakjeom?tab=agency' },
           { id: 'hakjeom-tab-bulk',         label: '일괄등록',   href: '/hakjeom?tab=bulk' },
           { id: 'hakjeom-tab-counsel_done', label: '연락예정',   href: '/hakjeom?tab=counsel_done' },
-          { id: 'hakjeom-tab-edu-students', label: '교육원 학생',   href: '/hakjeom?tab=edu-students' },
           { id: 'hakjeom-tab-stats',        label: '통계',       href: '/hakjeom?tab=stats' },
         ],
       },
