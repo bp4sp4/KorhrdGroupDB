@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
     return `${d.getFullYear()}-${d.getMonth() + 1}`
   }
 
-  const [nmsRes, certRes, abroadRes, allcareRes] = await Promise.allSettled([
+  const [nmsRes, certRes, abroadRes, allcareRes, eduRes] = await Promise.allSettled([
     nmsAdmin
       .from('customers')
       .select('payment_amount, created_at')
@@ -76,12 +76,18 @@ export async function GET(request: NextRequest) {
       .gte('approved_at', rangeStart)
       .lte('approved_at', rangeEnd)
       .neq('user_id', '94832325-c5ec-4b21-bc74-00ae0763cbda'),
+    supabaseAdmin
+      .from('edu_students')
+      .select('cost, registered_at, status')
+      .gte('registered_at', rangeStart.slice(0, 10))
+      .lte('registered_at', rangeEnd)
+      .not('status', 'in', '("환불","삭제예정")'),
   ])
 
-  const monthly: Record<string, { label: string; nms: number; cert: number; abroad: number }> = {}
+  const monthly: Record<string, { label: string; nms: number; cert: number; abroad: number; edu: number }> = {}
   for (const r of ranges) {
     const key = `${r.year}-${r.month}`
-    monthly[key] = { label: r.label, nms: 0, cert: 0, abroad: 0 }
+    monthly[key] = { label: r.label, nms: 0, cert: 0, abroad: 0, edu: 0 }
   }
 
   if (nmsRes.status === 'fulfilled' && nmsRes.value.data) {
@@ -112,10 +118,19 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  if (eduRes.status === 'fulfilled' && eduRes.value.data) {
+    for (const row of eduRes.value.data) {
+      if (!row.registered_at) continue
+      const k = monthKey(row.registered_at)
+      if (monthly[k]) monthly[k].edu += Number(row.cost) || 0
+    }
+  }
+
   const result = Object.entries(monthly).map(([key, v]) => {
     const nms = !ownDivisions || ownDivisions.includes('nms') ? v.nms : 0
     const cert = !ownDivisions || ownDivisions.includes('cert') ? v.cert : 0
     const abroad = !ownDivisions || ownDivisions.includes('abroad') ? v.abroad : 0
+    const edu = !ownDivisions || ownDivisions.includes('nms') ? v.edu : 0
 
     return {
       key,
@@ -123,7 +138,8 @@ export async function GET(request: NextRequest) {
       nms,
       cert,
       abroad,
-      total: nms + cert + abroad,
+      edu,
+      total: nms + cert + abroad + edu,
     }
   })
 

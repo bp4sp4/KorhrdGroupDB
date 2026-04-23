@@ -14,6 +14,7 @@ interface StatMonth {
   nms: number
   cert: number
   abroad: number
+  edu: number
   total: number
 }
 
@@ -23,8 +24,8 @@ interface HeroSummary {
   sublabel: string
 }
 
-const DC = { nms: '#3182F6', cert: '#7C3AED', abroad: '#12B76A', total: '#F59E0B' }
-const DL = { nms: '학점은행제', cert: '민간자격증', abroad: '유학' }
+const DC = { nms: '#3182F6', cert: '#7C3AED', abroad: '#12B76A', edu: '#EC4899', total: '#F59E0B' }
+const DL = { nms: '학점은행제', cert: '민간자격증', abroad: '유학', edu: '교육원' }
 
 function fmt(n: number) {
   return formatAmount(n)
@@ -58,7 +59,7 @@ function SalesBarTooltip({ active, payload, label }: {
   )
 }
 
-const DIV_KEYS = ['nms', 'cert', 'abroad'] as const
+const DIV_KEYS = ['nms', 'cert', 'abroad', 'edu'] as const
 type DivKey = typeof DIV_KEYS[number]
 
 export default function StatsTab({ year, month, onSummary }: { year: number; month: number; onSummary: (s: HeroSummary) => void }) {
@@ -88,7 +89,7 @@ export default function StatsTab({ year, month, onSummary }: { year: number; mon
           onSummary({
             amount: latest.total,
             label: '이번 달 통합 매출',
-            sublabel: '학점은행제 + 민간자격증 + 유학 합산',
+            sublabel: '학점은행제 + 민간자격증 + 유학 + 교육원 합산',
           })
         }
       }
@@ -107,16 +108,19 @@ export default function StatsTab({ year, month, onSummary }: { year: number; mon
   const nmsAll    = data.reduce((s, m) => s + m.nms,    0)
   const certAll   = data.reduce((s, m) => s + m.cert,   0)
   const abroadAll = data.reduce((s, m) => s + m.abroad, 0)
+  const eduAll    = data.reduce((s, m) => s + (m.edu ?? 0), 0)
 
   const momRate    = (prev?.total  ?? 0) > 0 ? Math.round(((latest.total  - prev.total)  / prev.total)  * 100) : null
   const nmsRate    = (prev?.nms    ?? 0) > 0 ? Math.round(((latest.nms    - prev.nms)    / prev.nms)    * 100) : null
   const certRate   = (prev?.cert   ?? 0) > 0 ? Math.round(((latest.cert   - prev.cert)   / prev.cert)   * 100) : null
   const abroadRate = (prev?.abroad ?? 0) > 0 ? Math.round(((latest.abroad - prev.abroad) / prev.abroad) * 100) : null
+  const eduRate    = (prev?.edu    ?? 0) > 0 ? Math.round(((latest.edu    - prev.edu)    / prev.edu)    * 100) : null
 
   const shareData = [
     { key: 'nms'    as DivKey, name: '학점은행제', value: nmsAll,    color: DC.nms },
     { key: 'cert'   as DivKey, name: '민간자격증', value: certAll,   color: DC.cert },
     { key: 'abroad' as DivKey, name: '유학',       value: abroadAll, color: DC.abroad },
+    { key: 'edu'    as DivKey, name: '교육원',     value: eduAll,    color: DC.edu },
   ].filter(d => d.value > 0)
 
   const visibleShareData = shareData.filter(d => activeDivs.has(d.key))
@@ -126,6 +130,7 @@ export default function StatsTab({ year, month, onSummary }: { year: number; mon
     totalAll > 0 ? Math.round(nmsAll    / totalAll * 100) : 0,
     totalAll > 0 ? Math.round(certAll   / totalAll * 100) : 0,
     totalAll > 0 ? Math.round(abroadAll / totalAll * 100) : 0,
+    totalAll > 0 ? Math.round(eduAll    / totalAll * 100) : 0,
   ]
 
   return (
@@ -162,11 +167,13 @@ export default function StatsTab({ year, month, onSummary }: { year: number; mon
             {revPcts[0] > 0 && <div className={styles.ac_rev_bar_seg} style={{ width: `${revPcts[0]}%`, background: DC.nms }} />}
             {revPcts[1] > 0 && <div className={styles.ac_rev_bar_seg} style={{ width: `${revPcts[1]}%`, background: DC.cert }} />}
             {revPcts[2] > 0 && <div className={styles.ac_rev_bar_seg} style={{ width: `${revPcts[2]}%`, background: DC.abroad }} />}
+            {revPcts[3] > 0 && <div className={styles.ac_rev_bar_seg} style={{ width: `${revPcts[3]}%`, background: DC.edu }} />}
           </div>
           <div className={styles.ac_rev_legend}>
             {revPcts[0] > 0 && <span className={styles.ac_rev_legend_item}><span className={styles.ac_rev_dot} style={{ background: DC.nms }} />학점은행제 {revPcts[0]}%</span>}
             {revPcts[1] > 0 && <span className={styles.ac_rev_legend_item}><span className={styles.ac_rev_dot} style={{ background: DC.cert }} />민간자격증 {revPcts[1]}%</span>}
             {revPcts[2] > 0 && <span className={styles.ac_rev_legend_item}><span className={styles.ac_rev_dot} style={{ background: DC.abroad }} />유학 {revPcts[2]}%</span>}
+            {revPcts[3] > 0 && <span className={styles.ac_rev_legend_item}><span className={styles.ac_rev_dot} style={{ background: DC.edu }} />교육원 {revPcts[3]}%</span>}
           </div>
         </div>
 
@@ -203,6 +210,17 @@ export default function StatsTab({ year, month, onSummary }: { year: number; mon
           {prev && <p className={styles.ac_card_hint}>전달 {fmt(prev.abroad)}</p>}
         </div>
 
+        {/* 교육원 */}
+        <div className={styles.ac_card}>
+          <p className={styles.ac_card_label}>교육원</p>
+          <p className={styles.ac_card_value} style={{ color: DC.edu }}>{fmt(eduAll)}</p>
+          <div className={styles.ac_card_sub}>
+            <span>전체의 <b>{revPcts[3]}%</b></span>
+            <GrowthBadge pct={eduRate} />
+          </div>
+          {prev && <p className={styles.ac_card_hint}>전달 {fmt(prev.edu ?? 0)}</p>}
+        </div>
+
       </div>
 
       {/* 2열 차트: 월별 매출 + 사업부 비중 */}
@@ -217,6 +235,7 @@ export default function StatsTab({ year, month, onSummary }: { year: number; mon
                 { key: 'nms'    as DivKey, label: '학점은행제', color: DC.nms },
                 { key: 'cert'   as DivKey, label: '민간자격증', color: DC.cert },
                 { key: 'abroad' as DivKey, label: '유학',       color: DC.abroad },
+                { key: 'edu'    as DivKey, label: '교육원',     color: DC.edu },
               ]).map(d => (
                 <button
                   key={d.key}
@@ -238,6 +257,7 @@ export default function StatsTab({ year, month, onSummary }: { year: number; mon
               <Bar dataKey="nms"    name="학점은행제" fill={DC.nms}    radius={[3,3,0,0]} barSize={14} hide={!activeDivs.has('nms')} />
               <Bar dataKey="cert"   name="민간자격증" fill={DC.cert}   radius={[3,3,0,0]} barSize={14} hide={!activeDivs.has('cert')} />
               <Bar dataKey="abroad" name="유학"       fill={DC.abroad} radius={[3,3,0,0]} barSize={14} hide={!activeDivs.has('abroad')} />
+              <Bar dataKey="edu"    name="교육원"     fill={DC.edu}    radius={[3,3,0,0]} barSize={14} hide={!activeDivs.has('edu')} />
               <Line dataKey="total" name="합계" type="monotone" stroke={DC.total} strokeWidth={2} dot={{ r: 3, fill: DC.total }} />
             </ComposedChart>
           </ResponsiveContainer>
@@ -297,6 +317,7 @@ export default function StatsTab({ year, month, onSummary }: { year: number; mon
               <th className={styles.th_right} style={{ color: DC.nms }}>학점은행제</th>
               <th className={styles.th_right} style={{ color: DC.cert }}>민간자격증</th>
               <th className={styles.th_right} style={{ color: DC.abroad }}>유학</th>
+              <th className={styles.th_right} style={{ color: DC.edu }}>교육원</th>
               <th className={styles.th_right}>합계</th>
               <th className={styles.th_center}>전월比</th>
             </tr>
@@ -311,6 +332,7 @@ export default function StatsTab({ year, month, onSummary }: { year: number; mon
                   <td className={styles.td_right}>{fmt(m.nms)}</td>
                   <td className={styles.td_right}>{fmt(m.cert)}</td>
                   <td className={styles.td_right}>{fmt(m.abroad)}</td>
+                  <td className={styles.td_right}>{fmt(m.edu ?? 0)}</td>
                   <td className={`${styles.td_right} ${styles.manager_name}`}>{fmt(m.total)}</td>
                   <td className={styles.td_center}>
                     {r !== null && (

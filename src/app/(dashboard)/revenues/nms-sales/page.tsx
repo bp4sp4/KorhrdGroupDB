@@ -149,7 +149,25 @@ interface AllcareSalesData {
   payments: AllcarePaymentRow[]
 }
 
+interface EduStudentRow {
+  id: string
+  name: string | null
+  education_center_name: string | null
+  course_name: string | null
+  manager_name: string | null
+  cost: number
+  status: string | null
+  registered_at: string | null
+}
+
+interface EduSalesData {
+  totalRevenue: number
+  count: number
+  students: EduStudentRow[]
+}
+
 const ALLCARE_PAGE_SIZE = 20
+const EDU_PAGE_SIZE = 20
 
 const toKSTDate = (s: string | null) => {
   if (!s) return '-'
@@ -162,6 +180,8 @@ function NmsTab({ year, month, onSummary }: { year: number; month: number; onSum
   const [loading, setLoading] = useState(false)
   const [expandedTeams, setExpandedTeams] = useState<Set<string>>(new Set())
   const [allcareData, setAllcareData] = useState<AllcareSalesData | null>(null)
+  const [eduData, setEduData] = useState<EduSalesData | null>(null)
+  const [eduPage, setEduPage] = useState(1)
   const [allcarePage, setAllcarePage] = useState(1)
   const [allcareTypeFilter, setAllcareTypeFilter] = useState<Set<string>>(new Set())
   const [typeDropdownOpen, setTypeDropdownOpen] = useState(false)
@@ -173,20 +193,22 @@ function NmsTab({ year, month, onSummary }: { year: number; month: number; onSum
     try {
       const params = new URLSearchParams({ year: String(year), month: String(month) })
       if (teamFilter && teamFilter !== 'allcare') params.set('team', teamFilter)
-      const [nmsRes, allcareRes] = await Promise.all([
-        teamFilter === 'allcare' ? Promise.resolve(null) : fetch(`/api/management/nms-sales?${params}`),
+      const [nmsRes, allcareRes, eduRes] = await Promise.all([
+        teamFilter === 'allcare' || teamFilter === 'edu' ? Promise.resolve(null) : fetch(`/api/management/nms-sales?${params}`),
         fetch(`/api/management/allcare-sales?year=${year}&month=${month}`),
+        fetch(`/api/management/edu-sales?year=${year}&month=${month}`),
       ])
       setAllcarePage(1)
       setAllcareTypeFilter(new Set())
       let nmsTotal = 0
       let allcareTotal = 0
+      let eduTotal = 0
       if (nmsRes && nmsRes.ok) {
         const json = (await nmsRes.json()) as NmsSalesData
         setData(json)
         setExpandedTeams(new Set())
         nmsTotal = json.total?.paymentAmount ?? 0
-      } else if (teamFilter === 'allcare') {
+      } else if (teamFilter === 'allcare' || teamFilter === 'edu') {
         setData(null)
       }
       if (allcareRes.ok) {
@@ -194,10 +216,16 @@ function NmsTab({ year, month, onSummary }: { year: number; month: number; onSum
         setAllcareData(json)
         allcareTotal = json.totalRevenue ?? 0
       }
+      if (eduRes.ok) {
+        const json = (await eduRes.json()) as EduSalesData
+        setEduData(json)
+        eduTotal = json.totalRevenue ?? 0
+        setEduPage(1)
+      }
       onSummary({
-        amount: nmsTotal + allcareTotal,
+        amount: nmsTotal + allcareTotal + eduTotal,
         label: '이번 달 총 매출',
-        sublabel: '학점은행제 + 올케어 합산',
+        sublabel: '학점은행제 + 올케어 + 교육원 합산',
       })
     } finally {
       setLoading(false)
@@ -236,8 +264,21 @@ function NmsTab({ year, month, onSummary }: { year: number; month: number; onSum
             <button key={t} className={`${styles.team_tab} ${teamFilter === t ? styles.team_tab_active : ''}`} onClick={() => setTeamFilter(t)}>{t}</button>
           ))}
           <button className={`${styles.team_tab} ${teamFilter === 'allcare' ? styles.team_tab_active : ''}`} onClick={() => setTeamFilter('allcare')}>올케어</button>
+          <button className={`${styles.team_tab} ${teamFilter === 'edu' ? styles.team_tab_active : ''}`} onClick={() => setTeamFilter('edu')}>교육원</button>
         </div>
       </div>
+
+      {/* 요약 카드 - 교육원 단독 */}
+      {teamFilter === 'edu' && (
+        <div className={styles.summary_grid}>
+          <div className={`${styles.summary_card} ${styles.card_purple}`}>
+            <div className={styles.card_icon_wrap}><TrendingUp size={18} /></div>
+            <span className={styles.summary_label}>교육원 매출</span>
+            <span className={styles.summary_value}>{formatAmount(eduData?.totalRevenue ?? 0)}</span>
+            <span className={styles.summary_sub}>{eduData?.count ?? 0}명 등록 (환불/삭제 제외)</span>
+          </div>
+        </div>
+      )}
 
       {/* 요약 카드 */}
       {data && (
@@ -245,8 +286,8 @@ function NmsTab({ year, month, onSummary }: { year: number; month: number; onSum
           <div className={`${styles.summary_card} ${styles.card_indigo}`}>
             <div className={styles.card_icon_wrap}><TrendingUp size={18} /></div>
             <span className={styles.summary_label}>총 매출</span>
-            <span className={styles.summary_value}>{formatAmount((data.total.paymentAmount) + (allcareData?.totalRevenue ?? 0))}</span>
-            <span className={styles.summary_sub}>학점은행제 + 올케어 합산</span>
+            <span className={styles.summary_value}>{formatAmount((data.total.paymentAmount) + (allcareData?.totalRevenue ?? 0) + (eduData?.totalRevenue ?? 0))}</span>
+            <span className={styles.summary_sub}>학점은행제 + 올케어 + 교육원 합산</span>
           </div>
           <div className={`${styles.summary_card} ${styles.card_blue}`}>
             <div className={styles.card_icon_wrap}><TrendingUp size={18} /></div>
@@ -259,6 +300,12 @@ function NmsTab({ year, month, onSummary }: { year: number; month: number; onSum
             <span className={styles.summary_label}>올케어 매출</span>
             <span className={styles.summary_value}>{formatAmount(allcareData?.totalRevenue ?? 0)}</span>
             <span className={styles.summary_sub}>{allcareData?.count ?? 0}건 결제완료</span>
+          </div>
+          <div className={`${styles.summary_card} ${styles.card_purple}`}>
+            <div className={styles.card_icon_wrap}><TrendingUp size={18} /></div>
+            <span className={styles.summary_label}>교육원 매출</span>
+            <span className={styles.summary_value}>{formatAmount(eduData?.totalRevenue ?? 0)}</span>
+            <span className={styles.summary_sub}>{eduData?.count ?? 0}명 등록 (환불/삭제 제외)</span>
           </div>
         </div>
       )}
@@ -367,6 +414,60 @@ function NmsTab({ year, month, onSummary }: { year: number; month: number; onSum
                     </button>
                     <span className={styles.page_info}>{allcarePage} / {totalPages}</span>
                     <button className={styles.page_btn} disabled={allcarePage === totalPages} onClick={() => setAllcarePage(p => p + 1)}>
+                      <ChevronRight size={14} />
+                    </button>
+                  </div>
+                )}
+              </>
+            )
+          })()}
+        </div>
+      ) : teamFilter === 'edu' ? (
+        <div className={styles.allcare_wrap}>
+          {(() => {
+            const all = eduData?.students ?? []
+            const totalPages = Math.max(1, Math.ceil(all.length / EDU_PAGE_SIZE))
+            const page = Math.min(eduPage, totalPages)
+            const paginated = all.slice((page - 1) * EDU_PAGE_SIZE, page * EDU_PAGE_SIZE)
+            return (
+              <>
+                <div className={styles.allcare_table_card}>
+                  <table className={styles.allcare_table}>
+                    <thead>
+                      <tr>
+                        <th className={styles.allcare_th}>이름</th>
+                        <th className={styles.allcare_th}>교육원</th>
+                        <th className={styles.allcare_th}>과정</th>
+                        <th className={styles.allcare_th}>담당자</th>
+                        <th className={`${styles.allcare_th} ${styles.th_center}`}>상태</th>
+                        <th className={`${styles.allcare_th} ${styles.th_right}`}>비용</th>
+                        <th className={`${styles.allcare_th} ${styles.th_center}`}>등록일</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {paginated.length === 0 ? (
+                        <tr><td colSpan={7} className={styles.allcare_empty_td}>데이터 없음</td></tr>
+                      ) : paginated.map(s => (
+                        <tr key={s.id} className={styles.allcare_tr}>
+                          <td className={`${styles.allcare_td} ${styles.manager_name}`}>{s.name ?? '-'}</td>
+                          <td className={styles.allcare_td}>{s.education_center_name ?? '-'}</td>
+                          <td className={styles.allcare_td}>{s.course_name ?? '-'}</td>
+                          <td className={styles.allcare_td}>{s.manager_name ?? '-'}</td>
+                          <td className={`${styles.allcare_td} ${styles.td_center}`}>{s.status ?? '-'}</td>
+                          <td className={`${styles.allcare_td} ${styles.td_right}`}>{formatAmount(s.cost)}</td>
+                          <td className={`${styles.allcare_td} ${styles.td_center}`}>{s.registered_at ? new Date(s.registered_at).toLocaleDateString('ko-KR') : '-'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {totalPages > 1 && (
+                  <div className={styles.allcare_pagination}>
+                    <button className={styles.page_btn} disabled={page === 1} onClick={() => setEduPage(p => p - 1)}>
+                      <ChevronLeft size={14} />
+                    </button>
+                    <span className={styles.page_info}>{page} / {totalPages}</span>
+                    <button className={styles.page_btn} disabled={page === totalPages} onClick={() => setEduPage(p => p + 1)}>
                       <ChevronRight size={14} />
                     </button>
                   </div>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import * as XLSX from 'xlsx';
 import { createClient } from '@/lib/supabase/client';
 import { logEduActivity } from '@/lib/edu-logger';
 import StudentModal from './components/StudentModal';
@@ -191,6 +192,16 @@ export default function EduStudentsTab({ isActive }: Props) {
   const totalStudentPages = Math.ceil(filtered.length / STUDENT_PAGE_SIZE);
   const pagedStudents = filtered.slice((studentPage - 1) * STUDENT_PAGE_SIZE, studentPage * STUDENT_PAGE_SIZE);
 
+  function handleExportCsv() {
+    const rows = filtered.map(s => ({ 이름: s.name ?? '', 연락처: s.phone ?? '' }));
+    const ws = XLSX.utils.json_to_sheet(rows, { header: ['이름', '연락처'] });
+    ws['!cols'] = [{ wch: 14 }, { wch: 18 }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '등록학생');
+    const today = new Date().toISOString().slice(0, 10);
+    XLSX.writeFile(wb, `등록학생_${today}.xlsx`);
+  }
+
   async function handleSubmit(data: EduStudentFormData) {
     const payload = {
       name: data.name,
@@ -364,6 +375,10 @@ export default function EduStudentsTab({ isActive }: Props) {
           placeholder="전체 과정"
           options={courses.map((c) => ({ value: String(c.id), label: c.name }))}
         />
+
+        <button className={styles.export_btn} onClick={handleExportCsv}>
+          엑셀 다운로드
+        </button>
 
         <button className={styles.add_btn} onClick={() => { setEditTarget(null); setModalOpen(true); }}>
           + 학생 추가

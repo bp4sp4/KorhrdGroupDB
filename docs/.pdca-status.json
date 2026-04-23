@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-04-23T07:05:51.779Z",
+  "lastUpdated": "2026-04-23T09:02:40.442Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -121,7 +121,8 @@
     "[document_type]",
     "dynamic",
     "approval-forms",
-    "approvalForms"
+    "approvalForms",
+    "edu-sales"
   ],
   "primaryFeature": "supabase",
   "features": {
@@ -173,7 +174,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:20:57.368Z",
-        "lastUpdated": "2026-04-23T06:53:51.152Z"
+        "lastUpdated": "2026-04-23T07:38:23.715Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/components/layout/Sidebar.tsx"
     },
@@ -1382,7 +1383,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-13T06:31:44.434Z",
-        "lastUpdated": "2026-04-20T04:59:07.275Z"
+        "lastUpdated": "2026-04-23T08:19:26.612Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/revenues/nms-sales/page.tsx"
     },
@@ -1421,7 +1422,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-13T06:57:55.155Z",
-        "lastUpdated": "2026-04-20T04:58:10.674Z"
+        "lastUpdated": "2026-04-23T08:05:24.365Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/management/sales-stats/route.ts"
     },
@@ -1512,9 +1513,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-20T08:01:43.414Z",
-        "lastUpdated": "2026-04-23T03:17:27.680Z"
+        "lastUpdated": "2026-04-23T09:02:40.442Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/hakjeom/education-center/components/StudentModal.tsx"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/hakjeom/education-center/EduStudentsTab.tsx"
     },
     "allcare-check": {
       "phase": "do",
@@ -1684,6 +1685,19 @@
         "lastUpdated": "2026-04-23T05:46:42.340Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/lib/approvalForms/sync.ts"
+    },
+    "edu-sales": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-23T07:51:44.505Z",
+        "lastUpdated": "2026-04-23T08:01:04.387Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/management/edu-sales/route.ts"
     }
   },
   "pipeline": {
@@ -1694,7 +1708,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-23T07:05:51.779Z"
+    "lastActivity": "2026-04-23T09:02:40.442Z"
   },
   "history": [
     {
@@ -21350,6 +21364,246 @@
     {
       "timestamp": "2026-04-23T07:05:51.779Z",
       "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T07:38:23.715Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T07:51:44.505Z",
+      "feature": "edu-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T07:51:51.512Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T07:51:56.626Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T07:52:16.753Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T07:52:28.900Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T08:01:04.387Z",
+      "feature": "edu-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T08:01:09.457Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T08:01:14.315Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T08:01:24.963Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T08:01:28.563Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T08:01:45.455Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T08:01:55.355Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T08:01:59.745Z",
+      "feature": "sales-stats",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T08:02:07.312Z",
+      "feature": "sales-stats",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T08:02:13.327Z",
+      "feature": "sales-stats",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T08:05:13.313Z",
+      "feature": "sales-stats",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T08:05:18.068Z",
+      "feature": "sales-stats",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T08:05:24.365Z",
+      "feature": "sales-stats",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T08:05:29.001Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T08:05:34.093Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T08:05:38.363Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T08:05:43.423Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T08:05:57.713Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T08:06:08.632Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T08:06:18.159Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T08:06:24.097Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T08:06:30.297Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T08:06:35.852Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T08:06:41.384Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T08:18:56.510Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T08:19:03.095Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T08:19:07.775Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T08:19:26.612Z",
+      "feature": "nms-sales",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T08:59:33.344Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T08:59:41.120Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T09:01:52.016Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T09:01:58.622Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T09:02:28.727Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T09:02:40.442Z",
+      "feature": "education-center",
       "phase": "do",
       "action": "updated"
     }

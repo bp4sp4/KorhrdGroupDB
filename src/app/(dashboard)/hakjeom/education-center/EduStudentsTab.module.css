@@ -465,6 +465,26 @@
   background-color: #1B6EE8;
 }
 
+.export_btn {
+  height: 38px;
+  padding: 0 16px;
+  background-color: #059669;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s, box-shadow 0.15s;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.export_btn:hover {
+  background-color: #047857;
+}
+
 /* ── 테이블 ── */
 .table_wrap {
   width: 100%;
