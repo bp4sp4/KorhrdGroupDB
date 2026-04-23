@@ -57,12 +57,28 @@ function getSeenIds(): number[] {
   try { return JSON.parse(localStorage.getItem('seenAnnouncementIds') ?? '[]') } catch { return [] }
 }
 
+const RESTRICTED_POSITIONS = new Set(['사원', '주임'])
+const HIDDEN_TYPES_FOR_RESTRICTED = new Set(['NEW_CONSULTATION'])
+
+// 사원/주임에게는 "누가 신청했는지"가 노출되는 접수류 알림을 숨긴다.
+// 결재 상신(APPROVAL_SUBMITTED)은 본인이 결재자로 지정된 건만 오므로 제외.
+function isRestrictedHiddenNotification(n: { type: string; title: string; message: string }): boolean {
+  if (HIDDEN_TYPES_FOR_RESTRICTED.has(n.type)) return true
+  if (n.type.startsWith('APPROVAL_')) return false
+  const title = n.title ?? ''
+  if (title.startsWith('새 ') && title.includes('접수')) return true
+  const message = n.message ?? ''
+  if (/님이\s.*신청했습니다/.test(message)) return true
+  return false
+}
+
 export default function NotificationBell() {
   const [open, setOpen] = useState(false)
   const [tab, setTab] = useState<TabKey>('all')
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [unseenCount, setUnseenCount] = useState(0)
+  const [isRestricted, setIsRestricted] = useState(false)
   const channelRef = useRef<ReturnType<ReturnType<typeof createClient>['channel']> | null>(null)
 
   const fetchNotifications = useCallback(async () => {
@@ -119,6 +135,16 @@ export default function NotificationBell() {
   }, [])
 
   useEffect(() => {
+    fetch('/api/auth/me')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        const pos = (data?.positionName ?? '').trim()
+        setIsRestricted(RESTRICTED_POSITIONS.has(pos))
+      })
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
     fetchNotifications()
     const interval = setInterval(fetchNotifications, 15000)
     const supabase = createClient()
@@ -163,9 +189,13 @@ export default function NotificationBell() {
     setOpen(false)
   }
 
-  const visibleNotifications = tab === 'unread'
-    ? notifications.filter(n => !n.is_read)
+  const accessibleNotifications = isRestricted
+    ? notifications.filter(n => !isRestrictedHiddenNotification(n))
     : notifications
+  const visibleNotifications = tab === 'unread'
+    ? accessibleNotifications.filter(n => !n.is_read)
+    : accessibleNotifications
+  const visibleUnreadCount = accessibleNotifications.filter(n => !n.is_read).length
 
   const modal = open ? (
     <div className={styles.overlay} onMouseDown={(e) => { if (e.target === e.currentTarget) setOpen(false) }}>
@@ -180,14 +210,14 @@ export default function NotificationBell() {
               onClick={() => setTab('all')}
             >
               전체 알림
-              {notifications.length > 0 && <span className={styles.sidebarCount}>{notifications.length}</span>}
+              {accessibleNotifications.length > 0 && <span className={styles.sidebarCount}>{accessibleNotifications.length}</span>}
             </button>
             <button
               className={`${styles.sidebarItem} ${tab === 'unread' ? styles.sidebarItemActive : ''}`}
               onClick={() => setTab('unread')}
             >
               안읽은 알림
-              {unreadCount > 0 && <span className={`${styles.sidebarCount} ${styles.sidebarCountUnread}`}>{unreadCount}</span>}
+              {visibleUnreadCount > 0 && <span className={`${styles.sidebarCount} ${styles.sidebarCountUnread}`}>{visibleUnreadCount}</span>}
             </button>
             <button
               className={`${styles.sidebarItem} ${tab === 'announcements' ? styles.sidebarItemActive : ''}`}
@@ -314,13 +344,13 @@ export default function NotificationBell() {
   return (
     <div className={styles.wrap}>
       <button
-        className={`${styles.bellBtn} ${(unreadCount + unseenCount) > 0 ? styles.bellBtnActive : ''}`}
+        className={`${styles.bellBtn} ${(visibleUnreadCount + unseenCount) > 0 ? styles.bellBtnActive : ''}`}
         onClick={() => setOpen(v => !v)}
         title="알림"
       >
         <Bell size={18} />
-        {(unreadCount + unseenCount) > 0 && (
-          <span className={styles.badge}>{(unreadCount + unseenCount) > 99 ? '99+' : unreadCount + unseenCount}</span>
+        {(visibleUnreadCount + unseenCount) > 0 && (
+          <span className={styles.badge}>{(visibleUnreadCount + unseenCount) > 99 ? '99+' : visibleUnreadCount + unseenCount}</span>
         )}
       </button>
 

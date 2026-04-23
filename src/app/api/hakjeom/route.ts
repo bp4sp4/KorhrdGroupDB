@@ -260,6 +260,22 @@ export async function PATCH(request: NextRequest) {
         .in('id', ids)
       if (error) return NextResponse.json({ error: 'Failed to bulk update manager' }, { status: 500 })
       await logAction({ user_id: user.id, user_email: user.email, action: 'update', resource: '학점은행제 상담', resource_id: ids.join(','), detail: `${ids.length}건 담당자 일괄 배정: ${manager || '없음'}`, meta: { ids, manager } })
+
+      // 담당자 일괄 배정 알림
+      if (manager) {
+        const uid = await getUidByDisplayName(manager)
+        if (uid) {
+          const { error: nErr } = await supabaseAdmin.from('notifications').insert({
+            user_id: uid,
+            type: 'MANAGER_ASSIGNED',
+            title: '담당자 배정',
+            message: `${ids.length}건이 담당으로 배정되었습니다.`,
+            link: `/hakjeom`,
+            is_read: false,
+          })
+          if (nErr) console.error('[PATCH bulk] MANAGER_ASSIGNED 알림 실패:', nErr)
+        }
+      }
       return NextResponse.json({ message: 'Bulk manager updated' })
     }
 

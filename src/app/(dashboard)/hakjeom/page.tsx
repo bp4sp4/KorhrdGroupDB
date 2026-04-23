@@ -4515,17 +4515,16 @@ function CounselDoneTab({ isActive, onCountChange }: { isActive: boolean; onCoun
               <th className={styles.th}>연락처</th>
               <th className={styles.th}>담당자</th>
               <th className={styles.th}>상태</th>
-              <th className={styles.th}>연락예정일</th>
-              <th className={styles.th}>상담완료일</th>
+              <th className={styles.th}>최근 메모</th>
               <th className={styles.th}>등록일</th>
               <th className={styles.th}>재연락</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <TableSkeleton cols={9} rows={5} />
+              <TableSkeleton cols={8} rows={5} />
             ) : paginated.length === 0 ? (
-              <tr><td colSpan={9} className={styles.tableEmptyMsg}>해당 항목이 없습니다.</td></tr>
+              <tr><td colSpan={8} className={styles.tableEmptyMsg}>해당 항목이 없습니다.</td></tr>
             ) : paginated.map((item, index) => (
               <tr
                 key={item.id}
@@ -4565,20 +4564,17 @@ function CounselDoneTab({ isActive, onCountChange }: { isActive: boolean; onCoun
                     displayLabel={COUNSEL_SUB_LABEL[item.status] ? `상담완료 · ${COUNSEL_SUB_LABEL[item.status]}` : item.status}
                   />
                 </td>
-                <td className={styles.tdSecondary}>
-                  {item.contact_scheduled_at ? (
-                    <span className={item.contact_scheduled_at.slice(0, 10) < todayIso ? styles.scheduledDateOverdue : styles.scheduledDateUpcoming}>
-                      {item.contact_scheduled_at.slice(0, 10)}
-                    </span>
-                  ) : '-'}
+                <td className={styles.tdSecondary} title={item.latest_memo ?? ''}>
+                  {item.latest_memo
+                    ? (item.latest_memo.length > 30 ? item.latest_memo.slice(0, 30) + '…' : item.latest_memo)
+                    : '-'}
                 </td>
-                <td className={styles.tdSecondary}>{item.counsel_completed_at ? formatDateShort(item.counsel_completed_at) : '-'}</td>
                 <td className={styles.tdSecondary}>{formatDate(item.created_at)}</td>
                 <td className={styles.tdAction} onClick={e => e.stopPropagation()}>
                   <DateInput
                     value={item.contact_scheduled_at?.slice(0, 10) ?? ''}
                     onChange={(val) => {
-                      if (val) handleUpdate(item.id, { contact_scheduled_at: val });
+                      handleUpdate(item.id, { contact_scheduled_at: val || null });
                     }}
                     variant="button"
                     label="재연락"

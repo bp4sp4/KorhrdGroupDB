@@ -112,7 +112,6 @@ const ALL_SECTIONS: NavSection[] = [
     activeOn: ['/admin'],
     items: [
       { id: 'admin-settings', label: '시스템 설정', href: '/admin', icon: <Settings size={16} />, groupLabel: '관리자' },
-      { id: 'admin-accounts', label: '계정 관리', href: '/admin?tab=accounts', icon: <Users size={16} /> },
       { id: 'admin-approval-forms', label: '결재 양식 관리', href: '/admin/approval-forms', icon: <FileCheck size={16} /> },
     ],
   },
@@ -270,12 +269,33 @@ export default function Sidebar({ userRole, permissions = [], revenueOwnDivision
       <nav className={styles.sidebarNav}>
         <ul className={styles.sidebarList}>
           {currentItems.map((item) => {
-            const basePath = item.href.split('?')[0]
-            const isPathActive = item.exactMatch
+            const [basePath, itemQuery = ''] = item.href.split('?')
+            const itemTab = new URLSearchParams(itemQuery).get('tab')
+            const currentTabParam = searchParams.get('tab')
+
+            // 동일 basePath 안에서 tab 으로 구분되는 형제가 있는지 확인
+            const siblingsOnSameBase = currentItems.filter(other => other.href.split('?')[0] === basePath)
+            const siblingTabs = siblingsOnSameBase
+              .map(s => new URLSearchParams(s.href.split('?')[1] ?? '').get('tab'))
+              .filter((t): t is string => !!t)
+
+            const pathMatches = item.exactMatch
               ? pathname === basePath
               : item.activeOn
                 ? item.activeOn.some(p => pathname.startsWith(p))
                 : pathname.startsWith(basePath)
+
+            let tabMatches = true
+            if (siblingsOnSameBase.length > 1) {
+              if (itemTab) {
+                tabMatches = currentTabParam === itemTab
+              } else {
+                // tab 없는 기본 항목: 현재 tab 이 형제 tab 중 하나이면 비활성
+                tabMatches = !currentTabParam || !siblingTabs.includes(currentTabParam)
+              }
+            }
+
+            const isPathActive = pathMatches && tabMatches
             const isTrash = item.id === 'trash'
             const hasChildren = item.children && item.children.length > 0
             const isOpen = openItems.has(item.id)

@@ -902,12 +902,17 @@ function ApprovalTemplatesTab() {
                   </td>
                   <td>
                     <div className={styles.stepsSummary}>
-                      {item.steps.map((s, i) => (
-                        <span key={s.step}>
-                          <span className={styles.stepChip}>{s.label || `단계 ${s.step}`}</span>
-                          {i < item.steps.length - 1 && <span className={styles.stepArrow}>›</span>}
-                        </span>
-                      ))}
+                      {item.steps.map((s, i) => {
+                        const resolvedName = s.type === 'APPLICANT'
+                          ? '신청자'
+                          : (users.find((u) => u.id === s.user_id)?.display_name ?? '-')
+                        return (
+                          <span key={s.step}>
+                            <span className={styles.stepChip}>{resolvedName}</span>
+                            {i < item.steps.length - 1 && <span className={styles.stepArrow}>›</span>}
+                          </span>
+                        )
+                      })}
                     </div>
                   </td>
                   <td>
