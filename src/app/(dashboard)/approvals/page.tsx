@@ -14,7 +14,9 @@ import {
 import styles from './page.module.css'
 import d from './detailView.module.css'
 import f from './formView.module.css'
-import { getDocTemplate, ALL_TEMPLATE_FIELDS } from './docTemplates'
+import { getDocTemplate, ALL_TEMPLATE_FIELDS, buildDynamicTemplateConfigs } from './docTemplates'
+import type { DocTemplateConfig } from './docTemplates'
+import type { ApprovalFormTemplate } from '@/types/approvalForm'
 
 // ---------------------------------------------------------------------------
 // 타입 정의
@@ -293,6 +295,8 @@ export default function ApprovalsPage() {
 
   // 마스터 데이터
   const [templates, setTemplates] = useState<ApprovalTemplate[]>([])
+  const [dynamicConfigs, setDynamicConfigs] = useState<DocTemplateConfig[]>([])
+  const [dynamicForms, setDynamicForms] = useState<ApprovalFormTemplate[]>([])
   const [departments, setDepartments] = useState<Department[]>([])
   const [users, setUsers] = useState<{ id: string; display_name: string; department_id?: string | null }[]>([])
   const [myUserId, setMyUserId] = useState<string | null>(null)
@@ -360,7 +364,14 @@ export default function ApprovalsPage() {
   const [refSubTab, setRefSubTab] = useState<'all' | 'reference'>('all')
 
   const handleContentChange = useCallback((key: string, value: string) => {
-    setFormState((prev) => ({ ...prev, content: { ...prev.content, [key]: value } }))
+    setFormState((prev) => {
+      const nextContent = { ...prev.content, [key]: value }
+      // 동적 양식의 문서제목 필드는 approval.title 과 동기화
+      if (key === '__title__') {
+        return { ...prev, title: value, content: nextContent }
+      }
+      return { ...prev, content: nextContent }
+    })
   }, [])
 
   // 미리보기
@@ -396,6 +407,12 @@ export default function ApprovalsPage() {
   useEffect(() => {
     fetchHomeData()
     fetch('/api/management/approvals/templates').then(r => r.json()).then(setTemplates).catch(() => {})
+    fetch('/api/approvals/forms').then(r => r.json()).then((forms: ApprovalFormTemplate[]) => {
+      if (Array.isArray(forms)) {
+        setDynamicForms(forms)
+        setDynamicConfigs(buildDynamicTemplateConfigs(forms))
+      }
+    }).catch(() => {})
     fetch('/api/management/departments').then(r => r.json()).then(setDepartments).catch(() => {})
     fetch('/api/management/users').then(r => r.json()).then(setUsers).catch(() => {})
     fetch('/api/auth/me').then(r => r.json()).then(d => {
@@ -501,7 +518,15 @@ export default function ApprovalsPage() {
     if (!modalSelectedTemplate) return
     setTemplateModalOpen(false)
     setSelectedCategory(null)
-    setFormState({ template: modalSelectedTemplate, title: modalSelectedTemplate.document_type, department_id: modalDepartmentId, content: {}, approver_ids: [], reference_ids: [] })
+    const isDynamic = modalSelectedTemplate.document_type.startsWith('custom_')
+    setFormState({
+      template: modalSelectedTemplate,
+      title: isDynamic ? '' : modalSelectedTemplate.document_type,
+      department_id: modalDepartmentId,
+      content: {},
+      approver_ids: [],
+      reference_ids: [],
+    })
     setFormError('')
     setAttachedFiles([])
     setUploadingFiles(false)
@@ -550,9 +575,10 @@ export default function ApprovalsPage() {
   }
 
   const handleSelectTemplate = (tpl: ApprovalTemplate) => {
+    const isDynamic = tpl.document_type.startsWith('custom_')
     setFormState({
       template: tpl,
-      title: tpl.document_type,
+      title: isDynamic ? '' : tpl.document_type,
       department_id: '',
       content: {},
       approver_ids: [],
@@ -568,7 +594,7 @@ export default function ApprovalsPage() {
       return
     }
 
-    const templateConfig = getDocTemplate(template)
+    const templateConfig = getDocTemplate(template, dynamicConfigs)
     for (const f of (templateConfig?.fields ?? [])) {
       if (f.required && !content[f.key]) {
         setFormError(`'${f.label}'을(를) 입력해주세요.`)
@@ -668,7 +694,14 @@ export default function ApprovalsPage() {
     ['APPROVED', 'REJECTED', 'CANCELLED'].includes(a.status)
   )
 
-  const formTemplateConfig = getDocTemplate(formState.template)
+  const formTemplateConfig = getDocTemplate(formState.template, dynamicConfigs)
+  const formIsDynamic = !!formState.template?.document_type.startsWith('custom_')
+  const formDynamicName = formIsDynamic
+    ? (dynamicForms.find((fo) => fo.document_type === formState.template?.document_type)?.name ?? null)
+    : null
+  const formHeadingTitle = formIsDynamic
+    ? (formState.title?.trim() || formDynamicName || '(문서 제목을 입력하세요)')
+    : (formState.template?.document_type ?? '')
 
   // ---------------------------------------------------------------------------
   // 렌더: 사이드바
@@ -1104,7 +1137,7 @@ export default function ApprovalsPage() {
 
               {/* 본문 테이블 — 템플릿 레지스트리에서 자동 처리 */}
               {(() => {
-                const cfg = getDocTemplate(selectedApproval)
+                const cfg = getDocTemplate(selectedApproval, dynamicConfigs)
                 if (!cfg) return null
                 return (
                   <cfg.BodySection
@@ -1413,7 +1446,7 @@ export default function ApprovalsPage() {
           <div>
             <p className={f.new_form_category}>{formState.template?.category}</p>
             <h2 className={f.new_form_title}>
-              {formState.template?.document_type}
+              {formHeadingTitle}
               {editingDraftId && <span className={f.draft_editing_badge}>임시저장 편집 중</span>}
             </h2>
           </div>
@@ -1476,7 +1509,7 @@ export default function ApprovalsPage() {
         <div className={styles.doc_scroll_area}>
           <div className={styles.doc_paper}>
             {/* 문서 제목 */}
-            <h2 className={styles.doc_title}>{formState.template?.document_type}</h2>
+            <h2 className={styles.doc_title}>{formHeadingTitle}</h2>
 
             {/* 헤더 영역: 정보 테이블 + 결재란 */}
             <div className={styles.doc_header_area}>
@@ -1781,7 +1814,7 @@ export default function ApprovalsPage() {
               </div>
               <div className={f.preview_modal_body}>
                 <div className={styles.doc_paper}>
-                  <h2 className={styles.doc_title}>{formState.template?.document_type}</h2>
+                  <h2 className={styles.doc_title}>{formHeadingTitle}</h2>
                   <div className={styles.doc_header_area}>
                     <table className={styles.doc_info_table}>
                       <tbody>

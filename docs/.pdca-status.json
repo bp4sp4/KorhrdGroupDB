@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-04-23T03:50:58.250Z",
+  "lastUpdated": "2026-04-23T06:23:52.633Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -114,7 +114,14 @@
     "plan",
     "tmp",
     "upload-photo",
-    "DateRangeCalendar"
+    "DateRangeCalendar",
+    "approval-form-categories",
+    "approval-form-templates",
+    "forms",
+    "[document_type]",
+    "dynamic",
+    "approval-forms",
+    "approvalForms"
   ],
   "primaryFeature": "supabase",
   "features": {
@@ -166,7 +173,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:20:57.368Z",
-        "lastUpdated": "2026-04-21T07:18:41.650Z"
+        "lastUpdated": "2026-04-23T05:33:13.703Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/components/layout/Sidebar.tsx"
     },
@@ -179,7 +186,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:30:16.038Z",
-        "lastUpdated": "2026-04-23T03:50:58.250Z"
+        "lastUpdated": "2026-04-23T06:23:52.633Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/hakjeom/page.tsx"
     },
@@ -309,9 +316,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T09:41:18.714Z",
-        "lastUpdated": "2026-04-20T08:06:29.861Z"
+        "lastUpdated": "2026-04-23T05:56:58.571Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/lib/edu-logger.ts"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/types/approvalForm.ts"
     },
     "scripts": {
       "phase": "do",
@@ -894,9 +901,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-01T06:58:08.194Z",
-        "lastUpdated": "2026-04-07T08:57:58.547Z"
+        "lastUpdated": "2026-04-23T06:03:45.570Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/management/approvals/route.ts"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/approvals/page.tsx"
     },
     "reports": {
       "phase": "do",
@@ -959,9 +966,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-01T07:06:44.615Z",
-        "lastUpdated": "2026-04-20T08:44:41.298Z"
+        "lastUpdated": "2026-04-23T05:47:08.978Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/hakjeom/education-center/students/[id]/page.tsx"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/admin/approval-form-templates/[id]/route.ts"
     },
     "templates": {
       "phase": "do",
@@ -1586,6 +1593,97 @@
         "lastUpdated": "2026-04-23T03:50:51.435Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/components/DateRangeCalendar/index.tsx"
+    },
+    "approval-form-categories": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-23T05:26:11.779Z",
+        "lastUpdated": "2026-04-23T05:26:11.779Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/admin/approval-form-categories/route.ts"
+    },
+    "approval-form-templates": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-23T05:26:22.579Z",
+        "lastUpdated": "2026-04-23T05:46:53.211Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/admin/approval-form-templates/route.ts"
+    },
+    "forms": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-23T05:26:43.863Z",
+        "lastUpdated": "2026-04-23T05:37:15.598Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/approvals/forms/route.ts"
+    },
+    "[document_type]": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-23T05:26:45.981Z",
+        "lastUpdated": "2026-04-23T05:26:45.981Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/approvals/forms/[document_type]/route.ts"
+    },
+    "dynamic": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-23T05:27:28.110Z",
+        "lastUpdated": "2026-04-23T06:06:12.682Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/approvals/templates/dynamic/index.tsx"
+    },
+    "approval-forms": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-23T05:28:46.990Z",
+        "lastUpdated": "2026-04-23T06:01:01.178Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/admin/approval-forms/FormEditor.tsx"
+    },
+    "approvalForms": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-23T05:46:42.340Z",
+        "lastUpdated": "2026-04-23T05:46:42.340Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/lib/approvalForms/sync.ts"
     }
   },
   "pipeline": {
@@ -1596,7 +1694,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-23T03:50:58.250Z"
+    "lastActivity": "2026-04-23T06:23:52.633Z"
   },
   "history": [
     {
@@ -20747,6 +20845,396 @@
     },
     {
       "timestamp": "2026-04-23T03:50:58.250Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:25:56.512Z",
+      "feature": "hakjeom-bank-web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:26:11.779Z",
+      "feature": "approval-form-categories",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:26:16.094Z",
+      "feature": "[id]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:26:22.579Z",
+      "feature": "approval-form-templates",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:26:30.001Z",
+      "feature": "[id]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:26:43.863Z",
+      "feature": "forms",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:26:45.981Z",
+      "feature": "[document_type]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:27:28.110Z",
+      "feature": "dynamic",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:28:46.990Z",
+      "feature": "approval-forms",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:29:17.379Z",
+      "feature": "approval-forms",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:29:51.847Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:29:58.937Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:30:10.599Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:30:24.545Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:30:29.200Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:30:33.582Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:30:35.151Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:30:36.142Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:33:13.703Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:36:41.157Z",
+      "feature": "hakjeom-bank-web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:36:46.268Z",
+      "feature": "hakjeom-bank-web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:36:51.138Z",
+      "feature": "hakjeom-bank-web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:36:56.927Z",
+      "feature": "approval-form-templates",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:37:02.277Z",
+      "feature": "approval-form-templates",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:37:11.189Z",
+      "feature": "[id]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:37:15.598Z",
+      "feature": "forms",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:38:33.331Z",
+      "feature": "approval-forms",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:38:48.496Z",
+      "feature": "approval-forms",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:38:52.992Z",
+      "feature": "approval-forms",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:38:58.827Z",
+      "feature": "approval-forms",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:39:04.747Z",
+      "feature": "approval-forms",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:39:09.304Z",
+      "feature": "approval-forms",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:39:35.743Z",
+      "feature": "dynamic",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:46:04.333Z",
+      "feature": "hakjeom-bank-web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:46:31.571Z",
+      "feature": "approval-form-templates",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:46:42.340Z",
+      "feature": "approvalForms",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:46:53.211Z",
+      "feature": "approval-form-templates",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:47:08.978Z",
+      "feature": "[id]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:47:20.442Z",
+      "feature": "approval-forms",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:47:33.874Z",
+      "feature": "approval-forms",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:56:58.571Z",
+      "feature": "hakjeom-bank-web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:57:38.535Z",
+      "feature": "dynamic",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:57:55.366Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:58:05.409Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:58:16.469Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:58:21.808Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T05:59:35.056Z",
+      "feature": "approval-forms",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T06:01:01.178Z",
+      "feature": "approval-forms",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T06:02:16.202Z",
+      "feature": "dynamic",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T06:03:21.265Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T06:03:25.959Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T06:03:32.879Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T06:03:37.793Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T06:03:41.588Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T06:03:45.570Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T06:05:38.416Z",
+      "feature": "dynamic",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T06:06:12.682Z",
+      "feature": "dynamic",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T06:21:35.054Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T06:21:43.432Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T06:21:51.730Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T06:22:49.120Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T06:22:53.863Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T06:22:58.735Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T06:23:04.353Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T06:23:52.633Z",
       "feature": "hakjeom",
       "phase": "do",
       "action": "updated"

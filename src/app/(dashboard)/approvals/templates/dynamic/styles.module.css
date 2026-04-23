@@ -1,0 +1,100 @@
+.textarea_large {
+  min-height: 100px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.input_full {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.checkbox_row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #111;
+}
+
+/* 테이블 필드 */
+.table_wrapper {
+  width: 100%;
+}
+
+.nested_table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.nested_th {
+  background: #eeeeee;
+  border: 1px solid #333;
+  padding: 4px 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #111;
+  text-align: center;
+}
+
+.nested_th_action {
+  background: #eeeeee;
+  border: 1px solid #333;
+  width: 32px;
+  font-size: 11px;
+  color: #9ca3af;
+  text-align: center;
+  font-weight: 400;
+}
+
+.nested_td {
+  border: 1px solid #333;
+  padding: 3px 4px;
+  vertical-align: middle;
+}
+
+.nested_td_action {
+  border: 1px solid #333;
+  padding: 2px;
+  text-align: center;
+  width: 28px;
+}
+
+.nested_empty {
+  border: 1px solid #333;
+  padding: 8px;
+  text-align: center;
+  color: #999;
+  font-size: 12px;
+}
+
+.nested_remove_btn {
+  padding: 2px 6px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #6b7280;
+  font-size: 12px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.nested_remove_btn:hover {
+  color: #dc2626;
+  border-color: #dc2626;
+}
+
+.nested_add_btn {
+  margin-top: 6px;
+  padding: 4px 10px;
+  border: 1px dashed #9ca3af;
+  background: #fff;
+  color: #374151;
+  font-size: 12px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.nested_add_btn:hover {
+  border-color: #2563eb;
+  color: #2563eb;
+}

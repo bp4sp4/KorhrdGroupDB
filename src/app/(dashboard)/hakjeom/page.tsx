@@ -4366,11 +4366,26 @@ function CounselDoneTab({ isActive, onCountChange }: { isActive: boolean; onCoun
     return () => document.removeEventListener('mousedown', handleMouseDown);
   }, [managerDropdownOpen]);
 
+  const todayIso = new Date().toISOString().slice(0, 10);
+
+  const bucket = (d: string): number => {
+    if (!d) return 3;
+    if (d === todayIso) return 0;
+    if (d > todayIso) return 1;
+    return 2;
+  };
   const sorted = [...filtered].sort((a, b) => {
-    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    const ad = a.contact_scheduled_at?.slice(0, 10) ?? '';
+    const bd = b.contact_scheduled_at?.slice(0, 10) ?? '';
+    const ba = bucket(ad);
+    const bb = bucket(bd);
+    if (ba !== bb) return ba - bb;
+    return ad.localeCompare(bd);
   });
   const totalPages = Math.ceil(sorted.length / itemsPerPage);
   const paginated = sorted.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const dueToday = eligible.filter(c => c.contact_scheduled_at?.slice(0, 10) === todayIso);
 
   const handleUpdate = async (id: number, fields: Partial<HakjeomConsultation>) => {
     const res = await fetch('/api/hakjeom', {
@@ -4409,6 +4424,31 @@ function CounselDoneTab({ isActive, onCountChange }: { isActive: boolean; onCoun
 
   return (
     <div>
+      {dueToday.length > 0 && (
+        <div className={styles.scheduleBanner}>
+          <div className={styles.bannerIconBox}>📞</div>
+          <div className={styles.bannerTextWrap}>
+            <span className={styles.bannerLabel}>
+              오늘 연락해야 하는 상담이 <strong>{dueToday.length}건</strong> 있습니다
+            </span>
+            <div className={styles.bannerDetail}>
+              {dueToday.slice(0, 8).map((c, i) => (
+                <span key={c.id} className={styles.bannerPerson}>
+                  {i > 0 && <span className={styles.bannerDot} />}
+                  <span className={styles.bannerPersonName}>{c.name}</span>
+                  {c.manager && <span className={styles.bannerLabel}>({c.manager})</span>}
+                </span>
+              ))}
+              {dueToday.length > 8 && (
+                <span className={styles.bannerPerson}>
+                  <span className={styles.bannerDot} />
+                  <span className={styles.bannerLabel}>외 {dueToday.length - 8}명</span>
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       {/* 필터 바 */}
       <div className={styles.filterRow}>
         <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--toss-text-primary)', whiteSpace: 'nowrap' }}>총 {filtered.length}건</span>
@@ -4478,13 +4518,14 @@ function CounselDoneTab({ isActive, onCountChange }: { isActive: boolean; onCoun
               <th className={styles.th}>연락예정일</th>
               <th className={styles.th}>상담완료일</th>
               <th className={styles.th}>등록일</th>
+              <th className={styles.th}>재연락</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <TableSkeleton cols={8} rows={5} />
+              <TableSkeleton cols={9} rows={5} />
             ) : paginated.length === 0 ? (
-              <tr><td colSpan={8} className={styles.tableEmptyMsg}>해당 항목이 없습니다.</td></tr>
+              <tr><td colSpan={9} className={styles.tableEmptyMsg}>해당 항목이 없습니다.</td></tr>
             ) : paginated.map((item, index) => (
               <tr
                 key={item.id}
@@ -4526,13 +4567,24 @@ function CounselDoneTab({ isActive, onCountChange }: { isActive: boolean; onCoun
                 </td>
                 <td className={styles.tdSecondary}>
                   {item.contact_scheduled_at ? (
-                    <span className={item.contact_scheduled_at.slice(0, 10) < new Date().toISOString().slice(0, 10) ? styles.scheduledDateOverdue : styles.scheduledDateUpcoming}>
+                    <span className={item.contact_scheduled_at.slice(0, 10) < todayIso ? styles.scheduledDateOverdue : styles.scheduledDateUpcoming}>
                       {item.contact_scheduled_at.slice(0, 10)}
                     </span>
                   ) : '-'}
                 </td>
                 <td className={styles.tdSecondary}>{item.counsel_completed_at ? formatDateShort(item.counsel_completed_at) : '-'}</td>
                 <td className={styles.tdSecondary}>{formatDate(item.created_at)}</td>
+                <td className={styles.tdAction} onClick={e => e.stopPropagation()}>
+                  <DateInput
+                    value={item.contact_scheduled_at?.slice(0, 10) ?? ''}
+                    onChange={(val) => {
+                      if (val) handleUpdate(item.id, { contact_scheduled_at: val });
+                    }}
+                    variant="button"
+                    label="재연락"
+                    align="right"
+                  />
+                </td>
               </tr>
             ))}
           </tbody>

@@ -16,6 +16,8 @@ import { AffiliatePaymentBody, AFFILIATE_PAYMENT_FIELDS } from './templates/affi
 import { PointResolutionBody, POINT_RESOLUTION_FIELDS } from './templates/pointResolution'
 import { AffiliateRefundBody, AFFILIATE_REFUND_FIELDS } from './templates/affiliateRefund'
 import { DateInput } from '@/components/ui/Calendar/DateInput'
+import { makeSchemaBody, schemaToFieldDefs } from './templates/dynamic'
+import type { ApprovalFormTemplate } from '@/types/approvalForm'
 
 export type { FieldDef, DocBodyProps, DocTemplateConfig }
 
@@ -266,10 +268,29 @@ export const DOC_TEMPLATE_REGISTRY: DocTemplateConfig[] = [
 ]
 
 export function getDocTemplate(
-  doc: { document_type: string; category?: string } | null
+  doc: { document_type: string; category?: string } | null,
+  dynamicConfigs?: DocTemplateConfig[],
 ): DocTemplateConfig | null {
   if (!doc) return null
+  // DB 기반 커스텀 양식을 먼저 매칭 (우선순위)
+  if (dynamicConfigs && dynamicConfigs.length > 0) {
+    const hit = dynamicConfigs.find((c) => c.match(doc))
+    if (hit) return hit
+  }
   return DOC_TEMPLATE_REGISTRY.find((c) => c.match(doc)) ?? null
+}
+
+/** DB 템플릿을 DocTemplateConfig 배열로 변환 */
+export function buildDynamicTemplateConfigs(
+  templates: ApprovalFormTemplate[],
+): DocTemplateConfig[] {
+  return templates.map((tmpl) => ({
+    id: `dynamic:${tmpl.document_type}`,
+    match: (doc) => doc.document_type === tmpl.document_type,
+    fields: schemaToFieldDefs(tmpl.schema),
+    BodySection: makeSchemaBody(tmpl.schema, { titlePlaceholder: tmpl.title_placeholder }),
+    supportsAttachments: tmpl.supports_attachments,
+  }))
 }
 
 /** 모든 템플릿 필드 목록 (레이블 조회용) */

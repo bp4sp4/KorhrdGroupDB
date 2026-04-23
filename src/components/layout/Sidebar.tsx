@@ -113,6 +113,7 @@ const ALL_SECTIONS: NavSection[] = [
     items: [
       { id: 'admin-settings', label: '시스템 설정', href: '/admin', icon: <Settings size={16} />, groupLabel: '관리자' },
       { id: 'admin-accounts', label: '계정 관리', href: '/admin?tab=accounts', icon: <Users size={16} /> },
+      { id: 'admin-approval-forms', label: '결재 양식 관리', href: '/admin/approval-forms', icon: <FileCheck size={16} /> },
     ],
   },
 ]
