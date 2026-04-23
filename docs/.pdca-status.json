@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-04-23T06:23:52.633Z",
+  "lastUpdated": "2026-04-23T06:28:48.308Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -316,9 +316,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T09:41:18.714Z",
-        "lastUpdated": "2026-04-23T05:56:58.571Z"
+        "lastUpdated": "2026-04-23T06:28:48.308Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/types/approvalForm.ts"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/lib/announcements.ts"
     },
     "scripts": {
       "phase": "do",
@@ -1694,7 +1694,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-23T06:23:52.633Z"
+    "lastActivity": "2026-04-23T06:28:48.308Z"
   },
   "history": [
     {
@@ -21236,6 +21236,12 @@
     {
       "timestamp": "2026-04-23T06:23:52.633Z",
       "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-23T06:28:48.308Z",
+      "feature": "hakjeom-bank-web",
       "phase": "do",
       "action": "updated"
     }
