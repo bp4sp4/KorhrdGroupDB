@@ -13,6 +13,8 @@ import MemoHoverBadge from '@/components/ui/MemoHoverBadge'
 import { TableSkeleton, StatsCardsSkeleton, ChartsGridSkeleton, FilterBarSkeleton } from '@/components/ui/Skeleton'
 import { downloadExcel } from '@/lib/excelExport'
 import { DateInput } from '@/components/ui/Calendar/DateInput'
+import { DateRangeCalendar } from '@/components/DateRangeCalendar'
+import type { DateRange } from 'react-day-picker'
 import EduStudentsTab from './education-center/EduStudentsTab'
 
 // ─── 공통 타입 ──────────────────────────────────────────────────────────────
@@ -1704,8 +1706,55 @@ function HakjeomTab({ isActive, highlightId }: { isActive: boolean; highlightId?
   const [minorCategoryFilter, setMinorCategoryFilter] = useState<string[]>([]);
   const [reasonFilter, setReasonFilter] = useState<string[]>([]);
   const [counselCheckFilter, setCounselCheckFilter] = useState<string[]>([]);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  // 기본값: 당월(이번 달 1일 ~ 말일)
+  const [startDate, setStartDate] = useState(() => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    return `${y}-${m}-01`;
+  });
+  const [endDate, setEndDate] = useState(() => {
+    const now = new Date();
+    const last = new Date(now.getFullYear(), now.getMonth() + 1, 0); // 이번달 말일
+    const y = last.getFullYear();
+    const m = String(last.getMonth() + 1).padStart(2, '0');
+    const d = String(last.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  });
+  const [dateRangeOpen, setDateRangeOpen] = useState(false);
+  const dateRangeRef = useRef<HTMLDivElement>(null);
+
+  // 외부 클릭 시 팝오버 닫기
+  useEffect(() => {
+    if (!dateRangeOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (dateRangeRef.current && !dateRangeRef.current.contains(e.target as Node)) {
+        setDateRangeOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [dateRangeOpen]);
+
+  // yyyy-mm-dd ↔ Date 변환
+  const ymd = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+  const dateRangeValue: DateRange | undefined = (startDate || endDate)
+    ? {
+        from: startDate ? new Date(startDate + 'T00:00:00') : undefined,
+        to: endDate ? new Date(endDate + 'T00:00:00') : undefined,
+      }
+    : undefined;
+  const dateRangeLabel = (() => {
+    if (startDate && endDate) return `${startDate} ~ ${endDate}`;
+    if (startDate) return `${startDate} ~`;
+    if (endDate) return `~ ${endDate}`;
+    return '기간 선택';
+  })();
 
   // 담당자 실적 (검색영역 표시용)
   const [managerStatsNode, setManagerStatsNode] = useState<React.ReactNode>(null);
@@ -2156,9 +2205,34 @@ function HakjeomTab({ isActive, highlightId }: { isActive: boolean; highlightId?
           {/* 필터 영역 */}
           <div className={styles.filterRow}>
             <input type="text" value={searchText} onChange={e => { setSearchText(e.target.value); setCurrentPage(1); }} placeholder="이름, 연락처, 취득사유, 메모 검색..." className={styles.input} style={{ width: 300 }} />
-            <input type="date" value={startDate} onChange={e => { setStartDate(e.target.value); setCurrentPage(1); }} className={styles.input} style={{ width: 140 }} />
-            <span className={styles.dateSeparator}>~</span>
-            <input type="date" value={endDate} onChange={e => { setEndDate(e.target.value); setCurrentPage(1); }} className={styles.input} style={{ width: 140 }} />
+            <div ref={dateRangeRef} className={styles.dateRangeWrap}>
+              <button
+                type="button"
+                className={styles.dateRangeBtn}
+                onClick={() => setDateRangeOpen(v => !v)}
+              >
+                {dateRangeLabel}
+              </button>
+              {dateRangeOpen && (
+                <div className={styles.dateRangePopover}>
+                  <DateRangeCalendar
+                    variant="quarter"
+                    value={dateRangeValue}
+                    onChange={(r) => {
+                      setStartDate(r?.from ? ymd(r.from) : '');
+                      setEndDate(r?.to ? ymd(r.to) : '');
+                      setCurrentPage(1);
+                    }}
+                    onConfirm={() => setDateRangeOpen(false)}
+                    onReset={() => {
+                      setStartDate('');
+                      setEndDate('');
+                      setCurrentPage(1);
+                    }}
+                  />
+                </div>
+              )}
+            </div>
             {isFiltered && (
               <button onClick={resetFilters} className={styles.btnSecondary}>필터 초기화</button>
             )}

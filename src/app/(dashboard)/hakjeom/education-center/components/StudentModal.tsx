@@ -216,6 +216,7 @@ export default function StudentModal({ student, courses, centers, managers = [],
     e.preventDefault();
     if (!form.phone.trim()) { alert('전화번호를 입력해주세요.'); return; }
     if (!form.education_level) { alert('최종학력을 선택해주세요.'); return; }
+    if (!form.desired_degree) { alert('희망학위과정을 선택해주세요.'); return; }
     if (!form.course_id) { alert('희망자격증과정을 선택해주세요.'); return; }
     if (!form.manager_name) { alert('담당자를 선택해주세요.'); return; }
     setLoading(true);
@@ -272,7 +273,7 @@ export default function StudentModal({ student, courses, centers, managers = [],
               {/* 희망학위과정 */}
               {showDesiredDegree && (
                 <div className={styles.form_field}>
-                  <label className={styles.form_label}>희망학위과정</label>
+                  <label className={styles.form_label}>희망학위과정<span className={styles.form_required}>*</span></label>
                   <ModalSelect
                     value={form.desired_degree}
                     placeholder="선택"

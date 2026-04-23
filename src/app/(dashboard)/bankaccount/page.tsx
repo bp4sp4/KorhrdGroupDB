@@ -1,9 +1,32 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
-import { Landmark, RefreshCw, ExternalLink, Search } from 'lucide-react'
-import { DateInput } from '@/components/ui/Calendar/DateInput'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { Landmark, RefreshCw, ExternalLink, Search, CalendarDays } from 'lucide-react'
+import { DateRangeCalendar, type DateRange } from '@/components/DateRangeCalendar'
 import styles from './page.module.css'
+
+// YYYYMMDD <-> Date 변환
+function ymdToDate(ymd: string): Date | undefined {
+  if (!ymd || ymd.length !== 8) return undefined
+  const y = Number(ymd.slice(0, 4))
+  const m = Number(ymd.slice(4, 6)) - 1
+  const d = Number(ymd.slice(6, 8))
+  const dt = new Date(y, m, d)
+  return isNaN(dt.getTime()) ? undefined : dt
+}
+
+function dateToYmd(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${y}${m}${dd}`
+}
+
+function formatRangeLabel(start: string, end: string): string {
+  const f = (ymd: string) => ymd ? `${ymd.slice(0,4)}.${ymd.slice(4,6)}.${ymd.slice(6,8)}` : ''
+  if (!start && !end) return '기간 선택'
+  return `${f(start)} ~ ${f(end)}`
+}
 
 const BANK_CODES: Record<string, string> = {
   '004': 'KB국민',
@@ -121,6 +144,40 @@ export default function BankAccountPage() {
   const [page, setPage] = useState(1)
   const [error, setError] = useState<string | null>(null)
   const [memos, setMemos] = useState<Record<string, string>>({})
+
+  // 조회기간 팝오버
+  const [rangeOpen, setRangeOpen] = useState(false)
+  const rangeWrapRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!rangeOpen) return
+    function onDown(e: MouseEvent) {
+      if (rangeWrapRef.current && !rangeWrapRef.current.contains(e.target as Node)) {
+        setRangeOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
+  }, [rangeOpen])
+
+  const currentRange: DateRange | undefined = (() => {
+    const from = ymdToDate(startDate)
+    const to = ymdToDate(endDate)
+    return from && to ? { from, to } : undefined
+  })()
+
+  function handleRangeConfirm(range: DateRange | undefined) {
+    if (range?.from && range?.to) {
+      setStartDate(dateToYmd(range.from))
+      setEndDate(dateToYmd(range.to))
+    }
+    setRangeOpen(false)
+  }
+
+  function handleRangeReset() {
+    setStartDate('')
+    setEndDate('')
+  }
 
   const fetchAccounts = useCallback(async () => {
     setLoading(true)
@@ -310,19 +367,31 @@ export default function BankAccountPage() {
           </div>
           <div className={styles.formRow}>
             <label>조회기간</label>
-            <div className={styles.dateRange}>
-              <DateInput
-                value={startDate ? `${startDate.slice(0,4)}-${startDate.slice(4,6)}-${startDate.slice(6,8)}` : ''}
-                onChange={v => setStartDate(v.replace(/-/g, ''))}
-                placeholder="시작일"
-              />
-              <span>~</span>
-              <DateInput
-                value={endDate ? `${endDate.slice(0,4)}-${endDate.slice(4,6)}-${endDate.slice(6,8)}` : ''}
-                onChange={v => setEndDate(v.replace(/-/g, ''))}
-                placeholder="종료일"
-                align="right"
-              />
+            <div ref={rangeWrapRef} className={styles.dateRangeWrap}>
+              <button
+                type="button"
+                className={styles.dateRangeTrigger}
+                onClick={() => setRangeOpen(v => !v)}
+              >
+                <CalendarDays size={14} />
+                <span>{formatRangeLabel(startDate, endDate)}</span>
+              </button>
+              {rangeOpen && (
+                <div className={styles.dateRangePopover}>
+                  <DateRangeCalendar
+                    value={currentRange}
+                    onChange={(r) => {
+                      if (r?.from) setStartDate(dateToYmd(r.from))
+                      if (r?.to) setEndDate(dateToYmd(r.to))
+                      if (!r?.from) setStartDate('')
+                      if (!r?.to) setEndDate('')
+                    }}
+                    onConfirm={handleRangeConfirm}
+                    onReset={handleRangeReset}
+                    maxRangeMonths={6}
+                  />
+                </div>
+              )}
             </div>
           </div>
           <button

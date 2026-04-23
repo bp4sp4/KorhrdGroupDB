@@ -1371,6 +1371,42 @@
   font-size: 13px;
 }
 
+/* ─── DateRangeCalendar 팝오버 ───────────────────────────────────────────── */
+
+.dateRangeWrap {
+  position: relative;
+  display: inline-block;
+}
+
+.dateRangeBtn {
+  padding: 12px 14px;
+  min-width: 220px;
+  text-align: left;
+  border: 1.5px solid var(--toss-border);
+  border-radius: 8px;
+  background: #fff;
+  font-size: 14px;
+  color: var(--toss-text-primary);
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s, background 120ms ease;
+}
+
+.dateRangeBtn:hover {
+  background: #f9fafb;
+}
+
+.dateRangeBtn:focus {
+  border-color: var(--toss-blue);
+}
+
+.dateRangePopover {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 40;
+}
+
 /* ─── 기관협약 - 셀 클릭 편집 ───────────────────────────────────────────── */
 
 .cellClick {

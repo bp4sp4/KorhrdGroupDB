@@ -168,6 +168,39 @@
 
 .dateRange span { color: #6b7280; }
 
+/* 조회기간 팝오버 트리거 */
+.dateRangeWrap {
+  position: relative;
+  display: inline-block;
+}
+
+.dateRangeTrigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  min-width: 260px;
+
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #fff;
+  color: #111827;
+  font-size: 13px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.dateRangeTrigger:hover { border-color: #9ca3af; }
+.dateRangeTrigger:focus { outline: none; border-color: #2563eb; }
+.dateRangeTrigger svg { color: #6b7280; flex-shrink: 0; }
+
+.dateRangePopover {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 50;
+}
+
 .jobInfo {
   display: flex;
   align-items: center;
