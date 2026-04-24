@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-04-24T07:26:55.744Z",
+  "lastUpdated": "2026-04-24T07:30:52.121Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -122,7 +122,8 @@
     "dynamic",
     "approval-forms",
     "approvalForms",
-    "edu-sales"
+    "edu-sales",
+    "test-sms"
   ],
   "primaryFeature": "supabase",
   "features": {
@@ -1698,6 +1699,19 @@
         "lastUpdated": "2026-04-23T08:01:04.387Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/management/edu-sales/route.ts"
+    },
+    "test-sms": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-24T07:30:52.121Z",
+        "lastUpdated": "2026-04-24T07:30:52.121Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/test-sms/route.ts"
     }
   },
   "pipeline": {
@@ -1708,7 +1722,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-24T07:26:55.744Z"
+    "lastActivity": "2026-04-24T07:30:52.121Z"
   },
   "history": [
     {
@@ -22264,6 +22278,12 @@
     {
       "timestamp": "2026-04-24T07:26:55.744Z",
       "feature": "hakjeom-bank-web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T07:30:52.121Z",
+      "feature": "test-sms",
       "phase": "do",
       "action": "updated"
     }
