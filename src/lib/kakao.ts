@@ -137,11 +137,14 @@ export async function sendSms({
   const byteLength = new TextEncoder().encode(message).length
   const type = msg_type ?? (byteLength > 90 ? 'LMS' : 'SMS')
 
+  const senderClean = sender.replace(/-/g, '')
+  console.log('[SMS] 전송 시도:', { sender: senderClean, type, receivers: list, byteLength })
+
   try {
     const formData = new FormData()
     formData.append('key', key)
     formData.append('user_id', user_id)
-    formData.append('sender', sender)
+    formData.append('sender', senderClean)
     formData.append('receiver', list.join(','))
     formData.append('msg', message)
     formData.append('msg_type', type)
@@ -151,14 +154,21 @@ export async function sendSms({
       method: 'POST',
       body: formData,
     })
-    const result = (await res.json()) as { result_code: number | string; message: string }
+    const raw = await res.text()
+    let result: { result_code: number | string; message: string }
+    try {
+      result = JSON.parse(raw)
+    } catch {
+      console.error('[SMS] ❌ 알리고 응답 JSON 파싱 실패:', raw)
+      return { success: false, error: 'invalid aligo response' }
+    }
     const code = Number(result.result_code)
 
     if (code === 1) {
-      console.log(`[SMS] ✅ ${type} 전송 성공 (${list.length}명)`)
+      console.log(`[SMS] ✅ ${type} 전송 성공 (${list.length}명):`, result.message)
       return { success: true }
     }
-    console.error('[SMS] ❌ 전송 실패:', code, result.message)
+    console.error('[SMS] ❌ 전송 실패:', code, result.message, raw)
     return { success: false, error: `${code}: ${result.message}` }
   } catch (e) {
     console.error('[SMS] ❌ 전송 오류:', e)
