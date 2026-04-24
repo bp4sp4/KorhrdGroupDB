@@ -13,12 +13,13 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
   const { id } = await params
   const body = await request.json()
-  const { role, display_name, is_active, position_id, department_id } = body as {
+  const { role, display_name, is_active, position_id, department_id, phone } = body as {
     role?: string
     display_name?: string
     is_active?: boolean
     position_id?: string | null
     department_id?: string | null
+    phone?: string | null
   }
 
   const updates: Record<string, unknown> = {}
@@ -27,6 +28,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   if (is_active !== undefined) updates.is_active = is_active
   if (position_id !== undefined) updates.position_id = position_id
   if (department_id !== undefined) updates.department_id = department_id
+  if (phone !== undefined) updates.phone = phone || null
 
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: '변경할 항목이 없습니다.' }, { status: 400 })

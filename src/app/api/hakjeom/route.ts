@@ -2,6 +2,18 @@ import { requireAuth, requireAuthFull } from '@/lib/auth/requireAuth'
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { logAction } from '@/lib/audit/logAction';
+import { sendSms, parsePhones } from '@/lib/kakao';
+
+// ─── 담당자 display_name → phone ─────────────────────────────────────────────
+async function getPhoneByDisplayName(displayName: string): Promise<string | null> {
+  const { data, error } = await supabaseAdmin
+    .from('app_users')
+    .select('phone')
+    .eq('display_name', displayName)
+    .maybeSingle()
+  if (error || !data?.phone) return null
+  return data.phone
+}
 
 // ─── 알림 헬퍼 ────────────────────────────────────────────────────────────────
 
@@ -228,6 +240,16 @@ export async function POST(request: NextRequest) {
       }
     }).catch(() => {})
 
+    // 신규 문의 SMS 발송 (env 수신자 고정)
+    const newInquiryPhones = parsePhones(process.env.ALIGO_NEW_INQUIRY_PHONES)
+    if (newInquiryPhones.length > 0) {
+      sendSms({
+        receivers: newInquiryPhones,
+        title: '학점은행제 신규 문의',
+        message: `[학점은행제] 새 상담 신청\n이름: ${data.name}\n연락처: ${data.contact}\n${data.hope_course ? `희망: ${data.hope_course}\n` : ''}관리자 페이지에서 확인해주세요.`,
+      }).catch((e) => console.error('[hakjeom POST] SMS 실패:', e))
+    }
+
     return NextResponse.json({ message: 'Created successfully', data }, { status: 201 });
   } catch (err) {
     console.error('[hakjeom POST] Unexpected error:', err);
@@ -274,6 +296,15 @@ export async function PATCH(request: NextRequest) {
             is_read: false,
           })
           if (nErr) console.error('[PATCH bulk] MANAGER_ASSIGNED 알림 실패:', nErr)
+        }
+        // SMS: 담당자 phone으로 발송
+        const phone = await getPhoneByDisplayName(manager)
+        if (phone) {
+          sendSms({
+            receivers: phone,
+            title: '담당자 배정 알림',
+            message: `[학점은행제] 담당자 배정\n${manager}님, 상담 ${ids.length}건이 담당으로 배정되었습니다.\n관리자 페이지에서 확인해주세요.`,
+          }).catch((e) => console.error('[PATCH bulk] SMS 실패:', e))
         }
       }
       return NextResponse.json({ message: 'Bulk manager updated' })
@@ -395,6 +426,15 @@ export async function PATCH(request: NextRequest) {
           is_read: false,
         })
         if (nErr) console.error('[PATCH] MANAGER_ASSIGNED 알림 실패:', nErr)
+      }
+      // SMS: 담당자 phone으로 발송
+      const phone = await getPhoneByDisplayName(manager)
+      if (phone) {
+        sendSms({
+          receivers: phone,
+          title: '담당자 배정 알림',
+          message: `[학점은행제] 담당자 배정\n${manager}님, ${data.name}님의 상담이 담당으로 배정되었습니다.\n연락처: ${data.contact}\n관리자 페이지에서 확인해주세요.`,
+        }).catch((e) => console.error('[PATCH] SMS 실패:', e))
       }
     }
 

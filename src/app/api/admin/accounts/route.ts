@@ -10,7 +10,7 @@ export async function GET() {
 
   const { data, error } = await supabaseAdmin
     .from('app_users')
-    .select('id, username, display_name, role, is_active, created_at, position_id, department_id')
+    .select('id, username, display_name, role, is_active, created_at, position_id, department_id, phone')
     .order('created_at', { ascending: false })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -23,13 +23,14 @@ export async function POST(request: NextRequest) {
   if (errorResponse) return errorResponse
 
   const body = await request.json()
-  const { email, password, display_name, role, position_id, department_id } = body as {
+  const { email, password, display_name, role, position_id, department_id, phone } = body as {
     email: string
     password: string
     display_name: string
     role?: string
     position_id?: string | null
     department_id?: string | null
+    phone?: string | null
   }
 
   if (!email || !password || !display_name) {
@@ -56,6 +57,7 @@ export async function POST(request: NextRequest) {
     is_active: true,
     ...(position_id ? { position_id } : {}),
     ...(department_id ? { department_id } : {}),
+    ...(phone ? { phone } : {}),
   })
 
   if (dbError) {

@@ -62,6 +62,7 @@ interface Account {
   created_at: string
   position_id: string | null
   department_id: string | null
+  phone: string | null
 }
 
 interface AccountForm {
@@ -71,6 +72,7 @@ interface AccountForm {
   role: AccountRole
   position_id: string
   department_id: string
+  phone: string
 }
 
 const emptyAccountForm: AccountForm = {
@@ -80,6 +82,7 @@ const emptyAccountForm: AccountForm = {
   role: 'staff',
   position_id: '',
   department_id: '',
+  phone: '',
 }
 
 const ROLE_LABELS: Record<AccountRole, string> = {
@@ -1077,6 +1080,7 @@ function AccountsTab() {
       role: item.role,
       position_id: item.position_id ?? '',
       department_id: item.department_id ?? '',
+      phone: item.phone ?? '',
     })
     setFormError('')
     setShowModal(true)
@@ -1104,6 +1108,7 @@ function AccountsTab() {
           role: form.role,
           position_id: form.position_id || null,
           department_id: form.department_id || null,
+          phone: form.phone.trim() || null,
         }),
       })
     } else {
@@ -1117,6 +1122,7 @@ function AccountsTab() {
           role: form.role,
           position_id: form.position_id || null,
           department_id: form.department_id || null,
+          phone: form.phone.trim() || null,
         }),
       })
     }
@@ -1163,6 +1169,7 @@ function AccountsTab() {
               <tr>
                 <th>이메일</th>
                 <th>표시이름</th>
+                <th>휴대폰</th>
                 <th>직급</th>
                 <th>사업부</th>
                 <th>역할</th>
@@ -1175,6 +1182,7 @@ function AccountsTab() {
                 <tr key={item.id} className={!item.is_active ? styles.rowInactive : ''}>
                   <td>{item.username}</td>
                   <td>{item.display_name}</td>
+                  <td>{item.phone || '-'}</td>
                   <td>{(item.position_id && positionMap[item.position_id]) || '-'}</td>
                   <td>{(item.department_id && deptMap[item.department_id]) || '-'}</td>
                   <td>
@@ -1295,6 +1303,16 @@ function AccountsTab() {
                     ))}
                   </select>
                 </div>
+              </div>
+              <div className={styles.formRow}>
+                <label className={styles.formLabel}>휴대폰 (알림톡/SMS 수신용)</label>
+                <input
+                  type="tel"
+                  className={styles.formInput}
+                  placeholder="010-1234-5678"
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                />
               </div>
               {formError && <p className={styles.errorMsg}>{formError}</p>}
             </div>
