@@ -138,23 +138,38 @@ export async function sendSms({
   const type = msg_type ?? (byteLength > 90 ? 'LMS' : 'SMS')
 
   const senderClean = sender.replace(/-/g, '')
-  console.log('[SMS] 전송 시도:', { sender: senderClean, type, receivers: list, byteLength })
+  const proxyUrl = process.env.PROXY_URL
+  const proxySecret = process.env.PROXY_SECRET
+  console.log('[SMS] 전송 시도:', { sender: senderClean, type, receivers: list, byteLength, viaProxy: !!(proxyUrl && proxySecret) })
+
+  const payload: Record<string, string> = {
+    key,
+    user_id,
+    sender: senderClean,
+    receiver: list.join(','),
+    msg: message,
+    msg_type: type,
+  }
+  if (title && type === 'LMS') payload.title = title
 
   try {
-    const formData = new FormData()
-    formData.append('key', key)
-    formData.append('user_id', user_id)
-    formData.append('sender', senderClean)
-    formData.append('receiver', list.join(','))
-    formData.append('msg', message)
-    formData.append('msg_type', type)
-    if (title && type === 'LMS') formData.append('title', title)
-
-    const res = await fetch('https://apis.aligo.in/send/', {
-      method: 'POST',
-      body: formData,
-    })
-    const raw = await res.text()
+    let raw: string
+    if (proxyUrl && proxySecret) {
+      const res = await fetch(`${proxyUrl}/sms`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-proxy-secret': proxySecret },
+        body: JSON.stringify(payload),
+      })
+      raw = await res.text()
+    } else {
+      const formData = new FormData()
+      Object.entries(payload).forEach(([k, v]) => formData.append(k, v))
+      const res = await fetch('https://apis.aligo.in/send/', {
+        method: 'POST',
+        body: formData,
+      })
+      raw = await res.text()
+    }
     let result: { result_code: number | string; message: string }
     try {
       result = JSON.parse(raw)

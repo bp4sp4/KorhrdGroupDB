@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-04-24T07:30:52.121Z",
+  "lastUpdated": "2026-04-24T07:45:28.921Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -318,7 +318,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T09:41:18.714Z",
-        "lastUpdated": "2026-04-24T07:26:55.744Z"
+        "lastUpdated": "2026-04-24T07:45:28.921Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/lib/kakao.ts"
     },
@@ -1722,7 +1722,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-24T07:30:52.121Z"
+    "lastActivity": "2026-04-24T07:45:28.921Z"
   },
   "history": [
     {
@@ -22284,6 +22284,12 @@
     {
       "timestamp": "2026-04-24T07:30:52.121Z",
       "feature": "test-sms",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T07:45:28.921Z",
+      "feature": "hakjeom-bank-web",
       "phase": "do",
       "action": "updated"
     }
