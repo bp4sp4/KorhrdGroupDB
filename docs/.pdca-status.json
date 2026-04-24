@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-04-24T07:45:28.921Z",
+  "lastUpdated": "2026-04-24T07:58:37.774Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -188,7 +188,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:30:16.038Z",
-        "lastUpdated": "2026-04-24T07:17:22.521Z"
+        "lastUpdated": "2026-04-24T07:58:37.774Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/hakjeom/route.ts"
     },
@@ -318,7 +318,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T09:41:18.714Z",
-        "lastUpdated": "2026-04-24T07:45:28.921Z"
+        "lastUpdated": "2026-04-24T07:48:33.601Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/lib/kakao.ts"
     },
@@ -1709,7 +1709,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-24T07:30:52.121Z",
-        "lastUpdated": "2026-04-24T07:30:52.121Z"
+        "lastUpdated": "2026-04-24T07:56:40.892Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/test-sms/route.ts"
     }
@@ -1722,7 +1722,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-24T07:45:28.921Z"
+    "lastActivity": "2026-04-24T07:58:37.774Z"
   },
   "history": [
     {
@@ -22290,6 +22290,60 @@
     {
       "timestamp": "2026-04-24T07:45:28.921Z",
       "feature": "hakjeom-bank-web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T07:48:33.601Z",
+      "feature": "hakjeom-bank-web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T07:56:10.669Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T07:56:17.479Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T07:56:24.098Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T07:56:30.027Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T07:56:40.892Z",
+      "feature": "test-sms",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T07:58:22.700Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T07:58:32.478Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T07:58:37.774Z",
+      "feature": "hakjeom",
       "phase": "do",
       "action": "updated"
     }

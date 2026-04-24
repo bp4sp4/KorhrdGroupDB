@@ -175,7 +175,7 @@ export async function sendSms({
       result = JSON.parse(raw)
     } catch {
       console.error('[SMS] ❌ 알리고 응답 JSON 파싱 실패:', raw)
-      return { success: false, error: 'invalid aligo response' }
+      return { success: false, error: `invalid response: ${raw.slice(0, 200)}` }
     }
     const code = Number(result.result_code)
 
