@@ -88,6 +88,10 @@ export function CorporateCardBody({ content, onChange, departments = [] }: DocBo
     ? items.filter(item => item.date || item.card_last4 || item.merchant || item.amount)
     : items
 
+  const merchantSuggestions = Array.from(
+    new Set(items.map((it) => it.merchant?.trim()).filter((m): m is string => !!m))
+  )
+
   return (
     <>
       <table className={styles.table_main}>
@@ -154,9 +158,15 @@ export function CorporateCardBody({ content, onChange, departments = [] }: DocBo
               </td>
               <td className={styles.td_merchant}>
                 {ro ? <span>{item.merchant}</span> : (
-                  <input type="text" className={styles.input_full}
-                    value={item.merchant} placeholder=""
-                    onChange={(e) => updateItem(idx, 'merchant', e.target.value)} />
+                  <input
+                    type="text"
+                    className={styles.input_full}
+                    list="merchant-suggestions"
+                    autoComplete="off"
+                    value={item.merchant}
+                    placeholder=""
+                    onChange={(e) => updateItem(idx, 'merchant', e.target.value)}
+                  />
                 )}
               </td>
               <td className={styles.td_detail}>
@@ -168,9 +178,17 @@ export function CorporateCardBody({ content, onChange, departments = [] }: DocBo
               </td>
               <td className={styles.td_amount}>
                 {ro ? <span>{numDisplay(item.amount)}</span> : (
-                  <input type="number" className={styles.input_num}
-                    value={item.amount} placeholder=""
-                    onChange={(e) => updateItem(idx, 'amount', e.target.value)} />
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    className={styles.input_num}
+                    value={item.amount ? Number(item.amount.replace(/[^\d]/g, '')).toLocaleString() : ''}
+                    placeholder=""
+                    onChange={(e) => {
+                      const raw = e.target.value.replace(/[^\d]/g, '')
+                      updateItem(idx, 'amount', raw)
+                    }}
+                  />
                 )}
               </td>
             </tr>
@@ -187,6 +205,12 @@ export function CorporateCardBody({ content, onChange, departments = [] }: DocBo
           onClick={() => updateItems([...items, emptyItem()])}>
           + 행 추가
         </button>
+      )}
+
+      {!ro && merchantSuggestions.length > 0 && (
+        <datalist id="merchant-suggestions">
+          {merchantSuggestions.map((m) => <option key={m} value={m} />)}
+        </datalist>
       )}
 
       <div className={styles.notes}>

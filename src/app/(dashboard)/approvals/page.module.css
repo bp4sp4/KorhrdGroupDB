@@ -1732,7 +1732,7 @@ height: 26px;
 
 /* 법인카드 사용내역 제출서: 문서 옆에 붙는 증빙 패널 */
 .doc_proof_aside {
-  width: 340px;
+  width: 400px;
   flex-shrink: 0;
   padding: 16px;
   overflow-y: auto;

@@ -1735,7 +1735,7 @@ export default function ApprovalsPage() {
                 const emptyIdx = list.findIndex(isEmptyRow)
                 const newRow = {
                   date: picked.date,
-                  card_last4: '',
+                  card_last4: picked.cardLast4 ?? '',
                   dept: String(myDept?.id ?? ''),
                   user: myUser?.display_name ?? '',
                   merchant: picked.merchant,
@@ -1747,6 +1747,21 @@ export default function ApprovalsPage() {
                 } else {
                   list.push(newRow)
                 }
+                handleContentChange('card_items', JSON.stringify(list))
+              }}
+              onRemoveItem={(picked) => {
+                const content = formState.content as Record<string, unknown>
+                const raw = content['card_items']
+                let list: Array<Record<string, string>> = []
+                try {
+                  const parsed = raw ? JSON.parse(String(raw)) : []
+                  if (Array.isArray(parsed)) list = parsed
+                } catch {}
+                const idx = list.findIndex(
+                  (r) => r.date === picked.date && Number(r.amount) === Number(picked.amount),
+                )
+                if (idx < 0) return
+                list.splice(idx, 1)
                 handleContentChange('card_items', JSON.stringify(list))
               }}
             />

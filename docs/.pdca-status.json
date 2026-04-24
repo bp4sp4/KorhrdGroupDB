@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-04-24T03:39:14.627Z",
+  "lastUpdated": "2026-04-24T06:27:42.735Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -902,7 +902,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-01T06:58:08.194Z",
-        "lastUpdated": "2026-04-24T03:08:43.387Z"
+        "lastUpdated": "2026-04-24T05:56:55.379Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/approvals/page.tsx"
     },
@@ -1279,7 +1279,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-07T06:32:24.971Z",
-        "lastUpdated": "2026-04-24T03:05:08.332Z"
+        "lastUpdated": "2026-04-24T06:27:37.976Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/approvals/templates/corporateCard/ExpenseProofPanel.tsx"
     },
@@ -1500,9 +1500,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-20T06:45:24.089Z",
-        "lastUpdated": "2026-04-23T01:44:07.434Z"
+        "lastUpdated": "2026-04-24T06:27:42.735Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/bankaccount/page.tsx"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/bankaccount/route.ts"
     },
     "education-center": {
       "phase": "do",
@@ -1708,7 +1708,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-24T03:39:14.627Z"
+    "lastActivity": "2026-04-24T06:27:42.735Z"
   },
   "history": [
     {
@@ -21928,6 +21928,240 @@
     {
       "timestamp": "2026-04-24T03:39:14.627Z",
       "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T05:45:26.120Z",
+      "feature": "corporateCard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T05:45:29.413Z",
+      "feature": "corporateCard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T05:47:34.142Z",
+      "feature": "corporateCard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T05:47:44.841Z",
+      "feature": "corporateCard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T05:47:55.623Z",
+      "feature": "corporateCard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T05:50:28.764Z",
+      "feature": "corporateCard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T05:50:35.212Z",
+      "feature": "corporateCard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T05:50:46.774Z",
+      "feature": "corporateCard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T05:51:10.101Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T05:55:16.487Z",
+      "feature": "corporateCard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T05:56:30.497Z",
+      "feature": "corporateCard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T05:56:37.320Z",
+      "feature": "corporateCard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T05:56:43.324Z",
+      "feature": "corporateCard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T05:56:49.937Z",
+      "feature": "corporateCard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T05:56:55.379Z",
+      "feature": "approvals",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T06:03:59.407Z",
+      "feature": "corporateCard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T06:04:07.492Z",
+      "feature": "corporateCard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T06:04:48.762Z",
+      "feature": "corporateCard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T06:04:54.285Z",
+      "feature": "corporateCard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T06:05:13.579Z",
+      "feature": "corporateCard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T06:09:11.476Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T06:09:21.676Z",
+      "feature": "corporateCard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T06:09:26.401Z",
+      "feature": "corporateCard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T06:09:34.422Z",
+      "feature": "corporateCard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T06:09:38.358Z",
+      "feature": "corporateCard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T06:11:40.975Z",
+      "feature": "corporateCard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T06:12:54.085Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T06:14:38.433Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T06:14:44.875Z",
+      "feature": "corporateCard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T06:24:11.157Z",
+      "feature": "corporateCard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T06:25:05.474Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T06:25:53.146Z",
+      "feature": "corporateCard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T06:25:57.229Z",
+      "feature": "corporateCard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T06:27:12.513Z",
+      "feature": "corporateCard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T06:27:17.813Z",
+      "feature": "corporateCard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T06:27:21.258Z",
+      "feature": "corporateCard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T06:27:28.109Z",
+      "feature": "corporateCard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T06:27:37.976Z",
+      "feature": "corporateCard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-24T06:27:42.735Z",
+      "feature": "bankaccount",
       "phase": "do",
       "action": "updated"
     }

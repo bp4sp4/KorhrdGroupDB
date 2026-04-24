@@ -49,7 +49,9 @@ export interface CardItemLike {
 interface Props {
   cardItems: CardItemLike[]
   /** 지출내역 항목 클릭 시 호출 - 제공되면 항목을 클릭해서 사용내역에 자동 추가 가능 */
-  onAddItem?: (item: { date: string; amount: string; merchant: string }) => void
+  onAddItem?: (item: { date: string; amount: string; merchant: string; cardLast4: string }) => void
+  /** 매칭된 항목 제거 요청 - 제공되면 X 버튼 노출 */
+  onRemoveItem?: (item: { date: string; amount: string }) => void
 }
 
 function toApiDate(d: string): string {
@@ -71,27 +73,34 @@ function findMatchingItem(tx: Transaction, items: CardItemLike[]): CardItemLike 
   })
 }
 
-export function ExpenseProofPanel({ cardItems, onAddItem }: Props) {
+type FilterMode = 'unmatched' | 'matched' | 'all'
+
+export function ExpenseProofPanel({ cardItems, onAddItem, onRemoveItem }: Props) {
   const [account, setAccount] = useState<BankAccount | null>(null)
   const [accountError, setAccountError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<SearchResult | null>(null)
+  const [filterMode, setFilterMode] = useState<FilterMode>('unmatched')
+  const [query, setQuery] = useState('')
+  const [defaultCardLast4, setDefaultCardLast4] = useState('')
   const lastFetchKeyRef = useRef<string>('')
 
-  const dateRange = useMemo(() => {
-    // 이번 달 1일 ~ 오늘
-    const toStr = (d: Date) => {
-      const y = d.getFullYear()
-      const m = String(d.getMonth() + 1).padStart(2, '0')
-      const dd = String(d.getDate()).padStart(2, '0')
-      return `${y}-${m}-${dd}`
-    }
+  const toStr = (d: Date) => {
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, '0')
+    const dd = String(d.getDate()).padStart(2, '0')
+    return `${y}-${m}-${dd}`
+  }
+  const defaultRange = useMemo(() => {
     const now = new Date()
     const start = new Date(now.getFullYear(), now.getMonth(), 1)
     return { start: toStr(start), end: toStr(now) }
   }, [])
+  const [startDate, setStartDate] = useState(defaultRange.start)
+  const [endDate, setEndDate] = useState(defaultRange.end)
+  const dateRange = useMemo(() => ({ start: startDate, end: endDate }), [startDate, endDate])
 
   // 계좌 목록 자동 조회 (첫 번째 활성 계좌 선택)
   useEffect(() => {
@@ -178,13 +187,26 @@ export function ExpenseProofPanel({ cardItems, onAddItem }: Props) {
 
   const withdrawals = result?.list.filter((tx) => Number(tx.accOut) > 0) ?? []
   const matchedCount = withdrawals.filter((tx) => findMatchingItem(tx, cardItems)).length
-  const bankName = account ? BANK_NAMES[account.bankCode] ?? account.bankCode : ''
+  const unmatchedCount = withdrawals.length - matchedCount
+  const normalizedBankCode = account ? account.bankCode.replace(/^0+/, '').padStart(3, '0') : ''
+  const bankName = account ? BANK_NAMES[normalizedBankCode] ?? BANK_NAMES[account.bankCode] ?? account.bankCode : ''
+
+  const q = query.trim().toLowerCase()
+  const visibleList = withdrawals.filter((tx) => {
+    const matched = !!findMatchingItem(tx, cardItems)
+    if (filterMode === 'matched' && !matched) return false
+    if (filterMode === 'unmatched' && matched) return false
+    if (!q) return true
+    const merchant = (tx.remark1 || tx.remark2 || tx.memo || '').toLowerCase()
+    const amount = String(Number(tx.accOut))
+    return merchant.includes(q) || amount.includes(q) || tx.trdate.includes(q.replace(/-/g, ''))
+  })
 
   return (
     <aside className={styles.proof_panel}>
       <div className={styles.proof_head}>
         <div className={styles.proof_title}>
-          증빙 - {account ? account.accountName || '법인카드 계좌' : '계좌 불러오는 중...'}
+          {account ? account.accountName || '법인카드 계좌' : '계좌 불러오는 중...'}
         </div>
         {account && (
           <div className={styles.proof_account}>
@@ -194,9 +216,37 @@ export function ExpenseProofPanel({ cardItems, onAddItem }: Props) {
         {accountError && <div className={styles.proof_error}>{accountError}</div>}
       </div>
 
-      <div className={styles.proof_range}>
-        조회 범위: {dateRange.start} ~ {dateRange.end} (최근 1개월)
+      <div className={styles.proof_range_picker}>
+        <input
+          type="date"
+          className={styles.proof_date_input}
+          value={startDate}
+          max={endDate}
+          onChange={(e) => setStartDate(e.target.value)}
+        />
+        <span className={styles.proof_date_sep}>~</span>
+        <input
+          type="date"
+          className={styles.proof_date_input}
+          value={endDate}
+          min={startDate}
+          max={toStr(new Date())}
+          onChange={(e) => setEndDate(e.target.value)}
+        />
       </div>
+
+      <label className={styles.proof_card_field}>
+        <span className={styles.proof_card_label}>카드번호 뒷 4자리</span>
+        <input
+          type="text"
+          inputMode="numeric"
+          maxLength={4}
+          className={styles.proof_card_input}
+          placeholder="0000"
+          value={defaultCardLast4}
+          onChange={(e) => setDefaultCardLast4(e.target.value.replace(/[^\d]/g, '').slice(0, 4))}
+        />
+      </label>
 
       <button
         type="button"
@@ -213,17 +263,69 @@ export function ExpenseProofPanel({ cardItems, onAddItem }: Props) {
       {error && <div className={styles.proof_error}>{error}</div>}
 
       {result && (
-        <div className={styles.proof_summary}>
-          출금 {withdrawals.length}건 · 매칭 <strong>{matchedCount}</strong>건 / 미매칭{' '}
-          <strong>{withdrawals.length - matchedCount}</strong>건
-        </div>
+        <>
+          <div className={styles.proof_tabs} role="tablist">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={filterMode === 'unmatched'}
+              className={`${styles.proof_tab} ${filterMode === 'unmatched' ? styles.proof_tab_active : ''}`}
+              onClick={() => setFilterMode('unmatched')}
+            >
+              미매칭 <span className={styles.proof_tab_count}>{unmatchedCount}</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={filterMode === 'matched'}
+              className={`${styles.proof_tab} ${filterMode === 'matched' ? styles.proof_tab_active : ''}`}
+              onClick={() => setFilterMode('matched')}
+            >
+              매칭 <span className={styles.proof_tab_count}>{matchedCount}</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={filterMode === 'all'}
+              className={`${styles.proof_tab} ${filterMode === 'all' ? styles.proof_tab_active : ''}`}
+              onClick={() => setFilterMode('all')}
+            >
+              전체 <span className={styles.proof_tab_count}>{withdrawals.length}</span>
+            </button>
+          </div>
+
+          <div className={styles.proof_search_wrap}>
+            <input
+              type="text"
+              className={styles.proof_search}
+              placeholder="상호 · 금액 · 날짜 검색"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            {query && (
+              <button
+                type="button"
+                className={styles.proof_search_clear}
+                onClick={() => setQuery('')}
+                aria-label="검색어 지우기"
+              >
+                ×
+              </button>
+            )}
+          </div>
+        </>
       )}
 
       <div className={styles.proof_list}>
         {result && withdrawals.length === 0 && (
           <div className={styles.proof_empty}>기간 내 출금 내역이 없습니다.</div>
         )}
-        {withdrawals.map((tx) => {
+        {result && withdrawals.length > 0 && visibleList.length === 0 && (
+          <div className={styles.proof_empty}>
+            {q ? '검색 결과가 없습니다.' : filterMode === 'unmatched' ? '모든 내역이 매칭되었습니다 🎉' : '해당하는 내역이 없습니다.'}
+          </div>
+        )}
+        {visibleList.map((tx) => {
           const matched = findMatchingItem(tx, cardItems)
           const clickable = !!onAddItem && !matched
           const handleClick = () => {
@@ -232,6 +334,7 @@ export function ExpenseProofPanel({ cardItems, onAddItem }: Props) {
               date: fromApiDate(tx.trdate),
               amount: String(Number(tx.accOut)),
               merchant: tx.remark1 || tx.remark2 || tx.memo || '',
+              cardLast4: defaultCardLast4,
             })
           }
           return (
@@ -262,6 +365,23 @@ export function ExpenseProofPanel({ cardItems, onAddItem }: Props) {
               <div className={styles.proof_item_badge}>
                 {matched ? '✓ 증빙됨' : clickable ? '+ 클릭하여 추가' : '⚠ 사용내역 없음'}
               </div>
+              {matched && onRemoveItem && (
+                <button
+                  type="button"
+                  className={styles.proof_item_remove}
+                  aria-label="사용내역에서 제거"
+                  title="사용내역에서 제거"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onRemoveItem({
+                      date: fromApiDate(tx.trdate),
+                      amount: String(Number(tx.accOut)),
+                    })
+                  }}
+                >
+                  ×
+                </button>
+              )}
             </div>
           )
         })}
