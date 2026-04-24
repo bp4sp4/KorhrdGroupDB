@@ -93,12 +93,13 @@
 }
 
 .course_actions {
-  display: none;
+  display: flex;
+  visibility: hidden;
   gap: 4px;
   flex-shrink: 0;
 }
 
-.course_item:hover .course_actions { display: flex; }
+.course_item:hover .course_actions { visibility: visible; }
 
 .mini_btn {
   height: 22px;

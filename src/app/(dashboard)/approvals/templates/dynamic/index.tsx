@@ -1,85 +1,20 @@
 import React from 'react'
 import shared from '../../page.module.css'
 import styles from './styles.module.css'
-import type { DocBodyProps, FieldDef } from '../types'
+import type { DocBodyProps } from '../types'
 import type { FormSchema, FieldBlock, TableColumn } from '@/types/approvalForm'
 import { TITLE_CONTENT_KEY } from '@/types/approvalForm'
 import { DateInput } from '@/components/ui/Calendar/DateInput'
+import {
+  v,
+  vBool,
+  toRows,
+  groupRows,
+  schemaToFieldDefs,
+  type TableRow,
+} from '@/lib/approvals/fieldRenderer'
 
-function v(content: Record<string, unknown>, key: string): string {
-  return String(content[key] ?? '')
-}
-
-function vBool(content: Record<string, unknown>, key: string): boolean {
-  const raw = content[key]
-  return raw === true || raw === 'true'
-}
-
-export function schemaToFieldDefs(schema: FormSchema): FieldDef[] {
-  return schema.blocks
-    .filter((b) => b.type !== 'table') // 테이블은 별도 저장
-    .map((b) => blockToFieldDef(b))
-}
-
-function blockToFieldDef(b: FieldBlock): FieldDef {
-  const base = { key: b.key, label: b.label, required: b.required }
-  switch (b.type) {
-    case 'text':
-      return { ...base, type: 'text' }
-    case 'textarea':
-      return { ...base, type: 'textarea' }
-    case 'number':
-      return { ...base, type: 'number' }
-    case 'date':
-      return { ...base, type: 'date' }
-    case 'select':
-      return { ...base, type: 'select', options: b.options ?? [] }
-    case 'checkbox':
-    case 'table':
-      return { ...base, type: 'text' }
-  }
-}
-
-type TableRow = Record<string, string>
-
-function toRows(raw: unknown): TableRow[] {
-  let arr: unknown = raw
-  if (typeof raw === 'string') {
-    if (!raw.trim()) return []
-    try {
-      arr = JSON.parse(raw)
-    } catch {
-      return []
-    }
-  }
-  if (!Array.isArray(arr)) return []
-  return arr.map((r) => (r && typeof r === 'object' ? (r as TableRow) : {}))
-}
-
-function groupRows(blocks: FieldBlock[]): FieldBlock[][] {
-  const rows: FieldBlock[][] = []
-  let i = 0
-  while (i < blocks.length) {
-    const b = blocks[i]
-    // table/textarea 는 항상 한 행 단독
-    if (b.type === 'table' || b.type === 'textarea') {
-      rows.push([b])
-      i += 1
-      continue
-    }
-    if (b.width === 'half' && i + 1 < blocks.length
-        && blocks[i + 1].width === 'half'
-        && blocks[i + 1].type !== 'table'
-        && blocks[i + 1].type !== 'textarea') {
-      rows.push([b, blocks[i + 1]])
-      i += 2
-    } else {
-      rows.push([b])
-      i += 1
-    }
-  }
-  return rows
-}
+export { schemaToFieldDefs }
 
 function renderFieldInput(
   b: FieldBlock,

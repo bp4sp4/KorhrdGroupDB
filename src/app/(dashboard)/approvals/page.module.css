@@ -247,8 +247,6 @@
   padding: 20px 30px;
 }
 
-.table_wrap {
-}
 
 .table_empty {
   padding: 50px 50px;
@@ -1732,4 +1730,21 @@ height: 26px;
 }
 .apmBtnCancel:hover { background: #f5f6f7; }
 
+/* 법인카드 사용내역 제출서: 문서 옆에 붙는 증빙 패널 */
+.doc_proof_aside {
+  width: 340px;
+  flex-shrink: 0;
+  padding: 16px;
+  overflow-y: auto;
+  border-left: 1px solid var(--toss-border, #e5e7eb);
+  background: #fafbfc;
+}
+
+/* 작성 폼: doc_scroll_area + 증빙 패널을 가로로 배치 */
+.doc_with_aside {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
 

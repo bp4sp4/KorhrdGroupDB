@@ -16,6 +16,7 @@ import d from './detailView.module.css'
 import f from './formView.module.css'
 import { getDocTemplate, ALL_TEMPLATE_FIELDS, buildDynamicTemplateConfigs } from './docTemplates'
 import type { DocTemplateConfig } from './docTemplates'
+import { ExpenseProofPanel, parseCardItems } from './templates/corporateCard'
 import type { ApprovalFormTemplate } from '@/types/approvalForm'
 
 // ---------------------------------------------------------------------------
@@ -1139,12 +1140,8 @@ export default function ApprovalsPage() {
               {(() => {
                 const cfg = getDocTemplate(selectedApproval, dynamicConfigs)
                 if (!cfg) return null
-                return (
-                  <cfg.BodySection
-                    content={selectedApproval.content as Record<string, unknown>}
-                    departments={departments}
-                  />
-                )
+                const content = selectedApproval.content as Record<string, unknown>
+                return <cfg.BodySection content={content} departments={departments} />
               })()}
 
               {/* 첨부파일 미리보기 */}
@@ -1207,6 +1204,18 @@ export default function ApprovalsPage() {
               )}
             </div>
           </div>
+
+          {/* 법인카드 사용내역 제출서: 우측 증빙 패널 */}
+          {(() => {
+            const cfg = getDocTemplate(selectedApproval, dynamicConfigs)
+            if (cfg?.id !== 'corporate-card') return null
+            const content = selectedApproval.content as Record<string, unknown>
+            return (
+              <aside className={styles.doc_proof_aside}>
+                <ExpenseProofPanel cardItems={parseCardItems(content)} />
+              </aside>
+            )
+          })()}
 
           {/* 이미지 라이트박스 */}
           {lightboxUrl && (
@@ -1505,7 +1514,8 @@ export default function ApprovalsPage() {
           </div>
         </div>
 
-        {/* 종이 문서 스크롤 영역 */}
+        {/* 종이 문서 + 증빙 패널 (법인카드일 때만 우측 패널) */}
+        <div className={styles.doc_with_aside}>
         <div className={styles.doc_scroll_area}>
           <div className={styles.doc_paper}>
             {/* 문서 제목 */}
@@ -1706,6 +1716,42 @@ export default function ApprovalsPage() {
 
             {formError && <p className={styles.error_msg}>{formError}</p>}
           </div>
+        </div>
+        {formTemplateConfig?.id === 'corporate-card' && (
+          <aside className={styles.doc_proof_aside}>
+            <ExpenseProofPanel
+              cardItems={parseCardItems(formState.content as Record<string, unknown>)}
+              onAddItem={(picked) => {
+                const content = formState.content as Record<string, unknown>
+                const raw = content['card_items']
+                let list: Array<Record<string, string>> = []
+                try {
+                  const parsed = raw ? JSON.parse(String(raw)) : []
+                  if (Array.isArray(parsed)) list = parsed
+                } catch {}
+                const isEmptyRow = (row: Record<string, string>) =>
+                  !row.date && !row.card_last4 && !row.dept && !row.user &&
+                  !row.merchant && !row.detail && !row.amount
+                const emptyIdx = list.findIndex(isEmptyRow)
+                const newRow = {
+                  date: picked.date,
+                  card_last4: '',
+                  dept: String(myDept?.id ?? ''),
+                  user: myUser?.display_name ?? '',
+                  merchant: picked.merchant,
+                  detail: '',
+                  amount: picked.amount,
+                }
+                if (emptyIdx >= 0) {
+                  list[emptyIdx] = newRow
+                } else {
+                  list.push(newRow)
+                }
+                handleContentChange('card_items', JSON.stringify(list))
+              }}
+            />
+          </aside>
+        )}
         </div>
 
         {/* 하단 액션바 */}

@@ -9,7 +9,7 @@ import styles from './page.module.css';
 
 // ── 타입 ──────────────────────────────────────────────────────
 
-type SubjectCategory = '전공' | '교양' | '일반';
+type SubjectCategory = '전공' | '선택' | '교양' | '일반';
 
 interface Subject {
   id: number;
@@ -82,7 +82,7 @@ interface SemesterDates {
 
 // ── 상수 ──────────────────────────────────────────────────────
 
-const SUBJECT_CATEGORIES: SubjectCategory[] = ['전공', '교양', '일반'];
+const SUBJECT_CATEGORIES: SubjectCategory[] = ['전공', '선택', '교양', '일반'];
 const CREDIT_OPTIONS = [1, 2, 3, 4, 5] as const;
 const DEFAULT_CENTERS = ['한평생교육', '서사평', '올티칭'];
 const CENTER_ADD_THRESHOLD = 60;
@@ -412,14 +412,104 @@ export default function PlanPage() {
         : courseName.includes('구법') ? '구법'
         : courseName || null;
       const hasStudentSubjects = loadedSubjects.some((s) => s.student_id === id);
-      if (courseType && !hasStudentSubjects) {
-        const { data: presets } = await supabase
+      // 기존 학생: 프리셋에서 유래한 과목은 전부 삭제 후 현재 프리셋 기준으로 재시딩
+      // (수기로 추가한 과목은 보존: 프리셋 이름과 일치하지 않는 학생 전용 row)
+      if (courseType && hasStudentSubjects && !cancelled) {
+        // 해당 course_type의 프리셋 전체(필수+선택) 로드
+        const { data: presetData } = await supabase
           .from('edu_subject_presets')
           .select('name, credits, subject_type')
           .eq('course_type', courseType)
           .order('sort_order');
+        const presetList = (presetData ?? []) as Array<{ name: string; credits: number; subject_type: '필수' | '선택' }>;
+
+        // 이름별 중복 제거 (신법 필수 우선 → presetList 순서 = 신법→구법)
+        const presetMap = new Map<string, { credits: number; subject_type: '필수' | '선택' }>();
+        for (const p of presetList) {
+          if (!presetMap.has(p.name)) presetMap.set(p.name, { credits: p.credits, subject_type: p.subject_type });
+        }
+
+        if (presetMap.size > 0) {
+          // 1) 프리셋 이름 기준으로 학생 row의 subject_type/category 동기화 (ID 유지 — 수강계획 링크 보존)
+          //    같은 이름이 여러 row이면 첫 row만 유지하고 나머지는 삭제
+          const studentRowsByName = new Map<string, Subject[]>()
+          for (const s of loadedSubjects) {
+            if (s.student_id !== id) continue
+            if (!studentRowsByName.has(s.name)) studentRowsByName.set(s.name, [])
+            studentRowsByName.get(s.name)!.push(s)
+          }
+
+          const updates: Array<{ id: number; subject_type: '필수' | '선택'; category: SubjectCategory; credits: number }> = []
+          const dupIds: number[] = []
+          for (const [name, rows] of studentRowsByName) {
+            const p = presetMap.get(name)
+            if (!p) continue // 프리셋에 없는 수기 과목은 건드리지 않음
+            // 첫 번째만 유지, 나머지 dup 삭제
+            const [keep, ...dups] = rows
+            dupIds.push(...dups.map((d) => d.id))
+            const targetCat: SubjectCategory = '전공'
+            if (keep.subject_type !== p.subject_type || keep.category !== targetCat || keep.credits !== p.credits) {
+              updates.push({ id: keep.id, subject_type: p.subject_type, category: targetCat, credits: p.credits })
+            }
+          }
+
+          if (dupIds.length) {
+            await supabase.from('edu_subjects').delete().in('id', dupIds)
+            loadedSubjects = loadedSubjects.filter((s) => !dupIds.includes(s.id))
+          }
+
+          for (const u of updates) {
+            await supabase.from('edu_subjects')
+              .update({ subject_type: u.subject_type, category: u.category, credits: u.credits })
+              .eq('id', u.id)
+          }
+          if (updates.length) {
+            const updateById = new Map(updates.map((u) => [u.id, u]))
+            loadedSubjects = loadedSubjects.map((s) => {
+              const u = updateById.get(s.id)
+              return u ? { ...s, subject_type: u.subject_type, category: u.category, credits: u.credits } : s
+            })
+          }
+
+          // 2) 프리셋에 있지만 학생에게 없는 과목 insert
+          const existingNames = new Set(
+            loadedSubjects.filter((s) => s.student_id === id).map((s) => s.name),
+          )
+          const missing = Array.from(presetMap.entries()).filter(([name]) => !existingNames.has(name))
+          if (missing.length) {
+            const insertRows = missing.map(([name, p]) => ({
+              category: '전공' as SubjectCategory,
+              name,
+              credits: p.credits,
+              type: '이론' as const,
+              subject_type: p.subject_type,
+              student_id: id,
+            }))
+            const { data: inserted, error: insertErr } = await supabase
+              .from('edu_subjects').insert(insertRows).select()
+            if (insertErr) console.error('[plan] preset insert failed', JSON.stringify(insertErr), 'rows:', insertRows)
+            if (inserted) loadedSubjects = [...loadedSubjects, ...(inserted as Subject[])]
+          }
+        }
+      }
+
+      if (courseType && !hasStudentSubjects) {
+        // 해당 course_type 프리셋 전체(필수+선택) 로드
+        const { data } = await supabase
+          .from('edu_subject_presets')
+          .select('name, credits, subject_type')
+          .eq('course_type', courseType)
+          .order('sort_order');
+        const presets = (data ?? []) as Array<{ name: string; credits: number; subject_type: '필수' | '선택' }>;
         if (presets?.length && !cancelled) {
-          const rows = presets.map((p) => ({
+          // 중복 과목명 제거 (같은 이름은 첫 번째 항목만 유지)
+          const seen = new Set<string>();
+          const uniquePresets = presets.filter((p) => {
+            if (seen.has(p.name)) return false;
+            seen.add(p.name);
+            return true;
+          });
+          const rows = uniquePresets.map((p) => ({
             category: '전공' as SubjectCategory,
             name: p.name,
             credits: p.credits,
@@ -548,7 +638,13 @@ export default function PlanPage() {
 
   // ── 과목 필터/그룹 ───────────────────────────────────────────
   const filteredSubjects = useMemo(() => {
-    const byCategory = selectedCategory === '전체' ? subjects : subjects.filter((s) => s.category === selectedCategory);
+    const byCategory = selectedCategory === '전체'
+      ? subjects
+      : subjects.filter((s) => {
+          // subject_type 기준으로 재분류된 effective category로 필터링
+          const effective = s.subject_type === '선택' ? '선택' : s.category;
+          return effective === selectedCategory;
+        });
     if (!subjectSearch.trim()) return byCategory;
     const q = subjectSearch.trim().toLowerCase();
     return byCategory.filter((s) => s.name.toLowerCase().includes(q));
@@ -556,9 +652,15 @@ export default function PlanPage() {
 
   const groupedSubjects = useMemo(() => {
     const groups: Record<string, Subject[]> = {};
+    // 과목명 중복 제거 (동일 name은 첫 번째만)
+    const seen = new Set<string>();
     filteredSubjects.forEach((s) => {
-      if (!groups[s.category]) groups[s.category] = [];
-      groups[s.category].push(s);
+      if (seen.has(s.name)) return;
+      seen.add(s.name);
+      // subject_type 기준으로 그룹 재분류: 선택이면 '선택', 아니면 원래 category
+      const effectiveCategory = s.subject_type === '선택' ? '선택' : s.category;
+      if (!groups[effectiveCategory]) groups[effectiveCategory] = [];
+      groups[effectiveCategory].push(s);
     });
     return groups;
   }, [filteredSubjects]);
@@ -737,7 +839,6 @@ export default function PlanPage() {
   }
 
   // ── 구법/신법 프리셋 fetch ─────────────────────────────────────
-  // 신법: 필수 → 신법, 선택 → 구법
   async function openGubupPopup(courseType: '구법' | '신법' = '구법') {
     if (courseType !== gubupCourseType) {
       setGubupCourseType(courseType);
@@ -746,14 +847,7 @@ export default function PlanPage() {
     setShowGubupPopup(true);
     if (gubupPresets.length > 0 && courseType === gubupCourseType) return;
     const supabase = createClient();
-    if (courseType === '신법') {
-      const [sinRes, guRes] = await Promise.all([
-        supabase.from('edu_subject_presets').select('name, credits, subject_type').eq('course_type', '신법').eq('subject_type', '필수').order('sort_order'),
-        supabase.from('edu_subject_presets').select('name, credits, subject_type').eq('course_type', '구법').eq('subject_type', '선택').order('sort_order'),
-      ]);
-      const combined = [...(sinRes.data ?? []), ...(guRes.data ?? [])];
-      setGubupPresets(combined as { name: string; credits: number; subject_type: '필수' | '선택' }[]);
-    } else {
+    {
       const { data } = await supabase
         .from('edu_subject_presets')
         .select('name, credits, subject_type')

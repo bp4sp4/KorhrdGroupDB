@@ -134,3 +134,162 @@
   font-weight: 600;
   margin-bottom: 2px;
 }
+
+/* ── 증빙 패널 (사이드 영역에 단독 렌더) ── */
+.proof_panel {
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #fafbfc;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.proof_head {
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 8px;
+}
+
+.proof_title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #111;
+}
+
+.proof_account {
+  font-size: 11px;
+  color: #6b7280;
+  margin-top: 2px;
+  font-family: monospace;
+}
+
+.proof_range {
+  font-size: 11px;
+  color: #6b7280;
+  background: #fff;
+  padding: 6px 8px;
+  border-radius: 4px;
+  border: 1px dashed #d1d5db;
+}
+
+.proof_btn {
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.proof_btn:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.proof_btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.proof_error {
+  padding: 8px;
+  font-size: 11px;
+  color: #dc2626;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 4px;
+}
+
+.proof_summary {
+  font-size: 11px;
+  color: #374151;
+  padding: 6px 8px;
+  background: #f3f4f6;
+  border-radius: 4px;
+}
+
+.proof_list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.proof_empty {
+  padding: 20px 8px;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 11px;
+}
+
+.proof_item {
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid;
+  font-size: 12px;
+}
+
+.proof_item_match {
+  border-color: #86efac;
+  background: #f0fdf4;
+}
+
+.proof_item_miss {
+  border-color: #fcd34d;
+  background: #fffbeb;
+}
+
+.proof_item_top {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+  color: #111;
+}
+
+.proof_item_date {
+  font-size: 11px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.proof_item_amount {
+  font-size: 12px;
+}
+
+.proof_item_merchant {
+  margin-top: 2px;
+  font-size: 11px;
+  color: #374151;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.proof_item_badge {
+  margin-top: 4px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.proof_item_match .proof_item_badge {
+  color: #166534;
+}
+
+.proof_item_miss .proof_item_badge {
+  color: #b45309;
+}
+
+.proof_item_clickable {
+  cursor: pointer;
+  transition: background 120ms, transform 120ms;
+}
+
+.proof_item_clickable:hover {
+  background: #fef3c7;
+  transform: translateY(-1px);
+}
+
+.proof_item_clickable:active {
+  transform: translateY(0);
+}

@@ -650,3 +650,14 @@
   color: #6b7280;
   background: #f9fafb;
 }
+
+/* 양식 목록 셀 보조 스타일 */
+.codeCell {
+  color: #6b7280;
+  font-family: monospace;
+}
+
+.dateCell {
+  color: #6b7280;
+  font-size: 12px;
+}

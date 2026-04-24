@@ -5,6 +5,21 @@ import { DateInput } from '@/components/ui/Calendar/DateInput'
 import { parse, isValid, format } from 'date-fns'
 import { ko } from 'date-fns/locale'
 
+export { ExpenseProofPanel } from './ExpenseProofPanel'
+export type { CardItemLike } from './ExpenseProofPanel'
+
+/** 외부에서 content → card_items 파싱하여 패널로 넘길 때 사용 */
+export function parseCardItems(content: Record<string, unknown>): Array<{ date: string; amount: string; merchant?: string }> {
+  const raw = String(content['card_items'] ?? '')
+  if (!raw) return []
+  try {
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
 export const CORPORATE_CARD_FIELDS: FieldDef[] = [
   { key: 'card_items', label: '사용내역', type: 'text', required: true },
 ]

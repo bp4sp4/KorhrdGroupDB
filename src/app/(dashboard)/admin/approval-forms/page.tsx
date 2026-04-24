@@ -3,6 +3,8 @@
 import { useEffect, useState, useCallback } from 'react'
 import styles from './page.module.css'
 import { FormEditor } from './FormEditor'
+import { CategoryTree } from './components/CategoryTree'
+import { FormList } from './components/FormList'
 import type { ApprovalFormCategory, ApprovalFormTemplate } from '@/types/approvalForm'
 import { emptySchema } from '@/types/approvalForm'
 import type { ApprovalTemplate } from '@/lib/management/types'
@@ -193,92 +195,21 @@ export default function ApprovalFormsAdminPage() {
         <div className={styles.loading}>불러오는 중...</div>
       ) : (
         <div className={styles.body}>
-          {/* 좌: 카테고리 */}
-          <aside className={styles.sidebar}>
-            <div className={styles.sidebarHead}>
-              <span>카테고리</span>
-              <button className={styles.iconBtn} onClick={addCategory} type="button">+ 추가</button>
-            </div>
-            <div className={styles.sidebarBody}>
-              <div
-                className={`${styles.catItem}${selectedCategoryId === null ? ' ' + styles.catItemActive : ''}`}
-                onClick={() => setSelectedCategoryId(null)}
-              >
-                <span>전체</span>
-              </div>
-              {categories.map((c) => (
-                <div
-                  key={c.id}
-                  className={`${styles.catItem}${selectedCategoryId === c.id ? ' ' + styles.catItemActive : ''}`}
-                  onClick={() => setSelectedCategoryId(c.id)}
-                >
-                  <span>{c.name}</span>
-                  <span className={styles.catActions}>
-                    <button
-                      className={styles.iconBtn}
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); renameCategory(c) }}
-                    >수정</button>
-                    <button
-                      className={styles.iconBtn}
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); deleteCategory(c) }}
-                    >삭제</button>
-                  </span>
-                </div>
-              ))}
-            </div>
-          </aside>
-
-          {/* 중: 양식 목록 */}
-          <main className={styles.main}>
-            <div className={styles.mainHead}>
-              <h2 className={styles.mainTitle}>
-                {selectedCategoryId
-                  ? categories.find((c) => c.id === selectedCategoryId)?.name ?? '양식'
-                  : '전체 양식'}
-              </h2>
-              <button
-                className={`${styles.btn} ${styles.btnPrimary}`}
-                onClick={createNewTemplate}
-                type="button"
-              >+ 양식 추가</button>
-            </div>
-            <div className={styles.mainBody}>
-              {templates.length === 0 ? (
-                <div className={styles.emptyState}>등록된 양식이 없습니다.</div>
-              ) : (
-                <table className={styles.formTable}>
-                  <thead>
-                    <tr>
-                      <th>양식명</th>
-                      <th>문서 코드</th>
-                      <th>필드 수</th>
-                      <th>상태</th>
-                      <th>수정일</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {templates.map((t) => (
-                      <tr key={t.id} onClick={() => openTemplate(t)}>
-                        <td>{t.name}</td>
-                        <td style={{ color: '#6b7280', fontFamily: 'monospace' }}>{t.document_type}</td>
-                        <td>{t.schema?.blocks?.length ?? 0}</td>
-                        <td>
-                          <span className={`${styles.statusBadge} ${t.is_active ? styles.statusActive : styles.statusInactive}`}>
-                            {t.is_active ? '활성' : '비활성'}
-                          </span>
-                        </td>
-                        <td style={{ color: '#6b7280', fontSize: 12 }}>
-                          {new Date(t.updated_at).toLocaleDateString('ko-KR')}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </main>
+          <CategoryTree
+            categories={categories}
+            selectedId={selectedCategoryId}
+            onSelect={setSelectedCategoryId}
+            onAdd={addCategory}
+            onRename={renameCategory}
+            onDelete={deleteCategory}
+          />
+          <FormList
+            templates={templates}
+            selectedCategoryId={selectedCategoryId}
+            categories={categories}
+            onCreate={createNewTemplate}
+            onOpen={openTemplate}
+          />
         </div>
       )}
     </div>
