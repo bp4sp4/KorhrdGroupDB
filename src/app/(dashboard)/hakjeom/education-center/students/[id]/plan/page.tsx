@@ -577,6 +577,11 @@ export default function PlanPage() {
           }
         }
       }
+      // center 미설정 학기에 첫 번째 등록교육원 자동 적용
+      const defaultCenter = (studentData?.education_center_name ?? '').split(',').map(s => s.trim()).filter(Boolean)[0];
+      if (defaultCenter) {
+        finalSemesters = finalSemesters.map(s => s.center ? s : { ...s, center: defaultCenter });
+      }
       setSemesters(finalSemesters);
       setLoading(false);
       setTimeout(() => { isInitialized.current = true; }, 0);
@@ -631,16 +636,54 @@ export default function PlanPage() {
   // ── 교육원별 학점 분배 ────────────────────────────────────────
   const centerCreditsList = useMemo(() => {
     if (!student) return [] as { name: string; used: number; limit: number | null }[];
-    const centers = (student.education_center_name ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+    const registeredCenters = (student.education_center_name ?? '').split(',').map(s => s.trim()).filter(Boolean);
     const limit = getCenterCreditLimit(student.education_level);
-    if (centers.length === 0) return [] as { name: string; used: number; limit: number | null }[];
-    let remaining = totalCredits;
-    return centers.map((name) => {
-      const used = limit !== null ? Math.min(remaining, limit) : remaining;
-      remaining = limit !== null ? Math.max(0, remaining - limit) : 0;
-      return { name, used, limit };
+    if (registeredCenters.length === 0) return [] as { name: string; used: number; limit: number | null }[];
+
+    // 그룹 빌드 (semester 순서 유지)
+    const groups = new Map<string, typeof semesters[number][]>();
+    semesters.forEach(s => {
+      const key = `${s.year}-${s.term}`;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(s);
     });
-  }, [student, totalCredits]);
+
+    // 그룹별 학점 합산
+    const groupCreditMap = new Map<string, number>();
+    groups.forEach((groupSems, key) => {
+      const cred = groupSems.reduce((sum, s) =>
+        sum + (semesterSubjects[s.id] ?? []).reduce((cs, sid) => {
+          const subj = subjects.find(sub => sub.id === sid);
+          return cs + (subj?.credits ?? 0);
+        }, 0), 0);
+      groupCreditMap.set(key, cred);
+    });
+
+    // 그룹별 center 귀속 → 교육원별 학점 누산
+    const creditMap = new Map<string, number>();
+    registeredCenters.forEach(c => creditMap.set(c, 0));
+
+    let cumBefore = 0;
+    groups.forEach((groupSems, key) => {
+      const explicit = groupSems[0]?.center && groupSems[0].center !== '__custom__' ? groupSems[0].center : undefined;
+      let centerName: string;
+      if (explicit) {
+        centerName = explicit;
+      } else if (limit !== null) {
+        const idx = Math.min(Math.floor(cumBefore / limit), registeredCenters.length - 1);
+        centerName = registeredCenters[idx];
+      } else {
+        centerName = registeredCenters[0];
+      }
+      const groupCredits = groupCreditMap.get(key) ?? 0;
+      creditMap.set(centerName, (creditMap.get(centerName) ?? 0) + groupCredits);
+      cumBefore += groupCredits;
+    });
+
+    // 등록 교육원 + 직접 지정 교육원 모두 포함
+    const allCenters = Array.from(new Set([...registeredCenters, ...Array.from(creditMap.keys())]));
+    return allCenters.map(name => ({ name, used: creditMap.get(name) ?? 0, limit }));
+  }, [student, semesters, semesterSubjects, subjects]);
 
   // ── 과목 필터/그룹 ───────────────────────────────────────────
   const filteredSubjects = useMemo(() => {
