@@ -67,17 +67,21 @@ export async function GET(request: NextRequest) {
     }
 
     if (contact) {
-      const clean = contact.replace(/-/g, '')
-      let hyphenated = ''
-      if (/^\d{4,}$/.test(clean)) {
-        hyphenated = clean.length >= 10
-          ? `${clean.slice(0,3)}-${clean.slice(3,7)}-${clean.slice(7)}`
-          : `${clean.slice(0,3)}-${clean.slice(3)}`
-      }
-      if (hyphenated && hyphenated !== contact) {
-        query = query.or(`contact.ilike.%${contact}%,contact.ilike.%${hyphenated}%`)
-      } else {
-        query = query.ilike('contact', `%${contact}%`)
+      // PostgREST .or() 인젝션 방어: 숫자와 하이픈만 허용
+      const safeContact = contact.replace(/[^0-9-]/g, '').slice(0, 20)
+      if (safeContact) {
+        const clean = safeContact.replace(/-/g, '')
+        let hyphenated = ''
+        if (/^\d{4,}$/.test(clean)) {
+          hyphenated = clean.length >= 10
+            ? `${clean.slice(0,3)}-${clean.slice(3,7)}-${clean.slice(7)}`
+            : `${clean.slice(0,3)}-${clean.slice(3)}`
+        }
+        if (hyphenated && hyphenated !== safeContact) {
+          query = query.or(`contact.ilike.%${safeContact}%,contact.ilike.%${hyphenated}%`)
+        } else {
+          query = query.ilike('contact', `%${safeContact}%`)
+        }
       }
     }
 
@@ -135,6 +139,14 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Supabase configuration missing' }, { status: 500 });
     }
 
+    // 결제 관련 필드는 master-admin/admin만 수정 가능
+    const { data: appUser } = await supabaseAdmin
+      .from('app_users')
+      .select('role')
+      .eq('username', user.email)
+      .maybeSingle();
+    const isFullAccess = appUser?.role === 'master-admin' || appUser?.role === 'admin';
+
     const body = await request.json();
     const {
       id,
@@ -156,6 +168,16 @@ export async function PATCH(request: NextRequest) {
 
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    }
+
+    // 결제 민감 필드 시도 시 권한 체크
+    const paymentFields = { payment_status, cash_receipt, amount, mul_no, pay_method };
+    const triedPaymentField = Object.entries(paymentFields).some(([, v]) => v !== undefined);
+    if (triedPaymentField && !isFullAccess) {
+      return NextResponse.json(
+        { error: '결제 관련 필드는 관리자만 수정할 수 있습니다.' },
+        { status: 403 }
+      );
     }
 
     const updateData: CertUpdatePayload = {};

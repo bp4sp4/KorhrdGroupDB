@@ -277,6 +277,20 @@ export async function PATCH(request: NextRequest) {
 
     // 일괄 담당자 배정
     if (Array.isArray(ids) && ids.length > 0 && manager !== undefined) {
+      // 일괄 담당자 변경은 master-admin/admin만 허용 (mass abuse 방지)
+      const { data: appUser } = await supabaseAdmin
+        .from('app_users')
+        .select('role')
+        .eq('username', user.email)
+        .maybeSingle()
+      const isFullAccess = appUser?.role === 'master-admin' || appUser?.role === 'admin'
+      if (!isFullAccess) {
+        return NextResponse.json(
+          { error: '담당자 일괄 배정은 관리자만 가능합니다.' },
+          { status: 403 }
+        )
+      }
+
       const { error } = await supabaseAdmin
         .from(TABLE)
         .update({ manager: manager || null })

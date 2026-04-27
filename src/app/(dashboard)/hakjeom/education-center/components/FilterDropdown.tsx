@@ -32,10 +32,12 @@ export default function FilterDropdown({ value, onChange, options, placeholder }
   const allOptions = [{ value: '', label: placeholder }, ...options];
   const selected = allOptions.find((o) => o.value === value) ?? allOptions[0];
 
+  const isActive = value !== '';
+
   return (
     <div className={styles.wrap} ref={ref}>
       <button
-        className={`${styles.trigger} ${open ? styles.trigger_open : ''}`}
+        className={`${styles.trigger} ${open ? styles.trigger_open : ''} ${isActive ? styles.trigger_active : ''}`}
         onClick={() => setOpen((o) => !o)}
         type="button"
       >

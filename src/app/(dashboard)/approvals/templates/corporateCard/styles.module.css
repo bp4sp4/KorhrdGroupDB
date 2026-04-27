@@ -36,6 +36,14 @@
 .td_detail   { }
 .td_amount   { width: 90px; text-align: right; }
 
+
+.td_dept{
+  nav-up: auto;
+  gap: inherit;
+  box-sizing: border-box;
+  text-align: right;
+}
+
 /* Inputs */
 .input_full {
   color: rgb(17, 17, 17);

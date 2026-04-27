@@ -27,7 +27,13 @@ export async function GET(request: NextRequest) {
 
     if (resource) query = query.eq('resource', resource)
     if (action) query = query.eq('action', action)
-    if (search) query = query.or(`user_email.ilike.%${search}%,detail.ilike.%${search}%,resource_id.ilike.%${search}%`)
+    if (search) {
+      // PostgREST .or() 인젝션 방어: 특수문자 제거
+      const safeSearch = search.replace(/[,()*\\]/g, '').slice(0, 100)
+      if (safeSearch) {
+        query = query.or(`user_email.ilike.%${safeSearch}%,detail.ilike.%${safeSearch}%,resource_id.ilike.%${safeSearch}%`)
+      }
+    }
     if (from) query = query.gte('created_at', from)
     if (to) query = query.lte('created_at', to + 'T23:59:59')
 

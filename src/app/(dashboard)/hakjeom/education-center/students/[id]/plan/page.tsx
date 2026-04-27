@@ -73,6 +73,7 @@ interface Semester {
   class_number: number;  // 기수 (1, 2, 3...)
   label: string;
   months: string;
+  center?: string;
 }
 
 interface SemesterDates {
@@ -92,8 +93,8 @@ const YEAR_OPTIONS = Array.from({ length: 8 }, (_, i) => String(2023 + i)); // 2
 
 
 const INITIAL_SEMESTERS: Semester[] = [
-  { id: 0, year: '2025', term: 1, class_number: 1, label: '', months: '' },
-  { id: 1, year: '2025', term: 2, class_number: 1, label: '', months: '' },
+  { id: 0, year: '2026', term: 1, class_number: 1, label: '', months: '' },
+  { id: 1, year: '2026', term: 2, class_number: 1, label: '', months: '' },
 ];
 
 const TARGET_CREDITS  = 51;
@@ -340,8 +341,13 @@ export default function PlanPage() {
   const [dokaksaSearch, setDokaksaSearch] = useState('');
 
   const [showAddSemesterPopup, setShowAddSemesterPopup] = useState(false);
-  const [newSemesterForm, setNewSemesterForm] = useState({ year: '2025', term: 1 });
+  const [newSemesterForm, setNewSemesterForm] = useState({ year: '2026', term: 1, center: '' });
   const [yearDropdownOpen, setYearDropdownOpen] = useState(false);
+  const [detailCustomDraft, setDetailCustomDraft] = useState<string | null>(null);
+  const [showCenterEditPopup, setShowCenterEditPopup] = useState(false);
+  const [centerEditTarget, setCenterEditTarget] = useState<{ year: string; term: number; currentCenter: string } | null>(null);
+  const [centerEditDraft, setCenterEditDraft] = useState('');
+  const [centerEditCustomMode, setCenterEditCustomMode] = useState(false);
   const [showKisuPopup, setShowKisuPopup] = useState(false);
   const [newKisuNumber, setNewKisuNumber] = useState('');
   const [showCenterLimitPopup, setShowCenterLimitPopup] = useState(false);
@@ -767,7 +773,8 @@ export default function PlanPage() {
     const last  = semesters[semesters.length - 1];
     const nextTerm = last.term === 2 ? 1 : 2;
     const nextYear = last.term === 2 ? String(Number(last.year) + 1) : last.year;
-    setNewSemesterForm({ year: nextYear, term: nextTerm });
+    const registeredCenters = (student?.education_center_name ?? '').split(',').map(s => s.trim()).filter(Boolean);
+    setNewSemesterForm({ year: nextYear, term: nextTerm, center: registeredCenters[0] ?? '' });
     setShowAddSemesterPopup(true);
   }
 
@@ -782,10 +789,21 @@ export default function PlanPage() {
     const newId = (semesters[semesters.length - 1]?.id ?? -1) + 1;
     const sameGroup = semesters.filter(s => s.year === newSemesterForm.year && s.term === newSemesterForm.term);
     const classNumber = sameGroup.length + 1;
-    setSemesters((prev) => [...prev, { id: newId, year: newSemesterForm.year, term: newSemesterForm.term, class_number: classNumber, label: '', months: '' }]);
+    const centerVal = (newSemesterForm.center && newSemesterForm.center !== '__custom__') ? newSemesterForm.center : undefined;
+    setSemesters((prev) => [...prev, { id: newId, year: newSemesterForm.year, term: newSemesterForm.term, class_number: classNumber, label: '', months: '', center: centerVal }]);
     setSemesterDates((prev) => ({ ...prev, [newId]: getDefaultDates(newSemesterForm.year, newSemesterForm.term) }));
     setSelectedSemester(newId);
     setShowAddSemesterPopup(false);
+  }
+
+  function handleGroupCenterChange(groupYear: string, groupTerm: number, center: string) {
+    setSemesters((prev) =>
+      prev.map((s) =>
+        s.year === groupYear && s.term === groupTerm
+          ? { ...s, center: center || undefined }
+          : s
+      )
+    );
   }
 
   function handleDeleteSemester(semId: number) {
@@ -2148,10 +2166,16 @@ export default function PlanPage() {
               // 각 그룹 시작 시점 누적 학점 → 교육원 인덱스 결정
               const groupCenterMap = new Map<string, { name: string; idx: number }>();
               let cumBefore = 0;
-              groups.forEach((_, key) => {
+              groups.forEach((groupSems, key) => {
                 if (eduCenters.length > 0 && centerLimit !== null) {
-                  const idx = Math.min(Math.floor(cumBefore / centerLimit), eduCenters.length - 1);
-                  groupCenterMap.set(key, { name: eduCenters[idx], idx });
+                  const explicitCenter = groupSems[0]?.center && groupSems[0].center !== '__custom__' ? groupSems[0].center : undefined;
+                  if (explicitCenter) {
+                    const idx = eduCenters.indexOf(explicitCenter);
+                    groupCenterMap.set(key, { name: explicitCenter, idx: idx >= 0 ? idx : 0 });
+                  } else {
+                    const idx = Math.min(Math.floor(cumBefore / centerLimit), eduCenters.length - 1);
+                    groupCenterMap.set(key, { name: eduCenters[idx], idx });
+                  }
                 }
                 cumBefore += groupCreditMap.get(key) ?? 0;
               });
@@ -2185,28 +2209,45 @@ export default function PlanPage() {
                       >
                         <div className={styles.tab_top_row}>
                           <span className={styles.tab_year}>{String(rep.year).slice(2)}년{totalCount > 0 ? ` · ${totalCount}과목` : ''}</span>
-                          {semesters.length > groupSems.length && (
+                          <div className={styles.tab_action_group}>
                             <span
-                              className={styles.tab_delete_btn}
-                              onClick={(e) => { e.stopPropagation(); groupSems.forEach(s => handleDeleteSemester(s.id)); }}
+                              className={styles.tab_edit_btn}
                               role="button"
-                              aria-label="학기 삭제"
-                            >
-                              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                              </svg>
-                            </span>
-                          )}
+                              aria-label="교육원 편집"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const cur = rep.center && rep.center !== '__custom__' ? rep.center : (centerInfo?.name ?? '');
+                                setCenterEditTarget({ year: rep.year, term: rep.term, currentCenter: cur });
+                                const isRegistered = (student?.education_center_name ?? '').split(',').map(s => s.trim()).filter(Boolean).includes(cur);
+                                setCenterEditDraft(cur);
+                                setCenterEditCustomMode(!isRegistered && cur !== '');
+                                setShowCenterEditPopup(true);
+                              }}
+                            >수정</span>
+                            {semesters.length > groupSems.length && (
+                              <span
+                                className={styles.tab_delete_btn}
+                                onClick={(e) => { e.stopPropagation(); groupSems.forEach(s => handleDeleteSemester(s.id)); }}
+                                role="button"
+                                aria-label="학기 삭제"
+                              >
+                                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                                </svg>
+                              </span>
+                            )}
+                          </div>
                         </div>
                         <span className={styles.tab_term}>{rep.term}학기</span>
-                        {showCenterBadge && centerInfo && (
-                          <span
-                            className={styles.tab_center_badge}
-                            style={{ background: `${color}18`, color }}
-                          >
-                            {centerInfo.name}
-                          </span>
-                        )}
+                        {(() => {
+                          const displayCenter = (rep.center && rep.center !== '__custom__') ? rep.center : centerInfo?.name;
+                          if (!displayCenter) return null;
+                          return (
+                            <span className={styles.tab_center_name} style={{ color }}>
+                              {displayCenter}
+                            </span>
+                          );
+                        })()}
                       </button>
                     </div>
                   </Fragment>
@@ -2873,6 +2914,43 @@ export default function PlanPage() {
                   ))}
                 </div>
               </div>
+              {(() => {
+                const registeredCenters = (student?.education_center_name ?? '').split(',').map(s => s.trim()).filter(Boolean);
+                const isCustomMode = newSemesterForm.center === '__custom__' || (newSemesterForm.center !== '' && !registeredCenters.includes(newSemesterForm.center));
+                const customInputValue = newSemesterForm.center === '__custom__' ? '' : (isCustomMode ? newSemesterForm.center : '');
+                return (
+                  <div className={styles.popup_field}>
+                    <label className={styles.popup_label}>교육원</label>
+                    {registeredCenters.length > 0 && (
+                      <div className={styles.popup_radio_group}>
+                        {registeredCenters.map((c) => (
+                          <label key={c} className={`${styles.popup_radio} ${newSemesterForm.center === c ? styles.popup_radio_active : ''}`}>
+                            <input type="radio" name="semCenter" value={c} checked={newSemesterForm.center === c}
+                              onChange={() => setNewSemesterForm((f) => ({ ...f, center: c }))} />{c}
+                          </label>
+                        ))}
+                        <label className={`${styles.popup_radio} ${isCustomMode ? styles.popup_radio_active : ''}`}>
+                          <input type="radio" name="semCenter" value="__custom__" checked={isCustomMode}
+                            onChange={() => setNewSemesterForm((f) => ({ ...f, center: '__custom__' }))} />직접 입력
+                        </label>
+                      </div>
+                    )}
+                    {(registeredCenters.length === 0 || isCustomMode) && (
+                      <input
+                        className={styles.popup_input}
+                        placeholder="교육원 이름 입력"
+                        value={customInputValue}
+                        autoFocus
+                        onChange={(e) => setNewSemesterForm((f) => ({ ...f, center: e.target.value }))}
+                        list="sem_center_suggestions"
+                      />
+                    )}
+                    <datalist id="sem_center_suggestions">
+                      {DEFAULT_CENTERS.filter(c => !registeredCenters.includes(c)).map(c => <option key={c} value={c} />)}
+                    </datalist>
+                  </div>
+                );
+              })()}
             </div>
             <div className={styles.popup_footer}>
               <button className={styles.popup_cancel} onClick={() => setShowAddSemesterPopup(false)}>취소</button>
@@ -2881,6 +2959,66 @@ export default function PlanPage() {
           </div>
         </div>
       )}
+
+      {/* ── 교육원 편집 팝업 ── */}
+      {showCenterEditPopup && centerEditTarget && (() => {
+        const registeredCenters = (student?.education_center_name ?? '').split(',').map(s => s.trim()).filter(Boolean);
+        const isCustomMode = centerEditCustomMode || (centerEditDraft !== '' && !registeredCenters.includes(centerEditDraft));
+        const handleConfirm = () => {
+          const finalCenter = centerEditDraft.trim();
+          if (finalCenter) {
+            handleGroupCenterChange(centerEditTarget.year, centerEditTarget.term, finalCenter);
+          }
+          setShowCenterEditPopup(false);
+        };
+        return (
+          <div className={styles.popup_overlay} onClick={() => setShowCenterEditPopup(false)}>
+            <div className={styles.popup} onClick={(e) => e.stopPropagation()}>
+              <div className={styles.popup_header}>
+                <span className={styles.popup_title}>{centerEditTarget.year}년 {centerEditTarget.term}학기 교육원</span>
+                <button className={styles.popup_close} onClick={() => setShowCenterEditPopup(false)}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+              <div className={styles.popup_body}>
+                <div className={styles.popup_field}>
+                  <label className={styles.popup_label}>교육원 선택</label>
+                  <div className={styles.popup_radio_group}>
+                    {registeredCenters.map((c) => (
+                      <label key={c} className={`${styles.popup_radio} ${!centerEditCustomMode && centerEditDraft === c ? styles.popup_radio_active : ''}`}>
+                        <input type="radio" name="centerEdit" value={c} checked={!centerEditCustomMode && centerEditDraft === c}
+                          onChange={() => { setCenterEditDraft(c); setCenterEditCustomMode(false); }} />{c}
+                      </label>
+                    ))}
+                    <label className={`${styles.popup_radio} ${isCustomMode ? styles.popup_radio_active : ''}`}>
+                      <input type="radio" name="centerEdit" value="__custom__" checked={isCustomMode}
+                        onChange={() => { setCenterEditCustomMode(true); setCenterEditDraft(''); }} />직접 입력
+                    </label>
+                  </div>
+                  {isCustomMode && (
+                    <input
+                      className={styles.popup_input}
+                      placeholder="교육원 이름 입력"
+                      value={centerEditDraft}
+                      autoFocus
+                      onChange={(e) => setCenterEditDraft(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleConfirm(); }}
+                      list="center_edit_suggestions"
+                    />
+                  )}
+                  <datalist id="center_edit_suggestions">
+                    {DEFAULT_CENTERS.filter(c => !registeredCenters.includes(c)).map(c => <option key={c} value={c} />)}
+                  </datalist>
+                </div>
+              </div>
+              <div className={styles.popup_footer}>
+                <button className={styles.popup_cancel} onClick={() => setShowCenterEditPopup(false)}>취소</button>
+                <button className={styles.popup_confirm} onClick={handleConfirm} disabled={!centerEditDraft.trim()}>확인</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ── 기수 추가 팝업 ── */}
       {showKisuPopup && (

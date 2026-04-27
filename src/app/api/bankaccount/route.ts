@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/auth/requireAuth'
+import { requireManagementAccess } from '@/lib/auth/managementAccess'
 import { easyFinBankService, CORP_NUM } from '@/lib/popbill'
 
 function callPopbill<T>(fn: (resolve: (v: T) => void, reject: (e: { message: string }) => void) => void): Promise<NextResponse> {
@@ -12,8 +12,8 @@ function callPopbill<T>(fn: (resolve: (v: T) => void, reject: (e: { message: str
 }
 
 export async function GET(request: NextRequest) {
-  const { errorResponse } = await requireAuth()
-  if (errorResponse) return errorResponse
+  const access = await requireManagementAccess('bankaccount')
+  if (!access.ok) return access.response
 
   const { searchParams } = new URL(request.url)
   const action = searchParams.get('action')
@@ -48,14 +48,17 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const { errorResponse } = await requireAuth()
-  if (errorResponse) return errorResponse
+  const access = await requireManagementAccess('bankaccount')
+  if (!access.ok) return access.response
 
   const body = await request.json()
   const { action, bankCode, accountNumber, startDate, endDate } = body
 
   if (action === 'requestJob') {
-    console.log('[requestJob]', { CORP_NUM, bankCode, accountNumber, startDate, endDate })
+    const maskedAccount = accountNumber
+      ? `${String(accountNumber).slice(0, 4)}****${String(accountNumber).slice(-4)}`
+      : null
+    console.log('[requestJob]', { bankCode, accountNumber: maskedAccount, startDate, endDate })
     return callPopbill((ok, err) =>
       easyFinBankService.requestJob(CORP_NUM, bankCode, accountNumber, startDate, endDate, '', ok, err)
     )

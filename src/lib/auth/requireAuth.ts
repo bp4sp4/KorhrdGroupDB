@@ -3,8 +3,6 @@ import { createClient } from '@/lib/supabase/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import type { User } from '@supabase/supabase-js'
 
-const MASTER_ADMIN_EMAIL = 'bp4sp4@naver.com'
-
 type AuthResult =
   | { user: User; errorResponse: null }
   | { user: null; errorResponse: NextResponse }
@@ -59,24 +57,27 @@ export async function requireAuthFull(): Promise<AuthFullResult> {
     .eq('username', user.email)
     .maybeSingle()
 
-  if (user.email === MASTER_ADMIN_EMAIL) {
+  // master-admin 판정은 DB role 컬럼 기반
+  if (appUser?.role === 'master-admin') {
     return {
       user,
       appUser: {
-        id: appUser?.id ?? 0,
-        display_name: appUser?.display_name ?? user.email,
+        id: appUser.id,
+        display_name: appUser.display_name ?? user.email ?? null,
         role: 'master-admin',
-        position_id: appUser?.position_id ?? null,
-        department_id: appUser?.department_id ?? null,
+        position_id: appUser.position_id ?? null,
+        department_id: appUser.department_id ?? null,
       },
       errorResponse: null,
     }
   }
 
-  // app_users에 없으면 admin 권한으로 fallback (항상 전체 열람)
+  // app_users에 없으면 guest 권한으로 fallback (모든 섹션 차단)
+  // - 정상 등록된 사용자만 admin/master-admin/일반 권한 부여
+  // - auth.users에는 있지만 app_users 미등록 사용자는 로그인은 되지만 데이터 접근 차단
   return {
     user,
-    appUser: appUser ?? { id: 0, display_name: null, role: 'admin', position_id: null, department_id: null },
+    appUser: appUser ?? { id: 0, display_name: null, role: 'guest', position_id: null, department_id: null },
     errorResponse: null,
   }
 }

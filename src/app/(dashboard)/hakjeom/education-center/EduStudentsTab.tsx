@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import * as XLSX from 'xlsx';
 import { createClient } from '@/lib/supabase/client';
@@ -9,6 +9,8 @@ import StudentModal from './components/StudentModal';
 import FilterDropdown from './components/FilterDropdown';
 import EduSubjectsTab from './EduSubjectsTab';
 import EduManagersTab from './EduManagersTab';
+import { DateRangeCalendar } from '@/components/DateRangeCalendar';
+import type { DateRange } from '@/components/DateRangeCalendar';
 import type { EduStudent, EduCourse, EduEducationCenter, EduStudentFormData, EduMonthlyEnrollment } from './types';
 import styles from './EduStudentsTab.module.css';
 
@@ -109,6 +111,47 @@ export default function EduStudentsTab({ isActive }: Props) {
   const [filterManager, setFilterManager] = useState('');
   const [filterCourse, setFilterCourse] = useState('');
 
+  const [startDate, setStartDate] = useState(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+  });
+  const [endDate, setEndDate] = useState(() => {
+    const now = new Date();
+    const last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    return `${last.getFullYear()}-${String(last.getMonth() + 1).padStart(2, '0')}-${String(last.getDate()).padStart(2, '0')}`;
+  });
+  const [dateRangeOpen, setDateRangeOpen] = useState(false);
+  const dateRangeRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!dateRangeOpen) return;
+    function handleOutside(e: MouseEvent) {
+      if (dateRangeRef.current && !dateRangeRef.current.contains(e.target as Node)) {
+        setDateRangeOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, [dateRangeOpen]);
+
+  function ymd(d: Date) {
+    return d.toISOString().slice(0, 10);
+  }
+
+  const dateRangeValue: DateRange | undefined = (startDate || endDate)
+    ? {
+        from: startDate ? new Date(startDate + 'T00:00:00') : undefined,
+        to: endDate ? new Date(endDate + 'T00:00:00') : undefined,
+      }
+    : undefined;
+
+  const dateRangeLabel = (() => {
+    if (startDate && endDate) return `${startDate} ~ ${endDate}`;
+    if (startDate) return `${startDate} ~`;
+    if (endDate) return `~ ${endDate}`;
+    return '등록일 기간 선택';
+  })();
+
   const fetchAll = useCallback(async () => {
     setLoading(true);
     const [studentsRes, coursesRes, centersRes, managersRes] = await Promise.all([
@@ -182,6 +225,11 @@ export default function EduStudentsTab({ isActive }: Props) {
     if (filterBatch && !s.class_start?.split(',').map((v) => v.trim()).includes(filterBatch)) return false;
     if (filterManager && s.manager_name !== filterManager) return false;
     if (filterCourse && String(s.course_id) !== filterCourse) return false;
+    if (startDate || endDate) {
+      const d = new Date(s.registered_at);
+      if (startDate && d < new Date(startDate + 'T00:00:00')) return false;
+      if (endDate && d > new Date(endDate + 'T23:59:59')) return false;
+    }
     return true;
   });
 
@@ -346,6 +394,35 @@ export default function EduStudentsTab({ isActive }: Props) {
           </svg>
           <input className={styles.filter_search} placeholder="이름 또는 전화번호로 검색..."
             value={search} onChange={(e) => setSearch(e.target.value)} />
+        </div>
+
+        <div ref={dateRangeRef} className={styles.dateRangeWrap}>
+          <button
+            type="button"
+            className={`${styles.dateRangeBtn} ${(startDate || endDate) ? styles.dateRangeBtn_active : ''}`}
+            onClick={() => setDateRangeOpen(v => !v)}
+          >
+            {dateRangeLabel}
+          </button>
+          {dateRangeOpen && (
+            <div className={styles.dateRangePopover}>
+              <DateRangeCalendar
+                variant="month"
+                value={dateRangeValue}
+                onChange={(r) => {
+                  setStartDate(r?.from ? ymd(r.from) : '');
+                  setEndDate(r?.to ? ymd(r.to) : '');
+                  setStudentPage(1);
+                }}
+                onConfirm={() => setDateRangeOpen(false)}
+                onReset={() => {
+                  setStartDate('');
+                  setEndDate('');
+                  setStudentPage(1);
+                }}
+              />
+            </div>
+          )}
         </div>
 
         <FilterDropdown

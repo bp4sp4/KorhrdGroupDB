@@ -4,8 +4,6 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import { completePermissions, getEffectivePermissions, getEffectivePermissionsFromBase, getFullAccessPermissions, getPermissionScope, normalizePermissionRecords } from '@/lib/auth/permissions';
 import { getRevenueOwnAccessibleDivisions } from '@/lib/auth/managementAccess';
 
-const MASTER_ADMIN_EMAIL = 'bp4sp4@naver.com';
-
 // GET: 현재 로그인한 유저의 role 정보 조회
 export async function GET() {
   try {
@@ -45,9 +43,9 @@ export async function GET() {
       departmentName = department?.name ?? null
     }
 
-    const effectiveRole = user.email === MASTER_ADMIN_EMAIL
-      ? 'master-admin'
-      : (appUser?.role ?? 'admin')
+    // master-admin 판정은 DB role 컬럼 기반
+    // app_users 미등록자는 guest 권한 (모든 섹션 차단)
+    const effectiveRole = appUser?.role ?? 'guest'
     const isFullAccess = effectiveRole === 'master-admin' || effectiveRole === 'admin'
 
     let permissions = isFullAccess ? getFullAccessPermissions() : []
@@ -110,7 +108,11 @@ export async function GET() {
       permissions,
       revenueOwnDivisions,
     });
-  } catch {
-    return NextResponse.json({ role: 'admin' });
+  } catch (err) {
+    console.error('[auth/me] Unexpected error:', err);
+    return NextResponse.json(
+      { error: '사용자 정보를 불러오지 못했습니다.' },
+      { status: 500 }
+    );
   }
 }

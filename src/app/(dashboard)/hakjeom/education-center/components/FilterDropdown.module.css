@@ -13,7 +13,7 @@
   border-radius: 8px;
   background: #FFFFFF;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 700;
   color: #191F28;
   cursor: pointer;
   white-space: nowrap;
@@ -24,6 +24,11 @@
 .trigger_open {
   border-color: #3182F6;
   background: #F0F7FF;
+}
+
+.trigger_active {
+  font-weight: 700;
+  color: #191F28;
 }
 
 .trigger:hover:not(.trigger_open) {

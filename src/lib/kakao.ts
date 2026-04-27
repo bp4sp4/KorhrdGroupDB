@@ -140,7 +140,8 @@ export async function sendSms({
   const senderClean = sender.replace(/-/g, '')
   const proxyUrl = process.env.PROXY_URL
   const proxySecret = process.env.PROXY_SECRET
-  console.log('[SMS] 전송 시도:', { sender: senderClean, type, receivers: list, byteLength, viaProxy: !!(proxyUrl && proxySecret) })
+  const maskPhone = (p: string) => p.length >= 8 ? `${p.slice(0, 3)}****${p.slice(-4)}` : '****'
+  console.log('[SMS] 전송 시도:', { sender: senderClean, type, receiverCount: list.length, receivers: list.map(maskPhone), byteLength, viaProxy: !!(proxyUrl && proxySecret) })
 
   const payload: Record<string, string> = {
     key,

@@ -1881,6 +1881,50 @@
   gap: 4px;
 }
 
+.tab_action_group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.tab_edit_btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 18px;
+  padding: 0 7px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 4px;
+  color: #9CA3AF;
+  background: transparent;
+  opacity: 0;
+  pointer-events: none;
+  cursor: pointer;
+  transition: opacity 0.15s, color 0.15s, background 0.15s;
+  white-space: nowrap;
+  margin-right: 4px;
+}
+
+.semester_tab_wrap:hover .tab_edit_btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.tab_edit_btn:hover {
+  color: #3182F6;
+  background: rgba(49, 130, 246, 0.1);
+}
+
+.tab_center_name {
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 90px;
+}
+
 .tab_term {
   font-size: 15px;
   font-weight: 700;
@@ -1950,6 +1994,105 @@
 }
 
 /* 기수별 날짜 블록 */
+.center_edit_row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  background: #F9FAFB;
+  border-radius: 10px;
+  border: 1px solid #E5E8EB;
+}
+
+.center_edit_label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #4E5968;
+  white-space: nowrap;
+  margin-right: 2px;
+}
+
+.center_edit_options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.center_edit_btn {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #4E5968;
+  background: #fff;
+  border: 1px solid #D1D6DB;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.center_edit_btn:hover {
+  border-color: #3182F6;
+  color: #3182F6;
+}
+
+.center_edit_btn_active {
+  background: #EBF3FF;
+  border-color: #3182F6;
+  color: #3182F6;
+  font-weight: 600;
+}
+
+.center_edit_input {
+  height: 30px;
+  padding: 0 10px;
+  font-size: 13px;
+  color: #191F28;
+  background: #fff;
+  border: 1.5px solid #3182F6;
+  border-radius: 8px;
+  outline: none;
+  min-width: 140px;
+}
+
+.center_edit_confirm_row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.center_edit_ok_btn {
+  height: 30px;
+  padding: 0 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  background: #3182F6;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.center_edit_ok_btn:hover {
+  background: #1A6EE8;
+}
+
+.center_edit_custom_name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #3182F6;
+  background: #EBF3FF;
+  border-radius: 6px;
+  padding: 3px 10px;
+}
+
 .kisu_date_block {
   margin-bottom: 8px;
   border-radius: 10px;

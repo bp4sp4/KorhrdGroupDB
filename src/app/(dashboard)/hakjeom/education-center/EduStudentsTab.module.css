@@ -445,6 +445,48 @@
   color: #8B95A1;
 }
 
+.dateRangeWrap {
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.dateRangeBtn {
+  height: 38px;
+  padding: 0 14px;
+  min-width: 200px;
+  text-align: left;
+  border: 1px solid #E5E8EB;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 13px;
+  color: #191F28;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s, background 120ms ease;
+  white-space: nowrap;
+}
+
+.dateRangeBtn:hover {
+  background: #f9fafb;
+}
+
+.dateRangeBtn:focus {
+  border-color: #3182F6;
+}
+
+.dateRangeBtn_active {
+  font-weight: 700;
+  color: #191F28;
+}
+
+.dateRangePopover {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 40;
+}
+
 .add_btn {
   height: 38px;
   padding: 0 16px;
