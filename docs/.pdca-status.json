@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-04-28T01:45:45.324Z",
+  "lastUpdated": "2026-04-28T01:58:24.702Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -152,7 +152,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:18:14.828Z",
-        "lastUpdated": "2026-04-28T01:29:13.959Z"
+        "lastUpdated": "2026-04-28T01:58:05.145Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(auth)/login/page.tsx"
     },
@@ -321,9 +321,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T09:41:18.714Z",
-        "lastUpdated": "2026-04-28T01:45:16.758Z"
+        "lastUpdated": "2026-04-28T01:58:24.702Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/lib/qr-sessions.ts"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/proxy.ts"
     },
     "scripts": {
       "phase": "do",
@@ -1738,7 +1738,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-28T01:21:45.477Z",
-        "lastUpdated": "2026-04-28T01:45:45.324Z"
+        "lastUpdated": "2026-04-28T01:52:47.572Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/auth/qr-verify/[token]/route.ts"
     },
@@ -1764,7 +1764,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-28T01:45:45.324Z"
+    "lastActivity": "2026-04-28T01:58:24.702Z"
   },
   "history": [
     {
@@ -22878,6 +22878,30 @@
     {
       "timestamp": "2026-04-28T01:45:45.324Z",
       "feature": "[token]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T01:52:33.927Z",
+      "feature": "[token]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T01:52:47.572Z",
+      "feature": "[token]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T01:58:05.145Z",
+      "feature": "login",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T01:58:24.702Z",
+      "feature": "hakjeom-bank-web",
       "phase": "do",
       "action": "updated"
     }

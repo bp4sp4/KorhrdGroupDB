@@ -3,8 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "cross-env NODE_OPTIONS=--max-http-header-size=32768 next dev -H 0.0.0.0",
-    "dev:ip": "node -e \"const o=require('os').networkInterfaces();Object.values(o).flat().filter(i=>i.family==='IPv4'&&!i.internal).forEach(i=>console.log('http://'+i.address+':3000'))\"",
+    "dev": "cross-env NODE_OPTIONS=--max-http-header-size=32768 next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
@@ -24,7 +23,6 @@
     "motion": "^12.38.0",
     "next": "16.1.6",
     "popbill": "^1.64.0",
-    "qrcode.react": "^4.2.0",
     "react": "19.2.3",
     "react-day-picker": "^9.14.0",
     "react-dom": "19.2.3",
