@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/auth/requireAuth'
+import { requireMasterAdmin } from '@/lib/auth/requireAuth'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 
+// 직급 권한 부여는 master-admin 전용
 export async function POST(request: NextRequest) {
-  const { errorResponse } = await requireAdmin()
+  const { errorResponse } = await requireMasterAdmin()
   if (errorResponse) return errorResponse
 
   const body = await request.json() as {
@@ -27,7 +28,8 @@ export async function POST(request: NextRequest) {
     )
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('[admin/position-permissions POST]', error)
+    return NextResponse.json({ error: '권한 저장 중 오류가 발생했습니다.' }, { status: 500 })
   }
 
   return NextResponse.json({ success: true })

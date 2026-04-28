@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-04-28T01:58:24.702Z",
+  "lastUpdated": "2026-04-28T03:39:45.018Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -126,7 +126,8 @@
     "test-sms",
     "qr-session",
     "[token]",
-    "qr-session-open"
+    "qr-session-open",
+    "position-permissions"
   ],
   "primaryFeature": "supabase",
   "features": {
@@ -191,7 +192,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:30:16.038Z",
-        "lastUpdated": "2026-04-28T00:59:55.652Z"
+        "lastUpdated": "2026-04-28T02:28:47.929Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/hakjeom/page.tsx"
     },
@@ -295,7 +296,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T06:09:16.436Z",
-        "lastUpdated": "2026-04-24T07:19:31.949Z"
+        "lastUpdated": "2026-04-28T03:08:43.508Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/admin/page.tsx"
     },
@@ -451,7 +452,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-18T09:51:47.807Z",
-        "lastUpdated": "2026-04-27T09:43:48.466Z"
+        "lastUpdated": "2026-04-28T03:00:18.862Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/lib/auth/requireAuth.ts"
     },
@@ -971,7 +972,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-01T07:06:44.615Z",
-        "lastUpdated": "2026-04-24T07:18:49.448Z"
+        "lastUpdated": "2026-04-28T03:39:45.018Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/admin/accounts/[id]/route.ts"
     },
@@ -1062,7 +1063,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-01T08:04:40.004Z",
-        "lastUpdated": "2026-04-24T07:18:43.779Z"
+        "lastUpdated": "2026-04-28T02:58:32.048Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/admin/accounts/route.ts"
     },
@@ -1075,7 +1076,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-01T08:40:24.529Z",
-        "lastUpdated": "2026-04-03T07:40:45.513Z"
+        "lastUpdated": "2026-04-28T02:53:05.789Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/admin/permissions/route.ts"
     },
@@ -1517,9 +1518,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-20T08:01:43.414Z",
-        "lastUpdated": "2026-04-27T03:06:11.414Z"
+        "lastUpdated": "2026-04-28T02:07:06.877Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/hakjeom/education-center/EduStudentsTab.tsx"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/hakjeom/education-center/components/StudentModal.tsx"
     },
     "allcare-check": {
       "phase": "do",
@@ -1754,6 +1755,19 @@
         "lastUpdated": "2026-04-28T01:45:23.012Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/auth/qr-session-open/route.ts"
+    },
+    "position-permissions": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-28T02:53:16.990Z",
+        "lastUpdated": "2026-04-28T02:53:22.510Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/admin/position-permissions/route.ts"
     }
   },
   "pipeline": {
@@ -1764,7 +1778,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-28T01:58:24.702Z"
+    "lastActivity": "2026-04-28T03:39:45.018Z"
   },
   "history": [
     {
@@ -22902,6 +22916,174 @@
     {
       "timestamp": "2026-04-28T01:58:24.702Z",
       "feature": "hakjeom-bank-web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T02:06:06.076Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T02:06:22.644Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T02:06:29.591Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T02:06:42.168Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T02:06:54.640Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T02:07:06.877Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T02:24:54.786Z",
+      "feature": "[id]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T02:25:02.994Z",
+      "feature": "[id]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T02:25:18.537Z",
+      "feature": "[id]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T02:27:36.776Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T02:27:50.055Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T02:28:41.100Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T02:28:47.929Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T02:52:05.408Z",
+      "feature": "auth",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T02:52:19.317Z",
+      "feature": "[id]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T02:52:26.197Z",
+      "feature": "accounts",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T02:52:38.487Z",
+      "feature": "accounts",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T02:52:51.824Z",
+      "feature": "permissions",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T02:53:05.789Z",
+      "feature": "permissions",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T02:53:16.990Z",
+      "feature": "position-permissions",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T02:53:22.510Z",
+      "feature": "position-permissions",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T02:58:24.470Z",
+      "feature": "auth",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T02:58:32.048Z",
+      "feature": "accounts",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T03:00:18.862Z",
+      "feature": "auth",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T03:08:25.091Z",
+      "feature": "[id]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T03:08:33.986Z",
+      "feature": "admin",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T03:08:43.508Z",
+      "feature": "admin",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T03:39:45.018Z",
+      "feature": "[id]",
       "phase": "do",
       "action": "updated"
     }

@@ -1146,6 +1146,22 @@ function AccountsTab() {
     if (res.ok) fetchItems()
   }
 
+  const handleDelete = async (item: Account) => {
+    const ok = window.confirm(
+      `정말 "${item.display_name ?? item.username}" 계정을 삭제하시겠습니까?\n\n` +
+      `이 작업은 되돌릴 수 없으며, Supabase 인증 정보도 함께 삭제됩니다.`
+    )
+    if (!ok) return
+
+    const res = await fetch(`/api/admin/accounts/${item.id}`, { method: 'DELETE' })
+    if (res.ok) {
+      fetchItems()
+    } else {
+      const err = await res.json().catch(() => ({}))
+      alert(err.error ?? '계정 삭제에 실패했습니다.')
+    }
+  }
+
   const positionMap = Object.fromEntries(positions.map(p => [p.id, p.name]))
   const deptMap = Object.fromEntries(departments.map(d => [d.id, d.name]))
 
@@ -1209,6 +1225,9 @@ function AccountsTab() {
                           <RotateCcw size={12} /> 활성화
                         </button>
                       )}
+                      <button className={styles.btnDelete} onClick={() => handleDelete(item)}>
+                        <Trash2 size={12} /> 삭제
+                      </button>
                     </div>
                   </td>
                 </tr>

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdmin } from '@/lib/auth/requireAuth'
+import { requireAdmin, requireMasterAdmin } from '@/lib/auth/requireAuth'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { completePermissions, getBasePermissions, mergePermissions, normalizePermissionRecords } from '@/lib/auth/permissions'
 
@@ -77,8 +77,9 @@ export async function GET() {
 }
 
 // POST: 특정 유저의 섹션 권한 upsert (clear_override=true면 삭제)
+// 권한 부여는 master-admin 전용 (admin이 자신/타인에게 임의 권한 부여 방지)
 export async function POST(request: NextRequest) {
-  const { errorResponse } = await requireAdmin()
+  const { errorResponse } = await requireMasterAdmin()
   if (errorResponse) return errorResponse
 
   const body = await request.json() as {

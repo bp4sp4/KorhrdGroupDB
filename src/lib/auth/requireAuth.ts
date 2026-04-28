@@ -51,11 +51,45 @@ export async function requireAuthFull(): Promise<AuthFullResult> {
     }
   }
 
-  const { data: appUser } = await supabaseAdmin
+  // 보안 강화: auth_user_id (UUID, 불변) 우선 매칭
+  // fallback: username(이메일)로 매칭 후 auth_user_id 자동 백필
+  let appUser = null as null | {
+    id: number
+    display_name: string | null
+    role: string
+    position_id: string | null
+    department_id: string | null
+    auth_user_id: string | null
+  }
+
+  // 1차: auth_user_id로 매칭 (가장 안전)
+  const byAuthId = await supabaseAdmin
     .from('app_users')
-    .select('id, display_name, role, position_id, department_id')
-    .eq('username', user.email)
+    .select('id, display_name, role, position_id, department_id, auth_user_id')
+    .eq('auth_user_id', user.id)
     .maybeSingle()
+
+  if (byAuthId.data) {
+    appUser = byAuthId.data
+  } else if (user.email) {
+    // 2차 fallback: username(이메일) 매칭 + auth_user_id 백필
+    const byUsername = await supabaseAdmin
+      .from('app_users')
+      .select('id, display_name, role, position_id, department_id, auth_user_id')
+      .eq('username', user.email)
+      .maybeSingle()
+
+    if (byUsername.data) {
+      appUser = byUsername.data
+      // 백필: auth_user_id가 비어있으면 채워넣음 (다음부터는 1차 매칭 성공)
+      if (!byUsername.data.auth_user_id) {
+        await supabaseAdmin
+          .from('app_users')
+          .update({ auth_user_id: user.id })
+          .eq('id', byUsername.data.id)
+      }
+    }
+  }
 
   // master-admin 판정은 DB role 컬럼 기반
   if (appUser?.role === 'master-admin') {
@@ -96,4 +130,31 @@ export async function requireAdmin(): Promise<AuthFullResult> {
   }
 
   return result
+}
+
+// master-admin 전용 (role 변경, 권한 부여 등 민감한 작업)
+export async function requireMasterAdmin(): Promise<AuthFullResult> {
+  const result = await requireAuthFull()
+  if (result.errorResponse) return result
+
+  if (result.appUser.role !== 'master-admin') {
+    return {
+      user: null,
+      appUser: null,
+      errorResponse: NextResponse.json(
+        { error: '최고 관리자 권한이 필요합니다.' },
+        { status: 403 }
+      ),
+    }
+  }
+
+  return result
+}
+
+// 허용된 role 화이트리스트 (UI ROLE_LABELS와 동기화 필요)
+export const ALLOWED_ROLES = ['master-admin', 'admin', 'mini-admin', 'staff', 'user', 'guest'] as const
+export type AllowedRole = typeof ALLOWED_ROLES[number]
+
+export function isValidRole(role: unknown): role is AllowedRole {
+  return typeof role === 'string' && (ALLOWED_ROLES as readonly string[]).includes(role)
 }

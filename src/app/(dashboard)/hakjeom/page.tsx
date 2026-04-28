@@ -132,7 +132,7 @@ const CERT_MAJOR_CATEGORIES = ['전체과정', '실버과정', '아동과정', '
 
 const COUNSEL_CHECK_OPTIONS = ['비용', '주변반대', '시간부족', '의지부족', '타교육원', '연락두절', '개인사정', '당장 불필요'];
 const REASON_OPTIONS = ['즉시취업', '이직', '미래준비', '취업'];
-const EDUCATION_OPTIONS = ['고등학교 졸업', '전문대 졸업', '대학교 재학', '대학교 중퇴', '대학교 졸업', '대학원 이상'];
+const EDUCATION_OPTIONS = ['고등학교졸업', '전문대졸', '대학교 졸업', '대학교중퇴', '대학원이상', '대학교졸업(외국)'] as const;
 const HAKJEOM_COURSE_OPTIONS = ['사회복지사', '아동학사', '평생교육사', '편입/대학원', '건강가정사', '청소년지도사', '보육교사', '심리상담사'];
 const CURRENT_SITUATION_OPTIONS = ['주부', '직장인', '자영업자', '대학생', '기타'];
 const REACTION_POINT_MAP: Record<string, string[]> = {
@@ -541,6 +541,76 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 
 // ─── 학점은행제 상세 패널 ────────────────────────────────────────────────────
 
+const EDUCATION_CUSTOM = '직접입력';
+
+function EducationSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const isPreset = (EDUCATION_OPTIONS as readonly string[]).includes(value);
+  const [open, setOpen] = useState(false);
+  const [customMode, setCustomMode] = useState(!!value && !isPreset);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const preset = (EDUCATION_OPTIONS as readonly string[]).includes(value);
+    setCustomMode(!!value && !preset);
+  }, [value]);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  const displayValue = customMode ? EDUCATION_CUSTOM : (value || '선택');
+
+  return (
+    <div className={styles.eduSelectWrap} ref={ref}>
+      <button
+        type="button"
+        className={`${styles.eduSelectTrigger} ${value ? styles.eduSelectActive : ''}`}
+        onClick={() => setOpen(o => !o)}
+      >
+        <span>{displayValue}</span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`${styles.eduSelectChevron} ${open ? styles.eduSelectChevronOpen : ''}`}>
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+      {open && (
+        <div className={styles.eduSelectDropdown}>
+          {EDUCATION_OPTIONS.map(opt => (
+            <button
+              key={opt}
+              type="button"
+              className={`${styles.eduSelectOption} ${value === opt ? styles.eduSelectOptionActive : ''}`}
+              onClick={() => { setCustomMode(false); onChange(opt); setOpen(false); }}
+            >
+              {opt}
+            </button>
+          ))}
+          <button
+            type="button"
+            className={`${styles.eduSelectOption} ${customMode ? styles.eduSelectOptionActive : ''}`}
+            onClick={() => { setCustomMode(true); onChange(''); setOpen(false); }}
+          >
+            {EDUCATION_CUSTOM}
+          </button>
+        </div>
+      )}
+      {customMode && (
+        <input
+          type="text"
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          placeholder="최종학력 직접 입력"
+          className={`${styles.input} ${styles.inputFull} ${styles.eduSelectCustomInput}`}
+          autoFocus
+        />
+      )}
+    </div>
+  );
+}
+
 interface HakjeomDetailPanelProps {
   item: HakjeomConsultation;
   onClose: () => void;
@@ -780,12 +850,7 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic', cus
               {/* 최종학력 */}
               <div className={styles.detailFieldRow}>
                 <span className={styles.detailFieldLabel}>최종학력</span>
-                <input
-                  value={editEducation}
-                  onChange={e => setEditEducation(e.target.value)}
-                  placeholder="예) 대졸, 고졸"
-                  className={`${styles.input} ${styles.inputFull}`}
-                />
+                <EducationSelect value={editEducation} onChange={setEditEducation} />
               </div>
 
               {/* 희망과정 */}
