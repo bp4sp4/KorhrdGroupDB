@@ -4712,7 +4712,12 @@ export default function HakjeomPage() {
         const isFullAccess = data.role === 'admin' || data.role === 'master-admin';
         if (!isFullAccess) {
           const perm = data.permissions?.find((p: { section: string; allowed_tabs?: string[] | null }) => p.section === 'hakjeom');
-          setAllowedHakjeomTabs(perm?.allowed_tabs ?? null);
+          const raw: string[] | null = perm?.allowed_tabs ?? null;
+          // 'hakjeom-tab-XXX' 형식 → 'XXX' 로 변환 (구버전 짧은 키도 그대로 통과)
+          const normalized = raw
+            ? raw.map(v => v.startsWith('hakjeom-tab-') ? v.slice('hakjeom-tab-'.length) : v)
+            : null;
+          setAllowedHakjeomTabs(normalized);
         }
       }
     });
@@ -4738,10 +4743,14 @@ export default function HakjeomPage() {
   };
 
   useEffect(() => {
-    if (urlTab && TAB_CONFIG.some(t => t.key === urlTab) && (!allowedHakjeomTabs || allowedHakjeomTabs.includes(urlTab))) {
-      handleTabChange(urlTab);
+    if (!urlTab) return;
+    if (!TAB_CONFIG.some(t => t.key === urlTab)) return;
+    if (allowedHakjeomTabs && !allowedHakjeomTabs.includes(urlTab)) return;
+    if (urlTab !== activeTab) {
+      setActiveTab(urlTab);
+      setMountedTabs(prev => new Set([...prev, urlTab]));
     }
-  }, [urlTab]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [urlTab, allowedHakjeomTabs, activeTab]);
 
   return (
     <div>

@@ -1381,6 +1381,8 @@ const PERMISSION_SECTIONS: PermissionSection[] = [
   { key: 'logs',       label: '로그 관리',          description: '작업 로그 열람',          allowOwn: false, group: '시스템' },
   { key: 'ref-manage', label: '어드민 관리',        description: '기준 데이터 관리',        allowOwn: false, group: '시스템' },
   { key: 'assignment', label: '배정 현황',          description: '담당자 배정 통계 열람',   allowOwn: false, group: '시스템' },
+  { key: 'links',      label: '링크모음',           description: '자주 쓰는 링크 모음',     allowOwn: false, group: '시스템' },
+  { key: 'marketing',  label: '마케팅개발본부',      description: '채널/소재별 성과 관리',   allowOwn: false, group: '경영관리' },
   { key: 'approvals',  label: '전자결재',           description: '전자결재 열람·처리',      allowOwn: false, group: '경영관리' },
   { key: 'revenues',   label: '팀별 매출 관리',      description: '사업부별 매출 현황 열람 (담당: 사원/주임은 본인 사업부만, 대리 이상은 전체)',  allowOwn: true,  group: '경영관리' },
   { key: 'revenue-upload', label: '매출 데이터 관리', description: '매출 데이터 업로드·관리 (담당: 본인 사업부만)', allowOwn: true,  group: '경영관리' },
@@ -1389,33 +1391,48 @@ const PERMISSION_SECTIONS: PermissionSection[] = [
 ]
 
 // 탭 제한을 지원하는 섹션과 해당 탭 목록
+// value 는 Sidebar 의 NavSubItem.id 와 일치해야 함
 const TAB_RESTRICTION_SECTIONS: {
   sectionKey: string
   label: string
   tabs: { value: string; label: string }[]
 }[] = [
   {
-    sectionKey: 'cert',
-    label: '민간자격증 사업부',
-    tabs: [
-      { value: 'hakjeom',          label: '학점연계 신청' },
-      { value: 'edu',              label: '교육원' },
-      { value: 'private-cert',     label: '민간자격증' },
-      { value: 'student-mgmt',     label: '학생관리' },
-      { value: 'student-contact',  label: '연락예정' },
-      { value: 'counsel-template', label: '상담 템플릿' },
-      { value: 'stats',            label: '통계' },
-    ],
-  },
-  {
     sectionKey: 'hakjeom',
     label: '학점은행제 사업부',
     tabs: [
-      { value: 'hakjeom',      label: '학점은행제' },
-      { value: 'agency',       label: '기관협약' },
-      { value: 'bulk',         label: '일괄등록' },
-      { value: 'counsel_done', label: '연락예정' },
-      { value: 'stats',        label: '통계' },
+      { value: 'hakjeom-tab-hakjeom',      label: '문의DB' },
+      { value: 'hakjeom-tab-edu-students', label: '등록학생' },
+      { value: 'hakjeom-tab-agency',       label: '기관협약' },
+      { value: 'hakjeom-tab-bulk',         label: '일괄등록' },
+      { value: 'hakjeom-tab-counsel_done', label: '연락예정' },
+      { value: 'hakjeom-tab-stats',        label: '통계' },
+      { value: 'allcare-tab-users',        label: '올케어 회원목록' },
+      { value: 'allcare-tab-payments',     label: '올케어 결제내역' },
+      { value: 'allcare-tab-stats',        label: '올케어 통계' },
+    ],
+  },
+  {
+    sectionKey: 'cert',
+    label: '민간자격증 사업부',
+    tabs: [
+      { value: 'cert-tab-hakjeom',         label: '학점연계 신청' },
+      { value: 'cert-tab-edu',             label: '교육원' },
+      { value: 'cert-tab-private-cert',    label: '민간자격증' },
+      { value: 'cert-tab-student-mgmt',    label: '학생관리' },
+      { value: 'cert-tab-student-contact', label: '연락예정' },
+      { value: 'cert-tab-student-bulk',    label: '일괄등록' },
+      { value: 'cert-tab-stats',           label: '통계' },
+    ],
+  },
+  {
+    sectionKey: 'abroad',
+    label: '유학 사업부',
+    tabs: [
+      { value: 'abroad-tab-users',        label: '회원 목록' },
+      { value: 'abroad-tab-consult',      label: '간편상담' },
+      { value: 'abroad-tab-applications', label: '신청서 목록' },
+      { value: 'abroad-tab-payments',     label: '결제 목록' },
     ],
   },
 ]

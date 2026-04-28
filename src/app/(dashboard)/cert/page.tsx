@@ -5343,7 +5343,12 @@ export default function CertPage() {
         const isFullAccess = data.role === 'admin' || data.role === 'master-admin'
         if (!isFullAccess) {
           const certPerm = data.permissions?.find((p: { section: string; allowed_tabs?: string[] | null }) => p.section === 'cert')
-          setAllowedCertTabs(certPerm?.allowed_tabs ?? null)
+          const raw: string[] | null = certPerm?.allowed_tabs ?? null
+          // 'cert-tab-XXX' 형식 → 'XXX' 변환 (구버전 짧은 키도 통과)
+          const normalized = raw
+            ? raw.map(v => v.startsWith('cert-tab-') ? v.slice('cert-tab-'.length) : v)
+            : null
+          setAllowedCertTabs(normalized)
         }
       }
       setTabsLoaded(true)

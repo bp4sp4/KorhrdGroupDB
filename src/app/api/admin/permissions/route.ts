@@ -102,14 +102,20 @@ export async function POST(request: NextRequest) {
       .delete()
       .eq('user_id', user_id)
       .eq('section', section)
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+      console.error('[permissions POST clear] error:', error)
+      return NextResponse.json({ error: error.message, details: error }, { status: 500 })
+    }
   } else if (scope === undefined) {
     const { error } = await supabaseAdmin
       .from('user_permissions')
       .update({ allowed_tabs: allowed_tabs ?? null })
       .eq('user_id', user_id)
       .eq('section', section)
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+      console.error('[permissions POST update] error:', error)
+      return NextResponse.json({ error: error.message, details: error }, { status: 500 })
+    }
   } else {
     // upsert (scope + allowed_tabs)
     const { error } = await supabaseAdmin
@@ -118,7 +124,10 @@ export async function POST(request: NextRequest) {
         { user_id, section, scope, allowed_tabs: allowed_tabs ?? null },
         { onConflict: 'user_id,section' }
       )
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+      console.error('[permissions POST upsert] error:', error, 'payload:', { user_id, section, scope, allowed_tabs })
+      return NextResponse.json({ error: error.message, details: error }, { status: 500 })
+    }
   }
 
   return NextResponse.json({ success: true })

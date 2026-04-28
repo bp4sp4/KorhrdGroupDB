@@ -1,0 +1,83 @@
+.page_wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.page_header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.page_title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--toss-text-primary);
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.page_division {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 10px;
+  background: #EBF3FE;
+  color: #3182F6;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 6px;
+  letter-spacing: 0.2px;
+}
+
+.page_feature {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--toss-text-primary);
+}
+
+.tab_content {
+  min-height: 200px;
+}
+
+.loading {
+  padding: 40px 20px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--toss-text-secondary);
+}
+
+.placeholder {
+  background: var(--toss-card-bg);
+  border: 1px solid var(--toss-border);
+  border-radius: var(--toss-radius-card);
+  box-shadow: var(--toss-shadow-card);
+  padding: 80px 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.placeholder_emoji {
+  font-size: 40px;
+  margin: 0;
+}
+
+.placeholder_title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--toss-text-primary);
+  margin: 0;
+}
+
+.placeholder_text {
+  font-size: 13px;
+  color: var(--toss-text-tertiary);
+  margin: 0;
+}

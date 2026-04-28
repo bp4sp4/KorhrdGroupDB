@@ -11,6 +11,8 @@ export type PermissionSection =
   | 'logs'
   | 'ref-manage'
   | 'assignment'
+  | 'links'
+  | 'marketing'
   | 'approvals'
   | 'revenues'
   | 'revenue-upload'
@@ -40,6 +42,8 @@ export const ALL_PERMISSION_SECTIONS: PermissionSection[] = [
   'logs',
   'ref-manage',
   'assignment',
+  'links',
+  'marketing',
   'approvals',
   'revenues',
   'revenue-upload',
