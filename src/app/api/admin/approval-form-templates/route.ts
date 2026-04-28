@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/auth/requireAuth'
+import { requireAdmin } from '@/lib/auth/requireAuth'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { syncApprovalTemplate } from '@/lib/approvalForms/sync'
 import type { FormSchema } from '@/types/approvalForm'
 
 export async function GET(request: Request) {
-  const { errorResponse } = await requireAuth()
+  const { errorResponse } = await requireAdmin()
   if (errorResponse) return errorResponse
 
   const { searchParams } = new URL(request.url)
@@ -26,7 +26,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const { errorResponse } = await requireAuth()
+  const { errorResponse } = await requireAdmin()
   if (errorResponse) return errorResponse
 
   const body = await request.json()

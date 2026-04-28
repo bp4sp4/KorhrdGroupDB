@@ -42,7 +42,7 @@ export default function LoginPage() {
           const res = await fetch('/api/auth/me')
           if (res.ok) {
             const data = await res.json()
-            localStorage.setItem('user_role', data.role ?? 'admin')
+            localStorage.setItem('user_role', data.role ?? 'guest')
             router.replace(getDefaultPath(data))
             return
           }
@@ -69,7 +69,7 @@ export default function LoginPage() {
       const res = await fetch('/api/auth/me')
       if (res.ok) {
         const data = await res.json()
-        localStorage.setItem('user_role', data.role ?? 'admin')
+        localStorage.setItem('user_role', data.role ?? 'guest')
         router.replace(getDefaultPath(data))
         return
       }

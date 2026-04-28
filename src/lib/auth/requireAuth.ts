@@ -81,3 +81,19 @@ export async function requireAuthFull(): Promise<AuthFullResult> {
     errorResponse: null,
   }
 }
+
+export async function requireAdmin(): Promise<AuthFullResult> {
+  const result = await requireAuthFull()
+  if (result.errorResponse) return result
+
+  const { role } = result.appUser
+  if (role !== 'master-admin' && role !== 'admin') {
+    return {
+      user: null,
+      appUser: null,
+      errorResponse: NextResponse.json({ error: '권한이 없습니다.' }, { status: 403 }),
+    }
+  }
+
+  return result
+}

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/auth/requireAuth'
+import { requireAdmin } from '@/lib/auth/requireAuth'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 
 interface RouteParams {
@@ -8,7 +8,7 @@ interface RouteParams {
 
 // PATCH: role, display_name, is_active 수정
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
-  const { errorResponse } = await requireAuth()
+  const { errorResponse } = await requireAdmin()
   if (errorResponse) return errorResponse
 
   const { id } = await params

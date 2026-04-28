@@ -1911,11 +1911,17 @@ function HakjeomTab({ isActive, highlightId }: { isActive: boolean; highlightId?
     if (selectedIds.length === 0) return;
     setAssigningManager(true);
     setShowManagerAssign(false);
-    await fetch('/api/hakjeom', {
+    const res = await fetch('/api/hakjeom', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ids: selectedIds, manager }),
     });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      setError(body.error ?? '담당자 배정에 실패했습니다.');
+      setAssigningManager(false);
+      return;
+    }
     setSelectedIds([]);
     setManagerAssignInput('');
     await fetchData();

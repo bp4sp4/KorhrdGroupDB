@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/auth/requireAuth'
+import { requireAdmin } from '@/lib/auth/requireAuth'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 
 export async function GET() {
-  const { errorResponse } = await requireAuth()
+  const { errorResponse } = await requireAdmin()
   if (errorResponse) return errorResponse
 
   const { data, error } = await supabaseAdmin
@@ -16,7 +16,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const { errorResponse } = await requireAuth()
+  const { errorResponse } = await requireAdmin()
   if (errorResponse) return errorResponse
 
   const body = await request.json()

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/auth/requireAuth'
+import { requireAdmin } from '@/lib/auth/requireAuth'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 
 interface RouteParams {
@@ -7,7 +7,7 @@ interface RouteParams {
 }
 
 export async function PATCH(request: Request, { params }: RouteParams) {
-  const { errorResponse } = await requireAuth()
+  const { errorResponse } = await requireAdmin()
   if (errorResponse) return errorResponse
 
   const { id } = await params
@@ -35,7 +35,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 }
 
 export async function DELETE(_request: Request, { params }: RouteParams) {
-  const { errorResponse } = await requireAuth()
+  const { errorResponse } = await requireAdmin()
   if (errorResponse) return errorResponse
 
   const { id } = await params

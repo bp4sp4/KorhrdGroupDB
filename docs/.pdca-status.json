@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-04-27T08:59:50.281Z",
+  "lastUpdated": "2026-04-28T00:59:55.652Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -136,9 +136,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:18:02.059Z",
-        "lastUpdated": "2026-04-22T08:25:45.025Z"
+        "lastUpdated": "2026-04-28T00:54:41.690Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/creaditbridge/lib/supabase/client.ts"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/lib/supabase/admin.ts"
     },
     "login": {
       "phase": "do",
@@ -149,9 +149,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:18:14.828Z",
-        "lastUpdated": "2026-04-27T03:40:02.881Z"
+        "lastUpdated": "2026-04-27T09:43:39.781Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/auth/login/route.ts"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(auth)/login/page.tsx"
     },
     "(dashboard)": {
       "phase": "do",
@@ -188,9 +188,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:30:16.038Z",
-        "lastUpdated": "2026-04-27T03:53:46.175Z"
+        "lastUpdated": "2026-04-28T00:59:55.652Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/hakjeom/route.ts"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/hakjeom/page.tsx"
     },
     "practice": {
       "phase": "do",
@@ -318,9 +318,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T09:41:18.714Z",
-        "lastUpdated": "2026-04-27T03:38:44.494Z"
+        "lastUpdated": "2026-04-28T00:55:28.241Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/lib/kakao.ts"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/lib/edu-logger.ts"
     },
     "scripts": {
       "phase": "do",
@@ -448,7 +448,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-18T09:51:47.807Z",
-        "lastUpdated": "2026-04-27T03:40:51.258Z"
+        "lastUpdated": "2026-04-27T09:43:48.466Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/lib/auth/requireAuth.ts"
     },
@@ -1722,7 +1722,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-27T08:59:50.281Z"
+    "lastActivity": "2026-04-28T00:59:55.652Z"
   },
   "history": [
     {
@@ -22656,6 +22656,60 @@
     {
       "timestamp": "2026-04-27T08:59:50.281Z",
       "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-27T09:43:28.604Z",
+      "feature": "supabase",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-27T09:43:39.781Z",
+      "feature": "login",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-27T09:43:48.466Z",
+      "feature": "auth",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T00:54:41.690Z",
+      "feature": "supabase",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T00:54:47.491Z",
+      "feature": "hakjeom-bank-web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T00:55:00.093Z",
+      "feature": "hakjeom-bank-web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T00:55:28.241Z",
+      "feature": "hakjeom-bank-web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T00:59:46.514Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T00:59:55.652Z",
+      "feature": "hakjeom",
       "phase": "do",
       "action": "updated"
     }

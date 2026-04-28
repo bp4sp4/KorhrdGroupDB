@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAuth } from '@/lib/auth/requireAuth'
+import { requireAdmin } from '@/lib/auth/requireAuth'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { completePermissions, getBasePermissions, mergePermissions, normalizePermissionRecords } from '@/lib/auth/permissions'
 
 // GET: 전체 계정 + 각 계정의 권한 목록 조회
 export async function GET() {
-  const { errorResponse } = await requireAuth()
+  const { errorResponse } = await requireAdmin()
   if (errorResponse) return errorResponse
 
   const { data: users, error } = await supabaseAdmin
@@ -78,7 +78,7 @@ export async function GET() {
 
 // POST: 특정 유저의 섹션 권한 upsert (clear_override=true면 삭제)
 export async function POST(request: NextRequest) {
-  const { errorResponse } = await requireAuth()
+  const { errorResponse } = await requireAdmin()
   if (errorResponse) return errorResponse
 
   const body = await request.json() as {
