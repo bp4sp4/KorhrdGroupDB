@@ -1,3 +1,5 @@
+import { supabaseAdmin } from './supabase/admin'
+
 const SYLLABLES = [
   '가', '나', '다', '라', '마', '바', '사', '아', '자', '차',
   '강', '랑', '망', '방', '상', '앙', '장', '창', '탕', '항',
@@ -13,64 +15,82 @@ function pickChars(): { chars: string[]; correctChar: string; correctIndex: numb
   return { chars, correctChar: chars[correctIndex], correctIndex }
 }
 
-type QrSession = {
+const TABLE = 'qr_login_sessions'
+
+export type QrSessionRow = {
+  token: string
+  chars: string[]
+  correct_char: string
+  correct_index: number
+  status: 'pending' | 'confirmed'
+  access_token: string | null
+  refresh_token: string | null
+  expires_at: string
+}
+
+export async function createQrSession(): Promise<{
+  token: string
   chars: string[]
   correctChar: string
   correctIndex: number
-  status: 'pending' | 'confirmed' | 'expired'
-  expiresAt: number
-  // 모바일에서 인증 성공 시 보관되는 Supabase 세션 토큰
-  accessToken?: string
-  refreshToken?: string
-}
-
-const store = new Map<string, QrSession>()
-
-function cleanup() {
-  const now = Date.now()
-  for (const [token, session] of store) {
-    if (session.expiresAt < now) store.delete(token)
-  }
-}
-
-export function createQrSession(): { token: string; chars: string[]; correctChar: string; correctIndex: number } {
-  cleanup()
+}> {
   const token = crypto.randomUUID()
   const { chars, correctChar, correctIndex } = pickChars()
-  store.set(token, {
+
+  const { error } = await supabaseAdmin.from(TABLE).insert({
+    token,
     chars,
-    correctChar,
-    correctIndex,
+    correct_char: correctChar,
+    correct_index: correctIndex,
     status: 'pending',
-    expiresAt: Date.now() + 5 * 60 * 1000,
+    expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
   })
+
+  if (error) throw new Error(`QR 세션 생성 실패: ${error.message}`)
+
   return { token, chars, correctChar, correctIndex }
 }
 
-export function getQrSession(token: string): QrSession | null {
-  const session = store.get(token)
-  if (!session) return null
-  if (session.expiresAt < Date.now()) {
-    store.delete(token)
+export async function getQrSession(token: string): Promise<QrSessionRow | null> {
+  const { data, error } = await supabaseAdmin
+    .from(TABLE)
+    .select('*')
+    .eq('token', token)
+    .maybeSingle()
+
+  if (error || !data) return null
+
+  // 만료 확인
+  if (new Date(data.expires_at).getTime() < Date.now()) {
+    await supabaseAdmin.from(TABLE).delete().eq('token', token)
     return null
   }
-  return session
+
+  return data as QrSessionRow
 }
 
-export function confirmQrSession(
+export async function confirmQrSession(
   token: string,
   selectedChar: string,
   tokens: { accessToken: string; refreshToken: string }
-): 'ok' | 'wrong' | 'not_found' {
-  const session = store.get(token)
-  if (!session || session.expiresAt < Date.now()) return 'not_found'
-  if (session.correctChar !== selectedChar) return 'wrong'
-  session.status = 'confirmed'
-  session.accessToken = tokens.accessToken
-  session.refreshToken = tokens.refreshToken
+): Promise<'ok' | 'wrong' | 'not_found'> {
+  const session = await getQrSession(token)
+  if (!session) return 'not_found'
+  if (session.correct_char !== selectedChar) return 'wrong'
+
+  const { error } = await supabaseAdmin
+    .from(TABLE)
+    .update({
+      status: 'confirmed',
+      access_token: tokens.accessToken,
+      refresh_token: tokens.refreshToken,
+    })
+    .eq('token', token)
+
+  if (error) return 'not_found'
   return 'ok'
 }
 
-export function deleteQrSession(token: string) {
-  store.delete(token)
+export async function deleteQrSession(token: string): Promise<void> {
+  await supabaseAdmin.from(TABLE).delete().eq('token', token)
 }

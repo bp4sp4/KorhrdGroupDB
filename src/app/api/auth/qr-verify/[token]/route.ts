@@ -9,13 +9,12 @@ export async function GET(
   { params }: { params: Promise<{ token: string }> }
 ) {
   const { token } = await params
-  const session = getQrSession(token)
+  const session = await getQrSession(token)
 
   if (!session) {
     return NextResponse.json({ error: '만료되었거나 유효하지 않은 QR코드입니다.' }, { status: 404 })
   }
 
-  // 모바일이 이미 로그인되어 있는지 확인
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -27,8 +26,6 @@ export async function GET(
 }
 
 // POST: 모바일에서 글자 선택 → 인증 처리
-// - 모바일이 이미 로그인 상태: { char }만 받아서 쿠키 세션 토큰 사용
-// - 비로그인 상태: { email, password, char }
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ token: string }> }
@@ -41,18 +38,18 @@ export async function POST(
     return NextResponse.json({ error: '글자를 선택해주세요.' }, { status: 400 })
   }
 
-  const session = getQrSession(token)
+  const session = await getQrSession(token)
   if (!session) {
     return NextResponse.json({ error: '만료되었거나 유효하지 않은 QR코드입니다.' }, { status: 404 })
   }
-  if (session.correctChar !== char) {
+  if (session.correct_char !== char) {
     return NextResponse.json({ error: '틀린 글자입니다. 다시 시도해주세요.' }, { status: 400 })
   }
 
   let accessToken: string | undefined
   let refreshToken: string | undefined
 
-  // ── 모드 1: 모바일이 이미 로그인 → 쿠키 세션 토큰 사용 ──
+  // 모드 1: 모바일 이미 로그인 → 쿠키 세션 토큰 사용
   const serverSupabase = await createServerClient()
   const { data: { session: existingSession } } = await serverSupabase.auth.getSession()
 
@@ -60,7 +57,7 @@ export async function POST(
     accessToken = existingSession.access_token
     refreshToken = existingSession.refresh_token
   } else {
-    // ── 모드 2: 비로그인 → 이메일/비밀번호 검증 ──
+    // 모드 2: 비로그인 → 이메일/비밀번호 검증
     if (!email || !password) {
       return NextResponse.json({ error: '이메일/비밀번호를 입력해주세요.' }, { status: 400 })
     }
@@ -80,7 +77,7 @@ export async function POST(
     return NextResponse.json({ error: '인증 토큰을 가져올 수 없습니다.' }, { status: 500 })
   }
 
-  const result = confirmQrSession(token, char, { accessToken, refreshToken })
+  const result = await confirmQrSession(token, char, { accessToken, refreshToken })
   if (result !== 'ok') {
     return NextResponse.json({ error: '인증에 실패했습니다.' }, { status: 400 })
   }

@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-04-28T01:36:26.287Z",
+  "lastUpdated": "2026-04-28T01:45:45.324Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -321,7 +321,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T09:41:18.714Z",
-        "lastUpdated": "2026-04-28T01:26:02.338Z"
+        "lastUpdated": "2026-04-28T01:45:16.758Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/lib/qr-sessions.ts"
     },
@@ -1738,9 +1738,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-28T01:21:45.477Z",
-        "lastUpdated": "2026-04-28T01:36:26.287Z"
+        "lastUpdated": "2026-04-28T01:45:45.324Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(auth)/qr/[token]/page.tsx"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/auth/qr-verify/[token]/route.ts"
     },
     "qr-session-open": {
       "phase": "do",
@@ -1751,7 +1751,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-28T01:23:29.412Z",
-        "lastUpdated": "2026-04-28T01:23:29.412Z"
+        "lastUpdated": "2026-04-28T01:45:23.012Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/auth/qr-session-open/route.ts"
     }
@@ -1764,7 +1764,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-28T01:36:26.287Z"
+    "lastActivity": "2026-04-28T01:45:45.324Z"
   },
   "history": [
     {
@@ -22847,6 +22847,36 @@
     },
     {
       "timestamp": "2026-04-28T01:36:26.287Z",
+      "feature": "[token]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T01:42:38.301Z",
+      "feature": "hakjeom-bank-web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T01:45:16.758Z",
+      "feature": "hakjeom-bank-web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T01:45:23.012Z",
+      "feature": "qr-session-open",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T01:45:29.161Z",
+      "feature": "[token]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T01:45:45.324Z",
       "feature": "[token]",
       "phase": "do",
       "action": "updated"

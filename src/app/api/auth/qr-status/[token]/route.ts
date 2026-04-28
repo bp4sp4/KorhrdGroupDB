@@ -6,16 +6,16 @@ export async function GET(
   { params }: { params: Promise<{ token: string }> }
 ) {
   const { token } = await params
-  const session = getQrSession(token)
+  const session = await getQrSession(token)
 
   if (!session) {
     return NextResponse.json({ status: 'expired' })
   }
 
   if (session.status === 'confirmed') {
-    const accessToken = session.accessToken
-    const refreshToken = session.refreshToken
-    deleteQrSession(token)
+    const accessToken = session.access_token
+    const refreshToken = session.refresh_token
+    await deleteQrSession(token)
     return NextResponse.json({
       status: 'confirmed',
       access_token: accessToken,
