@@ -34,6 +34,7 @@ export async function proxy(request: NextRequest) {
   // 인증 없이 접근 가능한 경로
   const isPublic =
     pathname.startsWith('/login') ||
+    pathname.startsWith('/qr/') ||
     pathname.startsWith('/api/auth/') ||
     pathname.startsWith('/_next/') ||
     pathname === '/favicon.ico' ||

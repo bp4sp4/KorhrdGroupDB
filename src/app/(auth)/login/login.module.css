@@ -20,24 +20,59 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 18px;
-  gap: 14px;
+  margin-bottom: 24px;
 }
 
 .logo {
   width: 271px;
-  
   height: auto;
   display: block;
 }
 
-.subtitle {
-  font-size: 13px;
-  color: var(--toss-text-secondary);
-  line-height: 1.5;
-  margin: 0;
+/* ── 탭 ──────────────────────────────────────────────────────────────────── */
+.tabRow {
+  display: flex;
+  background: var(--toss-bg);
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 24px;
+  gap: 2px;
 }
 
+.tabActive {
+  flex: 1;
+  padding: 10px 0;
+  background: var(--toss-card-bg);
+  border: none;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--toss-text-primary);
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  transition: background 150ms ease;
+  font-family: inherit;
+}
+
+.tabInactive {
+  flex: 1;
+  padding: 10px 0;
+  background: transparent;
+  border: none;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--toss-text-secondary);
+  cursor: pointer;
+  transition: background 150ms ease;
+  font-family: inherit;
+}
+
+.tabInactive:hover {
+  background: rgba(0,0,0,0.04);
+}
+
+/* ── 폼 공통 ─────────────────────────────────────────────────────────────── */
 .form {
   display: flex;
   flex-direction: column;
@@ -111,4 +146,168 @@
 .submitBtn:disabled {
   background: #b0b8c1;
   cursor: not-allowed;
+}
+
+/* ── QR 영역 ─────────────────────────────────────────────────────────────── */
+.qrArea {
+  display: flex;
+  flex-direction: column;
+}
+
+.qrDesc {
+  font-size: 13px;
+  color: var(--toss-text-secondary);
+  text-align: center;
+  line-height: 1.6;
+  margin: 0 0 16px;
+}
+
+.qrCenter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 32px 0;
+}
+
+.qrSpinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e8edf2;
+  border-top-color: var(--toss-blue);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.qrHint {
+  font-size: 14px;
+  color: var(--toss-text-secondary);
+  margin: 0;
+}
+
+.qrScanArea {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.qrBox {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+
+.qrScanHint {
+  font-size: 13px;
+  color: var(--toss-text-secondary);
+  text-align: center;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* 글자 표시 행 */
+.charRow {
+  display: flex;
+  gap: 10px;
+}
+
+.charHighlight {
+  width: 64px;
+  height: 64px;
+  background: var(--toss-blue);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  font-weight: 700;
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(77, 130, 253, 0.4);
+}
+
+.charNormal {
+  width: 64px;
+  height: 64px;
+  background: var(--toss-bg);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--toss-text-primary);
+  border: 1.5px solid #e8edf2;
+}
+
+.qrWaiting {
+  font-size: 13px;
+  color: var(--toss-text-secondary);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.qrWaiting::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: var(--toss-blue);
+  border-radius: 50%;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.qrCancelBtn {
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: var(--toss-text-secondary);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-family: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.qrCancelBtn:hover {
+  color: var(--toss-text-primary);
+}
+
+.qrCheck {
+  width: 64px;
+  height: 64px;
+  background: #e8f5e9;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  color: #4caf50;
+}
+
+.qrSuccessText {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--toss-text-primary);
+  margin: 0;
+}
+
+.qrExpiredText {
+  font-size: 15px;
+  color: #f04452;
+  margin: 0;
+  font-weight: 600;
 }

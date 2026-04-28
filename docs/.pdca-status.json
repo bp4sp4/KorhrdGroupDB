@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-04-28T00:59:55.652Z",
+  "lastUpdated": "2026-04-28T01:36:26.287Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -123,7 +123,10 @@
     "approval-forms",
     "approvalForms",
     "edu-sales",
-    "test-sms"
+    "test-sms",
+    "qr-session",
+    "[token]",
+    "qr-session-open"
   ],
   "primaryFeature": "supabase",
   "features": {
@@ -149,7 +152,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:18:14.828Z",
-        "lastUpdated": "2026-04-27T09:43:39.781Z"
+        "lastUpdated": "2026-04-28T01:29:13.959Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(auth)/login/page.tsx"
     },
@@ -318,9 +321,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T09:41:18.714Z",
-        "lastUpdated": "2026-04-28T00:55:28.241Z"
+        "lastUpdated": "2026-04-28T01:26:02.338Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/lib/edu-logger.ts"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/lib/qr-sessions.ts"
     },
     "scripts": {
       "phase": "do",
@@ -1712,6 +1715,45 @@
         "lastUpdated": "2026-04-24T07:56:40.892Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/test-sms/route.ts"
+    },
+    "qr-session": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-28T01:21:27.860Z",
+        "lastUpdated": "2026-04-28T01:21:27.860Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/auth/qr-session/route.ts"
+    },
+    "[token]": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-28T01:21:45.477Z",
+        "lastUpdated": "2026-04-28T01:36:26.287Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(auth)/qr/[token]/page.tsx"
+    },
+    "qr-session-open": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-28T01:23:29.412Z",
+        "lastUpdated": "2026-04-28T01:23:29.412Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/auth/qr-session-open/route.ts"
     }
   },
   "pipeline": {
@@ -1722,7 +1764,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-28T00:59:55.652Z"
+    "lastActivity": "2026-04-28T01:36:26.287Z"
   },
   "history": [
     {
@@ -22710,6 +22752,102 @@
     {
       "timestamp": "2026-04-28T00:59:55.652Z",
       "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T01:21:23.123Z",
+      "feature": "hakjeom-bank-web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T01:21:27.860Z",
+      "feature": "qr-session",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T01:21:45.477Z",
+      "feature": "[token]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T01:21:54.816Z",
+      "feature": "[token]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T01:22:18.185Z",
+      "feature": "[token]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T01:23:17.687Z",
+      "feature": "login",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T01:23:29.412Z",
+      "feature": "qr-session-open",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T01:24:39.933Z",
+      "feature": "hakjeom-bank-web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T01:26:02.339Z",
+      "feature": "hakjeom-bank-web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T01:26:13.761Z",
+      "feature": "[token]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T01:26:20.627Z",
+      "feature": "[token]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T01:26:55.875Z",
+      "feature": "login",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T01:27:16.136Z",
+      "feature": "[token]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T01:29:13.959Z",
+      "feature": "login",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T01:36:02.365Z",
+      "feature": "[token]",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T01:36:26.287Z",
+      "feature": "[token]",
       "phase": "do",
       "action": "updated"
     }
