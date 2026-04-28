@@ -1368,6 +1368,7 @@ interface PermissionSection {
   description: string
   allowOwn: boolean
   group: '교육운영' | '시스템' | '경영관리'
+  hideFromUserOverride?: boolean
 }
 
 const PERMISSION_SECTIONS: PermissionSection[] = [
@@ -1773,7 +1774,10 @@ function PermissionsTab() {
                     </div>
 
                     {PERM_GROUPS.map(group => {
-                      const groupSections = PERMISSION_SECTIONS.filter(section => section.group === group.key)
+                      const groupSections = PERMISSION_SECTIONS.filter(
+                        section => section.group === group.key && !section.hideFromUserOverride
+                      )
+                      if (groupSections.length === 0) return null
                       return (
                         <div key={`${user.id}-${group.key}`} className={styles.permCardGroup}>
                           <div className={styles.permCardGroupLabel}>{group.key}</div>

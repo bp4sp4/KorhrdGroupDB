@@ -277,7 +277,10 @@ export default function StudentModal({ student, courses, centers, managers = [],
                   <ModalSelect
                     value={form.desired_degree}
                     placeholder="선택"
-                    options={degreeOptions.map((d) => ({ value: d, label: d }))}
+                    options={degreeOptions.map((d) => ({
+                      value: d,
+                      label: d === '학사 X' ? '학위 X' : d,
+                    }))}
                     onChange={(val) => set('desired_degree', val as DesiredDegree | '')}
                   />
                 </div>

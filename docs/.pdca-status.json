@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-04-28T09:39:13.448Z",
+  "lastUpdated": "2026-04-28T09:54:35.727Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -300,7 +300,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T06:09:16.436Z",
-        "lastUpdated": "2026-04-28T09:33:42.854Z"
+        "lastUpdated": "2026-04-28T09:54:35.727Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/admin/page.tsx"
     },
@@ -456,7 +456,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-18T09:51:47.807Z",
-        "lastUpdated": "2026-04-28T09:33:36.498Z"
+        "lastUpdated": "2026-04-28T09:51:34.674Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/lib/auth/permissions.ts"
     },
@@ -1522,7 +1522,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-20T08:01:43.414Z",
-        "lastUpdated": "2026-04-28T02:07:06.877Z"
+        "lastUpdated": "2026-04-28T09:47:03.790Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/hakjeom/education-center/components/StudentModal.tsx"
     },
@@ -1834,7 +1834,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-28T09:39:13.448Z"
+    "lastActivity": "2026-04-28T09:54:35.727Z"
   },
   "history": [
     {
@@ -23782,6 +23782,42 @@
     {
       "timestamp": "2026-04-28T09:39:13.448Z",
       "feature": "cert",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T09:47:03.790Z",
+      "feature": "education-center",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T09:51:34.674Z",
+      "feature": "auth",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T09:53:40.420Z",
+      "feature": "admin",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T09:53:47.106Z",
+      "feature": "admin",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T09:53:55.330Z",
+      "feature": "admin",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-28T09:54:35.727Z",
+      "feature": "admin",
       "phase": "do",
       "action": "updated"
     }
