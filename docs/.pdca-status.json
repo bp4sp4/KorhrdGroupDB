@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-04-29T01:30:26.797Z",
+  "lastUpdated": "2026-04-29T01:45:56.597Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -132,7 +132,8 @@
     "ad-costs",
     "marketing",
     "creatives",
-    "migrate-jiin"
+    "migrate-jiin",
+    "shinhan-proxy"
   ],
   "primaryFeature": "supabase",
   "features": {
@@ -327,7 +328,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T09:41:18.714Z",
-        "lastUpdated": "2026-04-29T01:30:26.797Z"
+        "lastUpdated": "2026-04-29T01:45:56.597Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/lib/shinhan.ts"
     },
@@ -1838,6 +1839,19 @@
         "lastUpdated": "2026-04-29T01:27:16.655Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/hakjeom/migrate-jiin/route.ts"
+    },
+    "shinhan-proxy": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-29T01:45:16.049Z",
+        "lastUpdated": "2026-04-29T01:45:16.049Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/shinhan-proxy/server.js"
     }
   },
   "pipeline": {
@@ -1848,7 +1862,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-29T01:30:26.797Z"
+    "lastActivity": "2026-04-29T01:45:56.597Z"
   },
   "history": [
     {
@@ -24017,6 +24031,24 @@
     },
     {
       "timestamp": "2026-04-29T01:30:26.797Z",
+      "feature": "hakjeom-bank-web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T01:45:16.050Z",
+      "feature": "shinhan-proxy",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T01:45:45.788Z",
+      "feature": "hakjeom-bank-web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T01:45:56.597Z",
       "feature": "hakjeom-bank-web",
       "phase": "do",
       "action": "updated"

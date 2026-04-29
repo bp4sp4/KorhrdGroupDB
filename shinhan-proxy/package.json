@@ -1,0 +1,17 @@
+{
+  "name": "shinhan-proxy",
+  "version": "1.0.0",
+  "description": "신한은행 오픈API 호출 전용 프록시 서버 (IP whitelist 우회용)",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
