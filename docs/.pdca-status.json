@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-04-29T01:17:16.300Z",
+  "lastUpdated": "2026-04-29T01:30:26.797Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -327,9 +327,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T09:41:18.714Z",
-        "lastUpdated": "2026-04-29T01:14:09.708Z"
+        "lastUpdated": "2026-04-29T01:30:26.797Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/lib/announcements.ts"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/lib/shinhan.ts"
     },
     "scripts": {
       "phase": "do",
@@ -1510,9 +1510,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-20T06:45:24.089Z",
-        "lastUpdated": "2026-04-27T03:52:36.112Z"
+        "lastUpdated": "2026-04-29T01:26:57.497Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/bankaccount/route.ts"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/bankaccount/page.tsx"
     },
     "education-center": {
       "phase": "do",
@@ -1835,7 +1835,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-29T01:04:35.013Z",
-        "lastUpdated": "2026-04-29T01:17:16.300Z"
+        "lastUpdated": "2026-04-29T01:27:16.655Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/hakjeom/migrate-jiin/route.ts"
     }
@@ -1848,7 +1848,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-29T01:17:16.300Z"
+    "lastActivity": "2026-04-29T01:30:26.797Z"
   },
   "history": [
     {
@@ -23910,6 +23910,114 @@
     {
       "timestamp": "2026-04-29T01:17:16.300Z",
       "feature": "migrate-jiin",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T01:25:48.857Z",
+      "feature": "hakjeom-bank-web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T01:26:03.838Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T01:26:21.423Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T01:26:23.944Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T01:26:36.745Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T01:26:42.643Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T01:26:45.359Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T01:26:48.425Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T01:26:56.391Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T01:26:57.497Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T01:27:16.655Z",
+      "feature": "migrate-jiin",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T01:28:26.958Z",
+      "feature": "hakjeom-bank-web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T01:29:44.762Z",
+      "feature": "hakjeom-bank-web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T01:29:48.059Z",
+      "feature": "hakjeom-bank-web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T01:29:51.614Z",
+      "feature": "hakjeom-bank-web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T01:30:22.503Z",
+      "feature": "hakjeom-bank-web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T01:30:25.653Z",
+      "feature": "hakjeom-bank-web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T01:30:26.797Z",
+      "feature": "hakjeom-bank-web",
       "phase": "do",
       "action": "updated"
     }

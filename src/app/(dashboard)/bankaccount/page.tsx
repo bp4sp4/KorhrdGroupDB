@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Landmark, RefreshCw, ExternalLink, Search, CalendarDays } from 'lucide-react'
+import { Landmark, RefreshCw, Search, CalendarDays } from 'lucide-react'
 import { DateRangeCalendar, type DateRange } from '@/components/DateRangeCalendar'
 import styles from './page.module.css'
 
@@ -127,7 +127,6 @@ function formatAmount(n: number) {
 export default function BankAccountPage() {
   const [accounts, setAccounts] = useState<BankAccount[]>([])
   const [loading, setLoading] = useState(false)
-  const [mgtUrl, setMgtUrl] = useState<string | null>(null)
 
   const [selectedBankCode, setSelectedBankCode] = useState('')
   const [selectedAccount, setSelectedAccount] = useState('')
@@ -196,45 +195,16 @@ export default function BankAccountPage() {
 
   useEffect(() => { fetchAccounts() }, [fetchAccounts])
 
-  const openMgtUrl = async () => {
-    try {
-      const res = await fetch('/api/bankaccount?action=mgturl')
-      const json = await res.json()
-      if (json.error) throw new Error(json.error)
-      setMgtUrl(json.data)
-      window.open(json.data, '_blank')
-    } catch (e) {
-      setError(e instanceof Error ? e.message : '관리 URL 조회 실패')
-    }
-  }
-
-  const searchWithRetry = async (id: string): Promise<void> => {
-    for (let i = 0; i < 15; i++) {
-      await new Promise(r => setTimeout(r, 1500))
-      setJobStatus(`조회 중... (${i + 1}/15)`)
-      const res = await fetch(`/api/bankaccount?action=search&jobID=${id}&page=1&perPage=20`)
-      const json = await res.json()
-      if (json.error) {
-        if (json.error.includes('완료되지') || json.error.includes('처리중') || json.error.includes('대기')) continue
-        throw new Error(json.error)
-      }
-      setSearchResult(json.data)
-      setPage(1)
-      return
-    }
-    throw new Error('조회 시간 초과 - 잠시 후 결과 보기를 눌러주세요')
-  }
-
   const requestJob = async () => {
-    if (!selectedBankCode || !selectedAccount) {
-      setError('은행과 계좌번호를 선택하세요')
+    if (!selectedAccount) {
+      setError('계좌번호를 선택하세요')
       return
     }
     setJobLoading(true)
     setError(null)
     setJobID(null)
     setSearchResult(null)
-    setJobStatus('조회 요청 중...')
+    setJobStatus('신한 API 조회 중...')
     try {
       const res = await fetch('/api/bankaccount', {
         method: 'POST',
@@ -249,9 +219,9 @@ export default function BankAccountPage() {
       })
       const json = await res.json()
       if (json.error) throw new Error(json.error)
-      const id: string = json.data
-      setJobID(id)
-      await searchWithRetry(id)
+      setSearchResult(json.data)
+      setPage(1)
+      setJobID('shinhan')
       setJobStatus('조회 완료')
     } catch (e) {
       setError(e instanceof Error ? e.message : '조회 요청 실패')
@@ -261,40 +231,21 @@ export default function BankAccountPage() {
     }
   }
 
-  const searchTransactions = async (targetPage = 1) => {
-    if (!jobID) return
-    setJobLoading(true)
-    setError(null)
-    try {
-      const res = await fetch(`/api/bankaccount?action=search&jobID=${jobID}&page=${targetPage}&perPage=20`)
-      const json = await res.json()
-      if (json.error) throw new Error(json.error)
-      setSearchResult(json.data)
-      setPage(targetPage)
-    } catch (e) {
-      setError(e instanceof Error ? e.message : '거래내역 조회 실패')
-    } finally {
-      setJobLoading(false)
-    }
+  const searchTransactions = async () => {
+    await requestJob()
   }
-
-  const totalPages = searchResult ? Math.ceil(searchResult.total / searchResult.perPage) : 0
 
   return (
     <div className={styles.container}>
       <div className={styles.header}>
         <div className={styles.headerTitle}>
           <Landmark size={20} />
-          <h1>계좌조회 (팝빌)</h1>
+          <h1>계좌조회 (신한)</h1>
         </div>
         <div className={styles.headerActions}>
           <button className={styles.btnSecondary} onClick={fetchAccounts} disabled={loading}>
             <RefreshCw size={14} />
             새로고침
-          </button>
-          <button className={styles.btnPrimary} onClick={openMgtUrl}>
-            <ExternalLink size={14} />
-            계좌 관리
           </button>
         </div>
       </div>
@@ -306,7 +257,7 @@ export default function BankAccountPage() {
         {loading ? (
           <p className={styles.loadingText}>불러오는 중...</p>
         ) : accounts.length === 0 ? (
-          <p className={styles.emptyText}>등록된 계좌가 없습니다. 우측 상단 "계좌 관리"에서 계좌를 등록하세요.</p>
+          <p className={styles.emptyText}>등록된 계좌가 없습니다.</p>
         ) : (
           <table className={styles.table}>
             <thead>
@@ -410,13 +361,12 @@ export default function BankAccountPage() {
 
         {jobID && (
           <div className={styles.jobInfo}>
-            <span>Job ID: <code>{jobID}</code></span>
             <button
               className={styles.btnSecondary}
-              onClick={() => searchTransactions(1)}
+              onClick={() => searchTransactions()}
               disabled={jobLoading}
             >
-              결과 보기
+              다시 조회
             </button>
           </div>
         )}
@@ -477,20 +427,9 @@ export default function BankAccountPage() {
                 })}
               </tbody>
             </table>
-            {totalPages > 1 && (
-              <div className={styles.pagination}>
-                <button disabled={page <= 1} onClick={() => searchTransactions(page - 1)}>이전</button>
-                <span>{page} / {totalPages}</span>
-                <button disabled={page >= totalPages} onClick={() => searchTransactions(page + 1)}>다음</button>
-              </div>
-            )}
           </>
         )}
       </section>
-
-      {mgtUrl && (
-        <p className={styles.urlHint}>관리 URL: <a href={mgtUrl} target="_blank" rel="noopener noreferrer">{mgtUrl}</a></p>
-      )}
     </div>
   )
 }

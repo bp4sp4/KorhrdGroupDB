@@ -34,7 +34,7 @@ export async function POST() {
   }
 
   await logAction({
-    user_id: appUser.id,
+    user_id: String(appUser.id),
     action: 'update',
     resource: '학점은행제 상담',
     resource_id: ids.join(','),
