@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-04-29T02:51:57.570Z",
+  "lastUpdated": "2026-04-29T03:23:35.738Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -133,7 +133,8 @@
     "marketing",
     "creatives",
     "migrate-jiin",
-    "shinhan-proxy"
+    "shinhan-proxy",
+    "korhrdsocial"
   ],
   "primaryFeature": "supabase",
   "features": {
@@ -198,9 +199,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:30:16.038Z",
-        "lastUpdated": "2026-04-29T01:11:09.533Z"
+        "lastUpdated": "2026-04-29T03:00:18.294Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/hakjeom/page.tsx"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/hakjeom/route.ts"
     },
     "practice": {
       "phase": "do",
@@ -328,9 +329,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T09:41:18.714Z",
-        "lastUpdated": "2026-04-29T01:45:56.597Z"
+        "lastUpdated": "2026-04-29T02:59:43.787Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/lib/shinhan.ts"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/lib/kakao.ts"
     },
     "scripts": {
       "phase": "do",
@@ -1719,7 +1720,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-24T07:30:52.121Z",
-        "lastUpdated": "2026-04-24T07:56:40.892Z"
+        "lastUpdated": "2026-04-29T03:02:13.195Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/test-sms/route.ts"
     },
@@ -1849,9 +1850,22 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-29T01:45:16.049Z",
-        "lastUpdated": "2026-04-29T02:03:48.113Z"
+        "lastUpdated": "2026-04-29T03:14:21.524Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/shinhan-proxy/server.js"
+    },
+    "korhrdsocial": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-29T03:23:22.176Z",
+        "lastUpdated": "2026-04-29T03:23:35.738Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/korhrdsocial/lib/kakao.ts"
     }
   },
   "pipeline": {
@@ -1862,7 +1876,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-29T02:51:57.570Z"
+    "lastActivity": "2026-04-29T03:23:35.738Z"
   },
   "history": [
     {
@@ -24086,6 +24100,78 @@
     {
       "timestamp": "2026-04-29T02:51:57.570Z",
       "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T02:59:38.387Z",
+      "feature": "hakjeom-bank-web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T02:59:43.787Z",
+      "feature": "hakjeom-bank-web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T02:59:52.880Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T02:59:56.497Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T03:00:15.581Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T03:00:18.294Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T03:02:09.030Z",
+      "feature": "test-sms",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T03:02:11.293Z",
+      "feature": "test-sms",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T03:02:13.195Z",
+      "feature": "test-sms",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T03:14:21.524Z",
+      "feature": "shinhan-proxy",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T03:23:22.176Z",
+      "feature": "korhrdsocial",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T03:23:35.738Z",
+      "feature": "korhrdsocial",
       "phase": "do",
       "action": "updated"
     }

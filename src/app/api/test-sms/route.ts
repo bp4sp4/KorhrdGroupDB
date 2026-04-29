@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/auth/requireAuth'
-import { sendAlimtalk, parsePhones } from '@/lib/kakao'
+import { sendAlimtalk, parsePhones, ALIMTALK_TEMPLATES } from '@/lib/kakao'
 
 /**
  * 알림톡 테스트 엔드포인트
@@ -20,8 +20,6 @@ export async function GET(request: NextRequest) {
     ALIGO_USER_ID: !!process.env.ALIGO_USER_ID,
     ALIGO_SENDER_KEY: !!process.env.ALIGO_SENDER_KEY,
     ALIGO_SENDER: process.env.ALIGO_SENDER || null,
-    ALIGO_TEMPLATE_CODE: process.env.ALIGO_TEMPLATE_CODE || null,
-    ALIGO_TEMPLATE_MESSAGE: !!process.env.ALIGO_TEMPLATE_MESSAGE,
     ALIGO_NEW_INQUIRY_PHONES: process.env.ALIGO_NEW_INQUIRY_PHONES || null,
     PROXY_URL: !!process.env.PROXY_URL,
     receivers_to_use: receivers,
@@ -31,7 +29,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ ok: false, envCheck, error: '수신자 없음 (to 쿼리 또는 ALIGO_NEW_INQUIRY_PHONES 설정)' }, { status: 400 })
   }
 
-  const result = await sendAlimtalk({ receivers })
+  const result = await sendAlimtalk({
+    receivers,
+    tplCode: ALIMTALK_TEMPLATES.NEW_INQUIRY.tplCode,
+    message: ALIMTALK_TEMPLATES.NEW_INQUIRY.message,
+    vars: { 고객명: '테스트' },
+  })
 
   return NextResponse.json({ ok: result.success, envCheck, result })
 }

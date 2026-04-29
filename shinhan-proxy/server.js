@@ -131,6 +131,56 @@ app.post('/shinhan/transactions', async (req, res) => {
   }
 })
 
+// ─────────── 알리고 알림톡/SMS 프록시 ───────────
+// Vercel(동적 IP)에서 호출 시 알리고 IP 화이트리스트 차단을 우회
+
+app.post('/alimtalk', async (req, res) => {
+  try {
+    const payload = req.body ?? {}
+    const formData = new URLSearchParams()
+    for (const [k, v] of Object.entries(payload)) {
+      formData.append(k, String(v))
+    }
+
+    const r = await fetch('https://kakaoapi.aligo.in/akv10/alimtalk/send/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: formData.toString(),
+    })
+
+    const text = await r.text()
+    let data
+    try { data = JSON.parse(text) } catch { data = { raw: text } }
+
+    res.status(r.ok ? 200 : 502).json(data)
+  } catch (e) {
+    console.error('[alimtalk] error:', e)
+    res.status(500).json({ code: -1, message: e instanceof Error ? e.message : '프록시 오류' })
+  }
+})
+
+app.post('/sms', async (req, res) => {
+  try {
+    const payload = req.body ?? {}
+    const formData = new URLSearchParams()
+    for (const [k, v] of Object.entries(payload)) {
+      formData.append(k, String(v))
+    }
+
+    const r = await fetch('https://apis.aligo.in/send/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: formData.toString(),
+    })
+
+    const text = await r.text()
+    res.status(r.ok ? 200 : 502).type('json').send(text)
+  } catch (e) {
+    console.error('[sms] error:', e)
+    res.status(500).json({ result_code: -1, message: e instanceof Error ? e.message : '프록시 오류' })
+  }
+})
+
 app.listen(PORT, () => {
   console.log(`[shinhan-proxy] listening on :${PORT} (env: ${IS_PROD ? 'prod' : 'dev'})`)
 })
