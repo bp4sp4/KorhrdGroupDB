@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-04-29T08:51:57.050Z",
+  "lastUpdated": "2026-04-29T09:32:56.161Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -135,7 +135,8 @@
     "migrate-jiin",
     "shinhan-proxy",
     "korhrdsocial",
-    "notify"
+    "notify",
+    "dashboard-stats"
   ],
   "primaryFeature": "supabase",
   "features": {
@@ -863,9 +864,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-24T09:29:00.757Z",
-        "lastUpdated": "2026-04-15T09:04:39.102Z"
+        "lastUpdated": "2026-04-29T09:15:36.510Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/management/reports/dashboard/route.ts"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/marketing/dashboard/route.ts"
     },
     "duplicate": {
       "phase": "do",
@@ -1812,9 +1813,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-28T05:54:11.328Z",
-        "lastUpdated": "2026-04-28T08:59:52.329Z"
+        "lastUpdated": "2026-04-29T09:32:12.179Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/marketing/page.tsx"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/marketing/DashboardTab.tsx"
     },
     "creatives": {
       "phase": "do",
@@ -1880,6 +1881,19 @@
         "lastUpdated": "2026-04-29T07:09:35.682Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/hakjeom/notify/route.ts"
+    },
+    "dashboard-stats": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-29T09:26:19.137Z",
+        "lastUpdated": "2026-04-29T09:32:56.161Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/marketing/dashboard-stats/route.ts"
     }
   },
   "pipeline": {
@@ -1890,7 +1904,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-29T08:51:57.050Z"
+    "lastActivity": "2026-04-29T09:32:56.161Z"
   },
   "history": [
     {
@@ -24300,6 +24314,78 @@
     {
       "timestamp": "2026-04-29T08:51:57.050Z",
       "feature": "DateRangeCalendar",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T09:15:36.511Z",
+      "feature": "dashboard",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T09:26:19.137Z",
+      "feature": "dashboard-stats",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T09:28:07.678Z",
+      "feature": "marketing",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T09:28:18.229Z",
+      "feature": "marketing",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T09:28:23.851Z",
+      "feature": "marketing",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T09:28:47.357Z",
+      "feature": "marketing",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T09:28:52.675Z",
+      "feature": "marketing",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T09:28:57.450Z",
+      "feature": "marketing",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T09:32:00.633Z",
+      "feature": "marketing",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T09:32:12.179Z",
+      "feature": "marketing",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T09:32:45.070Z",
+      "feature": "dashboard-stats",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T09:32:56.161Z",
+      "feature": "dashboard-stats",
       "phase": "do",
       "action": "updated"
     }

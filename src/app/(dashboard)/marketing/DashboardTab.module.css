@@ -1,0 +1,390 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 4px 0 32px;
+}
+
+/* ── 필터 바 ───────────────────────────────────────────── */
+.filter_bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: #ffffff;
+  border: 1px solid #e5e8ec;
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.filter_label {
+  font-size: 13px;
+  color: #4e5968;
+  font-weight: 600;
+}
+
+.range_btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #f5f7fa;
+  border: 1px solid #e5e8ec;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #191f28;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.range_btn:hover {
+  background: #eef2f6;
+  border-color: #c6d3df;
+}
+
+.range_btn_active {
+  background: #eaf2ff;
+  border-color: #3182f6;
+  color: #1f4cd9;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.loading_badge {
+  font-size: 12px;
+  color: #6b7684;
+  background: #f5f7fa;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+/* ── KPI 카드 ──────────────────────────────────────────── */
+.kpi_grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+}
+
+@media (max-width: 1100px) {
+  .kpi_grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.kpi_card {
+  background: #ffffff;
+  border: 1px solid #e5e8ec;
+  border-radius: 14px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+  min-height: 110px;
+}
+
+.kpi_header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.kpi_label {
+  font-size: 13px;
+  color: #6b7684;
+  font-weight: 500;
+}
+
+.kpi_value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #191f28;
+  line-height: 1.2;
+}
+
+.kpi_change {
+  font-size: 12px;
+  color: #6b7684;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.change_up {
+  color: #e23a3a;
+  font-weight: 600;
+}
+
+.change_down {
+  color: #1463ec;
+  font-weight: 600;
+}
+
+.change_flat {
+  color: #6b7684;
+}
+
+/* ── 차트 그리드 ────────────────────────────────────────── */
+.chart_grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 14px;
+}
+
+@media (max-width: 1100px) {
+  .chart_grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.chart_card {
+  background: #ffffff;
+  border: 1px solid #e5e8ec;
+  border-radius: 14px;
+  padding: 18px 18px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 280px;
+}
+
+.chart_header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.chart_title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #191f28;
+}
+
+.chart_body {
+  flex: 1;
+  min-height: 210px;
+}
+
+.chart_empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 13px;
+  color: #b0b8c1;
+}
+
+/* ── 도넛 차트 영역 ─────────────────────────────────────── */
+.pie_wrap {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.pie_chart {
+  flex: 0 0 160px;
+  position: relative;
+}
+
+.pie_center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.pie_center_label {
+  font-size: 11px;
+  color: #6b7684;
+}
+
+.pie_center_value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #191f28;
+}
+
+.pie_legend {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.pie_legend_item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pie_legend_dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.pie_legend_name {
+  flex: 1;
+  color: #4e5968;
+}
+
+.pie_legend_value {
+  color: #191f28;
+  font-weight: 600;
+}
+
+.pie_legend_pct {
+  color: #8b95a1;
+  margin-left: 4px;
+}
+
+/* ── 하단 TOP 3 ────────────────────────────────────────── */
+.top_grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+@media (max-width: 900px) {
+  .top_grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.top_card {
+  background: #ffffff;
+  border: 1px solid #e5e8ec;
+  border-radius: 14px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.top_title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #191f28;
+}
+
+.top_table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.top_thead {
+  background: transparent;
+}
+
+.top_th {
+  padding: 8px 10px;
+  text-align: left;
+  font-size: 12px;
+  color: #8b95a1;
+  font-weight: 500;
+  border-bottom: 1px solid #f0f3f6;
+}
+
+.top_th_num {
+  text-align: right;
+}
+
+.top_td {
+  padding: 12px 10px;
+  font-size: 13px;
+  color: #191f28;
+  border-bottom: 1px solid #f5f7fa;
+  vertical-align: middle;
+}
+
+.top_td_num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.top_rank {
+  width: 36px;
+  text-align: center;
+  font-size: 16px;
+}
+
+.top_creative_cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.top_thumbnail {
+  width: 44px;
+  height: 30px;
+  border-radius: 6px;
+  background: #f0f3f6 center/cover no-repeat;
+  flex-shrink: 0;
+  border: 1px solid #e5e8ec;
+}
+
+.top_thumbnail_empty {
+  width: 44px;
+  height: 30px;
+  border-radius: 6px;
+  background: #f0f3f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: #b0b8c1;
+  flex-shrink: 0;
+}
+
+.top_creative_name {
+  font-weight: 600;
+  color: #191f28;
+}
+
+.top_empty {
+  text-align: center;
+  padding: 32px 0;
+  color: #b0b8c1;
+  font-size: 13px;
+}
+
+/* ── 에러 ──────────────────────────────────────────────── */
+.error_box {
+  background: #fff5f5;
+  border: 1px solid #ffd1d1;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.error_text {
+  color: #c92a2a;
+  font-size: 13px;
+}
+
+.retry_btn {
+  background: #ffffff;
+  border: 1px solid #ffd1d1;
+  color: #c92a2a;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.retry_btn:hover {
+  background: #fff5f5;
+}

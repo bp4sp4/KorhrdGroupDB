@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import styles from './page.module.css'
 import DBMarketingTab from './DBMarketingTab'
 import CreativeTab from './CreativeTab'
+import DashboardTab from './DashboardTab'
 
 type TabKey =
   | 'nms-channel' | 'nms-creative' | 'nms-dashboard'
@@ -66,11 +67,9 @@ export default async function MarketingPage({ searchParams }: PageProps) {
           <CreativeTab division={meta.division} />
         )}
         {meta.kind === 'dashboard' && (
-          <div className={styles.placeholder}>
-            <p className={styles.placeholder_emoji}>📊</p>
-            <p className={styles.placeholder_title}>{meta.division} 대시보드</p>
-            <p className={styles.placeholder_text}>준비 중인 페이지입니다.</p>
-          </div>
+          <Suspense fallback={<div className={styles.loading}>데이터 로딩 중...</div>}>
+            <DashboardTab division={meta.divisionKey} divisionLabel={meta.division} />
+          </Suspense>
         )}
       </div>
     </div>
