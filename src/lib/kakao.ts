@@ -1,10 +1,31 @@
 interface AlimtalkParams {
   /** 수신자 전화번호 (여러 명 가능, - 포함/미포함 무관) */
   receivers: string | string[]
+  /** 템플릿 코드 (미지정 시 ALIGO_TEMPLATE_CODE 사용) */
+  tplCode?: string
   /** 템플릿 본문 override (미지정 시 ALIGO_TEMPLATE_MESSAGE 사용) */
   message?: string
   /** 제목 override (미지정 시 ALIGO_TEMPLATE_SUBJECT 사용) */
   subject?: string
+  /** 템플릿 변수 치환 (#{key} → value) */
+  vars?: Record<string, string>
+}
+
+/** 알림톡 템플릿 정의 */
+export const ALIMTALK_TEMPLATES = {
+  NEW_INQUIRY: {
+    tplCode: 'UH_4559',
+    message: '#{고객명}님, 새로운 문의가 등록되었습니다.',
+  },
+  MANAGER_ASSIGNED: {
+    tplCode: 'UH_4555',
+    message: '#{고객명}님, 새로운 상담 신청이 배정되었습니다.',
+  },
+} as const
+
+function applyVars(message: string, vars?: Record<string, string>): string {
+  if (!vars) return message
+  return message.replace(/#\{(\w+)\}/g, (_, key) => vars[key] ?? `#{${key}}`)
 }
 
 interface AligoResult {
@@ -20,15 +41,18 @@ interface AligoResult {
  */
 export async function sendAlimtalk({
   receivers,
+  tplCode,
   message,
   subject,
+  vars,
 }: AlimtalkParams): Promise<{ success: boolean; error?: string }> {
   const apikey = process.env.ALIGO_API_KEY
   const userid = process.env.ALIGO_USER_ID
   const senderkey = process.env.ALIGO_SENDER_KEY
   const sender = process.env.ALIGO_SENDER
-  const tpl_code = process.env.ALIGO_TEMPLATE_CODE
-  const templateMessage = message ?? process.env.ALIGO_TEMPLATE_MESSAGE
+  const tpl_code = tplCode ?? process.env.ALIGO_TEMPLATE_CODE
+  const rawMessage = message ?? process.env.ALIGO_TEMPLATE_MESSAGE
+  const templateMessage = rawMessage ? applyVars(rawMessage, vars) : undefined
   const templateSubject = subject ?? process.env.ALIGO_TEMPLATE_SUBJECT ?? '알림'
 
   if (!apikey || !userid || !senderkey || !sender || !tpl_code) {

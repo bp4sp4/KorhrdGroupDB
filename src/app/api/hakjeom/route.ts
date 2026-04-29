@@ -2,7 +2,7 @@ import { requireAuth, requireAuthFull } from '@/lib/auth/requireAuth'
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { logAction } from '@/lib/audit/logAction';
-import { sendAlimtalk, parsePhones } from '@/lib/kakao';
+import { sendAlimtalk, parsePhones, ALIMTALK_TEMPLATES } from '@/lib/kakao';
 
 // ─── 담당자 display_name → phone ─────────────────────────────────────────────
 async function getPhoneByDisplayName(displayName: string): Promise<string | null> {
@@ -247,8 +247,12 @@ export async function POST(request: NextRequest) {
       ...parsePhones(process.env.ALIGO_NEW_INQUIRY_PHONES),
     ]
     if (newInquiryReceivers.length > 0) {
-      sendAlimtalk({ receivers: newInquiryReceivers })
-        .catch((e) => console.error('[hakjeom POST] 알림톡 실패:', e))
+      sendAlimtalk({
+        receivers: newInquiryReceivers,
+        tplCode: ALIMTALK_TEMPLATES.NEW_INQUIRY.tplCode,
+        message: ALIMTALK_TEMPLATES.NEW_INQUIRY.message,
+        vars: { 고객명: data.name ?? '고객' },
+      }).catch((e) => console.error('[hakjeom POST] 알림톡 실패:', e))
     }
 
     return NextResponse.json({ message: 'Created successfully', data }, { status: 201 });
@@ -321,11 +325,21 @@ export async function PATCH(request: NextRequest) {
           })
           if (nErr) console.error('[PATCH bulk] MANAGER_ASSIGNED 알림 실패:', nErr)
         }
-        // SMS: 담당자 phone으로 발송
+        // 담당자에게 알림톡 발송 (각 고객별 1건)
         const phone = await getPhoneByDisplayName(manager)
         if (phone) {
-          sendAlimtalk({ receivers: phone })
-            .catch((e) => console.error('[PATCH bulk] 알림톡 실패:', e))
+          const { data: assignedRows } = await supabaseAdmin
+            .from(TABLE)
+            .select('name')
+            .in('id', ids)
+          for (const row of assignedRows ?? []) {
+            sendAlimtalk({
+              receivers: phone,
+              tplCode: ALIMTALK_TEMPLATES.MANAGER_ASSIGNED.tplCode,
+              message: ALIMTALK_TEMPLATES.MANAGER_ASSIGNED.message,
+              vars: { 고객명: row.name ?? '고객' },
+            }).catch((e) => console.error('[PATCH bulk] 알림톡 실패:', e))
+          }
         }
       }
       return NextResponse.json({ message: 'Bulk manager updated' })
@@ -469,11 +483,15 @@ export async function PATCH(request: NextRequest) {
         })
         if (nErr) console.error('[PATCH] MANAGER_ASSIGNED 알림 실패:', nErr)
       }
-      // SMS: 담당자 phone으로 발송
+      // 담당자에게 알림톡 발송
       const phone = await getPhoneByDisplayName(manager)
       if (phone) {
-        sendAlimtalk({ receivers: phone })
-          .catch((e) => console.error('[PATCH] 알림톡 실패:', e))
+        sendAlimtalk({
+          receivers: phone,
+          tplCode: ALIMTALK_TEMPLATES.MANAGER_ASSIGNED.tplCode,
+          message: ALIMTALK_TEMPLATES.MANAGER_ASSIGNED.message,
+          vars: { 고객명: data.name ?? '고객' },
+        }).catch((e) => console.error('[PATCH] 알림톡 실패:', e))
       }
     }
 
