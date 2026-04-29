@@ -415,10 +415,6 @@ export default function Sidebar({ userRole, permissions = [], revenueOwnDivision
           })}
         </ul>
       </nav>
-
-      <div className={styles.sidebarFooter}>
-        <p className={styles.sidebarVersion}>v1.0.0</p>
-      </div>
     </aside>
   )
 }

@@ -340,15 +340,3 @@ li:first-child > .sidebarSubSectionLabel {
   color: var(--toss-blue);
   background: var(--toss-blue-subtle);
 }
-
-.sidebarFooter {
-  border-top: 1px solid var(--toss-border);
-  flex-shrink: 0;
-  padding: 10px 20px 14px;
-}
-
-.sidebarVersion {
-  font-size: 11px;
-  color: var(--toss-text-tertiary);
-  margin: 0;
-}

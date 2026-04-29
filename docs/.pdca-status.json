@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-04-29T01:11:09.533Z",
+  "lastUpdated": "2026-04-29T01:14:27.675Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -327,9 +327,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T09:41:18.714Z",
-        "lastUpdated": "2026-04-28T01:58:24.702Z"
+        "lastUpdated": "2026-04-29T01:14:09.708Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/proxy.ts"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/lib/announcements.ts"
     },
     "scripts": {
       "phase": "do",
@@ -1835,7 +1835,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-29T01:04:35.013Z",
-        "lastUpdated": "2026-04-29T01:04:35.013Z"
+        "lastUpdated": "2026-04-29T01:14:27.675Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/hakjeom/migrate-jiin/route.ts"
     }
@@ -1848,7 +1848,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-29T01:11:09.533Z"
+    "lastActivity": "2026-04-29T01:14:27.675Z"
   },
   "history": [
     {
@@ -23874,6 +23874,18 @@
     {
       "timestamp": "2026-04-29T01:11:09.533Z",
       "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T01:14:09.708Z",
+      "feature": "hakjeom-bank-web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T01:14:27.675Z",
+      "feature": "migrate-jiin",
       "phase": "do",
       "action": "updated"
     }

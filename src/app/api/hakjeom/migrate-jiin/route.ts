@@ -5,9 +5,10 @@ import { logAction } from '@/lib/audit/logAction';
 
 // POST /api/hakjeom/migrate-jiin
 // 등록완료 상태인 지인소개 레코드의 click_source를 기타로 일괄 변경 (1회성 마이그레이션)
-export async function POST(req: NextRequest) {
-  const { user } = await requireAuthFull(req);
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export async function POST(_req: NextRequest) {
+  const { appUser, errorResponse } = await requireAuthFull();
+  if (errorResponse) return errorResponse;
+  const user = { id: appUser.id, email: appUser.email ?? '' };
 
   const { data: records, error: fetchError } = await supabaseAdmin
     .from('hakjeom_consultations')

@@ -7,6 +7,16 @@ export interface Announcement {
 
 const ANNOUNCEMENTS: Announcement[] = [
   {
+    id: 8,
+    date: '2026-04-29',
+    title: '학점은행제 문의DB 개선',
+    items: [
+      '사이드바 메뉴 구성이 개편됐어요.',
+      '지인소개 대분류로 등록완료 처리 시 상태가 자동으로 기타로 변경돼요.',
+      '담당자 실적이 월별, 분기별로 함께 표시돼요.',
+    ],
+  },
+  {
     id: 7,
     date: '2026-04-23',
     title: '연락예정 탭 개편',
