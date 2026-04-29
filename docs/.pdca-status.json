@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-04-29T01:14:27.675Z",
+  "lastUpdated": "2026-04-29T01:17:16.300Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -1835,7 +1835,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-29T01:04:35.013Z",
-        "lastUpdated": "2026-04-29T01:14:27.675Z"
+        "lastUpdated": "2026-04-29T01:17:16.300Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/hakjeom/migrate-jiin/route.ts"
     }
@@ -1848,7 +1848,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-29T01:14:27.675Z"
+    "lastActivity": "2026-04-29T01:17:16.300Z"
   },
   "history": [
     {
@@ -23885,6 +23885,30 @@
     },
     {
       "timestamp": "2026-04-29T01:14:27.675Z",
+      "feature": "migrate-jiin",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T01:17:08.660Z",
+      "feature": "migrate-jiin",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T01:17:10.042Z",
+      "feature": "migrate-jiin",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T01:17:16.240Z",
+      "feature": "migrate-jiin",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T01:17:16.300Z",
       "feature": "migrate-jiin",
       "phase": "do",
       "action": "updated"

@@ -1,14 +1,13 @@
 import { requireAuthFull } from '@/lib/auth/requireAuth'
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { logAction } from '@/lib/audit/logAction';
 
 // POST /api/hakjeom/migrate-jiin
 // 등록완료 상태인 지인소개 레코드의 click_source를 기타로 일괄 변경 (1회성 마이그레이션)
-export async function POST(_req: NextRequest) {
+export async function POST() {
   const { appUser, errorResponse } = await requireAuthFull();
   if (errorResponse) return errorResponse;
-  const user = { id: appUser.id, email: appUser.email ?? '' };
 
   const { data: records, error: fetchError } = await supabaseAdmin
     .from('hakjeom_consultations')
@@ -35,8 +34,7 @@ export async function POST(_req: NextRequest) {
   }
 
   await logAction({
-    user_id: user.id,
-    user_email: user.email,
+    user_id: appUser.id,
     action: 'update',
     resource: '학점은행제 상담',
     resource_id: ids.join(','),
