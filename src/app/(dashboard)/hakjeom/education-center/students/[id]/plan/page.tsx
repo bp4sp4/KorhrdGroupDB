@@ -84,6 +84,13 @@ interface SemesterDates {
 // ── 상수 ──────────────────────────────────────────────────────
 
 const SUBJECT_CATEGORIES: SubjectCategory[] = ['전공', '선택', '교양', '일반'];
+// 필터/그룹 헤더 표시용 라벨 — '전공' = 전공필수, '선택' = 전공선택
+const CATEGORY_LABELS: Record<SubjectCategory, string> = {
+  '전공': '전공필수',
+  '선택': '전공선택',
+  '교양': '교양',
+  '일반': '일반',
+};
 const CREDIT_OPTIONS = [1, 2, 3, 4, 5] as const;
 const DEFAULT_CENTERS = ['한평생교육', '서사평', '올티칭'];
 const CENTER_ADD_THRESHOLD = 60;
@@ -1955,7 +1962,7 @@ export default function PlanPage() {
           <div className={styles.credit_list}>
             {prevSubjects.map((s) => (
               <div key={s.id} className={styles.credit_item}>
-                <span className={styles.prev_cat_badge}>{s.category}</span>
+                <span className={styles.prev_cat_badge}>{CATEGORY_LABELS[s.category] ?? s.category}</span>
                 <span className={styles.credit_item_name}>{s.name}</span>
                 <span className={styles.credit_badge}>{s.credits}학점</span>
                 <button className={styles.item_edit_btn} onClick={() => openEditPrevSubject(s)}>수정</button>
@@ -2093,13 +2100,13 @@ export default function PlanPage() {
           />
           <select className={styles.subject_filter} value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}>
             <option value="전체">전체</option>
-            {SUBJECT_CATEGORIES.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
+            {SUBJECT_CATEGORIES.map((cat) => <option key={cat} value={cat}>{CATEGORY_LABELS[cat]}</option>)}
           </select>
 
           <div className={styles.subject_list}>
             {Object.entries(groupedSubjects).map(([category, subjs]) => (
               <div key={category}>
-                <div className={styles.subject_category_label}>{category}</div>
+                <div className={styles.subject_category_label}>{CATEGORY_LABELS[category as SubjectCategory] ?? category}</div>
                 {subjs.map((subject) => {
                   const used = isSubjectUsed(subject.id);
                   const score = getSubjectScore(subject.id);
@@ -2451,7 +2458,7 @@ export default function PlanPage() {
                   {SUBJECT_CATEGORIES.map((cat) => (
                     <label key={cat} className={`${styles.popup_radio} ${subjectForm.category === cat ? styles.popup_radio_active : ''}`}>
                       <input type="radio" name="sCat" value={cat} checked={subjectForm.category === cat}
-                        onChange={() => setSubjectForm((f) => ({ ...f, category: cat }))} />{cat}
+                        onChange={() => setSubjectForm((f) => ({ ...f, category: cat }))} />{CATEGORY_LABELS[cat]}
                     </label>
                   ))}
                 </div>
@@ -2651,7 +2658,7 @@ export default function PlanPage() {
                   {SUBJECT_CATEGORIES.map((cat) => (
                     <label key={cat} className={`${styles.popup_radio} ${prevForm.category === cat ? styles.popup_radio_active : ''}`}>
                       <input type="radio" name="pCat" value={cat} checked={prevForm.category === cat}
-                        onChange={() => setPrevForm((f) => ({ ...f, category: cat }))} />{cat}
+                        onChange={() => setPrevForm((f) => ({ ...f, category: cat }))} />{CATEGORY_LABELS[cat]}
                     </label>
                   ))}
                 </div>

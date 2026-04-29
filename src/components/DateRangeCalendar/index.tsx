@@ -41,7 +41,7 @@ export interface DateRangeCalendarProps {
 }
 
 type Preset =
-  | { key: string; label: string; build: (ref: Date) => DateRange }
+  | { key: string; label: string; build: (ref: Date) => DateRange; noClamp?: boolean }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 프리셋
@@ -54,6 +54,7 @@ const MONTH_VARIANT_PRESETS: Preset[] = [
   { key: 'thisMonth', label: '당월',   build: (r) => ({ from: startOfMonth(r), to: endOfMonth(r) }) },
   { key: 'lastMonth', label: '전월',   build: (r) => { const d = addMonths(r, -1); return { from: startOfMonth(d), to: endOfMonth(d) } } },
   { key: 'prevPrev',  label: '전전월', build: (r) => { const d = addMonths(r, -2); return { from: startOfMonth(d), to: endOfMonth(d) } } },
+  { key: 'wholeYear', label: '전체',   build: (r) => ({ from: startOfYear(r), to: endOfYear(r) }), noClamp: true },
 ]
 
 const QUARTER_VARIANT_PRESETS: Preset[] = [
@@ -66,6 +67,7 @@ const QUARTER_VARIANT_PRESETS: Preset[] = [
   { key: 'q4',        label: '4분기',  build: (r) => ({ from: startOfQuarter(new Date(r.getFullYear(), 9, 1)), to: endOfQuarter(new Date(r.getFullYear(), 9, 1)) }) },
   { key: 'h1',        label: '상반기', build: (r) => ({ from: startOfYear(r), to: endOfMonth(new Date(r.getFullYear(), 5, 1)) }) },
   { key: 'h2',        label: '하반기', build: (r) => ({ from: startOfMonth(new Date(r.getFullYear(), 6, 1)), to: endOfYear(r) }) },
+  { key: 'wholeYear', label: '전체',   build: (r) => ({ from: startOfYear(r), to: endOfYear(r) }), noClamp: true },
 ]
 
 const MONTH_PRESETS: Preset[] = Array.from({ length: 12 }, (_, i) => ({
@@ -168,15 +170,15 @@ export function DateRangeCalendar({
   // 정확한 월 단위 상한은 clampRangeByMax가 처리. max prop은 러프 가이드.
   const maxDays = maxRangeMonths * 31
 
-  function setRange(next: DateRange | undefined) {
-    const clamped = clampRangeByMax(next, maxRangeMonths)
-    if (!isControlled) setInternal(clamped)
-    onChange?.(clamped)
+  function setRange(next: DateRange | undefined, opts?: { noClamp?: boolean }) {
+    const final = opts?.noClamp ? next : clampRangeByMax(next, maxRangeMonths)
+    if (!isControlled) setInternal(final)
+    onChange?.(final)
   }
 
   function applyPreset(p: Preset) {
     const next = p.build(ref)
-    setRange(next)
+    setRange(next, { noClamp: p.noClamp })
     // 프리셋 선택 시 달력을 해당 범위의 시작 월로 이동
     if (next?.from) setDisplayMonth(startOfMonth(next.from))
   }
@@ -248,7 +250,7 @@ export function DateRangeCalendar({
             Chevron: NavChevron,
             // 더블 chevron (<< >>) — 월 전후 이동 버튼은 react-day-picker가 제공 안 하므로 UI에서 생략
           }}
-          max={maxDays}
+          max={days > maxDays ? undefined : maxDays}
         />
       </div>
 
