@@ -338,6 +338,22 @@ export async function PATCH(request: NextRequest) {
         .update({ status })
         .in('id', ids)
       if (error) return NextResponse.json({ error: 'Failed to bulk update status' }, { status: 500 })
+
+      // 지인소개 대분류는 등록완료 대신 기타 상태로 처리
+      if (status === '등록완료') {
+        const { data: jiinRecords } = await supabaseAdmin
+          .from(TABLE)
+          .select('id')
+          .in('id', ids)
+          .like('click_source', '지인소개%')
+        if (jiinRecords && jiinRecords.length > 0) {
+          await supabaseAdmin
+            .from(TABLE)
+            .update({ status: '기타' })
+            .in('id', jiinRecords.map(r => r.id))
+        }
+      }
+
       await logAction({ user_id: user.id, user_email: user.email, action: 'update', resource: '학점은행제 상담', resource_id: ids.join(','), detail: `${ids.length}건 상태 일괄 변경: ${status}`, meta: { ids, status } })
       return NextResponse.json({ message: 'Bulk status updated' })
     }
@@ -399,6 +415,11 @@ export async function PATCH(request: NextRequest) {
     }
 
     const { data: current } = await supabaseAdmin.from(TABLE).select('*').eq('id', id).single();
+
+    // 지인소개 대분류는 등록완료 대신 기타로 처리
+    if (status === '등록완료' && current?.click_source?.startsWith('지인소개')) {
+      updateData.status = '기타';
+    }
 
     const { data, error } = await supabaseAdmin
       .from(TABLE)

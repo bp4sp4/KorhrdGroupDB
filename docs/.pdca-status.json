@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-04-28T09:54:35.727Z",
+  "lastUpdated": "2026-04-29T01:11:09.533Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -131,7 +131,8 @@
     "channel-stats",
     "ad-costs",
     "marketing",
-    "creatives"
+    "creatives",
+    "migrate-jiin"
   ],
   "primaryFeature": "supabase",
   "features": {
@@ -196,7 +197,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:30:16.038Z",
-        "lastUpdated": "2026-04-28T09:38:50.273Z"
+        "lastUpdated": "2026-04-29T01:11:09.533Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/hakjeom/page.tsx"
     },
@@ -1824,6 +1825,19 @@
         "lastUpdated": "2026-04-28T08:51:45.505Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/marketing/creatives/route.ts"
+    },
+    "migrate-jiin": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-04-29T01:04:35.013Z",
+        "lastUpdated": "2026-04-29T01:04:35.013Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/hakjeom/migrate-jiin/route.ts"
     }
   },
   "pipeline": {
@@ -1834,7 +1848,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-28T09:54:35.727Z"
+    "lastActivity": "2026-04-29T01:11:09.533Z"
   },
   "history": [
     {
@@ -23818,6 +23832,48 @@
     {
       "timestamp": "2026-04-28T09:54:35.727Z",
       "feature": "admin",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T01:04:08.462Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T01:04:18.545Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T01:04:35.013Z",
+      "feature": "migrate-jiin",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T01:07:33.255Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T01:07:39.090Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T01:10:05.638Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T01:11:09.533Z",
+      "feature": "hakjeom",
       "phase": "do",
       "action": "updated"
     }

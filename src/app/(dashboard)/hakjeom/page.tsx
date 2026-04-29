@@ -2224,23 +2224,28 @@ function HakjeomTab({ isActive, highlightId }: { isActive: boolean; highlightId?
           const t = list.length;
           return t > 0 ? Math.round((list.filter(c => c.status === '등록완료').length / t) * 100) : 0;
         };
-        // 한국시간(KST) 기준 4월 1일 ~ 4월 30일
+        // 한국시간(KST) 기준 월 / 분기 계산
         const now = new Date();
-        const kstYear = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Seoul' })).getFullYear();
-        const kstMonth = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Seoul' })).getMonth(); // 0-based
+        const kstNow = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
+        const kstYear = kstNow.getFullYear();
+        const kstMonth = kstNow.getMonth(); // 0-based
+        const quarter = Math.floor(kstMonth / 3) + 1; // 1~4
         const monthStart = new Date(`${kstYear}-${String(kstMonth + 1).padStart(2, '0')}-01T00:00:00+09:00`);
-        const monthEnd = new Date(kstYear, kstMonth + 1, 0); // 해당 월 마지막 날
-        const monthEndKST = new Date(`${kstYear}-${String(kstMonth + 1).padStart(2, '0')}-${String(monthEnd.getDate()).padStart(2, '0')}T23:59:59+09:00`);
+        const monthLastDay = new Date(kstYear, kstMonth + 1, 0).getDate();
+        const monthEnd = new Date(`${kstYear}-${String(kstMonth + 1).padStart(2, '0')}-${String(monthLastDay).padStart(2, '0')}T23:59:59+09:00`);
+        const quarterStartMonth = (quarter - 1) * 3;
+        const quarterEndMonth = quarterStartMonth + 2;
+        const quarterEndLastDay = new Date(kstYear, quarterEndMonth + 1, 0).getDate();
+        const quarterStart = new Date(`${kstYear}-${String(quarterStartMonth + 1).padStart(2, '0')}-01T00:00:00+09:00`);
+        const quarterEnd = new Date(`${kstYear}-${String(quarterEndMonth + 1).padStart(2, '0')}-${String(quarterEndLastDay).padStart(2, '0')}T23:59:59+09:00`);
 
         const mStats = mgrs.map(name => {
           const rows = all.filter(c => c.manager === name);
-          const monthlyRows = rows.filter(c => {
-            const d = new Date(c.created_at);
-            return d >= monthStart && d <= monthEndKST;
-          });
-          return { name, overall: rate(rows), monthly: rate(monthlyRows) };
-        }).sort((a, b) => b.overall - a.overall);
-        const topName = mStats[0]?.overall > 0 ? mStats[0].name : null;
+          const monthlyRows = rows.filter(c => { const d = new Date(c.created_at); return d >= monthStart && d <= monthEnd; });
+          const quarterlyRows = rows.filter(c => { const d = new Date(c.created_at); return d >= quarterStart && d <= quarterEnd; });
+          return { name, monthly: rate(monthlyRows), quarterly: rate(quarterlyRows) };
+        }).sort((a, b) => b.quarterly - a.quarterly);
+        const topName = mStats[0]?.quarterly > 0 ? mStats[0].name : null;
         setManagerStatsNode(
           <div className={styles.statsInline}>
             <span className={styles.statsInlineLabel}>담당자 실적</span>
@@ -2256,8 +2261,8 @@ function HakjeomTab({ isActive, highlightId }: { isActive: boolean; highlightId?
                     <span className={styles.statsInlineRate}>{m.monthly}%</span>
                   </span>
                   <span className={styles.statsInlineRateGroup}>
-                    <span className={styles.statsInlineRateLabel}>전체</span>
-                    <span className={`${styles.statsInlineRate} ${isTop ? styles.statsInlineRateTop : ''}`}>{m.overall}%</span>
+                    <span className={styles.statsInlineRateLabel}>{quarter}분기</span>
+                    <span className={`${styles.statsInlineRate} ${isTop ? styles.statsInlineRateTop : ''}`}>{m.quarterly}%</span>
                   </span>
                 </span>
               );
