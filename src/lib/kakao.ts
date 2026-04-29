@@ -25,7 +25,7 @@ export const ALIMTALK_TEMPLATES = {
 
 function applyVars(message: string, vars?: Record<string, string>): string {
   if (!vars) return message
-  return message.replace(/#\{(\w+)\}/g, (_, key) => vars[key] ?? `#{${key}}`)
+  return message.replace(/#\{([^}]+)\}/g, (_, key) => vars[key.trim()] ?? `#{${key}}`)
 }
 
 interface AligoResult {
