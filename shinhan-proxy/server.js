@@ -10,6 +10,7 @@ const APP_SECRET = process.env.SHINHAN_APP_SECRET ?? ''
 const SUB_CHANNEL = process.env.SHINHAN_SUB_CHANNEL ?? 'P6'
 const PROXY_SECRET = process.env.PROXY_SECRET ?? ''
 const IS_PROD = process.env.SHINHAN_ENV === 'prod'
+const SERVER_IP = process.env.SERVER_IP ?? '' // 신한 화이트리스트 등록된 서버 외부 IP
 
 const BASE_URL = IS_PROD
   ? 'https://shbapi.shinhan.com:6443'
@@ -110,7 +111,7 @@ app.post('/shinhan/transactions', async (req, res) => {
         apiKey: APP_KEY,
         Authorization: `Bearer ${token}`,
         hsKey,
-        clientIp: clientIp ?? '0.0.0.0',
+        clientIp: SERVER_IP || clientIp || '0.0.0.0',
       },
       body: bodyStr,
     })

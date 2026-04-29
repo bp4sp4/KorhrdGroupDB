@@ -234,9 +234,13 @@ export default function Sidebar({ userRole, permissions = [], revenueOwnDivision
   const baseItems = isFullAccess
     ? rawItems
     : rawItems.filter(item => {
-        const sectionKey = Object.entries(SECTION_ITEM_MAP).find(([, id]) => id === item.id)?.[0]
-        if (!sectionKey) return true
-        return allowedSections.has(sectionKey)
+        // 같은 item.id에 여러 section이 매핑될 수 있음 (예: management = revenues+approvals+reports+...)
+        // 그 중 하나라도 허용된 section이 있으면 부모 메뉴를 보여줌
+        const matchingSections = Object.entries(SECTION_ITEM_MAP)
+          .filter(([, id]) => id === item.id)
+          .map(([sec]) => sec)
+        if (matchingSections.length === 0) return true
+        return matchingSections.some(sec => allowedSections.has(sec))
       })
 
   // section -> 해당 section item 의 children 에 적용할 allowed_tabs (NavSubItem.id 기준)
@@ -258,9 +262,28 @@ export default function Sidebar({ userRole, permissions = [], revenueOwnDivision
     abroad: 'abroad',
   }
 
+  /** 경영지원본부(management) 자식 menu id → section 매핑 */
+  const managementChildSection: Record<string, string> = {
+    'management-nms-sales':      'revenues',
+    'management-revenue-upload': 'revenue-upload',
+    'management-bankaccount':    'bankaccount',
+    'management-approvals':      'approvals',
+    'management-reports':        'reports',
+  }
+
   const currentItems = baseItems
     .map(item => {
       if (!item.children) return item
+
+      // (0) 경영지원본부 — 자식별 section 권한에 따라 필터
+      if (item.id === 'management' && !isFullAccess) {
+        const filteredChildren = item.children.filter(child => {
+          const sec = managementChildSection[child.id]
+          if (!sec) return true
+          return allowedSections.has(sec)
+        })
+        return { ...item, children: filteredChildren }
+      }
 
       // (1) 매출 관리 — 기존 own scope 분기 유지
       if (item.id === 'nms-sales') {

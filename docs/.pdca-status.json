@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-04-29T01:45:56.597Z",
+  "lastUpdated": "2026-04-29T02:51:57.570Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -185,7 +185,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:20:57.368Z",
-        "lastUpdated": "2026-04-28T09:31:50.856Z"
+        "lastUpdated": "2026-04-29T02:51:57.570Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/components/layout/Sidebar.tsx"
     },
@@ -1849,9 +1849,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-29T01:45:16.049Z",
-        "lastUpdated": "2026-04-29T01:45:16.049Z"
+        "lastUpdated": "2026-04-29T02:03:48.113Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/shinhan-proxy/server.js"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/shinhan-proxy/server.js"
     }
   },
   "pipeline": {
@@ -1862,7 +1862,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-29T01:45:56.597Z"
+    "lastActivity": "2026-04-29T02:51:57.570Z"
   },
   "history": [
     {
@@ -24050,6 +24050,42 @@
     {
       "timestamp": "2026-04-29T01:45:56.597Z",
       "feature": "hakjeom-bank-web",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T02:03:47.043Z",
+      "feature": "shinhan-proxy",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T02:03:48.113Z",
+      "feature": "shinhan-proxy",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T02:51:36.804Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T02:51:45.460Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T02:51:48.348Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-29T02:51:57.570Z",
+      "feature": "layout",
       "phase": "do",
       "action": "updated"
     }
