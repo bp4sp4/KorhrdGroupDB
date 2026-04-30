@@ -43,11 +43,12 @@ const PATH_LABELS: Record<string, string> = {
 // 경로 + 탭 → 헤더 표시 레이블
 const PATH_TAB_LABELS: Record<string, Record<string, string>> = {
   '/hakjeom': {
-    hakjeom:      '학점은행제',
-    agency:       '기관협약',
-    bulk:         '일괄등록',
-    counsel_done: '연락예정',
-    stats:        '통계',
+    hakjeom:         '문의DB',
+    agency:          '기관협약',
+    bulk:            '일괄등록',
+    counsel_done:    '연락예정',
+    'edu-students':  '등록학생관리',
+    stats:           '통계',
   },
   '/cert': {
     hakjeom:          '학점연계 신청',

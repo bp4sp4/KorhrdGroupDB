@@ -377,6 +377,8 @@ export default function PlanPage() {
   const [uploadingTranscript, setUploadingTranscript] = useState(false);
   const creditFileInputRef = useRef<HTMLInputElement>(null);
   const transcriptFileInputRef = useRef<HTMLInputElement>(null);
+  const fvPrintRef = useRef<HTMLDivElement>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
   const [previewDoc, setPreviewDoc] = useState<{ url: string; name: string; fileType: 'image' | 'pdf' | 'other' } | null>(null);
 
   const planConfig = useMemo(
@@ -1393,16 +1395,8 @@ export default function PlanPage() {
   // ── 전체보기 ────────────────────────────────────────────────
   const ORDINALS_KR = ['첫', '두번째', '세번째', '네번째', '다섯번째', '여섯번째', '일곱번째', '여덟번째', '아홉번째', '열번째'];
   const SEM_COLORS = [
-    { bg: 'linear-gradient(180deg, #F3F7FF 0%, #E7EEFF 100%)', border: '#C9D7FF', label: '#3159C9' },
-    { bg: 'linear-gradient(180deg, #EEFBF6 0%, #DFF7EE 100%)', border: '#B7EBCF', label: '#0F766E' },
-    { bg: 'linear-gradient(180deg, #FFF7EC 0%, #FCECD5 100%)', border: '#F3CF9F', label: '#C26718' },
-    { bg: 'linear-gradient(180deg, #F8F4FF 0%, #EEE6FF 100%)', border: '#D8C9FF', label: '#6D46C5' },
-    { bg: 'linear-gradient(180deg, #EFF9FF 0%, #DEF0FF 100%)', border: '#B8DCF8', label: '#0F6E9E' },
-    { bg: 'linear-gradient(180deg, #FFF1F3 0%, #FFE3E8 100%)', border: '#F7C6D3', label: '#B44769' },
-    { bg: 'linear-gradient(180deg, #F1FCFA 0%, #DDF7F1 100%)', border: '#B8E9DE', label: '#117864' },
-    { bg: 'linear-gradient(180deg, #FFFBEF 0%, #FFF1C7 100%)', border: '#F2DB8D', label: '#A46A12' },
-    { bg: 'linear-gradient(180deg, #FDF5FF 0%, #F5E8FF 100%)', border: '#E5C9FA', label: '#8C4DB0' },
-    { bg: 'linear-gradient(180deg, #F0FCFF 0%, #DCF7FB 100%)', border: '#B6E8EF', label: '#16728B' },
+    { bg: 'linear-gradient(180deg, #EEF3FF 0%, #DFE8FF 100%)', border: '#BAC9F8', label: '#2B50C7', summaryBg: '#E5EDFF', kisuBg: '#EBF0FF' },
+    { bg: 'linear-gradient(180deg, #EAFAF8 0%, #D7F3F0 100%)', border: '#9ED8D3', label: '#0C7B72', summaryBg: '#DDF5F2', kisuBg: '#E5F7F5' },
   ];
   // 전체보기 고정 컬럼: 전공(category), 교양(category), 일반(category)
   const FV_COLUMNS = ['전공', '교양', '일반'] as const;
@@ -1431,16 +1425,71 @@ export default function PlanPage() {
     return d.start ? `${fmt(d.start)}~` : '';
   }
 
+  const handleDownloadPdf = async () => {
+    const el = fvPrintRef.current;
+    if (!el) return;
+    setPdfLoading(true);
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const { jsPDF } = await import('jspdf');
+
+      const canvas = await html2canvas(el, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const ratio = canvas.width / canvas.height;
+      const imgW = pageW;
+      const imgH = imgW / ratio;
+
+      if (imgH <= pageH) {
+        pdf.addImage(imgData, 'PNG', 0, 0, imgW, imgH);
+      } else {
+        let yOffset = 0;
+        let remaining = imgH;
+        while (remaining > 0) {
+          pdf.addImage(imgData, 'PNG', 0, -yOffset, imgW, imgH);
+          yOffset += pageH;
+          remaining -= pageH;
+          if (remaining > 0) pdf.addPage();
+        }
+      }
+
+      const today = new Date().toISOString().slice(0, 10);
+      pdf.save(`학습플랜_${student?.name ?? '학생'}_${today}.pdf`);
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
   if (showFullView) {
     return (
       <div className={styles.fv_wrap}>
         {/* 전체보기 헤더 */}
         <div className={styles.fv_top}>
           <h2 className={styles.fv_title}>학습플랜 전체보기</h2>
-          <button className={styles.fv_back_btn} onClick={() => setShowFullView(false)}>
-            ← 돌아가기
-          </button>
+          <div className={styles.fv_top_actions}>
+            <button
+              className={styles.fv_pdf_btn}
+              onClick={handleDownloadPdf}
+              disabled={pdfLoading}
+            >
+              {pdfLoading ? '생성 중...' : '↓ PDF 다운로드'}
+            </button>
+            <button className={styles.fv_back_btn} onClick={() => setShowFullView(false)}>
+              ← 돌아가기
+            </button>
+          </div>
         </div>
+
+        {/* 인쇄 영역 */}
+        <div ref={fvPrintRef}>
 
         {/* 학생 정보 */}
         <div className={styles.fv_info_bar}>
@@ -1508,7 +1557,7 @@ export default function PlanPage() {
                   if (multiKisu) {
                     // 기수 헤더 행
                     result.push(
-                      <tr key={`kisu-${sem.id}`} className={styles.fv_kisu_row}>
+                      <tr key={`kisu-${sem.id}`} className={styles.fv_kisu_row} style={{ background: color.kisuBg }}>
                         {!leftCellPlaced && leftCell}
                         <td colSpan={1 + FV_COLUMNS.length} className={styles.fv_kisu_label}>
                           {sem.class_number}기{monthRange ? ` · ${monthRange}` : ''}
@@ -1571,7 +1620,7 @@ export default function PlanPage() {
 
                   // 이수학점 소계
                   result.push(
-                    <tr key={`summary-${sem.id}`} className={styles.fv_summary_row}>
+                    <tr key={`summary-${sem.id}`} className={styles.fv_summary_row} style={{ background: color.summaryBg }}>
                       <td className={styles.fv_summary_label}>이수학점</td>
                       {FV_COLUMNS.map((col) => (
                         <td key={col} className={styles.fv_summary_credit}>
@@ -1597,6 +1646,7 @@ export default function PlanPage() {
           </tbody>
         </table>
 
+        </div> {/* /fvPrintRef */}
       </div>
     );
   }

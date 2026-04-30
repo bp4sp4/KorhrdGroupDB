@@ -7,15 +7,15 @@ export async function GET() {
   if (errorResponse) return errorResponse
 
   const [
-    { data: users },
+    { data: staffUsers },
     { data: applications },
     { data: consultations },
     { data: payments },
   ] = await Promise.all([
     supabaseAdmin
-      .from('profiles')
-      .select('id, full_name, email, target_country, created_at, is_admin, login_provider')
-      .order('created_at', { ascending: false }),
+      .from('app_users')
+      .select('auth_user_id')
+      .not('auth_user_id', 'is', null),
     supabaseAdmin
       .from('applications')
       .select('id, user_id, status, created_at, program, name, phone, email')
@@ -29,6 +29,19 @@ export async function GET() {
       .select('id, user_id, program, amount, payapp_order_id, payapp_tid, status, created_at')
       .order('created_at', { ascending: false }),
   ])
+
+  const staffAuthIds = (staffUsers ?? []).map(u => u.auth_user_id).filter(Boolean) as string[]
+
+  let profilesQuery = supabaseAdmin
+    .from('profiles')
+    .select('id, full_name, email, target_country, created_at, is_admin, login_provider')
+    .order('created_at', { ascending: false })
+
+  if (staffAuthIds.length > 0) {
+    profilesQuery = profilesQuery.not('id', 'in', `(${staffAuthIds.join(',')})`)
+  }
+
+  const { data: users } = await profilesQuery
 
   return NextResponse.json({
     users: users ?? [],

@@ -2641,6 +2641,37 @@
   letter-spacing: -0.6px;
 }
 
+.fv_top_actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.fv_pdf_btn {
+  height: 44px;
+  padding: 0 22px;
+  background: #FFFFFF;
+  color: #2B50C7;
+  border: 1.5px solid #BAC9F8;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+  box-shadow: 0 2px 8px rgba(43, 80, 199, 0.08);
+}
+
+.fv_pdf_btn:hover:not(:disabled) {
+  background: #EEF3FF;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(43, 80, 199, 0.14);
+}
+
+.fv_pdf_btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .fv_back_btn {
   height: 44px;
   padding: 0 22px;
@@ -2681,19 +2712,19 @@
   background: #FFFFFF;
   border-radius: 22px;
   overflow: hidden;
-  border: 1px solid #DCE6F5;
+  border: 1px solid #BFCFE8;
   font-size: 13px;
   box-shadow: 0 24px 48px rgba(16, 24, 40, 0.06);
 }
 
 .fv_th {
-  background: #F4F7FB;
-  color: #30425F;
+  background: #EDF1FA;
+  color: #253A5E;
   font-size: 12px;
   font-weight: 700;
   padding: 13px 14px;
   text-align: center;
-  border: 1px solid #DCE6F5;
+  border: 1px solid #CDD8EE;
   letter-spacing: 0.2px;
 }
 
@@ -2736,7 +2767,7 @@
 
 .fv_td {
   padding: 12px 14px;
-  border: 1px solid #E6ECF5;
+  border: 1px solid #D8E3F0;
   color: #1E293B;
   font-size: 13px;
   max-width: 180px;
@@ -2745,12 +2776,12 @@
 
 .fv_credit_td {
   padding: 12px 14px;
-  border: 1px solid #E6ECF5;
+  border: 1px solid #D8E3F0;
   text-align: center;
   color: #334155;
   font-size: 13px;
   min-width: 60px;
-  background: #FAFCFF;
+  background: #F8FAFE;
 }
 
 .fv_empty {
@@ -2758,64 +2789,64 @@
   text-align: center;
   color: #7A8699;
   font-size: 13px;
-  border: 1px solid #E6ECF5;
-  background: #FBFCFE;
+  border: 1px solid #D8E3F0;
+  background: #F8FAFE;
 }
 
 .fv_kisu_row {
-  background: #F8FBFD;
+  /* background set by inline style (semester color) */
 }
 
 .fv_kisu_label {
   padding: 10px 14px;
-  border: 1px solid #E1EAF5;
+  border: 1px solid #CDD8EE;
   font-size: 12px;
   font-weight: 700;
-  color: #3F556F;
+  color: #2E4268;
   letter-spacing: 0.2px;
-  background: #F8FBFD;
 }
 
 .fv_summary_row {
-  background: #F3F7FB;
+  /* background set by inline style (semester color) */
 }
 
 .fv_summary_label {
   padding: 11px 14px;
-  border: 1px solid #DCE6F5;
+  border: 1px solid #CDD8EE;
   font-size: 12px;
   font-weight: 700;
-  color: #41536F;
+  color: #253A5E;
 }
 
 .fv_summary_credit {
   padding: 11px 14px;
-  border: 1px solid #DCE6F5;
+  border: 1px solid #CDD8EE;
   text-align: center;
   font-size: 13px;
-  color: #334155;
+  color: #253A5E;
+  font-weight: 600;
 }
 
 .fv_total_row {
-  background: #FFF3BF;
+  background: #E6EDFF;
 }
 
 .fv_total_label {
   padding: 16px 16px;
-  border: 1px solid #F1D252;
+  border: 1px solid #AABEF5;
   font-size: 14px;
   font-weight: 800;
-  color: #674A00;
-  background: #FFF3BF;
+  color: #1A3580;
+  background: #E6EDFF;
 }
 
 .fv_total_credit {
   padding: 16px 14px;
-  border: 1px solid #F1D252;
+  border: 1px solid #AABEF5;
   text-align: center;
   font-size: 18px;
-  color: #674A00;
-  background: #FFF3BF;
+  color: #1A3580;
+  background: #E6EDFF;
   font-weight: 800;
 }
 
