@@ -2626,8 +2626,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(245, 249, 255, 0.96) 100%);
+  background:#fff;
   border: 1px solid #DCE6F5;
   border-radius: 22px;
   padding: 24px 28px;
@@ -2657,15 +2656,9 @@
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
-  box-shadow: 0 2px 8px rgba(43, 80, 199, 0.08);
 }
 
-.fv_pdf_btn:hover:not(:disabled) {
-  background: #EEF3FF;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(43, 80, 199, 0.14);
-}
+
 
 .fv_pdf_btn:disabled {
   opacity: 0.6;
@@ -2682,7 +2675,7 @@
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.24);
+  
   transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
 }
 
@@ -2696,25 +2689,24 @@
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  background: linear-gradient(180deg, #FFFFFF 0%, #F9FBFF 100%);
+  background: #fff;
   border-radius: 18px;
   padding: 18px 22px;
   font-size: 14px;
   color: #24334D;
   font-weight: 600;
   border: 1px solid #E0E8F2;
-  box-shadow: 0 10px 24px rgba(20, 35, 63, 0.05);
+  
+  margin-bottom: 20px;
 }
 
 .fv_table {
   width: 100%;
   border-collapse: collapse;
   background: #FFFFFF;
-  border-radius: 22px;
   overflow: hidden;
-  border: 1px solid #BFCFE8;
   font-size: 13px;
-  box-shadow: 0 24px 48px rgba(16, 24, 40, 0.06);
+  
 }
 
 .fv_th {

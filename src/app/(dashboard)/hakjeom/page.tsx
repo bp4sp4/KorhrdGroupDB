@@ -4728,8 +4728,10 @@ export default function HakjeomPage() {
     });
   }, []);
 
+  // 권한 시스템에 등록된 탭 키 — 이 목록에 없는 새 탭은 자동 허용
+  const MANAGED_HAKJEOM_TAB_KEYS = new Set(['hakjeom', 'agency', 'bulk', 'counsel_done', 'edu-students', 'stats']);
   const visibleTabs = allowedHakjeomTabs
-    ? TAB_CONFIG.filter(t => allowedHakjeomTabs.includes(t.key))
+    ? TAB_CONFIG.filter(t => allowedHakjeomTabs.includes(t.key) || !MANAGED_HAKJEOM_TAB_KEYS.has(t.key))
     : TAB_CONFIG;
 
   const initialTab: TabKey = (() => {

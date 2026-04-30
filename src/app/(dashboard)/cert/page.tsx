@@ -5355,8 +5355,10 @@ export default function CertPage() {
     })
   }, [])
 
+  // 권한 시스템에 등록된 탭 키 — 이 목록에 없는 새 탭은 자동 허용
+  const MANAGED_CERT_TAB_KEYS = new Set(['hakjeom', 'edu', 'private-cert', 'student-mgmt', 'student-contact', 'student-bulk', 'stats'])
   const visibleTabs = allowedCertTabs
-    ? SOURCE_TABS.filter(t => allowedCertTabs.includes(t.value))
+    ? SOURCE_TABS.filter(t => allowedCertTabs.includes(t.value) || !MANAGED_CERT_TAB_KEYS.has(t.value))
     : SOURCE_TABS
 
   const [sourceTab, setSourceTab] = useState<SourceTab>('hakjeom')

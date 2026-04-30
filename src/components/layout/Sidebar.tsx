@@ -308,7 +308,26 @@ export default function Sidebar({ userRole, permissions = [], revenueOwnDivision
       // null 또는 없음 = 전체 허용 → 그대로
       if (allowed === undefined || allowed === null) return item
 
-      const filteredChildren = item.children.filter(child => allowed.has(child.id))
+      // 권한 시스템에 등록된 탭 ID 목록 — 이 목록에 없는 탭은 새로 추가된 탭으로 간주해 자동 허용
+      const MANAGED_TAB_IDS: Record<string, Set<string>> = {
+        hakjeom: new Set([
+          'hakjeom-tab-hakjeom', 'hakjeom-tab-edu-students', 'hakjeom-tab-agency',
+          'hakjeom-tab-bulk', 'hakjeom-tab-counsel_done', 'hakjeom-tab-stats',
+          'allcare-tab-users', 'allcare-tab-payments', 'allcare-tab-stats',
+        ]),
+        cert: new Set([
+          'cert-tab-hakjeom', 'cert-tab-edu', 'cert-tab-private-cert',
+          'cert-tab-student-mgmt', 'cert-tab-student-contact', 'cert-tab-student-bulk', 'cert-tab-stats',
+        ]),
+        abroad: new Set([
+          'abroad-tab-users', 'abroad-tab-consult', 'abroad-tab-applications', 'abroad-tab-payments',
+        ]),
+      }
+
+      const managedSet = MANAGED_TAB_IDS[sectionForTabs]
+      const filteredChildren = item.children.filter(child =>
+        allowed.has(child.id) || !managedSet?.has(child.id)
+      )
       return { ...item, children: filteredChildren }
     })
     .filter(item => !item.children || item.children.length > 0)

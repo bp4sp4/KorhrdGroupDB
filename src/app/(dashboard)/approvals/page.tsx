@@ -57,6 +57,12 @@ interface AttachedFile {
   size: number
 }
 
+interface LinkedProposal {
+  id: string
+  document_number: string | null
+  title: string
+}
+
 // ---------------------------------------------------------------------------
 // 상수
 // ---------------------------------------------------------------------------
@@ -358,6 +364,16 @@ export default function ApprovalsPage() {
   // 임시저장 편집 모드
   const [editingDraftId, setEditingDraftId] = useState<string | null>(null)
 
+  // 품의서 연동 (지출결의서 전용)
+  const [linkedProposal, setLinkedProposal] = useState<LinkedProposal | null>(null)
+  const [proposalModalOpen, setProposalModalOpen] = useState(false)
+  const [proposalCandidates, setProposalCandidates] = useState<Approval[]>([])
+  const [proposalLoadingCandidates, setProposalLoadingCandidates] = useState(false)
+
+  // 연동 품의서 미리보기 팝업
+  const [linkedProposalView, setLinkedProposalView] = useState<Approval | null>(null)
+  const [linkedProposalViewLoading, setLinkedProposalViewLoading] = useState(false)
+
   // 리스트 뷰 - 검색/페이지네이션/서브탭
   const [listPage, setListPage] = useState(1)
   const [listSearch, setListSearch] = useState('')
@@ -458,8 +474,13 @@ export default function ApprovalsPage() {
       const template = templates.find(t => t.id === data.template_id) ?? null
       const rawAttachments = data.content['_attachments']
       const existingAttachments: AttachedFile[] = Array.isArray(rawAttachments) ? (rawAttachments as AttachedFile[]) : []
-      const { _attachments, ...restContent } = data.content as Record<string, unknown>
+      const rawLinked = (data.content as Record<string, unknown>)['_linked_proposal']
+      const existingLinked = (rawLinked && typeof rawLinked === 'object')
+        ? (rawLinked as LinkedProposal)
+        : null
+      const { _attachments, _linked_proposal, ...restContent } = data.content as Record<string, unknown>
       void _attachments
+      void _linked_proposal
 
       setFormState({
         template,
@@ -472,6 +493,7 @@ export default function ApprovalsPage() {
         reference_ids: Array.isArray(data.reference_ids) ? data.reference_ids.map(String) : [],
       })
       setAttachedFiles(existingAttachments)
+      setLinkedProposal(existingLinked)
       setEditingDraftId(data.id)
       setFormError('')
       setCurrentView('new_form')
@@ -532,6 +554,7 @@ export default function ApprovalsPage() {
     setAttachedFiles([])
     setUploadingFiles(false)
     setEditingDraftId(null)
+    setLinkedProposal(null)
     setCurrentView('new_form')
   }
 
@@ -575,6 +598,82 @@ export default function ApprovalsPage() {
     setAttachedFiles(prev => prev.filter((_, i) => i !== idx))
   }
 
+  // ── 품의서 연동 ────────────────────────────────────────────────
+  const openProposalLinkModal = useCallback(async () => {
+    setProposalModalOpen(true)
+    setProposalLoadingCandidates(true)
+    const [completedRes, mineRes] = await Promise.all([
+      fetch('/api/management/approvals?tab=completed'),
+      fetch('/api/management/approvals?tab=mine'),
+    ])
+    const completed: Approval[] = completedRes.ok ? await completedRes.json() : []
+    const mine: Approval[] = mineRes.ok ? await mineRes.json() : []
+
+    const isProposalType = (a: Approval) =>
+      a.document_type.replace(/\s/g, '') === '[품의서]지출품의서'
+    const isResolutionType = (a: Approval) =>
+      a.document_type.replace(/\s/g, '') === '[결의서]지출결의서'
+
+    // 본인 + 승인 완료 품의서
+    const approvedProposals = completed.filter(
+      a => String(a.applicant_id) === String(myUserId) && isProposalType(a) && a.status === 'APPROVED'
+    )
+
+    // 이미 다른 결의서가 연동한 품의서는 제외 (편집 중인 결의서는 예외)
+    const linkedIds = new Set<string>()
+    const seen = new Set<string>()
+    for (const a of [...mine, ...completed]) {
+      if (seen.has(String(a.id))) continue
+      seen.add(String(a.id))
+      if (!isResolutionType(a)) continue
+      if (editingDraftId && String(a.id) === String(editingDraftId)) continue
+      const lp = (a.content as Record<string, unknown> | null)?.['_linked_proposal'] as LinkedProposal | undefined
+      if (lp?.id) linkedIds.add(String(lp.id))
+    }
+    setProposalCandidates(approvedProposals.filter(p => !linkedIds.has(String(p.id))))
+    setProposalLoadingCandidates(false)
+  }, [myUserId, editingDraftId])
+
+  const applyProposalLink = (p: Approval) => {
+    const content = (p.content ?? {}) as Record<string, unknown>
+    const get = (k: string) => (content[k] != null ? String(content[k]) : '')
+
+    const filled: Record<string, string> = {}
+    if (get('belong_dept')) filled.belong_dept = get('belong_dept')
+    if (get('vendor_name')) filled.vendor_name = get('vendor_name')
+    if (get('contact')) filled.vendor_phone = get('contact')
+    if (get('purpose')) filled.detail = get('purpose')
+    if (get('amount')) filled.amount = get('amount')
+    if (get('cost_type')) filled.cost_type = get('cost_type')
+    if (get('special_note')) filled.special_note = get('special_note')
+
+    setFormState(prev => ({
+      ...prev,
+      content: { ...prev.content, ...filled },
+    }))
+
+    // 품의서 첨부파일 복사
+    const rawAtt = content['_attachments']
+    const proposalFiles: AttachedFile[] = Array.isArray(rawAtt) ? (rawAtt as AttachedFile[]) : []
+    if (proposalFiles.length) {
+      setAttachedFiles(prev => {
+        const seen = new Set(prev.map(f => f.url))
+        return [...prev, ...proposalFiles.filter(f => !seen.has(f.url))]
+      })
+    }
+
+    setLinkedProposal({
+      id: String(p.id),
+      document_number: p.document_number ?? null,
+      title: p.title,
+    })
+    setProposalModalOpen(false)
+  }
+
+  const handleUnlinkProposal = () => {
+    setLinkedProposal(null)
+  }
+
   const handleSelectTemplate = (tpl: ApprovalTemplate) => {
     const isDynamic = tpl.document_type.startsWith('custom_')
     setFormState({
@@ -585,6 +684,7 @@ export default function ApprovalsPage() {
       approver_ids: [],
       reference_ids: [],
     })
+    setLinkedProposal(null)
     setCurrentView('new_form')
   }
 
@@ -611,9 +711,9 @@ export default function ApprovalsPage() {
     setSubmitting(true)
     setFormError('')
 
-    const mergedContent = attachedFiles.length > 0
-      ? { ...content, _attachments: attachedFiles }
-      : content
+    const mergedContent: Record<string, unknown> = { ...content }
+    if (attachedFiles.length > 0) mergedContent._attachments = attachedFiles
+    if (linkedProposal) mergedContent._linked_proposal = linkedProposal
 
     let res: Response
     if (editingDraftId) {
@@ -1136,6 +1236,49 @@ export default function ApprovalsPage() {
                 </table>
               </div>
 
+              {/* 연동 품의서 (지출결의서) */}
+              {(() => {
+                const raw = (selectedApproval.content as Record<string, unknown>)?.['_linked_proposal']
+                if (!raw || typeof raw !== 'object') return null
+                const lp = raw as LinkedProposal
+                if (!lp.id) return null
+                return (
+                  <table className={styles.linkedProposalTable}>
+                    <thead>
+                      <tr>
+                        <th colSpan={2} className={styles.linkedProposalHeader}>연동 품의서</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td className={styles.linkedProposalLabelCell}>문서번호</td>
+                        <td className={styles.linkedProposalValueCell}>
+                          <button
+                            type="button"
+                            className={styles.linkedProposalLinkBtn}
+                            onClick={async () => {
+                              setLinkedProposalViewLoading(true)
+                              setLinkedProposalView({ id: lp.id } as Approval)
+                              const res = await fetch(`/api/management/approvals/${lp.id}`)
+                              if (res.ok) {
+                                setLinkedProposalView(await res.json())
+                              } else {
+                                setLinkedProposalView(null)
+                                alert('품의서를 불러올 수 없습니다.')
+                              }
+                              setLinkedProposalViewLoading(false)
+                            }}
+                          >
+                            {lp.document_number ?? '문서번호 없음'}
+                          </button>
+                          <span className={styles.linkedProposalSubtitle}>{lp.title}</span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                )
+              })()}
+
               {/* 본문 테이블 — 템플릿 레지스트리에서 자동 처리 */}
               {(() => {
                 const cfg = getDocTemplate(selectedApproval, dynamicConfigs)
@@ -1619,6 +1762,62 @@ export default function ApprovalsPage() {
               </table>
             </div>
 
+            {/* 품의서 연동 (지출결의서 전용) */}
+            {formTemplateConfig?.id === 'expense-resolution' && (
+              <table className={styles.linkedProposalTable}>
+                <thead>
+                  <tr>
+                    <th colSpan={2} className={styles.linkedProposalHeader}>연동 품의서</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className={styles.linkedProposalLabelCell}>품의서</td>
+                    <td className={styles.linkedProposalValueCell}>
+                      {linkedProposal ? (
+                        <>
+                          <button
+                            type="button"
+                            className={styles.linkedProposalLinkBtn}
+                            onClick={async () => {
+                              setLinkedProposalViewLoading(true)
+                              setLinkedProposalView({ id: linkedProposal.id } as Approval)
+                              const res = await fetch(`/api/management/approvals/${linkedProposal.id}`)
+                              if (res.ok) {
+                                setLinkedProposalView(await res.json())
+                              } else {
+                                setLinkedProposalView(null)
+                                alert('품의서를 불러올 수 없습니다.')
+                              }
+                              setLinkedProposalViewLoading(false)
+                            }}
+                          >
+                            {linkedProposal.document_number ?? '문서번호 없음'}
+                          </button>
+                          <span className={styles.linkedProposalSubtitle}>{linkedProposal.title}</span>
+                          <button
+                            type="button"
+                            className={styles.linkedProposalUnlinkBtn}
+                            onClick={handleUnlinkProposal}
+                          >
+                            연동 해제
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          className={styles.linkedProposalSelectBtn}
+                          onClick={openProposalLinkModal}
+                        >
+                          품의서 선택
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            )}
+
             {/* 본문 테이블 — 템플릿 레지스트리에서 자동 처리 */}
             {formTemplateConfig && (
               <formTemplateConfig.BodySection
@@ -2083,6 +2282,128 @@ export default function ApprovalsPage() {
     document.body
   ) : null
 
+  const proposalModal = proposalModalOpen && typeof document !== 'undefined' ? createPortal(
+    <div
+      className={styles.tplOverlay}
+      onMouseDown={e => { if (e.target === e.currentTarget) setProposalModalOpen(false) }}
+    >
+      <div className={styles.proposalModal}>
+        <div className={styles.tplHeader}>
+          <span className={styles.tplTitle}>품의서 선택</span>
+          <button
+            className={styles.tplClose}
+            onClick={() => setProposalModalOpen(false)}
+            aria-label="닫기"
+          >
+            <X size={16} />
+          </button>
+        </div>
+        <div className={styles.proposalModalBody}>
+          {proposalLoadingCandidates ? (
+            <p className={styles.proposalModalEmpty}>불러오는 중...</p>
+          ) : proposalCandidates.length === 0 ? (
+            <p className={styles.proposalModalEmpty}>연동 가능한 승인 완료 품의서가 없습니다.</p>
+          ) : (
+            <ul className={styles.proposalList}>
+              {proposalCandidates.map(p => {
+                const c = (p.content ?? {}) as Record<string, unknown>
+                const vendor = c['vendor_name'] ? String(c['vendor_name']) : ''
+                const amount = c['amount'] ? Number(c['amount']).toLocaleString() : ''
+                return (
+                  <li key={p.id} className={styles.proposalItem}>
+                    <button
+                      type="button"
+                      className={styles.proposalItemBtn}
+                      onClick={() => applyProposalLink(p)}
+                    >
+                      <div className={styles.proposalItemTop}>
+                        <span className={styles.proposalItemNumber}>
+                          {p.document_number ?? '문서번호 없음'}
+                        </span>
+                        <span className={styles.proposalItemDate}>
+                          {p.completed_at ? formatDate(p.completed_at) : formatDate(p.created_at)}
+                        </span>
+                      </div>
+                      <p className={styles.proposalItemTitle}>{p.title}</p>
+                      {(vendor || amount) && (
+                        <p className={styles.proposalItemMeta}>
+                          {vendor && <span>{vendor}</span>}
+                          {vendor && amount && <span className={styles.proposalItemDot}>·</span>}
+                          {amount && <span>{amount}원</span>}
+                        </p>
+                      )}
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </div>
+      </div>
+    </div>,
+    document.body
+  ) : null
+
+  const linkedProposalModal = linkedProposalView && typeof document !== 'undefined' ? createPortal(
+    <div
+      className={styles.tplOverlay}
+      onMouseDown={e => { if (e.target === e.currentTarget) setLinkedProposalView(null) }}
+    >
+      <div className={styles.linkedProposalViewModal}>
+        <div className={styles.tplHeader}>
+          <span className={styles.tplTitle}>
+            {linkedProposalView.document_number
+              ? `${linkedProposalView.document_number} · ${linkedProposalView.document_type ?? '품의서'}`
+              : '품의서 미리보기'}
+          </span>
+          <button
+            className={styles.tplClose}
+            onClick={() => setLinkedProposalView(null)}
+            aria-label="닫기"
+          >
+            <X size={16} />
+          </button>
+        </div>
+        <div className={styles.linkedProposalViewBody}>
+          {linkedProposalViewLoading || !linkedProposalView.document_type ? (
+            <p className={styles.proposalModalEmpty}>불러오는 중...</p>
+          ) : (
+            <>
+              <h3 className={styles.linkedProposalViewTitle}>{linkedProposalView.title}</h3>
+              {(() => {
+                const cfg = getDocTemplate(linkedProposalView, dynamicConfigs)
+                if (!cfg) return <p className={styles.proposalModalEmpty}>표시할 양식이 없습니다.</p>
+                const content = (linkedProposalView.content ?? {}) as Record<string, unknown>
+                return <cfg.BodySection content={content} departments={departments} />
+              })()}
+              {(() => {
+                const raw = (linkedProposalView.content as Record<string, unknown>)?.['_attachments']
+                const files: AttachedFile[] = Array.isArray(raw) ? (raw as AttachedFile[]) : []
+                if (!files.length) return null
+                return (
+                  <div className={styles.linkedProposalViewFiles}>
+                    <p className={styles.linkedProposalViewFilesLabel}>품의서 첨부파일</p>
+                    {files.map((file, i) => (
+                      <div key={i} className={styles.linkedProposalViewFileRow}>
+                        <span>{file.type.startsWith('image/') ? '🖼' : file.type === 'application/pdf' ? '📕' : '📄'}</span>
+                        <span className={styles.linkedProposalViewFileName}>{file.name}</span>
+                        <span className={styles.linkedProposalViewFileSize}>({(file.size / 1024).toFixed(0)}KB)</span>
+                        <a href={file.url} download={file.name} className={styles.doc_file_download_btn}>
+                          다운로드
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                )
+              })()}
+            </>
+          )}
+        </div>
+      </div>
+    </div>,
+    document.body
+  ) : null
+
   const myUser = users.find(u => String(u.id) === String(myUserId))
   const myDept = departments.find(d => String(d.id) === String(myUser?.department_id))
 
@@ -2487,6 +2808,8 @@ export default function ApprovalsPage() {
       {templateModal}
       {approverModal}
       {refModal}
+      {proposalModal}
+      {linkedProposalModal}
     </div>
   )
 }

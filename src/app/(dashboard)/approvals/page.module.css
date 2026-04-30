@@ -1748,3 +1748,201 @@ height: 26px;
   overflow: hidden;
 }
 
+
+/* ── 품의서 연동 (결의서 양식과 동일한 표 스타일) ─────────────── */
+.linkedProposalTable {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+.linkedProposalTable th,
+.linkedProposalTable td {
+  border: 1px solid #333;
+  padding: 7px 10px;
+  vertical-align: middle;
+}
+.linkedProposalHeader {
+  background: #dddddd;
+  font-weight: 600;
+  text-align: center;
+  font-size: 13px;
+}
+.linkedProposalLabelCell {
+  background: #f4f4f4;
+  font-weight: 700;
+  text-align: center;
+  width: 130px;
+  white-space: nowrap;
+}
+.linkedProposalValueCell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.linkedProposalLinkBtn {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #1a56db;
+  font-weight: 700;
+  font-size: 13px;
+  font-family: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.linkedProposalLinkBtn:hover { color: #0e3aa8; }
+.linkedProposalSubtitle {
+  color: #191f28;
+  font-size: 13px;
+}
+.linkedProposalSelectBtn {
+  padding: 4px 12px;
+  border: 1px solid #999;
+  background: #f9f9f9;
+  color: #191f28;
+  font-size: 12px;
+  cursor: pointer;
+}
+.linkedProposalSelectBtn:hover { background: #eee; }
+.linkedProposalUnlinkBtn {
+  margin-left: auto;
+  padding: 4px 10px;
+  border: 1px solid #999;
+  background: #f9f9f9;
+  color: #555;
+  font-size: 12px;
+  cursor: pointer;
+}
+.linkedProposalUnlinkBtn:hover { background: #eee; }
+
+/* 품의서 선택 모달 */
+.proposalModal {
+  width: 520px;
+  max-width: 92vw;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+}
+.proposalModalBody {
+  padding: 12px 14px 16px;
+  flex: 1;
+  overflow-y: auto;
+}
+.proposalModalEmpty {
+  margin: 32px 0;
+  text-align: center;
+  font-size: 13px;
+  color: #8b95a1;
+}
+.proposalList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.proposalItem { margin: 0; }
+.proposalItemBtn {
+  width: 100%;
+  text-align: left;
+  display: block;
+  padding: 12px 14px;
+  border: 1px solid #e5e8eb;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.proposalItemBtn:hover {
+  border-color: #3182f6;
+  background: #f8fbff;
+}
+.proposalItemTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.proposalItemNumber {
+  font-size: 11px;
+  font-weight: 600;
+  color: #3182f6;
+  font-family: 'SF Mono', Menlo, monospace;
+}
+.proposalItemDate {
+  font-size: 11px;
+  color: #8b95a1;
+}
+.proposalItemTitle {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #191f28;
+}
+.proposalItemMeta {
+  margin: 4px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #4e5968;
+}
+.proposalItemDot { color: #c9ced6; }
+
+/* 연동 품의서 미리보기 팝업 */
+.linkedProposalViewModal {
+  width: 720px;
+  max-width: 92vw;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+}
+.linkedProposalViewBody {
+  padding: 18px 22px 22px;
+  flex: 1;
+  overflow-y: auto;
+}
+.linkedProposalViewTitle {
+  margin: 0 0 14px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #191f28;
+  text-align: center;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #333;
+}
+.linkedProposalViewFiles {
+  margin-top: 16px;
+  border: 1px solid #ddd;
+  padding: 10px 12px;
+  background: #fafafa;
+}
+.linkedProposalViewFilesLabel {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #333;
+}
+.linkedProposalViewFileRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 12px;
+  color: #4e5968;
+}
+.linkedProposalViewFileName { color: #191f28; }
+.linkedProposalViewFileSize { color: #8b95a1; }

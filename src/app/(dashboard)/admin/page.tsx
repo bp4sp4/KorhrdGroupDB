@@ -1403,7 +1403,7 @@ const TAB_RESTRICTION_SECTIONS: {
     label: '학점은행제 사업부',
     tabs: [
       { value: 'hakjeom-tab-hakjeom',      label: '문의DB' },
-      { value: 'hakjeom-tab-edu-students', label: '등록학생' },
+      { value: 'hakjeom-tab-edu-students', label: '등록학생관리' },
       { value: 'hakjeom-tab-agency',       label: '기관협약' },
       { value: 'hakjeom-tab-bulk',         label: '일괄등록' },
       { value: 'hakjeom-tab-counsel_done', label: '연락예정' },
