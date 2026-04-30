@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-04-30T02:48:01.407Z",
+  "lastUpdated": "2026-04-30T02:59:56.289Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -1566,7 +1566,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-20T08:24:29.812Z",
-        "lastUpdated": "2026-04-30T02:48:01.407Z"
+        "lastUpdated": "2026-04-30T02:59:56.289Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/hakjeom/education-center/students/[id]/plan/page.tsx"
     },
@@ -1904,7 +1904,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-04-30T02:48:01.407Z"
+    "lastActivity": "2026-04-30T02:59:56.289Z"
   },
   "history": [
     {
@@ -24649,6 +24649,18 @@
     },
     {
       "timestamp": "2026-04-30T02:48:01.407Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-30T02:59:52.026Z",
+      "feature": "plan",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-04-30T02:59:56.289Z",
       "feature": "plan",
       "phase": "do",
       "action": "updated"

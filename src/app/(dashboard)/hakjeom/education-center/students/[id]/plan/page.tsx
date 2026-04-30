@@ -1392,19 +1392,19 @@ export default function PlanPage() {
   // ── 전체보기 ────────────────────────────────────────────────
   const ORDINALS_KR = ['첫', '두번째', '세번째', '네번째', '다섯번째', '여섯번째', '일곱번째', '여덟번째', '아홉번째', '열번째'];
   const SEM_COLORS = [
-    { bg: '#EEF2FF', border: '#C7D2FE', label: '#4338CA' },
-    { bg: '#ECFDF5', border: '#A7F3D0', label: '#065F46' },
-    { bg: '#FFF7ED', border: '#FED7AA', label: '#C2410C' },
-    { bg: '#F5F3FF', border: '#DDD6FE', label: '#5B21B6' },
-    { bg: '#F0F9FF', border: '#BAE6FD', label: '#0369A1' },
-    { bg: '#FFF1F2', border: '#FECDD3', label: '#9F1239' },
-    { bg: '#F0FDFA', border: '#99F6E4', label: '#0F766E' },
-    { bg: '#FFFBEB', border: '#FDE68A', label: '#92400E' },
-    { bg: '#FDF4FF', border: '#F5D0FE', label: '#86198F' },
-    { bg: '#ECFEFF', border: '#A5F3FC', label: '#0E7490' },
+    { bg: 'linear-gradient(180deg, #F3F7FF 0%, #E7EEFF 100%)', border: '#C9D7FF', label: '#3159C9' },
+    { bg: 'linear-gradient(180deg, #EEFBF6 0%, #DFF7EE 100%)', border: '#B7EBCF', label: '#0F766E' },
+    { bg: 'linear-gradient(180deg, #FFF7EC 0%, #FCECD5 100%)', border: '#F3CF9F', label: '#C26718' },
+    { bg: 'linear-gradient(180deg, #F8F4FF 0%, #EEE6FF 100%)', border: '#D8C9FF', label: '#6D46C5' },
+    { bg: 'linear-gradient(180deg, #EFF9FF 0%, #DEF0FF 100%)', border: '#B8DCF8', label: '#0F6E9E' },
+    { bg: 'linear-gradient(180deg, #FFF1F3 0%, #FFE3E8 100%)', border: '#F7C6D3', label: '#B44769' },
+    { bg: 'linear-gradient(180deg, #F1FCFA 0%, #DDF7F1 100%)', border: '#B8E9DE', label: '#117864' },
+    { bg: 'linear-gradient(180deg, #FFFBEF 0%, #FFF1C7 100%)', border: '#F2DB8D', label: '#A46A12' },
+    { bg: 'linear-gradient(180deg, #FDF5FF 0%, #F5E8FF 100%)', border: '#E5C9FA', label: '#8C4DB0' },
+    { bg: 'linear-gradient(180deg, #F0FCFF 0%, #DCF7FB 100%)', border: '#B6E8EF', label: '#16728B' },
   ];
-  // 전체보기 고정 컬럼: 전공(category), 교양(category), 실습(type)
-  const FV_COLUMNS = ['전공', '교양', '실습'] as const;
+  // 전체보기 고정 컬럼: 전공(category), 교양(category), 일반(category)
+  const FV_COLUMNS = ['전공', '교양', '일반'] as const;
 
   function getSemCreditByCol(semId: number, col: string) {
     const ids = semesterSubjects[semId] ?? (semesterSubjects as Record<string, number[]>)[String(semId)] ?? [];
@@ -1413,7 +1413,7 @@ export default function PlanPage() {
       if (!s) return sum;
       if (col === '전공') return s.category === '전공' ? sum + s.credits : sum;
       if (col === '교양') return s.category === '교양' ? sum + s.credits : sum;
-      if (col === '실습') return s.type === '실습' ? sum + s.credits : sum;
+      if (col === '일반') return s.category === '일반' ? sum + s.credits : sum;
       return sum;
     }, 0);
   }
@@ -1530,7 +1530,7 @@ export default function PlanPage() {
                             {FV_COLUMNS.map((col) => {
                               const credits = col === '전공' && subject.category === '전공' ? subject.credits
                                 : col === '교양' && subject.category === '교양' ? subject.credits
-                                : col === '실습' && subject.type === '실습' ? subject.credits
+                                : col === '일반' && subject.category === '일반' ? subject.credits
                                 : 0;
                               return <td key={col} className={styles.fv_credit_td}>{credits}</td>;
                             })}
@@ -1557,7 +1557,7 @@ export default function PlanPage() {
                             {FV_COLUMNS.map((col) => {
                               const credits = col === '전공' && subject.category === '전공' ? subject.credits
                                 : col === '교양' && subject.category === '교양' ? subject.credits
-                                : col === '실습' && subject.type === '실습' ? subject.credits
+                                : col === '일반' && subject.category === '일반' ? subject.credits
                                 : 0;
                               return <td key={col} className={styles.fv_credit_td}>{credits}</td>;
                             })}

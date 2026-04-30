@@ -919,6 +919,9 @@
   padding: 9px 12px;
   border-radius: 10px;
   transition: background-color 0.1s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .subject_card_content {
@@ -2615,177 +2618,205 @@
 .fv_wrap {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding-bottom: 40px;
+  gap: 18px;
+  padding: 8px 0 48px;
 }
 
 .fv_top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #FFFFFF;
-  border-radius: 16px;
-  padding: 20px 24px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(245, 249, 255, 0.96) 100%);
+  border: 1px solid #DCE6F5;
+  border-radius: 22px;
+  padding: 24px 28px;
+  box-shadow: 0 18px 40px rgba(31, 63, 104, 0.08);
 }
 
 .fv_title {
-  font-size: 20px;
-  font-weight: 700;
-  color: #191F28;
-  letter-spacing: -0.4px;
+  font-size: 26px;
+  font-weight: 800;
+  color: #16233B;
+  letter-spacing: -0.6px;
 }
 
 .fv_back_btn {
-  height: 40px;
-  padding: 0 20px;
-  background: #3182F6;
+  height: 44px;
+  padding: 0 22px;
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
   color: #FFFFFF;
   border: none;
-  border-radius: 10px;
+  border-radius: 999px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: background-color 0.15s;
+  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.24);
+  transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
 }
 
 .fv_back_btn:hover {
-  background: #1B6EE8;
+  transform: translateY(-1px);
+  box-shadow: 0 16px 30px rgba(37, 99, 235, 0.28);
+  filter: brightness(1.03);
 }
 
 .fv_info_bar {
   display: flex;
-  gap: 40px;
-  background: #FFFFFF;
-  border-radius: 12px;
-  padding: 16px 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+  background: linear-gradient(180deg, #FFFFFF 0%, #F9FBFF 100%);
+  border-radius: 18px;
+  padding: 18px 22px;
   font-size: 14px;
-  color: #191F28;
-  font-weight: 500;
-  border: 1px solid #E5E8EB;
+  color: #24334D;
+  font-weight: 600;
+  border: 1px solid #E0E8F2;
+  box-shadow: 0 10px 24px rgba(20, 35, 63, 0.05);
 }
 
 .fv_table {
   width: 100%;
   border-collapse: collapse;
   background: #FFFFFF;
-  border-radius: 12px;
+  border-radius: 22px;
   overflow: hidden;
-  border: 1px solid #E2E8F0;
+  border: 1px solid #DCE6F5;
   font-size: 13px;
+  box-shadow: 0 24px 48px rgba(16, 24, 40, 0.06);
 }
 
 .fv_th {
-  background: #F8FAFC;
-  color: #374151;
+  background: #F4F7FB;
+  color: #30425F;
   font-size: 12px;
   font-weight: 700;
-  padding: 11px 14px;
+  padding: 13px 14px;
   text-align: center;
-  border: 1px solid #E2E8F0;
-  letter-spacing: 0.3px;
+  border: 1px solid #DCE6F5;
+  letter-spacing: 0.2px;
 }
 
 .fv_sem_cell {
-  padding: 18px 20px;
-  border: 1px solid #E5E7EB;
+  padding: 22px 20px;
+  border: 1px solid #DCE6F5;
   vertical-align: middle;
   text-align: center;
   width: 240px;
   min-width: 200px;
+  position: relative;
+  overflow: hidden;
+}
+
+.fv_sem_cell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.56) 0%, rgba(255, 255, 255, 0) 55%);
+  pointer-events: none;
 }
 
 .fv_sem_label {
-  font-size: 20px;
+  position: relative;
+  z-index: 1;
+  font-size: 24px;
   font-weight: 800;
-  margin-bottom: 6px;
-  letter-spacing: -0.4px;
+  margin-bottom: 8px;
+  letter-spacing: -0.6px;
 }
 
 .fv_sem_meta {
+  position: relative;
+  z-index: 1;
   font-size: 13px;
-  color: #6B7280;
-  line-height: 1.7;
+  color: #516071;
+  line-height: 1.75;
+  font-weight: 600;
 }
 
 .fv_td {
-  padding: 10px 12px;
-  border: 1px solid #E5E7EB;
-  color: #191F28;
+  padding: 12px 14px;
+  border: 1px solid #E6ECF5;
+  color: #1E293B;
   font-size: 13px;
   max-width: 180px;
+  background: #FFFFFF;
 }
 
 .fv_credit_td {
-  padding: 10px 14px;
-  border: 1px solid #E5E7EB;
+  padding: 12px 14px;
+  border: 1px solid #E6ECF5;
   text-align: center;
-  color: #374151;
+  color: #334155;
   font-size: 13px;
   min-width: 60px;
+  background: #FAFCFF;
 }
 
 .fv_empty {
-  padding: 20px;
+  padding: 24px 20px;
   text-align: center;
-  color: #9CA3AF;
+  color: #7A8699;
   font-size: 13px;
-  border: 1px solid #E5E7EB;
+  border: 1px solid #E6ECF5;
+  background: #FBFCFE;
 }
 
 .fv_kisu_row {
-  background: #F9FAFB;
+  background: #F8FBFD;
 }
 
 .fv_kisu_label {
-  padding: 7px 14px;
-  border: 1px solid #E5E7EB;
+  padding: 10px 14px;
+  border: 1px solid #E1EAF5;
   font-size: 12px;
   font-weight: 700;
-  color: #6B7280;
-  letter-spacing: 0.3px;
+  color: #3F556F;
+  letter-spacing: 0.2px;
+  background: #F8FBFD;
 }
 
 .fv_summary_row {
-  background: #F3F4F6;
+  background: #F3F7FB;
 }
 
 .fv_summary_label {
-  padding: 9px 14px;
-  border: 1px solid #E5E7EB;
+  padding: 11px 14px;
+  border: 1px solid #DCE6F5;
   font-size: 12px;
   font-weight: 700;
-  color: #374151;
+  color: #41536F;
 }
 
 .fv_summary_credit {
-  padding: 9px 14px;
-  border: 1px solid #E5E7EB;
+  padding: 11px 14px;
+  border: 1px solid #DCE6F5;
   text-align: center;
   font-size: 13px;
-  color: #374151;
+  color: #334155;
 }
 
 .fv_total_row {
-  background: #FFF9C4;
+  background: #FFF3BF;
 }
 
 .fv_total_label {
-  padding: 13px 14px;
-  border: 1px solid #F0D800;
-  font-size: 13px;
-  font-weight: 700;
-  color: #1E293B;
-  background: #FFF9C4;
+  padding: 16px 16px;
+  border: 1px solid #F1D252;
+  font-size: 14px;
+  font-weight: 800;
+  color: #674A00;
+  background: #FFF3BF;
 }
 
 .fv_total_credit {
-  padding: 13px 14px;
-  border: 1px solid #F0D800;
+  padding: 16px 14px;
+  border: 1px solid #F1D252;
   text-align: center;
-  font-size: 15px;
-  color: #1E293B;
-  background: #FFF9C4;
-  font-weight: 700;
+  font-size: 18px;
+  color: #674A00;
+  background: #FFF3BF;
+  font-weight: 800;
 }
 
 .fv_stats {
@@ -2825,6 +2856,59 @@
   font-weight: 500;
   color: #4E5968;
   margin-left: 4px;
+}
+
+@media (max-width: 1024px) {
+  .fv_top {
+    padding: 20px 22px;
+  }
+
+  .fv_title {
+    font-size: 22px;
+  }
+
+  .fv_sem_cell {
+    width: 180px;
+    min-width: 180px;
+  }
+}
+
+@media (max-width: 768px) {
+  .fv_wrap {
+    gap: 14px;
+    overflow-x: auto;
+  }
+
+  .fv_top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 18px;
+  }
+
+  .fv_title {
+    font-size: 20px;
+  }
+
+  .fv_info_bar {
+    padding: 16px 18px;
+    gap: 10px;
+  }
+
+  .fv_table {
+    min-width: 760px;
+    border-radius: 18px;
+  }
+
+  .fv_sem_cell {
+    width: 160px;
+    min-width: 160px;
+    padding: 18px 14px;
+  }
+
+  .fv_sem_label {
+    font-size: 21px;
+  }
 }
 
 /* ── 문서 모달 ── */
