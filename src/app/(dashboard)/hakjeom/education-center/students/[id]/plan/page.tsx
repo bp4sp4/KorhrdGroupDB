@@ -593,6 +593,7 @@ export default function PlanPage() {
         finalSemesters = finalSemesters.map(s => s.center ? s : { ...s, center: defaultCenter });
       }
       setSemesters(finalSemesters);
+      if (finalSemesters.length > 0) setSelectedSemester(finalSemesters[0].id);
       setLoading(false);
       setTimeout(() => { isInitialized.current = true; }, 0);
     });
