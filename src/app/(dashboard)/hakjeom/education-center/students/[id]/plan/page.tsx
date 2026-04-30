@@ -19,6 +19,7 @@ interface Subject {
   type: '이론' | '실습';
   subject_type?: '필수' | '선택' | null;
   student_id?: string | null;
+  is_from_preset?: boolean;
 }
 
 interface PrevSubject {
@@ -473,14 +474,14 @@ export default function PlanPage() {
 
           for (const u of updates) {
             await supabase.from('edu_subjects')
-              .update({ subject_type: u.subject_type, category: u.category, credits: u.credits })
+              .update({ subject_type: u.subject_type, category: u.category, credits: u.credits, is_from_preset: true })
               .eq('id', u.id)
           }
           if (updates.length) {
             const updateById = new Map(updates.map((u) => [u.id, u]))
             loadedSubjects = loadedSubjects.map((s) => {
               const u = updateById.get(s.id)
-              return u ? { ...s, subject_type: u.subject_type, category: u.category, credits: u.credits } : s
+              return u ? { ...s, subject_type: u.subject_type, category: u.category, credits: u.credits, is_from_preset: true } : s
             })
           }
 
@@ -497,6 +498,7 @@ export default function PlanPage() {
               type: '이론' as const,
               subject_type: p.subject_type,
               student_id: id,
+              is_from_preset: true,
             }))
             const { data: inserted, error: insertErr } = await supabase
               .from('edu_subjects').insert(insertRows).select()
@@ -529,6 +531,7 @@ export default function PlanPage() {
             type: '이론' as const,
             subject_type: p.subject_type as '필수' | '선택',
             student_id: id,
+            is_from_preset: true,
           }));
           const { data: inserted } = await supabase.from('edu_subjects').insert(rows).select();
           if (inserted) loadedSubjects = [...loadedSubjects, ...(inserted as Subject[])];
@@ -698,7 +701,7 @@ export default function PlanPage() {
       ? subjects
       : subjects.filter((s) => {
           // subject_type 기준으로 재분류된 effective category로 필터링
-          const effective = s.subject_type === '선택' ? '선택' : s.category;
+          const effective = s.subject_type === '선택' && s.category !== '교양' ? '선택' : s.category;
           return effective === selectedCategory;
         });
     if (!subjectSearch.trim()) return byCategory;
@@ -713,8 +716,8 @@ export default function PlanPage() {
     filteredSubjects.forEach((s) => {
       if (seen.has(s.name)) return;
       seen.add(s.name);
-      // subject_type 기준으로 그룹 재분류: 선택이면 '선택', 아니면 원래 category
-      const effectiveCategory = s.subject_type === '선택' ? '선택' : s.category;
+      // subject_type 기준으로 그룹 재분류: 선택이면서 교양이 아닐 때만 '선택', 교양으로 이동된 것은 교양으로
+      const effectiveCategory = s.subject_type === '선택' && s.category !== '교양' ? '선택' : s.category;
       if (!groups[effectiveCategory]) groups[effectiveCategory] = [];
       groups[effectiveCategory].push(s);
     });
@@ -943,12 +946,15 @@ export default function PlanPage() {
   async function handleAddCustomSubject() {
     if (!subjectForm.name.trim()) return;
     const supabase = createClient();
+    const dbCategory = subjectForm.category === '선택' ? '전공' : subjectForm.category;
+    const dbSubjectType = subjectForm.category === '선택' ? '선택' : undefined;
     const { data, error } = await supabase.from('edu_subjects').insert({
-      category: subjectForm.category,
+      category: dbCategory,
       name: subjectForm.name.trim(),
       credits: subjectForm.credits,
       type: subjectForm.type,
       student_id: id,
+      ...(dbSubjectType ? { subject_type: dbSubjectType } : {}),
     }).select().single();
     if (error) { alert(`추가 실패: ${error.message}`); return; }
     setSubjects((prev) => [...prev, data as Subject]);
@@ -2111,7 +2117,8 @@ export default function PlanPage() {
                   const used = isSubjectUsed(subject.id);
                   const score = getSubjectScore(subject.id);
                   const isPassed = score !== undefined && score >= 60;
-                  const isCustom = !!subject.student_id && !subject.subject_type;
+                  const isCustom = !!subject.student_id && !subject.is_from_preset;
+                  const displaySubjectType = category === '교양' && subject.subject_type === '선택' ? null : subject.subject_type;
                   return (
                     <div
                       key={subject.id}
@@ -2157,9 +2164,9 @@ export default function PlanPage() {
                         <div className={styles.subject_card_bottom}>
                           <span className={styles.credit_badge}>{subject.credits}학점</span>
                           <span className={`${styles.type_badge} ${subject.type === '실습' ? styles.type_badge_practice : ''}`}>{subject.type}</span>
-                          {subject.subject_type && (
-                            <span className={`${styles.subject_type_badge} ${subject.subject_type === '필수' ? styles.subject_type_required : styles.subject_type_elective}`}>
-                              {subject.subject_type}
+                          {displaySubjectType && (
+                            <span className={`${styles.subject_type_badge} ${displaySubjectType === '필수' ? styles.subject_type_required : styles.subject_type_elective}`}>
+                              {displaySubjectType}
                             </span>
                           )}
                         </div>
@@ -2467,7 +2474,7 @@ export default function PlanPage() {
                 <label className={styles.popup_label}>과목명</label>
                 <input className={styles.popup_input} placeholder="과목명을 입력하세요" value={subjectForm.name}
                   onChange={(e) => setSubjectForm((f) => ({ ...f, name: e.target.value }))}
-                  onKeyDown={(e) => { if (e.key === 'Enter') handleAddCustomSubject(); }} autoFocus />
+                  onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) handleAddCustomSubject(); }} autoFocus />
               </div>
               <div className={styles.popup_row}>
                 <div className={styles.popup_field}>

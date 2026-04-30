@@ -916,10 +916,6 @@
 }
 
 .subject_card {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 6px;
   padding: 9px 12px;
   border-radius: 10px;
   transition: background-color 0.1s;

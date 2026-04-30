@@ -5,15 +5,21 @@ import styles from './page.module.css'
 import DBMarketingTab from './DBMarketingTab'
 import CreativeTab from './CreativeTab'
 import DashboardTab from './DashboardTab'
+import MomCafeTab from './MomCafeTab'
 
 type TabKey =
   | 'nms-channel' | 'nms-creative' | 'nms-dashboard'
   | 'cert-channel' | 'cert-creative' | 'cert-dashboard'
   | 'abroad-channel' | 'abroad-creative' | 'abroad-dashboard'
+  | 'mom-cafe'
 
 type DivKey = 'nms' | 'cert' | 'abroad'
 
-const TAB_META: Record<TabKey, { division: string; divisionKey: DivKey; feature: string; kind: 'channel' | 'creative' | 'dashboard' }> = {
+type TabMeta =
+  | { division: string; divisionKey: DivKey; feature: string; kind: 'channel' | 'creative' | 'dashboard' }
+  | { division: string; feature: string; kind: 'mom-cafe' }
+
+const TAB_META: Record<TabKey, TabMeta> = {
   'nms-channel':      { division: '학점은행제', divisionKey: 'nms',    feature: '채널별 성과', kind: 'channel' },
   'nms-creative':     { division: '학점은행제', divisionKey: 'nms',    feature: '소재별 성과', kind: 'creative' },
   'nms-dashboard':    { division: '학점은행제', divisionKey: 'nms',    feature: '대시보드',     kind: 'dashboard' },
@@ -23,6 +29,7 @@ const TAB_META: Record<TabKey, { division: string; divisionKey: DivKey; feature:
   'abroad-channel':   { division: '유학',      divisionKey: 'abroad', feature: '채널별 성과', kind: 'channel' },
   'abroad-creative':  { division: '유학',      divisionKey: 'abroad', feature: '소재별 성과', kind: 'creative' },
   'abroad-dashboard': { division: '유학',      divisionKey: 'abroad', feature: '대시보드',     kind: 'dashboard' },
+  'mom-cafe':         { division: '맘카페',     feature: '맘카페 관리', kind: 'mom-cafe' },
 }
 
 const ALL_TABS = Object.keys(TAB_META) as TabKey[]
@@ -70,6 +77,9 @@ export default async function MarketingPage({ searchParams }: PageProps) {
           <Suspense fallback={<div className={styles.loading}>데이터 로딩 중...</div>}>
             <DashboardTab division={meta.divisionKey} divisionLabel={meta.division} />
           </Suspense>
+        )}
+        {meta.kind === 'mom-cafe' && (
+          <MomCafeTab />
         )}
       </div>
     </div>

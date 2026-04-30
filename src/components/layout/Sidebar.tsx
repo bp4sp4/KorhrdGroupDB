@@ -98,6 +98,7 @@ const ALL_SECTIONS: NavSection[] = [
           { id: 'marketing-abroad-channel',   label: '채널별 성과', href: '/marketing?tab=abroad-channel',   sectionLabel: '유학' },
           { id: 'marketing-abroad-creative',  label: '소재별 성과', href: '/marketing?tab=abroad-creative' },
           { id: 'marketing-abroad-dashboard', label: '대시보드',    href: '/marketing?tab=abroad-dashboard' },
+          { id: 'marketing-mom-cafe',         label: '맘카페 관리', href: '/marketing?tab=mom-cafe',         sectionLabel: '맘카페' },
         ],
       },
       { id: 'duplicate', label: '중복 조회', href: '/duplicate', icon: <Copy size={16} />, groupLabel: '시스템' },

@@ -128,7 +128,8 @@ export async function GET(request: NextRequest) {
       .select('*')
       .is('deleted_at', null)
       .order('created_at', { ascending: false })
-      .order('id', { ascending: false });
+      .order('id', { ascending: false })
+      .limit(10000);
 
     if (managerFilter !== null) query = query.eq('manager', managerFilter);
     if (name) query = query.ilike('name', `%${name}%`);
