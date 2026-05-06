@@ -170,20 +170,9 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
-    // 결제 민감 필드 시도 시 권한 체크
-    const paymentFields = { payment_status, cash_receipt, amount, mul_no, pay_method };
-    const triedPaymentField = Object.entries(paymentFields).some(([, v]) => v !== undefined);
-    if (triedPaymentField && !isFullAccess) {
-      return NextResponse.json(
-        { error: '결제 관련 필드는 관리자만 수정할 수 있습니다.' },
-        { status: 403 }
-      );
-    }
-
     const updateData: CertUpdatePayload = {};
 
     if (is_checked !== undefined) updateData.is_checked = is_checked;
-    if (payment_status !== undefined) updateData.payment_status = payment_status;
     if (name !== undefined) updateData.name = name;
     if (contact !== undefined) updateData.contact = contact;
     if (birth_prefix !== undefined) updateData.birth_prefix = birth_prefix;
@@ -191,11 +180,16 @@ export async function PATCH(request: NextRequest) {
     if (address_main !== undefined) updateData.address_main = address_main;
     if (address_detail !== undefined) updateData.address_detail = address_detail;
     if (certificates !== undefined) updateData.certificates = certificates;
-    if (cash_receipt !== undefined) updateData.cash_receipt = cash_receipt;
-    if (amount !== undefined) updateData.amount = amount ?? null;
-    if (mul_no !== undefined) updateData.mul_no = mul_no ?? null;
-    if (pay_method !== undefined) updateData.pay_method = pay_method ?? null;
     if (source !== undefined) updateData.source = source ?? null;
+
+    // 결제 관련 필드는 master-admin/admin만 수정 가능
+    if (isFullAccess) {
+      if (payment_status !== undefined) updateData.payment_status = payment_status;
+      if (cash_receipt !== undefined) updateData.cash_receipt = cash_receipt;
+      if (amount !== undefined) updateData.amount = amount ?? null;
+      if (mul_no !== undefined) updateData.mul_no = mul_no ?? null;
+      if (pay_method !== undefined) updateData.pay_method = pay_method ?? null;
+    }
 
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json({ error: 'At least one field is required for update' }, { status: 400 });
