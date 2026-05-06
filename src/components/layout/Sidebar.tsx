@@ -61,9 +61,10 @@ const ALL_SECTIONS: NavSection[] = [
           { id: 'cert-tab-edu',             label: '교육원',        href: '/cert?tab=edu' },
           { id: 'cert-tab-private-cert',    label: '민간자격증',    href: '/cert?tab=private-cert' },
           { id: 'cert-tab-student-mgmt',    label: '학생관리',      href: '/cert?tab=student-mgmt' },
-          { id: 'cert-tab-student-contact', label: '연락예정',      href: '/cert?tab=student-contact' },
-          { id: 'cert-tab-student-bulk',    label: '일괄등록',      href: '/cert?tab=student-bulk' },
-          { id: 'cert-tab-stats',           label: '통계',          href: '/cert?tab=stats' },
+          { id: 'cert-tab-student-contact',  label: '연락예정',      href: '/cert?tab=student-contact' },
+          { id: 'cert-tab-student-bulk',     label: '일괄등록',      href: '/cert?tab=student-bulk' },
+          { id: 'cert-tab-counsel-template', label: '상담 템플릿',   href: '/cert?tab=counsel-template' },
+          { id: 'cert-tab-stats',            label: '통계',          href: '/cert?tab=stats' },
         ],
       },
       {
@@ -147,9 +148,11 @@ interface SidebarProps {
   userRole?: string | null
   permissions?: { section: string; scope: string; allowed_tabs?: string[] | null }[]
   revenueOwnDivisions?: ('nms' | 'cert' | 'abroad')[]
+  isOpen?: boolean
+  onClose?: () => void
 }
 
-export default function Sidebar({ userRole, permissions = [], revenueOwnDivisions = [] }: SidebarProps) {
+export default function Sidebar({ userRole, permissions = [], revenueOwnDivisions = [], isOpen, onClose }: SidebarProps) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [trashCount, setTrashCount] = useState<number>(0)
@@ -317,7 +320,7 @@ export default function Sidebar({ userRole, permissions = [], revenueOwnDivision
         ]),
         cert: new Set([
           'cert-tab-hakjeom', 'cert-tab-edu', 'cert-tab-private-cert',
-          'cert-tab-student-mgmt', 'cert-tab-student-contact', 'cert-tab-student-bulk', 'cert-tab-stats',
+          'cert-tab-student-mgmt', 'cert-tab-student-contact', 'cert-tab-student-bulk', 'cert-tab-counsel-template', 'cert-tab-stats',
         ]),
         abroad: new Set([
           'abroad-tab-users', 'abroad-tab-consult', 'abroad-tab-applications', 'abroad-tab-payments',
@@ -349,7 +352,7 @@ export default function Sidebar({ userRole, permissions = [], revenueOwnDivision
   }, [pathname, searchParams]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <aside className={styles.sidebar}>
+    <aside className={`${styles.sidebar}${isOpen ? ` ${styles.sidebarOpen}` : ''}`}>
       <nav className={styles.sidebarNav}>
         <ul className={styles.sidebarList}>
           {currentItems.map((item) => {
@@ -382,7 +385,7 @@ export default function Sidebar({ userRole, permissions = [], revenueOwnDivision
             const isPathActive = pathMatches && tabMatches
             const isTrash = item.id === 'trash'
             const hasChildren = item.children && item.children.length > 0
-            const isOpen = openItems.has(item.id)
+            const isExpanded = openItems.has(item.id)
 
             // 서브 아이템 중 현재 활성 탭 확인
             const currentTab = searchParams.get('tab')
@@ -404,11 +407,11 @@ export default function Sidebar({ userRole, permissions = [], revenueOwnDivision
                     >
                       <span className={styles.sidebarLinkIcon}>{item.icon}</span>
                       <span className={styles.sidebarLinkLabel}>{item.label}</span>
-                      <span className={`${styles.sidebarChevron} ${isOpen ? styles.sidebarChevronOpen : ''}`}>
+                      <span className={`${styles.sidebarChevron} ${isExpanded ? styles.sidebarChevronOpen : ''}`}>
                         <ChevronRight size={13} />
                       </span>
                     </button>
-                    {isOpen && (
+                    {isExpanded && (
                       <ul className={styles.sidebarSubList}>
                         {item.children!.map(child => {
                           const childBasePath = child.href.split('?')[0]
@@ -426,6 +429,7 @@ export default function Sidebar({ userRole, permissions = [], revenueOwnDivision
                               <Link
                                 href={child.href}
                                 className={`${styles.sidebarSubLink} ${isChildActive ? styles.sidebarSubLinkActive : ''}`}
+                                onClick={onClose}
                               >
                                 {child.label}
                                 {isCounselDone && counselCount > 0 && (
@@ -445,6 +449,7 @@ export default function Sidebar({ userRole, permissions = [], revenueOwnDivision
                   <Link
                     href={item.href}
                     className={`${styles.sidebarLink} ${isPathActive ? styles.sidebarLinkActive : ''}`}
+                    onClick={onClose}
                   >
                     <span className={styles.sidebarLinkIcon}>{item.icon}</span>
                     <span className={styles.sidebarLinkLabel}>{item.label}</span>

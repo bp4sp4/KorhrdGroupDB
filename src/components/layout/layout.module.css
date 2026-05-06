@@ -111,8 +111,6 @@
   gap: 10px;
 }
 
-
-
 .headerUserName {
   font-size: 13px;
   font-weight: 500;
@@ -158,6 +156,11 @@
   overflow-y: auto;
 }
 
+/* 모바일 오버레이 (사이드바 열릴 때) */
+.sidebarOverlay {
+  display: none;
+}
+
 .sidebarNav {
   flex: 1;
   padding: 12px 10px;
@@ -198,7 +201,9 @@
   font-size: 13px;
   font-weight: 400;
   color: var(--toss-text-secondary);
-  transition: background 120ms ease, color 120ms ease;
+  transition:
+    background 120ms ease,
+    color 120ms ease;
 }
 
 .sidebarLink:hover {
@@ -263,7 +268,9 @@
   color: var(--toss-text-secondary);
   cursor: pointer;
   text-align: left;
-  transition: background 120ms ease, color 120ms ease;
+  transition:
+    background 120ms ease,
+    color 120ms ease;
 }
 
 .sidebarParentBtn:hover {
@@ -327,7 +334,9 @@ li:first-child > .sidebarSubSectionLabel {
   font-size: 12px;
   font-weight: 400;
   color: var(--toss-text-secondary);
-  transition: background 120ms ease, color 120ms ease;
+  transition:
+    background 120ms ease,
+    color 120ms ease;
 }
 
 .sidebarSubLink:hover {
@@ -339,4 +348,77 @@ li:first-child > .sidebarSubSectionLabel {
   font-weight: 600;
   color: var(--toss-blue);
   background: var(--toss-blue-subtle);
+}
+
+/* 햄버거 버튼 (모바일에서만 표시) */
+.hamburgerBtn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--toss-text-secondary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* ─── 모바일 반응형 (480px 이하) ────────────────────────────────────────── */
+
+@media (max-width: 480px) {
+  .headerLogo {
+    width: auto;
+    padding: 0;
+    border-right: none;
+  }
+
+  .headerLogoImg {
+    width: 100px;
+  }
+
+  .headerNav {
+    display: none;
+  }
+
+  .hamburgerBtn {
+    display: flex;
+  }
+
+  .quickSearchHide {
+    display: none;
+  }
+
+  /* 사이드바: 드로어 방식 */
+  .sidebar {
+    position: fixed;
+    top: var(--toss-nav-height);
+    left: 0;
+    bottom: 0;
+    z-index: 200;
+    transform: translateX(-100%);
+    transition: transform 240ms ease;
+    box-shadow: none;
+  }
+
+  .sidebarOpen {
+    transform: translateX(0);
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.12);
+  }
+
+  /* 오버레이 */
+  .sidebarOverlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    top: var(--toss-nav-height);
+    background: rgba(0, 0, 0, 0.35);
+    z-index: 199;
+  }
+
+  /* 메인: 왼쪽 여백 없앰 (사이드바가 fixed이므로) */
+  .mainContent {
+    padding: 14px 12px;
+  }
 }

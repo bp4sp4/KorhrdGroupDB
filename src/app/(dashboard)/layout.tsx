@@ -19,6 +19,7 @@ export default function DashboardLayout({
   const [displayName, setDisplayName] = useState<string>('관리자')
   const [permissions, setPermissions] = useState<{ section: string; scope: string; allowed_tabs?: string[] | null }[]>([])
   const [revenueOwnDivisions, setRevenueOwnDivisions] = useState<('nms' | 'cert' | 'abroad')[]>([])
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const supabase = createClient()
 
   const refreshMe = useCallback(async () => {
@@ -151,10 +152,14 @@ export default function DashboardLayout({
 
   return (
     <div className={styles.dashboardWrap}>
-      <Header userName={displayName} userRole={userRole} permissions={permissions} revenueOwnDivisions={revenueOwnDivisions} />
+      <Header userName={displayName} userRole={userRole} permissions={permissions} revenueOwnDivisions={revenueOwnDivisions} onMenuToggle={() => setSidebarOpen(v => !v)} />
 
       <div className={styles.dashboardBody}>
-        <Sidebar userRole={userRole} permissions={permissions} revenueOwnDivisions={revenueOwnDivisions} />
+        <Sidebar userRole={userRole} permissions={permissions} revenueOwnDivisions={revenueOwnDivisions} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+        {sidebarOpen && (
+          <div className={styles.sidebarOverlay} onClick={() => setSidebarOpen(false)} />
+        )}
 
         <main className={`${styles.mainContent}${pathname.startsWith('/approvals') ? ` ${styles.mainContentWhite}` : ''}`}>
           {children}

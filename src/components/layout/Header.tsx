@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { LogOut } from 'lucide-react'
+import { LogOut, Menu } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import styles from './layout.module.css'
 import NotificationBell from './NotificationBell'
@@ -88,6 +88,7 @@ interface HeaderProps {
   userRole?: string | null
   permissions?: { section: string; scope: string; allowed_tabs?: string[] | null }[]
   revenueOwnDivisions?: ('nms' | 'cert' | 'abroad')[]
+  onMenuToggle?: () => void
 }
 
 
@@ -97,7 +98,7 @@ function hasPermission(permissions: { section: string; scope: string }[], sectio
 
 const EDUCATION_SECTIONS = ['hakjeom', 'cert', 'practice', 'allcare', 'duplicate', 'trash', 'logs', 'ref-manage', 'assignment', 'approvals', 'revenues', 'revenue-upload', 'reports']
 
-export default function Header({ userName = '관리자', userRole, permissions = [], revenueOwnDivisions = [] }: HeaderProps) {
+export default function Header({ userName = '관리자', userRole, permissions = [], revenueOwnDivisions = [], onMenuToggle }: HeaderProps) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -150,6 +151,11 @@ export default function Header({ userName = '관리자', userRole, permissions =
 
   return (
     <header className={styles.header}>
+      {/* 햄버거 버튼 (모바일) */}
+      <button className={styles.hamburgerBtn} onClick={onMenuToggle} aria-label="메뉴 열기">
+        <Menu size={20} />
+      </button>
+
       {/* 로고 */}
       <Link href="/hakjeom" className={styles.headerLogo}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -178,9 +184,11 @@ export default function Header({ userName = '관리자', userRole, permissions =
 
       {/* 우측 액션 */}
       <div className={styles.headerRight}>
-        <QuickSearch />
+        <div className={styles.quickSearchHide}>
+          <QuickSearch />
+        </div>
 
-        <div className={styles.headerDivider} />
+        <div className={`${styles.headerDivider} ${styles.quickSearchHide}`} />
 
         <NotificationBell />
 

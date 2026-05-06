@@ -3229,3 +3229,93 @@
 .eduSelectCustomInput {
   margin-top: 0;
 }
+
+/* ─── 모바일 반응형 (375px) ──────────────────────────────────────────────── */
+
+@media (max-width: 480px) {
+  /* 헤더: 세로 스택 */
+  .pageHeader {
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .pageTitle {
+    font-size: 16px;
+  }
+
+  /* 탭 네비게이션: 가로 스크롤 */
+  .tabNav {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex-wrap: nowrap;
+    margin-bottom: 14px;
+  }
+
+  .tabNav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tabBtn,
+  .tabBtnActive {
+    padding: 8px 12px;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  /* 필터 행 */
+  .filterRow {
+    padding: 8px 10px;
+    gap: 6px;
+  }
+
+  .input,
+  .select {
+    font-size: 13px;
+    padding: 9px 10px;
+  }
+
+  .btnPrimary,
+  .btnSecondary,
+  .btnDanger,
+  .btnDownload {
+    padding: 7px 10px;
+    font-size: 12px;
+  }
+
+  /* 테이블: min-width 축소 — tableOverflow로 가로 스크롤 처리 */
+  .tableMinWidth900 {
+    min-width: 600px;
+  }
+
+  /* 셀 패딩 축소 */
+  .th,
+  .thCenter {
+    padding: 10px 6px;
+    font-size: 11px;
+  }
+
+  .td,
+  .tdCenter,
+  .tdBold,
+  .tdSecondary,
+  .tdAction {
+    padding: 10px 6px;
+    font-size: 12px;
+  }
+
+  /* 인라인 연락처 입력 */
+  .inlineContactInput {
+    width: 90px;
+    font-size: 12px;
+    padding: 2px 5px;
+  }
+
+  /* 일정 배너: 줄바꿈 허용 */
+  .scheduleBanner {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 10px;
+  }
+}

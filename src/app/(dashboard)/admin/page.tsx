@@ -1421,9 +1421,10 @@ const TAB_RESTRICTION_SECTIONS: {
       { value: 'cert-tab-edu',             label: '교육원' },
       { value: 'cert-tab-private-cert',    label: '민간자격증' },
       { value: 'cert-tab-student-mgmt',    label: '학생관리' },
-      { value: 'cert-tab-student-contact', label: '연락예정' },
-      { value: 'cert-tab-student-bulk',    label: '일괄등록' },
-      { value: 'cert-tab-stats',           label: '통계' },
+      { value: 'cert-tab-student-contact',  label: '연락예정' },
+      { value: 'cert-tab-student-bulk',     label: '일괄등록' },
+      { value: 'cert-tab-counsel-template', label: '상담 템플릿' },
+      { value: 'cert-tab-stats',            label: '통계' },
     ],
   },
   {
