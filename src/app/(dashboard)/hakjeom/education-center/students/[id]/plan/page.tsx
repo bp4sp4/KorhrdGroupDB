@@ -1552,8 +1552,7 @@ export default function PlanPage() {
                     rowSpan={totalRows}
                     style={{ background: color.bg, border: `1px solid ${color.border}` }}
                   >
-                    <div className={styles.fv_sem_label} style={{ color: color.label }}>{ordinalLabel}</div>
-                    <div className={styles.fv_sem_meta}>{rep.year}년도 {rep.term}학기</div>
+                    <div className={styles.fv_sem_label} style={{ color: color.label }}>{rep.year}년도 {rep.term}학기</div>
                     {semStartDate && <div className={styles.fv_sem_date}>시작 {fmtDate(semStartDate)}</div>}
                     {semEndDate && <div className={styles.fv_sem_date}>종료 {fmtDate(semEndDate)}</div>}
                   </td>
