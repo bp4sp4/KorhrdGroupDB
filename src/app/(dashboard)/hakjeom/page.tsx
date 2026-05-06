@@ -2435,7 +2435,7 @@ function HakjeomTab({ isActive, highlightId }: { isActive: boolean; highlightId?
         {error ? (
           <div className={styles.tableErrorMsg}>{error}</div>
         ) : (
-          <div className={styles.tableOverflow}>
+          <div className={`${styles.tableOverflow} ${styles.hakjeomMainTable}`}>
             <table className={styles.table}>
               <thead>
                 <tr>
@@ -2536,7 +2536,7 @@ function HakjeomTab({ isActive, highlightId }: { isActive: boolean; highlightId?
                     <td className={styles.tdBold}><Highlight text={item.name} query={searchText} /></td>
                     <td
                       className={styles.tdTabular}
-                      onClick={e => { e.stopPropagation(); if (selectedItem?.id === item.id) setInlineContact({ id: item.id, value: item.contact }); }}
+                      onClick={e => { e.stopPropagation(); if (selectedItem?.id === item.id) setInlineContact({ id: item.id, value: item.contact }); else setSelectedItem(item); }}
                     >
                       {inlineContact?.id === item.id ? (
                         <input

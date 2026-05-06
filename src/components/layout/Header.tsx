@@ -1,181 +1,237 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
-import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { LogOut, Menu } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
-import styles from './layout.module.css'
-import NotificationBell from './NotificationBell'
-import QuickSearch from './QuickSearch'
+import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { LogOut, Menu } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import styles from "./layout.module.css";
+import NotificationBell from "./NotificationBell";
+import QuickSearch from "./QuickSearch";
 
 interface NavSection {
-  label: string
-  href: string
-  activeOn: string[]
+  label: string;
+  href: string;
+  activeOn: string[];
 }
 
 const SECTION_NAV: NavSection[] = [
   {
-    label: '교육운영',
-    href: '/hakjeom',
-    activeOn: ['/hakjeom', '/cert', '/practice', '/allcare', '/duplicate', '/trash', '/ref-manage', '/logs', '/links', '/revenues', '/revenue-upload', '/approvals', '/reports'],
+    label: "교육운영",
+    href: "/hakjeom",
+    activeOn: [
+      "/hakjeom",
+      "/cert",
+      "/practice",
+      "/allcare",
+      "/duplicate",
+      "/trash",
+      "/ref-manage",
+      "/logs",
+      "/links",
+      "/revenues",
+      "/revenue-upload",
+      "/approvals",
+      "/reports",
+    ],
   },
   {
-    label: '어드민',
-    href: '/admin',
-    activeOn: ['/admin'],
+    label: "어드민",
+    href: "/admin",
+    activeOn: ["/admin"],
   },
-]
+];
 
 // 탭 없는 단일 페이지 레이블
 const PATH_LABELS: Record<string, string> = {
-  '/duplicate':  '중복 조회',
-  '/trash':      '삭제목록',
-  '/ref-manage': '어드민 관리',
-  '/logs':       '로그 관리',
-  '/assignment': '배정 현황',
-  '/links':      '링크모음',
-  '/approvals':  '전자결재',
-  '/revenue-upload': '매출 데이터 관리',
-  '/reports':    '손익 리포트',
-}
+  "/duplicate": "중복 조회",
+  "/trash": "삭제목록",
+  "/ref-manage": "어드민 관리",
+  "/logs": "로그 관리",
+  "/assignment": "배정 현황",
+  "/links": "링크모음",
+  "/approvals": "전자결재",
+  "/revenue-upload": "매출 데이터 관리",
+  "/reports": "손익 리포트",
+};
 
 // 경로 + 탭 → 헤더 표시 레이블
 const PATH_TAB_LABELS: Record<string, Record<string, string>> = {
-  '/hakjeom': {
-    hakjeom:         '문의DB',
-    agency:          '기관협약',
-    bulk:            '일괄등록',
-    counsel_done:    '연락예정',
-    'edu-students':  '등록학생관리',
-    stats:           '통계',
+  "/hakjeom": {
+    hakjeom: "문의DB",
+    agency: "기관협약",
+    bulk: "일괄등록",
+    counsel_done: "연락예정",
+    "edu-students": "등록학생관리",
+    stats: "통계",
   },
-  '/cert': {
-    hakjeom:          '학점연계 신청',
-    edu:              '교육원',
-    'private-cert':   '민간자격증',
-    'student-mgmt':   '학생관리',
-    'student-contact':'연락예정',
-    'student-bulk':   '일괄등록',
-    stats:            '통계',
+  "/cert": {
+    hakjeom: "학점연계 신청",
+    edu: "교육원",
+    "private-cert": "민간자격증",
+    "student-mgmt": "학생관리",
+    "student-contact": "연락예정",
+    "student-bulk": "일괄등록",
+    stats: "통계",
   },
-  '/abroad': {
-    users:        '회원 목록',
-    consult:      '간편상담',
-    applications: '신청서 목록',
-    payments:     '결제 목록',
+  "/abroad": {
+    users: "회원 목록",
+    consult: "간편상담",
+    applications: "신청서 목록",
+    payments: "결제 목록",
   },
-  '/practice': {
-    consultation: '상담신청',
-    practice:     '실습섭외신청',
-    employment:   '취업신청',
+  "/practice": {
+    consultation: "상담신청",
+    practice: "실습섭외신청",
+    employment: "취업신청",
   },
-  '/allcare': {
-    users:    '회원 목록',
-    payments: '결제 내역',
-    stats:    '통계',
+  "/allcare": {
+    users: "회원 목록",
+    payments: "결제 내역",
+    stats: "통계",
   },
-  '/revenues/nms-sales': {
-    nms:    '학점은행제',
-    cert:   '민간자격증',
-    abroad: '유학',
-    stats:  '통합 통계',
+  "/revenues/nms-sales": {
+    nms: "학점은행제",
+    cert: "민간자격증",
+    abroad: "유학",
+    stats: "통합 통계",
   },
-}
+};
 
 interface HeaderProps {
-  userName?: string
-  userRole?: string | null
-  permissions?: { section: string; scope: string; allowed_tabs?: string[] | null }[]
-  revenueOwnDivisions?: ('nms' | 'cert' | 'abroad')[]
-  onMenuToggle?: () => void
+  userName?: string;
+  userRole?: string | null;
+  permissions?: {
+    section: string;
+    scope: string;
+    allowed_tabs?: string[] | null;
+  }[];
+  revenueOwnDivisions?: ("nms" | "cert" | "abroad")[];
+  onMenuToggle?: () => void;
 }
 
-
-function hasPermission(permissions: { section: string; scope: string }[], sections: string[]): boolean {
-  return sections.some(s => permissions.some(p => p.section === s && p.scope !== 'none'))
+function hasPermission(
+  permissions: { section: string; scope: string }[],
+  sections: string[],
+): boolean {
+  return sections.some((s) =>
+    permissions.some((p) => p.section === s && p.scope !== "none"),
+  );
 }
 
-const EDUCATION_SECTIONS = ['hakjeom', 'cert', 'practice', 'allcare', 'duplicate', 'trash', 'logs', 'ref-manage', 'assignment', 'approvals', 'revenues', 'revenue-upload', 'reports']
+const EDUCATION_SECTIONS = [
+  "hakjeom",
+  "cert",
+  "practice",
+  "allcare",
+  "duplicate",
+  "trash",
+  "logs",
+  "ref-manage",
+  "assignment",
+  "approvals",
+  "revenues",
+  "revenue-upload",
+  "reports",
+];
 
-export default function Header({ userName = '관리자', userRole, permissions = [], revenueOwnDivisions = [], onMenuToggle }: HeaderProps) {
-  const router = useRouter()
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
-  const supabase = createClient()
+export default function Header({
+  userName = "관리자",
+  userRole,
+  permissions = [],
+  revenueOwnDivisions = [],
+  onMenuToggle,
+}: HeaderProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const supabase = createClient();
 
   // 현재 경로 + 탭 기반으로 레이블 결정
   const getDynamicLabel = (sec: NavSection): string => {
-    if (!sec.activeOn.some(p => pathname.startsWith(p))) return sec.label
+    if (!sec.activeOn.some((p) => pathname.startsWith(p))) return sec.label;
 
     // 탭 없는 단일 페이지
-    const flatLabel = PATH_LABELS[pathname]
-    if (flatLabel) return flatLabel
+    const flatLabel = PATH_LABELS[pathname];
+    if (flatLabel) return flatLabel;
 
     // 탭 있는 페이지 (가장 길게 매칭되는 경로 우선)
     const matchedPath = Object.keys(PATH_TAB_LABELS)
-      .filter(p => pathname.startsWith(p))
-      .sort((a, b) => b.length - a.length)[0]
-    if (!matchedPath) return sec.label
+      .filter((p) => pathname.startsWith(p))
+      .sort((a, b) => b.length - a.length)[0];
+    if (!matchedPath) return sec.label;
 
-    const currentTab = searchParams.get('tab')
-    const tabLabels = PATH_TAB_LABELS[matchedPath]
-    if (matchedPath === '/revenues/nms-sales' && pathname.startsWith('/revenues/nms-sales')) {
-      const revenueScope = permissions.find(permission => permission.section === 'revenues')?.scope ?? 'none'
-      if (revenueScope === 'own' && revenueOwnDivisions.length === 1) {
-        const onlyDivision = revenueOwnDivisions[0]
-        if (tabLabels[onlyDivision]) return tabLabels[onlyDivision]
+    const currentTab = searchParams.get("tab");
+    const tabLabels = PATH_TAB_LABELS[matchedPath];
+    if (
+      matchedPath === "/revenues/nms-sales" &&
+      pathname.startsWith("/revenues/nms-sales")
+    ) {
+      const revenueScope =
+        permissions.find((permission) => permission.section === "revenues")
+          ?.scope ?? "none";
+      if (revenueScope === "own" && revenueOwnDivisions.length === 1) {
+        const onlyDivision = revenueOwnDivisions[0];
+        if (tabLabels[onlyDivision]) return tabLabels[onlyDivision];
       }
     }
-    if (currentTab && tabLabels[currentTab]) return tabLabels[currentTab]
-    return sec.label
-  }
+    if (currentTab && tabLabels[currentTab]) return tabLabels[currentTab];
+    return sec.label;
+  };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
-    router.replace('/login')
-  }
+    await supabase.auth.signOut();
+    router.replace("/login");
+  };
 
-  const isMiniAdmin = userRole === 'mini-admin'
-  const isMasterAdmin = userRole === 'master-admin'
-  const isAdminRole = userRole === 'admin' || isMasterAdmin
+  const isMiniAdmin = userRole === "mini-admin";
+  const isMasterAdmin = userRole === "master-admin";
+  const isAdminRole = userRole === "admin" || isMasterAdmin;
 
-  const showEducation = isAdminRole || hasPermission(permissions, EDUCATION_SECTIONS)
-  const showAdmin = isAdminRole
+  const showEducation =
+    isAdminRole || hasPermission(permissions, EDUCATION_SECTIONS);
+  const showAdmin = isAdminRole;
 
   const visibleSectionNav = SECTION_NAV.filter((sec) => {
-    if (sec.href === '/admin') return showAdmin
-    if (sec.href === '/hakjeom') return showEducation
-    return true
-  })
+    if (sec.href === "/admin") return showAdmin;
+    if (sec.href === "/hakjeom") return showEducation;
+    return true;
+  });
 
   return (
     <header className={styles.header}>
       {/* 햄버거 버튼 (모바일) */}
-      <button className={styles.hamburgerBtn} onClick={onMenuToggle} aria-label="메뉴 열기">
+      <button
+        className={styles.hamburgerBtn}
+        onClick={onMenuToggle}
+        aria-label="메뉴 열기"
+      >
         <Menu size={20} />
       </button>
 
       {/* 로고 */}
       <Link href="/hakjeom" className={styles.headerLogo}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo.png" alt="한평생교육 로고" className={styles.headerLogoImg} />
+        <img
+          src="/logo.png"
+          alt="한평생교육 로고"
+          className={styles.headerLogoImg}
+        />
       </Link>
 
       {/* 섹션 네비게이션 */}
       {!isMiniAdmin && (
         <nav className={styles.headerNav}>
           {visibleSectionNav.map((sec) => {
-            const isActive = sec.activeOn.some((p) => pathname.startsWith(p))
+            const isActive = sec.activeOn.some((p) => pathname.startsWith(p));
             return (
               <Link
                 key={sec.label}
                 href={sec.href}
-                className={`${styles.headerNavItem} ${isActive ? styles.headerNavItemActive : ''}`}
+                className={`${styles.headerNavItem} ${isActive ? styles.headerNavItemActive : ""}`}
               >
                 {getDynamicLabel(sec)}
               </Link>
-            )
+            );
           })}
         </nav>
       )}
@@ -194,8 +250,6 @@ export default function Header({ userName = '관리자', userRole, permissions =
 
         <div className={styles.headerDivider} />
 
-     
-
         <span className={styles.headerUserName}>{userName}</span>
 
         <div className={styles.headerDivider} />
@@ -206,5 +260,5 @@ export default function Header({ userName = '관리자', userRole, permissions =
         </button>
       </div>
     </header>
-  )
+  );
 }

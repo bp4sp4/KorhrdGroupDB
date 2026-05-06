@@ -3318,4 +3318,10 @@
     gap: 8px;
     padding: 8px 10px;
   }
+
+  /* 문의DB 테이블: 번호(2), 이름(5), 연락처(6)만 표시 */
+  .hakjeomMainTable th:not(:nth-child(2)):not(:nth-child(5)):not(:nth-child(6)),
+  .hakjeomMainTable td:not(:nth-child(2)):not(:nth-child(5)):not(:nth-child(6)) {
+    display: none;
+  }
 }

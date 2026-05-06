@@ -9,7 +9,7 @@
 .loading_text {
   padding: 40px;
   font-size: 14px;
-  color: #4E5968;
+  color: #4e5968;
 }
 
 /* ── 뒤로가기 버튼 ───────────────────────────────────────────── */
@@ -20,7 +20,7 @@
   gap: 6px;
   font-size: 13px;
   font-weight: 500;
-  color: #4E5968;
+  color: #4e5968;
   background: none;
   border: none;
   cursor: pointer;
@@ -30,13 +30,13 @@
 }
 
 .back_btn:hover {
-  color: #191F28;
+  color: #191f28;
 }
 
 /* ── 헤더 카드 ───────────────────────────────────────────────── */
 
 .header_card {
-  background: #FFFFFF;
+  background: #ffffff;
   border: none;
   border-radius: 16px;
   padding: 24px;
@@ -54,7 +54,7 @@
 .course_name {
   font-size: 20px;
   font-weight: 700;
-  color: #191F28;
+  color: #191f28;
   letter-spacing: -0.4px;
 }
 
@@ -63,11 +63,11 @@
   align-items: center;
   gap: 6px;
   font-size: 13px;
-  color: #4E5968;
+  color: #4e5968;
 }
 
 .meta_sep {
-  color: #E5E8EB;
+  color: #e5e8eb;
 }
 
 .header_right_group {
@@ -80,11 +80,11 @@
   height: 34px;
   padding: 0 14px;
   background: none;
-  border: 1px solid #E5E8EB;
+  border: 1px solid #e5e8eb;
   border-radius: 8px;
   font-size: 12px;
   font-weight: 500;
-  color: #4E5968;
+  color: #4e5968;
   cursor: pointer;
   transition: all 0.15s;
   flex-shrink: 0;
@@ -94,9 +94,9 @@
 }
 
 .header_doc_btn:hover {
-  background: #F5F8FF;
-  border-color: #BFDBFE;
-  color: #3182F6;
+  background: #f5f8ff;
+  border-color: #bfdbfe;
+  color: #3182f6;
 }
 
 .header_doc_count {
@@ -107,7 +107,7 @@
   height: 16px;
   padding: 0 4px;
   border-radius: 8px;
-  background: #3182F6;
+  background: #3182f6;
   color: #fff;
   font-size: 10px;
   font-weight: 700;
@@ -116,28 +116,28 @@
 .fullview_btn {
   height: 34px;
   padding: 0 16px;
-  background: #F9FAFB;
-  border: 1px solid #E5E8EB;
+  background: #f9fafb;
+  border: 1px solid #e5e8eb;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
-  color: #191F28;
+  color: #191f28;
   cursor: pointer;
   transition: all 0.15s;
   flex-shrink: 0;
 }
 
 .fullview_btn:hover {
-  background: #EFF6FF;
-  border-color: #3182F6;
-  color: #3182F6;
+  background: #eff6ff;
+  border-color: #3182f6;
+  color: #3182f6;
 }
 
 .save_btn {
   height: 40px;
   padding: 0 20px;
-  background-color: #3182F6;
-  color: #FFFFFF;
+  background-color: #3182f6;
+  color: #ffffff;
   border: none;
   border-radius: 10px;
   font-size: 14px;
@@ -148,7 +148,7 @@
 }
 
 .save_btn:hover {
-  background-color: #1B6EE8;
+  background-color: #1b6ee8;
 }
 
 .save_indicator {
@@ -173,13 +173,18 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #F59E0B;
+  background: #f59e0b;
   animation: pulse 1s infinite;
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
 }
 
 /* ── 전적대 이수 과목 섹션 ────────────────────────────────────── */
@@ -187,7 +192,7 @@
 /* ── 학점 인정 공통 섹션 ─────────────────────────────────────── */
 
 .credit_section {
-  background: #FFFFFF;
+  background: #ffffff;
   border-radius: 16px;
   padding: 20px 24px;
 }
@@ -208,8 +213,8 @@
 .section_count_badge {
   font-size: 11px;
   font-weight: 700;
-  color: #3182F6;
-  background: #EFF6FF;
+  color: #3182f6;
+  background: #eff6ff;
   padding: 2px 8px;
   border-radius: 20px;
 }
@@ -217,8 +222,8 @@
 .section_add_btn {
   font-size: 13px;
   font-weight: 600;
-  color: #3182F6;
-  background: #EFF6FF;
+  color: #3182f6;
+  background: #eff6ff;
   border: none;
   border-radius: 8px;
   padding: 7px 14px;
@@ -227,7 +232,9 @@
   flex-shrink: 0;
 }
 
-.section_add_btn:hover { background: #DBEAFE; }
+.section_add_btn:hover {
+  background: #dbeafe;
+}
 
 .section_btn_group {
   display: flex;
@@ -238,8 +245,8 @@
 .section_add_btn_gubup {
   font-size: 13px;
   font-weight: 600;
-  color: #7C3AED;
-  background: #EDE9FE;
+  color: #7c3aed;
+  background: #ede9fe;
   border: none;
   border-radius: 8px;
   padding: 7px 14px;
@@ -248,13 +255,15 @@
   flex-shrink: 0;
 }
 
-.section_add_btn_gubup:hover { background: #DDD6FE; }
+.section_add_btn_gubup:hover {
+  background: #ddd6fe;
+}
 
 .section_link_btn {
   font-size: 13px;
   font-weight: 600;
-  color: #3182F6;
-  background: #EFF6FF;
+  color: #3182f6;
+  background: #eff6ff;
   border: none;
   border-radius: 8px;
   padding: 7px 14px;
@@ -264,7 +273,9 @@
   transition: background 0.15s;
 }
 
-.section_link_btn:hover { background: #DBEAFE; }
+.section_link_btn:hover {
+  background: #dbeafe;
+}
 
 .gubup_coming_soon {
   display: flex;
@@ -278,7 +289,7 @@
 
 .gubup_desc {
   font-size: 12px;
-  color: #8B95A1;
+  color: #8b95a1;
   margin: 0 0 4px;
 }
 
@@ -291,7 +302,7 @@
 .gubup_group_label {
   font-size: 12px;
   font-weight: 700;
-  color: #4E5968;
+  color: #4e5968;
   letter-spacing: 0.2px;
 }
 
@@ -307,7 +318,7 @@
   gap: 8px;
   width: 100%;
   padding: 9px 12px;
-  border: 1px solid #E5E8EB;
+  border: 1px solid #e5e8eb;
   border-radius: 8px;
   background: #fff;
   cursor: pointer;
@@ -316,31 +327,31 @@
 }
 
 .gubup_item:hover:not(:disabled) {
-  border-color: #7C3AED;
-  background: #F5F3FF;
+  border-color: #7c3aed;
+  background: #f5f3ff;
 }
 
 .gubup_item_done {
-  background: #F5F3FF;
-  border-color: #C4B5FD;
+  background: #f5f3ff;
+  border-color: #c4b5fd;
 }
 
 .gubup_item_done:hover {
-  border-color: #EF4444;
-  background: #FEF2F2;
+  border-color: #ef4444;
+  background: #fef2f2;
 }
 
 .gubup_item_done:hover .gubup_item_name {
-  color: #EF4444;
+  color: #ef4444;
 }
 
 .gubup_item_done:hover .gubup_item_check::before {
-  content: '−';
+  content: "−";
   position: absolute;
 }
 
 .gubup_item_done:hover .gubup_item_check {
-  color: #EF4444;
+  color: #ef4444;
   position: relative;
 }
 
@@ -348,29 +359,29 @@
   flex: 1;
   font-size: 13px;
   font-weight: 500;
-  color: #191F28;
+  color: #191f28;
 }
 
 .gubup_item_done .gubup_item_name {
-  color: #7C3AED;
+  color: #7c3aed;
 }
 
 .gubup_item_credit {
   font-size: 12px;
-  color: #8B95A1;
+  color: #8b95a1;
   flex-shrink: 0;
 }
 
 .gubup_item_check {
   font-size: 13px;
-  color: #7C3AED;
+  color: #7c3aed;
   font-weight: 700;
   flex-shrink: 0;
 }
 
 .gubup_item_add {
   font-size: 15px;
-  color: #8B95A1;
+  color: #8b95a1;
   font-weight: 400;
   flex-shrink: 0;
   line-height: 1;
@@ -393,14 +404,14 @@
   align-items: center;
   gap: 8px;
   padding: 8px 10px;
-  background: #F9FAFB;
+  background: #f9fafb;
   border-radius: 10px;
 }
 
 .credit_item_name {
   flex: 1;
   font-size: 13px;
-  color: #191F28;
+  color: #191f28;
   font-weight: 500;
 }
 
@@ -412,8 +423,8 @@
 .stage_badge {
   font-size: 11px;
   font-weight: 700;
-  color: #7C3AED;
-  background: #EDE9FE;
+  color: #7c3aed;
+  background: #ede9fe;
   padding: 2px 8px;
   border-radius: 20px;
   flex-shrink: 0;
@@ -422,17 +433,22 @@
 .item_edit_btn {
   font-size: 11px;
   font-weight: 500;
-  color: #6B7280;
+  color: #6b7280;
   background: transparent;
   border: none;
   cursor: pointer;
   padding: 2px 6px;
   border-radius: 4px;
   flex-shrink: 0;
-  transition: color 0.15s, background 0.15s;
+  transition:
+    color 0.15s,
+    background 0.15s;
 }
 
-.item_edit_btn:hover { color: #3182F6; background: #EFF6FF; }
+.item_edit_btn:hover {
+  color: #3182f6;
+  background: #eff6ff;
+}
 
 .item_remove_btn {
   display: flex;
@@ -450,7 +466,9 @@
   transition: color 0.15s;
 }
 
-.item_remove_btn:hover { color: #EF4444; }
+.item_remove_btn:hover {
+  color: #ef4444;
+}
 
 .item_edit_btn {
   display: flex;
@@ -467,7 +485,9 @@
   flex-shrink: 0;
   transition: color 0.15s;
 }
-.item_edit_btn:hover { color: #3182F6; }
+.item_edit_btn:hover {
+  color: #3182f6;
+}
 
 /* subject 삭제 버튼 */
 .subject_delete_btn {
@@ -484,11 +504,13 @@
   border-radius: 3px;
   transition: color 0.15s;
 }
-.subject_delete_btn:hover { color: #EF4444; }
+.subject_delete_btn:hover {
+  color: #ef4444;
+}
 
 /* ── prev_section 유지 (하위호환) ────────────────────────────── */
 .prev_section {
-  background: #FFFFFF;
+  background: #ffffff;
   border: none;
   border-radius: 16px;
   padding: 24px;
@@ -504,14 +526,14 @@
 .section_title {
   font-size: 14px;
   font-weight: 700;
-  color: #191F28;
+  color: #191f28;
 }
 
 .prev_add_btn {
   font-size: 13px;
   font-weight: 600;
-  color: #3182F6;
-  background: #EFF6FF;
+  color: #3182f6;
+  background: #eff6ff;
   border: none;
   border-radius: 8px;
   padding: 6px 12px;
@@ -520,7 +542,7 @@
 }
 
 .prev_add_btn:hover {
-  background: #DBEAFE;
+  background: #dbeafe;
 }
 
 .prev_add_row {
@@ -529,7 +551,7 @@
   gap: 8px;
   margin-bottom: 12px;
   padding: 12px;
-  background: #F9FAFB;
+  background: #f9fafb;
   border-radius: 10px;
 }
 
@@ -538,23 +560,23 @@
   height: 36px;
   padding: 0 10px;
   font-size: 13px;
-  color: #191F28;
-  background: #FFFFFF;
-  border: 1px solid #E5E8EB;
+  color: #191f28;
+  background: #ffffff;
+  border: 1px solid #e5e8eb;
   border-radius: 8px;
   outline: none;
   cursor: pointer;
 }
 
 .prev_add_select:focus {
-  border-color: #3182F6;
+  border-color: #3182f6;
 }
 
 .prev_confirm_btn {
   height: 36px;
   padding: 0 14px;
-  background: #3182F6;
-  color: #FFFFFF;
+  background: #3182f6;
+  color: #ffffff;
   border: none;
   border-radius: 8px;
   font-size: 13px;
@@ -564,14 +586,14 @@
 }
 
 .prev_confirm_btn:hover {
-  background: #1B6EE8;
+  background: #1b6ee8;
 }
 
 .prev_cancel_btn {
   height: 36px;
   padding: 0 14px;
-  background: #F2F4F6;
-  color: #4E5968;
+  background: #f2f4f6;
+  color: #4e5968;
   border: none;
   border-radius: 8px;
   font-size: 13px;
@@ -581,12 +603,12 @@
 }
 
 .prev_cancel_btn:hover {
-  background: #E5E8EC;
+  background: #e5e8ec;
 }
 
 .prev_empty {
   font-size: 13px;
-  color: #8B95A1;
+  color: #8b95a1;
   padding: 4px 0;
 }
 
@@ -601,14 +623,14 @@
   align-items: center;
   gap: 6px;
   padding: 6px 10px;
-  background: #F2F4F6;
+  background: #f2f4f6;
   border-radius: 8px;
 }
 
 .prev_item_name {
   font-size: 13px;
   font-weight: 500;
-  color: #191F28;
+  color: #191f28;
 }
 
 .prev_item_remove {
@@ -618,14 +640,14 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: #8B95A1;
+  color: #8b95a1;
   padding: 0;
   margin-left: 2px;
   transition: color 0.15s;
 }
 
 .prev_item_remove:hover {
-  color: #EF4444;
+  color: #ef4444;
 }
 
 /* ── 학력 안내 배너 ──────────────────────────────────────────── */
@@ -647,12 +669,12 @@
 
 .edu_banner_text {
   font-size: 13px;
-  color: #191F28;
+  color: #191f28;
   line-height: 1.5;
 }
 
 .edu_banner_sub {
-  color: #4E5968;
+  color: #4e5968;
   font-size: 12px;
 }
 
@@ -666,7 +688,7 @@
 }
 
 .stat_card {
-  background: #FFFFFF;
+  background: #ffffff;
   border: none;
   border-radius: 16px;
   padding: 20px 24px;
@@ -678,7 +700,7 @@
 .stat_label {
   font-size: 12px;
   font-weight: 600;
-  color: #8B95A1;
+  color: #8b95a1;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -686,7 +708,7 @@
 .stat_value {
   font-size: 26px;
   font-weight: 800;
-  color: #191F28;
+  color: #191f28;
   letter-spacing: -0.5px;
   line-height: 1;
 }
@@ -694,14 +716,14 @@
 .stat_unit {
   font-size: 14px;
   font-weight: 500;
-  color: #4E5968;
+  color: #4e5968;
   margin-left: 4px;
 }
 
 .stat_bar_wrap {
   width: 100%;
   height: 4px;
-  background: #F2F4F6;
+  background: #f2f4f6;
   border-radius: 2px;
   overflow: hidden;
   margin-top: 4px;
@@ -709,7 +731,7 @@
 
 .stat_bar {
   height: 100%;
-  background: #3182F6;
+  background: #3182f6;
   border-radius: 2px;
   transition: width 0.3s ease;
 }
@@ -725,24 +747,26 @@
   background: none;
   border: none;
   font-size: 10px;
-  color: #B0B8C1;
+  color: #b0b8c1;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
   padding: 0;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
 
 .center_remove_btn:hover {
-  background: #FEE2E2;
-  color: #EF4444;
+  background: #fee2e2;
+  color: #ef4444;
 }
 
 .stat_card_add {
-  background: #FFFFFF;
-  border: 1.5px dashed #CBD5E1;
+  background: #ffffff;
+  border: 1.5px dashed #cbd5e1;
   border-radius: 16px;
   padding: 20px 24px;
   display: flex;
@@ -760,7 +784,7 @@
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
-  color: #3182F6;
+  color: #3182f6;
   padding: 0;
 }
 
@@ -772,24 +796,24 @@
 
 .center_add_select {
   height: 32px;
-  border: 1.5px solid #CBD5E1;
+  border: 1.5px solid #cbd5e1;
   border-radius: 8px;
   padding: 0 8px;
   font-size: 12px;
-  color: #191F28;
-  background: #F8FAFC;
+  color: #191f28;
+  background: #f8fafc;
   outline: none;
   width: 100%;
 }
 
 .center_add_select:focus {
-  border-color: #3182F6;
+  border-color: #3182f6;
 }
 
 .center_add_confirm {
   height: 26px;
   padding: 0 10px;
-  background: #3182F6;
+  background: #3182f6;
   color: #fff;
   border: none;
   border-radius: 6px;
@@ -800,15 +824,15 @@
 }
 
 .center_add_confirm:hover {
-  background: #2563EB;
+  background: #2563eb;
 }
 
 .center_add_cancel {
   height: 26px;
   padding: 0 10px;
   background: none;
-  color: #8B95A1;
-  border: 1px solid #E5E8EB;
+  color: #8b95a1;
+  border: 1px solid #e5e8eb;
   border-radius: 6px;
   font-size: 11px;
   cursor: pointer;
@@ -816,7 +840,7 @@
 }
 
 .center_add_cancel:hover {
-  background: #F2F4F6;
+  background: #f2f4f6;
 }
 
 /* ── 두 패널 레이아웃 ────────────────────────────────────────── */
@@ -831,7 +855,7 @@
 .panel_title {
   font-size: 13px;
   font-weight: 700;
-  color: #4E5968;
+  color: #4e5968;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 12px;
@@ -840,7 +864,7 @@
 /* ── 좌측: 과목 목록 패널 ─────────────────────────────────────── */
 
 .subject_panel {
-  background: #FFFFFF;
+  background: #ffffff;
   border: none;
   border-radius: 16px;
   padding: 20px;
@@ -855,18 +879,20 @@
   height: 36px;
   padding: 0 10px;
   font-size: 13px;
-  color: #191F28;
-  border: 1px solid #E5E8EB;
+  color: #191f28;
+  border: 1px solid #e5e8eb;
   border-radius: 8px;
-  
+
   outline: none;
   margin-bottom: 8px;
-  transition: border-color 0.15s, background-color 0.15s;
+  transition:
+    border-color 0.15s,
+    background-color 0.15s;
 }
 
 .subject_search_input:focus {
-  border-color: #3182F6;
-  background: #FFFFFF;
+  border-color: #3182f6;
+  background: #ffffff;
 }
 
 .subject_filter {
@@ -874,9 +900,9 @@
   height: 36px;
   padding: 0 10px;
   font-size: 13px;
-  color: #191F28;
+  color: #191f28;
   background: #fff;
-  border: 1px solid #E5E8EB;
+  border: 1px solid #e5e8eb;
   border-radius: 8px;
   outline: none;
   cursor: pointer;
@@ -884,8 +910,7 @@
 }
 
 .subject_filter:focus {
-  border-color: #3182F6;
-  
+  border-color: #3182f6;
 }
 
 .subject_list {
@@ -902,14 +927,14 @@
 }
 
 .subject_list::-webkit-scrollbar-thumb {
-  background: #E5E8EB;
+  background: #e5e8eb;
   border-radius: 2px;
 }
 
 .subject_category_label {
   font-size: 11px;
   font-weight: 700;
-  color: #8B95A1;
+  color: #8b95a1;
   letter-spacing: 0.5px;
   text-transform: uppercase;
   padding: 10px 4px 6px;
@@ -949,11 +974,11 @@
 }
 
 .subject_card_active:hover {
-  background-color: #EFF6FF;
+  background-color: #eff6ff;
 }
 
 .subject_card_active:hover .subject_name {
-  color: #3182F6;
+  color: #3182f6;
 }
 
 .subject_card_disabled {
@@ -963,8 +988,8 @@
 
 .subject_card_passed {
   cursor: default;
-  background: #F0FDF4;
-  border-color: #BBF7D0;
+  background: #f0fdf4;
+  border-color: #bbf7d0;
 }
 
 .subject_check_passed {
@@ -975,7 +1000,7 @@
   font-size: 10px;
   font-weight: 600;
   color: #059669;
-  background: #D1FAE5;
+  background: #d1fae5;
   border-radius: 4px;
   padding: 1px 5px;
   margin-left: 4px;
@@ -985,7 +1010,7 @@
   font-size: 10px;
   font-weight: 700;
   color: #059669;
-  background: #D1FAE5;
+  background: #d1fae5;
   border-radius: 4px;
   padding: 1px 5px;
 }
@@ -998,9 +1023,9 @@
   font-size: 11px;
   font-weight: 600;
   text-align: center;
-  border: 1px solid #D1D5DB;
+  border: 1px solid #d1d5db;
   border-radius: 6px;
-  background: #F9FAFB;
+  background: #f9fafb;
   color: #374151;
   outline: none;
   -moz-appearance: textfield;
@@ -1013,32 +1038,32 @@
 }
 
 .score_input:focus {
-  border-color: #3182F6;
+  border-color: #3182f6;
   background: #fff;
 }
 
 .score_input_passed {
-  border-color: #6EE7B7;
-  background: #ECFDF5;
+  border-color: #6ee7b7;
+  background: #ecfdf5;
   color: #059669;
 }
 
 /* ── 이수 완료 배정 항목 ─────────────────────────────────────── */
 
 .assigned_item_passed {
-  background: #F0FDF4;
-  border-color: #BBF7D0;
+  background: #f0fdf4;
+  border-color: #bbf7d0;
 }
 
 .assigned_item_passed:hover {
-  background: #DCFCE7;
-  border-color: #86EFAC;
+  background: #dcfce7;
+  border-color: #86efac;
 }
 
 /* ── 교육원별 학점 카드 ──────────────────────────────────────── */
 
 .stat_card_center {
-  background: #FFFFFF;
+  background: #ffffff;
   border: none;
   border-radius: 16px;
   padding: 20px 24px;
@@ -1073,18 +1098,18 @@
 .center_list_val {
   font-size: 12px;
   font-weight: 700;
-  color: #3182F6;
+  color: #3182f6;
   white-space: nowrap;
 }
 
 .center_list_val_full {
-  color: #EF4444;
+  color: #ef4444;
 }
 
 .center_list_bar_wrap {
   width: 48px;
   height: 4px;
-  background: #F3F4F6;
+  background: #f3f4f6;
   border-radius: 2px;
   overflow: hidden;
   flex-shrink: 0;
@@ -1108,8 +1133,8 @@
 .center_credit_chip {
   font-size: 10px;
   font-weight: 600;
-  color: #3182F6;
-  background: #EFF6FF;
+  color: #3182f6;
+  background: #eff6ff;
   border-radius: 4px;
   padding: 2px 6px;
   white-space: nowrap;
@@ -1131,8 +1156,8 @@
 .subject_add_btn {
   font-size: 12px;
   font-weight: 600;
-  color: #3182F6;
-  background: #EFF6FF;
+  color: #3182f6;
+  background: #eff6ff;
   border: none;
   border-radius: 7px;
   padding: 5px 10px;
@@ -1142,7 +1167,7 @@
 }
 
 .subject_add_btn:hover {
-  background: #DBEAFE;
+  background: #dbeafe;
 }
 
 /* ── 전적대 분류 뱃지 ────────────────────────────────────────── */
@@ -1152,8 +1177,8 @@
   font-weight: 600;
   padding: 2px 7px;
   border-radius: 5px;
-  background: #F2F4F6;
-  color: #4E5968;
+  background: #f2f4f6;
+  color: #4e5968;
   flex-shrink: 0;
 }
 
@@ -1171,12 +1196,16 @@
 }
 
 @keyframes fade_in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .popup {
-  background: #FFFFFF;
+  background: #ffffff;
   border-radius: 16px;
   width: 380px;
   max-width: calc(100vw - 32px);
@@ -1205,8 +1234,8 @@
   border-radius: 4px;
   font-size: 11px;
   font-weight: 600;
-  background-color: #F2F4F6;
-  color: #8B95A1;
+  background-color: #f2f4f6;
+  color: #8b95a1;
   flex-shrink: 0;
 }
 
@@ -1217,9 +1246,9 @@
   border-radius: 99px;
   font-size: 11px;
   font-weight: 700;
-  background-color: #EFF6FF;
-  color: #3182F6;
-  border: 1px solid #BFDBFE;
+  background-color: #eff6ff;
+  color: #3182f6;
+  border: 1px solid #bfdbfe;
 }
 
 .dokaksa_general_badge {
@@ -1229,9 +1258,9 @@
   border-radius: 99px;
   font-size: 11px;
   font-weight: 700;
-  background-color: #F3F4F6;
-  color: #6B7280;
-  border: 1px solid #E5E7EB;
+  background-color: #f3f4f6;
+  color: #6b7280;
+  border: 1px solid #e5e7eb;
 }
 
 .dokaksa_gyoyang_badge {
@@ -1241,15 +1270,15 @@
   border-radius: 99px;
   font-size: 11px;
   font-weight: 700;
-  background-color: #ECFDF5;
+  background-color: #ecfdf5;
   color: #059669;
-  border: 1px solid #A7F3D0;
+  border: 1px solid #a7f3d0;
 }
 
 .dokaksa_subtype_label {
   font-size: 11px;
   font-weight: 700;
-  color: #8B95A1;
+  color: #8b95a1;
   letter-spacing: 0.5px;
   text-transform: uppercase;
   padding: 6px 2px 4px;
@@ -1258,13 +1287,19 @@
 
 .dokaksa_divider {
   height: 1px;
-  background: #E5E8EB;
+  background: #e5e8eb;
   margin: 14px 0;
 }
 
 @keyframes popup_in {
-  from { opacity: 0; transform: scale(0.96) translateY(6px); }
-  to   { opacity: 1; transform: scale(1)    translateY(0); }
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .popup_header {
@@ -1277,7 +1312,7 @@
 .popup_title {
   font-size: 15px;
   font-weight: 700;
-  color: #191F28;
+  color: #191f28;
 }
 
 .popup_close {
@@ -1290,13 +1325,15 @@
   border: none;
   border-radius: 7px;
   cursor: pointer;
-  color: #8B95A1;
-  transition: background-color 0.1s, color 0.1s;
+  color: #8b95a1;
+  transition:
+    background-color 0.1s,
+    color 0.1s;
 }
 
 .popup_close:hover {
-  background: #F2F4F6;
-  color: #191F28;
+  background: #f2f4f6;
+  color: #191f28;
 }
 
 .popup_body {
@@ -1308,8 +1345,13 @@
   overflow-y: auto;
 }
 
-.popup_body::-webkit-scrollbar { width: 4px; }
-.popup_body::-webkit-scrollbar-thumb { background: #E5E8EB; border-radius: 2px; }
+.popup_body::-webkit-scrollbar {
+  width: 4px;
+}
+.popup_body::-webkit-scrollbar-thumb {
+  background: #e5e8eb;
+  border-radius: 2px;
+}
 
 .popup_field {
   display: flex;
@@ -1320,25 +1362,27 @@
 .popup_label {
   font-size: 12px;
   font-weight: 600;
-  color: #4E5968;
+  color: #4e5968;
 }
 
 .popup_input {
   width: 100%;
   height: 38px;
   padding: 0 12px;
-  border: 1px solid #E5E8EB;
+  border: 1px solid #e5e8eb;
   border-radius: 8px;
   font-size: 13px;
-  color: #191F28;
-  
+  color: #191f28;
+
   outline: none;
-  transition: border-color 0.15s, background-color 0.15s;
+  transition:
+    border-color 0.15s,
+    background-color 0.15s;
 }
 
 .popup_input:focus {
-  border-color: #3182F6;
-  background: #FFFFFF;
+  border-color: #3182f6;
+  background: #ffffff;
 }
 
 /* 팝업 내 FilterDropdown 스타일 드롭다운 */
@@ -1355,36 +1399,38 @@
   width: 100%;
   height: 38px;
   padding: 0 12px;
-  border: 1px solid #E5E8EB;
+  border: 1px solid #e5e8eb;
   border-radius: 8px;
-  background: #FFFFFF;
+  background: #ffffff;
   font-size: 13px;
   font-weight: 500;
-  color: #191F28;
+  color: #191f28;
   cursor: pointer;
-  transition: border-color 0.15s, background-color 0.15s;
+  transition:
+    border-color 0.15s,
+    background-color 0.15s;
   user-select: none;
 }
 
 .fd_trigger_open {
-  border-color: #3182F6;
-  background: #F0F7FF;
+  border-color: #3182f6;
+  background: #f0f7ff;
 }
 
 .fd_trigger:hover:not(.fd_trigger_open) {
-  border-color: #8B95A1;
-  background: #FAFAFA;
+  border-color: #8b95a1;
+  background: #fafafa;
 }
 
 .fd_chevron {
-  color: #8B95A1;
+  color: #8b95a1;
   flex-shrink: 0;
   transition: transform 0.2s;
 }
 
 .fd_chevron_open {
   transform: rotate(180deg);
-  color: #3182F6;
+  color: #3182f6;
 }
 
 .fd_dropdown {
@@ -1392,10 +1438,10 @@
   top: calc(100% + 6px);
   left: 0;
   min-width: 100%;
-  background: #FFFFFF;
-  border: 1px solid #E5E8EB;
+  background: #ffffff;
+  border: 1px solid #e5e8eb;
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.10);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   z-index: 600;
   padding: 6px;
   animation: dropdown_in 0.12s ease;
@@ -1404,23 +1450,23 @@
 .fd_option {
   padding: 8px 12px;
   font-size: 13px;
-  color: #191F28;
+  color: #191f28;
   border-radius: 7px;
   cursor: pointer;
   transition: background-color 0.1s;
 }
 
 .fd_option:hover {
-  background-color: #F2F4F6;
+  background-color: #f2f4f6;
 }
 
 .fd_option_active {
-  color: #3182F6;
+  color: #3182f6;
   font-weight: 600;
 }
 
 .fd_option_active:hover {
-  background-color: #EBF3FE;
+  background-color: #ebf3fe;
 }
 
 .popup_row {
@@ -1440,10 +1486,10 @@
   align-items: center;
   padding: 5px 12px;
   border-radius: 7px;
-  border: 1px solid #E5E8EB;
+  border: 1px solid #e5e8eb;
   font-size: 13px;
   font-weight: 500;
-  color: #4E5968;
+  color: #4e5968;
   cursor: pointer;
   transition: all 0.1s;
   user-select: none;
@@ -1454,26 +1500,26 @@
 }
 
 .popup_radio:hover {
-  border-color: #3182F6;
-  color: #3182F6;
+  border-color: #3182f6;
+  color: #3182f6;
 }
 
 .popup_radio_active {
-  background: #EFF6FF;
-  border-color: #3182F6;
-  color: #3182F6;
+  background: #eff6ff;
+  border-color: #3182f6;
+  color: #3182f6;
   font-weight: 600;
 }
 
 .popup_label_sub {
   font-size: 11px;
   font-weight: 400;
-  color: #8B95A1;
+  color: #8b95a1;
 }
 
 .popup_divider {
   height: 1px;
-  background: #F2F4F6;
+  background: #f2f4f6;
   margin: 0 -4px;
 }
 
@@ -1485,7 +1531,7 @@
 
 .cb_searching {
   font-size: 12px;
-  color: #8B95A1;
+  color: #8b95a1;
   padding: 6px 2px;
 }
 
@@ -1494,10 +1540,10 @@
   top: calc(100% + 4px);
   left: 0;
   right: 0;
-  background: #FFFFFF;
-  border: 1px solid #E5E8EB;
+  background: #ffffff;
+  border: 1px solid #e5e8eb;
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.10);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   z-index: 700;
   max-height: 200px;
   overflow-y: auto;
@@ -1505,33 +1551,38 @@
   animation: dropdown_in 0.12s ease;
 }
 
-.cb_results::-webkit-scrollbar { width: 4px; }
-.cb_results::-webkit-scrollbar-thumb { background: #E5E8EB; border-radius: 2px; }
+.cb_results::-webkit-scrollbar {
+  width: 4px;
+}
+.cb_results::-webkit-scrollbar-thumb {
+  background: #e5e8eb;
+  border-radius: 2px;
+}
 
 .cb_result_item {
   padding: 8px 12px;
   font-size: 13px;
-  color: #191F28;
+  color: #191f28;
   border-radius: 7px;
   cursor: pointer;
   transition: background-color 0.1s;
 }
 
 .cb_result_item:hover {
-  background-color: #EFF6FF;
-  color: #3182F6;
+  background-color: #eff6ff;
+  color: #3182f6;
   font-weight: 500;
 }
 
 .cb_no_result {
   font-size: 12px;
-  color: #4E5968;
+  color: #4e5968;
   padding: 6px 2px;
   line-height: 1.6;
 }
 
 .cb_no_result_link {
-  color: #3182F6;
+  color: #3182f6;
   font-weight: 600;
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -1547,18 +1598,18 @@
 .popup_cancel {
   height: 40px;
   padding: 0 18px;
-  border: 1px solid #E5E8EB;
+  border: 1px solid #e5e8eb;
   border-radius: 8px;
-  background: #FFFFFF;
+  background: #ffffff;
   font-size: 13px;
   font-weight: 500;
-  color: #4E5968;
+  color: #4e5968;
   cursor: pointer;
   transition: all 0.15s;
 }
 
 .popup_cancel:hover {
-  background: #F2F4F6;
+  background: #f2f4f6;
 }
 
 .popup_confirm {
@@ -1566,20 +1617,20 @@
   padding: 0 20px;
   border: none;
   border-radius: 8px;
-  background: #3182F6;
+  background: #3182f6;
   font-size: 13px;
   font-weight: 600;
-  color: #FFFFFF;
+  color: #ffffff;
   cursor: pointer;
   transition: background-color 0.15s;
 }
 
 .popup_confirm:hover:not(:disabled) {
-  background: #1B6EE8;
+  background: #1b6ee8;
 }
 
 .popup_confirm:disabled {
-  background: #C5D8FD;
+  background: #c5d8fd;
   cursor: not-allowed;
 }
 
@@ -1602,9 +1653,9 @@
   height: 36px;
   padding: 0 16px;
   border-radius: 8px;
-  border: 1.5px solid #3182F6;
-  background: #EEF5FF;
-  color: #3182F6;
+  border: 1.5px solid #3182f6;
+  background: #eef5ff;
+  color: #3182f6;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -1612,7 +1663,7 @@
 }
 
 .center_limit_option:hover {
-  background: #D6E8FF;
+  background: #d6e8ff;
 }
 
 .center_limit_custom_row {
@@ -1624,7 +1675,7 @@
 /* ── 체크 아이콘 ─────────────────────────────────────────────── */
 
 .subject_check {
-  color: #3182F6;
+  color: #3182f6;
   flex-shrink: 0;
 }
 
@@ -1636,8 +1687,8 @@
 .subject_max_notice {
   font-size: 12px;
   font-weight: 600;
-  color: #D97706;
-  background: #FFFBEB;
+  color: #d97706;
+  background: #fffbeb;
   border-radius: 7px;
   padding: 6px 10px;
   margin-bottom: 10px;
@@ -1646,7 +1697,7 @@
 .subject_name {
   font-size: 13px;
   font-weight: 500;
-  color: #191F28;
+  color: #191f28;
   flex: 1;
   line-height: 1.3;
   transition: color 0.1s;
@@ -1656,17 +1707,22 @@
 .subject_edit_btn {
   font-size: 11px;
   font-weight: 500;
-  color: #6B7280;
+  color: #6b7280;
   background: transparent;
   border: none;
   cursor: pointer;
   padding: 1px 5px;
   border-radius: 4px;
   flex-shrink: 0;
-  transition: color 0.15s, background 0.15s;
+  transition:
+    color 0.15s,
+    background 0.15s;
 }
 
-.subject_edit_btn:hover { color: #3182F6; background: #EFF6FF; }
+.subject_edit_btn:hover {
+  color: #3182f6;
+  background: #eff6ff;
+}
 
 .subject_badges {
   display: flex;
@@ -1682,8 +1738,8 @@
   border-radius: 5px;
   font-size: 11px;
   font-weight: 600;
-  background: #EFF6FF;
-  color: #3182F6;
+  background: #eff6ff;
+  color: #3182f6;
 }
 
 .type_badge {
@@ -1693,13 +1749,13 @@
   border-radius: 5px;
   font-size: 11px;
   font-weight: 600;
-  background: #F2F4F6;
-  color: #4E5968;
+  background: #f2f4f6;
+  color: #4e5968;
 }
 
 .type_badge_practice {
-  background: #FFF7ED;
-  color: #EA580C;
+  background: #fff7ed;
+  color: #ea580c;
 }
 
 /* ── 우측: 학기별 수강 계획 패널 ─────────────────────────────── */
@@ -1724,19 +1780,19 @@
 .semester_count_badge {
   font-size: 13px;
   font-weight: 600;
-  color: #3182F6;
-  background: #EFF6FF;
+  color: #3182f6;
+  background: #eff6ff;
   padding: 6px 14px;
   border-radius: 20px;
 }
 
 .semester_count_badge_full {
-  color: #DC2626;
-  background: #FEF2F2;
+  color: #dc2626;
+  background: #fef2f2;
 }
 
 .semester_add_btn {
-  background: #3182F6;
+  background: #3182f6;
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -1759,16 +1815,16 @@
   height: 16px;
   padding: 0 4px;
   border-radius: 8px;
-  background: rgba(255,255,255,0.3);
+  background: rgba(255, 255, 255, 0.3);
   font-size: 10px;
   font-weight: 700;
-  color: #3182F6;
+  color: #3182f6;
   margin-top: 2px;
 }
 
 .semester_tab_active .tab_count {
-  background: rgba(255,255,255,0.25);
-  color: #FFFFFF;
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
 }
 
 .tab_subject_count {
@@ -1779,19 +1835,19 @@
   height: 16px;
   padding: 0 4px;
   border-radius: 8px;
-  background: #E5E7EB;
+  background: #e5e7eb;
   font-size: 10px;
   font-weight: 700;
-  color: #6B7280;
+  color: #6b7280;
 }
 
 .semester_tab_active .tab_subject_count {
-  background: #DBEAFE;
-  color: #3182F6;
+  background: #dbeafe;
+  color: #3182f6;
 }
 
 .semester_panel {
-  background: #FFFFFF;
+  background: #ffffff;
   border: none;
   border-radius: 16px;
   padding: 20px;
@@ -1806,7 +1862,7 @@
   overflow-y: visible;
   margin-bottom: 20px;
   padding: 6px;
-  background: #F2F4F6;
+  background: #f2f4f6;
   border-radius: 14px;
 }
 
@@ -1833,17 +1889,20 @@
   height: 16px;
   border-radius: 50%;
   background: rgba(0, 0, 0, 0.08);
-  color: #9CA3AF;
+  color: #9ca3af;
   flex-shrink: 0;
   cursor: pointer;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.15s, background 0.15s, color 0.15s;
+  transition:
+    opacity 0.15s,
+    background 0.15s,
+    color 0.15s;
 }
 
 .tab_delete_btn:hover {
   background: rgba(239, 68, 68, 0.12);
-  color: #EF4444;
+  color: #ef4444;
 }
 
 .semester_tab {
@@ -1869,7 +1928,7 @@
 .tab_year {
   font-size: 11px;
   font-weight: 500;
-  color: #9CA3AF;
+  color: #9ca3af;
 }
 
 .tab_top_row {
@@ -1895,12 +1954,15 @@
   font-size: 11px;
   font-weight: 500;
   border-radius: 4px;
-  color: #9CA3AF;
+  color: #9ca3af;
   background: transparent;
   opacity: 0;
   pointer-events: none;
   cursor: pointer;
-  transition: opacity 0.15s, color 0.15s, background 0.15s;
+  transition:
+    opacity 0.15s,
+    color 0.15s,
+    background 0.15s;
   white-space: nowrap;
   margin-right: 4px;
 }
@@ -1911,7 +1973,7 @@
 }
 
 .tab_edit_btn:hover {
-  color: #3182F6;
+  color: #3182f6;
   background: rgba(49, 130, 246, 0.1);
 }
 
@@ -1927,24 +1989,24 @@
 .tab_term {
   font-size: 15px;
   font-weight: 700;
-  color: #9CA3AF;
+  color: #9ca3af;
 }
 
 .semester_tab_active {
-  background: #FFFFFF;
+  background: #ffffff;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }
 
 .semester_tab_active:hover {
-  background: #FFFFFF;
+  background: #ffffff;
 }
 
 .semester_tab_active .tab_year {
-  color: #8B95A1;
+  color: #8b95a1;
 }
 
 .semester_tab_active .tab_term {
-  color: #191F28;
+  color: #191f28;
 }
 
 /* ── 교육원 귀속 배지 ── */
@@ -1975,12 +2037,12 @@
 .center_divider_line {
   width: 1px;
   flex: 1;
-  background: #E5E8EB;
+  background: #e5e8eb;
 }
 
 .center_divider_arrow {
   font-size: 9px;
-  color: #8B95A1;
+  color: #8b95a1;
   line-height: 1;
 }
 
@@ -2000,15 +2062,15 @@
   gap: 6px;
   padding: 8px 12px;
   margin-bottom: 8px;
-  background: #F9FAFB;
+  background: #f9fafb;
   border-radius: 10px;
-  border: 1px solid #E5E8EB;
+  border: 1px solid #e5e8eb;
 }
 
 .center_edit_label {
   font-size: 12px;
   font-weight: 600;
-  color: #4E5968;
+  color: #4e5968;
   white-space: nowrap;
   margin-right: 2px;
 }
@@ -2024,23 +2086,26 @@
   padding: 0 10px;
   font-size: 12px;
   font-weight: 500;
-  color: #4E5968;
+  color: #4e5968;
   background: #fff;
-  border: 1px solid #D1D6DB;
+  border: 1px solid #d1d6db;
   border-radius: 6px;
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s, color 0.15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    color 0.15s;
 }
 
 .center_edit_btn:hover {
-  border-color: #3182F6;
-  color: #3182F6;
+  border-color: #3182f6;
+  color: #3182f6;
 }
 
 .center_edit_btn_active {
-  background: #EBF3FF;
-  border-color: #3182F6;
-  color: #3182F6;
+  background: #ebf3ff;
+  border-color: #3182f6;
+  color: #3182f6;
   font-weight: 600;
 }
 
@@ -2048,9 +2113,9 @@
   height: 30px;
   padding: 0 10px;
   font-size: 13px;
-  color: #191F28;
+  color: #191f28;
   background: #fff;
-  border: 1.5px solid #3182F6;
+  border: 1.5px solid #3182f6;
   border-radius: 8px;
   outline: none;
   min-width: 140px;
@@ -2071,7 +2136,7 @@
   font-size: 12px;
   font-weight: 600;
   color: #fff;
-  background: #3182F6;
+  background: #3182f6;
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -2080,14 +2145,14 @@
 }
 
 .center_edit_ok_btn:hover {
-  background: #1A6EE8;
+  background: #1a6ee8;
 }
 
 .center_edit_custom_name {
   font-size: 12px;
   font-weight: 600;
-  color: #3182F6;
-  background: #EBF3FF;
+  color: #3182f6;
+  background: #ebf3ff;
   border-radius: 6px;
   padding: 3px 10px;
 }
@@ -2097,12 +2162,14 @@
   border-radius: 10px;
   border: 1.5px solid transparent;
   padding: 10px 12px;
-  transition: border-color 0.15s, background 0.15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
 }
 
 .kisu_date_block_active {
-  border-color: #3182F6;
-  background: #F8FAFF;
+  border-color: #3182f6;
+  background: #f8faff;
 }
 
 .kisu_label_row {
@@ -2115,18 +2182,18 @@
 .kisu_label {
   font-size: 12px;
   font-weight: 700;
-  color: #9CA3AF;
+  color: #9ca3af;
 }
 
 .kisu_label_active {
-  color: #3182F6;
+  color: #3182f6;
 }
 
 .kisu_active_badge {
   font-size: 11px;
   font-weight: 600;
-  color: #3182F6;
-  background: #DBEAFE;
+  color: #3182f6;
+  background: #dbeafe;
   padding: 2px 7px;
   border-radius: 10px;
 }
@@ -2141,15 +2208,17 @@
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  color: #8B95A1;
+  color: #8b95a1;
   flex-shrink: 0;
   margin-left: auto;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 }
 
 .kisu_delete_btn:hover {
-  background: #FEE2E2;
-  color: #EF4444;
+  background: #fee2e2;
+  color: #ef4444;
 }
 
 .assigned_kisu_header {
@@ -2157,30 +2226,30 @@
   align-items: center;
   gap: 8px;
   padding: 8px 16px 6px;
-  background: #F9FAFB;
+  background: #f9fafb;
 }
 
 .assigned_kisu_header_border {
-  border-top: 1.5px solid #E5E7EB;
+  border-top: 1.5px solid #e5e7eb;
   margin-top: 4px;
 }
 
 .assigned_kisu_title {
   font-size: 12px;
   font-weight: 700;
-  color: #3182F6;
+  color: #3182f6;
 }
 
 .assigned_kisu_count {
   font-size: 11px;
-  color: #9CA3AF;
+  color: #9ca3af;
   font-weight: 500;
 }
 
 .assigned_kisu_empty {
   padding: 10px 16px;
   font-size: 13px;
-  color: #9CA3AF;
+  color: #9ca3af;
   font-style: italic;
 }
 
@@ -2191,8 +2260,8 @@
   border-radius: 5px;
   font-size: 11px;
   font-weight: 700;
-  background: #EFF6FF;
-  color: #3182F6;
+  background: #eff6ff;
+  color: #3182f6;
 }
 
 .kisu_add_btn {
@@ -2203,8 +2272,8 @@
   padding: 6px 12px;
   font-size: 12px;
   font-weight: 600;
-  color: #3182F6;
-  background: #EFF6FF;
+  color: #3182f6;
+  background: #eff6ff;
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -2212,19 +2281,19 @@
 }
 
 .kisu_add_btn:hover {
-  background: #DBEAFE;
+  background: #dbeafe;
 }
 
 .semester_title_big {
   font-size: 18px;
   font-weight: 700;
-  color: #191F28;
+  color: #191f28;
   letter-spacing: -0.3px;
 }
 
 .semester_title_small {
   font-size: 13px;
-  color: #4E5968;
+  color: #4e5968;
   margin-top: -10px;
 }
 
@@ -2239,18 +2308,18 @@
 .semester_year_select {
   height: 36px;
   padding: 0 10px;
-  border: 1.5px solid #E5E8EB;
+  border: 1.5px solid #e5e8eb;
   border-radius: 8px;
   font-size: 14px;
   font-weight: 600;
-  color: #191F28;
-  background: #FFFFFF;
+  color: #191f28;
+  background: #ffffff;
   cursor: pointer;
   outline: none;
 }
 
 .semester_year_select:focus {
-  border-color: #3182F6;
+  border-color: #3182f6;
 }
 
 .semester_term_btns {
@@ -2261,20 +2330,20 @@
 .semester_term_btn {
   height: 36px;
   padding: 0 14px;
-  border: 1.5px solid #E5E8EB;
+  border: 1.5px solid #e5e8eb;
   border-radius: 8px;
   font-size: 14px;
   font-weight: 500;
-  color: #4E5968;
-  background: #FFFFFF;
+  color: #4e5968;
+  background: #ffffff;
   cursor: pointer;
   transition: all 0.15s;
 }
 
 .semester_term_btn_active {
-  border-color: #3182F6;
-  background: #EFF6FF;
-  color: #3182F6;
+  border-color: #3182f6;
+  background: #eff6ff;
+  color: #3182f6;
   font-weight: 600;
 }
 
@@ -2295,34 +2364,36 @@
 .date_label {
   font-size: 12px;
   font-weight: 600;
-  color: #4E5968;
+  color: #4e5968;
 }
 
 .date_input {
   height: 38px;
   padding: 0 10px;
   font-size: 13px;
-  color: #191F28;
-  background: #F9FAFB;
-  border: 1px solid #E5E8EB;
+  color: #191f28;
+  background: #f9fafb;
+  border: 1px solid #e5e8eb;
   border-radius: 8px;
   outline: none;
-  transition: border-color 0.15s, background-color 0.15s;
+  transition:
+    border-color 0.15s,
+    background-color 0.15s;
 }
 
 .date_input:focus {
-  border-color: #3182F6;
-  background: #FFFFFF;
+  border-color: #3182f6;
+  background: #ffffff;
 }
 
 /* 배정된 과목 목록 */
 
 .semester_empty {
   font-size: 13px;
-  color: #8B95A1;
+  color: #8b95a1;
   padding: 24px;
   text-align: center;
-  background: #F9FAFB;
+  background: #f9fafb;
   border-radius: 10px;
 }
 
@@ -2345,15 +2416,17 @@
   align-items: center;
   gap: 5px;
   padding: 5px 10px;
-  
-  border: 1px solid #E5E7EB;
+
+  border: 1px solid #e5e7eb;
   border-radius: 20px;
-  transition: background 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
 }
 
 .assigned_item:hover {
-  background: #FEE2E2;
-  border-color: #FECACA;
+  background: #fee2e2;
+  border-color: #fecaca;
 }
 
 .assigned_info {
@@ -2379,27 +2452,29 @@
   border: none;
   border-radius: 50%;
   cursor: pointer;
-  color: #9CA3AF;
+  color: #9ca3af;
   flex-shrink: 0;
   padding: 0;
   opacity: 0;
-  transition: color 0.15s, opacity 0.15s;
+  transition:
+    color 0.15s,
+    opacity 0.15s;
 }
 
 .assigned_item:hover .assigned_remove_btn {
   opacity: 1;
-  color: #EF4444;
+  color: #ef4444;
 }
 
 .assigned_remove_btn:hover {
-  color: #DC2626;
+  color: #dc2626;
 }
 
 /* ── 실습예정 요건 트래커 ────────────────────────────────────── */
 
 .practice_tracker {
-  background: #FFF7ED;
-  border: 1px solid #FED7AA;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
   border-radius: 14px;
   padding: 16px 20px;
 }
@@ -2410,7 +2485,7 @@
   gap: 6px;
   font-size: 13px;
   font-weight: 700;
-  color: #EA580C;
+  color: #ea580c;
   margin-bottom: 12px;
 }
 
@@ -2424,7 +2499,7 @@
   align-items: center;
   gap: 8px;
   background: #fff;
-  border: 1px solid #FED7AA;
+  border: 1px solid #fed7aa;
   border-radius: 10px;
   padding: 10px 16px;
   flex: 1;
@@ -2433,7 +2508,7 @@
 
 .practice_item_done {
   border-color: #059669;
-  background: #ECFDF5;
+  background: #ecfdf5;
   color: #059669;
 }
 
@@ -2461,13 +2536,13 @@
 }
 
 .subject_type_required {
-  background: #EFF6FF;
-  color: #1D4ED8;
+  background: #eff6ff;
+  color: #1d4ed8;
 }
 
 .subject_type_elective {
-  background: #F5F3FF;
-  color: #7C3AED;
+  background: #f5f3ff;
+  color: #7c3aed;
 }
 
 /* ── 서류 아이템 ── */
@@ -2477,12 +2552,12 @@
   align-items: center;
   gap: 8px;
   padding: 10px 12px;
-  background: #F9FAFB;
+  background: #f9fafb;
   border-radius: 10px;
 }
 
 .doc_icon {
-  color: #8B95A1;
+  color: #8b95a1;
   flex-shrink: 0;
 }
 
@@ -2490,7 +2565,7 @@
   flex: 1;
   font-size: 13px;
   font-weight: 500;
-  color: #191F28;
+  color: #191f28;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2498,7 +2573,7 @@
 
 .doc_size {
   font-size: 11px;
-  color: #8B95A1;
+  color: #8b95a1;
   flex-shrink: 0;
 }
 
@@ -2508,7 +2583,7 @@
   justify-content: center;
   width: 28px;
   height: 28px;
-  background: #F0FDF4;
+  background: #f0fdf4;
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -2518,7 +2593,7 @@
 }
 
 .doc_preview_btn:hover {
-  background: #DCFCE7;
+  background: #dcfce7;
 }
 
 .doc_download_btn {
@@ -2527,23 +2602,23 @@
   justify-content: center;
   width: 28px;
   height: 28px;
-  background: #EFF6FF;
+  background: #eff6ff;
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  color: #3182F6;
+  color: #3182f6;
   flex-shrink: 0;
   transition: background-color 0.15s;
 }
 
 .doc_download_btn:hover {
-  background: #DBEAFE;
+  background: #dbeafe;
 }
 
 /* ── 미리보기 모달 ── */
 
 .preview_modal {
-  background: #FFFFFF;
+  background: #ffffff;
   border-radius: 16px;
   width: 90vw;
   max-width: 900px;
@@ -2560,14 +2635,14 @@
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  border-bottom: 1px solid #F2F4F6;
+  border-bottom: 1px solid #f2f4f6;
   flex-shrink: 0;
 }
 
 .preview_title {
   font-size: 14px;
   font-weight: 600;
-  color: #191F28;
+  color: #191f28;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2581,7 +2656,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #F9FAFB;
+  background: #f9fafb;
 }
 
 .preview_iframe {
@@ -2601,14 +2676,14 @@
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  color: #8B95A1;
+  color: #8b95a1;
   font-size: 14px;
 }
 
 .preview_dl_link {
   font-size: 13px;
   font-weight: 600;
-  color: #3182F6;
+  color: #3182f6;
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -2618,227 +2693,215 @@
 .fv_wrap {
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  padding: 8px 0 48px;
+  gap: 14px;
+  padding: 8px 0 0;
 }
 
 .fv_top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background:#fff;
-  border: 1px solid #DCE6F5;
-  border-radius: 22px;
-  padding: 24px 28px;
-  box-shadow: 0 18px 40px rgba(31, 63, 104, 0.08);
+  background: #fff;
+
+  border-radius: 6px;
+  padding: 16px 20px;
 }
 
 .fv_title {
-  font-size: 26px;
-  font-weight: 800;
-  color: #16233B;
-  letter-spacing: -0.6px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+  letter-spacing: 0;
 }
 
 .fv_top_actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .fv_pdf_btn {
-  height: 44px;
-  padding: 0 22px;
-  background: #FFFFFF;
-  color: #2B50C7;
-  border: 1.5px solid #BAC9F8;
-  border-radius: 999px;
-  font-size: 14px;
-  font-weight: 700;
+  height: 36px;
+  padding: 0 16px;
+  background: #ffffff;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
+  transition: background 0.15s;
 }
 
-
+.fv_pdf_btn:hover {
+  background: #f3f4f6;
+}
 
 .fv_pdf_btn:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
 .fv_back_btn {
-  height: 44px;
-  padding: 0 22px;
-  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
-  color: #FFFFFF;
+  height: 36px;
+  padding: 0 16px;
+  background: #1d4ed8;
+  color: #ffffff;
   border: none;
-  border-radius: 999px;
-  font-size: 14px;
-  font-weight: 700;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
-  
-  transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
+  transition: background 0.15s;
 }
 
 .fv_back_btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 16px 30px rgba(37, 99, 235, 0.28);
-  filter: brightness(1.03);
+  background: #1e40af;
 }
 
 .fv_info_bar {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  background: #fff;
-  border-radius: 18px;
-  padding: 18px 22px;
-  font-size: 14px;
-  color: #24334D;
-  font-weight: 600;
-  border: 1px solid #E0E8F2;
-  
-  margin-bottom: 20px;
+  gap: 20px;
+  padding: 12px 0;
+  font-size: 13px;
+  color: #374151;
+  font-weight: 500;
+  margin-bottom: 4px;
 }
 
 .fv_table {
   width: 100%;
   border-collapse: collapse;
-  background: #FFFFFF;
-  overflow: hidden;
+  background: #ffffff;
   font-size: 13px;
-  
 }
 
 .fv_th {
-  background: #EDF1FA;
-  color: #253A5E;
+  background: #e5e7eb;
+  color: #111827;
   font-size: 12px;
   font-weight: 700;
-  padding: 13px 14px;
+  padding: 10px 12px;
   text-align: center;
-  border: 1px solid #CDD8EE;
-  letter-spacing: 0.2px;
+  border: 1px solid #9ca3af;
 }
 
 .fv_sem_cell {
-  padding: 22px 20px;
-  border: 1px solid #DCE6F5;
+  padding: 16px 14px;
+  border: 1px solid #9ca3af;
   vertical-align: middle;
   text-align: center;
-  width: 240px;
-  min-width: 200px;
-  position: relative;
-  overflow: hidden;
-}
-
-.fv_sem_cell::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.56) 0%, rgba(255, 255, 255, 0) 55%);
-  pointer-events: none;
+  width: 200px;
+  min-width: 180px;
 }
 
 .fv_sem_label {
-  position: relative;
-  z-index: 1;
-  font-size: 24px;
-  font-weight: 800;
-  margin-bottom: 8px;
-  letter-spacing: -0.6px;
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #111827;
 }
 
 .fv_sem_meta {
-  position: relative;
-  z-index: 1;
-  font-size: 13px;
-  color: #516071;
-  line-height: 1.75;
-  font-weight: 600;
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.6;
+  font-weight: 500;
+}
+
+.fv_sem_date {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-top: 6px;
+  line-height: 1.5;
 }
 
 .fv_td {
-  padding: 12px 14px;
-  border: 1px solid #D8E3F0;
-  color: #1E293B;
+  padding: 9px 12px;
+  border: 1px solid #9ca3af;
+  color: #111827;
   font-size: 13px;
-  max-width: 180px;
-  background: #FFFFFF;
+  background: #ffffff;
+  text-align: center;
 }
 
 .fv_credit_td {
-  padding: 12px 14px;
-  border: 1px solid #D8E3F0;
+  padding: 9px 12px;
+  border: 1px solid #9ca3af;
   text-align: center;
-  color: #334155;
+  color: #111827;
   font-size: 13px;
-  min-width: 60px;
-  background: #F8FAFE;
+  min-width: 56px;
+  background: #fafafa;
 }
 
 .fv_empty {
-  padding: 24px 20px;
+  padding: 16px 12px;
   text-align: center;
-  color: #7A8699;
+  color: #9ca3af;
   font-size: 13px;
-  border: 1px solid #D8E3F0;
-  background: #F8FAFE;
+  border: 1px solid #9ca3af;
+  background: #fafafa;
 }
 
 .fv_kisu_row {
-  /* background set by inline style (semester color) */
 }
 
 .fv_kisu_label {
-  padding: 10px 14px;
-  border: 1px solid #CDD8EE;
+  padding: 8px 12px;
+  border: 1px solid #9ca3af;
   font-size: 12px;
   font-weight: 700;
-  color: #2E4268;
-  letter-spacing: 0.2px;
+  color: #374151;
+  background: #f9fafb;
+  text-align: center;
 }
 
 .fv_summary_row {
-  /* background set by inline style (semester color) */
 }
 
 .fv_summary_label {
-  padding: 11px 14px;
-  border: 1px solid #CDD8EE;
+  padding: 9px 12px;
+  border: 1px solid #9ca3af;
   font-size: 12px;
   font-weight: 700;
-  color: #253A5E;
+  color: #374151;
+  background: #eef2ff;
+  text-align: center;
 }
 
 .fv_summary_credit {
-  padding: 11px 14px;
-  border: 1px solid #CDD8EE;
+  padding: 9px 12px;
+  border: 1px solid #9ca3af;
   text-align: center;
   font-size: 13px;
-  color: #253A5E;
-  font-weight: 600;
+  color: #1e40af;
+  font-weight: 700;
+  background: #eef2ff;
 }
 
 .fv_total_row {
-  background: #E6EDFF;
+  background: #1e3a5f;
 }
 
 .fv_total_label {
-  padding: 16px 16px;
-  border: 1px solid #AABEF5;
-  font-size: 14px;
-  font-weight: 800;
-  color: #1A3580;
-  background: #E6EDFF;
+  padding: 12px 14px;
+  border: 1px solid #374151;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+  background: #1e3a5f;
+  text-align: center;
 }
 
 .fv_total_credit {
-  padding: 16px 14px;
-  border: 1px solid #AABEF5;
+  padding: 12px 14px;
+  border: 1px solid #374151;
   text-align: center;
-  font-size: 18px;
-  color: #1A3580;
-  background: #E6EDFF;
+  font-size: 15px;
+  color: #ffffff;
+  background: #1e3a5f;
   font-weight: 800;
 }
 
@@ -2849,88 +2912,69 @@
 }
 
 .fv_stat_item {
-  background: #FFFFFF;
-  border-radius: 12px;
-  padding: 20px 24px;
-  border: 1px solid #E5E8EB;
+  background: #ffffff;
+  border-radius: 4px;
+  padding: 16px 20px;
+  border: 1px solid #d1d5db;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .fv_stat_label {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
-  color: #8B95A1;
+  color: #6b7280;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .fv_stat_value {
-  font-size: 28px;
-  font-weight: 800;
-  color: #191F28;
-  letter-spacing: -0.5px;
+  font-size: 24px;
+  font-weight: 700;
+  color: #111827;
   line-height: 1;
 }
 
 .fv_stat_unit {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
-  color: #4E5968;
-  margin-left: 4px;
+  color: #6b7280;
+  margin-left: 3px;
 }
 
 @media (max-width: 1024px) {
-  .fv_top {
-    padding: 20px 22px;
-  }
-
-  .fv_title {
-    font-size: 22px;
-  }
-
   .fv_sem_cell {
-    width: 180px;
-    min-width: 180px;
+    width: 160px;
+    min-width: 160px;
   }
 }
 
 @media (max-width: 768px) {
   .fv_wrap {
-    gap: 14px;
+    gap: 10px;
     overflow-x: auto;
   }
 
   .fv_top {
     flex-direction: column;
     align-items: flex-start;
-    gap: 14px;
-    padding: 18px;
-  }
-
-  .fv_title {
-    font-size: 20px;
-  }
-
-  .fv_info_bar {
-    padding: 16px 18px;
-    gap: 10px;
+    gap: 12px;
+    padding: 14px 16px;
   }
 
   .fv_table {
-    min-width: 760px;
-    border-radius: 18px;
+    min-width: 680px;
   }
 
   .fv_sem_cell {
-    width: 160px;
-    min-width: 160px;
-    padding: 18px 14px;
+    width: 140px;
+    min-width: 140px;
+    padding: 12px 10px;
   }
 
   .fv_sem_label {
-    font-size: 21px;
+    font-size: 16px;
   }
 }
 
@@ -2947,7 +2991,7 @@
 }
 
 .doc_modal {
-  background: #FFFFFF;
+  background: #ffffff;
   border-radius: 16px;
   width: 480px;
   max-width: calc(100vw - 40px);
@@ -2962,13 +3006,13 @@
   align-items: center;
   justify-content: space-between;
   padding: 20px 20px 16px;
-  border-bottom: 1px solid #F2F4F6;
+  border-bottom: 1px solid #f2f4f6;
 }
 
 .doc_modal_title {
   font-size: 16px;
   font-weight: 700;
-  color: #191F28;
+  color: #191f28;
 }
 
 .doc_modal_actions {
@@ -2980,7 +3024,7 @@
 .doc_modal_upload_btn {
   height: 32px;
   padding: 0 14px;
-  background: #3182F6;
+  background: #3182f6;
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -2991,7 +3035,7 @@
 }
 
 .doc_modal_upload_btn:hover {
-  background: #1B6EE8;
+  background: #1b6ee8;
 }
 
 .doc_modal_upload_btn:disabled {
@@ -3009,20 +3053,20 @@
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  color: #4E5968;
+  color: #4e5968;
   transition: background 0.15s;
 }
 
 .doc_modal_close:hover {
-  background: #F2F4F6;
-  color: #191F28;
+  background: #f2f4f6;
+  color: #191f28;
 }
 
 .doc_modal_empty {
   padding: 40px 20px;
   text-align: center;
   font-size: 14px;
-  color: #8B95A1;
+  color: #8b95a1;
 }
 
 .doc_modal_list {

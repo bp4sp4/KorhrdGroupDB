@@ -1395,8 +1395,8 @@ export default function PlanPage() {
   // ── 전체보기 ────────────────────────────────────────────────
   const ORDINALS_KR = ['첫', '두번째', '세번째', '네번째', '다섯번째', '여섯번째', '일곱번째', '여덟번째', '아홉번째', '열번째'];
   const SEM_COLORS = [
-    { bg: 'linear-gradient(180deg, #EEF3FF 0%, #DFE8FF 100%)', border: '#BAC9F8', label: '#2B50C7', summaryBg: '#E5EDFF', kisuBg: '#EBF0FF' },
-    { bg: 'linear-gradient(180deg, #EAFAF8 0%, #D7F3F0 100%)', border: '#9ED8D3', label: '#0C7B72', summaryBg: '#DDF5F2', kisuBg: '#E5F7F5' },
+    { bg: '#FFFFFF', border: '#9CA3AF', label: '#1E3A5F', summaryBg: '#E5E7EB', kisuBg: '#F3F4F6' },
+    { bg: '#FFFFFF', border: '#9CA3AF', label: '#1E3A5F', summaryBg: '#E5E7EB', kisuBg: '#F3F4F6' },
   ];
   // 전체보기 고정 컬럼: 전공(category), 교양(category), 일반(category)
   const FV_COLUMNS = ['전공', '교양', '일반'] as const;
@@ -1444,17 +1444,18 @@ export default function PlanPage() {
       const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
       const pageW = pdf.internal.pageSize.getWidth();
       const pageH = pdf.internal.pageSize.getHeight();
+      const margin = 15;
       const ratio = canvas.width / canvas.height;
-      const imgW = pageW;
+      const imgW = pageW - margin * 2;
       const imgH = imgW / ratio;
 
       if (imgH <= pageH) {
-        pdf.addImage(imgData, 'PNG', 0, 0, imgW, imgH);
+        pdf.addImage(imgData, 'PNG', margin, margin, imgW, imgH);
       } else {
         let yOffset = 0;
         let remaining = imgH;
         while (remaining > 0) {
-          pdf.addImage(imgData, 'PNG', 0, -yOffset, imgW, imgH);
+          pdf.addImage(imgData, 'PNG', margin, -yOffset, imgW, imgH);
           yOffset += pageH;
           remaining -= pageH;
           if (remaining > 0) pdf.addPage();
@@ -1536,14 +1537,25 @@ export default function PlanPage() {
                   return sum + (multiKisu ? 1 : 0) + subCount + 1;
                 }, 0);
 
+                const fmtDate = (d: string) => {
+                  const dt = new Date(d);
+                  return `${dt.getFullYear()}.${String(dt.getMonth() + 1).padStart(2, '0')}.${String(dt.getDate()).padStart(2, '0')}`;
+                };
+                const allSemsSorted = groups.flat();
+                const firstDateEntry = allSemsSorted.map(s => semesterDates[s.id]).find(d => d?.start || d?.end);
+                const semStartDate = groupIdx === 0 ? (firstDateEntry?.start ?? null) : null;
+                const semEndDate = groupIdx === groups.length - 1 ? (firstDateEntry?.end ?? null) : null;
+
                 const leftCell = (
                   <td
                     className={styles.fv_sem_cell}
                     rowSpan={totalRows}
-                    style={{ background: color.bg, borderColor: color.border }}
+                    style={{ background: color.bg, border: `1px solid ${color.border}` }}
                   >
                     <div className={styles.fv_sem_label} style={{ color: color.label }}>{ordinalLabel}</div>
                     <div className={styles.fv_sem_meta}>{rep.year}년도 {rep.term}학기</div>
+                    {semStartDate && <div className={styles.fv_sem_date}>시작 {fmtDate(semStartDate)}</div>}
+                    {semEndDate && <div className={styles.fv_sem_date}>종료 {fmtDate(semEndDate)}</div>}
                   </td>
                 );
 
@@ -1620,10 +1632,10 @@ export default function PlanPage() {
 
                   // 이수학점 소계
                   result.push(
-                    <tr key={`summary-${sem.id}`} className={styles.fv_summary_row} style={{ background: color.summaryBg }}>
-                      <td className={styles.fv_summary_label}>이수학점</td>
+                    <tr key={`summary-${sem.id}`} className={styles.fv_summary_row}>
+                      <td className={styles.fv_summary_label} style={{ background: color.summaryBg }}>이수학점</td>
                       {FV_COLUMNS.map((col) => (
-                        <td key={col} className={styles.fv_summary_credit}>
+                        <td key={col} className={styles.fv_summary_credit} style={{ background: color.summaryBg }}>
                           <strong>{getSemCreditByCol(sem.id, col)}</strong>
                         </td>
                       ))}

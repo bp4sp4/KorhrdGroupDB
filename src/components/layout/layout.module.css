@@ -368,6 +368,17 @@ li:first-child > .sidebarSubSectionLabel {
 /* ─── 모바일 반응형 (480px 이하) ────────────────────────────────────────── */
 
 @media (max-width: 480px) {
+  .header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+  }
+
+  .headerNavSpacer {
+    display: none;
+  }
+
   .headerLogo {
     width: auto;
     padding: 0;
