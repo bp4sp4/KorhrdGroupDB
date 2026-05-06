@@ -65,7 +65,7 @@ async function getAdminUids(): Promise<string[]> {
 
 // ─── 타입 정의 ───────────────────────────────────────────────────────────────
 
-type HakjeomStatus = '부재중/추후통화' | '상담대기' | '상담완료-높음' | '상담완료-중간' | '상담완료-낮음' | '보류' | '등록완료' | '취소' | `기타(${string})` | '기타';
+type HakjeomStatus = '부재중/추후통화' | '상담대기' | '상담완료-높음' | '상담완료-중간' | '상담완료-낮음' | '보류' | '등록완료' | '취소' | '지인등록' | '지인취소' | '지인대기' | `기타(${string})` | '기타';
 
 const COUNSEL_COMPLETE_STATUSES: HakjeomStatus[] = ['상담완료-높음', '상담완료-중간', '상담완료-낮음'];
 
@@ -354,7 +354,7 @@ export async function PATCH(request: NextRequest) {
         .in('id', ids)
       if (error) return NextResponse.json({ error: 'Failed to bulk update status' }, { status: 500 })
 
-      // 지인소개 대분류는 등록완료 대신 기타 상태로 처리
+      // 지인소개 대분류는 등록완료 대신 지인등록 상태로 처리
       if (status === '등록완료') {
         const { data: jiinRecords } = await supabaseAdmin
           .from(TABLE)
@@ -364,7 +364,7 @@ export async function PATCH(request: NextRequest) {
         if (jiinRecords && jiinRecords.length > 0) {
           await supabaseAdmin
             .from(TABLE)
-            .update({ status: '기타' })
+            .update({ status: '지인등록' })
             .in('id', jiinRecords.map(r => r.id))
         }
       }
@@ -431,9 +431,9 @@ export async function PATCH(request: NextRequest) {
 
     const { data: current } = await supabaseAdmin.from(TABLE).select('*').eq('id', id).single();
 
-    // 지인소개 대분류는 등록완료 대신 기타로 처리
+    // 지인소개 대분류는 등록완료 대신 지인등록으로 처리
     if (status === '등록완료' && current?.click_source?.startsWith('지인소개')) {
-      updateData.status = '기타';
+      updateData.status = '지인등록';
     }
 
     const { data, error } = await supabaseAdmin
