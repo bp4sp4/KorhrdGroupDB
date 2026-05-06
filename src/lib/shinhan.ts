@@ -170,16 +170,17 @@ export async function fetchTransactions(params: {
   endDate: string
   clientIp?: string
 }): Promise<ShinhanTransactionResult> {
-  if (!CLIENT_ID || !CLIENT_SECRET) {
-    throw new Error('SHINHAN_APP_KEY / SHINHAN_APP_SECRET 환경변수가 설정되지 않았습니다.')
-  }
-
   const ip = params.clientIp ?? '0.0.0.0'
 
+  // 프록시 설정 시 — Vercel 등 동적 IP 환경 (Shinhan 자격증명은 프록시 서버에 있음)
   if (PROXY_URL && PROXY_SECRET) {
     return fetchTransactionsViaProxy({ ...params, clientIp: ip })
   }
-  // 프록시 미설정 시 직접 호출 (로컬 개발 등 IP 화이트리스트 환경)
+
+  // 직접 호출 — 로컬 개발 등 IP 화이트리스트 환경
+  if (!CLIENT_ID || !CLIENT_SECRET) {
+    throw new Error('SHINHAN_APP_KEY / SHINHAN_APP_SECRET 환경변수가 설정되지 않았습니다.')
+  }
   return fetchTransactionsDirect({ ...params, clientIp: ip })
 }
 
