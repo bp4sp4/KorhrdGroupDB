@@ -17,18 +17,22 @@ export async function GET(request: NextRequest) {
   const action = searchParams.get('action')
 
   if (action === 'list') {
+    const accounts = [
+      { accountNumber: '100038221017', accountName: '' },
+      { accountNumber: '140014910339', accountName: '' },
+      { accountNumber: '140015029000', accountName: '' },
+      { accountNumber: '140015307601', accountName: '' },
+    ]
     return NextResponse.json({
-      data: [
-        {
-          bankCode: '088',
-          accountNumber: SHINHAN_TEST_ACCOUNT,
-          accountName: '신한은행 테스트계좌',
-          accountType: '입출금',
-          state: 1,
-          closeRequestYN: false,
-          useRestrictYN: false,
-        },
-      ],
+      data: accounts.map(({ accountNumber, accountName }) => ({
+        bankCode: '088',
+        accountNumber,
+        accountName,
+        accountType: '입출금',
+        state: 1,
+        closeRequestYN: false,
+        useRestrictYN: false,
+      })),
     })
   }
 

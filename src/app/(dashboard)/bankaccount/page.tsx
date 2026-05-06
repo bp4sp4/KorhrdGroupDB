@@ -223,6 +223,14 @@ export default function BankAccountPage() {
       setPage(1)
       setJobID('shinhan')
       setJobStatus('조회 완료')
+      // 예금주(고객명)를 API 응답으로 자동 업데이트
+      if (json.data?.accountInfo?.고객명) {
+        setAccounts(prev => prev.map(acc =>
+          acc.accountNumber === selectedAccount
+            ? { ...acc, accountName: json.data.accountInfo.고객명 }
+            : acc
+        ))
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : '조회 요청 실패')
       setJobStatus('')
@@ -279,7 +287,7 @@ export default function BankAccountPage() {
                 >
                   <td>{BANK_CODES[acc.bankCode] ?? BANK_CODES[acc.bankCode.replace(/^0+/, '')] ?? acc.bankCode}</td>
                   <td>{acc.accountNumber}</td>
-                  <td>{acc.accountName}</td>
+                  <td>{acc.accountName || '-'}</td>
                   <td>{acc.accountType}</td>
                   <td>{acc.state === 1 ? '정상' : acc.state === 2 ? '해지' : '일시정지'}</td>
                   <td>{acc.closeRequestYN ? '해지신청' : acc.useRestrictYN ? '제한' : '사용'}</td>
