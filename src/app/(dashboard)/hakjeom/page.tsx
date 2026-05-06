@@ -19,7 +19,7 @@ import EduStudentsTab from './education-center/EduStudentsTab'
 
 // ─── 공통 타입 ──────────────────────────────────────────────────────────────
 
-type ConsultationStatus = '부재중/추후통화' | '상담대기' | '상담완료-높음' | '상담완료-중간' | '상담완료-낮음' | '보류' | '등록완료' | '취소' | '기타';
+type ConsultationStatus = '부재중/추후통화' | '상담대기' | '상담완료-높음' | '상담완료-중간' | '상담완료-낮음' | '보류' | '등록완료' | '취소' | '지인등록' | '지인취소' | '지인대기' | '기타';
 type AgencyStatus = '협약대기' | '협약중' | '보류' | '협약완료';
 type TabKey = 'hakjeom' | 'agency' | 'bulk' | 'counsel_done' | 'edu-students' | 'stats';
 
@@ -105,7 +105,7 @@ interface CsvRow {
 const CONSULTATION_STATUS_OPTIONS: ConsultationStatus[] = [
   '부재중/추후통화', '상담대기',
   '상담완료-높음', '상담완료-중간', '상담완료-낮음',
-  '보류', '등록완료', '취소', '기타',
+  '보류', '등록완료', '취소', '지인등록', '지인취소', '지인대기', '기타',
 ];
 const AGENCY_STATUS_OPTIONS: AgencyStatus[] = ['협약대기', '협약중', '보류', '협약완료'];
 
@@ -118,6 +118,9 @@ const CONSULTATION_STATUS_STYLE: Record<ConsultationStatus, { background: string
   '보류':                { background: '#F3E8FF', color: '#7C3AED' },
   '등록완료':            { background: '#DCFCE7', color: '#16A34A' },
   '취소':                { background: '#FEE2E2', color: '#DC2626' },
+  '지인등록':            { background: '#FFF0E6', color: '#EA580C' },
+  '지인취소':            { background: '#FEF0F0', color: '#B91C1C' },
+  '지인대기':            { background: '#FFF7ED', color: '#D97706' },
   '기타':                { background: '#F0FFF4', color: '#059669' },
 };
 
@@ -1016,7 +1019,7 @@ function HakjeomDetailPanel({ item, onClose, onUpdate, initialTab = 'basic', cus
               <div className={styles.detailChipSection}>
                 <span className={styles.detailChipSectionLabel}>상태</span>
                 <div className={styles.detailChipRow}>
-                  {(['부재중/추후통화', '상담대기', '상담완료', '보류', '등록완료', '취소', '기타'] as string[]).map(s => {
+                  {(['부재중/추후통화', '상담대기', '상담완료', '보류', '등록완료', '취소', '지인등록', '지인취소', '지인대기', '기타'] as string[]).map(s => {
                     const isConsultDone = s === '상담완료';
                     const isCancel = s === '취소';
                     const isActive = isConsultDone ? editStatus.startsWith('상담완료') : editStatus === s;
@@ -3762,12 +3765,14 @@ type StatsSubTab = 'overview' | 'status' | 'source' | 'time' | 'mamcafe';
 const STATS_STATUS_COLORS: Record<string, string> = {
   '부재중/추후통화': '#94a3b8', '상담대기': '#3b82f6',
   '상담완료-높음': '#0ea5e9', '상담완료-중간': '#eab308', '상담완료-낮음': '#f43f5e',
-  '보류': '#8b5cf6', '등록완료': '#22c55e', '취소': '#dc2626', '기타': '#059669',
+  '보류': '#8b5cf6', '등록완료': '#22c55e', '취소': '#dc2626',
+  '지인등록': '#EA580C', '지인취소': '#B91C1C', '지인대기': '#D97706',
+  '기타': '#059669',
 };
 const STATS_STATUS_LIST: ConsultationStatus[] = [
   '부재중/추후통화', '상담대기',
   '상담완료-높음', '상담완료-중간', '상담완료-낮음',
-  '보류', '등록완료', '취소', '기타',
+  '보류', '등록완료', '취소', '지인등록', '지인취소', '지인대기', '기타',
 ];
 const WEEKDAY_KO = ['일', '월', '화', '수', '목', '금', '토'];
 const SOURCE_COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#64748b'];

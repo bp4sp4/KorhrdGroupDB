@@ -2771,7 +2771,7 @@
 }
 
 .fv_table {
-  width: 100%;
+  width: 700px;
   border-collapse: collapse;
   background: #ffffff;
   font-size: 13px;
@@ -2784,6 +2784,7 @@
   font-weight: 700;
   padding: 10px 12px;
   text-align: center;
+  vertical-align: middle;
   border: 1px solid #9ca3af;
 }
 
@@ -2825,12 +2826,14 @@
   font-size: 13px;
   background: #ffffff;
   text-align: center;
+  vertical-align: middle;
 }
 
 .fv_credit_td {
   padding: 9px 12px;
   border: 1px solid #9ca3af;
   text-align: center;
+  vertical-align: middle;
   color: #111827;
   font-size: 13px;
   min-width: 56px;
@@ -2870,12 +2873,14 @@
   color: #374151;
   background: #eef2ff;
   text-align: center;
+  vertical-align: middle;
 }
 
 .fv_summary_credit {
   padding: 9px 12px;
   border: 1px solid #9ca3af;
   text-align: center;
+  vertical-align: middle;
   font-size: 13px;
   color: #1e40af;
   font-weight: 700;
@@ -2894,12 +2899,14 @@
   color: #ffffff;
   background: #1e3a5f;
   text-align: center;
+  vertical-align: middle;
 }
 
 .fv_total_credit {
   padding: 12px 14px;
   border: 1px solid #374151;
   text-align: center;
+  vertical-align: middle;
   font-size: 15px;
   color: #ffffff;
   background: #1e3a5f;
@@ -3077,3 +3084,5 @@
   gap: 8px;
   overflow-y: auto;
 }
+
+/* ── 인쇄용 (PDF 다운로드 = 브라우저 인쇄) ─────────────────────── */
