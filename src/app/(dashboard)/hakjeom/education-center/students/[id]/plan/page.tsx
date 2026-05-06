@@ -1427,200 +1427,35 @@ export default function PlanPage() {
 
   const handleDownloadPdf = async () => {
     if (!student) return;
+    const el = fvPrintRef.current;
+    if (!el) return;
     setPdfLoading(true);
     try {
-      const pdfMakeMod = await import('pdfmake/build/pdfmake');
-      const pdfMake = (pdfMakeMod as unknown as { default: typeof pdfMakeMod }).default ?? pdfMakeMod;
+      const { domToCanvas } = await import('modern-screenshot');
+      const { jsPDF } = await import('jspdf');
 
-      // 한글 폰트 로드 → base64
-      const fontRes = await fetch('/fonts/Pretendard-Regular.ttf');
-      const fontBuffer = await fontRes.arrayBuffer();
-      let binary = '';
-      const bytes = new Uint8Array(fontBuffer);
-      const chunkSize = 0x8000;
-      for (let i = 0; i < bytes.length; i += chunkSize) {
-        binary += String.fromCharCode.apply(null, Array.from(bytes.subarray(i, i + chunkSize)));
-      }
-      const fontBase64 = btoa(binary);
-
-      pdfMake.addVirtualFileSystem({
-        'Pretendard-Regular.ttf': fontBase64,
-      });
-      pdfMake.addFonts({
-        Pretendard: {
-          normal: 'Pretendard-Regular.ttf',
-          bold: 'Pretendard-Regular.ttf',
-          italics: 'Pretendard-Regular.ttf',
-          bolditalics: 'Pretendard-Regular.ttf',
-        },
+      const rect = el.getBoundingClientRect();
+      const canvas = await domToCanvas(el, {
+        scale: 1,
+        backgroundColor: '#ffffff',
+        width: Math.ceil(rect.width),
+        height: Math.ceil(rect.height),
       });
 
-      // ── 그룹 빌드 ────────────────────────────────────────────
-      const groupsForPdf: Semester[][] = [];
-      const groupKeyMap = new Map<string, Semester[]>();
-      semesters.forEach((sem) => {
-        const key = `${sem.year}-${sem.term}`;
-        if (!groupKeyMap.has(key)) groupKeyMap.set(key, []);
-        groupKeyMap.get(key)!.push(sem);
-      });
-      groupKeyMap.forEach((arr) => {
-        arr.sort((a, b) => a.class_number - b.class_number);
-        groupsForPdf.push(arr);
-      });
+      const imgData = canvas.toDataURL('image/jpeg', 0.85);
+      const margin = 12;
+      // 캔버스 픽셀을 mm로 환산 (96 DPI 기준)
+      const px2mm = 0.2645833;
+      const imgW = canvas.width * px2mm;
+      const imgH = canvas.height * px2mm;
+      const pageW = imgW + margin * 2;
+      const pageH = imgH + margin * 2;
 
-      const allSemsSorted = groupsForPdf.flat();
-      const firstDateEntry = allSemsSorted.map((s) => semesterDates[s.id]).find((d) => d?.start || d?.end);
-      const fmtDate = (d: string) => {
-        const dt = new Date(d);
-        return `${dt.getFullYear()}.${String(dt.getMonth() + 1).padStart(2, '0')}.${String(dt.getDate()).padStart(2, '0')}`;
-      };
-
-      // ── 테이블 body 구성 ────────────────────────────────────
-      const headerFill = '#E5E7EB';
-      const summaryFill = '#E5E7EB';
-      const totalFill = '#1E3A5F';
-      const semFill = '#FFFFFF';
-
-      type CellDef = {
-        text?: string | Array<{ text: string; fontSize?: number; bold?: boolean; color?: string }>;
-        rowSpan?: number;
-        colSpan?: number;
-        alignment?: 'left' | 'center' | 'right';
-        fillColor?: string;
-        color?: string;
-        bold?: boolean;
-        fontSize?: number;
-        margin?: [number, number, number, number];
-      };
-
-      const tableBody: CellDef[][] = [];
-
-      // 헤더 행 1
-      tableBody.push([
-        { text: '온라인수업 일정', rowSpan: 2, alignment: 'center', fillColor: headerFill, bold: true, margin: [0, 8, 0, 0] as [number, number, number, number] },
-        { text: '과목', rowSpan: 2, alignment: 'center', fillColor: headerFill, bold: true, margin: [0, 8, 0, 0] as [number, number, number, number] },
-        { text: '학점', colSpan: 3, alignment: 'center', fillColor: headerFill, bold: true },
-        {},
-        {},
-      ]);
-      // 헤더 행 2
-      tableBody.push([
-        {},
-        {},
-        { text: '전공', alignment: 'center', fillColor: headerFill, bold: true },
-        { text: '교양', alignment: 'center', fillColor: headerFill, bold: true },
-        { text: '일반', alignment: 'center', fillColor: headerFill, bold: true },
-      ]);
-
-      groupsForPdf.forEach((group, groupIdx) => {
-        const rep = group[0];
-        const subjectIdsAll: number[] = group.flatMap((s) => semesterSubjects[s.id] ?? []);
-        const subjectsList = subjectIdsAll
-          .map((sid) => subjects.find((sub) => sub.id === sid))
-          .filter(Boolean) as Subject[];
-        const subjCount = Math.max(subjectsList.length, 1);
-        const totalRows = subjCount + 1;
-
-        // 학기 라벨 (날짜 포함)
-        const semCellContent: Array<{ text: string; fontSize?: number; bold?: boolean; color?: string }> = [
-          { text: `${rep.year}년도 ${rep.term}학기\n`, bold: true, fontSize: 11, color: '#1E3A5F' },
-        ];
-        if (groupIdx === 0 && firstDateEntry?.start) {
-          semCellContent.push({ text: `\n시작 ${fmtDate(firstDateEntry.start)}`, fontSize: 9, color: '#1F2937' });
-        }
-        if (groupIdx === groupsForPdf.length - 1 && firstDateEntry?.end) {
-          semCellContent.push({ text: `\n종료 ${fmtDate(firstDateEntry.end)}`, fontSize: 9, color: '#1F2937' });
-        }
-
-        // subject rows
-        if (subjectsList.length === 0) {
-          tableBody.push([
-            { text: semCellContent, rowSpan: totalRows, alignment: 'center', fillColor: semFill, margin: [4, Math.max(4, (totalRows * 22 - 50) / 2), 4, 4] },
-            { text: '등록된 과목이 없습니다', colSpan: 4, alignment: 'center', color: '#9CA3AF' },
-            {},
-            {},
-            {},
-          ]);
-        } else {
-          subjectsList.forEach((subject, idx) => {
-            const row: CellDef[] = [];
-            if (idx === 0) {
-              row.push({ text: semCellContent, rowSpan: totalRows, alignment: 'center', fillColor: semFill, margin: [4, Math.max(4, (totalRows * 22 - 50) / 2), 4, 4] });
-            } else {
-              row.push({});
-            }
-            row.push({ text: subject.name, alignment: 'center' });
-            ['전공', '교양', '일반'].forEach((col) => {
-              const credits =
-                col === '전공' && subject.category === '전공' ? subject.credits :
-                col === '교양' && subject.category === '교양' ? subject.credits :
-                col === '일반' && subject.category === '일반' ? subject.credits : 0;
-              row.push({ text: String(credits), alignment: 'center' });
-            });
-            tableBody.push(row);
-          });
-        }
-
-        // summary row
-        const sumRow: CellDef[] = [
-          {}, // 학기 셀이 rowSpan으로 점유
-          { text: '이수학점', alignment: 'center', fillColor: summaryFill, bold: true, color: '#374151' },
-        ];
-        ['전공', '교양', '일반'].forEach((col) => {
-          const total = group.reduce((sum, sem) => sum + getSemCreditByCol(sem.id, col), 0);
-          sumRow.push({ text: String(total), alignment: 'center', fillColor: summaryFill, bold: true, color: '#1E40AF' });
-        });
-        tableBody.push(sumRow);
-      });
-
-      // 총 학점합계
-      tableBody.push([
-        { text: '총 학점합계', colSpan: 2, alignment: 'center', fillColor: totalFill, color: '#FFFFFF', bold: true },
-        {},
-        ...['전공', '교양', '일반'].map((col) => ({
-          text: String(getTotalCreditByCol(col)),
-          alignment: 'center' as const,
-          fillColor: totalFill,
-          color: '#FFFFFF',
-          bold: true,
-          fontSize: 12,
-        })),
-      ]);
-
-      const docDefinition = {
-        pageSize: { width: 700, height: 'auto' as const },
-        pageMargins: [15, 15, 15, 15],
-        defaultStyle: { font: 'Pretendard', fontSize: 9 },
-        content: [
-          {
-            text: `성명: ${student.name}    과정: ${student.edu_courses?.name ?? '-'}    담당자: ${student.manager_name ?? '-'}`,
-            fontSize: 11,
-            margin: [0, 0, 0, 8] as [number, number, number, number],
-            color: '#374151',
-          },
-          {
-            table: {
-              headerRows: 2,
-              widths: [80, '*', 50, 50, 50],
-              body: tableBody,
-            },
-            layout: {
-              hLineWidth: () => 0.5,
-              vLineWidth: () => 0.5,
-              hLineColor: () => '#9CA3AF',
-              vLineColor: () => '#9CA3AF',
-              paddingTop: () => 6,
-              paddingBottom: () => 6,
-              paddingLeft: () => 4,
-              paddingRight: () => 4,
-            },
-          },
-        ],
-      };
+      const pdf = new jsPDF({ orientation: pageW > pageH ? 'landscape' : 'portrait', unit: 'mm', format: [pageW, pageH] });
+      pdf.addImage(imgData, 'JPEG', margin, margin, imgW, imgH);
 
       const today = new Date().toISOString().slice(0, 10);
-      pdfMake.createPdf(docDefinition as Parameters<typeof pdfMake.createPdf>[0])
-        .download(`학습플랜_${student.name}_${today}.pdf`);
+      pdf.save(`학습플랜_${student.name}_${today}.pdf`);
     } finally {
       setPdfLoading(false);
     }
@@ -1647,7 +1482,7 @@ export default function PlanPage() {
         </div>
 
         {/* 인쇄 영역 */}
-        <div ref={fvPrintRef}>
+        <div ref={fvPrintRef} style={{ width: '700px' }}>
 
         {/* 학생 정보 */}
         <div className={styles.fv_info_bar}>
@@ -1698,10 +1533,12 @@ export default function PlanPage() {
                   const dt = new Date(d);
                   return `${dt.getFullYear()}.${String(dt.getMonth() + 1).padStart(2, '0')}.${String(dt.getDate()).padStart(2, '0')}`;
                 };
-                const allSemsSorted = groups.flat();
-                const firstDateEntry = allSemsSorted.map(s => semesterDates[s.id]).find(d => d?.start || d?.end);
-                const semStartDate = groupIdx === 0 ? (firstDateEntry?.start ?? null) : null;
-                const semEndDate = groupIdx === groups.length - 1 ? (firstDateEntry?.end ?? null) : null;
+                const groupDate = group.map(s => semesterDates[s.id]).find(d => d?.start || d?.end);
+                const semStartDate = groupDate?.start ?? null;
+                const semEndDate = groupDate?.end ?? null;
+                const groupCenter = group.find(s => s.center)?.center
+                  || (student?.education_center_name ?? '').split(',').map(s => s.trim()).filter(Boolean)[0]
+                  || null;
 
                 const leftCell = (
                   <td
@@ -1710,8 +1547,9 @@ export default function PlanPage() {
                     style={{ background: color.bg, border: `1px solid ${color.border}`, verticalAlign: 'middle', textAlign: 'center' }}
                   >
                     <div className={styles.fv_sem_label} style={{ color: color.label }}>{rep.year}년도 {rep.term}학기</div>
-                    {semStartDate && <div className={styles.fv_sem_date}>시작 {fmtDate(semStartDate)}</div>}
-                    {semEndDate && <div className={styles.fv_sem_date}>종료 {fmtDate(semEndDate)}</div>}
+                    {semStartDate && <div className={styles.fv_sem_date}>{fmtDate(semStartDate)}</div>}
+                    {semEndDate && <div className={styles.fv_sem_date}>{fmtDate(semEndDate)}</div>}
+                    {groupCenter && <div className={styles.fv_sem_date}>{groupCenter}</div>}
                   </td>
                 );
 
