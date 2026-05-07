@@ -11,11 +11,13 @@ interface DateInputProps {
   onChange?: (value: string) => void
   placeholder?: string
   className?: string
+  triggerClassName?: string    // trigger 버튼에 추가할 className (외관 커스터마이징)
   disabled?: boolean
   align?: 'left' | 'right'      // 팝오버 좌우 정렬 (기본 left)
   direction?: 'down' | 'up'    // 팝오버 열리는 방향 (기본 down)
   variant?: 'input' | 'button' // 트리거 스타일 (기본 input)
   label?: string               // variant="button" 일 때 버튼 텍스트 (기본 "연락예정")
+  showIcon?: boolean           // 트리거에 캘린더 아이콘 표시 여부 (기본 true)
 }
 
 function parseDate(str: string): Date | undefined {
@@ -36,11 +38,13 @@ export function DateInput({
   onChange,
   placeholder = '날짜 선택',
   className,
+  triggerClassName,
   disabled,
   align = 'left',
   direction,          // 미지정 시 자동 감지
   variant = 'input',
   label = '연락예정',
+  showIcon = true,
 }: DateInputProps) {
   const [open, setOpen] = useState(false)
   const [popoverStyle, setPopoverStyle] = useState<React.CSSProperties>({})
@@ -126,12 +130,13 @@ export function DateInput({
         // 인풋 스타일 (기본)
         <button
           type="button"
-          className={`${styles.trigger} ${!display ? styles.trigger_placeholder : ''} ${open ? styles.trigger_open : ''}`}
+          className={`${triggerClassName ?? styles.trigger} ${!display ? styles.trigger_placeholder : ''} ${open ? styles.trigger_open : ''}`}
           onClick={handleToggle}
           disabled={disabled}
+          style={triggerClassName ? { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, cursor: disabled ? 'not-allowed' : 'pointer', textAlign: 'left' } : undefined}
         >
-          <CalendarDays size={13} className={styles.icon} />
-          <span>{display || placeholder}</span>
+          <span style={triggerClassName ? { color: display ? '#191f28' : '#9ca3af', flex: 1 } : undefined}>{display || placeholder}</span>
+          {showIcon && <CalendarDays size={triggerClassName ? 16 : 13} className={styles.icon} style={triggerClassName ? { color: '#9ca3af', flexShrink: 0 } : undefined} />}
         </button>
       )}
 

@@ -3755,11 +3755,12 @@ interface StatItem {
   click_source: string | null;
   hope_course: string | null;
   counsel_check: string | null;
+  manager: string | null;
   created_at: string;
 }
 
 type StatsSource = 'hakjeom';
-type StatsSubTab = 'overview' | 'status' | 'source' | 'time' | 'mamcafe';
+type StatsSubTab = 'overview' | 'funnel' | 'manager' | 'status' | 'source' | 'time' | 'mamcafe';
 
 // 통계 상수
 const STATS_STATUS_COLORS: Record<string, string> = {
@@ -3783,6 +3784,8 @@ const SOURCE_LABELS: { id: StatsSource; label: string }[] = [
 
 const STATS_SUB_TABS: { id: StatsSubTab; label: string }[] = [
   { id: 'overview', label: '개요' },
+  { id: 'funnel', label: '전환 분석' },
+  { id: 'manager', label: '담당자별' },
   { id: 'status', label: '상태 분석' },
   { id: 'source', label: '유입 경로' },
   { id: 'time', label: '시간 패턴' },
@@ -3975,6 +3978,59 @@ function StatsTab() {
   }));
   const maxWeekCount = weekData.length > 0 ? Math.max(...weekData.map(d => d.count)) : 0;
 
+  // ── 전환 깔때기 (문의 → 상담완료 → 등록완료)
+  const consultedSet = new Set<ConsultationStatus>([
+    '상담완료-높음', '상담완료-중간', '상담완료-낮음',
+    '보류', '등록완료', '취소', '지인등록', '지인취소', '지인대기',
+  ]);
+  const funnelStages = [
+    { stage: '문의 접수', count: total, color: '#3b82f6' },
+    { stage: '상담 완료', count: data.filter(c => consultedSet.has(c.status)).length, color: '#0ea5e9' },
+    { stage: '등록 완료', count: registered, color: '#22c55e' },
+  ];
+  const consultRate = total > 0 ? Math.round((funnelStages[1].count / total) * 100) : 0;
+  const finalRegRate = funnelStages[1].count > 0 ? Math.round((registered / funnelStages[1].count) * 100) : 0;
+
+  // ── 담당자별 성과
+  const managerStats: { name: string; total: number; registered: number; rate: number }[] = (() => {
+    const acc: Record<string, { total: number; registered: number }> = {};
+    data.forEach(c => {
+      const m = (c.manager ?? '').trim() || '미배정';
+      if (!acc[m]) acc[m] = { total: 0, registered: 0 };
+      acc[m].total += 1;
+      if (c.status === '등록완료') acc[m].registered += 1;
+    });
+    return Object.entries(acc)
+      .map(([name, v]) => ({
+        name,
+        total: v.total,
+        registered: v.registered,
+        rate: v.total > 0 ? Math.round((v.registered / v.total) * 100) : 0,
+      }))
+      .sort((a, b) => b.total - a.total);
+  })();
+  const topManager = managerStats.filter(m => m.name !== '미배정' && m.total >= 5)
+    .sort((a, b) => b.rate - a.rate)[0];
+
+  // ── 유입경로별 등록률
+  const channelStats: { name: string; total: number; registered: number; rate: number }[] = (() => {
+    const acc: Record<string, { total: number; registered: number }> = {};
+    data.forEach(c => {
+      const m = getMajorSrc(c.click_source);
+      if (!acc[m]) acc[m] = { total: 0, registered: 0 };
+      acc[m].total += 1;
+      if (c.status === '등록완료') acc[m].registered += 1;
+    });
+    return Object.entries(acc)
+      .map(([name, v]) => ({
+        name,
+        total: v.total,
+        registered: v.registered,
+        rate: v.total > 0 ? Math.round((v.registered / v.total) * 100) : 0,
+      }))
+      .sort((a, b) => b.total - a.total);
+  })();
+
   return (
     <div className={styles.statsContainer}>
 
@@ -4086,6 +4142,155 @@ function StatsTab() {
                     <Area type="monotone" dataKey="count" stroke="#3B82F6" strokeWidth={2} fill="url(#statsGrad30)" dot={false} activeDot={{ r: 4, fill: '#3B82F6' }} name="신규" />
                   </AreaChart>
                 </ResponsiveContainer>
+              </StatsPanel>
+            </div>
+          )}
+
+          {/* ════ 전환 분석 ════ */}
+          {subTab === 'funnel' && (
+            <div>
+              {/* 전환 KPI */}
+              <div className={styles.statsGrid4}>
+                <StatsCard label="문의 접수" value={total.toLocaleString()} sub="누적" color="#3b82f6" />
+                <StatsCard label="문의 → 상담" value={`${consultRate}%`} sub={`${funnelStages[1].count}건 상담완료`} color="#0ea5e9" />
+                <StatsCard label="상담 → 등록" value={`${finalRegRate}%`} sub={`${registered}건 등록`} color="#22c55e" />
+                <StatsCard label="전체 등록률" value={`${regRate}%`} sub={`${total}건 중 ${registered}건`} color="#16a34a" />
+              </div>
+
+              {/* 깔때기 차트 (가로 막대) */}
+              <StatsPanel title="전환 깔때기" sub="문의 → 상담 → 등록 단계별 전환">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14, padding: '8px 4px' }}>
+                  {funnelStages.map((s, i) => {
+                    const max = funnelStages[0].count || 1;
+                    const widthPct = Math.max((s.count / max) * 100, 6);
+                    const prevCount = i > 0 ? funnelStages[i - 1].count : null;
+                    const stageRate = prevCount && prevCount > 0 ? Math.round((s.count / prevCount) * 100) : null;
+                    return (
+                      <div key={s.stage}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6, fontSize: 13 }}>
+                          <span style={{ fontWeight: 600, color: '#191f28' }}>{s.stage}</span>
+                          <span style={{ color: '#4e5968', display: 'flex', gap: 12 }}>
+                            <strong style={{ color: '#191f28' }}>{s.count.toLocaleString()}건</strong>
+                            {stageRate !== null && (
+                              <span style={{ color: stageRate >= 50 ? '#16a34a' : stageRate >= 25 ? '#ca8a04' : '#dc2626' }}>
+                                전 단계 대비 {stageRate}%
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                        <div style={{ height: 36, background: '#f3f4f6', borderRadius: 8, overflow: 'hidden', position: 'relative' }}>
+                          <div
+                            style={{
+                              width: `${widthPct}%`,
+                              height: '100%',
+                              background: `linear-gradient(90deg, ${s.color}, ${s.color}dd)`,
+                              borderRadius: 8,
+                              transition: 'width 0.6s ease',
+                            }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </StatsPanel>
+
+              {/* 유입경로별 등록률 차트 */}
+              {channelStats.length > 0 && (
+                <StatsPanel title="유입 경로별 등록률" sub="어느 채널이 등록 전환이 가장 좋은지">
+                  <ResponsiveContainer width="100%" height={Math.max(channelStats.length * 38 + 40, 200)}>
+                    <BarChart data={channelStats} layout="vertical" margin={{ top: 8, right: 30, left: 0, bottom: 8 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
+                      <XAxis type="number" stroke="#94a3b8" fontSize={11} domain={[0, 100]} unit="%" />
+                      <YAxis type="category" dataKey="name" stroke="#64748b" fontSize={12} width={90} />
+                      <Tooltip content={<StatsTip />} />
+                      <Bar dataKey="rate" name="등록률" radius={[0, 6, 6, 0]} fill="#22c55e">
+                        {channelStats.map((c, i) => (
+                          <Cell key={i} fill={c.rate >= 30 ? '#16a34a' : c.rate >= 15 ? '#22c55e' : c.rate >= 5 ? '#84cc16' : '#cbd5e1'} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12, fontSize: 12 }}>
+                    {channelStats.map(c => (
+                      <div key={c.name} style={{ padding: '6px 10px', background: '#f8fafc', borderRadius: 8, color: '#475569' }}>
+                        <strong style={{ color: '#191f28' }}>{c.name}</strong>: {c.registered}/{c.total}건
+                      </div>
+                    ))}
+                  </div>
+                </StatsPanel>
+              )}
+            </div>
+          )}
+
+          {/* ════ 담당자별 ════ */}
+          {subTab === 'manager' && (
+            <div>
+              <div className={styles.statsGrid4}>
+                <StatsCard label="총 담당자" value={managerStats.filter(m => m.name !== '미배정').length} sub="배정된 담당자 수" color="#3b82f6" />
+                <StatsCard
+                  label="평균 등록률"
+                  value={managerStats.length > 0
+                    ? `${Math.round(managerStats.filter(m => m.name !== '미배정').reduce((s, m) => s + m.rate, 0) / Math.max(managerStats.filter(m => m.name !== '미배정').length, 1))}%`
+                    : '0%'}
+                  sub="배정 담당자 평균"
+                  color="#22c55e"
+                />
+                <StatsCard
+                  label="최고 성과"
+                  value={topManager ? `${topManager.name}` : '-'}
+                  sub={topManager ? `등록률 ${topManager.rate}%` : '데이터 부족'}
+                  color="#f59e0b"
+                />
+                <StatsCard
+                  label="미배정"
+                  value={managerStats.find(m => m.name === '미배정')?.total ?? 0}
+                  sub="담당자 미지정 건수"
+                  color="#94a3b8"
+                />
+              </div>
+
+              <StatsPanel title="담당자별 처리 건수 및 등록률" sub="배정 건수와 등록률을 함께 비교">
+                {managerStats.length === 0 ? (
+                  <div style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>데이터 없음</div>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                      <thead>
+                        <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                          <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 600, color: '#475569' }}>담당자</th>
+                          <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 600, color: '#475569' }}>배정</th>
+                          <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 600, color: '#475569' }}>등록</th>
+                          <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 600, color: '#475569', minWidth: 200 }}>등록률</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {managerStats.map(m => (
+                          <tr key={m.name} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                            <td style={{ padding: '10px 12px', fontWeight: 600, color: m.name === '미배정' ? '#94a3b8' : '#191f28' }}>{m.name}</td>
+                            <td style={{ padding: '10px 12px', textAlign: 'center', color: '#475569' }}>{m.total.toLocaleString()}</td>
+                            <td style={{ padding: '10px 12px', textAlign: 'center', color: '#16a34a', fontWeight: 600 }}>{m.registered.toLocaleString()}</td>
+                            <td style={{ padding: '10px 12px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                <div style={{ flex: 1, height: 8, background: '#f1f5f9', borderRadius: 4, overflow: 'hidden' }}>
+                                  <div
+                                    style={{
+                                      width: `${Math.min(m.rate, 100)}%`,
+                                      height: '100%',
+                                      background: m.rate >= 30 ? '#16a34a' : m.rate >= 15 ? '#22c55e' : m.rate >= 5 ? '#84cc16' : '#cbd5e1',
+                                      transition: 'width 0.4s ease',
+                                    }}
+                                  />
+                                </div>
+                                <span style={{ minWidth: 40, textAlign: 'right', fontWeight: 600, color: '#191f28' }}>{m.rate}%</span>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </StatsPanel>
             </div>
           )}

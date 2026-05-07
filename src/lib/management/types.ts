@@ -135,6 +135,8 @@ export interface DashboardData {
   profit: number
   profit_rate: number
   prev_month: { revenue: number; expense: number; profit: number }
+  prev_year_month: { revenue: number; expense: number; profit: number }
+  ytd: { revenue: number; expense: number; profit: number }
   revenue_by_source: { source: string; amount: number }[]
   expense_by_category: { category: string; amount: number }[]
   revenue_by_dept: { dept: string; amount: number }[]

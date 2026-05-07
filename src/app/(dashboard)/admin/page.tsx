@@ -906,9 +906,11 @@ function ApprovalTemplatesTab() {
                   <td>
                     <div className={styles.stepsSummary}>
                       {item.steps.map((s, i) => {
+                        const userIdStr = String(s.user_id ?? '').trim()
+                        const matchedUser = userIdStr ? users.find((u) => String(u.id).trim() === userIdStr) : undefined
                         const resolvedName = s.type === 'APPLICANT'
                           ? '신청자'
-                          : (users.find((u) => u.id === s.user_id)?.display_name ?? '-')
+                          : (matchedUser?.display_name || s.label || '-')
                         return (
                           <span key={s.step}>
                             <span className={styles.stepChip}>{resolvedName}</span>

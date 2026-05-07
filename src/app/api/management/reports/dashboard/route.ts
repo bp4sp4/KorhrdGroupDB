@@ -27,6 +27,19 @@ export async function GET(request: NextRequest) {
   const prevKstStart = `${prevYear}-${pad(prevMonth)}-01T00:00:00+09:00`
   const prevKstEnd = `${prevYear}-${pad(prevMonth)}-${pad(prevLastDay)}T23:59:59+09:00`
 
+  // 전년 동월 (YoY)
+  const yoyYear = year - 1
+  const { start: yoyStart, end: yoyEnd } = getMonthRange(yoyYear, month)
+  const yoyLastDay = new Date(yoyYear, month, 0).getDate()
+  const yoyKstStart = `${yoyYear}-${pad(month)}-01T00:00:00+09:00`
+  const yoyKstEnd = `${yoyYear}-${pad(month)}-${pad(yoyLastDay)}T23:59:59+09:00`
+
+  // 연 누적 (YTD): 1월 1일 ~ 선택한 월 말
+  const ytdKstStart = `${year}-01-01T00:00:00+09:00`
+  const ytdKstEnd = kstEnd
+  const ytdStartDate = `${year}-01-01`
+  const ytdEndDate = end
+
   const TEST_USER_ID = '94832325-c5ec-4b21-bc74-00ae0763cbda'
 
   // ── 병렬 쿼리 (당월) ──
@@ -169,6 +182,56 @@ export async function GET(request: NextRequest) {
     sumData(prevRev, d => d.reduce((s, r: { amount: number }) => s + (r.amount || 0), 0))
   const prevExpTotal = sumData(prevExp, d => d.reduce((s, r: { amount: number }) => s + (r.amount || 0), 0))
 
+  // ── 전년 동월 (YoY) 집계 ──
+  const [yoyNms, yoyCert, yoyAbroad, yoyAllcare, yoyRev, yoyExp] = await Promise.allSettled([
+    nmsAdmin.from('customers').select('payment_amount')
+      .eq('status', '등록완료').gte('created_at', yoyKstStart).lte('created_at', yoyKstEnd),
+    supabaseAdmin.from('certificate_applications').select('amount')
+      .eq('payment_status', 'paid').eq('source', 'bridge')
+      .gte('created_at', yoyKstStart).lte('created_at', yoyKstEnd).is('deleted_at', null),
+    supabaseAdmin.from('payments').select('amount')
+      .eq('status', 'completed').gte('created_at', yoyKstStart).lte('created_at', yoyKstEnd),
+    allcareAdmin.from('payments').select('amount')
+      .eq('status', 'completed').gte('approved_at', yoyKstStart).lte('approved_at', yoyKstEnd)
+      .neq('user_id', TEST_USER_ID),
+    supabaseAdmin.from('revenues').select('amount')
+      .gte('revenue_date', yoyStart).lte('revenue_date', yoyEnd).eq('is_deleted', false),
+    supabaseAdmin.from('expenses').select('amount')
+      .gte('expense_date', yoyStart).lte('expense_date', yoyEnd).eq('is_deleted', false),
+  ])
+  const yoyRevTotal =
+    sumData(yoyNms, d => d.reduce((s, r: { payment_amount: number }) => s + (r.payment_amount || 0), 0)) +
+    sumData(yoyCert, d => d.reduce((s, r: { amount: number }) => s + (r.amount || 0), 0)) +
+    sumData(yoyAbroad, d => d.reduce((s, r: { amount: number }) => s + (r.amount || 0), 0)) +
+    sumData(yoyAllcare, d => d.reduce((s, r: { amount: number }) => s + (r.amount || 0), 0)) +
+    sumData(yoyRev, d => d.reduce((s, r: { amount: number }) => s + (r.amount || 0), 0))
+  const yoyExpTotal = sumData(yoyExp, d => d.reduce((s, r: { amount: number }) => s + (r.amount || 0), 0))
+
+  // ── 연 누적 (YTD) ──
+  const [ytdNms, ytdCert, ytdAbroad, ytdAllcare, ytdRev, ytdExp] = await Promise.allSettled([
+    nmsAdmin.from('customers').select('payment_amount')
+      .eq('status', '등록완료').gte('created_at', ytdKstStart).lte('created_at', ytdKstEnd),
+    supabaseAdmin.from('certificate_applications').select('amount')
+      .eq('payment_status', 'paid').eq('source', 'bridge')
+      .gte('created_at', ytdKstStart).lte('created_at', ytdKstEnd).is('deleted_at', null),
+    supabaseAdmin.from('payments').select('amount')
+      .eq('status', 'completed').gte('created_at', ytdKstStart).lte('created_at', ytdKstEnd),
+    allcareAdmin.from('payments').select('amount')
+      .eq('status', 'completed').gte('approved_at', ytdKstStart).lte('approved_at', ytdKstEnd)
+      .neq('user_id', TEST_USER_ID),
+    supabaseAdmin.from('revenues').select('amount')
+      .gte('revenue_date', ytdStartDate).lte('revenue_date', ytdEndDate).eq('is_deleted', false),
+    supabaseAdmin.from('expenses').select('amount')
+      .gte('expense_date', ytdStartDate).lte('expense_date', ytdEndDate).eq('is_deleted', false),
+  ])
+  const ytdRevTotal =
+    sumData(ytdNms, d => d.reduce((s, r: { payment_amount: number }) => s + (r.payment_amount || 0), 0)) +
+    sumData(ytdCert, d => d.reduce((s, r: { amount: number }) => s + (r.amount || 0), 0)) +
+    sumData(ytdAbroad, d => d.reduce((s, r: { amount: number }) => s + (r.amount || 0), 0)) +
+    sumData(ytdAllcare, d => d.reduce((s, r: { amount: number }) => s + (r.amount || 0), 0)) +
+    sumData(ytdRev, d => d.reduce((s, r: { amount: number }) => s + (r.amount || 0), 0))
+  const ytdExpTotal = sumData(ytdExp, d => d.reduce((s, r: { amount: number }) => s + (r.amount || 0), 0))
+
   // ── 6개월 추이 ──
   const now = new Date()
   const trendRanges: { year: number; month: number; label: string }[] = []
@@ -247,6 +310,8 @@ export async function GET(request: NextRequest) {
     profit,
     profit_rate,
     prev_month: { revenue: prevRevTotal, expense: prevExpTotal, profit: prevRevTotal - prevExpTotal },
+    prev_year_month: { revenue: yoyRevTotal, expense: yoyExpTotal, profit: yoyRevTotal - yoyExpTotal },
+    ytd: { revenue: ytdRevTotal, expense: ytdExpTotal, profit: ytdRevTotal - ytdExpTotal },
     revenue_by_source,
     expense_by_category,
     revenue_by_dept,

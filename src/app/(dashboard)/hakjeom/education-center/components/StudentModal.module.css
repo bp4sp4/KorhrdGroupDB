@@ -118,6 +118,7 @@
 }
 
 .form_input {
+  width: 100%;
   height: 44px;
   padding: 0 14px;
   border: 1.5px solid #E5E8EB;
@@ -126,7 +127,13 @@
   color: #191F28;
   background: #FFFFFF;
   outline: none;
+  cursor: pointer;
   transition: border-color 0.15s;
+}
+
+.form_input_wrap {
+  display: block;
+  width: 100%;
 }
 
 .form_input:focus {

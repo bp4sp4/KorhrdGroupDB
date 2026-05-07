@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import type { EduStudent, EduCourse, EduEducationCenter, EduStudentFormData, EducationLevel, DesiredDegree } from '../types';
 import styles from './StudentModal.module.css';
 import ModalSelect from './ModalSelect';
+import { DateInput } from '@/components/ui/Calendar/DateInput';
 import { createClient } from '@/lib/supabase/client';
 
 const EDUCATION_LEVELS: EducationLevel[] = [
@@ -492,9 +493,13 @@ export default function StudentModal({ student, courses, centers, managers = [],
               {/* 목표취득예정일 */}
               <div className={styles.form_field}>
                 <label className={styles.form_label}>목표취득예정일</label>
-                <input className={styles.form_input} type="date"
+                <DateInput
                   value={form.target_completion_date}
-                  onChange={(e) => set('target_completion_date', e.target.value)} />
+                  onChange={(v) => set('target_completion_date', v)}
+                  placeholder="연도. 월. 일."
+                  triggerClassName={styles.form_input}
+                  className={styles.form_input_wrap}
+                />
               </div>
 
               {/* 올케어 가입여부 */}

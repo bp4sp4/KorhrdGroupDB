@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useRef, Fragment } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { logEduActivity } from '@/lib/edu-logger';
+import { DateInput } from '@/components/ui/Calendar/DateInput';
 import type { EduStudent } from '../../../types';
 import styles from './page.module.css';
 
@@ -2405,14 +2406,24 @@ export default function PlanPage() {
                   )}
                   <div className={styles.date_row} onClick={(e) => e.stopPropagation()}>
                     <div className={styles.date_field}>
-                      <label className={styles.date_label} htmlFor={`start-${sem.id}`}>학기 시작일</label>
-                      <input id={`start-${sem.id}`} className={styles.date_input} type="date"
-                        value={dates.start} onChange={(e) => handleDateChange(sem.id, 'start', e.target.value)} />
+                      <label className={styles.date_label}>학기 시작일</label>
+                      <DateInput
+                        value={dates.start}
+                        onChange={(v) => handleDateChange(sem.id, 'start', v)}
+                        placeholder="연도. 월. 일."
+                        triggerClassName={styles.date_input}
+                        className={styles.date_input_wrap}
+                      />
                     </div>
                     <div className={styles.date_field}>
-                      <label className={styles.date_label} htmlFor={`end-${sem.id}`}>학기 종료일</label>
-                      <input id={`end-${sem.id}`} className={styles.date_input} type="date"
-                        value={dates.end} onChange={(e) => handleDateChange(sem.id, 'end', e.target.value)} />
+                      <label className={styles.date_label}>학기 종료일</label>
+                      <DateInput
+                        value={dates.end}
+                        onChange={(v) => handleDateChange(sem.id, 'end', v)}
+                        placeholder="연도. 월. 일."
+                        triggerClassName={styles.date_input}
+                        className={styles.date_input_wrap}
+                      />
                     </div>
                   </div>
                 </div>

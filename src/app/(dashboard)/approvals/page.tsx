@@ -439,6 +439,19 @@ export default function ApprovalsPage() {
     }).catch(() => {})
   }, [fetchHomeData])
 
+  // template 변경 시 결재선 자동 채움 (어떤 진입 경로든 커버)
+  useEffect(() => {
+    const tpl = formState.template
+    if (!tpl) return
+    if (formState.approver_ids.length > 0) return
+    const autoIds = (tpl.steps ?? [])
+      .filter((s) => s.type !== 'APPLICANT' && s.user_id)
+      .map((s) => String(s.user_id))
+    if (autoIds.length > 0) {
+      setFormState((prev) => ({ ...prev, approver_ids: autoIds }))
+    }
+  }, [formState.template, formState.approver_ids.length])
+
   // ---------------------------------------------------------------------------
   // 이벤트 핸들러
   // ---------------------------------------------------------------------------
@@ -542,12 +555,15 @@ export default function ApprovalsPage() {
     setTemplateModalOpen(false)
     setSelectedCategory(null)
     const isDynamic = modalSelectedTemplate.document_type.startsWith('custom_')
+    const defaultApproverIds = (modalSelectedTemplate.steps ?? [])
+      .filter((s) => s.type !== 'APPLICANT' && s.user_id)
+      .map((s) => String(s.user_id))
     setFormState({
       template: modalSelectedTemplate,
       title: isDynamic ? '' : modalSelectedTemplate.document_type,
       department_id: modalDepartmentId,
       content: {},
-      approver_ids: [],
+      approver_ids: defaultApproverIds,
       reference_ids: [],
     })
     setFormError('')
@@ -676,12 +692,15 @@ export default function ApprovalsPage() {
 
   const handleSelectTemplate = (tpl: ApprovalTemplate) => {
     const isDynamic = tpl.document_type.startsWith('custom_')
+    const defaultApproverIds = (tpl.steps ?? [])
+      .filter((s) => s.type !== 'APPLICANT' && s.user_id)
+      .map((s) => String(s.user_id))
     setFormState({
       template: tpl,
       title: isDynamic ? '' : tpl.document_type,
       department_id: '',
       content: {},
-      approver_ids: [],
+      approver_ids: defaultApproverIds,
       reference_ids: [],
     })
     setLinkedProposal(null)
