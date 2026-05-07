@@ -67,6 +67,51 @@ function CollapseSection({ title, children, defaultOpen = false }: { title: stri
   )
 }
 
+/* ── section 스타일 + 접이식 헤더 ── */
+function FoldableSection({
+  eyebrow, title, caption, headerExtra, defaultOpen = false, children,
+}: {
+  eyebrow?: string
+  title: string
+  caption?: React.ReactNode
+  headerExtra?: React.ReactNode
+  defaultOpen?: boolean
+  children: React.ReactNode
+}) {
+  const [open, setOpen] = useState(defaultOpen)
+  return (
+    <div className={styles.section}>
+      <div
+        className={styles.section_header}
+        style={{ cursor: 'pointer', userSelect: 'none' }}
+        onClick={() => setOpen(v => !v)}
+      >
+        <div>
+          {eyebrow && <span className={styles.section_eyebrow}>{eyebrow}</span>}
+          <h3 className={styles.section_title}>{title}</h3>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }} onClick={(e) => e.stopPropagation()}>
+          {caption && <span className={styles.section_caption}>{caption}</span>}
+          {headerExtra}
+          <button
+            type="button"
+            onClick={() => setOpen(v => !v)}
+            aria-label={open ? '접기' : '펼치기'}
+            style={{
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              width: 32, height: 32, border: '1px solid #e5e8eb', borderRadius: 8,
+              background: '#fff', cursor: 'pointer', color: '#4e5968',
+            }}
+          >
+            {open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          </button>
+        </div>
+      </div>
+      {open && <div>{children}</div>}
+    </div>
+  )
+}
+
 /* ── 메인 페이지 ── */
 export default function ReportsPage() {
   const months = getLastMonths(12)
@@ -76,6 +121,31 @@ export default function ReportsPage() {
   const [selectedMonth, setSelectedMonth] = useState(thisMonth.month)
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(false)
+
+  // 고정비 매칭 데이터
+  interface FixedCostItem {
+    date: string
+    time: string
+    amount: number
+    remarks: string
+    account: string
+    fixedCost: { description: string; amount: number; note: string; company: string }
+  }
+  interface FixedCostCategory { description: string; count: number; total: number }
+  interface FixedCostAccountSummary { account: string; count: number; total: number }
+  interface FixedCostResponse {
+    month: string
+    total: number
+    count: number
+    items: FixedCostItem[]
+    categories: FixedCostCategory[]
+    accountSummary: FixedCostAccountSummary[]
+    totalTransactions: number
+    errors: { account: string; error: string }[]
+  }
+  const [fixedCostsData, setFixedCostsData] = useState<FixedCostResponse | null>(null)
+  const [fixedCostsLoading, setFixedCostsLoading] = useState(false)
+  const [fixedCostsError, setFixedCostsError] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -99,6 +169,61 @@ export default function ReportsPage() {
       cancelled = true
     }
   }, [selectedYear, selectedMonth])
+
+  const loadFixedCosts = async () => {
+    setFixedCostsLoading(true)
+    setFixedCostsError(null)
+    try {
+      const params = new URLSearchParams({ year: String(selectedYear), month: String(selectedMonth) })
+      const res = await fetch(`/api/management/reports/fixed-costs?${params}`)
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || '고정비 조회 실패')
+      }
+      setFixedCostsData(await res.json())
+    } catch (e) {
+      setFixedCostsError(e instanceof Error ? e.message : '오류')
+    } finally {
+      setFixedCostsLoading(false)
+    }
+  }
+
+  // 월 변경 시 고정비 자동 로드
+  useEffect(() => {
+    let cancelled = false
+    setFixedCostsData(null)
+    setFixedCostsError(null)
+    setFixedCostsLoading(true)
+    const params = new URLSearchParams({ year: String(selectedYear), month: String(selectedMonth) })
+    fetch(`/api/management/reports/fixed-costs?${params}`)
+      .then(async (res) => {
+        if (cancelled) return
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}))
+          throw new Error(err.error || '고정비 조회 실패')
+        }
+        const json = await res.json()
+        if (!cancelled) setFixedCostsData(json)
+      })
+      .catch((e) => {
+        if (!cancelled) setFixedCostsError(e instanceof Error ? e.message : '오류')
+      })
+      .finally(() => {
+        if (!cancelled) setFixedCostsLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [selectedYear, selectedMonth])
+
+  // 고정비를 지출에 합산한 조정값
+  const fixedTotal = fixedCostsData?.total ?? 0
+  const adjExpense = (data?.total_expense ?? 0) + fixedTotal
+  const adjProfit = (data?.total_revenue ?? 0) - adjExpense
+  const adjProfitRate = data && data.total_revenue > 0
+    ? Math.round((adjProfit / data.total_revenue) * 1000) / 10
+    : 0
+  const adjExpDiff = data && data.prev_month.expense > 0
+    ? Math.round(((adjExpense - data.prev_month.expense) / data.prev_month.expense) * 1000) / 10
+    : null
 
   const revDiff = data && data.prev_month.revenue > 0
     ? Math.round(((data.total_revenue - data.prev_month.revenue) / data.prev_month.revenue) * 1000) / 10
@@ -144,11 +269,12 @@ export default function ReportsPage() {
       ['지출', '수동 등록', data.manual_expenses],
       ['지출', '전자결재 승인', data.approved_expenses],
       ['지출', '카드 지출', data.uploaded_revenue.card],
+      ['지출', '고정비 (신한 자동)', fixedTotal],
       ['', '', ''],
       ['합계', '총 매출', data.total_revenue],
-      ['합계', '총 지출', data.total_expense],
-      ['합계', '순이익', data.profit],
-      ['합계', '이익률', `${data.profit_rate}%`],
+      ['합계', '총 지출', adjExpense],
+      ['합계', '순이익', adjProfit],
+      ['합계', '이익률', `${adjProfitRate}%`],
     ]
     const ws = XLSX.utils.aoa_to_sheet(rows)
     const wb = XLSX.utils.book_new()
@@ -159,12 +285,12 @@ export default function ReportsPage() {
   const selectedLabel = getMonthLabel(selectedYear, selectedMonth)
   const headlineText = !data
     ? ''
-    : data.profit >= 0
-      ? `${selectedLabel} 기준 순이익은 ${formatAmount(data.profit)}입니다.`
-      : `${selectedLabel} 기준 손실은 ${formatAmount(Math.abs(data.profit))}입니다.`
+    : adjProfit >= 0
+      ? `${selectedLabel} 기준 순이익은 ${formatAmount(adjProfit)}입니다.`
+      : `${selectedLabel} 기준 손실은 ${formatAmount(Math.abs(adjProfit))}입니다.`
   const summaryText = !data
     ? ''
-    : `매출 ${formatAmount(data.total_revenue)} · 지출 ${formatAmount(data.total_expense)} · 이익률 ${data.profit_rate}%`
+    : `매출 ${formatAmount(data.total_revenue)} · 지출 ${formatAmount(adjExpense)} · 이익률 ${adjProfitRate}%`
 
   return (
     <div className={styles.page_wrap}>
@@ -235,21 +361,14 @@ export default function ReportsPage() {
         <>
           {/* ① KPI Cards */}
           <div className={styles.kpiGrid}>
-            <KpiCard label="순이익" value={data.profit} highlight={data.profit >= 0} color={data.profit >= 0 ? 'default' : 'red'} />
+            <KpiCard label="순이익" value={adjProfit} highlight={adjProfit >= 0} color={adjProfit >= 0 ? 'default' : 'red'} />
             <KpiCard label="총 매출" value={data.total_revenue} color="blue" diff={revDiff} />
-            <KpiCard label="총 지출" value={data.total_expense} color="red" diff={expDiff} />
-            <KpiCard label="이익률" value={data.profit_rate} format="percent" color={data.profit_rate >= 0 ? 'green' : 'red'} />
+            <KpiCard label={fixedTotal > 0 ? '총 지출 (고정비 포함)' : '총 지출'} value={adjExpense} color="red" diff={adjExpDiff ?? expDiff} />
+            <KpiCard label="이익률" value={adjProfitRate} format="percent" color={adjProfitRate >= 0 ? 'green' : 'red'} />
           </div>
 
           {/* ② 간이 손익계산서 */}
-          <div className={styles.section}>
-            <div className={styles.section_header}>
-              <div>
-                <span className={styles.section_eyebrow}>손익 요약</span>
-                <h3 className={styles.section_title}>간이 손익계산서</h3>
-              </div>
-              <span className={styles.section_caption}>{selectedLabel}</span>
-            </div>
+          <FoldableSection eyebrow="손익 요약" title="간이 손익계산서" caption={selectedLabel}>
             <table className={styles.pnl_table}>
               <tbody>
                 <tr className={styles.pnl_row_total}>
@@ -264,26 +383,142 @@ export default function ReportsPage() {
 
                 <tr className={styles.pnl_row_total}>
                   <td>[ 총 지출 ]</td>
-                  <td>{formatAmount(data.total_expense)}</td>
+                  <td>{formatAmount(adjExpense)}</td>
                 </tr>
                 {data.manual_expenses > 0 && <tr><td className={styles.pnl_indent}>└ 수동 등록 지출</td><td>{formatAmount(data.manual_expenses)}</td></tr>}
                 {data.approved_expenses > 0 && <tr><td className={styles.pnl_indent}>└ 전자결재 승인 지출</td><td>{formatAmount(data.approved_expenses)}</td></tr>}
                 {data.uploaded_revenue.card > 0 && <tr><td className={styles.pnl_indent}>└ 카드 지출</td><td>{formatAmount(data.uploaded_revenue.card)}</td></tr>}
+                {fixedTotal > 0 && <tr><td className={styles.pnl_indent}>└ 고정비 (신한 자동분류)</td><td>{formatAmount(fixedTotal)}</td></tr>}
 
-                <tr className={data.profit >= 0 ? styles.pnl_row_total_blue : styles.pnl_row_total_red}>
+                <tr className={adjProfit >= 0 ? styles.pnl_row_total_blue : styles.pnl_row_total_red}>
                   <td>[ 매출 총이익 ]</td>
-                  <td>{formatAmount(data.profit)}</td>
+                  <td>{formatAmount(adjProfit)}</td>
                 </tr>
-                <tr className={data.profit >= 0 ? styles.pnl_row_total_blue : styles.pnl_row_total_red}>
+                <tr className={adjProfit >= 0 ? styles.pnl_row_total_blue : styles.pnl_row_total_red}>
                   <td>[ 이익률 ]</td>
-                  <td>{data.profit_rate}%</td>
+                  <td>{adjProfitRate}%</td>
                 </tr>
               </tbody>
             </table>
-          </div>
+          </FoldableSection>
+
+          {/* ②-2 고정비 매칭 (신한 거래내역 기반) */}
+          <FoldableSection
+            eyebrow="📌 고정비 추적"
+            title="신한 거래내역 자동 분류"
+            caption={fixedCostsData ? `${fixedCostsData.count}건 · ${formatAmount(fixedCostsData.total)}` : (fixedCostsLoading ? '불러오는 중...' : null)}
+            headerExtra={
+              <button
+                onClick={loadFixedCosts}
+                disabled={fixedCostsLoading}
+                className={styles.btn_secondary}
+              >
+                {fixedCostsLoading ? '갱신 중...' : '↻ 새로고침'}
+              </button>
+            }
+          >
+            {fixedCostsError && (
+              <div style={{ margin: '14px 22px', padding: 12, background: '#fef2f2', color: '#b91c1c', borderRadius: 8, fontSize: 13 }}>
+                ⚠️ {fixedCostsError}
+              </div>
+            )}
+
+            {fixedCostsLoading && !fixedCostsData && (
+              <div style={{ padding: '32px 22px', textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>
+                신한 거래내역 불러오는 중...
+              </div>
+            )}
+
+            {fixedCostsData && (
+              <>
+                {/* 한 줄 요약 */}
+                <div style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  flexWrap: 'wrap', gap: 12,
+                  padding: '16px 22px',
+                  borderBottom: '1px solid rgba(229, 232, 235, 0.9)',
+                  fontSize: 13,
+                }}>
+                  <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', color: '#4e5968' }}>
+                    <span>매칭 건수 <strong style={{ color: '#191f28' }}>{fixedCostsData.count}건</strong></span>
+                    <span style={{ color: '#e5e8eb' }}>|</span>
+                    <span>분류 항목 <strong style={{ color: '#191f28' }}>{fixedCostsData.categories.length}개</strong></span>
+                    <span style={{ color: '#e5e8eb' }}>|</span>
+                    <span style={{ color: '#8b95a1', fontSize: 12 }}>전체 거래 {fixedCostsData.totalTransactions}건 중</span>
+                  </div>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: '#dc2626', letterSpacing: '-0.02em' }}>
+                    {formatAmount(fixedCostsData.total)}
+                  </div>
+                </div>
+
+                {fixedCostsData.errors.length > 0 && (
+                  <div style={{ margin: '14px 22px 0', padding: 10, background: '#fef3c7', borderRadius: 8, fontSize: 12, color: '#92400e' }}>
+                    ⚠️ {fixedCostsData.errors.length}개 계좌 조회 실패: {fixedCostsData.errors.map(e => e.account).join(', ')}
+                  </div>
+                )}
+
+                {/* 계좌별 요약 */}
+                {fixedCostsData.accountSummary.length > 0 && (
+                  <div style={{ padding: '20px 22px 16px' }}>
+                    <h4 style={{ fontSize: 13, fontWeight: 700, color: '#4e5968', marginBottom: 10, marginTop: 0 }}>계좌별</h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 10 }}>
+                      {fixedCostsData.accountSummary.map((a) => (
+                        <div key={a.account} style={{
+                          padding: '12px 14px',
+                          background: a.total > 0 ? '#ffffff' : '#f9fafb',
+                          border: '1px solid rgba(229, 232, 235, 0.9)',
+                          borderRadius: 8, fontSize: 12,
+                        }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
+                            <span style={{ color: '#6b7684', fontFamily: 'monospace', fontSize: 11 }}>{a.account}</span>
+                            <span style={{ color: '#8b95a1', fontSize: 11 }}>{a.count}건</span>
+                          </div>
+                          <div style={{ marginTop: 6, textAlign: 'right' }}>
+                            <strong style={{ color: a.total > 0 ? '#dc2626' : '#cbd5e1', fontSize: 14, fontWeight: 700 }}>
+                              {a.total > 0 ? formatAmount(a.total) : '없음'}
+                            </strong>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {fixedCostsData.categories.length > 0 && (
+                  <div style={{ borderTop: '1px solid rgba(229, 232, 235, 0.9)' }}>
+                    <h4 style={{ fontSize: 13, fontWeight: 700, color: '#4e5968', margin: 0, padding: '16px 22px 8px' }}>고정비 항목별</h4>
+                    <table className={styles.pnl_table}>
+                      <thead>
+                        <tr>
+                          <th style={{ textAlign: 'left', padding: '10px 22px', fontSize: 12, fontWeight: 600, color: '#8b95a1', background: '#fafbfc', borderBottom: '1px solid rgba(229, 232, 235, 0.9)' }}>분류</th>
+                          <th style={{ textAlign: 'center', padding: '10px 22px', fontSize: 12, fontWeight: 600, color: '#8b95a1', background: '#fafbfc', borderBottom: '1px solid rgba(229, 232, 235, 0.9)' }}>건수</th>
+                          <th style={{ textAlign: 'right', padding: '10px 22px', fontSize: 12, fontWeight: 600, color: '#8b95a1', background: '#fafbfc', borderBottom: '1px solid rgba(229, 232, 235, 0.9)' }}>총액</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {fixedCostsData.categories.map((c) => (
+                          <tr key={c.description}>
+                            <td>{c.description}</td>
+                            <td style={{ textAlign: 'center', color: '#6b7684' }}>{c.count}</td>
+                            <td style={{ textAlign: 'right', fontWeight: 600 }}>{formatAmount(c.total)}</td>
+                          </tr>
+                        ))}
+                        <tr className={styles.pnl_row_total}>
+                          <td>[ 합계 ]</td>
+                          <td style={{ textAlign: 'center' }}>{fixedCostsData.count}</td>
+                          <td style={{ textAlign: 'right' }}>{formatAmount(fixedCostsData.total)}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </>
+            )}
+          </FoldableSection>
 
           {/* ③ 추이 + 매출 구성 (2열) */}
-          <div className={styles.chartGrid2}>
+          <FoldableSection eyebrow="추세" title="매출 추이 · 구성">
+          <div className={styles.chartGrid2} style={{ padding: 22 }}>
             {trendData.length > 0 && (
               <div className={styles.miniSection}>
                 <div className={styles.miniHeader}>
@@ -334,9 +569,11 @@ export default function ReportsPage() {
               </div>
             )}
           </div>
+          </FoldableSection>
 
           {/* ⑤ 지출 구성 + 사업부별 (2열) */}
-          <div className={styles.chartGrid2}>
+          <FoldableSection eyebrow="지출 분석" title="지출 구성 · 사업부별">
+          <div className={styles.chartGrid2} style={{ padding: 22 }}>
             {expenseDonut.length > 0 && (
               <div className={styles.miniSection}>
                 <div className={styles.miniHeader}>
@@ -386,6 +623,7 @@ export default function ReportsPage() {
               </div>
             )}
           </div>
+          </FoldableSection>
 
           {/* ⑥ 매출/지출 상세 (접이식) */}
           <CollapseSection title="매출/지출 상세 내역">

@@ -1,0 +1,266 @@
+[
+  {
+    "day": 1,
+    "description": "020.주식회사 -  씨드큐브 임차료",
+    "amount": 7823500,
+    "note": "",
+    "company": "한평생그룹",
+    "autopay": true
+  },
+  {
+    "day": 5,
+    "description": "NHNKCP - VPN결제 (에듀바이저스)",
+    "amount": 9700,
+    "note": "",
+    "company": "한평생그룹",
+    "autopay": true
+  },
+  {
+    "day": 8,
+    "description": "우리금융캐피탈 - 차량 리스",
+    "amount": 956788,
+    "note": "",
+    "company": "한평생그룹",
+    "autopay": true
+  },
+  {
+    "day": 10,
+    "description": "웹케시경리나라",
+    "amount": 75900,
+    "note": "세금계산서 선발행(매월 말일) - 결제 익월 10일",
+    "company": "한평생그룹",
+    "autopay": true
+  },
+  {
+    "day": 10,
+    "description": "SK인텔릭스요금 - 정수기 강남",
+    "amount": 19900,
+    "note": "세금계산서 선발행(매월 1일) - 결제 10일",
+    "company": "한평생그룹",
+    "autopay": true
+  },
+  {
+    "day": 10,
+    "description": "SK인텔릭스요금 - 정수기 창동",
+    "amount": 21900,
+    "note": "세금계산서 선발행(매월 1일) - 결제 10일",
+    "company": "한평생그룹",
+    "autopay": true
+  },
+  {
+    "day": 10,
+    "description": "노무법인 서교",
+    "amount": 110000,
+    "note": "",
+    "company": "한평생그룹",
+    "autopay": true
+  },
+  {
+    "day": 10,
+    "description": "311250959674",
+    "amount": 333526,
+    "note": "이자비용 / 2억 대출 후 금액 인상될 예정 (약 100만원)",
+    "company": "한평생그룹",
+    "autopay": true
+  },
+  {
+    "day": 12,
+    "description": "Adobe",
+    "amount": 78100,
+    "note": "",
+    "company": "한평생그룹",
+    "autopay": true
+  },
+  {
+    "day": 15,
+    "description": "01093372922SKT - 민간 업무폰",
+    "amount": 29210,
+    "note": "한평생교육 / 세금계산서 선발행(매월 3일) - 결제 15일",
+    "company": "한평생그룹",
+    "autopay": true
+  },
+  {
+    "day": 15,
+    "description": "SK쉴더스강남 - 본사 캡스",
+    "amount": 55000,
+    "note": "",
+    "company": "한평생그룹",
+    "autopay": true
+  },
+  {
+    "day": 15,
+    "description": "SK쉴더스강남 - 강남지사 캡스",
+    "amount": 88000,
+    "note": "",
+    "company": "한평생그룹",
+    "autopay": true
+  },
+  {
+    "day": 16,
+    "description": "NHNKCP - VPN결제 (에듀바이저스)",
+    "amount": 9700,
+    "note": "",
+    "company": "한평생그룹",
+    "autopay": true
+  },
+  {
+    "day": 22,
+    "description": "SKB6525916203",
+    "amount": 44104,
+    "note": "",
+    "company": "한평생그룹",
+    "autopay": true
+  },
+  {
+    "day": 22,
+    "description": "LGU+기업전화",
+    "amount": 51360,
+    "note": "",
+    "company": "한평생그룹",
+    "autopay": true
+  },
+  {
+    "day": 26,
+    "description": "렌탈사무기(복사기)",
+    "amount": 286000,
+    "note": "",
+    "company": "한평생그룹",
+    "autopay": true
+  },
+  {
+    "day": 26,
+    "description": "KT통신요금 (강남지사)",
+    "amount": 42900,
+    "note": "",
+    "company": "한평생그룹",
+    "autopay": true
+  },
+  {
+    "day": 29,
+    "description": "임종신 세무사",
+    "amount": 220000,
+    "note": "",
+    "company": "한평생그룹",
+    "autopay": true
+  },
+  {
+    "day": 1,
+    "description": "성윤환(여산빌딩) 임차료",
+    "amount": 2310500,
+    "note": "",
+    "company": "한평생교육",
+    "autopay": true
+  },
+  {
+    "day": 10,
+    "description": "웹케시경리나라",
+    "amount": 75900,
+    "note": "세금계산서 선발행(매월 말일) - 결제 익월 10일",
+    "company": "한평생교육",
+    "autopay": true
+  },
+  {
+    "day": 15,
+    "description": "코웨이 렌탈",
+    "amount": 49900,
+    "note": "세금계산서 선발행(매월 15일) - 결제 익월 15일 (1달 차이)",
+    "company": "한평생교육",
+    "autopay": true
+  },
+  {
+    "day": 15,
+    "description": "임종신 세무사",
+    "amount": 220000,
+    "note": "",
+    "company": "한평생교육",
+    "autopay": true
+  },
+  {
+    "day": 15,
+    "description": "SK쉴더스 (캡스)",
+    "amount": 88000,
+    "note": "자동이체 등록 완료",
+    "company": "한평생교육",
+    "autopay": true
+  },
+  {
+    "day": 18,
+    "description": "LGU+인터넷",
+    "amount": 66650,
+    "note": "",
+    "company": "한평생교육",
+    "autopay": true
+  },
+  {
+    "day": 18,
+    "description": "LGU+기업전화",
+    "amount": 136340,
+    "note": "",
+    "company": "한평생교육",
+    "autopay": true
+  },
+  {
+    "day": 23,
+    "description": "솔비스 IDC",
+    "amount": 2700000,
+    "note": "",
+    "company": "한평생교육",
+    "autopay": false
+  },
+  {
+    "day": null,
+    "description": "01023154221LG - 학생관리팀 업무폰",
+    "amount": 20900,
+    "note": "",
+    "company": "한평생교육",
+    "autopay": true
+  },
+  {
+    "day": 26,
+    "description": "렌탈사무기 - 프린터기",
+    "amount": 143000,
+    "note": "",
+    "company": "한평생교육",
+    "autopay": true
+  },
+  {
+    "day": 26,
+    "description": "의정부 사무실",
+    "amount": 4600000,
+    "note": "",
+    "company": "한평생교육",
+    "autopay": true
+  },
+  {
+    "day": 20,
+    "description": "한전(주식회사) - 강남 지사 전기요금",
+    "amount": 180000,
+    "note": "사용량에 따라 변동",
+    "company": "에듀바이저스 지출",
+    "autopay": false
+  },
+  {
+    "day": 20,
+    "description": "한전(주식회사) - 강남 지사 전기요금",
+    "amount": 300000,
+    "note": "사용량에 따라 변동",
+    "company": "에듀바이저스 지출",
+    "autopay": false
+  },
+  {
+    "day": 31,
+    "description": "씨드큐브 창동 관리비",
+    "amount": 1750000,
+    "note": "사용량에 따라 변동",
+    "company": "",
+    "autopay": false
+  },
+  {
+    "day": 22,
+    "description": "신한 법인카드(신용카드) 해외지출",
+    "amount": 1000000,
+    "note": "구독 + 광고료에 따라 변동",
+    "company": "",
+    "autopay": true
+  }
+]

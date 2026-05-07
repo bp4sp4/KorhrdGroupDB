@@ -100,6 +100,7 @@
   font-size: 14px;
   font-weight: 700;
   color: #111;
+  pointer-events: none;
 }
 
 /* 네비게이션 */
@@ -111,6 +112,7 @@
   display: flex;
   justify-content: space-between;
   pointer-events: none;
+  z-index: 2;
 }
 
 .dp_nav_btn {
@@ -126,6 +128,12 @@
   border-radius: 6px;
   pointer-events: auto;
   padding: 0;
+  position: relative;
+  z-index: 3;
+}
+
+.dp_nav_btn svg {
+  pointer-events: none;
 }
 
 .dp_nav_btn:hover {

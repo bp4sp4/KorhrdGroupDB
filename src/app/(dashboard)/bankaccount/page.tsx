@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Landmark, RefreshCw, Search, CalendarDays } from 'lucide-react'
 import { DateRangeCalendar, type DateRange } from '@/components/DateRangeCalendar'
+import { matchFixedCost, type FixedCost } from '@/lib/fixed-cost-matcher'
 import styles from './page.module.css'
 
 // YYYYMMDD <-> Date 변환
@@ -143,6 +144,8 @@ export default function BankAccountPage() {
   const [page, setPage] = useState(1)
   const [error, setError] = useState<string | null>(null)
   const [memos, setMemos] = useState<Record<string, string>>({})
+  const [selectedMonth, setSelectedMonth] = useState<string>('') // 'YYYY-MM' or '' = 전체
+  const [showFixedCostPanel, setShowFixedCostPanel] = useState(false)
 
   // 조회기간 팝오버
   const [rangeOpen, setRangeOpen] = useState(false)
@@ -379,11 +382,119 @@ export default function BankAccountPage() {
           </div>
         )}
 
-        {searchResult && (
+        {searchResult && (() => {
+          // 거래에 있는 월 목록 추출 (YYYY-MM)
+          const monthSet = new Set<string>()
+          searchResult.list.forEach(tx => {
+            if (tx.trdate?.length >= 6) monthSet.add(`${tx.trdate.slice(0, 4)}-${tx.trdate.slice(4, 6)}`)
+          })
+          const months = Array.from(monthSet).sort()
+          // 월 필터 적용
+          const visibleList = selectedMonth
+            ? searchResult.list.filter(tx => tx.trdate?.startsWith(selectedMonth.replace('-', '')))
+            : searchResult.list
+          // 고정비 매칭 (월 필터 적용된 결과 기준)
+          const matchedItems = visibleList
+            .map(tx => ({ tx, fc: matchFixedCost(tx) }))
+            .filter(x => x.fc !== null) as { tx: Transaction; fc: FixedCost }[]
+          return (
           <>
-            <p className={styles.resultCount}>
-              총 <strong>{searchResult.total.toLocaleString()}</strong>건
-            </p>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 12 }}>
+              <p className={styles.resultCount} style={{ margin: 0 }}>
+                {selectedMonth
+                  ? <>{selectedMonth} <strong>{visibleList.length.toLocaleString()}</strong>건 / 전체 {searchResult.total.toLocaleString()}건</>
+                  : <>총 <strong>{searchResult.total.toLocaleString()}</strong>건</>
+                }
+                {' · 고정비 매칭 '}
+                <strong style={{ color: '#3730a3' }}>{matchedItems.length}건</strong>
+              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                {months.length > 1 && (
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: 2, background: '#f3f4f6', borderRadius: 8 }}>
+                    <button
+                      onClick={() => setSelectedMonth('')}
+                      style={{
+                        padding: '6px 12px', fontSize: 12, fontWeight: 600,
+                        border: 'none', borderRadius: 6, cursor: 'pointer',
+                        background: !selectedMonth ? '#fff' : 'transparent',
+                        color: !selectedMonth ? '#191f28' : '#6b7280',
+                        boxShadow: !selectedMonth ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+                      }}
+                    >전체</button>
+                    {months.map(m => (
+                      <button
+                        key={m}
+                        onClick={() => setSelectedMonth(m)}
+                        style={{
+                          padding: '6px 12px', fontSize: 12, fontWeight: 600,
+                          border: 'none', borderRadius: 6, cursor: 'pointer',
+                          background: selectedMonth === m ? '#fff' : 'transparent',
+                          color: selectedMonth === m ? '#191f28' : '#6b7280',
+                          boxShadow: selectedMonth === m ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+                        }}
+                      >{m.slice(5)}월</button>
+                    ))}
+                  </div>
+                )}
+                <button
+                  onClick={() => setShowFixedCostPanel(v => !v)}
+                  style={{
+                    padding: '8px 14px', fontSize: 13, fontWeight: 600,
+                    border: '1px solid', borderColor: showFixedCostPanel ? '#3730a3' : '#e5e7eb',
+                    borderRadius: 8, cursor: 'pointer',
+                    background: showFixedCostPanel ? '#eef2ff' : '#fff',
+                    color: showFixedCostPanel ? '#3730a3' : '#374151',
+                  }}
+                >📌 고정비 분류 {showFixedCostPanel ? '닫기' : '보기'} ({matchedItems.length})</button>
+              </div>
+            </div>
+
+            {/* 고정비 매칭 별도 패널 */}
+            {showFixedCostPanel && (
+              <div style={{
+                marginBottom: 16, padding: 16,
+                border: '1px solid #c7d2fe', borderRadius: 12,
+                background: '#f5f7ff',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                  <strong style={{ fontSize: 14, color: '#3730a3' }}>📌 고정비 매칭 거래 — {selectedMonth || '전체'}</strong>
+                  <span style={{ fontSize: 12, color: '#6366f1' }}>
+                    합계: {formatAmount(matchedItems.reduce((s, x) => s + parseInt(x.tx.accOut), 0))}
+                  </span>
+                </div>
+                {matchedItems.length === 0 ? (
+                  <p style={{ margin: 0, color: '#94a3b8', fontSize: 13, textAlign: 'center', padding: '12px 0' }}>매칭된 고정비 거래가 없습니다.</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {matchedItems.map(({ tx, fc }, i) => {
+                      const datetime = tx.trdt?.length >= 14
+                        ? `${formatDate(tx.trdt.slice(0, 8))} ${formatTime(tx.trdt.slice(8, 14))}`
+                        : formatDate(tx.trdate)
+                      return (
+                        <div key={`fc-${tx.tid}-${i}`} style={{
+                          display: 'grid',
+                          gridTemplateColumns: '110px 1fr 130px',
+                          gap: 12, alignItems: 'center',
+                          padding: '10px 12px', background: '#fff',
+                          borderRadius: 8, fontSize: 13,
+                        }}>
+                          <span style={{ color: '#6b7280' }}>{datetime}</span>
+                          <div>
+                            <div style={{ fontWeight: 600, color: '#191f28' }}>{fc.description}</div>
+                            <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>
+                              {[tx.remark1, tx.remark2, tx.remark3].filter(Boolean).join(' ')}
+                            </div>
+                          </div>
+                          <span style={{ textAlign: 'right', fontWeight: 700, color: '#dc2626' }}>
+                            -{formatAmount(parseInt(tx.accOut))}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
             <table className={styles.table}>
               <thead>
                 <tr>
@@ -398,7 +509,10 @@ export default function BankAccountPage() {
                 </tr>
               </thead>
               <tbody>
-                {searchResult.list.map((tx, idx) => {
+                {visibleList.length === 0 && (
+                  <tr><td colSpan={8} style={{ padding: 32, textAlign: 'center', color: '#94a3b8' }}>{selectedMonth ? `${selectedMonth} 거래 없음` : '거래 없음'}</td></tr>
+                )}
+                {visibleList.map((tx, idx) => {
                   const accIn = parseInt(tx.accIn)
                   const accOut = parseInt(tx.accOut)
                   const datetime = tx.trdt?.length >= 14
@@ -436,7 +550,8 @@ export default function BankAccountPage() {
               </tbody>
             </table>
           </>
-        )}
+          )
+        })()}
       </section>
     </div>
   )
