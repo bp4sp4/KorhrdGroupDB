@@ -3,6 +3,7 @@ import shared from '../../page.module.css'
 import styles from './styles.module.css'
 import type { DocBodyProps, FieldDef } from '../types'
 import { DateInput } from '@/components/ui/Calendar/DateInput'
+import CustomSelect from '../../../marketing/CustomSelect'
 
 export const ATTENDANCE_FIELDS: FieldDef[] = [
   { key: 'attend_start_date', label: '날짜(시작)', type: 'date', required: true },
@@ -56,14 +57,21 @@ export function AttendanceBody({ content, onChange }: DocBodyProps) {
               {ro ? (
                 <span className={shared.doc_field_value_text}>{v(content, 'attend_type') || '-'}</span>
               ) : (
-                <select className={shared.doc_body_select} value={v(content, 'attend_type')} onChange={(e) => onChange!('attend_type', e.target.value)}>
-                  <option value="">선택</option>
-                  <option value="지각">지각</option>
-                  <option value="조퇴">조퇴</option>
-                  <option value="외출">외출</option>
-                  <option value="병가">병가</option>
-                  <option value="기타">기타</option>
-                </select>
+                <CustomSelect
+                  value={v(content, 'attend_type')}
+                  placeholder="선택"
+                  ariaLabel="구분"
+                  size="sm"
+                  fullWidth
+                  options={[
+                    { value: '지각', label: '지각' },
+                    { value: '조퇴', label: '조퇴' },
+                    { value: '외출', label: '외출' },
+                    { value: '병가', label: '병가' },
+                    { value: '기타', label: '기타' },
+                  ]}
+                  onChange={(val) => onChange!('attend_type', val)}
+                />
               )}
             </td>
           </tr>

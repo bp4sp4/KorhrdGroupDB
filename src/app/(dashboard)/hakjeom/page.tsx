@@ -3745,10 +3745,13 @@ interface StatItem {
   counsel_check: string | null;
   manager: string | null;
   created_at: string;
+  counsel_completed_at: string | null;
+  registered_at: string | null;
+  last_counsel_level: string | null;
 }
 
 type StatsSource = 'hakjeom';
-type StatsSubTab = 'overview' | 'funnel' | 'manager' | 'status' | 'source' | 'time' | 'mamcafe';
+type StatsSubTab = 'overview' | 'funnel' | 'conversion' | 'manager' | 'status' | 'source' | 'time' | 'mamcafe';
 
 // 통계 상수
 const STATS_STATUS_COLORS: Record<string, string> = {
@@ -3773,6 +3776,7 @@ const SOURCE_LABELS: { id: StatsSource; label: string }[] = [
 const STATS_SUB_TABS: { id: StatsSubTab; label: string }[] = [
   { id: 'overview', label: '개요' },
   { id: 'funnel', label: '전환 분석' },
+  { id: 'conversion', label: '등록 전환 추적' },
   { id: 'manager', label: '담당자별' },
   { id: 'status', label: '상태 분석' },
   { id: 'source', label: '유입 경로' },
@@ -4019,6 +4023,80 @@ function StatsTab() {
       .sort((a, b) => b.total - a.total);
   })();
 
+  // ── 등록 전환 추적 (상담완료 → 등록완료/지인등록까지 소요시간 + 등급별)
+  const COUNSEL_LEVELS: ConsultationStatus[] = ['상담완료-높음', '상담완료-중간', '상담완료-낮음'];
+  // 현재 상담완료 단계에 머물러있는 건수 (등급별)
+  const currentlyAtCounselLevel = COUNSEL_LEVELS.map(level => ({
+    level,
+    count: data.filter(c => c.status === level).length,
+  }));
+  const totalAtCounsel = currentlyAtCounselLevel.reduce((s, v) => s + v.count, 0);
+
+  // 등급별 등록 전환 분석 (last_counsel_level 활용)
+  const conversionByLevel = COUNSEL_LEVELS.map(level => {
+    // 현재 이 등급에 머물러 있는 건수
+    const stillAtLevel = data.filter(c => c.status === level).length;
+    // 이 등급을 거쳐서 등록 완료된 건수 (last_counsel_level 매칭)
+    const registeredFromLevel = data.filter(c =>
+      (c.status === '등록완료' || c.status === '지인등록') && c.last_counsel_level === level
+    );
+    const total = stillAtLevel + registeredFromLevel.length;
+    const rate = total > 0 ? Math.round((registeredFromLevel.length / total) * 100) : 0;
+    // 평균 소요일
+    const durations: number[] = registeredFromLevel
+      .filter(c => c.counsel_completed_at && c.registered_at)
+      .map(c => {
+        const start = new Date(c.counsel_completed_at!).getTime();
+        const end = new Date(c.registered_at!).getTime();
+        return Math.round((end - start) / (1000 * 60 * 60 * 24));
+      })
+      .filter(d => d >= 0);
+    const avgDays = durations.length > 0
+      ? Math.round((durations.reduce((s, v) => s + v, 0) / durations.length) * 10) / 10
+      : null;
+    return {
+      level,
+      stillAtLevel,
+      registered: registeredFromLevel.length,
+      total,
+      rate,
+      avgDays,
+    };
+  });
+
+  // 전체 등록 전환된 건의 소요일 (분포 표시용)
+  const registeredDurations: number[] = [];
+  data.forEach(c => {
+    if ((c.status === '등록완료' || c.status === '지인등록') && c.counsel_completed_at && c.registered_at) {
+      const start = new Date(c.counsel_completed_at).getTime();
+      const end = new Date(c.registered_at).getTime();
+      if (end > start) {
+        registeredDurations.push(Math.round((end - start) / (1000 * 60 * 60 * 24)));
+      }
+    }
+  });
+  const totalRegisteredWithCounsel = registeredDurations.length;
+  const avgDays = totalRegisteredWithCounsel > 0
+    ? Math.round((registeredDurations.reduce((s, v) => s + v, 0) / totalRegisteredWithCounsel) * 10) / 10
+    : 0;
+  const sortedDurations = [...registeredDurations].sort((a, b) => a - b);
+  const medianDays = sortedDurations.length > 0
+    ? sortedDurations[Math.floor(sortedDurations.length / 2)]
+    : 0;
+  const durationBuckets = [
+    { label: '당일~1일', max: 1, count: 0 },
+    { label: '2~3일', max: 3, count: 0 },
+    { label: '4~7일', max: 7, count: 0 },
+    { label: '8~14일', max: 14, count: 0 },
+    { label: '15~30일', max: 30, count: 0 },
+    { label: '30일+', max: Infinity, count: 0 },
+  ];
+  registeredDurations.forEach(d => {
+    for (const b of durationBuckets) {
+      if (d <= b.max) { b.count += 1; break; }
+    }
+  });
+
   return (
     <div className={styles.statsContainer}>
 
@@ -4183,31 +4261,100 @@ function StatsTab() {
                 </div>
               </StatsPanel>
 
-              {/* 유입경로별 등록률 차트 */}
-              {channelStats.length > 0 && (
-                <StatsPanel title="유입 경로별 등록률" sub="어느 채널이 등록 전환이 가장 좋은지">
-                  <ResponsiveContainer width="100%" height={Math.max(channelStats.length * 38 + 40, 200)}>
-                    <BarChart data={channelStats} layout="vertical" margin={{ top: 8, right: 30, left: 0, bottom: 8 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
-                      <XAxis type="number" stroke="#94a3b8" fontSize={11} domain={[0, 100]} unit="%" />
-                      <YAxis type="category" dataKey="name" stroke="#64748b" fontSize={12} width={90} />
-                      <Tooltip content={<StatsTip />} />
-                      <Bar dataKey="rate" name="등록률" radius={[0, 6, 6, 0]} fill="#22c55e">
-                        {channelStats.map((c, i) => (
-                          <Cell key={i} fill={c.rate >= 30 ? '#16a34a' : c.rate >= 15 ? '#22c55e' : c.rate >= 5 ? '#84cc16' : '#cbd5e1'} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12, fontSize: 12 }}>
-                    {channelStats.map(c => (
-                      <div key={c.name} style={{ padding: '6px 10px', background: '#f8fafc', borderRadius: 8, color: '#475569' }}>
-                        <strong style={{ color: '#191f28' }}>{c.name}</strong>: {c.registered}/{c.total}건
-                      </div>
-                    ))}
+            </div>
+          )}
+
+          {/* ════ 등록 전환 추적 ════ */}
+          {subTab === 'conversion' && (
+            <div>
+              <div className={styles.statsGrid4}>
+                <StatsCard label="현재 상담완료 단계" value={totalAtCounsel} sub="등록 대기 중" color="#0ea5e9" />
+                <StatsCard label="추적된 등록 전환" value={totalRegisteredWithCounsel} sub="상담완료→등록 기록" color="#22c55e" />
+                <StatsCard label="평균 소요일" value={`${avgDays}일`} sub={totalRegisteredWithCounsel > 0 ? '상담완료 후 등록까지' : '데이터 부족'} color="#f59e0b" />
+                <StatsCard label="중앙값" value={`${medianDays}일`} sub={totalRegisteredWithCounsel > 0 ? '절반의 학생이 이 기간 내 등록' : '데이터 부족'} color="#8b5cf6" />
+              </div>
+
+              <StatsPanel title="등급별 등록 전환율" sub="각 상담완료 등급에서 등록완료까지 가는 비율">
+                <div style={{ padding: '8px 4px' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                    <thead>
+                      <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                        <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 600, color: '#475569' }}>상담완료 등급</th>
+                        <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 600, color: '#475569' }}>현재 머무름</th>
+                        <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 600, color: '#16a34a' }}>등록 완료</th>
+                        <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 600, color: '#475569' }}>합계</th>
+                        <th style={{ padding: '10px 12px', textAlign: 'center', fontWeight: 600, color: '#475569', minWidth: 160 }}>전환율</th>
+                        <th style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 600, color: '#475569' }}>평균 소요일</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {conversionByLevel.map(({ level, stillAtLevel, registered, total, rate, avgDays }) => {
+                        const color = level === '상담완료-높음' ? '#16a34a' : level === '상담완료-중간' ? '#ca8a04' : '#dc2626';
+                        return (
+                          <tr key={level} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                            <td style={{ padding: '12px 12px', fontWeight: 600, color }}>{level}</td>
+                            <td style={{ padding: '12px 12px', textAlign: 'center', color: '#475569' }}>{stillAtLevel}</td>
+                            <td style={{ padding: '12px 12px', textAlign: 'center', color: '#16a34a', fontWeight: 700 }}>{registered}</td>
+                            <td style={{ padding: '12px 12px', textAlign: 'center', color: '#191f28', fontWeight: 600 }}>{total}</td>
+                            <td style={{ padding: '12px 12px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                <div style={{ flex: 1, height: 8, background: '#f1f5f9', borderRadius: 4, overflow: 'hidden' }}>
+                                  <div
+                                    style={{
+                                      width: `${Math.min(rate, 100)}%`,
+                                      height: '100%',
+                                      background: rate >= 30 ? '#16a34a' : rate >= 15 ? '#22c55e' : rate >= 5 ? '#84cc16' : '#cbd5e1',
+                                      transition: 'width 0.4s ease',
+                                    }}
+                                  />
+                                </div>
+                                <span style={{ minWidth: 40, textAlign: 'right', fontWeight: 600, color: '#191f28' }}>{rate}%</span>
+                              </div>
+                            </td>
+                            <td style={{ padding: '12px 12px', textAlign: 'right', color: '#475569' }}>
+                              {avgDays !== null ? `${avgDays}일` : '-'}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </StatsPanel>
+
+              <StatsPanel title="상담완료 → 등록완료 소요 시간 분포" sub={totalRegisteredWithCounsel > 0 ? `${totalRegisteredWithCounsel}건 분석` : '데이터 수집 중 (등록완료된 건만 표시)'}>
+                {totalRegisteredWithCounsel === 0 ? (
+                  <div style={{ padding: '40px 16px', textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>
+                    아직 추적 가능한 데이터가 없습니다.<br />
+                    상담완료(높음/중간/낮음) → 등록완료로 변경된 건수가 쌓이면 분포가 표시됩니다.
                   </div>
-                </StatsPanel>
-              )}
+                ) : (
+                  <div style={{ padding: '8px 4px' }}>
+                    {durationBuckets.map(b => {
+                      const pct = totalRegisteredWithCounsel > 0 ? Math.round((b.count / totalRegisteredWithCounsel) * 100) : 0;
+                      return (
+                        <div key={b.label} style={{ marginBottom: 10 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, fontSize: 13 }}>
+                            <span style={{ fontWeight: 600, color: '#191f28' }}>{b.label}</span>
+                            <span style={{ color: '#4e5968' }}>
+                              <strong style={{ color: '#191f28' }}>{b.count}건</strong> ({pct}%)
+                            </span>
+                          </div>
+                          <div style={{ height: 8, background: '#f1f5f9', borderRadius: 4, overflow: 'hidden' }}>
+                            <div style={{
+                              width: `${pct}%`, height: '100%',
+                              background: 'linear-gradient(90deg, #3b82f6, #22c55e)',
+                              borderRadius: 4,
+                              transition: 'width 0.4s ease',
+                            }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </StatsPanel>
+
             </div>
           )}
 

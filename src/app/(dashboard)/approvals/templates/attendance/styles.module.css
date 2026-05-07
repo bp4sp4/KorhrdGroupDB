@@ -18,6 +18,7 @@
 
 .textarea_large {
   min-height: 120px;
+  padding: 3px 3px;
 }
 
 .note {
@@ -25,4 +26,34 @@
   color: #555;
   margin-top: 12px;
   padding: 0;
+}
+
+/* ── 구분 select (토스 스타일) ── */
+.attend_select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  width: 100%;
+  height: 32px;
+  padding: 0 30px 0 10px;
+  border: 1px solid #e5e8eb;
+  border-radius: 6px;
+  background-color: #fff;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none'><path d='M3 4.5L6 7.5L9 4.5' stroke='%238b95a1' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  font-size: 13px;
+  color: #191f28;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.attend_select:hover {
+  border-color: #b0b8c1;
+}
+
+.attend_select:focus {
+  border-color: #3182f6;
+  box-shadow: 0 0 0 3px rgba(49, 130, 246, 0.12);
 }

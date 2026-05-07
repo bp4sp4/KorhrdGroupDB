@@ -143,13 +143,25 @@ export function ExpenseResolutionBody({ content, onChange, departments = [] }: D
               )}
             </td>
             <td className={styles.label_cell}>요청금액</td>
-            <td className={styles.value_cell_num}>
+            <td className={styles.value_cell}>
               {ro ? (
-                <span>{numDisplay(v(content, 'amount'))}</span>
+                <span>{numDisplay(v(content, 'amount'))}{v(content, 'amount') ? ' 원' : ''}</span>
               ) : (
-                <input type="number" className={styles.input_num}
-                  value={v(content, 'amount')} placeholder=""
-                  onChange={(e) => onChange!('amount', e.target.value)} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    className={styles.input_full}
+                    value={numDisplay(v(content, 'amount'))}
+                    placeholder=""
+                    onChange={(e) => {
+                      const raw = e.target.value.replace(/[^\d]/g, '')
+                      onChange!('amount', raw)
+                    }}
+                    style={{ flex: 1 }}
+                  />
+                  <span style={{ fontSize: 13, color: '#374151', flexShrink: 0 }}>원</span>
+                </div>
               )}
             </td>
           </tr>

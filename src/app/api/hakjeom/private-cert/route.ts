@@ -21,6 +21,9 @@ interface CertUpdatePayload {
   residence?: string | null;
   hope_course?: string | null;
   major_category?: string | null;
+  registered_at?: string | null;
+  last_counsel_level?: string | null;
+  counsel_completed_at?: string | null;
 }
 
 const TABLE = 'private_cert_consultations';
@@ -140,7 +143,22 @@ export async function PATCH(request: NextRequest) {
 
     const updateData: CertUpdatePayload = {};
 
-    if (status !== undefined) updateData.status = status;
+    if (status !== undefined) {
+      updateData.status = status;
+      // 상담완료 단계 시 시각 + 마지막 등급 기록
+      if (status === '상담완료-높음' || status === '상담완료-중간' || status === '상담완료-낮음') {
+        updateData.counsel_completed_at = new Date().toISOString();
+        updateData.last_counsel_level = status;
+      } else {
+        updateData.counsel_completed_at = null;
+        // last_counsel_level은 등록완료/지인등록으로 갈 때 보존
+      }
+      if (status === '등록완료' || status === '지인등록') {
+        updateData.registered_at = new Date().toISOString();
+      } else {
+        updateData.registered_at = null;
+      }
+    }
     if (memo !== undefined) updateData.memo = memo || null;
     if (manager !== undefined) updateData.manager = manager || null;
     if (counsel_check !== undefined) updateData.counsel_check = counsel_check || null;

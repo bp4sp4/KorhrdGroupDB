@@ -83,6 +83,8 @@ interface HakjeomUpdatePayload {
   residence?: string | null;
   hope_course?: string | null;
   counsel_completed_at?: string | null;
+  registered_at?: string | null;
+  last_counsel_level?: string | null;
   current_situation?: string | null;
   reaction_point?: string | null;
   contact_scheduled_at?: string | null;
@@ -392,11 +394,19 @@ export async function PATCH(request: NextRequest) {
 
     if (status !== undefined) {
       updateData.status = status;
-      // 상담완료 상태로 변경 시 시각 기록, 다른 상태로 변경 시 초기화
+      // 상담완료 상태로 변경 시 시각 기록 + 마지막 상담 등급 저장
       if (COUNSEL_COMPLETE_STATUSES.includes(status as HakjeomStatus)) {
         updateData.counsel_completed_at = new Date().toISOString();
+        updateData.last_counsel_level = status; // 상담완료-높음/중간/낮음
       } else {
         updateData.counsel_completed_at = null;
+        // last_counsel_level은 그대로 유지 (등록완료로 가도 직전 등급 보존)
+      }
+      // 등록완료/지인등록 상태로 변경 시 등록 시각 기록, 다른 상태로 변경 시 초기화
+      if (status === '등록완료' || status === '지인등록') {
+        updateData.registered_at = new Date().toISOString();
+      } else {
+        updateData.registered_at = null;
       }
     }
     if (memo !== undefined) {

@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const type = (searchParams.get('type') ?? 'hakjeom') as StatsType;
 
-    const SELECT_FIELDS = 'id, status, click_source, hope_course, counsel_check, manager, created_at';
+    const SELECT_FIELDS = 'id, status, click_source, hope_course, counsel_check, manager, created_at, counsel_completed_at, registered_at, last_counsel_level';
 
     if (type === 'hakjeom') {
       const { data, error } = await supabaseAdmin

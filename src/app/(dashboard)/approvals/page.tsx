@@ -18,6 +18,7 @@ import { getDocTemplate, ALL_TEMPLATE_FIELDS, buildDynamicTemplateConfigs } from
 import type { DocTemplateConfig } from './docTemplates'
 import { ExpenseProofPanel, parseCardItems } from './templates/corporateCard'
 import type { ApprovalFormTemplate } from '@/types/approvalForm'
+import CustomSelect from '../marketing/CustomSelect'
 
 // ---------------------------------------------------------------------------
 // 타입 정의
@@ -451,6 +452,14 @@ export default function ApprovalsPage() {
       setFormState((prev) => ({ ...prev, approver_ids: autoIds }))
     }
   }, [formState.template, formState.approver_ids.length])
+
+  // 양식 진입 시 신청부서가 비어있으면 본인 소속 부서로 고정
+  useEffect(() => {
+    if (!formState.template) return
+    if (formState.department_id) return
+    if (!myDepartmentId) return
+    setFormState((prev) => ({ ...prev, department_id: String(myDepartmentId) }))
+  }, [formState.template, formState.department_id, myDepartmentId])
 
   // ---------------------------------------------------------------------------
   // 이벤트 핸들러
@@ -1695,16 +1704,9 @@ export default function ApprovalsPage() {
                   <tr>
                     <td className={styles.doc_info_label}>신청부서</td>
                     <td>
-                      <select
-                        className={styles.doc_info_select}
-                        value={formState.department_id}
-                        onChange={(e) => setFormState({ ...formState, department_id: e.target.value })}
-                      >
-                        <option value="">선택</option>
-                        {departments.map((d) => (
-                          <option key={d.id} value={d.id}>{d.name}</option>
-                        ))}
-                      </select>
+                      {departments.find((d) => String(d.id) === formState.department_id)?.name
+                        ?? departments.find((d) => String(d.id) === (myDepartmentId ?? ''))?.name
+                        ?? '-'}
                     </td>
                   </tr>
                   <tr>
