@@ -178,15 +178,11 @@ export function ExpenseResolutionBody({ content, onChange, departments = [] }: D
               )}
             </td>
           </tr>
-        </tbody>
-      </table>
 
-      {/* ── 특이사항 ── */}
-      <table className={styles.table_special}>
-        <tbody>
+          {/* 특이사항 — 메인 테이블 안으로 통합 (폭 일치) */}
           <tr>
-            <td className={styles.special_label}>특이사항</td>
-            <td className={styles.special_value}>
+            <td className={styles.label_cell}>특이사항</td>
+            <td className={styles.value_cell} colSpan={3}>
               {ro ? (
                 <span className={styles.pre_wrap}>{v(content, 'special_note') || ''}</span>
               ) : (

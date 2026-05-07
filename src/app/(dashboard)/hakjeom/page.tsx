@@ -1774,21 +1774,9 @@ function HakjeomTab({ isActive, highlightId }: { isActive: boolean; highlightId?
   const [minorCategoryFilter, setMinorCategoryFilter] = useState<string[]>([]);
   const [reasonFilter, setReasonFilter] = useState<string[]>([]);
   const [counselCheckFilter, setCounselCheckFilter] = useState<string[]>([]);
-  // 기본값: 당월(이번 달 1일 ~ 말일)
-  const [startDate, setStartDate] = useState(() => {
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = String(now.getMonth() + 1).padStart(2, '0');
-    return `${y}-${m}-01`;
-  });
-  const [endDate, setEndDate] = useState(() => {
-    const now = new Date();
-    const last = new Date(now.getFullYear(), now.getMonth() + 1, 0); // 이번달 말일
-    const y = last.getFullYear();
-    const m = String(last.getMonth() + 1).padStart(2, '0');
-    const d = String(last.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
-  });
+  // 기본값: 전체 기간 (필터 없음)
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [dateRangeOpen, setDateRangeOpen] = useState(false);
   const dateRangeRef = useRef<HTMLDivElement>(null);
 

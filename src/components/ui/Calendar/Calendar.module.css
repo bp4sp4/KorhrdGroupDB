@@ -104,7 +104,8 @@
 }
 
 /* nav 버튼용 chevron */
-.chevron {}
+.chevron {
+}
 
 /* ---------------------------------------------------------------------------
    네비게이션 버튼 (absolute — root 기준 우상단)
@@ -131,7 +132,9 @@
   color: #bbb;
   cursor: pointer;
   padding: 0;
-  transition: color 120ms ease, background 120ms ease;
+  transition:
+    color 120ms ease,
+    background 120ms ease;
 }
 
 .nav_btn:hover {
@@ -183,10 +186,14 @@
 }
 
 /* 일요일 */
-.weekday:first-child { color: #e03535; }
+.weekday:first-child {
+  color: #e03535;
+}
 
 /* 토요일 */
-.weekday:last-child  { color: #3182f6; }
+.weekday:last-child {
+  color: #3182f6;
+}
 
 /* ---------------------------------------------------------------------------
    날짜 셀
@@ -214,12 +221,14 @@
   background: none;
   border-radius: 50%;
   font-size: 12px;
-  font-weight: 400;
+  font-weight: 700;
   color: #222;
   cursor: pointer;
   margin: 0 auto;
   padding: 0;
-  transition: background 120ms ease, color 120ms ease;
+  transition:
+    background 120ms ease,
+    color 120ms ease;
 }
 
 .day_button:hover {
@@ -227,10 +236,14 @@
 }
 
 /* 일요일 날짜 */
-.day:first-child .day_button { color: #e03535; }
+.day:first-child .day_button {
+  color: #e03535;
+}
 
 /* 토요일 날짜 */
-.day:last-child  .day_button { color: #3182f6; }
+.day:last-child .day_button {
+  color: #3182f6;
+}
 
 /* ---------------------------------------------------------------------------
    상태별 스타일
@@ -261,9 +274,15 @@
 }
 
 /* 이번달 외 날짜 */
-.day_outside .day_button               { color: #ddd; }
-.day_outside:first-child .day_button   { color: #e8b4b4; }
-.day_outside:last-child  .day_button   { color: #b4ccf5; }
+.day_outside .day_button {
+  color: #ddd;
+}
+.day_outside:first-child .day_button {
+  color: #e8b4b4;
+}
+.day_outside:last-child .day_button {
+  color: #b4ccf5;
+}
 
 /* 비활성화 */
 .day_disabled .day_button {
@@ -276,7 +295,9 @@
 }
 
 /* 숨김 */
-.day_hidden { visibility: hidden; }
+.day_hidden {
+  visibility: hidden;
+}
 
 /* 포커스 */
 .day_focused .day_button {
@@ -289,7 +310,7 @@
    --------------------------------------------------------------------------- */
 
 .day_range_start .day_button,
-.day_range_end   .day_button {
+.day_range_end .day_button {
   background: #3182f6;
   color: #fff !important;
   border-radius: 50%;
