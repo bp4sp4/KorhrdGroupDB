@@ -93,6 +93,14 @@ const CATEGORY_LABELS: Record<SubjectCategory, string> = {
   '교양': '교양',
   '일반': '일반',
 };
+
+// 건강가정사 — 학기 선택 시 카테고리별 최대 과목 수 (학생 전체 합산 기준)
+const HEALTH_FAMILY_CATEGORIES = ['핵심과목', '기초이론', '상담·교육 등 실제'] as const;
+const HEALTH_FAMILY_LIMITS: Record<string, number> = {
+  '핵심과목': 5,
+  '기초이론': 4,
+  '상담·교육 등 실제': 3,
+};
 const CREDIT_OPTIONS = [1, 2, 3, 4, 5] as const;
 const DEFAULT_CENTERS = ['한평생교육', '서사평', '올티칭'];
 const CENTER_ADD_THRESHOLD = 60;
@@ -130,6 +138,7 @@ interface PlanConfig {
   targets: PlanTarget[];
   practice?: PracticeRequirement;
   showPrevSubjects?: boolean;
+  hideRegisteredCenters?: boolean; // 학생 등록 교육원 카드(좌측) 숨김
 }
 
 const JUNGTAE_GROUP = ['고졸', '2년제중퇴', '3년제중퇴', '4년제중퇴'];
@@ -151,6 +160,20 @@ function getPlanConfig(
         { label: '전공', categories: ['전공'], target: 6, color: '#3182F6' },
       ],
       practice: { required: 4, elective: 2 },
+    };
+  }
+
+  // 건강가정사 — 학력 무관, 12과목 / 36학점 (한 과목당 3학점), 전적대 이수과목 인정
+  if (courseName?.includes('건강가정사')) {
+    return {
+      isHighSchool: false,
+      totalTarget: 36,
+      subjectTarget: 12,
+      targets: [
+        { label: '전공', categories: ['전공'], target: 36, color: '#3182F6' },
+      ],
+      showPrevSubjects: true,
+      hideRegisteredCenters: true,
     };
   }
 
@@ -699,19 +722,32 @@ export default function PlanPage() {
     return allCenters.map(name => ({ name, used: creditMap.get(name) ?? 0, limit }));
   }, [student, semesters, semesterSubjects, subjects]);
 
+  // 건강가정사 모드: 카테고리/한도가 다름
+  const isHealthFamily = !!student?.edu_courses?.name?.includes('건강가정사');
+
   // ── 과목 필터/그룹 ───────────────────────────────────────────
   const filteredSubjects = useMemo(() => {
-    const byCategory = selectedCategory === '전체'
-      ? subjects
-      : subjects.filter((s) => {
-          // subject_type 기준으로 재분류된 effective category로 필터링
-          const effective = s.subject_type === '선택' && s.category !== '교양' ? '선택' : s.category;
-          return effective === selectedCategory;
-        });
+    // 건강가정사: 글로벌 풀에서 다른 과정의 과목(필수/선택 등)을 모두 제외하고
+    //            건강가정사 카테고리(핵심과목/기초이론/상담·교육 등 실제)만 풀로 사용
+    const pool = isHealthFamily
+      ? subjects.filter((s) => HEALTH_FAMILY_CATEGORIES.includes(s.subject_type as typeof HEALTH_FAMILY_CATEGORIES[number]))
+      : subjects;
+
+    let byCategory: Subject[];
+    if (selectedCategory === '전체') {
+      byCategory = pool;
+    } else if (isHealthFamily) {
+      byCategory = pool.filter((s) => s.subject_type === selectedCategory);
+    } else {
+      byCategory = pool.filter((s) => {
+        const effective = s.subject_type === '선택' && s.category !== '교양' ? '선택' : s.category;
+        return effective === selectedCategory;
+      });
+    }
     if (!subjectSearch.trim()) return byCategory;
     const q = subjectSearch.trim().toLowerCase();
     return byCategory.filter((s) => s.name.toLowerCase().includes(q));
-  }, [selectedCategory, subjects, subjectSearch]);
+  }, [selectedCategory, subjects, subjectSearch, isHealthFamily]);
 
   const groupedSubjects = useMemo(() => {
     const groups: Record<string, Subject[]> = {};
@@ -720,13 +756,20 @@ export default function PlanPage() {
     filteredSubjects.forEach((s) => {
       if (seen.has(s.name)) return;
       seen.add(s.name);
-      // subject_type 기준으로 그룹 재분류: 선택이면서 교양이 아닐 때만 '선택', 교양으로 이동된 것은 교양으로
-      const effectiveCategory = s.subject_type === '선택' && s.category !== '교양' ? '선택' : s.category;
-      if (!groups[effectiveCategory]) groups[effectiveCategory] = [];
-      groups[effectiveCategory].push(s);
+      if (isHealthFamily) {
+        // 건강가정사: subject_type별 그룹 (핵심과목/기초이론/상담·교육 등 실제)
+        const key = (s.subject_type as string) || '기타';
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(s);
+      } else {
+        // subject_type 기준으로 그룹 재분류: 선택이면서 교양이 아닐 때만 '선택', 교양으로 이동된 것은 교양으로
+        const effectiveCategory = s.subject_type === '선택' && s.category !== '교양' ? '선택' : s.category;
+        if (!groups[effectiveCategory]) groups[effectiveCategory] = [];
+        groups[effectiveCategory].push(s);
+      }
     });
     return groups;
-  }, [filteredSubjects]);
+  }, [filteredSubjects, isHealthFamily]);
 
   // ── 핸들러: 수강 계획 ────────────────────────────────────────
   const MAX_PER_SEMESTER = 8;
@@ -792,6 +835,24 @@ export default function PlanPage() {
       alert(`${curSem?.year}년도 최대 ${MAX_PER_YEAR}과목까지 수강 가능합니다.\n(1학기+2학기 합산 기준)`);
       return;
     }
+
+    // 건강가정사 — subject_type별 한도(핵심과목 5 / 기초이론 4 / 상담·교육 등 실제 3)
+    if (isHealthFamily) {
+      const subject = subjects.find((s) => s.id === subjectId);
+      const subType = subject?.subject_type as string | undefined;
+      if (subType && HEALTH_FAMILY_LIMITS[subType] !== undefined) {
+        const limit = HEALTH_FAMILY_LIMITS[subType];
+        const sameTypeCount = assignedIds.filter((aid) => {
+          const sb = subjects.find((s) => s.id === aid);
+          return sb?.subject_type === subType;
+        }).length;
+        if (sameTypeCount >= limit) {
+          alert(`${subType}은(는) 최대 ${limit}과목까지 선택 가능합니다.`);
+          return;
+        }
+      }
+    }
+
     setSemesterSubjects((prev) => ({
       ...prev,
       [targetSemId]: [...current, subjectId],
@@ -1782,7 +1843,7 @@ export default function PlanPage() {
         ) : (
           <>
             {/* 등록 교육원별 학점 카드 */}
-            {!hideCenterCredits && (() => {
+            {!hideCenterCredits && !planConfig.hideRegisteredCenters && (() => {
               const centers = (student.education_center_name ?? '').split(',').map(s => s.trim()).filter(Boolean);
               const limit = getCenterCreditLimit(student.education_level);
               if (centers.length === 0) return null;
@@ -2005,7 +2066,7 @@ export default function PlanPage() {
                 구법 과목 추가
               </button>
             )}
-            {student.edu_courses?.name?.includes('신법') && (
+            {(student.edu_courses?.name?.includes('신법') || isHealthFamily) && (
               <button className={styles.section_add_btn_gubup} onClick={() => openGubupPopup('신법')}>
                 신법 과목 추가
               </button>
@@ -2164,7 +2225,13 @@ export default function PlanPage() {
           />
           <select className={styles.subject_filter} value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}>
             <option value="전체">전체</option>
-            {SUBJECT_CATEGORIES.map((cat) => <option key={cat} value={cat}>{CATEGORY_LABELS[cat]}</option>)}
+            {isHealthFamily
+              ? HEALTH_FAMILY_CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat} ({HEALTH_FAMILY_LIMITS[cat]}과목)
+                  </option>
+                ))
+              : SUBJECT_CATEGORIES.map((cat) => <option key={cat} value={cat}>{CATEGORY_LABELS[cat]}</option>)}
           </select>
 
           <div className={styles.subject_list}>

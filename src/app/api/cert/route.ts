@@ -139,14 +139,6 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Supabase configuration missing' }, { status: 500 });
     }
 
-    // 결제 관련 필드는 master-admin/admin만 수정 가능
-    const { data: appUser } = await supabaseAdmin
-      .from('app_users')
-      .select('role')
-      .eq('username', user.email)
-      .maybeSingle();
-    const isFullAccess = appUser?.role === 'master-admin' || appUser?.role === 'admin';
-
     const body = await request.json();
     const {
       id,
@@ -182,14 +174,12 @@ export async function PATCH(request: NextRequest) {
     if (certificates !== undefined) updateData.certificates = certificates;
     if (source !== undefined) updateData.source = source ?? null;
 
-    // 결제 관련 필드는 master-admin/admin만 수정 가능
-    if (isFullAccess) {
-      if (payment_status !== undefined) updateData.payment_status = payment_status;
-      if (cash_receipt !== undefined) updateData.cash_receipt = cash_receipt;
-      if (amount !== undefined) updateData.amount = amount ?? null;
-      if (mul_no !== undefined) updateData.mul_no = mul_no ?? null;
-      if (pay_method !== undefined) updateData.pay_method = pay_method ?? null;
-    }
+    // 결제 관련 필드: 변경이력은 logAction으로 audit_logs에 남기므로 권한 제한 없이 수정 허용
+    if (payment_status !== undefined) updateData.payment_status = payment_status;
+    if (cash_receipt !== undefined) updateData.cash_receipt = cash_receipt;
+    if (amount !== undefined) updateData.amount = amount ?? null;
+    if (mul_no !== undefined) updateData.mul_no = mul_no ?? null;
+    if (pay_method !== undefined) updateData.pay_method = pay_method ?? null;
 
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json({ error: 'At least one field is required for update' }, { status: 400 });

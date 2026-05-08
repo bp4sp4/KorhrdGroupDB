@@ -6,12 +6,14 @@ import { logEduActivity } from '@/lib/edu-logger';
 import type { EduCourse } from './types';
 import styles from './EduSubjectsTab.module.css';
 
+type SubjectType = '필수' | '선택' | '핵심과목' | '기초이론' | '상담·교육 등 실제';
+
 interface SubjectPreset {
   id: number;
   course_type: string;
   name: string;
   credits: number;
-  subject_type: '필수' | '선택';
+  subject_type: SubjectType;
   sort_order: number;
 }
 
@@ -22,7 +24,16 @@ function getCourseType(courseName: string): string {
   return courseName; // 새 과정은 이름 그대로 사용
 }
 
-const EMPTY_PRESET = { name: '', credits: 3, subject_type: '필수' as '필수' | '선택', sort_order: 0 };
+// 과정별 "구분" 옵션 (건강가정사 등 비-사회복지사 과정은 별도 분류 체계 사용)
+const HEALTH_FAMILY_TYPES: SubjectType[] = ['핵심과목', '기초이론', '상담·교육 등 실제'];
+const DEFAULT_SUBJECT_TYPES: SubjectType[] = ['필수', '선택'];
+
+function getSubjectTypeOptions(courseType: string): SubjectType[] {
+  if (courseType.includes('건강가정사')) return HEALTH_FAMILY_TYPES;
+  return DEFAULT_SUBJECT_TYPES;
+}
+
+const EMPTY_PRESET = { name: '', credits: 3, subject_type: '필수' as SubjectType, sort_order: 0 };
 const EMPTY_COURSE = { name: '' };
 
 interface Props {
@@ -125,7 +136,8 @@ export default function EduSubjectsTab({ isActive }: Props) {
   function openAddPreset() {
     setEditPreset(null);
     const nextOrder = coursePresets.length > 0 ? Math.max(...coursePresets.map(p => p.sort_order)) + 1 : 1;
-    setPresetForm({ ...EMPTY_PRESET, sort_order: nextOrder });
+    const defaultType = getSubjectTypeOptions(courseType)[0];
+    setPresetForm({ ...EMPTY_PRESET, subject_type: defaultType, sort_order: nextOrder });
     setShowPresetModal(true);
   }
 
@@ -239,7 +251,7 @@ export default function EduSubjectsTab({ isActive }: Props) {
                       <td className={styles.subject_name}>{p.name}</td>
                       <td>{p.credits}학점</td>
                       <td>
-                        <span className={`${styles.type_badge} ${p.subject_type === '필수' ? styles.type_required : styles.type_elective}`}>
+                        <span className={`${styles.type_badge} ${(p.subject_type === '필수' || p.subject_type === '핵심과목') ? styles.type_required : styles.type_elective}`}>
                           {p.subject_type}
                         </span>
                       </td>
@@ -292,7 +304,7 @@ export default function EduSubjectsTab({ isActive }: Props) {
               <div className={styles.field}>
                 <label className={styles.label}>구분</label>
                 <div className={styles.radio_group}>
-                  {(['필수', '선택'] as const).map(t => (
+                  {getSubjectTypeOptions(courseType).map(t => (
                     <label key={t} className={`${styles.radio} ${presetForm.subject_type === t ? styles.radio_active : ''}`}>
                       <input type="radio" checked={presetForm.subject_type === t} onChange={() => setPresetForm(f => ({ ...f, subject_type: t }))} />
                       {t}
