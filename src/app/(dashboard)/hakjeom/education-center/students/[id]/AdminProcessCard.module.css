@@ -1,0 +1,159 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.loading_card {
+  padding: 32px 16px;
+  text-align: center;
+  font-size: 14px;
+  color: #8b95a1;
+}
+
+/* ── 카드(탭 본문 안에서는 배경 없이 섹션만 구분) ── */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 18px 20px;
+  border: 1px solid #f2f4f6;
+  border-radius: 12px;
+  background: #fafbfc;
+}
+
+/* ── 섹션 ── */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px dashed #f2f4f6;
+}
+.section:first-of-type {
+  padding-top: 0;
+  border-top: none;
+}
+
+.section_label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #333d4b;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.row_2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 640px) {
+  .row_2col {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── 필드 ── */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field_label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #8b95a1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.saving {
+  font-size: 11px;
+  color: #3182f6;
+  font-weight: 500;
+}
+
+.input {
+  height: 38px;
+  padding: 0 12px;
+  border: 1.5px solid #e5e8eb;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #191f28;
+  outline: none;
+  background: #fff;
+  transition: border-color 0.15s;
+  font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
+}
+.input:hover {
+  border-color: #d1d6db;
+}
+.input:focus {
+  border-color: #3182f6;
+}
+.input::placeholder {
+  color: #b0b8c1;
+}
+
+/* 비밀번호 토글 */
+.password_wrap {
+  position: relative;
+}
+.password_wrap .input {
+  padding-right: 56px;
+}
+.eye_btn {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid #e5e8eb;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 11px;
+  color: #4e5968;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+.eye_btn:hover {
+  border-color: #3182f6;
+  color: #3182f6;
+}
+
+/* ── 세그먼트 셀렉트 ── */
+.seg_wrap {
+  display: inline-flex;
+  background: #f2f4f6;
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+}
+.seg_btn {
+  min-width: 56px;
+  height: 32px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7684;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.seg_btn:hover {
+  color: #191f28;
+}
+.seg_btn_active {
+  background: #fff;
+  color: #3182f6;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+

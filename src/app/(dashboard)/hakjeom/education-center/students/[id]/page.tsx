@@ -6,6 +6,8 @@ import { createClient } from '@/lib/supabase/client';
 import { logEduActivity } from '@/lib/edu-logger';
 import type { EduStudent, EduCourse, EduEducationCenter, EduStudentFormData } from '../../types';
 import StudentModal from '../../components/StudentModal';
+import AdminProcessCard from './AdminProcessCard';
+import SemesterListCard from './SemesterListCard';
 import styles from './page.module.css';
 
 // ── 타입 ───────────────────────────────────────────────────────
@@ -17,36 +19,7 @@ interface StudentMemo {
   created_at: string;
 }
 
-interface StudentContact {
-  id: string;
-  student_id: string;
-  contact_type: string;
-  content: string;
-  contacted_at: string;
-  created_by: string;
-  created_at: string;
-}
-
-interface ActivityLog {
-  id: string;
-  user_name: string;
-  action: string;
-  target_type: string | null;
-  target_name: string | null;
-  detail: string | null;
-  created_at: string;
-}
-
-type DetailTab = '메모' | '연락기록' | '변경이력';
-
-const CONTACT_TYPES = ['전화', '문자', '이메일', '방문'];
-
-const CONTACT_TYPE_STYLE: Record<string, { color: string; bg: string }> = {
-  전화:  { color: '#3182F6', bg: '#EEF5FF' },
-  문자:  { color: '#059669', bg: '#ECFDF5' },
-  이메일:{ color: '#7C3AED', bg: '#F5F3FF' },
-  방문:  { color: '#D97706', bg: '#FFFBEB' },
-};
+type DetailTab = '행정 절차' | '수강내역' | '특이사항';
 
 // ── 헬퍼 ──────────────────────────────────────────────────────
 function formatDate(d: string | null) {
@@ -74,26 +47,14 @@ export default function StudentDetailPage() {
   const [managersDb, setManagersDb] = useState<string[]>([]);
   const [modalOpen,  setModalOpen]  = useState(false);
 
-  const [activeTab, setActiveTab] = useState<DetailTab>('메모');
+  const [activeTab, setActiveTab] = useState<DetailTab>('행정 절차');
 
-  // 메모
+  // 특이사항(구 메모)
   const [memos,        setMemos]        = useState<StudentMemo[]>([]);
   const [newMemo,      setNewMemo]      = useState('');
   const [memoSaving,   setMemoSaving]   = useState(false);
   const [editingMemoId,   setEditingMemoId]   = useState<string | null>(null);
   const [editingMemoText, setEditingMemoText] = useState('');
-
-  // 연락기록
-  const [contacts,        setContacts]        = useState<StudentContact[]>([]);
-  const [showContactForm, setShowContactForm] = useState(false);
-  const [contactType,     setContactType]     = useState('전화');
-  const [contactDate,     setContactDate]     = useState(() => new Date().toISOString().slice(0, 10));
-  const [contactContent,  setContactContent]  = useState('');
-  const [contactSaving,   setContactSaving]   = useState(false);
-
-  // 변경이력
-  const [logs,        setLogs]        = useState<ActivityLog[]>([]);
-  const [logsLoading, setLogsLoading] = useState(false);
 
   // 현재 사용자 이름
   const [myName, setMyName] = useState('');
@@ -132,37 +93,15 @@ export default function StudentDetailPage() {
         if (!cancelled) setMyName(appUser?.display_name ?? user.email ?? '');
       }
 
-      const [memosRes, contactsRes] = await Promise.all([
-        supabase.from('edu_student_memos').select('*').eq('student_id', id).order('created_at', { ascending: false }),
-        supabase.from('edu_student_contacts').select('*').eq('student_id', id).order('contacted_at', { ascending: false }),
-      ]);
-      if (!cancelled) {
-        setMemos((memosRes.data as StudentMemo[]) ?? []);
-        setContacts((contactsRes.data as StudentContact[]) ?? []);
-      }
+      const { data: memosData } = await supabase
+        .from('edu_student_memos')
+        .select('*')
+        .eq('student_id', id)
+        .order('created_at', { ascending: false });
+      if (!cancelled) setMemos((memosData as StudentMemo[]) ?? []);
     })();
     return () => { cancelled = true; };
   }, [id]);
-
-  // 변경이력 — 탭 진입 시 로드
-  useEffect(() => {
-    if (activeTab !== '변경이력' || !student) return;
-    let cancelled = false;
-    setLogsLoading(true);
-    const supabase = createClient();
-    supabase.from('edu_activity_logs')
-      .select('*')
-      .eq('target_name', student.name)
-      .order('created_at', { ascending: false })
-      .limit(50)
-      .then(({ data }) => {
-        if (!cancelled) {
-          setLogs((data as ActivityLog[]) ?? []);
-          setLogsLoading(false);
-        }
-      });
-    return () => { cancelled = true; };
-  }, [activeTab, student]);
 
   async function handleSubmit(data: EduStudentFormData) {
     const supabase = createClient();
@@ -191,14 +130,14 @@ export default function StudentDetailPage() {
     const { data, error } = await supabase.from('edu_student_memos').insert({
       student_id: id, content: newMemo.trim(), created_by: myName,
     }).select().single();
-    if (error) { alert('메모 저장 실패'); setMemoSaving(false); return; }
+    if (error) { alert('특이사항 저장 실패'); setMemoSaving(false); return; }
     setMemos(prev => [data as StudentMemo, ...prev]);
     setNewMemo('');
     setMemoSaving(false);
   }
 
   async function handleDeleteMemo(memoId: string) {
-    if (!confirm('메모를 삭제하시겠습니까?')) return;
+    if (!confirm('특이사항을 삭제하시겠습니까?')) return;
     const supabase = createClient();
     await supabase.from('edu_student_memos').delete().eq('id', memoId);
     setMemos(prev => prev.filter(m => m.id !== memoId));
@@ -219,32 +158,6 @@ export default function StudentDetailPage() {
     setMemos(prev => prev.map(m => m.id === memoId ? { ...m, content: editingMemoText.trim() } : m));
     setEditingMemoId(null);
     setEditingMemoText('');
-  }
-
-  async function handleAddContact() {
-    if (!contactContent.trim()) return;
-    setContactSaving(true);
-    const supabase = createClient();
-    const { data, error } = await supabase.from('edu_student_contacts').insert({
-      student_id: id, contact_type: contactType, content: contactContent.trim(),
-      contacted_at: contactDate, created_by: myName,
-    }).select().single();
-    if (error) { alert('연락기록 저장 실패'); setContactSaving(false); return; }
-    setContacts(prev => [data as StudentContact, ...prev].sort(
-      (a, b) => new Date(b.contacted_at).getTime() - new Date(a.contacted_at).getTime()
-    ));
-    setContactContent('');
-    setContactDate(new Date().toISOString().slice(0, 10));
-    setContactType('전화');
-    setShowContactForm(false);
-    setContactSaving(false);
-  }
-
-  async function handleDeleteContact(contactId: string) {
-    if (!confirm('연락기록을 삭제하시겠습니까?')) return;
-    const supabase = createClient();
-    await supabase.from('edu_student_contacts').delete().eq('id', contactId);
-    setContacts(prev => prev.filter(c => c.id !== contactId));
   }
 
   if (!student) {
@@ -318,27 +231,40 @@ export default function StudentDetailPage() {
       <div className={styles.tab_section}>
         {/* 탭 헤더 */}
         <div className={styles.tab_header}>
-          {(['메모', '연락기록', '변경이력'] as DetailTab[]).map(tab => (
+          {(['행정 절차', '수강내역', '특이사항'] as DetailTab[]).map(tab => (
             <button
               key={tab}
               className={`${styles.tab_btn} ${activeTab === tab ? styles.tab_btn_active : ''}`}
               onClick={() => setActiveTab(tab)}
             >
               {tab}
-              {tab === '메모'    && memos.length    > 0 && <span className={styles.tab_count}>{memos.length}</span>}
-              {tab === '연락기록' && contacts.length > 0 && <span className={styles.tab_count}>{contacts.length}</span>}
+              {tab === '특이사항' && memos.length > 0 && <span className={styles.tab_count}>{memos.length}</span>}
             </button>
           ))}
         </div>
 
-        {/* ── 메모 탭 ── */}
-        {activeTab === '메모' && (
+        {/* ── 행정 절차 탭 ── */}
+        {activeTab === '행정 절차' && (
           <div className={styles.tab_body}>
-            {/* 메모 입력 */}
+            <AdminProcessCard studentId={student.id} />
+          </div>
+        )}
+
+        {/* ── 수강내역 탭 ── */}
+        {activeTab === '수강내역' && (
+          <div className={styles.tab_body}>
+            <SemesterListCard studentId={student.id} />
+          </div>
+        )}
+
+        {/* ── 특이사항 탭 ── */}
+        {activeTab === '특이사항' && (
+          <div className={styles.tab_body}>
+            {/* 입력 */}
             <div className={styles.memo_input_wrap}>
               <textarea
                 className={styles.memo_textarea}
-                placeholder="메모를 입력하세요..."
+                placeholder="특이사항을 입력하세요..."
                 value={newMemo}
                 onChange={e => setNewMemo(e.target.value)}
                 rows={3}
@@ -349,14 +275,14 @@ export default function StudentDetailPage() {
                   onClick={handleAddMemo}
                   disabled={memoSaving || !newMemo.trim()}
                 >
-                  {memoSaving ? '저장 중...' : '메모 추가'}
+                  {memoSaving ? '저장 중...' : '특이사항 추가'}
                 </button>
               </div>
             </div>
 
-            {/* 메모 목록 */}
+            {/* 목록 */}
             {memos.length === 0 ? (
-              <div className={styles.empty}>등록된 메모가 없습니다.</div>
+              <div className={styles.empty}>등록된 특이사항이 없습니다.</div>
             ) : (
               <div className={styles.memo_list}>
                 {memos.map(memo => (
@@ -390,121 +316,6 @@ export default function StudentDetailPage() {
                         </div>
                       </>
                     )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── 연락기록 탭 ── */}
-        {activeTab === '연락기록' && (
-          <div className={styles.tab_body}>
-            {/* 추가 버튼 */}
-            <div className={styles.contact_header}>
-              <button className={styles.add_btn} onClick={() => setShowContactForm(v => !v)}>
-                {showContactForm ? '취소' : '+ 연락 기록 추가'}
-              </button>
-            </div>
-
-            {/* 추가 폼 */}
-            {showContactForm && (
-              <div className={styles.contact_form}>
-                <div className={styles.contact_form_row}>
-                  <div className={styles.form_group}>
-                    <label className={styles.form_label}>유형</label>
-                    <div className={styles.contact_type_btns}>
-                      {CONTACT_TYPES.map(t => (
-                        <button
-                          key={t}
-                          className={`${styles.contact_type_btn} ${contactType === t ? styles.contact_type_btn_active : ''}`}
-                          style={contactType === t ? { background: CONTACT_TYPE_STYLE[t].bg, color: CONTACT_TYPE_STYLE[t].color, borderColor: CONTACT_TYPE_STYLE[t].color } : {}}
-                          onClick={() => setContactType(t)}
-                        >{t}</button>
-                      ))}
-                    </div>
-                  </div>
-                  <div className={styles.form_group}>
-                    <label className={styles.form_label}>날짜</label>
-                    <input
-                      type="date"
-                      className={styles.form_date}
-                      value={contactDate}
-                      onChange={e => setContactDate(e.target.value)}
-                    />
-                  </div>
-                </div>
-                <div className={styles.form_group}>
-                  <label className={styles.form_label}>내용</label>
-                  <textarea
-                    className={styles.form_textarea}
-                    placeholder="연락 내용을 입력하세요..."
-                    value={contactContent}
-                    onChange={e => setContactContent(e.target.value)}
-                    rows={3}
-                  />
-                </div>
-                <div className={styles.form_actions}>
-                  <button
-                    className={styles.submit_btn}
-                    onClick={handleAddContact}
-                    disabled={contactSaving || !contactContent.trim()}
-                  >
-                    {contactSaving ? '저장 중...' : '저장'}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* 연락 목록 */}
-            {contacts.length === 0 ? (
-              <div className={styles.empty}>연락 기록이 없습니다.</div>
-            ) : (
-              <div className={styles.contact_list}>
-                {contacts.map(c => {
-                  const typeStyle = CONTACT_TYPE_STYLE[c.contact_type] ?? { color: '#6B7684', bg: '#F2F4F6' };
-                  return (
-                    <div key={c.id} className={styles.contact_card}>
-                      <div className={styles.contact_card_top}>
-                        <div className={styles.contact_card_left}>
-                          <span className={styles.contact_type_badge} style={{ color: typeStyle.color, background: typeStyle.bg }}>
-                            {c.contact_type}
-                          </span>
-                          <span className={styles.contact_date}>{formatDate(c.contacted_at)}</span>
-                        </div>
-                        <div className={styles.contact_card_right}>
-                          <span className={styles.contact_by}>{c.created_by}</span>
-                          <button className={styles.delete_btn} onClick={() => handleDeleteContact(c.id)}>삭제</button>
-                        </div>
-                      </div>
-                      <div className={styles.contact_content}>{c.content}</div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── 변경이력 탭 ── */}
-        {activeTab === '변경이력' && (
-          <div className={styles.tab_body}>
-            {logsLoading ? (
-              <div className={styles.empty}>불러오는 중...</div>
-            ) : logs.length === 0 ? (
-              <div className={styles.empty}>변경 이력이 없습니다.</div>
-            ) : (
-              <div className={styles.log_list}>
-                {logs.map(log => (
-                  <div key={log.id} className={styles.log_row}>
-                    <div className={styles.log_row_left}>
-                      <span className={styles.log_action}>{log.action}</span>
-                      {log.detail && <span className={styles.log_detail}>{log.detail}</span>}
-                    </div>
-                    <div className={styles.log_row_right}>
-                      <span className={styles.log_user}>{log.user_name}</span>
-                      <span className={styles.log_time}>{formatDateTime(log.created_at)}</span>
-                    </div>
                   </div>
                 ))}
               </div>
