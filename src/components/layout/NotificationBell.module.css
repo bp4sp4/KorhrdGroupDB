@@ -587,3 +587,96 @@
     padding-right: 44px;
   }
 }
+
+/* ─── 새 공지 안내 팝업 ───────────────────────────── */
+.newPopupOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 16px;
+}
+
+.newPopup {
+  width: 100%;
+  max-width: 360px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px 22px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+}
+
+.newPopupIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #eef5ff;
+  color: #3182f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.newPopupImage {
+  width: 88px;
+  height: 88px;
+  margin-bottom: 6px;
+  object-fit: contain;
+}
+
+.newPopupTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: #191f28;
+}
+
+.newPopupDesc {
+  font-size: 13px;
+  color: #6b7684;
+  line-height: 1.5;
+  margin-bottom: 6px;
+}
+
+.newPopupActions {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.newPopupBtnGhost,
+.newPopupBtnPrimary {
+  flex: 1;
+  height: 40px;
+  border-radius: 9px;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.newPopupBtnGhost {
+  background: #f2f4f6;
+  color: #4e5968;
+}
+.newPopupBtnGhost:hover {
+  background: #e5e8eb;
+}
+
+.newPopupBtnPrimary {
+  background: #3182f6;
+  color: #fff;
+}
+.newPopupBtnPrimary:hover {
+  background: #1d6de0;
+}
