@@ -1149,12 +1149,23 @@ function HakjeomDetailPanel({
   };
 
   const handleSave = async () => {
+    const finalStatus = (editStatus === "기타" && editStatusEtc.trim()
+      ? `기타(${editStatusEtc.trim()})`
+      : editStatus) as ConsultationStatus;
+    // '등록완료'로 저장 시 과목당 비용(subject_cost) 필수 검증
+    if (finalStatus === "등록완료") {
+      const costNum = editSubjectCost
+        ? parseInt(editSubjectCost.replace(/,/g, ""), 10) || 0
+        : 0;
+      if (costNum <= 0) {
+        alert("과목당 비용이 입력되어야 '등록완료'로 변경할 수 있습니다.\n과목당 비용을 먼저 입력해주세요.");
+        return;
+      }
+    }
     setSaving(true);
     try {
       await onUpdate(item.id, {
-        status: (editStatus === "기타" && editStatusEtc.trim()
-          ? `기타(${editStatusEtc.trim()})`
-          : editStatus) as ConsultationStatus,
+        status: finalStatus,
         memo: editMemo || null,
         manager: editManager || null,
         education: editEducation || null,
@@ -2973,6 +2984,15 @@ function HakjeomTab({
   };
 
   const handleStatusChange = async (id: number, status: ConsultationStatus) => {
+    // '등록완료'로 바꿀 때는 과목당 비용(subject_cost)이 반드시 입력되어 있어야 함
+    if (status === "등록완료") {
+      const target = items.find((c) => c.id === id) ?? (selectedItem?.id === id ? selectedItem : null);
+      const cost = target?.subject_cost;
+      if (!cost || Number(cost) <= 0) {
+        alert("과목당 비용이 입력되어야 '등록완료'로 변경할 수 있습니다.\n상세창에서 과목당 비용을 먼저 저장해주세요.");
+        return;
+      }
+    }
     await handleUpdate(id, { status });
   };
 

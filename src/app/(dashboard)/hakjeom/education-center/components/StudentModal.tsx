@@ -58,6 +58,7 @@ const EMPTY_FORM: EduStudentFormData = {
   course_id: '',
   manager_name: '',
   cost: '',
+  unit_price: '',
   class_start: '',
   target_completion_date: '',
   education_center_name: '',
@@ -158,6 +159,7 @@ export default function StudentModal({ student, courses, centers, managers = [],
         course_id: student.course_id ?? '',
         manager_name: student.manager_name ?? '',
         cost: student.cost?.toString() ?? '',
+        unit_price: student.unit_price?.toString() ?? '',
         class_start: student.class_start ?? '',
         target_completion_date: student.target_completion_date ?? '',
         education_center_name: student.education_center_name ?? '',
@@ -186,10 +188,24 @@ export default function StudentModal({ student, courses, centers, managers = [],
     set('cost', digits);
   }
 
+  function handleUnitPrice(raw: string) {
+    const digits = raw.replace(/[^\d]/g, '');
+    set('unit_price', digits);
+  }
+
   function displayCost(val: string) {
     if (!val) return '';
     return Number(val).toLocaleString();
   }
+
+  // 과목당 비용 입력 시 결제금액 / 과목당비용으로 산출되는 과목수 (정수면 표시)
+  const subjectCountPreview = (() => {
+    const c = Number(form.cost || 0);
+    const u = Number(form.unit_price || 0);
+    if (!c || !u) return null;
+    const n = c / u;
+    return Number.isInteger(n) ? n : null;
+  })();
 
   // 학력에 따라 전공 자동완성 목록 결정
   const majorSuggestions = form.education_level === '4년제졸업'
@@ -220,6 +236,8 @@ export default function StudentModal({ student, courses, centers, managers = [],
     if (!form.desired_degree) { alert('희망학위과정을 선택해주세요.'); return; }
     if (!form.course_id) { alert('희망자격증과정을 선택해주세요.'); return; }
     if (!form.manager_name) { alert('담당자를 선택해주세요.'); return; }
+    if (!form.cost || Number(form.cost) <= 0) { alert('비용을 입력해주세요.'); return; }
+    if (!form.unit_price || Number(form.unit_price) <= 0) { alert('과목당 비용을 입력해주세요.'); return; }
     setLoading(true);
     try {
       await onSubmit(form);
@@ -481,11 +499,29 @@ export default function StudentModal({ student, courses, centers, managers = [],
 
               {/* 비용 */}
               <div className={styles.form_field}>
-                <label className={styles.form_label}>비용</label>
+                <label className={styles.form_label}>비용<span className={styles.form_required}>*</span></label>
                 <div className={styles.input_suffix_wrap}>
                   <input className={styles.form_input} inputMode="numeric" placeholder="0"
                     value={displayCost(form.cost)}
                     onChange={(e) => handleCost(e.target.value)} />
+                  <span className={styles.input_suffix}>원</span>
+                </div>
+              </div>
+
+              {/* 과목당 비용 */}
+              <div className={styles.form_field}>
+                <label className={styles.form_label}>
+                  과목당 비용<span className={styles.form_required}>*</span>
+                  {subjectCountPreview !== null && (
+                    <span style={{ marginLeft: 8, fontSize: 11, color: '#3182f6', fontWeight: 500 }}>
+                      = {subjectCountPreview}과목
+                    </span>
+                  )}
+                </label>
+                <div className={styles.input_suffix_wrap}>
+                  <input className={styles.form_input} inputMode="numeric" placeholder="예: 45000"
+                    value={displayCost(form.unit_price)}
+                    onChange={(e) => handleUnitPrice(e.target.value)} />
                   <span className={styles.input_suffix}>원</span>
                 </div>
               </div>

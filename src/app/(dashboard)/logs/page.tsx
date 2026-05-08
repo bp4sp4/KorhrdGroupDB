@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback, useRef, Fragment } from 'react'
 import styles from './page.module.css'
 
 // ─── 타입 ────────────────────────────────────────────────────────────────────
@@ -69,6 +69,55 @@ const FIELD_LABELS: Record<string, string> = {
   has_resume: '이력서',
   gender: '성별',
   birth_date: '생년월일',
+  // 상담/등록 시점
+  counsel_completed_at: '상담완료일시',
+  contact_scheduled_at: '연락예정일',
+  registered_at: '등록일',
+  last_counsel_level: '상담등급',
+  current_situation: '현재상황',
+  reaction_point: '반응포인트',
+  delete_reason: '삭제사유',
+  deleted_at: '삭제일시',
+  // 학생 정보 (등록학생관리)
+  phone: '연락처',
+  education_level: '최종학력',
+  major: '전공',
+  desired_degree: '희망학위과정',
+  course_id: '희망자격증과정',
+  manager_name: '담당자',
+  cost: '비용',
+  unit_price: '과목당비용',
+  class_start: '개강반',
+  target_completion_date: '목표취득일',
+  education_center_name: '등록교육원',
+  education_center_id: '등록교육원ID',
+  all_care: '올케어 가입',
+  // 행정 절차
+  learner_username: '학습자등록 아이디',
+  learner_password: '학습자등록 비밀번호',
+  credit_application: '학점인정신청',
+  degree_application: '학위신청',
+  course_plan_date: '수강신청 및 플랜',
+  dup_check_university: '중복과목(전적대)',
+  dup_check_certificate: '중복과목(자격증)',
+  // 메타
+  updated_at: '수정일시',
+  created_at: '생성일시',
+  user_id: '사용자ID',
+  user_email: '사용자',
+  display_name: '이름',
+}
+
+// 매핑되지 않은 영어 컬럼명을 한글 친화적으로 변환 (보조)
+function humanizeKey(k: string): string {
+  // 흔한 접미사 변환
+  let s = k
+  s = s.replace(/_at$/, '일시')
+  s = s.replace(/_date$/, '일')
+  s = s.replace(/_id$/, 'ID')
+  s = s.replace(/_url$/, '주소')
+  s = s.replace(/_/g, ' ')
+  return s
 }
 
 function extractTargetName(detail: string | null, resourceId: string | null): string {
@@ -88,9 +137,24 @@ function extractTargetName(detail: string | null, resourceId: string | null): st
 }
 
 function formatChangeVal(v: unknown): string {
-  if (v === null || v === undefined || v === '') return '(없음)'
+  if (v === null || v === undefined || v === '') return '—'
   if (typeof v === 'boolean') return v ? '예' : '아니오'
-  if (Array.isArray(v)) return v.join(', ')
+  if (Array.isArray(v)) return v.length ? v.join(', ') : '—'
+  if (typeof v === 'string') {
+    // ISO datetime → "yyyy.MM.dd HH:mm"
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(v)) {
+      const d = new Date(v)
+      if (!isNaN(d.getTime())) {
+        const pad = (n: number) => String(n).padStart(2, '0')
+        return `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+      }
+    }
+    // 날짜만(YYYY-MM-DD) → "yyyy.MM.dd"
+    if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v.replace(/-/g, '.')
+    // 큰 정수 금액 보정 (e.g. "720000" → "720,000원")  — 키와 무관하게 안전하게: 6자리 이상 숫자만
+    if (/^\d{6,}$/.test(v) && Number(v) > 0) return Number(v).toLocaleString() + '원'
+  }
+  if (typeof v === 'number' && v >= 100000) return v.toLocaleString() + '원'
   return String(v)
 }
 
@@ -224,6 +288,27 @@ function formatDateTime(iso: string) {
   return { date, time }
 }
 
+// 같은 날짜 그룹화용 키 (yyyy-mm-dd)
+function dateKey(iso: string) {
+  const d = new Date(iso)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
+// 그룹 헤더 라벨: 오늘 / 어제 / N월 N일 (요일)
+function dateGroupLabel(iso: string) {
+  const d = new Date(iso)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const target = new Date(d)
+  target.setHours(0, 0, 0, 0)
+  const diffDays = Math.round((today.getTime() - target.getTime()) / 86400000)
+  const weekday = ['일', '월', '화', '수', '목', '금', '토'][d.getDay()]
+  if (diffDays === 0) return `오늘 · ${d.getMonth() + 1}월 ${d.getDate()}일 (${weekday})`
+  if (diffDays === 1) return `어제 · ${d.getMonth() + 1}월 ${d.getDate()}일 (${weekday})`
+  return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 (${weekday})`
+}
+
 function formatEmail(email: string | null) {
   if (!email) return '-'
   return email.split('@')[0]
@@ -297,6 +382,7 @@ export default function LogsPage() {
   const [search, setSearch] = useState('')
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
+
 
   const fetchLogs = useCallback(async (p: number) => {
     setLoading(true)
@@ -405,67 +491,80 @@ export default function LogsPage() {
                 </td>
               </tr>
             )}
-            {logs.map(log => {
-              const { date, time } = formatDateTime(log.created_at)
+            {logs.map((log, idx) => {
+              const { time } = formatDateTime(log.created_at)
+              const prev = idx > 0 ? logs[idx - 1] : null
+              const showGroupHeader = !prev || dateKey(prev.created_at) !== dateKey(log.created_at)
+
+              // 변경 내용 정리
+              const rawChanges = log.meta?.changes as Record<string, unknown> | undefined
+              const changeEntries = rawChanges
+                ? Object.entries(rawChanges).filter(([, v]) => {
+                    if (typeof v === 'object' && v !== null && !Array.isArray(v) && 'before' in (v as object)) {
+                      const { before, after } = v as { before: unknown; after: unknown }
+                      return String(before ?? '') !== String(after ?? '')
+                    }
+                    return v !== null && v !== undefined && v !== ''
+                  })
+                : []
+              const hasChanges = changeEntries.length > 0
+
               return (
-                <tr key={log.id} className={styles.tr}>
-                  <td className={styles.td}>
-                    <div className={styles.timeCell}>
-                      <span className={styles.timeDate}>{date}</span>
-                      <span className={styles.timeTime}>{time}</span>
-                    </div>
-                  </td>
-                  <td className={styles.td}>
-                    <span className={styles.targetName}>{extractTargetName(log.detail, log.resource_id)}</span>
-                  </td>
-                  <td className={styles.td}>
-                    <div className={styles.actionCell}>
-                      <ActionBadge action={log.action} />
-                      <span className={styles.resourceTag}>{log.resource}</span>
-                    </div>
-                  </td>
-                  <td className={styles.td}>
-                    <div className={styles.detailWrap}>
-                      {log.meta?.changes && Object.keys(log.meta.changes as object).length > 0 ? (
-                        <div className={styles.changesList}>
-                          {Object.entries(log.meta.changes as Record<string, unknown>)
-                            .filter(([, v]) => {
-                              if (typeof v === 'object' && v !== null && !Array.isArray(v) && 'before' in (v as object)) {
-                                const { before, after } = v as { before: unknown; after: unknown }
-                                return String(before ?? '') !== String(after ?? '')
-                              }
-                              return v !== null && v !== undefined && v !== ''
-                            })
-                            .map(([k, v]) => {
-                              const label = FIELD_LABELS[k] ?? k
-                              if (typeof v === 'object' && v !== null && !Array.isArray(v) && 'before' in (v as object)) {
-                                const { before, after } = v as { before: unknown; after: unknown }
-                                return (
-                                  <span key={k} className={styles.changeItem}>
-                                    <span className={styles.changeKey}>{label}</span>
-                                    <span className={styles.changeBefore}>{formatChangeVal(before)}</span>
-                                    <span className={styles.changeArrow}>→</span>
-                                    <span className={styles.changeAfter}>{formatChangeVal(after)}</span>
-                                  </span>
-                                )
-                              }
+                <Fragment key={log.id}>
+                  {showGroupHeader && (
+                    <tr className={styles.groupHeaderRow}>
+                      <td colSpan={5} className={styles.groupHeaderCell}>
+                        {dateGroupLabel(log.created_at)}
+                      </td>
+                    </tr>
+                  )}
+                  <tr className={styles.tr}>
+                    <td className={styles.td}>
+                      <span className={styles.timeOnly}>{time}</span>
+                    </td>
+                    <td className={styles.td}>
+                      <span className={styles.targetName}>{extractTargetName(log.detail, log.resource_id)}</span>
+                    </td>
+                    <td className={styles.td}>
+                      <div className={styles.actionCell}>
+                        <ActionBadge action={log.action} />
+                        <span className={styles.resourceTag}>{log.resource}</span>
+                      </div>
+                    </td>
+                    <td className={styles.td}>
+                      {hasChanges ? (
+                        <div className={styles.changesTable}>
+                          {changeEntries.map(([k, v]) => {
+                            const label = FIELD_LABELS[k] ?? humanizeKey(k)
+                            const isDiff = typeof v === 'object' && v !== null && !Array.isArray(v) && 'before' in (v as object)
+                            if (isDiff) {
+                              const { before, after } = v as { before: unknown; after: unknown }
                               return (
-                                <span key={k} className={styles.changeItem}>
-                                  <span className={styles.changeKey}>{label}</span>
-                                  <span className={styles.changeVal}>{formatChangeVal(v)}</span>
-                                </span>
+                                <div key={k} className={styles.changesRow}>
+                                  <span className={styles.changesRowLabel}>{label}</span>
+                                  <span className={styles.changesRowBefore}>{formatChangeVal(before)}</span>
+                                  <span className={styles.changesRowArrow}>→</span>
+                                  <span className={styles.changesRowAfter}>{formatChangeVal(after)}</span>
+                                </div>
                               )
-                            })}
+                            }
+                            return (
+                              <div key={k} className={styles.changesRow}>
+                                <span className={styles.changesRowLabel}>{label}</span>
+                                <span className={styles.changesRowAfter} style={{ gridColumn: '2 / -1' }}>{formatChangeVal(v)}</span>
+                              </div>
+                            )
+                          })}
                         </div>
                       ) : (
                         <span className={styles.detailText}>{log.detail ?? '-'}</span>
                       )}
-                    </div>
-                  </td>
-                  <td className={styles.td}>
-                    <span className={styles.userText}>{log.display_name ?? formatEmail(log.user_email)}</span>
-                  </td>
-                </tr>
+                    </td>
+                    <td className={styles.td}>
+                      <span className={styles.userText}>{log.display_name ?? formatEmail(log.user_email)}</span>
+                    </td>
+                  </tr>
+                </Fragment>
               )
             })}
           </tbody>

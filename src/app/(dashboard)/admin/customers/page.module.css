@@ -1,0 +1,227 @@
+.page_wrap {
+  padding: 24px 28px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.page_header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.page_title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #191f28;
+  margin: 0 0 4px 0;
+}
+.page_sub {
+  font-size: 13px;
+  color: #8b95a1;
+  margin: 0;
+}
+
+.export_btn {
+  height: 36px;
+  padding: 0 16px;
+  background: #3182f6;
+  color: #fff;
+  border: none;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.export_btn:hover:not(:disabled) {
+  background: #1d6de0;
+}
+.export_btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── 요약 카드 ── */
+.summary_row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (max-width: 800px) {
+  .summary_row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.summary_card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.summary_label {
+  font-size: 12px;
+  color: #8b95a1;
+  font-weight: 600;
+}
+.summary_value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #191f28;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.summary_unit {
+  font-size: 12px;
+  color: #8b95a1;
+  font-weight: 500;
+}
+.summary_warn {
+  color: #ef4444;
+}
+
+/* ── 필터 바 ── */
+.filter_bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  background: #fff;
+  border-radius: 12px;
+  padding: 12px;
+}
+.search_input {
+  flex: 1 1 280px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1.5px solid #e5e8eb;
+  border-radius: 8px;
+  font-size: 13px;
+  outline: none;
+  background: #fff;
+  color: #191f28;
+  transition: border-color 0.15s;
+}
+.search_input:focus {
+  border-color: #3182f6;
+}
+.search_input::placeholder {
+  color: #b0b8c1;
+}
+
+.select {
+  height: 36px;
+  padding: 0 10px;
+  border: 1.5px solid #e5e8eb;
+  border-radius: 8px;
+  font-size: 13px;
+  background: #fff;
+  color: #191f28;
+  outline: none;
+  cursor: pointer;
+}
+.select:focus {
+  border-color: #3182f6;
+}
+
+/* ── 표 ── */
+.table_wrap {
+  background: #fff;
+  border-radius: 12px;
+  overflow-x: auto;
+  min-height: 280px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.table thead th {
+  background: #fafbfc;
+  color: #4e5968;
+  font-weight: 600;
+  text-align: left;
+  padding: 12px 14px;
+  border-bottom: 1px solid #f2f4f6;
+  white-space: nowrap;
+  font-size: 12px;
+}
+.table tbody td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #f2f4f6;
+  color: #333d4b;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.table tbody tr:hover {
+  background: #fafbfc;
+}
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.cell_name {
+  font-weight: 600;
+  color: #191f28;
+}
+.cell_id {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: #4e5968;
+}
+.cell_money {
+  font-weight: 600;
+  color: #191f28;
+  text-align: right;
+}
+.cell_count {
+  text-align: center;
+  font-weight: 600;
+}
+.cell_memo {
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #6b7684;
+}
+
+/* ── 단가 태그 ── */
+.tag_main,
+.tag_alt,
+.tag_unknown {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.tag_main {
+  color: #3182f6;
+  background: #eef5ff;
+}
+.tag_alt {
+  color: #d97706;
+  background: #fffbeb;
+}
+.tag_unknown {
+  color: #ef4444;
+  background: #fef2f2;
+}
+
+/* ── 빈 상태 ── */
+.empty,
+.empty_error {
+  text-align: center;
+  padding: 80px 16px;
+  font-size: 14px;
+  color: #8b95a1;
+}
+.empty_error {
+  color: #ef4444;
+}

@@ -261,6 +261,7 @@ export default function EduStudentsTab({ isActive }: Props) {
       course_id: data.course_id || null,
       manager_name: data.manager_name || null,
       cost: data.cost ? Number(data.cost) : null,
+      unit_price: data.unit_price ? Number(data.unit_price) : null,
       class_start: data.class_start || null,
       target_completion_date: data.target_completion_date || null,
       education_center_name: data.education_center_name || null,

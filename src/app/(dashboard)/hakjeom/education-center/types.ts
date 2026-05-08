@@ -25,6 +25,7 @@ export interface EduStudent {
   course_id: number | null;
   manager_name: string | null;
   cost: number | null;
+  unit_price: number | null;
   class_start: string | null;
   target_completion_date: string | null;
   education_center_name: string | null;
@@ -46,6 +47,7 @@ export interface EduStudentFormData {
   course_id: number | '';
   manager_name: string;
   cost: string;
+  unit_price: string;
   class_start: string;
   target_completion_date: string;
   education_center_name: string;
