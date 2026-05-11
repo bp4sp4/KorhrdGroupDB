@@ -242,6 +242,7 @@ export default function NotificationBell() {
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "announcements" },
         (payload) => {
+          console.log('[announcements] realtime INSERT', payload)
           const a = payload.new as Announcement;
           setAnnouncements((prev) =>
             prev.some((p) => p.id === a.id) ? prev : [a, ...prev],
@@ -256,7 +257,9 @@ export default function NotificationBell() {
           }
         },
       )
-      .subscribe();
+      .subscribe((status, err) => {
+        console.log('[announcements] subscribe status:', status, err ?? '')
+      });
 
     return () => {
       cancelled = true;
