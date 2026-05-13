@@ -11,6 +11,8 @@ import { BusinessTripReportBody, BUSINESS_TRIP_REPORT_FIELDS } from './templates
 import { BusinessTripApplicationBody, BUSINESS_TRIP_APPLICATION_FIELDS } from './templates/businessTripApplication'
 import { CorporateCardBody, CORPORATE_CARD_FIELDS } from './templates/corporateCard'
 import { ExpenseResolutionBody, EXPENSE_RESOLUTION_FIELDS } from './templates/expenseResolution'
+import { ExpenseResolutionCardBody, EXPENSE_RESOLUTION_CARD_FIELDS } from './templates/expenseResolutionCard'
+import { ExpenseResolutionTransferBody, EXPENSE_RESOLUTION_TRANSFER_FIELDS } from './templates/expenseResolutionTransfer'
 import { ExpenseProposalBody, EXPENSE_PROPOSAL_FIELDS } from './templates/expenseProposal'
 import { AffiliatePaymentBody, AFFILIATE_PAYMENT_FIELDS } from './templates/affiliatePayment'
 import { PointResolutionBody, POINT_RESOLUTION_FIELDS } from './templates/pointResolution'
@@ -177,6 +179,26 @@ export const DOC_TEMPLATE_REGISTRY: DocTemplateConfig[] = [
     supportsAttachments: true,
   },
   {
+    id: 'expense-resolution-card',
+    match: (doc) => {
+      const t = doc.document_type.replace(/\s/g, '')
+      return t === '지출결의서(법인카드)' || t === '[결의서]지출결의서(법인카드)'
+    },
+    fields: EXPENSE_RESOLUTION_CARD_FIELDS,
+    BodySection: ExpenseResolutionCardBody,
+    supportsAttachments: true,
+  },
+  {
+    id: 'expense-resolution-transfer',
+    match: (doc) => {
+      const t = doc.document_type.replace(/\s/g, '')
+      return t === '지출결의서(이체요청)' || t === '[결의서]지출결의서(이체요청)'
+    },
+    fields: EXPENSE_RESOLUTION_TRANSFER_FIELDS,
+    BodySection: ExpenseResolutionTransferBody,
+    supportsAttachments: true,
+  },
+  {
     id: 'expense-resolution',
     match: (doc) => doc.document_type.replace(/\s/g, '') === '[결의서]지출결의서',
     fields: EXPENSE_RESOLUTION_FIELDS,
@@ -308,6 +330,8 @@ export const ALL_TEMPLATE_FIELDS: FieldDef[] = [
   ...BUSINESS_TRIP_APPLICATION_FIELDS,
   ...CORPORATE_CARD_FIELDS,
   ...EXPENSE_RESOLUTION_FIELDS,
+  ...EXPENSE_RESOLUTION_CARD_FIELDS,
+  ...EXPENSE_RESOLUTION_TRANSFER_FIELDS,
   ...EXPENSE_PROPOSAL_FIELDS,
   ...AFFILIATE_PAYMENT_FIELDS,
   ...POINT_RESOLUTION_FIELDS,

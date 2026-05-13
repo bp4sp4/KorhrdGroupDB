@@ -5,7 +5,7 @@ import { usePathname, useSearchParams } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import {
   GraduationCap, Users, UserCog, Trash2,
-  ClipboardList, Copy, TrendingUp, FileCheck, BarChart2, Settings, UserCheck, Plane, Link2, ChevronRight, Upload, Landmark, Megaphone,
+  ClipboardList, Copy, TrendingUp, FileCheck, BarChart2, Settings, UserCheck, Plane, Link2, ChevronRight, Upload, Landmark, Megaphone, LayoutGrid,
 } from 'lucide-react'
 import styles from './layout.module.css'
 import { createClient } from '@/lib/supabase/client'
@@ -37,7 +37,7 @@ interface NavSection {
 const ALL_SECTIONS: NavSection[] = [
   {
     sectionKey: '교육운영',
-    activeOn: ['/hakjeom', '/cert', '/practice', '/allcare', '/abroad', '/revenues', '/revenue-upload', '/approvals', '/reports', '/bankaccount', '/marketing', '/duplicate', '/trash', '/ref-manage', '/logs', '/assignment', '/links'],
+    activeOn: ['/hakjeom', '/cert', '/practice', '/allcare', '/abroad', '/revenues', '/revenue-upload', '/approvals', '/reports', '/bankaccount', '/marketing', '/task-board', '/duplicate', '/trash', '/ref-manage', '/logs', '/assignment', '/links'],
     items: [
       {
         id: 'education', label: '학점은행제 사업부', href: '/hakjeom', icon: <GraduationCap size={16} />, groupLabel: '사업부서',
@@ -102,7 +102,8 @@ const ALL_SECTIONS: NavSection[] = [
           { id: 'marketing-mom-cafe',         label: '맘카페 관리', href: '/marketing?tab=mom-cafe',         sectionLabel: '맘카페' },
         ],
       },
-      { id: 'duplicate', label: '중복 조회', href: '/duplicate', icon: <Copy size={16} />, groupLabel: '시스템' },
+      { id: 'task-board', label: '통합 업무보드', href: '/task-board', icon: <LayoutGrid size={16} />, groupLabel: '시스템' },
+      { id: 'duplicate', label: '중복 조회', href: '/duplicate', icon: <Copy size={16} /> },
       { id: 'trash', label: '삭제목록', href: '/trash', icon: <Trash2 size={16} /> },
       { id: 'ref-manage', label: '어드민 관리', href: '/ref-manage', icon: <UserCog size={16} /> },
       { id: 'logs', label: '로그 관리', href: '/logs', icon: <ClipboardList size={16} /> },

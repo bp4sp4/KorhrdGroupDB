@@ -1,0 +1,257 @@
+/* 상단 요약 (사업부/출금통장) */
+.summary_table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.summary_table th,
+.summary_table td {
+  border: 1px solid #333;
+  padding: 7px 10px;
+  vertical-align: middle;
+}
+
+.label_cell {
+  background: #f4f4f4;
+  font-weight: 700;
+  text-align: center;
+  width: 130px;
+  white-space: nowrap;
+}
+
+.value_cell {
+  min-width: 0;
+}
+
+.account_display {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #191F28;
+}
+
+.account_display_main {
+  font-weight: 600;
+}
+
+.account_display_sub {
+  font-size: 12px;
+  color: #6B7684;
+  font-family: 'SF Mono', Menlo, monospace;
+}
+
+.account_display_memo {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #4b5563;
+  background: #f9fafb;
+  border-left: 2px solid #d1d5db;
+  padding: 4px 8px;
+  white-space: pre-wrap;
+  line-height: 1.4;
+}
+
+.select_full {
+  color: rgb(17, 17, 17);
+  box-sizing: border-box;
+  background: rgb(249, 249, 249);
+  border: 1px solid rgb(204, 204, 204);
+  width: 100%;
+  height: 26px;
+  padding: 0px 6px;
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+}
+
+/* 사용내역 표 */
+.table_main {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 13px;
+}
+
+.table_main th,
+.table_main td {
+  border: 1px solid #333;
+  padding: 5px 6px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.table_main thead th {
+  background: #dddddd;
+  font-weight: 600;
+}
+
+.th_date     { width: 120px; }
+.th_card     { width: 110px; }
+.th_user     { width: 90px; }
+.th_merchant { }
+.th_detail   { }
+.th_amount   { width: 100px; }
+
+.td_date     { width: 120px; }
+.td_card     { width: 110px; }
+.td_user     { width: 90px; }
+.td_merchant { }
+.td_detail   { }
+.td_amount   { width: 100px; text-align: right; }
+
+.input_full {
+  color: rgb(17, 17, 17);
+  box-sizing: border-box;
+  background: rgb(249, 249, 249);
+  border: 1px solid rgb(204, 204, 204);
+  width: 100%;
+  height: 26px;
+  padding: 0px 6px;
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+}
+
+.input_center {
+  color: rgb(17, 17, 17);
+  box-sizing: border-box;
+  background: rgb(249, 249, 249);
+  border: 1px solid rgb(204, 204, 204);
+  width: 100%;
+  height: 26px;
+  padding: 0px 6px;
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+  text-align: center;
+}
+
+.input_num {
+  color: rgb(17, 17, 17);
+  box-sizing: border-box;
+  background: rgb(249, 249, 249);
+  border: 1px solid rgb(204, 204, 204);
+  width: 100%;
+  height: 26px;
+  padding: 0px 6px;
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+}
+
+.total_row td {
+  background: #dddddd;
+  font-weight: 600;
+}
+
+.total_label {
+  text-align: right;
+  padding-right: 12px !important;
+}
+
+.total_amount {
+  text-align: right;
+}
+
+.btn_add_row {
+  margin-top: 6px;
+  padding: 4px 12px;
+  font-size: 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  color: #555;
+}
+
+.btn_add_row:hover {
+  background: #f5f5f5;
+}
+
+.special_block {
+  margin-top: 16px;
+}
+
+.textarea_full {
+  color: rgb(17, 17, 17);
+  box-sizing: border-box;
+  background: rgb(249, 249, 249);
+  border: 1px solid rgb(204, 204, 204);
+  width: 100%;
+  min-height: 80px;
+  padding: 6px;
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+  resize: vertical;
+}
+
+.pre_wrap {
+  white-space: pre-wrap;
+  display: block;
+  min-height: 60px;
+}
+
+.notes {
+  margin-top: 16px;
+  font-size: 12px;
+  color: #555;
+  line-height: 1.8;
+}
+
+.notes_title {
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.empty_account {
+  color: #9CA3AF;
+  font-size: 12px;
+}
+
+/* 통장 카드 리스트 (라디오) */
+.account_list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.account_card {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid #E5E8EB;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 120ms, box-shadow 120ms;
+}
+
+.account_card:hover {
+  border-color: #93C5FD;
+}
+
+.account_card_selected {
+  border-color: #3B82F6;
+  background: #EFF6FF;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.account_card input[type='radio'] {
+  margin-top: 3px;
+  accent-color: #2563EB;
+}
+
+.account_card_body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}

@@ -46,12 +46,26 @@ export interface CardItemLike {
   merchant?: string
 }
 
+export interface ExternalAccount {
+  bankCode?: string | null
+  accountNumber: string
+  accountName?: string | null
+  memo?: string | null
+}
+
 interface Props {
   cardItems: CardItemLike[]
   /** 지출내역 항목 클릭 시 호출 - 제공되면 항목을 클릭해서 사용내역에 자동 추가 가능 */
   onAddItem?: (item: { date: string; amount: string; merchant: string; cardLast4: string }) => void
   /** 매칭된 항목 제거 요청 - 제공되면 X 버튼 노출 */
   onRemoveItem?: (item: { date: string; amount: string }) => void
+  /** 외부에서 지정한 통장 — 제공되면 /api/bankaccount?action=list 자동 조회를 건너뜀.
+   *  null 이면 "통장이 선택되지 않았습니다" 상태로 표시. */
+  externalAccount?: ExternalAccount | null
+  /** 헤더 제목 (기본: 법인카드 계좌) */
+  title?: string
+  /** 카드번호 입력 필드 숨김 (이체요청용 등) */
+  hideCardLast4?: boolean
 }
 
 function toApiDate(d: string): string {
@@ -75,7 +89,14 @@ function findMatchingItem(tx: Transaction, items: CardItemLike[]): CardItemLike 
 
 type FilterMode = 'unmatched' | 'matched' | 'all'
 
-export function ExpenseProofPanel({ cardItems, onAddItem, onRemoveItem }: Props) {
+export function ExpenseProofPanel({
+  cardItems,
+  onAddItem,
+  onRemoveItem,
+  externalAccount,
+  title,
+  hideCardLast4,
+}: Props) {
   const [account, setAccount] = useState<BankAccount | null>(null)
   const [accountError, setAccountError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -102,8 +123,28 @@ export function ExpenseProofPanel({ cardItems, onAddItem, onRemoveItem }: Props)
   const [endDate, setEndDate] = useState(defaultRange.end)
   const dateRange = useMemo(() => ({ start: startDate, end: endDate }), [startDate, endDate])
 
-  // 계좌 목록 자동 조회 (첫 번째 활성 계좌 선택)
+  // externalAccount 가 명시되면 그대로 사용, 아니면 /api/bankaccount?action=list 로 자동 조회
   useEffect(() => {
+    if (externalAccount !== undefined) {
+      setAccountError(null)
+      setResult(null)
+      lastFetchKeyRef.current = ''
+      if (externalAccount === null) {
+        setAccount(null)
+      } else {
+        setAccount({
+          bankCode: externalAccount.bankCode ?? '',
+          accountNumber: externalAccount.accountNumber,
+          accountName: externalAccount.accountName ?? '',
+          accountType: '',
+          state: 0,
+          closeRequestYN: false,
+          useRestrictYN: false,
+        })
+      }
+      return
+    }
+
     let cancelled = false
     ;(async () => {
       try {
@@ -121,17 +162,17 @@ export function ExpenseProofPanel({ cardItems, onAddItem, onRemoveItem }: Props)
       }
     })()
     return () => { cancelled = true }
-  }, [])
+  }, [externalAccount])
 
   const fetchTransactions = useCallback(async () => {
     if (!account || !dateRange) return
     setLoading(true)
     setError(null)
     setResult(null)
-    setStatus('조회 요청 중...')
+    setStatus('조회 중...')
 
     try {
-      const reqRes = await fetch('/api/bankaccount', {
+      const res = await fetch('/api/bankaccount', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -142,32 +183,11 @@ export function ExpenseProofPanel({ cardItems, onAddItem, onRemoveItem }: Props)
           endDate: toApiDate(dateRange.end),
         }),
       })
-      const reqJson = await reqRes.json()
-      if (reqJson.error) throw new Error(reqJson.error)
-      const jobID: string = reqJson.data
+      const json = await res.json()
+      if (!res.ok || json.error) throw new Error(json.error ?? `HTTP ${res.status}`)
 
-      for (let i = 0; i < 15; i++) {
-        await new Promise((r) => setTimeout(r, 1500))
-        setStatus(`조회 중... (${i + 1}/15)`)
-        const searchRes = await fetch(
-          `/api/bankaccount?action=search&jobID=${jobID}&page=1&perPage=50`,
-        )
-        const searchJson = await searchRes.json()
-        if (searchJson.error) {
-          if (
-            searchJson.error.includes('완료되지') ||
-            searchJson.error.includes('처리중') ||
-            searchJson.error.includes('대기')
-          ) {
-            continue
-          }
-          throw new Error(searchJson.error)
-        }
-        setResult(searchJson.data)
-        setStatus('조회 완료')
-        return
-      }
-      throw new Error('조회 시간 초과. 잠시 후 다시 시도해주세요.')
+      setResult(json.data as SearchResult)
+      setStatus('조회 완료')
     } catch (e) {
       setError(e instanceof Error ? e.message : '조회 실패')
       setStatus('')
@@ -202,16 +222,25 @@ export function ExpenseProofPanel({ cardItems, onAddItem, onRemoveItem }: Props)
     return merchant.includes(q) || amount.includes(q) || tx.trdate.includes(q.replace(/-/g, ''))
   })
 
+  const headerTitle = title ?? '법인카드 계좌'
+
   return (
     <aside className={styles.proof_panel}>
       <div className={styles.proof_head}>
         <div className={styles.proof_title}>
-          {account ? account.accountName || '법인카드 계좌' : '계좌 불러오는 중...'}
+          {account
+            ? account.accountName || headerTitle
+            : externalAccount === null
+              ? '통장이 선택되지 않았습니다'
+              : '계좌 불러오는 중...'}
         </div>
         {account && (
           <div className={styles.proof_account}>
             {bankName} {account.accountNumber}
           </div>
+        )}
+        {externalAccount?.memo && (
+          <div className={styles.proof_memo}>{externalAccount.memo}</div>
         )}
         {accountError && <div className={styles.proof_error}>{accountError}</div>}
       </div>
@@ -235,18 +264,20 @@ export function ExpenseProofPanel({ cardItems, onAddItem, onRemoveItem }: Props)
         />
       </div>
 
-      <label className={styles.proof_card_field}>
-        <span className={styles.proof_card_label}>카드번호 뒷 4자리</span>
-        <input
-          type="text"
-          inputMode="numeric"
-          maxLength={4}
-          className={styles.proof_card_input}
-          placeholder="0000"
-          value={defaultCardLast4}
-          onChange={(e) => setDefaultCardLast4(e.target.value.replace(/[^\d]/g, '').slice(0, 4))}
-        />
-      </label>
+      {!hideCardLast4 && (
+        <label className={styles.proof_card_field}>
+          <span className={styles.proof_card_label}>카드번호 뒷 4자리</span>
+          <input
+            type="text"
+            inputMode="numeric"
+            maxLength={4}
+            className={styles.proof_card_input}
+            placeholder="0000"
+            value={defaultCardLast4}
+            onChange={(e) => setDefaultCardLast4(e.target.value.replace(/[^\d]/g, '').slice(0, 4))}
+          />
+        </label>
+      )}
 
       <button
         type="button"

@@ -13,6 +13,7 @@ import {
   X,
   UserPlus,
   Megaphone,
+  LayoutGrid,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import styles from "./NotificationBell.module.css";
@@ -32,9 +33,10 @@ interface Notification {
   link: string | null;
   is_read: boolean;
   created_at: string;
+  actor_id?: number | null;
 }
 
-type TabKey = "all" | "unread" | "announcements";
+type TabKey = "all" | "task" | "announcements";
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -59,6 +61,7 @@ function TypeIcon({ type }: { type: string }) {
     APPROVAL_APPROVED: <CheckCircle size={20} />,
     APPROVAL_REJECTED: <XCircle size={20} />,
     APPROVAL_SUBMITTED: <FileText size={20} />,
+    task_board: <LayoutGrid size={20} />,
   };
   return (
     <div className={styles.typeIcon}>
@@ -77,6 +80,24 @@ function getSeenIds(): number[] {
 function setSeenIds(ids: number[]) {
   try {
     localStorage.setItem("seenAnnouncementIds", JSON.stringify(ids));
+  } catch {
+    /* ignore */
+  }
+}
+
+// task_board 알림용 seen IDs (로그인 시 미확인 알림 1회 팝업)
+function getSeenTaskIds(): number[] {
+  try {
+    return JSON.parse(localStorage.getItem("seenTaskNotifIds") ?? "[]");
+  } catch {
+    return [];
+  }
+}
+function setSeenTaskIds(ids: number[]) {
+  try {
+    // 최근 200건만 보존
+    const capped = ids.slice(-200);
+    localStorage.setItem("seenTaskNotifIds", JSON.stringify(capped));
   } catch {
     /* ignore */
   }
@@ -117,6 +138,12 @@ export default function NotificationBell() {
   // 새 공지 안내 팝업 (한 번만)
   const [showNewPopup, setShowNewPopup] = useState(false);
   const [pendingNewIds, setPendingNewIds] = useState<number[]>([]);
+  // 업무 알림 팝업
+  const [taskPopup, setTaskPopup] = useState<Notification | null>(null);
+  const lastTaskIdRef = useRef<number | null>(null);
+  // 본인 작성 알림 억제용 자기 ID (ref + state — state는 useEffect 트리거용)
+  const myIdRef = useRef<number | null>(null);
+  const [myId, setMyId] = useState<number | null>(null);
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -179,9 +206,31 @@ export default function NotificationBell() {
       .then((data) => {
         const pos = (data?.positionName ?? "").trim();
         setIsRestricted(RESTRICTED_POSITIONS.has(pos));
+        if (typeof data?.id === "number") {
+          myIdRef.current = data.id;
+          setMyId(data.id);
+        }
       })
       .catch(() => {});
   }, []);
+
+  // 로그인/마운트 시 미확인 task_board 알림이 있으면 팝업으로 1회 노출
+  useEffect(() => {
+    if (myId === null) return;
+    if (taskPopup) return;
+    const seen = getSeenTaskIds();
+    // notifications는 최신순. 미확인 + 본인 작성 아님 인 가장 최신 알림 1건만
+    const candidate = notifications.find(
+      (n) =>
+        n.type === "task_board" &&
+        !seen.includes(n.id) &&
+        (n.actor_id == null || Number(n.actor_id) !== myId),
+    );
+    if (candidate && lastTaskIdRef.current !== candidate.id) {
+      lastTaskIdRef.current = candidate.id;
+      setTaskPopup(candidate);
+    }
+  }, [notifications, myId, taskPopup]);
 
   useEffect(() => {
     fetchNotifications();
@@ -192,8 +241,21 @@ export default function NotificationBell() {
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "notifications" },
-        () => {
+        (payload) => {
           fetchNotifications();
+          const n = payload.new as Notification;
+          // 업무 알림이면 공지처럼 팝업 (단, 본인이 작성한 건은 제외 + 이미 본 건은 제외)
+          if (n?.type === "task_board" && n.id !== lastTaskIdRef.current) {
+            const isMine =
+              myIdRef.current !== null &&
+              n.actor_id != null &&
+              Number(n.actor_id) === myIdRef.current;
+            const alreadySeen = getSeenTaskIds().includes(n.id);
+            if (!isMine && !alreadySeen) {
+              lastTaskIdRef.current = n.id;
+              setTaskPopup(n);
+            }
+          }
         },
       )
       .subscribe();
@@ -317,10 +379,11 @@ export default function NotificationBell() {
   const accessibleNotifications = isRestricted
     ? notifications.filter((n) => !isRestrictedHiddenNotification(n))
     : notifications;
+  const taskNotifications = accessibleNotifications.filter(
+    (n) => n.type === "task_board",
+  );
   const visibleNotifications =
-    tab === "unread"
-      ? accessibleNotifications.filter((n) => !n.is_read)
-      : accessibleNotifications;
+    tab === "task" ? taskNotifications : accessibleNotifications;
   const visibleUnreadCount = accessibleNotifications.filter(
     (n) => !n.is_read,
   ).length;
@@ -354,15 +417,13 @@ export default function NotificationBell() {
               )}
             </button>
             <button
-              className={`${styles.sidebarItem} ${tab === "unread" ? styles.sidebarItemActive : ""}`}
-              onClick={() => setTab("unread")}
+              className={`${styles.sidebarItem} ${tab === "task" ? styles.sidebarItemActive : ""}`}
+              onClick={() => setTab("task")}
             >
-              안읽은 알림
-              {visibleUnreadCount > 0 && (
-                <span
-                  className={`${styles.sidebarCount} ${styles.sidebarCountUnread}`}
-                >
-                  {visibleUnreadCount}
+              업무 알림
+              {taskNotifications.length > 0 && (
+                <span className={styles.sidebarCount}>
+                  {taskNotifications.length}
                 </span>
               )}
             </button>
@@ -387,24 +448,18 @@ export default function NotificationBell() {
           <div className={styles.contentHeader}>
             <span className={styles.contentTitle}>
               {tab === "all" && "전체 알림"}
-              {tab === "unread" && "안읽은 알림"}
+              {tab === "task" && "업무 알림"}
               {tab === "announcements" && "공지"}
             </span>
             <div className={styles.contentActions}>
               {tab !== "announcements" && (
-                <>
-                  <button className={styles.actionBtn} onClick={markAllRead}>
-                    <CheckCircle size={14} />
-                    전체 읽음
-                  </button>
-                  <button
-                    className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
-                    onClick={deleteAll}
-                  >
-                    <X size={14} />
-                    전체 삭제
-                  </button>
-                </>
+                <button
+                  className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
+                  onClick={deleteAll}
+                >
+                  <X size={14} />
+                  전체 삭제
+                </button>
               )}
               <button
                 className={styles.closeBtn}
@@ -479,8 +534,8 @@ export default function NotificationBell() {
               <div className={styles.empty}>
                 <Bell size={32} className={styles.emptyIcon} />
                 <p className={styles.emptyText}>
-                  {tab === "unread"
-                    ? "읽지 않은 알림이 없어요"
+                  {tab === "task"
+                    ? "업무 알림이 없어요"
                     : "새로운 알림이 없어요"}
                 </p>
                 <p className={styles.emptySubText}>
@@ -521,6 +576,50 @@ export default function NotificationBell() {
               ))
             )}
           </div>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
+  // 업무 알림 팝업 (공지 팝업과 동일한 디자인)
+  const dismissTaskPopup = (openLink: boolean) => {
+    if (taskPopup) {
+      const seen = getSeenTaskIds();
+      setSeenTaskIds(Array.from(new Set([...seen, taskPopup.id])));
+    }
+    const link = taskPopup?.link ?? null;
+    setTaskPopup(null);
+    if (openLink && link) window.location.href = link;
+  };
+
+  const taskPopupEl = taskPopup ? (
+    <div
+      className={styles.newPopupOverlay}
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) dismissTaskPopup(false);
+      }}
+    >
+      <div className={styles.newPopup} role="dialog" aria-modal="true">
+        <div className={styles.typeIcon} style={{ marginBottom: 8 }}>
+          <LayoutGrid size={28} />
+        </div>
+        <div className={styles.newPopupTitle}>{taskPopup.title}</div>
+        <div className={styles.newPopupDesc} style={{ whiteSpace: "pre-wrap" }}>
+          {taskPopup.message}
+        </div>
+        <div className={styles.newPopupActions}>
+          <button
+            className={styles.newPopupBtnGhost}
+            onClick={() => dismissTaskPopup(false)}
+          >
+            확인
+          </button>
+          <button
+            className={styles.newPopupBtnPrimary}
+            onClick={() => dismissTaskPopup(true)}
+          >
+            보러가기
+          </button>
         </div>
       </div>
     </div>
@@ -590,6 +689,9 @@ export default function NotificationBell() {
       {typeof document !== "undefined" &&
         newPopup &&
         createPortal(newPopup, document.body)}
+      {typeof document !== "undefined" &&
+        taskPopupEl &&
+        createPortal(taskPopupEl, document.body)}
     </div>
   );
 }

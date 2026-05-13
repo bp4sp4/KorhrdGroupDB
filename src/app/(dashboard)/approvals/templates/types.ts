@@ -6,11 +6,23 @@ export interface FieldDef {
   options?: { value: string; label: string }[]
 }
 
+export interface BankAccountLite {
+  id: string
+  department_id: string
+  bank_name: string
+  bank_code?: string | null
+  account_number: string
+  account_holder?: string | null
+  alias?: string | null
+  memo?: string | null
+}
+
 /** onChange 없으면 읽기 전용, 있으면 편집 모드 */
 export interface DocBodyProps {
   content: Record<string, unknown>
   onChange?: (key: string, value: string) => void
   departments?: { id: string; name: string }[]
+  bankAccounts?: BankAccountLite[]
 }
 
 export interface DocTemplateConfig {

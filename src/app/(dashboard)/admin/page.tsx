@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Plus, X, Trash2, Pencil, RotateCcw, UserPlus } from 'lucide-react'
 import styles from './page.module.css'
@@ -192,7 +192,7 @@ export default function AdminPage() {
   )
 }
 
-// ─── Departments Tab ──────────────────────────────────────────────────────────
+// ─── Departments Tab (with Bank Accounts) ─────────────────────────────────────
 
 interface DeptForm {
   code: string
@@ -201,65 +201,126 @@ interface DeptForm {
 
 const emptyDeptForm: DeptForm = { code: '', name: '' }
 
+interface BankAccount {
+  id: string
+  department_id: string
+  bank_name: string
+  bank_code: string | null
+  account_number: string
+  account_holder: string | null
+  memo: string | null
+  is_active: boolean
+  sort_order: number
+}
+
+interface BankAccountForm {
+  bank_name: string
+  bank_code: string
+  account_number: string
+  account_holder: string
+  memo: string
+}
+
+const emptyBankAccountForm: BankAccountForm = {
+  bank_name: '',
+  bank_code: '',
+  account_number: '',
+  account_holder: '',
+  memo: '',
+}
+
 function DepartmentsTab() {
   const [items, setItems] = useState<Department[]>([])
+  const [banks, setBanks] = useState<BankAccount[]>([])
   const [loading, setLoading] = useState(false)
-  const [showModal, setShowModal] = useState(false)
-  const [editTarget, setEditTarget] = useState<Department | null>(null)
-  const [form, setForm] = useState<DeptForm>(emptyDeptForm)
-  const [formError, setFormError] = useState('')
-  const [submitting, setSubmitting] = useState(false)
+
+  // 사업부 모달
+  const [showDeptModal, setShowDeptModal] = useState(false)
+  const [editDeptTarget, setEditDeptTarget] = useState<Department | null>(null)
+  const [deptForm, setDeptForm] = useState<DeptForm>(emptyDeptForm)
+  const [deptFormError, setDeptFormError] = useState('')
+  const [deptSubmitting, setDeptSubmitting] = useState(false)
+
+  // 통장 모달
+  const [bankModalDeptId, setBankModalDeptId] = useState<string | null>(null)
+  const [editBankTarget, setEditBankTarget] = useState<BankAccount | null>(null)
+  const [bankForm, setBankForm] = useState<BankAccountForm>(emptyBankAccountForm)
+  const [bankFormError, setBankFormError] = useState('')
+  const [bankSubmitting, setBankSubmitting] = useState(false)
+  const [bankLookupLoading, setBankLookupLoading] = useState(false)
+  const [bankLookupInfo, setBankLookupInfo] = useState<string | null>(null)
+
+  // 신한 등록 계좌 목록 (추가 모드에서만)
+  interface ShinhanListItem {
+    bank_name: string
+    bank_code: string
+    account_number: string
+    registered: { id: string; department_id: string; department_name: string; is_active: boolean } | null
+  }
+  const [shinhanList, setShinhanList] = useState<ShinhanListItem[]>([])
+  const [shinhanListLoading, setShinhanListLoading] = useState(false)
 
   const fetchItems = useCallback(async () => {
     setLoading(true)
-    const res = await fetch('/api/admin/departments')
-    if (res.ok) setItems(await res.json())
+    const [deptRes, bankRes] = await Promise.all([
+      fetch('/api/admin/departments'),
+      fetch('/api/admin/bank-accounts'),
+    ])
+    if (deptRes.ok) setItems(await deptRes.json())
+    if (bankRes.ok) setBanks(await bankRes.json())
     setLoading(false)
   }, [])
 
   useEffect(() => { fetchItems() }, [fetchItems])
 
-  const openAdd = () => {
-    setEditTarget(null)
-    setForm(emptyDeptForm)
-    setFormError('')
-    setShowModal(true)
+  // 사업부별 통장 묶기
+  const banksByDept: Record<string, BankAccount[]> = banks.reduce((acc, b) => {
+    (acc[b.department_id] ||= []).push(b)
+    return acc
+  }, {} as Record<string, BankAccount[]>)
+
+  // ── 사업부 CRUD ──
+  const openAddDept = () => {
+    setEditDeptTarget(null)
+    setDeptForm(emptyDeptForm)
+    setDeptFormError('')
+    setShowDeptModal(true)
   }
 
-  const openEdit = (item: Department) => {
-    setEditTarget(item)
-    setForm({ code: item.code, name: item.name })
-    setFormError('')
-    setShowModal(true)
+  const openEditDept = (item: Department) => {
+    setEditDeptTarget(item)
+    setDeptForm({ code: item.code, name: item.name })
+    setDeptFormError('')
+    setShowDeptModal(true)
   }
 
-  const handleSubmit = async () => {
-    if (!form.code.trim() || !form.name.trim()) {
-      setFormError('코드와 사업부명을 입력해주세요.')
+  const handleSubmitDept = async () => {
+    if (!deptForm.code.trim() || !deptForm.name.trim()) {
+      setDeptFormError('코드와 사업부명을 입력해주세요.')
       return
     }
-    setSubmitting(true)
-    setFormError('')
+    setDeptSubmitting(true)
+    setDeptFormError('')
 
-    const url = editTarget ? `/api/admin/departments/${editTarget.id}` : '/api/admin/departments'
-    const method = editTarget ? 'PATCH' : 'POST'
+    const url = editDeptTarget ? `/api/admin/departments/${editDeptTarget.id}` : '/api/admin/departments'
+    const method = editDeptTarget ? 'PATCH' : 'POST'
     const res = await fetch(url, {
       method,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
+      body: JSON.stringify(deptForm),
     })
 
-    setSubmitting(false)
+    setDeptSubmitting(false)
     if (res.ok) {
-      setShowModal(false)
+      setShowDeptModal(false)
       fetchItems()
     } else {
       const err = await res.json()
-      setFormError(err.error ?? '저장에 실패했습니다.')
+      setDeptFormError(err.error ?? '저장에 실패했습니다.')
     }
   }
 
-  const handleToggleActive = async (item: Department) => {
+  const handleToggleDeptActive = async (item: Department) => {
     const res = await fetch(`/api/admin/departments/${item.id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -268,12 +329,137 @@ function DepartmentsTab() {
     if (res.ok) fetchItems()
   }
 
+  // ── 통장 CRUD ──
+  const openAddBank = async (deptId: string) => {
+    setBankModalDeptId(deptId)
+    setEditBankTarget(null)
+    setBankForm(emptyBankAccountForm)
+    setBankFormError('')
+    setBankLookupInfo(null)
+    setShinhanList([])
+    setShinhanListLoading(true)
+    try {
+      const res = await fetch('/api/admin/bank-accounts/shinhan-list')
+      const json = await res.json().catch(() => ({}))
+      if (res.ok && Array.isArray(json.accounts)) {
+        setShinhanList(json.accounts as ShinhanListItem[])
+      }
+    } finally {
+      setShinhanListLoading(false)
+    }
+  }
+
+  // 신한 카드 클릭 → 그 계좌로 lookup 자동 수행
+  const handlePickShinhanAccount = async (item: ShinhanListItem) => {
+    setBankFormError('')
+    setBankLookupInfo(null)
+    setBankForm((prev) => ({
+      ...prev,
+      account_number: item.account_number,
+      bank_name: prev.bank_name.trim() || item.bank_name,
+      bank_code: prev.bank_code.trim() || item.bank_code,
+    }))
+    setBankLookupLoading(true)
+    try {
+      const res = await fetch('/api/admin/bank-accounts/lookup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accountNumber: item.account_number }),
+      })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setBankFormError(json?.error ?? '신한 API 조회 실패')
+        return
+      }
+      setBankForm((prev) => ({
+        ...prev,
+        account_number: String(json.account_number ?? item.account_number),
+        bank_name: prev.bank_name.trim() || String(json.bank_name ?? '신한'),
+        bank_code: prev.bank_code.trim() || String(json.bank_code ?? '088'),
+        account_holder: prev.account_holder.trim() || String(json.account_holder ?? ''),
+      }))
+      setBankLookupInfo(
+        [
+          json.product_name ? `상품: ${json.product_name}` : null,
+          json.balance ? `잔액: ${Number(json.balance).toLocaleString()}원` : null,
+        ].filter(Boolean).join(' · ') || '조회 완료',
+      )
+    } catch (e) {
+      setBankFormError(e instanceof Error ? e.message : '신한 API 조회 실패')
+    } finally {
+      setBankLookupLoading(false)
+    }
+  }
+
+  const openEditBank = (item: BankAccount) => {
+    setBankModalDeptId(item.department_id)
+    setEditBankTarget(item)
+    setBankForm({
+      bank_name: item.bank_name,
+      bank_code: item.bank_code ?? '',
+      account_number: item.account_number,
+      account_holder: item.account_holder ?? '',
+      memo: item.memo ?? '',
+    })
+    setBankFormError('')
+    setBankLookupInfo(null)
+  }
+
+
+  const handleSubmitBank = async () => {
+    if (!bankModalDeptId) return
+    if (!bankForm.bank_name.trim() || !bankForm.account_number.trim()) {
+      setBankFormError('은행명과 계좌번호는 필수입니다.')
+      return
+    }
+    setBankSubmitting(true)
+    setBankFormError('')
+
+    const payload = {
+      department_id: bankModalDeptId,
+      bank_name: bankForm.bank_name.trim(),
+      bank_code: bankForm.bank_code.trim() || null,
+      account_number: bankForm.account_number.replace(/[^\d]/g, ''),
+      account_holder: bankForm.account_holder.trim() || null,
+      alias: null,
+      memo: bankForm.memo.trim() || null,
+    }
+    const url = editBankTarget ? `/api/admin/bank-accounts/${editBankTarget.id}` : '/api/admin/bank-accounts'
+    const method = editBankTarget ? 'PATCH' : 'POST'
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+
+    setBankSubmitting(false)
+    if (res.ok) {
+      setBankModalDeptId(null)
+      fetchItems()
+    } else {
+      const err = await res.json().catch(() => ({}))
+      setBankFormError(err.error ?? '저장에 실패했습니다.')
+    }
+  }
+
+  const handleDeleteBank = async (item: BankAccount) => {
+    const ok = window.confirm(`${item.bank_name} ${item.account_number} 통장을 정말 삭제하시겠습니까?`)
+    if (!ok) return
+    const res = await fetch(`/api/admin/bank-accounts/${item.id}`, { method: 'DELETE' })
+    if (res.ok) {
+      fetchItems()
+    } else {
+      const err = await res.json().catch(() => ({}))
+      alert(err.error ?? '삭제에 실패했습니다.')
+    }
+  }
+
   return (
     <>
       <div className={styles.sectionCard}>
         <div className={styles.sectionHeader}>
           <h3 className={styles.sectionTitle}>사업부 관리</h3>
-          <button className={styles.btnPrimary} onClick={openAdd}>
+          <button className={styles.btnPrimary} onClick={openAddDept}>
             <Plus size={14} /> 추가
           </button>
         </div>
@@ -288,49 +474,107 @@ function DepartmentsTab() {
               <tr>
                 <th>코드</th>
                 <th>사업부명</th>
+                <th>통장</th>
                 <th>상태</th>
                 <th>액션</th>
               </tr>
             </thead>
             <tbody>
-              {items.map((item) => (
-                <tr key={item.id} className={!item.is_active ? styles.rowInactive : ''}>
-                  <td><code>{item.code}</code></td>
-                  <td>{item.name}</td>
-                  <td>
-                    <span className={`${styles.statusBadge} ${item.is_active ? styles.statusActive : styles.statusInactive}`}>
-                      {item.is_active ? '활성' : '비활성'}
-                    </span>
-                  </td>
-                  <td>
-                    <div className={styles.actionGroup}>
-                      <button className={styles.btnEdit} onClick={() => openEdit(item)}>
-                        <Pencil size={12} /> 수정
-                      </button>
-                      {item.is_active ? (
-                        <button className={styles.btnDelete} onClick={() => handleToggleActive(item)}>
-                          <Trash2 size={12} /> 비활성화
-                        </button>
+              {items.map((item) => {
+                const deptBanks = banksByDept[item.id] ?? []
+                return (
+                  <tr key={item.id} className={!item.is_active ? styles.rowInactive : ''}>
+                    <td className={styles.cellTop}><code>{item.code}</code></td>
+                    <td className={styles.cellTop}>{item.name}</td>
+                    <td className={styles.cellTop}>
+                      {deptBanks.length === 0 ? (
+                        <span className={styles.bankCellEmpty}>등록된 통장 없음</span>
                       ) : (
-                        <button className={styles.btnRestore} onClick={() => handleToggleActive(item)}>
-                          <RotateCcw size={12} /> 복원
-                        </button>
+                        <div className={styles.bankCellList}>
+                          {deptBanks.map((b) => (
+                            <div key={b.id} className={styles.bankCard}>
+                              <span className={styles.bankDot} />
+                              <div
+                                role="button"
+                                tabIndex={0}
+                                onClick={() => openEditBank(b)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault()
+                                    openEditBank(b)
+                                  }
+                                }}
+                                className={styles.bankCardBody}
+                                title="클릭하여 수정"
+                              >
+                                <div className={styles.bankCardMain}>
+                                  <span className={styles.bankChip}>{b.bank_name}</span>
+                                  <span className={styles.bankAccountNo}>{b.account_number}</span>
+                                  {b.account_holder && (
+                                    <span className={styles.bankHolder}>· {b.account_holder}</span>
+                                  )}
+                                </div>
+                                {b.memo && (
+                                  <span className={styles.bankMemoLine}>{b.memo}</span>
+                                )}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteBank(b)}
+                                title="삭제"
+                                className={styles.bankDeleteBtn}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
                       )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className={styles.cellTop}>
+                      <span className={`${styles.statusBadge} ${item.is_active ? styles.statusActive : styles.statusInactive}`}>
+                        {item.is_active ? '활성' : '비활성'}
+                      </span>
+                    </td>
+                    <td className={styles.cellTop}>
+                      <div className={styles.actionGroup}>
+                        <button
+                          type="button"
+                          className={styles.btnBankAdd}
+                          onClick={() => openAddBank(item.id)}
+                          title="이 사업부에 통장 추가"
+                        >
+                          <Plus size={12} /> 통장
+                        </button>
+                        <button className={styles.btnEdit} onClick={() => openEditDept(item)}>
+                          <Pencil size={12} /> 수정
+                        </button>
+                        {item.is_active ? (
+                          <button className={styles.btnDelete} onClick={() => handleToggleDeptActive(item)}>
+                            <Trash2 size={12} /> 비활성화
+                          </button>
+                        ) : (
+                          <button className={styles.btnRestore} onClick={() => handleToggleDeptActive(item)}>
+                            <RotateCcw size={12} /> 복원
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         )}
       </div>
 
-      {showModal && (
-        <div className={styles.modalOverlay} onClick={(e) => e.target === e.currentTarget && setShowModal(false)}>
+      {/* 사업부 모달 */}
+      {showDeptModal && (
+        <div className={styles.modalOverlay} onClick={(e) => e.target === e.currentTarget && setShowDeptModal(false)}>
           <div className={styles.modal}>
             <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>{editTarget ? '사업부 수정' : '사업부 추가'}</h3>
-              <button className={styles.modalClose} onClick={() => setShowModal(false)}>
+              <h3 className={styles.modalTitle}>{editDeptTarget ? '사업부 수정' : '사업부 추가'}</h3>
+              <button className={styles.modalClose} onClick={() => setShowDeptModal(false)}>
                 <X size={18} />
               </button>
             </div>
@@ -341,8 +585,8 @@ function DepartmentsTab() {
                   <input
                     className={styles.formInput}
                     placeholder="예: MGT"
-                    value={form.code}
-                    onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
+                    value={deptForm.code}
+                    onChange={(e) => setDeptForm({ ...deptForm, code: e.target.value.toUpperCase() })}
                   />
                 </div>
                 <div className={styles.formRow}>
@@ -350,17 +594,163 @@ function DepartmentsTab() {
                   <input
                     className={styles.formInput}
                     placeholder="예: 경영지원본부"
-                    value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
+                    value={deptForm.name}
+                    onChange={(e) => setDeptForm({ ...deptForm, name: e.target.value })}
                   />
                 </div>
               </div>
-              {formError && <p className={styles.errorMsg}>{formError}</p>}
+              {deptFormError && <p className={styles.errorMsg}>{deptFormError}</p>}
             </div>
             <div className={styles.modalFooter}>
-              <button className={styles.btnSecondary} onClick={() => setShowModal(false)}>취소</button>
-              <button className={styles.btnPrimary} onClick={handleSubmit} disabled={submitting}>
-                {submitting ? '저장 중...' : editTarget ? '수정' : '추가'}
+              <button className={styles.btnSecondary} onClick={() => setShowDeptModal(false)}>취소</button>
+              <button className={styles.btnPrimary} onClick={handleSubmitDept} disabled={deptSubmitting}>
+                {deptSubmitting ? '저장 중...' : editDeptTarget ? '수정' : '추가'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 통장 모달 */}
+      {bankModalDeptId && (
+        <div className={styles.modalOverlay} onClick={(e) => e.target === e.currentTarget && setBankModalDeptId(null)}>
+          <div className={styles.modal}>
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>
+                {(items.find(d => d.id === bankModalDeptId)?.name ?? '')} · {editBankTarget ? '통장 수정' : '통장 추가'}
+              </h3>
+              <button className={styles.modalClose} onClick={() => setBankModalDeptId(null)}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              {/* 신한 등록 계좌 목록 (추가 모드만) */}
+              {!editBankTarget && (
+                <div className={styles.formRow} style={{ marginBottom: 12 }}>
+                  <label className={styles.formLabel}>신한 등록 계좌</label>
+                  {shinhanListLoading ? (
+                    <p style={{ fontSize: 12, color: '#6B7280' }}>불러오는 중...</p>
+                  ) : shinhanList.length === 0 ? (
+                    <p style={{ fontSize: 12, color: '#9CA3AF' }}>신한 API에 등록된 계좌가 없습니다.</p>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {shinhanList.map((s) => {
+                        const otherDept = s.registered && s.registered.department_id !== bankModalDeptId
+                        const sameDept = s.registered && s.registered.department_id === bankModalDeptId
+                        const isSelected = bankForm.account_number === s.account_number
+                        const disabled = !!otherDept || !!sameDept
+                        return (
+                          <button
+                            type="button"
+                            key={s.account_number}
+                            onClick={() => !disabled && handlePickShinhanAccount(s)}
+                            disabled={disabled || bankLookupLoading}
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              padding: '10px 12px',
+                              border: `1px solid ${isSelected ? '#3B82F6' : '#E5E7EB'}`,
+                              borderRadius: 8,
+                              background: isSelected ? '#EFF6FF' : disabled ? '#F9FAFB' : '#fff',
+                              cursor: disabled ? 'not-allowed' : 'pointer',
+                              textAlign: 'left',
+                              opacity: disabled ? 0.6 : 1,
+                              fontFamily: 'inherit',
+                              fontSize: 13,
+                              boxShadow: isSelected ? '0 0 0 2px rgba(59,130,246,0.1)' : 'none',
+                            }}
+                          >
+                            <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                              <span style={{ fontWeight: 600 }}>
+                                {s.bank_name} <code>{s.account_number}</code>
+                              </span>
+                              {otherDept && (
+                                <span style={{ fontSize: 11, color: '#DC2626' }}>
+                                  이미 등록됨: {s.registered?.department_name}
+                                </span>
+                              )}
+                              {sameDept && (
+                                <span style={{ fontSize: 11, color: '#6B7280' }}>이 사업부에 이미 등록됨</span>
+                              )}
+                            </span>
+                            {isSelected && bankLookupLoading && (
+                              <span style={{ fontSize: 11, color: '#3B82F6' }}>조회 중...</span>
+                            )}
+                            {isSelected && !bankLookupLoading && bankForm.account_holder && (
+                              <span style={{ fontSize: 12, color: '#15803D' }}>{bankForm.account_holder}</span>
+                            )}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                  {bankLookupInfo && (
+                    <p style={{ fontSize: 11, color: '#15803D', marginTop: 6 }}>{bankLookupInfo}</p>
+                  )}
+                </div>
+              )}
+
+              <div className={styles.formRow2}>
+                <div className={styles.formRow}>
+                  <label className={`${styles.formLabel} ${styles.formLabelRequired}`}>은행명</label>
+                  <input
+                    className={styles.formInput}
+                    placeholder="예: 신한"
+                    value={bankForm.bank_name}
+                    readOnly={!editBankTarget}
+                    onChange={(e) => setBankForm({ ...bankForm, bank_name: e.target.value })}
+                  />
+                </div>
+                <div className={styles.formRow}>
+                  <label className={styles.formLabel}>은행 코드</label>
+                  <input
+                    className={styles.formInput}
+                    placeholder="예: 088"
+                    value={bankForm.bank_code}
+                    readOnly={!editBankTarget}
+                    onChange={(e) => setBankForm({ ...bankForm, bank_code: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className={styles.formRow2}>
+                <div className={styles.formRow}>
+                  <label className={`${styles.formLabel} ${styles.formLabelRequired}`}>계좌번호</label>
+                  <input
+                    className={styles.formInput}
+                    placeholder={editBankTarget ? '숫자만 입력' : '위에서 계좌를 선택하세요'}
+                    value={bankForm.account_number}
+                    readOnly={!editBankTarget}
+                    onChange={(e) => setBankForm({ ...bankForm, account_number: e.target.value.replace(/[^\d]/g, '') })}
+                  />
+                </div>
+                <div className={styles.formRow}>
+                  <label className={styles.formLabel}>예금주</label>
+                  <input
+                    className={styles.formInput}
+                    placeholder="예: (주)한평생교육원"
+                    value={bankForm.account_holder}
+                    onChange={(e) => setBankForm({ ...bankForm, account_holder: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className={styles.formRow}>
+                <label className={styles.formLabel}>메모</label>
+                <textarea
+                  className={styles.formInput}
+                  placeholder="이 통장의 용도를 입력하세요. 예: 직원 급여 이체 전용 / 외부 거래처 입금 수신"
+                  value={bankForm.memo}
+                  onChange={(e) => setBankForm({ ...bankForm, memo: e.target.value })}
+                  rows={3}
+                  style={{ minHeight: 72, resize: 'vertical', fontFamily: 'inherit' }}
+                />
+              </div>
+              {bankFormError && <p className={styles.errorMsg}>{bankFormError}</p>}
+            </div>
+            <div className={styles.modalFooter}>
+              <button className={styles.btnSecondary} onClick={() => setBankModalDeptId(null)}>취소</button>
+              <button className={styles.btnPrimary} onClick={handleSubmitBank} disabled={bankSubmitting}>
+                {bankSubmitting ? '저장 중...' : editBankTarget ? '수정' : '추가'}
               </button>
             </div>
           </div>

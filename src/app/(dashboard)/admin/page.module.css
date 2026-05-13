@@ -1273,3 +1273,166 @@
   background: #e9ecef;
   color: #8b95a1;
 }
+
+/* ── 사업부 행: 통장 셀 ─────────────────────────────────── */
+.bankCellList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 560px;
+}
+
+.bankCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: #ffffff;
+  border: 1px solid #eef0f3;
+  border-radius: 10px;
+  transition: border-color 150ms, box-shadow 150ms, background 150ms;
+  position: relative;
+}
+
+.bankCard:hover {
+  border-color: #c7d8ff;
+  background: #fbfcff;
+  box-shadow: 0 2px 6px rgba(45, 84, 217, 0.06);
+}
+
+.bankCard:hover .bankDeleteBtn {
+  opacity: 1;
+}
+
+/* 은행 색상 좌측 표식 (신한 기본) */
+.bankDot {
+  width: 6px;
+  height: 28px;
+  border-radius: 3px;
+  background: #2a5cff;
+  flex-shrink: 0;
+}
+
+.bankCardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+  outline: none;
+  padding: 2px 0;
+}
+
+.bankCardBody:focus-visible {
+  outline: 2px solid #2a5cff;
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.bankCardMain {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.bankChip {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  background: #eef3ff;
+  color: #2a5cff;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: -0.1px;
+  flex-shrink: 0;
+  line-height: 1.5;
+}
+
+.bankAccountNo {
+  font-family: 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.bankHolder {
+  font-size: 12px;
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.bankMemoLine {
+  font-size: 11px;
+  color: #9ca3af;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.bankDeleteBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: transparent;
+  color: #d1d5db;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 120ms, color 120ms, opacity 120ms;
+  flex-shrink: 0;
+  opacity: 0;
+}
+
+.bankDeleteBtn:hover {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.bankCellEmpty {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #9ca3af;
+  background: #fafbfc;
+  border: 1px dashed #e5e7eb;
+  border-radius: 8px;
+}
+
+/* 사업부 행 액션의 통장 추가 버튼 */
+.btnBankAdd {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  background: #f5f8ff;
+  color: #2a5cff;
+  border: 1px solid #dbe5ff;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 120ms, border-color 120ms;
+  white-space: nowrap;
+}
+
+.btnBankAdd:hover {
+  background: #e6efff;
+  border-color: #93b4ff;
+}
+
+.cellTop {
+  vertical-align: top;
+}
