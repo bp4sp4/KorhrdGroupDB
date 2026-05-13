@@ -34,6 +34,7 @@ interface Notification {
   is_read: boolean;
   created_at: string;
   actor_id?: number | null;
+  target_date?: string | null;
 }
 
 type TabKey = "all" | "task" | "announcements";
@@ -51,6 +52,36 @@ function timeAgo(dateStr: string): string {
 
 function isNewAnnouncement(date: string): boolean {
   return Date.now() - new Date(date).getTime() < 86400000;
+}
+
+// 로컬 기준 오늘 작성된 알림인지
+function isToday(dateStr: string | null | undefined): boolean {
+  if (!dateStr) return false;
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return false;
+  const now = new Date();
+  return (
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate()
+  );
+}
+
+// 한국 시간(KST) 기준 오늘 YYYY-MM-DD
+function todayKstStr(): string {
+  const now = new Date();
+  // UTC+9
+  const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  return kst.toISOString().slice(0, 10);
+}
+
+// 업무보드 알림이 오늘 적용 대상인지
+// target_date(YYYY-MM-DD) 우선, 없으면 created_at 기준 fallback
+function isTaskActiveToday(n: Notification): boolean {
+  if (n.target_date) {
+    return n.target_date === todayKstStr();
+  }
+  return isToday(n.created_at);
 }
 
 function TypeIcon({ type }: { type: string }) {
@@ -214,15 +245,16 @@ export default function NotificationBell() {
       .catch(() => {});
   }, []);
 
-  // 로그인/마운트 시 미확인 task_board 알림이 있으면 팝업으로 1회 노출
+  // 로그인/마운트 시 미확인 + 오늘 적용 task_board 알림이 있으면 팝업으로 1회 노출
   useEffect(() => {
     if (myId === null) return;
     if (taskPopup) return;
     const seen = getSeenTaskIds();
-    // notifications는 최신순. 미확인 + 본인 작성 아님 인 가장 최신 알림 1건만
+    // 오늘 적용(target_date === 오늘 KST) + 미확인 + 본인 작성 아님 가장 최신 1건
     const candidate = notifications.find(
       (n) =>
         n.type === "task_board" &&
+        isTaskActiveToday(n) &&
         !seen.includes(n.id) &&
         (n.actor_id == null || Number(n.actor_id) !== myId),
     );
@@ -244,14 +276,15 @@ export default function NotificationBell() {
         (payload) => {
           fetchNotifications();
           const n = payload.new as Notification;
-          // 업무 알림이면 공지처럼 팝업 (단, 본인이 작성한 건은 제외 + 이미 본 건은 제외)
+          // 업무 알림이면 공지처럼 팝업 (target_date가 오늘 + 본인 X + 미확인)
           if (n?.type === "task_board" && n.id !== lastTaskIdRef.current) {
             const isMine =
               myIdRef.current !== null &&
               n.actor_id != null &&
               Number(n.actor_id) === myIdRef.current;
             const alreadySeen = getSeenTaskIds().includes(n.id);
-            if (!isMine && !alreadySeen) {
+            const todayActive = isTaskActiveToday(n);
+            if (todayActive && !isMine && !alreadySeen) {
               lastTaskIdRef.current = n.id;
               setTaskPopup(n);
             }

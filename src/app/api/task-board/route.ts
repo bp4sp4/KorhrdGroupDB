@@ -2,6 +2,26 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAuthFull } from "@/lib/auth/requireAuth";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 
+// (year, month, week_no, weekday) → 그 주차의 해당 요일에 해당하는 실제 날짜(YYYY-MM-DD)
+// weekday: 1=월 ~ 5=금
+// 보드의 week_no는 todayCell과 동일하게 ceil(day/7) 기준
+function cellToDate(
+  year: number,
+  month: number,
+  week_no: number,
+  weekday: number,
+): string {
+  // 그 달 1일의 JS 요일 (0=일,1=월,...)
+  const firstDow = new Date(year, month - 1, 1).getDay();
+  // 우리 weekday(1=월..5=금) → js dow와 동일 (1~5)
+  // 그 달의 가장 빠른 weekday(요일)의 day
+  const firstWeekdayDay = ((weekday - firstDow + 7) % 7) + 1;
+  const day = firstWeekdayDay + (week_no - 1) * 7;
+  const m = String(month).padStart(2, "0");
+  const d = String(day).padStart(2, "0");
+  return `${year}-${m}-${d}`;
+}
+
 // 작성 권한: 대리 이상 (positions.sort_order >= 3) 또는 admin/master-admin
 async function canWrite(appUser: {
   role: string;
@@ -143,13 +163,15 @@ export async function POST(request: NextRequest) {
   // 전체 구성원 공지 (user_id NULL = 전체 공지)
   const weekdayKo = ["", "월", "화", "수", "목", "금"][weekday] ?? "?";
   const authorName = appUser.display_name ?? "관리자";
+  const targetDate = cellToDate(year, month, week_no, weekday);
   await supabaseAdmin.from("notifications").insert({
     type: "task_board",
     title: "통합 업무보드 새 알림",
-    message: `[${month}월 ${week_no}주차 ${weekdayKo}] ${title.trim()} (${authorName})`,
+    message: `[${month}월 ${week_no}주차 ${weekdayKo}] ${title.trim()})`,
     link: "/task-board",
     user_id: null,
     actor_id: appUser.id,
+    target_date: targetDate,
   });
 
   return NextResponse.json(inserted, { status: 201 });
