@@ -269,6 +269,7 @@
   color: #333d4b;
   vertical-align: middle;
   white-space: nowrap;
+  text-align: center;
 }
 .table tbody tr:hover {
   background: #fafbfc;
