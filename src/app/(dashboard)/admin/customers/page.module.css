@@ -24,9 +24,16 @@
   margin: 0;
 }
 
+/* ── 다운로드 드롭다운 ── */
+.dl_wrap {
+  position: relative;
+  flex-shrink: 0;
+}
 .export_btn {
+  display: flex;
+  align-items: center;
   height: 36px;
-  padding: 0 16px;
+  padding: 0 14px;
   background: #3182f6;
   color: #fff;
   border: none;
@@ -35,6 +42,7 @@
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s;
+  white-space: nowrap;
 }
 .export_btn:hover:not(:disabled) {
   background: #1d6de0;
@@ -42,6 +50,69 @@
 .export_btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+.dl_dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 190px;
+  background: #fff;
+  border: 1.5px solid #e5e8eb;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.09);
+  z-index: 300;
+  padding: 6px;
+}
+.dl_group_label {
+  margin: 4px 10px 2px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #b0b8c1;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.dl_option {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #333d4b;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.dl_option:hover:not(:disabled) {
+  background: #f2f4f6;
+  color: #191f28;
+}
+.dl_option:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.dl_option_all {
+  color: #3182f6;
+  font-weight: 600;
+}
+.dl_option_all:hover:not(:disabled) {
+  background: #eef5ff;
+  color: #1d6de0;
+}
+.dl_count {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  color: #8b95a1;
+}
+.dl_divider {
+  height: 1px;
+  background: #f2f4f6;
+  margin: 5px 6px;
 }
 
 /* ── 요약 카드 ── */
@@ -128,6 +199,47 @@
   border-color: #3182f6;
 }
 
+/* ── 선택 상태 바 ── */
+.selection_bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  background: #eef5ff;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #3182f6;
+}
+.selection_clear {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: #8b95a1;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 5px;
+  transition: background 0.12s;
+}
+.selection_clear:hover {
+  background: #dce8fb;
+  color: #3182f6;
+}
+
+/* ── 체크박스 ── */
+.th_check {
+  width: 40px;
+  text-align: center !important;
+  padding: 0 8px !important;
+}
+.checkbox {
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+  accent-color: #3182f6;
+}
+
 /* ── 표 ── */
 .table_wrap {
   background: #fff;
@@ -145,7 +257,7 @@
   background: #fafbfc;
   color: #4e5968;
   font-weight: 600;
-  text-align: left;
+  text-align: center;
   padding: 12px 14px;
   border-bottom: 1px solid #f2f4f6;
   white-space: nowrap;
@@ -160,6 +272,9 @@
 }
 .table tbody tr:hover {
   background: #fafbfc;
+}
+.row_selected {
+  background: #f0f6ff !important;
 }
 .table tbody tr:last-child td {
   border-bottom: none;
@@ -189,6 +304,33 @@
   color: #6b7684;
 }
 
+/* ── 단가 인풋 ── */
+.unit_input {
+  width: 80px;
+  height: 30px;
+  padding: 0 8px;
+  border: 1.5px solid #e5e8eb;
+  border-radius: 7px;
+  font-size: 13px;
+  color: #191f28;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.15s;
+  text-align: right;
+}
+.unit_input:focus {
+  border-color: #3182f6;
+  background: #f8fbff;
+}
+.unit_input::placeholder {
+  color: #c0c8d0;
+  font-size: 11px;
+}
+/* 스피너 제거 */
+.unit_input::-webkit-outer-spin-button,
+.unit_input::-webkit-inner-spin-button { -webkit-appearance: none; }
+.unit_input[type=number] { -moz-appearance: textfield; }
+
 /* ── 단가 태그 ── */
 .tag_main,
 .tag_alt,
@@ -212,6 +354,88 @@
 .tag_unknown {
   color: #ef4444;
   background: #fef2f2;
+}
+
+/* ── 필터 초기화 버튼 ── */
+.reset_btn {
+  height: 36px;
+  padding: 0 14px;
+  background: #f2f4f6;
+  color: #4e5968;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.reset_btn:hover {
+  background: #e5e8eb;
+}
+
+/* ── 월 필터 해제 버튼 (구) ── */
+.clear_btn {
+  height: 36px;
+  padding: 0 14px;
+  background: #f2f4f6;
+  color: #4e5968;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.clear_btn:hover {
+  background: #e5e8eb;
+}
+
+/* ── 페이지네이션 ── */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px 0;
+}
+.page_btn {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 8px;
+  border: 1.5px solid #e5e8eb;
+  border-radius: 8px;
+  background: #fff;
+  color: #333d4b;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.page_btn:hover:not(:disabled) {
+  border-color: #3182f6;
+  color: #3182f6;
+}
+.page_btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.page_btn_active {
+  background: #3182f6;
+  border-color: #3182f6;
+  color: #fff;
+}
+.page_btn_active:hover {
+  background: #1d6de0 !important;
+  border-color: #1d6de0 !important;
+  color: #fff !important;
+}
+.page_dots {
+  padding: 0 4px;
+  color: #b0b8c1;
+  font-size: 13px;
 }
 
 /* ── 빈 상태 ── */

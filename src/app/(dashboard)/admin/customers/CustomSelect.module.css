@@ -1,0 +1,120 @@
+.wrap {
+  position: relative;
+  display: inline-block;
+}
+
+/* ── 트리거 버튼 ── */
+.trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  height: 36px;
+  padding: 0 10px 0 12px;
+  border: 1.5px solid #e5e8eb;
+  border-radius: 8px;
+  background: #fff;
+  color: #191f28;
+  font-size: 13px;
+  cursor: pointer;
+  width: 100%;
+  white-space: nowrap;
+  transition: border-color 0.15s, background 0.15s;
+  outline: none;
+}
+.trigger:hover {
+  border-color: #b0b8c1;
+}
+.trigger_open {
+  border-color: #3182f6 !important;
+}
+/* 값이 선택된 상태 강조 */
+.trigger_active {
+  border-color: #3182f6;
+  background: #f0f6ff;
+  color: #3182f6;
+  font-weight: 600;
+}
+.trigger_active .arrow {
+  color: #3182f6;
+}
+
+.trigger_label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.arrow {
+  flex-shrink: 0;
+  color: #8b95a1;
+  transition: transform 0.18s;
+}
+.arrow_up {
+  transform: rotate(180deg);
+}
+
+/* ── 드롭다운 패널 ── */
+.dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 100%;
+  max-height: 260px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1.5px solid #e5e8eb;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.10);
+  z-index: 200;
+  padding: 4px;
+}
+
+/* 스크롤바 */
+.dropdown::-webkit-scrollbar {
+  width: 4px;
+}
+.dropdown::-webkit-scrollbar-track {
+  background: transparent;
+}
+.dropdown::-webkit-scrollbar-thumb {
+  background: #e5e8eb;
+  border-radius: 2px;
+}
+
+/* ── 옵션 아이템 ── */
+.option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: #333d4b;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s;
+  outline: none;
+}
+.option:hover {
+  background: #f2f4f6;
+}
+.option_selected {
+  background: #f0f6ff;
+  color: #3182f6;
+  font-weight: 600;
+}
+.option_selected:hover {
+  background: #e8f0fe;
+}
+
+.check {
+  flex-shrink: 0;
+  color: #3182f6;
+}

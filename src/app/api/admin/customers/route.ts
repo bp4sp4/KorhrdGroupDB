@@ -94,3 +94,31 @@ export async function GET() {
 
   return NextResponse.json(rows)
 }
+
+// 단가 수정
+export async function PATCH(request: Request) {
+  const { appUser, errorResponse } = await requireAuthFull()
+  if (errorResponse) return errorResponse
+
+  const role = appUser.role
+  if (role !== 'admin' && role !== 'master-admin') {
+    return NextResponse.json({ error: '권한이 없습니다.' }, { status: 403 })
+  }
+
+  const { id, unit_price } = await request.json()
+  if (!id) return NextResponse.json({ error: 'id 필요' }, { status: 400 })
+
+  // null 허용 (초기화), 숫자면 양수만
+  const value = unit_price === null ? null : Number(unit_price)
+  if (value !== null && (isNaN(value) || value <= 0)) {
+    return NextResponse.json({ error: '올바른 단가를 입력하세요.' }, { status: 400 })
+  }
+
+  const { error } = await supabaseAdmin
+    .from('edu_students')
+    .update({ unit_price: value })
+    .eq('id', id)
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ success: true })
+}
