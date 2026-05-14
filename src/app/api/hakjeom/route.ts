@@ -441,6 +441,20 @@ export async function PATCH(request: NextRequest) {
 
     const { data: current } = await supabaseAdmin.from(TABLE).select('*').eq('id', id).single();
 
+    // 등록완료로 변경 시 최종학력 + 희망과정 필수
+    if (status === '등록완료') {
+      const newEducation =
+        updateData.education !== undefined ? updateData.education : current?.education;
+      const newHopeCourse =
+        updateData.hope_course !== undefined ? updateData.hope_course : current?.hope_course;
+      if (!newEducation || !String(newEducation).trim() || !newHopeCourse || !String(newHopeCourse).trim()) {
+        return NextResponse.json(
+          { error: '등록완료로 변경하려면 최종학력과 희망과정을 먼저 입력해주세요.' },
+          { status: 400 },
+        );
+      }
+    }
+
     // 지인소개 대분류는 등록완료 대신 지인등록으로 처리
     if (status === '등록완료' && current?.click_source?.startsWith('지인소개')) {
       updateData.status = '지인등록';
@@ -463,6 +477,8 @@ export async function PATCH(request: NextRequest) {
       changes[key] = { before: (current as Record<string, unknown>)?.[key] ?? null, after: newVal };
     }
     await logAction({ user_id: user.id, user_email: user.email, action: 'update', resource: '학점은행제 상담', resource_id: String(id), detail: `${current?.name ?? `ID ${id}`} 수정`, meta: { changes } });
+
+    // (등록완료 → edu_students 자동 등록 로직은 비활성화 — 담당자가 등록학생관리에서 직접 추가)
 
     // 연락예정일 설정 → 담당자에게 알림
     if (contact_scheduled_at && data?.manager) {

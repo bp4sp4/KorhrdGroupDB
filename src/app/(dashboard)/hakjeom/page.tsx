@@ -38,6 +38,11 @@ import { DateInput } from "@/components/ui/Calendar/DateInput";
 import { DateRangeCalendar } from "@/components/DateRangeCalendar";
 import type { DateRange } from "react-day-picker";
 import EduStudentsTab from "./education-center/EduStudentsTab";
+import HakjeomCustomSelect from "../admin/customers/CustomSelect";
+import { DEMO_LIST as HAKJEOM_DEMO_LIST } from "@/lib/guide/hakjeomDemo";
+import PerformerLeaderboard from "@/components/stats/PerformerLeaderboard";
+import { Search, HelpCircle } from "lucide-react";
+import { useGuide } from "@/components/guide/GuideProvider";
 
 // ─── 공통 타입 ──────────────────────────────────────────────────────────────
 
@@ -224,22 +229,22 @@ const COUNSEL_CHECK_OPTIONS = [
 ];
 const REASON_OPTIONS = ["즉시취업", "이직", "미래준비", "취업"];
 const EDUCATION_OPTIONS = [
-  "고등학교졸업",
-  "전문대졸",
-  "대학교 졸업",
-  "대학교중퇴",
-  "대학원이상",
+  "고졸",
+  "2년제 중퇴",
+  "2년제 졸업",
+  "3년제 중퇴",
+  "3년제 졸업",
+  "4년제 중퇴",
+  "4년제 졸업",
+  "대학원 이상",
   "대학교졸업(외국)",
 ] as const;
 const HAKJEOM_COURSE_OPTIONS = [
-  "사회복지사",
-  "아동학사",
-  "평생교육사",
-  "편입/대학원",
+  "사회복지사2급 - 신법",
+  "사회복지사2급 - 구법",
+  "사회복지사 (실습예정)",
   "건강가정사",
-  "청소년지도사",
-  "보육교사",
-  "심리상담사",
+  "직접입력",
 ];
 const CURRENT_SITUATION_OPTIONS = [
   "주부",
@@ -826,6 +831,124 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 // ─── 학점은행제 상세 패널 ────────────────────────────────────────────────────
 
 const EDUCATION_CUSTOM = "직접입력";
+const HOPE_COURSE_CUSTOM = "직접입력";
+
+// 희망과정 — trigger엔 현재 값(콤마구분 가능) 그대로 다 보임
+// 드롭다운에서 4개 프리셋 중 하나 클릭 시 그 한 가지로 압축됨
+function HopeCourseSelect({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const presets = HAKJEOM_COURSE_OPTIONS.filter((o) => o !== HOPE_COURSE_CUSTOM);
+  const [customMode, setCustomMode] = useState(false);
+  const [customText, setCustomText] = useState("");
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+        setCustomMode(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  return (
+    <div className={styles.eduSelectWrap} ref={ref}>
+      <button
+        type="button"
+        className={`${styles.eduSelectTrigger} ${value ? styles.eduSelectActive : ""}`}
+        onClick={() => setOpen((o) => !o)}
+      >
+        {/* 현재 값을 그대로 다 표시 (콤마구분 텍스트가 길어도 그대로) */}
+        <span style={{ flex: 1, textAlign: "left", overflow: "hidden", textOverflow: "ellipsis" }}>
+          {value || "선택"}
+        </span>
+        <svg
+          width="12" height="12" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+          className={`${styles.eduSelectChevron} ${open ? styles.eduSelectChevronOpen : ""}`}
+        >
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+      {open && (
+        <div className={styles.eduSelectDropdown}>
+          {presets.map((opt) => (
+            <button
+              key={opt}
+              type="button"
+              className={`${styles.eduSelectOption} ${value === opt ? styles.eduSelectOptionActive : ""}`}
+              onClick={() => {
+                setCustomMode(false);
+                setCustomText("");
+                onChange(opt); // 클릭한 1개로 압축
+                setOpen(false);
+              }}
+            >
+              {opt}
+            </button>
+          ))}
+          <button
+            type="button"
+            className={`${styles.eduSelectOption} ${customMode ? styles.eduSelectOptionActive : ""}`}
+            onClick={() => {
+              setCustomMode((m) => !m);
+              if (!customMode) setCustomText(value); // 직접입력 켤 때 현재 값 가져옴
+            }}
+          >
+            {HOPE_COURSE_CUSTOM}
+          </button>
+          {customMode && (
+            <div style={{ padding: "6px 4px 4px", display: "flex", gap: 4, borderTop: "1px solid #e5e7eb" }}>
+              <input
+                className={styles.eduSelectCustomInput}
+                placeholder="직접 입력 후 Enter"
+                value={customText}
+                onChange={(e) => setCustomText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    onChange(customText.trim());
+                    setOpen(false);
+                    setCustomMode(false);
+                  }
+                }}
+                autoFocus
+                style={{ flex: 1, marginTop: 0 }}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  onChange(customText.trim());
+                  setOpen(false);
+                  setCustomMode(false);
+                }}
+                style={{
+                  padding: "0 12px",
+                  background: "#3182f6",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 6,
+                  cursor: "pointer",
+                  fontSize: 12,
+                }}
+              >
+                확인
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function EducationSelect({
   value,
@@ -1030,6 +1153,62 @@ function HakjeomDetailPanel({
   const [editName, setEditName] = useState(item.name ?? "");
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<"basic" | "info">(initialTab);
+
+  // 가이드에서 탭 자동 전환 이벤트 리스닝
+  useEffect(() => {
+    const toBasic = () => setActiveTab("basic");
+    const toInfo = () => setActiveTab("info");
+    window.addEventListener("guide-tab-basic", toBasic);
+    window.addEventListener("guide-tab-info", toInfo);
+    return () => {
+      window.removeEventListener("guide-tab-basic", toBasic);
+      window.removeEventListener("guide-tab-info", toInfo);
+    };
+  }, []);
+
+  // 가이드 자동 진행 — 데모 학생일 때만 변경 감지하여 이벤트 발행
+  const isDemoStudent = item.id < 0;
+  const prevEduRef = useRef(editEducation);
+  const prevHopeRef = useRef(editHopeCourse.join("|"));
+  const prevCostRef = useRef(editSubjectCost);
+  const prevStatusRef = useRef(editStatus);
+
+  useEffect(() => {
+    if (!isDemoStudent) return;
+    if (prevEduRef.current !== editEducation && editEducation) {
+      window.dispatchEvent(new CustomEvent("guide-edu-set"));
+    }
+    prevEduRef.current = editEducation;
+  }, [editEducation, isDemoStudent]);
+
+  useEffect(() => {
+    if (!isDemoStudent) return;
+    const key = editHopeCourse.join("|");
+    if (prevHopeRef.current !== key && editHopeCourse.length > 0) {
+      window.dispatchEvent(new CustomEvent("guide-hope-set"));
+    }
+    prevHopeRef.current = key;
+  }, [editHopeCourse, isDemoStudent]);
+
+  useEffect(() => {
+    if (!isDemoStudent) return;
+    if (prevCostRef.current !== editSubjectCost && editSubjectCost) {
+      const t = setTimeout(() => {
+        window.dispatchEvent(new CustomEvent("guide-cost-set"));
+      }, 600);
+      prevCostRef.current = editSubjectCost;
+      return () => clearTimeout(t);
+    }
+    prevCostRef.current = editSubjectCost;
+  }, [editSubjectCost, isDemoStudent]);
+
+  useEffect(() => {
+    if (!isDemoStudent) return;
+    if (prevStatusRef.current !== editStatus && editStatus === "등록완료") {
+      window.dispatchEvent(new CustomEvent("guide-status-set"));
+    }
+    prevStatusRef.current = editStatus;
+  }, [editStatus, isDemoStudent]);
   const [memoCount, setMemoCount] = useState<number | null>(null);
   const [cafeAddInput, setCafeAddInput] = useState("");
   const [showCafeAdd, setShowCafeAdd] = useState(false);
@@ -1161,7 +1340,34 @@ function HakjeomDetailPanel({
         alert("과목당 비용이 입력되어야 '등록완료'로 변경할 수 있습니다.\n과목당 비용을 먼저 입력해주세요.");
         return;
       }
+      // 최종학력 필수
+      if (!editEducation || !editEducation.trim()) {
+        alert("'등록완료'로 변경하려면 최종학력을 먼저 선택해주세요.");
+        return;
+      }
+      // 희망과정 — 4개 프리셋 중 하나라도 포함되어 있어야 함 (등록학생관리 매핑용)
+      const PRESETS = [
+        "사회복지사2급 - 신법",
+        "사회복지사2급 - 구법",
+        "사회복지사 (실습예정)",
+        "건강가정사",
+      ];
+      const joined = editHopeCourse.join(", ");
+      const hasPreset = PRESETS.some((p) => joined.includes(p));
+      if (!editHopeCourse.length) {
+        alert("'등록완료'로 변경하려면 희망과정을 입력해주세요.");
+        return;
+      }
+      if (!hasPreset) {
+        alert(
+          "'등록완료'로 변경하려면 희망과정에 다음 중 하나가 포함되어 있어야 합니다:\n" +
+            PRESETS.join("\n"),
+        );
+        return;
+      }
     }
+    const hopeCourseToSave =
+      editHopeCourse.length > 0 ? editHopeCourse.join(", ") : null;
     setSaving(true);
     try {
       await onUpdate(item.id, {
@@ -1169,8 +1375,7 @@ function HakjeomDetailPanel({
         memo: editMemo || null,
         manager: editManager || null,
         education: editEducation || null,
-        hope_course:
-          editHopeCourse.length > 0 ? editHopeCourse.join(", ") : null,
+        hope_course: hopeCourseToSave,
         reason: editReason.length > 0 ? editReason.join(", ") : null,
         counsel_check:
           editCounselCheck.length > 0
@@ -1285,28 +1490,29 @@ function HakjeomDetailPanel({
               {/* 최종학력 */}
               <div className={styles.detailFieldRow}>
                 <span className={styles.detailFieldLabel}>최종학력</span>
-                <EducationSelect
-                  value={editEducation}
-                  onChange={setEditEducation}
-                />
+                <div data-guide="detail-education">
+                  <EducationSelect
+                    value={editEducation}
+                    onChange={setEditEducation}
+                  />
+                </div>
               </div>
 
-              {/* 희망과정 */}
+              {/* 희망과정 — trigger엔 입력값 그대로 다 보임,
+                  드롭다운에서 4개 중 하나 선택 시 그 하나로 압축됨 */}
               <div className={styles.detailFieldRow}>
-                <span className={styles.detailFieldLabel}>희망과정</span>
-                <input
-                  value={editHopeCourse.join(", ")}
-                  onChange={(e) =>
-                    setEditHopeCourse(
-                      e.target.value
-                        .split(",")
-                        .map((s) => s.trim())
-                        .filter(Boolean),
-                    )
-                  }
-                  placeholder="예) 사회복지사, 보육교사"
-                  className={`${styles.input} ${styles.inputFull}`}
-                />
+                <span className={styles.detailFieldLabel}>
+                  희망과정
+                  {editStatus === "등록완료" && (
+                    <span style={{ color: "#dc2626", marginLeft: 2 }}>*</span>
+                  )}
+                </span>
+                <div data-guide="detail-hope-course">
+                  <HopeCourseSelect
+                    value={editHopeCourse.join(", ")}
+                    onChange={(v) => setEditHopeCourse(v ? [v] : [])}
+                  />
+                </div>
               </div>
 
               {/* 거주지 */}
@@ -1545,7 +1751,7 @@ function HakjeomDetailPanel({
               </div>
 
               {/* 상태 */}
-              <div className={styles.detailChipSection}>
+              <div className={styles.detailChipSection} data-guide="detail-status">
                 <span className={styles.detailChipSectionLabel}>상태</span>
                 <div className={styles.detailChipRow}>
                   {(
@@ -1762,7 +1968,7 @@ function HakjeomDetailPanel({
               </div>
 
               {/* 과목당비용 */}
-              <div className={styles.detailFieldRow}>
+              <div className={styles.detailFieldRow} data-guide="detail-subject-cost">
                 <span className={styles.detailFieldLabel}>과목당비용</span>
                 <input
                   type="text"
@@ -2764,6 +2970,9 @@ function HakjeomTab({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isOwnScope, setIsOwnScope] = useState(false);
+  // 가이드 활성 시에만 데모 학생 10명 임시 표시
+  const [guideDemoActive, setGuideDemoActive] = useState(false);
+  const { startCurrent: startGuide } = useGuide();
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -2836,6 +3045,76 @@ function HakjeomTab({
   const [selectedItem, setSelectedItem] = useState<HakjeomConsultation | null>(
     null,
   );
+
+  // ref로 가이드 활성 여부 추적 — fetchData 비동기 결과에서도 사용
+  const guideDemoActiveRef = useRef(false);
+  useEffect(() => {
+    guideDemoActiveRef.current = guideDemoActive;
+  }, [guideDemoActive]);
+
+  // 가이드 데모 목록 이벤트 — 가이드 활성 시에만 데모 학생 추가
+  useEffect(() => {
+    const on = () => setGuideDemoActive(true);
+    const off = () => setGuideDemoActive(false);
+    window.addEventListener("guide-demo-list-on", on);
+    window.addEventListener("guide-demo-list-off", off);
+    return () => {
+      window.removeEventListener("guide-demo-list-on", on);
+      window.removeEventListener("guide-demo-list-off", off);
+    };
+  }, []);
+
+  // demo on/off 시 items에 추가/제거
+  useEffect(() => {
+    if (guideDemoActive) {
+      setItems((prev) => {
+        if (prev.some((i) => i.id < 0)) return prev;
+        const demos = HAKJEOM_DEMO_LIST as unknown as HakjeomConsultation[];
+        return [...demos, ...prev];
+      });
+    } else {
+      setItems((prev) => prev.filter((i) => i.id > 0));
+    }
+  }, [guideDemoActive]);
+
+  // 가이드 데모 모달 — window 이벤트로 가짜 학생 주입/제거
+  useEffect(() => {
+    const onOpen = () => {
+      const demo: HakjeomConsultation = {
+        id: -999999,
+        name: "홍길동 (가이드 예시)",
+        contact: "010-0000-0000",
+        education: null,
+        reason: "취업",
+        click_source: "가이드",
+        status: "상담대기",
+        memo: "이 학생은 가이드 예시 데이터입니다. 실제 저장되지 않아요.",
+        subject_cost: null,
+        manager: null,
+        residence: null,
+        hope_course: null,
+        counsel_completed_at: null,
+        counsel_check: null,
+        current_situation: null,
+        reaction_point: null,
+        contact_scheduled_at: null,
+        created_at: new Date().toISOString(),
+        updated_at: null,
+      };
+      setSelectedItem(demo);
+    };
+    const onClose = () => {
+      setSelectedItem((prev) =>
+        prev && prev.id === -999999 ? null : prev,
+      );
+    };
+    window.addEventListener("guide-demo-open", onOpen);
+    window.addEventListener("guide-demo-close", onClose);
+    return () => {
+      window.removeEventListener("guide-demo-open", onOpen);
+      window.removeEventListener("guide-demo-close", onClose);
+    };
+  }, []);
   const [openTab, setOpenTab] = useState<"basic" | "info">("basic");
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [deleting, setDeleting] = useState(false);
@@ -2930,7 +3209,13 @@ function HakjeomTab({
       const res = await fetch("/api/hakjeom");
       if (!res.ok) throw new Error("데이터를 불러오지 못했습니다.");
       const data: HakjeomConsultation[] = await res.json();
-      setItems(data);
+      // 가이드 활성 상태면 demo 학생을 항상 prepend
+      if (guideDemoActiveRef.current) {
+        const demos = HAKJEOM_DEMO_LIST as unknown as HakjeomConsultation[];
+        setItems([...demos, ...data]);
+      } else {
+        setItems(data);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "알 수 없는 오류");
     } finally {
@@ -2962,6 +3247,13 @@ function HakjeomTab({
     id: number,
     fields: Partial<HakjeomConsultation>,
   ) => {
+    // 가이드 데모 학생 — 실제 DB 호출 없이 selectedItem만 갱신 (저장 시뮬레이션)
+    if (id === -999999) {
+      setSelectedItem((prev) => (prev ? { ...prev, ...fields } : prev));
+      setToastVisible(true);
+      setTimeout(() => setToastVisible(false), 2500);
+      return;
+    }
     const res = await fetch("/api/hakjeom", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -2984,12 +3276,20 @@ function HakjeomTab({
   };
 
   const handleStatusChange = async (id: number, status: ConsultationStatus) => {
-    // '등록완료'로 바꿀 때는 과목당 비용(subject_cost)이 반드시 입력되어 있어야 함
+    // '등록완료'로 바꿀 때 필수 검증
     if (status === "등록완료") {
       const target = items.find((c) => c.id === id) ?? (selectedItem?.id === id ? selectedItem : null);
       const cost = target?.subject_cost;
       if (!cost || Number(cost) <= 0) {
         alert("과목당 비용이 입력되어야 '등록완료'로 변경할 수 있습니다.\n상세창에서 과목당 비용을 먼저 저장해주세요.");
+        return;
+      }
+      if (!target?.education || !String(target.education).trim()) {
+        alert("'등록완료'로 변경하려면 최종학력을 먼저 입력해주세요.\n상세창에서 학력을 선택 후 저장해주세요.");
+        return;
+      }
+      if (!target?.hope_course || !String(target.hope_course).trim()) {
+        alert("'등록완료'로 변경하려면 희망과정을 먼저 선택해주세요.\n상세창에서 희망과정을 선택 후 저장해주세요.");
         return;
       }
     }
@@ -3449,48 +3749,17 @@ function HakjeomTab({
               });
               return {
                 name,
-                monthly: rate(monthlyRows),
-                quarterly: rate(quarterlyRows),
+                month: rate(monthlyRows),
+                quarter: rate(quarterlyRows),
               };
             })
-            .sort((a, b) => b.quarterly - a.quarterly);
-          const topName = mStats[0]?.quarterly > 0 ? mStats[0].name : null;
+            .sort((a, b) => b.month - a.month);
           setManagerStatsNode(
-            <div className={styles.statsInline}>
-              <span className={styles.statsInlineLabel}>담당자 실적</span>
-              {mStats.map((m) => {
-                const isTop = m.name === topName;
-                return (
-                  <span
-                    key={m.name}
-                    className={`${styles.statsInlineItem} ${isTop ? styles.statsInlineItemTop : ""}`}
-                  >
-                    <span className={styles.statsInlineName}>
-                      {isTop && "🥇 "}
-                      {m.name}
-                    </span>
-                    <span className={styles.statsInlineRateGroup}>
-                      <span className={styles.statsInlineRateLabel}>
-                        {kstMonth + 1}월
-                      </span>
-                      <span className={styles.statsInlineRate}>
-                        {m.monthly}%
-                      </span>
-                    </span>
-                    <span className={styles.statsInlineRateGroup}>
-                      <span className={styles.statsInlineRateLabel}>
-                        {quarter}분기
-                      </span>
-                      <span
-                        className={`${styles.statsInlineRate} ${isTop ? styles.statsInlineRateTop : ""}`}
-                      >
-                        {m.quarterly}%
-                      </span>
-                    </span>
-                  </span>
-                );
-              })}
-            </div>,
+            <PerformerLeaderboard
+              performers={mStats}
+              primaryLabel={`${kstMonth + 1}월`}
+              secondaryLabel={`${quarter}분기`}
+            />,
           );
         },
       )
@@ -3503,24 +3772,35 @@ function HakjeomTab({
 
   return (
     <div>
+      {/* 페이지 상단 — 담당자 실적 리더보드 */}
+      {managerStatsNode && (
+        <div
+          className={styles.leaderboardWrap}
+          data-guide="hakjeom-leaderboard"
+        >
+          {managerStatsNode}
+        </div>
+      )}
       {loading ? (
         <FilterBarSkeleton />
       ) : (
         <>
           {/* 필터 영역 */}
           <div className={styles.filterRow}>
-            <input
-              type="text"
-              value={searchText}
-              onChange={(e) => {
-                setSearchText(e.target.value);
-                setCurrentPage(1);
-              }}
-              placeholder="이름, 연락처, 취득사유, 메모 검색..."
-              className={styles.input}
-              style={{ width: 300 }}
-            />
-            <div ref={dateRangeRef} className={styles.dateRangeWrap}>
+            <div className={styles.searchWrap} data-guide="hakjeom-search">
+              <Search className={styles.searchIcon} size={16} />
+              <input
+                type="text"
+                value={searchText}
+                onChange={(e) => {
+                  setSearchText(e.target.value);
+                  setCurrentPage(1);
+                }}
+                placeholder="이름, 연락처, 취득사유, 메모 검색..."
+                className={`${styles.input} ${styles.searchInput}`}
+              />
+            </div>
+            <div ref={dateRangeRef} className={styles.dateRangeWrap} data-guide="hakjeom-daterange">
               <button
                 type="button"
                 className={styles.dateRangeBtn}
@@ -3548,6 +3828,15 @@ function HakjeomTab({
                 </div>
               )}
             </div>
+            <button
+              type="button"
+              onClick={startGuide}
+              className={styles.guideBtn}
+              title="문의 DB 사용법 보기"
+            >
+              <HelpCircle size={15} />
+              <span>가이드</span>
+            </button>
             {isFiltered && (
               <button onClick={resetFilters} className={styles.btnSecondary}>
                 필터 초기화
@@ -3855,10 +4144,6 @@ function HakjeomTab({
                 </button>
               </>
             )}
-            {/* 담당자 실적 - 오른쪽 정렬 */}
-            {managerStatsNode && (
-              <div style={{ marginLeft: "auto" }}>{managerStatsNode}</div>
-            )}
           </div>
           {/* 액션 바 */}
           <div className={styles.actionBar}>
@@ -3876,6 +4161,7 @@ function HakjeomTab({
             <button
               onClick={() => setShowAddModal(true)}
               className={styles.btnPrimary}
+              data-guide="hakjeom-new-btn"
             >
               + 추가
             </button>
@@ -3884,7 +4170,7 @@ function HakjeomTab({
       )}
 
       {/* 테이블 */}
-      <div className={styles.tableCard}>
+      <div className={styles.tableCard} data-guide="hakjeom-table">
         {error ? (
           <div className={styles.tableErrorMsg}>{error}</div>
         ) : (
@@ -4057,7 +4343,7 @@ function HakjeomTab({
                     </div>
                   </th>
 
-                  <th className={styles.thFilterable}>
+                  <th className={styles.thFilterable} data-guide="hakjeom-status-col">
                     <div className={styles.thInner}>
                       상태
                       <button
@@ -4113,6 +4399,7 @@ function HakjeomTab({
                     <tr
                       key={item.id}
                       data-id={item.id}
+                      data-guide={index === 0 ? "hakjeom-first-row" : undefined}
                       onClick={() => setSelectedItem(item)}
                       style={{
                         cursor: "pointer",

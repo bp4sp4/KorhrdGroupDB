@@ -1,0 +1,141 @@
+.container {
+  background: #fff;
+  border: 1px solid #ececec;
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-family:
+    Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}
+
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  gap: 12px;
+}
+
+.title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0a0a0a;
+}
+
+.subtitle {
+  font-size: 11px;
+  color: #737373;
+}
+
+.grid {
+  display: grid;
+  gap: 8px;
+}
+
+.item {
+  all: unset;
+  cursor: pointer;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid transparent;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+  box-sizing: border-box;
+}
+
+.item:hover {
+  background: #fafafa;
+}
+
+.itemSelected {
+  background: #fffbe6;
+  border-color: #f0c000;
+}
+
+.itemSelected:hover {
+  background: #fffbe6;
+}
+
+.itemTop {
+  background: #fffbe6;
+  border-color: #f0c000;
+}
+
+.itemTop:hover {
+  background: #fff5cc;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.rank {
+  font-size: 10px;
+  font-weight: 700;
+  color: #a3a3a3;
+  width: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.rankTop {
+  color: #b45309;
+}
+
+.name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0a0a0a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.metric {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0a0a0a;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.metricZero {
+  color: #d4d4d4;
+}
+
+.metricUnit {
+  font-size: 12px;
+  font-weight: 500;
+  color: #a3a3a3;
+  margin-left: 1px;
+}
+
+.barTrack {
+  height: 4px;
+  background: #f5f5f5;
+  border-radius: 2px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  background: #a3a3a3;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.barFillTop {
+  background: #0a0a0a;
+}
+
+.secondary {
+  font-size: 11px;
+  color: #737373;
+  margin-top: 6px;
+  font-variant-numeric: tabular-nums;
+}

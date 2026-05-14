@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Sidebar from '@/components/layout/Sidebar'
 import Header from '@/components/layout/Header'
+import GuideProvider from '@/components/guide/GuideProvider'
 import { createClient } from '@/lib/supabase/client'
 import styles from '@/components/layout/layout.module.css'
 
@@ -151,20 +152,22 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className={styles.dashboardWrap}>
-      <Header userName={displayName} userRole={userRole} permissions={permissions} revenueOwnDivisions={revenueOwnDivisions} onMenuToggle={() => setSidebarOpen(v => !v)} />
+    <GuideProvider>
+      <div className={styles.dashboardWrap}>
+        <Header userName={displayName} userRole={userRole} permissions={permissions} revenueOwnDivisions={revenueOwnDivisions} onMenuToggle={() => setSidebarOpen(v => !v)} />
 
-      <div className={styles.dashboardBody}>
-        <Sidebar userRole={userRole} permissions={permissions} revenueOwnDivisions={revenueOwnDivisions} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <div className={styles.dashboardBody}>
+          <Sidebar userRole={userRole} permissions={permissions} revenueOwnDivisions={revenueOwnDivisions} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-        {sidebarOpen && (
-          <div className={styles.sidebarOverlay} onClick={() => setSidebarOpen(false)} />
-        )}
+          {sidebarOpen && (
+            <div className={styles.sidebarOverlay} onClick={() => setSidebarOpen(false)} />
+          )}
 
-        <main className={`${styles.mainContent}${pathname.startsWith('/approvals') ? ` ${styles.mainContentWhite}` : ''}`}>
-          {children}
-        </main>
+          <main className={`${styles.mainContent}${pathname.startsWith('/approvals') ? ` ${styles.mainContentWhite}` : ''}`}>
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </GuideProvider>
   )
 }

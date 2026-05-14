@@ -88,6 +88,11 @@ export default function StudentModal({ student, courses, centers, managers = [],
   }>({ loading: false, subscribed: null, found: null });
   const allcareTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // 문의DB 자동 채움 안내
+  const [consultationFound, setConsultationFound] = useState<null | { from: string }>(null);
+  const consultTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const consultAppliedKey = useRef<string>(''); // 같은 이름+번호로 두 번 채움 방지
+
   useEffect(() => {
     const supabase = createClient();
     supabase
@@ -143,6 +148,67 @@ export default function StudentModal({ student, courses, centers, managers = [],
     return () => { if (allcareTimer.current) clearTimeout(allcareTimer.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.name, form.phone]);
+
+  // 이름 + 전화번호 변경 시 문의 DB 매칭 → 빈 필드 자동 채움 (신규 추가 모드만)
+  useEffect(() => {
+    if (student) return; // 수정 모드면 자동 채움 X
+    const name = form.name.trim();
+    const phone = form.phone.trim();
+    if (!name || !phone || phone.replace(/-/g, '').length < 10) return;
+    const key = `${name}|${phone.replace(/\D/g, '')}`;
+    if (consultAppliedKey.current === key) return;
+
+    if (consultTimer.current) clearTimeout(consultTimer.current);
+    consultTimer.current = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `/api/edu/lookup-consultation?name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}`,
+        );
+        const data = await res.json();
+        if (!data?.found || !data.consultation) return;
+        const c = data.consultation as {
+          education?: string | null;
+          hope_course?: string | null;
+          manager?: string | null;
+          subject_cost?: number | null;
+          memo?: string | null;
+        };
+        consultAppliedKey.current = key;
+        setForm((prev) => {
+          const next = { ...prev };
+          // 최종학력 매핑: 문의 DB '2년제 졸업' → 등록학생관리 '2년제졸업' (공백 제거)
+          if (!next.education_level && c.education) {
+            const normalized = String(c.education).replace(/\s/g, '');
+            const match = EDUCATION_LEVELS.find((l) => l === normalized);
+            if (match) next.education_level = match;
+          }
+          // 희망자격증과정 매핑 (이름)
+          if (!next.course_id && c.hope_course) {
+            const list = courses.length > 0 ? courses : DEFAULT_COURSES;
+            const found = list.find(
+              (cc) =>
+                cc.name === c.hope_course ||
+                (c.hope_course && c.hope_course.includes(cc.name)),
+            );
+            if (found) next.course_id = found.id;
+          }
+          if (!next.manager_name && c.manager) next.manager_name = c.manager;
+          if (!next.unit_price && c.subject_cost) {
+            next.unit_price = String(c.subject_cost);
+          }
+          if (!next.notes && c.memo) next.notes = c.memo;
+          return next;
+        });
+        setConsultationFound({ from: '문의DB' });
+        // 3초 후 안내 배지 제거
+        setTimeout(() => setConsultationFound(null), 3500);
+      } catch {
+        /* ignore */
+      }
+    }, 800);
+    return () => { if (consultTimer.current) clearTimeout(consultTimer.current); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.name, form.phone, student]);
 
   const courseList = courses.length > 0 ? courses : DEFAULT_COURSES;
   const centerSuggestions = centers.length > 0 ? centers.map((c) => c.name) : DEFAULT_CENTERS;
@@ -251,7 +317,22 @@ export default function StudentModal({ student, courses, centers, managers = [],
     <div className={styles.overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className={styles.modal}>
         <div className={styles.modal_header}>
-          <h2 className={styles.modal_title}>{student ? '학생 정보 수정' : '학생 추가'}</h2>
+          <h2 className={styles.modal_title}>
+            {student ? '학생 정보 수정' : '학생 추가'}
+            {consultationFound && (
+              <span style={{
+                marginLeft: 10,
+                fontSize: 11,
+                fontWeight: 600,
+                color: '#15803D',
+                background: '#DCFCE7',
+                padding: '2px 8px',
+                borderRadius: 999,
+              }}>
+                ✓ 문의DB에서 자동 채움
+              </span>
+            )}
+          </h2>
           <button className={styles.modal_close} onClick={onClose}>✕</button>
         </div>
 

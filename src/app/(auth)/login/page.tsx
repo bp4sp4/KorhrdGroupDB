@@ -2,7 +2,7 @@
 
 import { useState, useEffect, FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle, Eye, EyeOff } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import styles from './login.module.css'
 
@@ -11,6 +11,7 @@ export default function LoginPage() {
   const supabase = createClient()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
@@ -101,15 +102,26 @@ export default function LoginPage() {
           </div>
 
           <div className={styles.inputWrap}>
-            <input
-              type="password"
-              placeholder="비밀번호"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              autoComplete="current-password"
-              className={styles.input}
-            />
+            <div className={styles.inputRow}>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="비밀번호"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+                className={styles.input}
+              />
+              <button
+                type="button"
+                className={styles.toggleBtn}
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           {error && (

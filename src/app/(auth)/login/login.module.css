@@ -111,3 +111,30 @@
   background: #b0b8c1;
   cursor: not-allowed;
 }
+
+.inputRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toggleBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 0;
+  transition: background 120ms, color 120ms;
+  flex-shrink: 0;
+}
+
+.toggleBtn:hover {
+  background: #f3f4f6;
+  color: #4b5563;
+}

@@ -9,7 +9,6 @@
 .tdAction {
   padding: 0 8px;
   white-space: nowrap;
-  
 }
 
 .scheduleBtn {
@@ -26,7 +25,9 @@
   font-family: inherit;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 100ms ease, color 100ms ease;
+  transition:
+    background 100ms ease,
+    color 100ms ease;
 }
 
 .scheduleBtn:hover {
@@ -69,7 +70,9 @@
   margin-bottom: 10px;
   background: #fff;
   border-radius: 8px;
-  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  box-shadow:
+    0 1px 8px rgba(0, 0, 0, 0.06),
+    0 0 0 1px rgba(0, 0, 0, 0.04);
   animation: bannerSlideIn 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
@@ -78,8 +81,14 @@
 }
 
 @keyframes bannerSlideIn {
-  from { opacity: 0; transform: translateY(-6px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* 아이콘 박스 */
@@ -182,7 +191,9 @@
   border-radius: 8px;
   cursor: pointer;
   color: #adb5bd;
-  transition: background 120ms ease, color 120ms ease;
+  transition:
+    background 120ms ease,
+    color 120ms ease;
 }
 
 .scheduleBannerClose:hover {
@@ -208,8 +219,14 @@
 }
 
 @keyframes toastIn {
-  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
 }
 
 /* ─── 공통 버튼 & 인풋 ───────────────────────────────────────────────────── */
@@ -221,10 +238,12 @@
   padding: 10px 12px;
   box-shadow: var(--toss-shadow-card);
   margin-bottom: 12px;
-  display: flex;
+  display: inline-flex;
   gap: 8px;
   flex-wrap: wrap;
   align-items: center;
+  width: fit-content;
+  max-width: 100%;
 }
 
 .input {
@@ -328,7 +347,7 @@
 }
 
 .btnDownload {
-  padding: 7px 12px;
+  padding: 6px 12px;
   background: none;
   color: var(--toss-blue);
   border: 1.5px solid var(--toss-blue);
@@ -338,7 +357,7 @@
   cursor: pointer;
 }
 .btnDownload:hover {
-  background: #EBF3FE;
+  background: #ebf3fe;
 }
 
 /* ─── 테이블 카드 ────────────────────────────────────────────────────────── */
@@ -389,7 +408,6 @@
   color: #191f28;
   border-bottom: 1px solid var(--toss-border);
   text-align: center;
-
 }
 
 /* ─── 태그 버튼 (동적 active 상태) ──────────────────────────────────────── */
@@ -412,9 +430,9 @@
   padding: 5px 12px;
   border-radius: 8px;
   cursor: pointer;
-  border: 2px solid #3182F6;
-  background: #EBF3FE;
-  color: #3182F6;
+  border: 2px solid #3182f6;
+  background: #ebf3fe;
+  color: #3182f6;
   font-size: 13px;
   font-weight: 600;
   transition: all 0.12s;
@@ -438,9 +456,9 @@
   padding: 4px 10px;
   border-radius: 8px;
   cursor: pointer;
-  border: 2px solid #3182F6;
-  background: #EBF3FE;
-  color: #3182F6;
+  border: 2px solid #3182f6;
+  background: #ebf3fe;
+  color: #3182f6;
   font-size: 12px;
   font-weight: 600;
   transition: all 0.12s;
@@ -463,9 +481,9 @@
   padding: 5px 12px;
   border-radius: 8px;
   cursor: pointer;
-  border: 2px solid #3182F6;
-  background: #EBF3FE;
-  color: #3182F6;
+  border: 2px solid #3182f6;
+  background: #ebf3fe;
+  color: #3182f6;
   font-size: 13px;
   font-weight: 600;
   transition: all 0.15s;
@@ -488,9 +506,9 @@
   padding: 4px 10px;
   border-radius: 8px;
   cursor: pointer;
-  border: 2px solid #3182F6;
-  background: #EBF3FE;
-  color: #3182F6;
+  border: 2px solid #3182f6;
+  background: #ebf3fe;
+  color: #3182f6;
   font-size: 13px;
   font-weight: 600;
   transition: all 0.15s;
@@ -860,7 +878,9 @@
   border-radius: 6px;
   transition: background 0.1s;
 }
-.funnelBackBtn:hover { background: var(--toss-hover); }
+.funnelBackBtn:hover {
+  background: var(--toss-hover);
+}
 
 .funnelCloseBtn {
   background: none;
@@ -872,7 +892,9 @@
   border-radius: 6px;
   transition: background 0.1s;
 }
-.funnelCloseBtn:hover { background: var(--toss-hover); }
+.funnelCloseBtn:hover {
+  background: var(--toss-hover);
+}
 
 .funnelStepLabel {
   font-size: 13px;
@@ -1010,8 +1032,8 @@
   background: #fff;
 }
 .funnelMultiSelect option:checked {
-  background: #EBF3FE;
-  color: #3182F6;
+  background: #ebf3fe;
+  color: #3182f6;
   font-weight: 600;
 }
 
@@ -1033,7 +1055,7 @@
 
 .funnelCourseCardActive {
   border-color: var(--toss-blue) !important;
-  background: #EBF3FE !important;
+  background: #ebf3fe !important;
 }
 
 .funnelCourseLabel {
@@ -1054,7 +1076,9 @@
   display: block;
   margin: 0 auto;
 }
-.funnelSkipBtn:hover { color: var(--toss-blue); }
+.funnelSkipBtn:hover {
+  color: var(--toss-blue);
+}
 
 .funnelFooter {
   padding: 16px 24px 24px;
@@ -1156,7 +1180,7 @@
 .tableErrorMsg {
   padding: 60px 24px;
   text-align: center;
-  color: #DC2626;
+  color: #dc2626;
   font-size: 14px;
 }
 
@@ -1287,8 +1311,8 @@
   display: inline-block;
   padding: 1px 6px;
   border-radius: 8px;
-  background: #F3F4F6;
-  color: #6B7684;
+  background: #f3f4f6;
+  color: #6b7684;
   font-size: 11px;
   font-weight: 600;
   white-space: nowrap;
@@ -1346,7 +1370,7 @@
   width: 38px;
   height: 38px;
   border: 2px solid var(--toss-blue);
-  background: #EBF3FE;
+  background: #ebf3fe;
   color: var(--toss-blue);
   font-size: 13px;
   font-weight: 700;
@@ -1389,7 +1413,9 @@
   color: var(--toss-text-primary);
   cursor: pointer;
   outline: none;
-  transition: border-color 0.15s, background 120ms ease;
+  transition:
+    border-color 0.15s,
+    background 120ms ease;
 }
 
 .dateRangeBtn:hover {
@@ -1460,7 +1486,6 @@
   gap: 0;
 }
 
-
 .bulkTabBtnActive {
   color: var(--toss-blue);
   font-weight: 700;
@@ -1509,7 +1534,7 @@
 
 .bulkTypeBtnActive {
   border-color: var(--toss-blue);
-  background: #EBF3FE;
+  background: #ebf3fe;
   color: var(--toss-blue);
   font-weight: 700;
 }
@@ -1521,7 +1546,9 @@
   text-align: center;
   cursor: pointer;
   background: #fafafa;
-  transition: border-color 0.15s, background 0.15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1533,9 +1560,20 @@
   background: #f0f7ff;
 }
 
-.bulkDropzoneIcon { font-size: 36px; }
-.bulkDropzoneTitle { font-size: 15px; font-weight: 600; color: var(--toss-text-primary); margin: 0; }
-.bulkDropzoneSub { font-size: 13px; color: var(--toss-text-secondary); margin: 0; }
+.bulkDropzoneIcon {
+  font-size: 36px;
+}
+.bulkDropzoneTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--toss-text-primary);
+  margin: 0;
+}
+.bulkDropzoneSub {
+  font-size: 13px;
+  color: var(--toss-text-secondary);
+  margin: 0;
+}
 
 .bulkPreviewCard {
   background: #fff;
@@ -1554,8 +1592,16 @@
   gap: 12px;
 }
 
-.bulkPreviewTitle { font-size: 14px; font-weight: 700; color: var(--toss-text-primary); }
-.bulkPreviewMeta { font-size: 13px; color: var(--toss-text-secondary); margin-left: 8px; }
+.bulkPreviewTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--toss-text-primary);
+}
+.bulkPreviewMeta {
+  font-size: 13px;
+  color: var(--toss-text-secondary);
+  margin-left: 8px;
+}
 
 .bulkPreviewTableWrap {
   overflow-x: auto;
@@ -1644,8 +1690,13 @@
   font-size: 14px;
 }
 
-.bulkEmptyIcon { font-size: 32px; }
-.bulkEmptySub { font-size: 12px; color: var(--toss-text-secondary); }
+.bulkEmptyIcon {
+  font-size: 32px;
+}
+.bulkEmptySub {
+  font-size: 12px;
+  color: var(--toss-text-secondary);
+}
 
 .tr {
   transition: background 0.1s;
@@ -1656,7 +1707,7 @@
 }
 
 .trSelected {
-  background: #EBF3FE !important;
+  background: #ebf3fe !important;
 }
 
 /* ─── 통계 탭 ────────────────────────────────────────────────────────────── */
@@ -1712,7 +1763,9 @@
   background: transparent;
   font-size: 14px;
   cursor: pointer;
-  transition: color 0.18s, border-color 0.18s;
+  transition:
+    color 0.18s,
+    border-color 0.18s;
   white-space: nowrap;
 }
 
@@ -2045,7 +2098,7 @@
   align-items: center;
   gap: 10px;
   padding: 10px 14px;
-  background: #EBF3FE;
+  background: #ebf3fe;
   border-radius: 8px;
   border: 1px solid #c5d9f8;
   margin-bottom: 8px;
@@ -2066,7 +2119,7 @@
   background: #fff;
   border: 1px solid var(--toss-border);
   border-radius: 10px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
   padding: 6px;
   min-width: 200px;
 }
@@ -2144,7 +2197,7 @@
   font-size: 12px;
   font-weight: 700;
   color: var(--toss-blue);
-  background: #EBF3FE;
+  background: #ebf3fe;
   border: 1px solid #bfdbfe;
   cursor: pointer;
   transition: background 0.12s;
@@ -2187,7 +2240,7 @@
   background: #fff;
   border: 1px solid var(--toss-border);
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.10);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   padding: 12px;
   z-index: 200;
   min-width: 300px;
@@ -2338,7 +2391,9 @@
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: color 0.15s, border-color 0.15s;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
   white-space: nowrap;
 }
 
@@ -2351,7 +2406,7 @@
   height: 18px;
   padding: 0 5px;
   border-radius: 9px;
-  background: #EF4444;
+  background: #ef4444;
   color: #fff;
   font-size: 11px;
   font-weight: 700;
@@ -2369,7 +2424,9 @@
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  transition: color 0.15s, border-color 0.15s;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
   white-space: nowrap;
 }
 
@@ -2413,9 +2470,9 @@
   font-size: 15px;
   cursor: pointer;
   width: 100%;
-  
+
   transition: border-color 0.15s;
-  
+
   white-space: nowrap;
 }
 
@@ -2574,8 +2631,8 @@
 .detailModalContactBadge {
   font-size: 12px;
   font-weight: 600;
-  color: #3182F6;
-  background: #EBF3FE;
+  color: #3182f6;
+  background: #ebf3fe;
   border-radius: 20px;
   padding: 2px 9px;
 }
@@ -2614,7 +2671,9 @@
   cursor: pointer;
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
-  transition: color 0.15s, border-color 0.15s;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
 }
 
 .detailModalTabActive {
@@ -2638,7 +2697,6 @@
   border-top: 1px solid var(--toss-border);
   padding-top: 16px;
 }
-
 
 /* Field row: label left, control right */
 .detailFieldRow {
@@ -2755,7 +2813,7 @@
 }
 
 .filterDropdownItem::before {
-  content: '';
+  content: "";
   display: block;
   width: 15px;
   height: 15px;
@@ -2775,7 +2833,7 @@
 }
 
 .filterDropdownItemActive::before {
-  content: '✓';
+  content: "✓";
   background: var(--toss-blue);
   border-color: var(--toss-blue);
   color: #fff;
@@ -2843,12 +2901,12 @@
 
 .statusSelectGroup {
   font-weight: 600;
-  color: #0277BD;
+  color: #0277bd;
   position: relative;
 }
 
 .statusSelectGroup:hover {
-  background: #EBF3FE;
+  background: #ebf3fe;
 }
 
 .statusSelectFlyout {
@@ -2857,9 +2915,9 @@
   left: 100%;
   top: 0;
   background: #fff;
-  border: 1px solid #E5E8EB;
+  border: 1px solid #e5e8eb;
   border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
   min-width: 120px;
   z-index: 1001;
   padding: 4px 0;
@@ -2971,6 +3029,56 @@
 
 .statsRateTop {
   color: #d97706 !important;
+}
+
+/* ─── 리더보드 래퍼 (페이지 상단) ────────────────────────────────────────── */
+.leaderboardWrap {
+  margin-bottom: 12px;
+}
+
+/* ─── 가이드 시작 버튼 ────────────────────────────────────────────────────── */
+.guideBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  background: #eff6ff;
+  border: 1.5px solid #bfdbfe;
+  border-radius: 8px;
+  color: #2563eb;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+  white-space: nowrap;
+}
+
+.guideBtn:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
+/* ─── 검색 입력 (돋보기 아이콘 포함) ──────────────────────────────────────── */
+.searchWrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 300px;
+  max-width: 100%;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 12px;
+  color: var(--toss-text-tertiary, #9ca3af);
+  pointer-events: none;
+}
+
+.searchInput {
+  padding-left: 36px;
+  width: 100%;
 }
 
 /* ─── 컴팩트 실적 칩 (헤더용) ────────────────────────────────────────────── */
@@ -3129,9 +3237,15 @@
 
 /* ─── 검색 하이라이트 ───────────────────────────────────────────── */
 @keyframes highlightFade {
-  0%   { background: #dbeafe; }
-  70%  { background: #dbeafe; }
-  100% { background: transparent; }
+  0% {
+    background: #dbeafe;
+  }
+  70% {
+    background: #dbeafe;
+  }
+  100% {
+    background: transparent;
+  }
 }
 
 .highlightRow {
@@ -3196,9 +3310,10 @@
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  z-index: 1000;
+  /* 가이드 backdrop(9000) 위로 띄워서 옵션이 어둡지 않게 */
+  z-index: 9500;
   overflow: hidden;
-  max-height: 280px;
+
   overflow-y: auto;
 }
 
@@ -3321,7 +3436,55 @@
 
   /* 문의DB 테이블: 번호(2), 이름(5), 연락처(6)만 표시 */
   .hakjeomMainTable th:not(:nth-child(2)):not(:nth-child(5)):not(:nth-child(6)),
-  .hakjeomMainTable td:not(:nth-child(2)):not(:nth-child(5)):not(:nth-child(6)) {
+  .hakjeomMainTable
+    td:not(:nth-child(2)):not(:nth-child(5)):not(:nth-child(6)) {
     display: none;
   }
+}
+
+/* ── 희망과정 다중 선택 칩 ─────────────────────────────────────── */
+.hopeCourseChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.hopeCourseChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 4px 3px 10px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #dbe5ff;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: -0.1px;
+}
+
+.hopeCourseChipRemove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  background: transparent;
+  border: none;
+  color: #2563eb;
+  border-radius: 999px;
+  cursor: pointer;
+  padding: 0;
+  font-size: 12px;
+  line-height: 1;
+  transition:
+    background 120ms,
+    color 120ms;
+}
+
+.hopeCourseChipRemove:hover {
+  background: #2563eb;
+  color: #fff;
 }
