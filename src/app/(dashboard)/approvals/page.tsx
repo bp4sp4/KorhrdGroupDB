@@ -35,6 +35,7 @@ import {
 } from "react-icons/md";
 import type {
   Approval,
+  ApprovalStatus,
   ApprovalTemplate,
   ApprovalStep,
   Department,
@@ -805,12 +806,12 @@ export default function ApprovalsPage() {
     title: "[가이드 예시] 5월 팀 회식비",
     document_type: "[품의서] 지출품의서",
     document_number: "GUIDE-2026-0001",
-    status: "APPROVED",
+    category: "회계",
+    status: "APPROVED" as ApprovalStatus,
     current_step: 0,
     created_at: new Date().toISOString(),
     completed_at: new Date().toISOString(),
     applicant_id: String(myUserId ?? ""),
-    applicant_name: "(가이드 예시)",
     content: {
       vendor_name: "가이드 예시 식당",
       purpose: "5월 팀 회식 비용 품의 — 가이드용 예시 데이터입니다.",
@@ -818,9 +819,9 @@ export default function ApprovalsPage() {
       cost_type: "tax_invoice",
       belong_dept: "가이드 예시",
       special_note: "가이드 시뮬레이션 — 실제 결재되지 않습니다.",
-    } as unknown as Record<string, unknown>,
+    },
     steps: [],
-  } as Approval;
+  };
 
   // 예시 본문 채움 — 품의서 / 결의서 공통
   const fillDemoContent = (kind: "proposal" | "resolution") => {
@@ -859,7 +860,7 @@ export default function ApprovalsPage() {
       setModalSelectedTemplate(tpl);
       setTemplateModalOpen(false);
       setSelectedCategory(null);
-      const defaultApproverIds = ((tpl.steps ?? []) as ApprovalStep[])
+      const defaultApproverIds = (tpl.steps ?? [])
         .filter((s) => s.type !== "APPLICANT" && s.user_id)
         .map((s) => String(s.user_id));
       setFormState({
