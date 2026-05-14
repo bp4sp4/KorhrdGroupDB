@@ -37,6 +37,10 @@ export interface GuideStep {
   hidePrev?: boolean;
   /** 이 단계에서 '다음' 버튼 숨김 (advanceOn 으로만 진행) */
   hideNext?: boolean;
+  /** 작은 코너 툴팁 (폼 위에 띄울 때 화면을 가리지 않도록) */
+  compact?: boolean;
+  /** 진입 후 N ms 뒤 자동으로 다음 단계로 (시뮬레이션용) */
+  autoAdvanceMs?: number;
 }
 
 export interface GuideDef {
@@ -245,6 +249,238 @@ export const GUIDES: GuideDef[] = [
           <>
             언제든 <C>기간 선택 옆의 [가이드] 버튼</C>을 눌러 가이드를 다시 볼
             수 있어요.
+          </>
+        ),
+      },
+    ],
+  },
+  // ─── 전자결재 가이드 (/approvals) ──────────────────────────────────────────
+  // 흐름: 품의서 자동 작성·제출 → 결의서 자동 작성·품의서 연동·제출 (모두 시뮬레이션)
+  {
+    id: "approvals-basics",
+    label: "전자결재 사용법",
+    matchPath: "/approvals",
+    steps: [
+      {
+        title: "전자결재 가이드",
+        content: (
+          <>
+            <B>지출품의서 → 지출결의서</B> 흐름을 시뮬레이션으로 보여드릴게요.
+            {"\n\n"}
+            <C>📝 지출품의서</C> — &quot;<B>이런 곳에 지출할 예정입니다</B>,
+            결재해주세요&quot; (<S>사전</S> 승인)
+            {"\n"}
+            <C>📄 지출결의서</C> — &quot;<B>이미 지출했습니다</B>,
+            확인해주세요&quot; (<S>사후</S> 처리)
+            {"\n\n"}
+            품의서 → 결재 완료 → 결의서 → 품의서 연동 순서로 진행돼요.
+            {"\n\n"}
+            <W>※ 이 가이드는 시뮬레이션입니다 (DB 저장 X)</W>
+          </>
+        ),
+        fireEvent: "guide-apv-action:demo-start",
+      },
+      {
+        title: "1단계 — 지출품의서 작성",
+        content: (
+          <>
+            <B>지출품의서</B> 양식을 자동으로 열게요. 결의서를 쓰려면 먼저
+            품의서가 <S>승인 완료</S>되어야 해요.
+          </>
+        ),
+        fireEvent: "guide-apv-action:open-proposal-form",
+        compact: true,
+      },
+      {
+        target: '[data-guide="approvals-body-section"]',
+        title: "2단계 — 본문 자동 입력",
+        content: (
+          <>
+            예시 본문이 자동으로 채워져요:
+            {"\n"}• 거래처: <C>가이드 예시 식당</C>
+            {"\n"}• 사유: <C>5월 팀 회식</C>
+            {"\n"}• 금액: <C>180,000원</C>
+          </>
+        ),
+        fireEvent: "guide-apv-action:fill-proposal",
+        compact: true,
+        waitMs: 800,
+      },
+      {
+        target: '[data-guide="approvals-submit-btn"]',
+        title: "3단계 — 품의서 신청",
+        content: (
+          <>
+            <B>[결재요청]</B> 버튼을 누르면 결재 흐름이 시작돼요. 모든 결재자가{" "}
+            <S>승인</S>하면 품의서 완료!
+          </>
+        ),
+        compact: true,
+      },
+      {
+        target: '[data-guide="approvals-linked-proposal-table"]',
+        title: "4단계 — 지출결의서 작성",
+        content: (
+          <>
+            품의서가 승인됐다고 가정하고, 이제 <B>지출결의서(법인카드)</B>를
+            자동으로 열어드렸어요.
+            {"\n\n"}
+            화면 위에 <C>[연동 품의서]</C> 영역이 보이죠? 여기서 품의서를
+            연결해요.
+          </>
+        ),
+        fireEvent: "guide-apv-action:open-resolution-form",
+        compact: true,
+        waitMs: 800,
+      },
+      {
+        target: '[data-guide="approvals-proposal-modal"]',
+        title: "5단계 — 품의서 선택",
+        content: (
+          <>
+            <B>[품의서 선택]</B>을 누르면 본인의 <S>승인 완료 품의서</S> 목록이
+            나와요.
+            {"\n\n"}
+            아래 <C>[가이드 예시] 5월 팀 회식비</C>를 클릭해보세요.
+          </>
+        ),
+        fireEvent: "guide-apv-action:open-proposal-link",
+        compact: true,
+        waitMs: 600,
+        advanceOn: "guide-apv-proposal-linked",
+        hideNext: true,
+      },
+      {
+        target: '[data-guide="approvals-linked-proposal-table"]',
+        title: "6단계 — 품의서 연동 완료",
+        content: (
+          <>
+            품의서가 결의서에 <S>자동 연동</S>됐어요.
+            {"\n"}본문에 <C>거래처·사유·금액·첨부파일</C>이 자동 복사됩니다.
+          </>
+        ),
+        compact: true,
+        waitMs: 400,
+      },
+      {
+        target: '[data-guide="approvals-submit-btn"]',
+        title: "7단계 — 결의서 신청",
+        content: (
+          <>
+            결재선·참조를 지정하고 <B>[결재요청]</B>을 누르면 결의서 결재가
+            시작돼요.
+            {"\n"}이걸로 <S>품의서 → 결의서 연동 흐름</S> 완료!
+          </>
+        ),
+        compact: true,
+      },
+      {
+        title: "끝났어요!",
+        content: (
+          <>
+            요약:
+            {"\n"}• <C>[품의서] 지출품의서</C> 작성·승인
+            {"\n"}• <C>[결의서] 지출결의서</C>에서 <S>품의서 선택</S>으로 연동
+            {"\n"}• 본문·첨부 자동 복사 → 결재 신청
+            {"\n\n"}
+            언제든 좌측 <C>[가이드] 버튼</C>으로 다시 볼 수 있어요.
+          </>
+        ),
+        fireEvent: "guide-apv-action:demo-end",
+      },
+    ],
+  },
+  // ─── 학습 플랜 설계 가이드 (학생 상세의 [플랜 설계] 페이지) ────────────────
+  {
+    id: "plan-basics",
+    label: "플랜 설계 사용법",
+    steps: [
+      {
+        title: "학습 플랜 설계(최초 1회)",
+        content: (
+          <>
+            학생의 <B>학력별 목표 학점</B>을 채우는 학습 플랜을 짜는 곳이에요.
+            {"\n"}모든 변경은 <S>자동 저장</S>됩니다.
+          </>
+        ),
+      },
+      {
+        target: '[data-guide="plan-edu-banner"]',
+        title: "학력 안내",
+        content: (
+          <>
+            상단 배너에 학생의 <B>최종학력</B>과 <B>희망학위과정</B>에 따른{" "}
+            <C>목표 학점</C>이 표시돼요.
+            {"\n"}예: 4년제 졸업 + 학사 → 학사학위 84학점
+          </>
+        ),
+        placement: "bottom",
+      },
+      {
+        target: '[data-guide="plan-stats"]',
+        title: "진행 현황",
+        content: (
+          <>
+            카테고리별 <B>이수 학점</B>과 <C>목표 대비 진행률</C>을 한눈에 볼 수
+            있어요.
+            {"\n"}과목을 학기에 배정하면 즉시 업데이트됩니다.
+          </>
+        ),
+        placement: "bottom",
+      },
+      {
+        target: '[data-guide="plan-subject-panel"]',
+        title: "과목 목록 (좌측)",
+        content: (
+          <>
+            <B>전공·교양·일반</B> 등 카테고리별 과목 리스트.
+            {"\n"}• <B>+ 추가</B> 버튼으로 학생 전용 과목 추가
+            {"\n"}• 과목 클릭 → <S>현재 학기에 배정</S>
+            {"\n"}• 이미 배정된 과목은 회색, <S>이수 완료(60점 이상)</S>는 초록색
+          </>
+        ),
+        placement: "right",
+      },
+      {
+        target: '[data-guide="plan-semester-panel"]',
+        title: "학기별 수강 계획 (우측)",
+        content: (
+          <>
+            학기 단위로 과목을 배정·점수를 입력하는 곳이에요.
+            {"\n"}• <B>+ 수강계획 추가</B> — 새 학기 추가
+            {"\n"}• 한 학기 최대 <W>8과목</W> · 한 해 최대 <W>14과목</W>
+            {"\n"}• 학기마다 <C>시작/종료일·교육원</C> 설정 가능
+          </>
+        ),
+        placement: "left",
+      },
+      {
+        target: '[data-guide="plan-fullview-btn"]',
+        title: "전체보기 · PDF",
+        content: (
+          <>
+            <B>[전체보기]</B>를 누르면 학습플랜 인쇄용 표가 떠요.
+            {"\n"}거기서 <S>PDF 다운로드</S>도 가능합니다 (학생에게 전달용).
+          </>
+        ),
+        placement: "bottom",
+      },
+      {
+        target: '[data-guide="plan-save-indicator"]',
+        title: "자동 저장",
+        content: (
+          <>
+            변경 시 <S>저장됨</S> / <C>저장 중...</C> 표시로 상태 확인 가능.
+            {"\n"}별도 저장 버튼 없이 <B>모든 변경이 자동 반영</B>돼요.
+          </>
+        ),
+        placement: "bottom",
+      },
+      {
+        title: "끝났어요!",
+        content: (
+          <>
+            언제든 헤더의 <C>[가이드] 버튼</C>으로 가이드를 다시 볼 수 있어요.
           </>
         ),
       },

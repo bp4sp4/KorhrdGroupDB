@@ -133,6 +133,28 @@
   color: #3182f6;
 }
 
+.plan_guide_btn {
+  height: 34px;
+  padding: 0 14px;
+  background: #eff6ff;
+  border: 1.5px solid #bfdbfe;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #2563eb;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.plan_guide_btn:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
 .save_btn {
   height: 40px;
   padding: 0 20px;

@@ -74,6 +74,28 @@
   border-color: #aaa;
 }
 
+.sidebar_guide_btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 232px;
+  margin: 0 16px 16px;
+  height: 32px;
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1.5px solid #bfdbfe;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.sidebar_guide_btn:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
 .sidebar_group {
   display: flex;
   flex-direction: column;

@@ -98,6 +98,19 @@
   transform: translate(-50%, -50%);
 }
 
+/* compact: 우측 하단 고정 작은 패널 (폼 위에 띄울 때) */
+.tooltipCorner {
+  position: fixed;
+  top: auto;
+  bottom: 24px;
+  right: 24px;
+  left: auto;
+  width: 320px;
+  max-width: calc(100vw - 32px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+  z-index: 9100;
+}
+
 .header {
   display: flex;
   justify-content: space-between;

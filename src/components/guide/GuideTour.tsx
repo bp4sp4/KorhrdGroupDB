@@ -70,7 +70,15 @@ export default function GuideTour({ steps, open, onClose }: Props) {
   useEffect(() => {
     if (!open || !current) return;
     if (current.fireEvent) {
-      window.dispatchEvent(new CustomEvent(current.fireEvent));
+      // "eventName:type" 포맷이면 detail로 type 전달
+      const [name, ...rest] = current.fireEvent.split(":");
+      if (rest.length > 0) {
+        window.dispatchEvent(
+          new CustomEvent(name, { detail: { type: rest.join(":") } }),
+        );
+      } else {
+        window.dispatchEvent(new CustomEvent(name));
+      }
     }
     if (current.clickSelector) {
       const el = document.querySelector<HTMLElement>(current.clickSelector);
@@ -93,6 +101,15 @@ export default function GuideTour({ steps, open, onClose }: Props) {
     };
     window.addEventListener(evt, handler);
     return () => window.removeEventListener(evt, handler);
+  }, [open, current, steps.length]);
+
+  // autoAdvanceMs — N ms 뒤 자동으로 다음 단계로 (시뮬레이션용)
+  useEffect(() => {
+    if (!open || !current?.autoAdvanceMs) return;
+    const t = setTimeout(() => {
+      setIndex((i) => (i + 1 < steps.length ? i + 1 : i));
+    }, current.autoAdvanceMs);
+    return () => clearTimeout(t);
   }, [open, current, steps.length]);
 
   // 타겟이 아직 DOM에 없을 수 있으니 짧게 폴링 + MutationObserver로 자식 변경 시 재측정
@@ -167,11 +184,14 @@ export default function GuideTour({ steps, open, onClose }: Props) {
     setIndex((i) => Math.max(0, i - 1));
   }
 
-  // 툴팁 위치 계산 — 타겟이 있으면 placement 기반, 없으면 중앙
+  // 툴팁 위치 계산 — 타겟이 있으면 placement 기반, 없으면 중앙 / compact면 코너
   let tooltipStyle: React.CSSProperties;
   let tooltipClass = styles.tooltip;
+  const isCompact = !!current.compact;
   if (!rect) {
-    tooltipClass = `${styles.tooltip} ${styles.tooltipCenter}`;
+    tooltipClass = isCompact
+      ? `${styles.tooltip} ${styles.tooltipCorner}`
+      : `${styles.tooltip} ${styles.tooltipCenter}`;
     tooltipStyle = {};
   } else {
     const placement = current.placement ?? "bottom";
@@ -242,8 +262,8 @@ export default function GuideTour({ steps, open, onClose }: Props) {
 
   const overlay = (
     <div className={styles.overlay}>
-      <div className={styles.backdrop} />
-      {blockers}
+      {!isCompact && <div className={styles.backdrop} />}
+      {!isCompact && blockers}
       {rect && (
         <div
           className={styles.spotlight}

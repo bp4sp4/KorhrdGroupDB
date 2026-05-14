@@ -57,6 +57,8 @@ import type { DocTemplateConfig } from "./docTemplates";
 import { ExpenseProofPanel, parseCardItems } from "./templates/corporateCard";
 import type { ApprovalFormTemplate } from "@/types/approvalForm";
 import CustomSelect from "../marketing/CustomSelect";
+import { useGuide } from "@/components/guide/GuideProvider";
+import { getSeenGuideIds } from "@/lib/guide/steps";
 
 // ---------------------------------------------------------------------------
 // 타입 정의
@@ -438,6 +440,17 @@ export default function ApprovalsPage() {
   const [currentView, setCurrentView] = useState<ViewType>("home");
   const [activeMenuKey, setActiveMenuKey] = useState<SidebarMenuKey>("home");
 
+  // 가이드: [가이드] 버튼 트리거용 (자동 시작은 templates 로드 후, 아래에서)
+  const { startById: startApprovalGuide } = useGuide();
+  const guideStartedRef = useRef(false);
+
+  // 가이드 데모 모드: 양식/본문 자동 채움 + 제출 시 DB 호출 차단 + 가짜 품의서 주입
+  const [guideDemoActive, setGuideDemoActive] = useState(false);
+  const guideDemoActiveRef = useRef(false);
+  useEffect(() => {
+    guideDemoActiveRef.current = guideDemoActive;
+  }, [guideDemoActive]);
+
   // 데이터
   const [mineApprovals, setMineApprovals] = useState<Approval[]>([]);
   const [pendingApprovals, setPendingApprovals] = useState<Approval[]>([]);
@@ -598,6 +611,16 @@ export default function ApprovalsPage() {
     },
     [],
   );
+
+  // 가이드 자동 시작 — templates 로드 완료 후 1회만
+  useEffect(() => {
+    if (guideStartedRef.current) return;
+    if (getSeenGuideIds().includes("approvals-basics")) return;
+    if (templates.length === 0) return;
+    guideStartedRef.current = true;
+    const t = setTimeout(() => startApprovalGuide("approvals-basics"), 400);
+    return () => clearTimeout(t);
+  }, [startApprovalGuide, templates.length]);
 
   useEffect(() => {
     fetchHomeData();
@@ -775,6 +798,151 @@ export default function ApprovalsPage() {
     setTemplateModalOpen(true);
   };
 
+  // ─── 가이드 데모 헬퍼 (전자결재 가이드 전용) ────────────────────────────
+  // 가짜 품의서 1건 — 결의서 연동 시 목록에 주입됨
+  const DEMO_PROPOSAL: Approval = {
+    id: "guide-demo-proposal-1",
+    title: "[가이드 예시] 5월 팀 회식비",
+    document_type: "[품의서] 지출품의서",
+    document_number: "GUIDE-2026-0001",
+    status: "APPROVED",
+    current_step: 0,
+    created_at: new Date().toISOString(),
+    completed_at: new Date().toISOString(),
+    applicant_id: String(myUserId ?? ""),
+    applicant_name: "(가이드 예시)",
+    content: {
+      vendor_name: "가이드 예시 식당",
+      purpose: "5월 팀 회식 비용 품의 — 가이드용 예시 데이터입니다.",
+      amount: "180000",
+      cost_type: "tax_invoice",
+      belong_dept: "가이드 예시",
+      special_note: "가이드 시뮬레이션 — 실제 결재되지 않습니다.",
+    } as unknown as Record<string, unknown>,
+    steps: [],
+  } as Approval;
+
+  // 예시 본문 채움 — 품의서 / 결의서 공통
+  const fillDemoContent = (kind: "proposal" | "resolution") => {
+    if (kind === "proposal") {
+      setFormState((prev) => ({
+        ...prev,
+        title: "[가이드 예시] 5월 팀 회식비",
+        content: {
+          ...prev.content,
+          vendor_name: "가이드 예시 식당",
+          purpose:
+            "5월 팀 회식 비용 품의 — 가이드용 예시 데이터입니다. (실제 제출되지 않음)",
+          amount: "180000",
+          cost_type: "tax_invoice",
+          belong_dept: "가이드 예시",
+          special_note: "가이드 시뮬레이션",
+        },
+      }));
+    } else {
+      // 결의서는 품의서 연동 후 자동 채움 — 여기서는 제목만
+      setFormState((prev) => ({
+        ...prev,
+        title: "[가이드 예시] 5월 팀 회식비 (결의)",
+      }));
+    }
+  };
+
+  // 양식 선택 모달에서 특정 양식 자동 선택 + 폼 진입
+  const autoPickTemplate = useCallback(
+    (matcher: (t: ApprovalTemplate) => boolean) => {
+      const tpl = templates.find(matcher);
+      if (!tpl) {
+        console.warn("[guide] template not found");
+        return;
+      }
+      setModalSelectedTemplate(tpl);
+      setTemplateModalOpen(false);
+      setSelectedCategory(null);
+      const defaultApproverIds = ((tpl.steps ?? []) as ApprovalStep[])
+        .filter((s) => s.type !== "APPLICANT" && s.user_id)
+        .map((s) => String(s.user_id));
+      setFormState({
+        template: tpl,
+        title: tpl.document_type,
+        department_id: myDepartmentId ?? "",
+        content: {},
+        approver_ids: defaultApproverIds,
+        reference_ids: [],
+      });
+      setFormError("");
+      setAttachedFiles([]);
+      setEditingDraftId(null);
+      setLinkedProposal(null);
+      setCurrentView("new_form");
+    },
+    [templates, myDepartmentId],
+  );
+
+  // 가이드 데모 이벤트 리스너
+  useEffect(() => {
+    const handleAction = (e: Event) => {
+      const detail = (e as CustomEvent<{ type: string }>).detail;
+      if (!detail) return;
+      switch (detail.type) {
+        case "demo-start":
+          setGuideDemoActive(true);
+          break;
+        case "demo-end":
+          // 모든 임시 상태 초기화
+          setGuideDemoActive(false);
+          setTemplateModalOpen(false);
+          setProposalModalOpen(false);
+          setCurrentView("home");
+          setActiveMenuKey("home");
+          setEditingDraftId(null);
+          setLinkedProposal(null);
+          break;
+        case "open-proposal-form":
+          // 1단계: 품의서 양식 자동 선택해 폼 열기
+          autoPickTemplate(
+            (t) =>
+              t.document_type.replace(/\s/g, "") === "[품의서]지출품의서",
+          );
+          break;
+        case "fill-proposal":
+          fillDemoContent("proposal");
+          break;
+        case "fake-submit-proposal":
+          // DB 호출 없이 폼 닫기
+          setCurrentView("home");
+          setActiveMenuKey("home");
+          break;
+        case "open-resolution-form":
+          // 2단계: 결의서(법인카드) 자동 선택해 폼 열기
+          autoPickTemplate(
+            (t) =>
+              t.document_type.replace(/\s/g, "") ===
+                "지출결의서(법인카드)" ||
+              t.document_type.replace(/\s/g, "") === "[결의서]지출결의서",
+          );
+          break;
+        case "open-proposal-link":
+          // 결의서의 [품의서 선택] 모달 열고 가짜 품의서 1건 표시
+          setProposalModalOpen(true);
+          setProposalCandidates([DEMO_PROPOSAL]);
+          setProposalLoadingCandidates(false);
+          break;
+        case "apply-demo-proposal":
+          applyProposalLink(DEMO_PROPOSAL);
+          setProposalModalOpen(false);
+          break;
+        case "fake-submit-resolution":
+          setCurrentView("home");
+          setActiveMenuKey("home");
+          break;
+      }
+    };
+    window.addEventListener("guide-apv-action", handleAction);
+    return () => window.removeEventListener("guide-apv-action", handleAction);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoPickTemplate, myUserId]);
+
   const handleTemplateModalConfirm = () => {
     if (!modalSelectedTemplate) return;
     setTemplateModalOpen(false);
@@ -933,6 +1101,10 @@ export default function ApprovalsPage() {
       title: p.title,
     });
     setProposalModalOpen(false);
+    // 가이드 데모 중이면 단계 자동 진행
+    if (guideDemoActiveRef.current) {
+      window.dispatchEvent(new CustomEvent("guide-apv-proposal-linked"));
+    }
   };
 
   const handleUnlinkProposal = () => {
@@ -957,6 +1129,14 @@ export default function ApprovalsPage() {
   };
 
   const handleSubmitNewApproval = async (action: "draft" | "submit") => {
+    // 가이드 데모 모드 — DB 호출 없이 폼 닫기만
+    if (guideDemoActiveRef.current) {
+      setCurrentView("home");
+      setActiveMenuKey("home");
+      window.dispatchEvent(new CustomEvent("guide-apv-demo-submitted"));
+      return;
+    }
+
     const {
       template,
       title,
@@ -1106,8 +1286,19 @@ export default function ApprovalsPage() {
       <button
         className={styles.sidebar_new_btn}
         onClick={handleNewApprovalStart}
+        data-guide="approvals-new-btn"
       >
         새 결재 진행
+      </button>
+
+      {/* 가이드 버튼 */}
+      <button
+        type="button"
+        className={styles.sidebar_guide_btn}
+        onClick={() => startApprovalGuide("approvals-basics")}
+        title="전자결재 사용법"
+      >
+        가이드
       </button>
 
       {/* 메뉴 그룹 */}
@@ -1144,6 +1335,7 @@ export default function ApprovalsPage() {
                 key={item.key}
                 className={`${styles.sidebar_menu_item} ${isActive ? styles.sidebar_menu_active : ""}`}
                 onClick={() => handleSidebarMenuClick(item)}
+                data-guide={`approvals-menu-${item.key}`}
               >
                 <span className={styles.sidebar_menu_label}>{item.label}</span>
                 {count > 0 && (
@@ -2095,11 +2287,12 @@ export default function ApprovalsPage() {
               )}
             </h2>
           </div>
-          <div className={f.new_form_actions}>
+          <div className={f.new_form_actions} data-guide="approvals-submit-actions">
             <button
               className={styles.btn_primary}
               onClick={() => handleSubmitNewApproval("submit")}
               disabled={submitting || formState.approver_ids.length === 0}
+              data-guide="approvals-submit-btn"
             >
               {submitting ? "처리 중..." : "결재요청"}
             </button>
@@ -2284,7 +2477,10 @@ export default function ApprovalsPage() {
               {(formTemplateConfig?.id === "expense-resolution" ||
                 formTemplateConfig?.id === "expense-resolution-card" ||
                 formTemplateConfig?.id === "expense-resolution-transfer") && (
-                <table className={styles.linkedProposalTable}>
+                <table
+                  className={styles.linkedProposalTable}
+                  data-guide="approvals-linked-proposal-table"
+                >
                   <thead>
                     <tr>
                       <th colSpan={2} className={styles.linkedProposalHeader}>
@@ -2337,6 +2533,7 @@ export default function ApprovalsPage() {
                             type="button"
                             className={styles.linkedProposalSelectBtn}
                             onClick={openProposalLinkModal}
+                            data-guide="approvals-link-proposal-btn"
                           >
                             품의서 선택
                           </button>
@@ -2349,12 +2546,14 @@ export default function ApprovalsPage() {
 
               {/* 본문 테이블 — 템플릿 레지스트리에서 자동 처리 */}
               {formTemplateConfig && (
-                <formTemplateConfig.BodySection
-                  content={formState.content as Record<string, unknown>}
-                  onChange={handleContentChange}
-                  departments={departments}
-                  bankAccounts={bankAccounts}
-                />
+                <div data-guide="approvals-body-section">
+                  <formTemplateConfig.BodySection
+                    content={formState.content as Record<string, unknown>}
+                    onChange={handleContentChange}
+                    departments={departments}
+                    bankAccounts={bankAccounts}
+                  />
+                </div>
               )}
 
               {/* 파일첨부 (supportsAttachments 템플릿만 표시) */}
@@ -3139,7 +3338,7 @@ export default function ApprovalsPage() {
               if (e.target === e.currentTarget) setProposalModalOpen(false);
             }}
           >
-            <div className={styles.proposalModal}>
+            <div className={styles.proposalModal} data-guide="approvals-proposal-modal">
               <div className={styles.tplHeader}>
                 <span className={styles.tplTitle}>품의서 선택</span>
                 <button

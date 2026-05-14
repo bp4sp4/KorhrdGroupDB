@@ -7,6 +7,8 @@ import { logEduActivity } from '@/lib/edu-logger';
 import { DateInput } from '@/components/ui/Calendar/DateInput';
 import type { EduStudent } from '../../../types';
 import styles from './page.module.css';
+import { useGuide } from '@/components/guide/GuideProvider';
+import { getSeenGuideIds } from '@/lib/guide/steps';
 
 // ── 타입 ──────────────────────────────────────────────────────
 
@@ -323,6 +325,14 @@ export default function PlanPage() {
   const [saving,     setSaving]     = useState(false);
   const isInitialized = useRef(false);
   const saveTimer     = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // 가이드: 첫 진입 1회 자동 시작 + [가이드] 버튼 트리거
+  const { startById: startGuide } = useGuide();
+  useEffect(() => {
+    if (getSeenGuideIds().includes('plan-basics')) return;
+    const t = setTimeout(() => startGuide('plan-basics'), 600);
+    return () => clearTimeout(t);
+  }, [startGuide]);
 
   // 학점 인정 데이터 (각각 즉시 DB 저장)
   const [prevSubjects, setPrevSubjects] = useState<PrevSubject[]>([]);
@@ -1731,7 +1741,7 @@ export default function PlanPage() {
       </button>
 
       {/* 헤더 카드 */}
-      <div className={styles.header_card}>
+      <div className={styles.header_card} data-guide="plan-header">
         <div className={styles.header_left}>
           <div className={styles.course_name}>{student.name}</div>
           <div className={styles.student_meta}>
@@ -1746,10 +1756,22 @@ export default function PlanPage() {
           <button className={styles.header_doc_btn} onClick={() => setDocModal('transcript')}>
             성적 증명서{transcriptDocs.length > 0 && <span className={styles.header_doc_count}>{transcriptDocs.length}</span>}
           </button>
-          <button className={styles.fullview_btn} onClick={() => setShowFullView(true)}>
+          <button
+            className={styles.fullview_btn}
+            onClick={() => setShowFullView(true)}
+            data-guide="plan-fullview-btn"
+          >
             전체보기
           </button>
-          <div className={styles.save_indicator}>
+          <button
+            type="button"
+            className={styles.plan_guide_btn}
+            onClick={() => startGuide('plan-basics')}
+            title="플랜 설계 사용법"
+          >
+            가이드
+          </button>
+          <div className={styles.save_indicator} data-guide="plan-save-indicator">
             {saving ? (
               <><span className={styles.save_dot_saving} />저장 중...</>
             ) : (
@@ -1761,7 +1783,7 @@ export default function PlanPage() {
 
       {/* 학력 안내 배너 — 실습예정은 숨김 */}
       {!planConfig.practice && (planConfig.isHighSchool ? (
-        <div className={styles.edu_banner} style={{ borderColor: '#FDE68A', background: '#FFFBEB' }}>
+        <div className={styles.edu_banner} data-guide="plan-edu-banner" style={{ borderColor: '#FDE68A', background: '#FFFBEB' }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
@@ -1778,7 +1800,7 @@ export default function PlanPage() {
           </span>
         </div>
       ) : (
-        <div className={styles.edu_banner} style={{ borderColor: '#BFDBFE', background: '#EFF6FF' }}>
+        <div className={styles.edu_banner} data-guide="plan-edu-banner" style={{ borderColor: '#BFDBFE', background: '#EFF6FF' }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3182F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
@@ -1792,7 +1814,7 @@ export default function PlanPage() {
       ))}
 
       {/* 통계 카드 — 실습예정은 숨김 */}
-      {!planConfig.practice && <div className={styles.stats_row}>
+      {!planConfig.practice && <div className={styles.stats_row} data-guide="plan-stats">
         {planConfig.isHighSchool ? (
           <>
             {planConfig.targets.map((t) => {
@@ -2207,7 +2229,7 @@ export default function PlanPage() {
       <div className={styles.plan_layout}>
 
         {/* 좌: 과목 목록 */}
-        <div className={styles.subject_panel}>
+        <div className={styles.subject_panel} data-guide="plan-subject-panel">
           <div className={styles.subject_panel_header}>
             <div className={styles.panel_title}>과목 목록</div>
             <button className={styles.subject_add_btn} onClick={() => setShowSubjectPopup(true)}>+ 추가</button>
@@ -2305,7 +2327,7 @@ export default function PlanPage() {
         </div>
 
         {/* 우: 학기별 수강 계획 */}
-        <div className={styles.semester_panel}>
+        <div className={styles.semester_panel} data-guide="plan-semester-panel">
           <div className={styles.semester_panel_header}>
             <div className={styles.panel_title}>학기별 수강 계획</div>
             <div className={styles.semester_header_right}>
