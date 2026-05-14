@@ -1,0 +1,162 @@
+.container {
+  background: #ffffff;
+  border: 1px solid #ececec;
+  border-radius: 10px;
+  overflow: hidden;
+  font-family:
+    Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}
+
+.dateHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #0a0a0a;
+  background: #fafaf9;
+  border-bottom: 1px solid #ececec;
+}
+
+.dateCount {
+  color: #a3a3a3;
+  font-weight: 400;
+  font-size: 11px;
+}
+
+.minuteHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  font-size: 11px;
+  color: #a3a3a3;
+  background: #fafaf9;
+  font-variant-numeric: tabular-nums;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.minuteTime {
+  font-weight: 600;
+  color: #525252;
+}
+
+.row {
+  border-bottom: 1px solid #f5f5f5;
+  cursor: default;
+}
+
+.rowClickable {
+  cursor: pointer;
+}
+
+.rowClickable:hover {
+  background: #fafaf9;
+}
+
+.rowGrid {
+  display: grid;
+  grid-template-columns: 110px 1fr auto;
+  gap: 12px;
+  padding: 8px 16px;
+  font-size: 13px;
+  align-items: center;
+}
+
+.actor {
+  color: #0a0a0a;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.actorDot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #22c55e;
+  flex-shrink: 0;
+}
+
+.sentence {
+  color: #525252;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.target {
+  color: #0a0a0a;
+  font-weight: 600;
+}
+
+.divider {
+  color: #a3a3a3;
+}
+
+.fromValue {
+  text-decoration: line-through;
+  text-decoration-color: #d4d4d4;
+  color: #737373;
+  font-variant-numeric: tabular-nums;
+}
+
+.arrow {
+  color: #a3a3a3;
+}
+
+.toValue {
+  color: #2563eb;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.moreBadge {
+  margin-left: 8px;
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: #fafaf9;
+  color: #737373;
+  border: 1px solid #f5f5f5;
+}
+
+.category {
+  font-size: 11px;
+  color: #a3a3a3;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.expanded {
+  padding: 4px 16px 12px 132px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: #fafaf9;
+  border-top: 1px solid #f5f5f5;
+}
+
+.expandedLine {
+  font-size: 12px;
+  color: #525252;
+}
+
+.empty {
+  padding: 60px 20px;
+  text-align: center;
+  background: #ffffff;
+  border: 1px solid #ececec;
+  border-radius: 10px;
+}
+
+.emptyText {
+  font-size: 13px;
+  color: #a3a3a3;
+}

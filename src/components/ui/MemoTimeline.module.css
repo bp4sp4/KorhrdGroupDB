@@ -13,6 +13,44 @@
   transition: border-color 0.15s;
 }
 
+/* ── 빠른 입력 칩 ── */
+.quickChipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 12px 0;
+  background: #fff;
+}
+
+.quickChip {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid #e5e8eb;
+  border-radius: 999px;
+  background: #f9fafb;
+  color: #4b5563;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background 0.12s,
+    border-color 0.12s,
+    color 0.12s;
+}
+
+.quickChip:hover {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  color: #2563eb;
+}
+
+.quickChip:active {
+  background: #dbeafe;
+}
+
 .inputWrap:focus-within {
   border-color: var(--toss-blue);
 }

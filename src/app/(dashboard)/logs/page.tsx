@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useState, useCallback, useRef, Fragment } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import styles from './page.module.css'
+import ActivityLogDense, { type LogEvent, type LogChange } from '@/components/activity/ActivityLogDense'
 
 // ─── 타입 ────────────────────────────────────────────────────────────────────
 
@@ -173,17 +174,24 @@ const ACTION_OPTIONS = [
   { value: 'hard_delete', label: '영구삭제' },
 ]
 
+// DB의 resource 값 → 사이드바 메뉴명으로 표시 (실제 화면과 용어 통일)
+const RESOURCE_LABEL_MAP: Record<string, string> = {
+  '학점은행제 상담': '문의DB',
+  '민간자격증 학생관리': '학생관리(자격증)',
+  '자격증신청': '자격증 신청',
+  '기관협약': '기관협약',
+  '휴지통': '삭제목록',
+  '어드민관리': '어드민 관리',
+}
+
 const RESOURCE_OPTIONS = [
   { value: '', label: '전체 메뉴' },
-  { value: '학점은행제 상담', label: '학점은행제 상담' },
-  { value: '민간자격증 상담', label: '민간자격증 상담' },
+  { value: '학점은행제 상담', label: '문의DB' },
+  { value: '민간자격증 학생관리', label: '학생관리(자격증)' },
+  { value: '자격증신청', label: '자격증 신청' },
   { value: '기관협약', label: '기관협약' },
-  { value: '자격증신청', label: '자격증신청' },
-  { value: '실습/취업 상담', label: '실습/취업 상담' },
-  { value: '실습섭외신청', label: '실습섭외신청' },
-  { value: '취업신청', label: '취업신청' },
-  { value: '휴지통', label: '휴지통' },
-  { value: '어드민관리', label: '어드민관리' },
+  { value: '휴지통', label: '삭제목록' },
+  { value: '어드민관리', label: '어드민 관리' },
 ]
 
 // ─── Custom Select ────────────────────────────────────────────────────────────
@@ -262,22 +270,6 @@ function CustomSelect({ value, onChange, options }: CustomSelectProps) {
   )
 }
 
-// ─── 액션 배지 ────────────────────────────────────────────────────────────────
-
-function ActionBadge({ action }: { action: string }) {
-  const map: Record<string, { label: string; cls: string }> = {
-    create: { label: '등록', cls: styles.badgeCreate },
-    update: { label: '수정', cls: styles.badgeUpdate },
-    delete: { label: '삭제', cls: styles.badgeDelete },
-    bulk_create: { label: '일괄등록', cls: styles.badgeBulkCreate },
-    bulk_delete: { label: '일괄삭제', cls: styles.badgeBulkDelete },
-    restore: { label: '복원', cls: styles.badgeRestore },
-    hard_delete: { label: '영구삭제', cls: styles.badgeHardDelete },
-  }
-  const m = map[action] ?? { label: action, cls: '' }
-  return <span className={`${styles.badge} ${m.cls}`}>{m.label}</span>
-}
-
 // ─── 날짜 포맷 ───────────────────────────────────────────────────────────────
 
 function formatDateTime(iso: string) {
@@ -286,13 +278,6 @@ function formatDateTime(iso: string) {
   const date = `${d.getFullYear()}.${pad(d.getMonth() + 1)}.${pad(d.getDate())}`
   const time = `${pad(d.getHours())}:${pad(d.getMinutes())}`
   return { date, time }
-}
-
-// 같은 날짜 그룹화용 키 (yyyy-mm-dd)
-function dateKey(iso: string) {
-  const d = new Date(iso)
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
 
 // 그룹 헤더 라벨: 오늘 / 어제 / N월 N일 (요일)
@@ -312,6 +297,75 @@ function dateGroupLabel(iso: string) {
 function formatEmail(email: string | null) {
   if (!email) return '-'
   return email.split('@')[0]
+}
+
+// AuditLog → ActivityLogDense의 LogEvent로 변환
+const ACTION_LABELS_LOG: Record<string, string> = {
+  create: '등록',
+  update: '수정',
+  delete: '삭제',
+  bulk_create: '일괄등록',
+  bulk_delete: '일괄삭제',
+  restore: '복원',
+  hard_delete: '영구삭제',
+}
+
+function logToEvent(log: AuditLog): LogEvent {
+  const { time } = formatDateTime(log.created_at)
+  const dateHeader = dateGroupLabel(log.created_at)
+  const actor = log.display_name ?? formatEmail(log.user_email)
+  const target = extractTargetName(log.detail, log.resource_id)
+  const actionLabel = ACTION_LABELS_LOG[log.action] ?? log.action
+  const resourceLabel = RESOURCE_LABEL_MAP[log.resource] ?? log.resource
+  const category = `${resourceLabel} · ${actionLabel}`
+
+  // meta.changes → LogChange[]
+  const rawChanges = log.meta?.changes as Record<string, unknown> | undefined
+  const changes: LogChange[] = rawChanges
+    ? Object.entries(rawChanges)
+        .filter(([, v]) => {
+          if (
+            typeof v === 'object' &&
+            v !== null &&
+            !Array.isArray(v) &&
+            'before' in (v as object)
+          ) {
+            const { before, after } = v as { before: unknown; after: unknown }
+            return String(before ?? '') !== String(after ?? '')
+          }
+          return v !== null && v !== undefined && v !== ''
+        })
+        .map(([k, v]): LogChange => {
+          const field = FIELD_LABELS[k] ?? humanizeKey(k)
+          if (
+            typeof v === 'object' &&
+            v !== null &&
+            !Array.isArray(v) &&
+            'before' in (v as object)
+          ) {
+            const { before, after } = v as { before: unknown; after: unknown }
+            return {
+              field,
+              from: formatChangeVal(before),
+              to: formatChangeVal(after),
+            }
+          }
+          return { field, to: formatChangeVal(v) }
+        })
+    : []
+
+  // 변경 항목 없으면 detail을 note로 사용
+  const finalChanges = changes.length > 0 ? changes : [{ note: log.detail ?? actionLabel }]
+
+  return {
+    id: log.id,
+    time,
+    date: dateHeader,
+    actor,
+    target,
+    category,
+    changes: finalChanges,
+  }
 }
 
 // ─── 페이지네이션 ─────────────────────────────────────────────────────────────
@@ -470,106 +524,13 @@ export default function LogsPage() {
         </span>
       </div>
 
-      {/* 테이블 */}
+      {/* 로그 — Dense 디자인 (한 줄 압축) */}
       <div className={styles.tableCard}>
-        <div className={styles.tableOverflow}>
-        <table className={styles.table}>
-          <thead className={styles.thead}>
-            <tr>
-              <th className={styles.th}>시간</th>
-              <th className={styles.th}>대상</th>
-              <th className={styles.th}>구분</th>
-              <th className={styles.th}>변경 내용</th>
-              <th className={styles.th}>담당자</th>
-            </tr>
-          </thead>
-          <tbody>
-            {!loading && logs.length === 0 && (
-              <tr>
-                <td colSpan={5}>
-                  <div className={styles.emptyWrap}>로그가 없습니다.</div>
-                </td>
-              </tr>
-            )}
-            {logs.map((log, idx) => {
-              const { time } = formatDateTime(log.created_at)
-              const prev = idx > 0 ? logs[idx - 1] : null
-              const showGroupHeader = !prev || dateKey(prev.created_at) !== dateKey(log.created_at)
-
-              // 변경 내용 정리
-              const rawChanges = log.meta?.changes as Record<string, unknown> | undefined
-              const changeEntries = rawChanges
-                ? Object.entries(rawChanges).filter(([, v]) => {
-                    if (typeof v === 'object' && v !== null && !Array.isArray(v) && 'before' in (v as object)) {
-                      const { before, after } = v as { before: unknown; after: unknown }
-                      return String(before ?? '') !== String(after ?? '')
-                    }
-                    return v !== null && v !== undefined && v !== ''
-                  })
-                : []
-              const hasChanges = changeEntries.length > 0
-
-              return (
-                <Fragment key={log.id}>
-                  {showGroupHeader && (
-                    <tr className={styles.groupHeaderRow}>
-                      <td colSpan={5} className={styles.groupHeaderCell}>
-                        {dateGroupLabel(log.created_at)}
-                      </td>
-                    </tr>
-                  )}
-                  <tr className={styles.tr}>
-                    <td className={styles.td}>
-                      <span className={styles.timeOnly}>{time}</span>
-                    </td>
-                    <td className={styles.td}>
-                      <span className={styles.targetName}>{extractTargetName(log.detail, log.resource_id)}</span>
-                    </td>
-                    <td className={styles.td}>
-                      <div className={styles.actionCell}>
-                        <ActionBadge action={log.action} />
-                        <span className={styles.resourceTag}>{log.resource}</span>
-                      </div>
-                    </td>
-                    <td className={styles.td}>
-                      {hasChanges ? (
-                        <div className={styles.changesTable}>
-                          {changeEntries.map(([k, v]) => {
-                            const label = FIELD_LABELS[k] ?? humanizeKey(k)
-                            const isDiff = typeof v === 'object' && v !== null && !Array.isArray(v) && 'before' in (v as object)
-                            if (isDiff) {
-                              const { before, after } = v as { before: unknown; after: unknown }
-                              return (
-                                <div key={k} className={styles.changesRow}>
-                                  <span className={styles.changesRowLabel}>{label}</span>
-                                  <span className={styles.changesRowBefore}>{formatChangeVal(before)}</span>
-                                  <span className={styles.changesRowArrow}>→</span>
-                                  <span className={styles.changesRowAfter}>{formatChangeVal(after)}</span>
-                                </div>
-                              )
-                            }
-                            return (
-                              <div key={k} className={styles.changesRow}>
-                                <span className={styles.changesRowLabel}>{label}</span>
-                                <span className={styles.changesRowAfter} style={{ gridColumn: '2 / -1' }}>{formatChangeVal(v)}</span>
-                              </div>
-                            )
-                          })}
-                        </div>
-                      ) : (
-                        <span className={styles.detailText}>{log.detail ?? '-'}</span>
-                      )}
-                    </td>
-                    <td className={styles.td}>
-                      <span className={styles.userText}>{log.display_name ?? formatEmail(log.user_email)}</span>
-                    </td>
-                  </tr>
-                </Fragment>
-              )
-            })}
-          </tbody>
-        </table>
-        </div>
+        {loading ? (
+          <div className={styles.emptyWrap}>로딩 중...</div>
+        ) : (
+          <ActivityLogDense events={logs.map(logToEvent)} />
+        )}
 
         {/* 페이지네이션 */}
         <Pagination page={page} totalPages={totalPages} onChange={setPage} />

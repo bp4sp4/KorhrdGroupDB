@@ -41,9 +41,14 @@ export interface GuideStep {
 
 export interface GuideDef {
   id: string;
-  label: string; // 헤더 ? 버튼 메뉴에 표시
-  /** 어떤 경로에서 자동 노출할지 (startsWith 비교) */
-  matchPath: string;
+  /** 가이드 표시명 (메뉴/드롭다운에 노출 가능) */
+  label: string;
+  /**
+   * pathname 기반 자동 시작 매칭 (startsWith).
+   * - 있으면 GuideProvider가 해당 경로에서 첫 진입 시 자동 시작.
+   * - 없으면 자동 시작 안 함 — 컴포넌트에서 `startById(id)`로 명시 호출.
+   */
+  matchPath?: string;
   steps: GuideStep[];
 }
 
@@ -60,9 +65,9 @@ export const GUIDES: GuideDef[] = [
             학점은행제 문의를 등록하고 <B>등록완료</B>까지 진행하는 흐름을
             단계별로 안내해드릴게요.
             {"\n\n"}
-            가이드 동안 임시로 <C>예시 학생 10명</C>이 목록에 표시됩니다
+            가이드 동안 임시로 <C>예시 학생 10명</C>이 목록에 표시됩니다.
             {"\n"}
-            <W>(실제 데이터 아님)</W>
+            <W>※ 실제 데이터 아닙니다.</W>
           </>
         ),
         fireEvent: "guide-demo-list-on",
@@ -110,7 +115,7 @@ export const GUIDES: GuideDef[] = [
           <>
             보통 홈페이지로 들어오는 문의는 <S>자동으로 등록</S>돼요.
             {"\n"}
-            <B>특이 케이스</B> — 대표전화나 당근채팅으로 연락처·최종학력을 받은
+            <B>특이 케이스</B> - 대표전화나 당근채팅으로 연락처·최종학력을 받은
             분들은 통화하고 여기서 직접 추가하고 있어요.
           </>
         ),
@@ -145,8 +150,8 @@ export const GUIDES: GuideDef[] = [
         content: (
           <>
             실제 데이터를 건드리지 않기 위해{" "}
-            <C>&apos;홍길동(가이드 예시)&apos;</C> 가짜 학생으로 상세창을
-            열어드릴게요.
+            <C>&apos;홍길동(가이드 예시)&apos;</C>
+            {"\n"} 가짜 학생으로 상세창을 열어드릴게요.
           </>
         ),
         fireEvent: "guide-demo-open",
@@ -157,7 +162,7 @@ export const GUIDES: GuideDef[] = [
         title: "등록완료로 바꾸기 ① 최종학력",
         content: (
           <>
-            먼저 <B>최종학력</B>을 선택하세요. 선택하면{" "}
+            먼저 <B>최종학력</B>을 선택하세요.{"\n"}선택하면{" "}
             <S>자동으로 다음 단계</S>로 넘어가요.
             {"\n"}
             (예: 4년제 졸업, 2년제 중퇴)
@@ -210,7 +215,7 @@ export const GUIDES: GuideDef[] = [
         title: "등록완료로 바꾸기 ④ 과목당비용",
         content: (
           <>
-            <B>과목당 비용</B>을 입력하세요.{" "}
+            <B>과목당 비용</B>을 입력하세요. {"\n"}
             <W>비어있으면 등록완료로 변경되지 않아요.</W>
             {"\n"}예) <C>150000</C>
           </>
@@ -245,10 +250,79 @@ export const GUIDES: GuideDef[] = [
       },
     ],
   },
+  // ─── 등록학생관리 가이드 (탭 컴포넌트에서 startById로 호출) ────────────────
+  {
+    id: "edu-students-basics",
+    label: "등록학생관리 사용법",
+    // matchPath 없음 → 컴포넌트(EduStudentsTab)에서 직접 startById로 시작
+    steps: [
+      {
+        title: "등록학생관리 가이드(최초 1회)",
+        content: (
+          <>
+            등록된 학생을 <B>관리·수정·삭제</B>하는 페이지예요. 핵심 기능을
+            짧게 안내해드릴게요.
+          </>
+        ),
+      },
+      {
+        target: '[data-guide="edu-search"]',
+        title: "검색",
+        content: (
+          <>
+            <B>이름</B> 또는 <B>전화번호</B>로 학생을 빠르게 찾을 수 있어요.
+          </>
+        ),
+        placement: "bottom",
+      },
+      {
+        target: '[data-guide="edu-add-student-btn"]',
+        title: "학생 추가 (자동 채움)",
+        content: (
+          <>
+            <B>+ 학생 추가</B> 버튼을 누르고 <C>이름·전화번호</C>만 입력하면
+            문의 DB에서 매칭되는 정보를 <S>자동으로 채워줘요</S>.
+            {"\n\n"}
+            자동 채움: 최종학력 · 희망과정 · 담당자 · 과목당 비용 · 메모
+            {"\n"}
+            <W>※ 이미 입력한 값은 덮어쓰지 않아요</W>
+          </>
+        ),
+        placement: "left",
+      },
+      {
+        target: '[data-guide="edu-table"]',
+        title: "학생 목록",
+        content: (
+          <>
+            등록된 학생이 표로 정리됩니다. <B>이름을 클릭</B>하면 상세 페이지로
+            이동해 학기·등록정보 등을 관리할 수 있어요.
+          </>
+        ),
+        placement: "top",
+      },
+      {
+        title: "끝났어요!",
+        content: (
+          <>
+            언제든 필터 영역의 <C>[가이드] 버튼</C>을 눌러 가이드를 다시 볼 수
+            있어요.
+          </>
+        ),
+      },
+    ],
+  },
 ];
 
 export function getGuideByPath(pathname: string): GuideDef | null {
-  return GUIDES.find((g) => pathname.startsWith(g.matchPath)) ?? null;
+  return (
+    GUIDES.find((g) => !!g.matchPath && pathname.startsWith(g.matchPath)) ??
+    null
+  );
+}
+
+export function getGuideById(id: string): GuideDef | null {
+  return GUIDES.find((g) => g.id === id) ?? null;
 }
 
 // localStorage seen 관리

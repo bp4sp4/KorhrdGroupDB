@@ -13,6 +13,53 @@ import { DateRangeCalendar } from '@/components/DateRangeCalendar';
 import type { DateRange } from '@/components/DateRangeCalendar';
 import type { EduStudent, EduCourse, EduEducationCenter, EduStudentFormData, EduMonthlyEnrollment } from './types';
 import styles from './EduStudentsTab.module.css';
+import { useGuide } from '@/components/guide/GuideProvider';
+import { getSeenGuideIds } from '@/lib/guide/steps';
+import ActivityLogDense, { type LogEvent, type LogChange } from '@/components/activity/ActivityLogDense';
+
+// detail 문자열을 LogChange[] 로 파싱
+// 지원 패턴:
+//   "필드: 이전→다음"        → { field, from, to }
+//   "이전 → 다음"           → { from, to }
+//   "필드: 값"              → { field, to: 값 }
+//   기타                    → { note: 원문 }
+function parseLogDetail(detail: string | null): LogChange[] {
+  if (!detail) return [];
+  return detail
+    .split(/[,\n]/)
+    .map(s => s.trim())
+    .filter(Boolean)
+    .map((line): LogChange => {
+      // "필드: 이전 → 다음" / "필드: 이전 -> 다음"
+      const arrowFieldMatch = line.match(/^([^:]+):\s*(.*?)\s*(?:→|->)\s*(.*)$/);
+      if (arrowFieldMatch) {
+        const [, field, from, to] = arrowFieldMatch;
+        return { field: field.trim(), from: from.trim() || null, to: to.trim() || null };
+      }
+      // "이전 → 다음"
+      const arrowOnlyMatch = line.match(/^(.*?)\s*(?:→|->)\s*(.*)$/);
+      if (arrowOnlyMatch) {
+        const [, from, to] = arrowOnlyMatch;
+        return { from: from.trim() || null, to: to.trim() || null };
+      }
+      // "필드: 값"
+      const fieldOnlyMatch = line.match(/^([^:]+):\s*(.+)$/);
+      if (fieldOnlyMatch) {
+        const [, field, val] = fieldOnlyMatch;
+        return { field: field.trim(), to: val.trim() };
+      }
+      return { note: line };
+    });
+}
+
+// target_type 코드 → 한글 카테고리
+const TARGET_TYPE_LABELS: Record<string, string> = {
+  student: '학생',
+  course: '과정',
+  subject_preset: '과목',
+  manager: '관리자',
+  center: '교육원',
+};
 
 interface ActivityLog {
   id: string;
@@ -35,7 +82,8 @@ function getLogActionType(action: string): { label: string; color: string; bg: s
 
 type SubTab = '학생관리' | '활동로그' | '환불목록' | '삭제목록' | '교육원 과목' | '교육원 관리자';
 
-const MANAGER_ONLY_TABS: SubTab[] = ['삭제목록', '교육원 과목', '교육원 관리자'];
+// 사원·주임 급은 학생관리만 보임. 대리 이상부터 전체 탭 노출.
+const MANAGER_ONLY_TABS: SubTab[] = ['활동로그', '환불목록', '삭제목록', '교육원 과목', '교육원 관리자'];
 
 // 대리 이상 직급 키워드 (lib/auth/managementAccess.ts 와 동일)
 const HIGHER_POSITION_KEYWORDS = ['대리', '과장', '차장', '부장', '이사', '대표', '원장', '실장', '본부장', '팀장'];
@@ -80,6 +128,15 @@ export default function EduStudentsTab({ isActive }: Props) {
 
   const [activeTab, setActiveTab] = useState<SubTab>('학생관리');
   const [canManage, setCanManage] = useState(false);
+  const { startById } = useGuide();
+
+  // 등록학생관리 가이드 첫 진입 1회 자동 시작
+  useEffect(() => {
+    if (!isActive) return;
+    if (getSeenGuideIds().includes('edu-students-basics')) return;
+    const t = setTimeout(() => startById('edu-students-basics'), 600);
+    return () => clearTimeout(t);
+  }, [isActive, startById]);
 
   useEffect(() => {
     fetch('/api/auth/me').then(r => r.ok ? r.json() : null).then(data => {
@@ -90,6 +147,13 @@ export default function EduStudentsTab({ isActive }: Props) {
       }
     });
   }, []);
+
+  // 사원·주임이 manager-only 탭에 머물러 있으면 학생관리로 강제 이동
+  useEffect(() => {
+    if (!canManage && MANAGER_ONLY_TABS.includes(activeTab)) {
+      setActiveTab('학생관리');
+    }
+  }, [canManage, activeTab]);
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [logsLoading, setLogsLoading] = useState(false);
   const [logSearch, setLogSearch] = useState('');
@@ -389,7 +453,7 @@ export default function EduStudentsTab({ isActive }: Props) {
 
       {/* 필터 바 */}
       <div className={styles.filter_bar}>
-        <div className={styles.filter_search_wrap}>
+        <div className={styles.filter_search_wrap} data-guide="edu-search">
           <svg className={styles.filter_search_icon} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
           </svg>
@@ -458,13 +522,26 @@ export default function EduStudentsTab({ isActive }: Props) {
           엑셀 다운로드
         </button>
 
-        <button className={styles.add_btn} onClick={() => { setEditTarget(null); setModalOpen(true); }}>
+        <button
+          className={styles.add_btn}
+          onClick={() => { setEditTarget(null); setModalOpen(true); }}
+          data-guide="edu-add-student-btn"
+        >
           + 학생 추가
+        </button>
+
+        <button
+          type="button"
+          onClick={() => startById('edu-students-basics')}
+          className={styles.guide_btn}
+          title="등록학생관리 사용법 보기"
+        >
+          가이드
         </button>
       </div>
 
       {/* 테이블 */}
-      <div className={styles.table_wrap}>
+      <div className={styles.table_wrap} data-guide="edu-table">
         {loading ? (
           <div className={styles.empty_state}><div className={styles.empty_text}>불러오는 중...</div></div>
         ) : filtered.length === 0 ? (
@@ -564,7 +641,11 @@ export default function EduStudentsTab({ isActive }: Props) {
         const filteredLogs = activityLogs.filter(l => {
           if (logSearch) {
             const q = logSearch.toLowerCase();
-            if (!l.user_name.toLowerCase().includes(q) && !l.action.toLowerCase().includes(q) && !(l.target_name ?? '').toLowerCase().includes(q)) return false;
+            if (
+              !l.user_name.toLowerCase().includes(q) &&
+              !l.action.toLowerCase().includes(q) &&
+              !(l.target_name ?? '').toLowerCase().includes(q)
+            ) return false;
           }
           if (logActionType && getLogActionType(l.action).label !== logActionType) return false;
           if (logDateFrom && l.created_at.slice(0, 10) < logDateFrom) return false;
@@ -574,6 +655,43 @@ export default function EduStudentsTab({ isActive }: Props) {
 
         const totalPages = Math.ceil(filteredLogs.length / LOG_PAGE_SIZE);
         const pagedLogs = filteredLogs.slice((logPage - 1) * LOG_PAGE_SIZE, logPage * LOG_PAGE_SIZE);
+
+        // LogEvent 형식으로 변환
+        const events: LogEvent[] = pagedLogs.map(log => {
+          const d = new Date(log.created_at);
+          const time = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+          const dateLabel = d.toLocaleDateString('ko-KR', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            weekday: 'short',
+          });
+          const todayStrFmt = new Date().toLocaleDateString('ko-KR', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          });
+          const isToday = dateLabel.startsWith(todayStrFmt);
+          const dateHeader = isToday ? `오늘 · ${dateLabel}` : dateLabel;
+
+          const categoryLabel = log.target_type
+            ? `${TARGET_TYPE_LABELS[log.target_type] ?? log.target_type} · ${log.action}`
+            : log.action;
+
+          const changes = parseLogDetail(log.detail);
+          // detail이 없으면 action을 note로 사용
+          const finalChanges = changes.length > 0 ? changes : [{ note: log.action }];
+
+          return {
+            id: log.id,
+            time,
+            date: dateHeader,
+            actor: log.user_name,
+            target: log.target_name ?? '-',
+            category: categoryLabel,
+            changes: finalChanges,
+          };
+        });
 
         // 통계
         const todayStr = new Date().toDateString();
@@ -594,7 +712,7 @@ export default function EduStudentsTab({ isActive }: Props) {
 
         return (
           <div className={styles.log_layout}>
-            {/* ── 왼쪽: 로그 목록 ── */}
+            {/* ── 왼쪽: 로그 목록 (Dense 디자인) ── */}
             <div className={styles.log_main}>
               <div className={styles.log_header}>
                 <span className={styles.log_header_title}>로그 관리</span>
@@ -639,40 +757,7 @@ export default function EduStudentsTab({ isActive }: Props) {
                 <div className={styles.empty_state}><div className={styles.empty_text}>활동 로그가 없습니다</div></div>
               ) : (
                 <>
-                  <div className={styles.log_cards}>
-                    {pagedLogs.map(log => {
-                      const atype = getLogActionType(log.action);
-                      const detailLines = log.detail ? log.detail.split(',').map(s => s.trim()).filter(Boolean) : [];
-                      return (
-                        <div key={log.id} className={styles.log_card}>
-                          <div className={styles.log_card_top}>
-                            <div className={styles.log_card_left}>
-                              <span className={styles.log_card_badge} style={{ color: atype.color, background: atype.bg }}>{atype.label}</span>
-                              <span className={styles.log_card_user}>{log.user_name}</span>
-                            </div>
-                            <span className={styles.log_card_time}>
-                              {new Date(log.created_at).toLocaleString('ko-KR', { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                            </span>
-                          </div>
-                          <div className={styles.log_card_action}>{log.action}</div>
-                          {(log.target_type || log.target_name) && (
-                            <div className={styles.log_card_meta}>
-                              {log.target_type && <span>테이블: {log.target_type}</span>}
-                              {log.target_name && <span>대상: {log.target_name}</span>}
-                            </div>
-                          )}
-                          {detailLines.length > 0 && (
-                            <div className={styles.log_card_detail}>
-                              <div className={styles.log_card_detail_title}>변경된 항목:</div>
-                              {detailLines.map((line, i) => (
-                                <div key={i} className={styles.log_card_detail_line}>{line}</div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
+                  <ActivityLogDense events={events} />
 
                   {totalPages > 1 && (
                     <div className={styles.log_pagination}>

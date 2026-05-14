@@ -157,6 +157,29 @@ export default function MemoTimeline({ tableName, recordId, legacyMemo, defaultI
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleAdd()
   }
 
+  // 자주 쓰는 메모 빠른 입력 칩 — 클릭 시 "MM.DD 라벨" 형식으로 입력창에 추가
+  const QUICK_MEMOS = ['부재중', '오전부재', '오후부재', '전화거절']
+  const handleQuickMemo = (label: string) => {
+    const d = new Date()
+    const pad = (n: number) => String(n).padStart(2, '0')
+    const dateLabel = `${pad(d.getMonth() + 1)}.${pad(d.getDate())}`
+    const snippet = `${dateLabel} ${label}`
+    setInput(prev => {
+      const trimmed = prev.trimEnd()
+      return trimmed ? `${trimmed}\n${snippet}` : snippet
+    })
+    // 포커스 + 커서를 끝으로
+    setTimeout(() => {
+      const el = textareaRef.current
+      if (el) {
+        el.focus()
+        el.selectionStart = el.selectionEnd = el.value.length
+        el.style.height = 'auto'
+        el.style.height = el.scrollHeight + 'px'
+      }
+    }, 0)
+  }
+
   const handleEditKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>, id: string) => {
     if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleEditSave(id)
     if (e.key === 'Escape') handleEditCancel()
@@ -343,6 +366,18 @@ export default function MemoTimeline({ tableName, recordId, legacyMemo, defaultI
 
       {/* 입력창 */}
       <div className={styles.inputWrap}>
+        <div className={styles.quickChipRow}>
+          {QUICK_MEMOS.map(label => (
+            <button
+              key={label}
+              type="button"
+              onClick={() => handleQuickMemo(label)}
+              className={styles.quickChip}
+            >
+              + {label}
+            </button>
+          ))}
+        </div>
         <textarea
           ref={textareaRef}
           className={styles.input}
