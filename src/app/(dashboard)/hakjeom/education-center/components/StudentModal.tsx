@@ -176,10 +176,22 @@ export default function StudentModal({ student, courses, centers, managers = [],
         consultAppliedKey.current = key;
         setForm((prev) => {
           const next = { ...prev };
-          // 최종학력 매핑: 문의 DB '2년제 졸업' → 등록학생관리 '2년제졸업' (공백 제거)
+          // 최종학력 매핑: 문의 DB ↔ 등록학생관리 (공백·표기 차이 보정)
           if (!next.education_level && c.education) {
-            const normalized = String(c.education).replace(/\s/g, '');
-            const match = EDUCATION_LEVELS.find((l) => l === normalized);
+            const raw = String(c.education).trim();
+            const normalized = raw.replace(/\s/g, '');
+            // 1) 정확 일치 (공백 제거 후)
+            let match = EDUCATION_LEVELS.find((l) => l === normalized) as
+              | EducationLevel
+              | undefined;
+            // 2) 별칭 매핑 (문의DB에만 있는 값 → 등록학생관리 대체값)
+            if (!match) {
+              const aliasMap: Record<string, EducationLevel> = {
+                "대학원이상": "4년제졸업",
+                "대학교졸업(외국)": "4년제졸업",
+              };
+              if (aliasMap[normalized]) match = aliasMap[normalized];
+            }
             if (match) next.education_level = match;
           }
           // 희망자격증과정 매핑 (이름)
