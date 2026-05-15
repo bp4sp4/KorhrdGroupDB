@@ -60,6 +60,7 @@ import type { ApprovalFormTemplate } from "@/types/approvalForm";
 import CustomSelect from "../marketing/CustomSelect";
 import { useGuide } from "@/components/guide/GuideProvider";
 import { getSeenGuideIds } from "@/lib/guide/steps";
+import GuidePicker from "@/components/guide/GuidePicker";
 
 // ---------------------------------------------------------------------------
 // 타입 정의
@@ -444,6 +445,7 @@ export default function ApprovalsPage() {
   // 가이드: [가이드] 버튼 트리거용 (자동 시작은 templates 로드 후, 아래에서)
   const { startById: startApprovalGuide } = useGuide();
   const guideStartedRef = useRef(false);
+  const [guidePickerOpen, setGuidePickerOpen] = useState(false);
 
   // 가이드 데모 모드: 양식/본문 자동 채움 + 제출 시 DB 호출 차단 + 가짜 품의서 주입
   const [guideDemoActive, setGuideDemoActive] = useState(false);
@@ -823,6 +825,53 @@ export default function ApprovalsPage() {
     steps: [],
   };
 
+  // 각 양식별 예시 본문 데이터 (가이드 시뮬레이션용)
+  const DEMO_FORM_CONTENTS: Record<string, Record<string, string>> = {
+    "휴가신청서": {
+      vacation_type: "연차",
+      vacation_start: "2026-05-20",
+      vacation_end: "2026-05-22",
+      vacation_reason: "개인 휴식 (가이드 예시)",
+    },
+    "근태사유서": {
+      attend_start_date: "2026-05-15",
+      attend_end_date: "2026-05-15",
+      attend_type: "지각",
+      reason: "교통 지연으로 인한 지각 (가이드 예시)",
+    },
+    "명함신청서": {
+      company_name: "한평생교육원",
+      department: "교육사업부",
+      name: "홍길동",
+      email: "hong@korhrd.com",
+      phone: "010-1234-5678",
+      phone_main: "02-1234-5678",
+      position: "대리",
+      address: "서울특별시 강남구 (가이드 예시)",
+    },
+    "사원증신청서": {
+      department: "교육사업부",
+      name: "홍길동",
+      name_en: "Hong Gildong",
+    },
+    "인수인계요청서": {
+      receiver_name: "김인수",
+      receiver_dept: "교육사업부 / 대리",
+      receiver_task: "문의DB 관리, 등록학생관리 (가이드 예시)",
+      giver_name: "홍길동",
+      giver_dept: "교육사업부 / 사원",
+      giver_task: "기존 담당 학생 인계 (가이드 예시)",
+    },
+    "퇴사확정일요청서": {
+      dept: "교육사업부",
+      hire_date: "2025-01-15",
+      handover_start: "2026-05-20",
+      handover_end: "2026-05-25",
+      contact_after: "010-1234-5678",
+      reason: "개인 사정 (가이드 예시)",
+    },
+  };
+
   // 예시 본문 채움 — 품의서 / 결의서 공통
   const fillDemoContent = (kind: "proposal" | "resolution") => {
     if (kind === "proposal") {
@@ -885,6 +934,27 @@ export default function ApprovalsPage() {
     const handleAction = (e: Event) => {
       const detail = (e as CustomEvent<{ type: string }>).detail;
       if (!detail) return;
+      // "open-form-by-type:XXX" — 인사·출장 양식 자동 열기 + 예시 본문 채움
+      if (detail.type.startsWith("open-form-by-type:")) {
+        const docType = detail.type.slice("open-form-by-type:".length).trim();
+        const normalizedKey = docType.replace(/\s/g, "");
+        setGuideDemoActive(true);
+        autoPickTemplate(
+          (t) => t.document_type.replace(/\s/g, "") === normalizedKey,
+        );
+        // 양식이 열린 다음 본문 자동 채움 (예시 내용 있으면)
+        const demoContent = DEMO_FORM_CONTENTS[normalizedKey];
+        if (demoContent) {
+          setTimeout(() => {
+            setFormState((prev) => ({
+              ...prev,
+              title: `[가이드 예시] ${docType}`,
+              content: { ...prev.content, ...demoContent },
+            }));
+          }, 100);
+        }
+        return;
+      }
       switch (detail.type) {
         case "demo-start":
           setGuideDemoActive(true);
@@ -1292,14 +1362,14 @@ export default function ApprovalsPage() {
         새 결재 진행
       </button>
 
-      {/* 가이드 버튼 */}
+      {/* 가이드 모음 버튼 */}
       <button
         type="button"
         className={styles.sidebar_guide_btn}
-        onClick={() => startApprovalGuide("approvals-basics")}
-        title="전자결재 사용법"
+        onClick={() => setGuidePickerOpen(true)}
+        title="전자결재 가이드 모음"
       >
-        가이드
+        가이드 모음
       </button>
 
       {/* 메뉴 그룹 */}
@@ -4210,6 +4280,16 @@ export default function ApprovalsPage() {
       {refModal}
       {proposalModal}
       {linkedProposalModal}
+      <GuidePicker
+        open={guidePickerOpen}
+        onClose={() => setGuidePickerOpen(false)}
+        title="전자결재 가이드 모음"
+        filter={(g) =>
+          g.category === "회계" ||
+          g.category === "인사" ||
+          g.category === "출장"
+        }
+      />
     </div>
   );
 }

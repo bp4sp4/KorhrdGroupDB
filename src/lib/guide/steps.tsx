@@ -53,6 +53,10 @@ export interface GuideDef {
    * - 없으면 자동 시작 안 함 — 컴포넌트에서 `startById(id)`로 명시 호출.
    */
   matchPath?: string;
+  /** 가이드 모음에서 그룹핑할 카테고리 (예: "회계", "인사", "출장") */
+  category?: string;
+  /** 가이드 모음에서 보일 짧은 설명 */
+  description?: string;
   steps: GuideStep[];
 }
 
@@ -254,12 +258,13 @@ export const GUIDES: GuideDef[] = [
       },
     ],
   },
-  // ─── 전자결재 가이드 (/approvals) ──────────────────────────────────────────
-  // 흐름: 품의서 자동 작성·제출 → 결의서 자동 작성·품의서 연동·제출 (모두 시뮬레이션)
+  // ─── 전자결재 — 회계: 지출품의서 → 지출결의서 흐름 ────────────────────────
   {
     id: "approvals-basics",
-    label: "전자결재 사용법",
+    label: "지출품의서 → 지출결의서",
     matchPath: "/approvals",
+    category: "회계",
+    description: "지출 사전 승인(품의)부터 사후 처리(결의)까지 연동 흐름",
     steps: [
       {
         title: "전자결재 가이드",
@@ -436,7 +441,8 @@ export const GUIDES: GuideDef[] = [
             <B>전공·교양·일반</B> 등 카테고리별 과목 리스트.
             {"\n"}• <B>+ 추가</B> 버튼으로 학생 전용 과목 추가
             {"\n"}• 과목 클릭 → <S>현재 학기에 배정</S>
-            {"\n"}• 이미 배정된 과목은 회색, <S>이수 완료(60점 이상)</S>는 초록색
+            {"\n"}• 이미 배정된 과목은 회색, <S>이수 완료(60점 이상)</S>는
+            초록색
           </>
         ),
         placement: "right",
@@ -493,13 +499,20 @@ export const GUIDES: GuideDef[] = [
     // matchPath 없음 → 컴포넌트(EduStudentsTab)에서 직접 startById로 시작
     steps: [
       {
-        title: "등록학생관리 가이드(최초 1회)",
+        title: "등록학생관리 가이드",
         content: (
           <>
-            등록된 학생을 <B>관리·수정·삭제</B>하는 페이지예요. 핵심 기능을
-            짧게 안내해드릴게요.
+            등록된 학생을 <B>관리·수정</B>하는 페이지예요.
+            {"\n\n"}
+            가이드 동안 임시로 <C>예시 학생 3명</C>이 목록에 표시됩니다.
+            {"\n"}
+            <W>※ 실제 데이터 아닙니다 (가이드 종료 시 자동 제거)</W>
+            {"\n\n"}
+            특히 <S>학생 추가</S> 시 <C>이름·전화번호</C>만 입력하면 문의DB에서
+            정보를 자동으로 채워주는 흐름을 시뮬레이션으로 보여드릴게요.
           </>
         ),
+        fireEvent: "guide-edu-action:demo-list-on",
       },
       {
         target: '[data-guide="edu-search"]',
@@ -510,21 +523,6 @@ export const GUIDES: GuideDef[] = [
           </>
         ),
         placement: "bottom",
-      },
-      {
-        target: '[data-guide="edu-add-student-btn"]',
-        title: "학생 추가 (자동 채움)",
-        content: (
-          <>
-            <B>+ 학생 추가</B> 버튼을 누르고 <C>이름·전화번호</C>만 입력하면
-            문의 DB에서 매칭되는 정보를 <S>자동으로 채워줘요</S>.
-            {"\n\n"}
-            자동 채움: 최종학력 · 희망과정 · 담당자 · 과목당 비용 · 메모
-            {"\n"}
-            <W>※ 이미 입력한 값은 덮어쓰지 않아요</W>
-          </>
-        ),
-        placement: "left",
       },
       {
         target: '[data-guide="edu-table"]',
@@ -538,13 +536,455 @@ export const GUIDES: GuideDef[] = [
         placement: "top",
       },
       {
+        target: '[data-guide="edu-add-student-btn"]',
+        title: "학생 추가 (자동 채움 데모)",
+        content: (
+          <>
+            <B>+ 학생 추가</B> 버튼을 자동으로 눌러 모달을 열게요.
+            {"\n"}이름과 전화번호만 입력하면 문의DB에서 정보를 <S>자동 채움</S>
+            해주는 흐름을 보여드릴게요.
+          </>
+        ),
+        placement: "left",
+        fireEvent: "guide-edu-action:open-add-modal",
+        waitMs: 600,
+      },
+      {
+        target: '[data-guide="edu-modal-name"]',
+        title: "1단계 — 이름 입력",
+        content: (
+          <>
+            <C>홍길동</C>을 직접 입력해보세요.
+            {"\n\n"}
+            정확히 입력하면 자동으로 다음 단계로 넘어갑니다.
+          </>
+        ),
+        placement: "right",
+        compact: true,
+        waitMs: 400,
+        advanceOn: "guide-edu-input-name-done",
+        hideNext: true,
+      },
+      {
+        target: '[data-guide="edu-modal-phone"]',
+        title: "2단계 — 전화번호 입력",
+        content: (
+          <>
+            <C>01012345678</C>을 직접 입력해보세요.
+            {"\n\n"}
+            정확히 11자리 입력하면 자동으로 다음 단계로 진행됩니다.{"\n"}
+            실제로는 이 시점에 시스템이 문의DB에서 <S>같은 이름·번호</S>를
+            검색해 정보를 자동으로 채워줍니다.
+          </>
+        ),
+        placement: "right",
+        compact: true,
+        waitMs: 400,
+        advanceOn: "guide-edu-input-phone-done",
+        hideNext: true,
+      },
+      {
+        title: "3단계 — 문의DB 자동 매칭",
+        content: (
+          <>
+            방금 입력한 <B>이름·전화번호</B>로 문의DB를 검색해서 핵심 정보를{" "}
+            <S>한 번에 채워줘요</S>.
+            {"\n\n"}
+            매칭되는 필드:
+            {"\n"}• <C>최종학력</C>
+            {"\n"}• <C>희망자격증과정</C>
+            {"\n"}• <C>담당자</C>
+            {"\n"}• <C>과목당 비용</C>
+            {"\n"}• <C>메모</C>
+            {"\n\n"}
+            <S>다음</S>을 눌러 각 필드를 확인하세요.
+          </>
+        ),
+        fireEvent: "guide-edu-modal-action:auto-fill",
+        compact: true,
+        waitMs: 400,
+      },
+      {
+        target: '[data-guide="edu-modal-autofilled"]',
+        title: "최종학력",
+        content: <><B>4년제졸업</B>으로 자동 매칭됐어요.</>,
+        placement: "right",
+        compact: true,
+      },
+      {
+        target: '[data-guide="edu-modal-course"]',
+        title: "희망자격증과정",
+        content: <><B>사회복지사2급(구법)</B>으로 자동 매칭됐어요.</>,
+        placement: "right",
+        compact: true,
+      },
+      {
+        target: '[data-guide="edu-modal-manager"]',
+        title: "담당자",
+        content: <><B>이규준</B>으로 자동 매칭됐어요.</>,
+        placement: "right",
+        compact: true,
+      },
+      {
+        target: '[data-guide="edu-modal-unit-price"]',
+        title: "과목당 비용",
+        content: <><B>150,000원</B>으로 자동 매칭됐어요.</>,
+        placement: "right",
+        compact: true,
+      },
+      {
+        target: '[data-guide="edu-modal-notes"]',
+        title: "메모",
+        content: (
+          <>
+            문의DB의 메모도 함께 복사돼요.
+            {"\n"}
+            <C>가이드 예시 — 문의DB에서 자동 채움</C>
+          </>
+        ),
+        placement: "top",
+        compact: true,
+      },
+      {
+        title: "4단계 — 마무리",
+        content: (
+          <>
+            핵심 필드가 <S>자동으로 채워진</S> 모습을 확인하세요.
+            {"\n\n"}
+            <B>희망학위·전공·교육원·기수·비용·목표일</B> 등은 사용자가 직접
+            입력하면 됩니다.
+            {"\n\n"}
+            마지막으로 <S>[저장]</S>을 누르면 등록 완료!
+          </>
+        ),
+        compact: true,
+      },
+      {
         title: "끝났어요!",
         content: (
           <>
-            언제든 필터 영역의 <C>[가이드] 버튼</C>을 눌러 가이드를 다시 볼 수
-            있어요.
+            요약:
+            {"\n"}• <C>+ 학생 추가</C> → 이름·전화번호 입력
+            {"\n"}• 문의DB에서 <S>자동 채움</S>
+            {"\n"}• 나머지 필드 확인 후 저장
+            {"\n\n"}
+            언제든 필터 영역의 <C>[가이드] 버튼</C>으로 다시 볼 수 있어요.
           </>
         ),
+        fireEvent: "guide-edu-action:close-add-modal",
+      },
+    ],
+  },
+  // ─── 전자결재 — 인사: 휴가신청서 ─────────────────────────────────────────
+  {
+    id: "approvals-vacation",
+    label: "휴가신청서",
+    category: "인사",
+    description: "연차·반차·경조사 등 휴가 신청 방법",
+    steps: [
+      {
+        title: "휴가신청서 가이드",
+        content: (
+          <>
+            <B>휴가신청서</B> 양식을 자동으로 열어드릴게요.
+            {"\n\n"}
+            연차·반차·경조사 등 유형을 선택하고, 기간·사유를 입력해 결재를
+            올립니다.
+          </>
+        ),
+        fireEvent: "guide-apv-action:open-form-by-type:휴가신청서",
+        waitMs: 600,
+      },
+      {
+        target: '[data-guide="approvals-body-section"]',
+        title: "본문 — 예시 자동 채움",
+        content: (
+          <>
+            본문에 <S>예시 데이터가 자동 입력</S>됐어요:
+            {"\n"}• 휴가 유형: <C>연차</C>
+            {"\n"}• 기간: <C>2026.05.20 ~ 2026.05.22</C>
+            {"\n"}• 사유: <C>개인 휴식</C>
+            {"\n\n"}
+            실제 사용 시에는 <B>본인 휴가 정보</B>로 수정하면 됩니다.
+            {"\n"}경조사 휴가는 <C>증빙서류</C>도 첨부하세요.
+          </>
+        ),
+        placement: "right",
+        compact: true,
+      },
+      {
+        target: '[data-guide="approvals-submit-btn"]',
+        title: "결재 신청",
+        content: (
+          <>
+            결재선이 자동 설정되어 있어요. <B>[결재요청]</B>을 누르면 휴가 결재
+            시작!
+          </>
+        ),
+        placement: "left",
+        compact: true,
+      },
+      {
+        title: "끝났어요!",
+        content: (
+          <>
+            언제든 좌측 <C>[가이드] 버튼</C>으로 다시 볼 수 있어요.
+          </>
+        ),
+        fireEvent: "guide-apv-action:demo-end",
+      },
+    ],
+  },
+  // ─── 전자결재 — 인사: 근태사유서 ─────────────────────────────────────────
+  {
+    id: "approvals-attendance",
+    label: "근태사유서",
+    category: "인사",
+    description: "지각·조퇴·결근 사유를 보고",
+    steps: [
+      {
+        title: "근태사유서 가이드",
+        content: (
+          <>
+            <B>지각·조퇴·결근</B> 등 근태 이슈 발생 시 사유를 보고하는 양식이에요.
+            {"\n\n"}
+            양식을 자동으로 열어드릴게요.
+          </>
+        ),
+        fireEvent: "guide-apv-action:open-form-by-type:근태사유서",
+        waitMs: 600,
+      },
+      {
+        target: '[data-guide="approvals-body-section"]',
+        title: "본문 — 예시 자동 채움",
+        content: (
+          <>
+            본문에 <S>예시 데이터가 자동 입력</S>됐어요:
+            {"\n"}• 날짜: <C>2026.05.15</C>
+            {"\n"}• 구분: <C>지각</C>
+            {"\n"}• 사유: <C>교통 지연으로 인한 지각</C>
+            {"\n\n"}
+            실제 사용 시에는 <B>해당 근태 정보</B>로 수정하세요.
+          </>
+        ),
+        placement: "right",
+        compact: true,
+      },
+      {
+        target: '[data-guide="approvals-submit-btn"]',
+        title: "결재 신청",
+        content: (
+          <>
+            작성 완료 후 <B>[결재요청]</B>을 눌러 제출하세요.
+          </>
+        ),
+        placement: "left",
+        compact: true,
+      },
+      {
+        title: "끝났어요!",
+        content: <>가이드 모음에서 다른 양식 가이드도 확인하세요.</>,
+        fireEvent: "guide-apv-action:demo-end",
+      },
+    ],
+  },
+  // ─── 전자결재 — 인사: 명함 신청서 ────────────────────────────────────────
+  {
+    id: "approvals-business-card",
+    label: "명함 신청서",
+    category: "인사",
+    description: "신규 입사·직책 변경 시 명함 발주 신청",
+    steps: [
+      {
+        title: "명함 신청서 가이드",
+        content: (
+          <>
+            <B>신규 입사</B>·<B>직책 변경</B> 시 명함 발주를 요청하는 양식이에요.
+            {"\n\n"}
+            양식을 자동으로 열어드릴게요.
+          </>
+        ),
+        fireEvent: "guide-apv-action:open-form-by-type:명함 신청서",
+        waitMs: 600,
+      },
+      {
+        target: '[data-guide="approvals-body-section"]',
+        title: "본문 — 예시 자동 채움",
+        content: (
+          <>
+            본문에 <S>예시 데이터가 자동 입력</S>됐어요:
+            {"\n"}• 부서: <C>교육사업부</C> / 직급: <C>대리</C>
+            {"\n"}• 이름: <C>홍길동</C>
+            {"\n"}• 연락처: <C>010-1234-5678</C>
+            {"\n"}• 이메일: <C>hong@korhrd.com</C>
+            {"\n\n"}
+            실제 사용 시 <B>본인 정보</B>로 수정하세요.
+          </>
+        ),
+        placement: "right",
+        compact: true,
+      },
+      {
+        target: '[data-guide="approvals-submit-btn"]',
+        title: "결재 신청",
+        content: <><B>[결재요청]</B>으로 신청 완료!</>,
+        placement: "left",
+        compact: true,
+      },
+      {
+        title: "끝났어요!",
+        content: <>승인되면 명함 제작이 진행됩니다.</>,
+        fireEvent: "guide-apv-action:demo-end",
+      },
+    ],
+  },
+  // ─── 전자결재 — 인사: 사원증 신청서 ──────────────────────────────────────
+  {
+    id: "approvals-employee-id",
+    label: "사원증 신청서",
+    category: "인사",
+    description: "사원증 신규 발급·재발급",
+    steps: [
+      {
+        title: "사원증 신청서 가이드",
+        content: (
+          <>
+            사원증 <B>신규 발급</B>·<B>재발급</B> 요청 양식이에요.
+            {"\n\n"}
+            양식을 자동으로 열어드릴게요.
+          </>
+        ),
+        fireEvent: "guide-apv-action:open-form-by-type:사원증 신청서",
+        waitMs: 600,
+      },
+      {
+        target: '[data-guide="approvals-body-section"]',
+        title: "본문 — 예시 자동 채움",
+        content: (
+          <>
+            본문에 <S>예시 데이터가 자동 입력</S>됐어요:
+            {"\n"}• 부서: <C>교육사업부</C>
+            {"\n"}• 이름: <C>홍길동</C>
+            {"\n"}• 영문이름: <C>Hong Gildong</C>
+            {"\n\n"}
+            <B>재발급</B>일 경우 분실 경위 등을 사유에 추가하세요.
+          </>
+        ),
+        placement: "right",
+        compact: true,
+      },
+      {
+        target: '[data-guide="approvals-submit-btn"]',
+        title: "결재 신청",
+        content: <><B>[결재요청]</B>으로 신청 완료!</>,
+        placement: "left",
+        compact: true,
+      },
+      {
+        title: "끝났어요!",
+        content: <>승인되면 사원증이 발급됩니다.</>,
+        fireEvent: "guide-apv-action:demo-end",
+      },
+    ],
+  },
+  // ─── 전자결재 — 인사: 인수인계요청서 ─────────────────────────────────────
+  {
+    id: "approvals-handover",
+    label: "인수인계요청서",
+    category: "인사",
+    description: "퇴사·이동 시 업무 인수인계 정리",
+    steps: [
+      {
+        title: "인수인계요청서 가이드",
+        content: (
+          <>
+            퇴사·이동 시 <B>맡고 있던 업무를 정리해서 인계</B>하는 양식이에요.
+            {"\n\n"}
+            양식을 자동으로 열어드릴게요.
+          </>
+        ),
+        fireEvent: "guide-apv-action:open-form-by-type:인수인계요청서",
+        waitMs: 600,
+      },
+      {
+        target: '[data-guide="approvals-body-section"]',
+        title: "본문 — 예시 자동 채움",
+        content: (
+          <>
+            본문에 <S>예시 데이터가 자동 입력</S>됐어요:
+            {"\n"}• 인계자: <C>홍길동 (교육사업부 / 사원)</C>
+            {"\n"}• 인수자: <C>김인수 (교육사업부 / 대리)</C>
+            {"\n"}• 업무: <C>문의DB 관리, 등록학생관리</C>
+            {"\n\n"}
+            실제 사용 시 <B>실제 업무 내용</B>으로 상세히 수정하세요. 공식
+            인수인계의 근거가 됩니다.
+          </>
+        ),
+        placement: "right",
+        compact: true,
+      },
+      {
+        target: '[data-guide="approvals-submit-btn"]',
+        title: "결재 신청",
+        content: <><B>[결재요청]</B>으로 인계 처리 시작!</>,
+        placement: "left",
+        compact: true,
+      },
+      {
+        title: "끝났어요!",
+        content: <>승인 후 인수인계가 공식 처리됩니다.</>,
+        fireEvent: "guide-apv-action:demo-end",
+      },
+    ],
+  },
+  // ─── 전자결재 — 인사: 퇴사확정일 요청서 ──────────────────────────────────
+  {
+    id: "approvals-resignation",
+    label: "퇴사확정일 요청서",
+    category: "인사",
+    description: "퇴사 의사 표명 + 퇴사일 확정 요청",
+    steps: [
+      {
+        title: "퇴사확정일 요청서 가이드",
+        content: (
+          <>
+            퇴사 의사를 공식적으로 보고하고 <B>퇴사일 확정</B>을 요청하는
+            양식이에요.
+            {"\n\n"}
+            양식을 자동으로 열어드릴게요.
+          </>
+        ),
+        fireEvent: "guide-apv-action:open-form-by-type:퇴사확정일 요청서",
+        waitMs: 600,
+      },
+      {
+        target: '[data-guide="approvals-body-section"]',
+        title: "본문 — 예시 자동 채움",
+        content: (
+          <>
+            본문에 <S>예시 데이터가 자동 입력</S>됐어요:
+            {"\n"}• 부서: <C>교육사업부</C>
+            {"\n"}• 입사일: <C>2025.01.15</C>
+            {"\n"}• 인수인계 기간: <C>2026.05.20 ~ 2026.05.25</C>
+            {"\n"}• 사유: <C>개인 사정</C>
+            {"\n\n"}
+            <W>※ 통상 30일 전 제출 권장</W>
+          </>
+        ),
+        placement: "right",
+        compact: true,
+      },
+      {
+        target: '[data-guide="approvals-submit-btn"]',
+        title: "결재 신청",
+        content: <><B>[결재요청]</B>으로 제출하면 인사팀에서 확정 진행!</>,
+        placement: "left",
+        compact: true,
+      },
+      {
+        title: "끝났어요!",
+        content: <>승인 후 퇴사 절차가 시작됩니다.</>,
+        fireEvent: "guide-apv-action:demo-end",
       },
     ],
   },
@@ -559,6 +999,20 @@ export function getGuideByPath(pathname: string): GuideDef | null {
 
 export function getGuideById(id: string): GuideDef | null {
   return GUIDES.find((g) => g.id === id) ?? null;
+}
+
+/** 카테고리 → 가이드 목록 매핑 (가이드 모음 UI용) */
+export function getGuidesGroupedByCategory(
+  filter?: (g: GuideDef) => boolean,
+): Record<string, GuideDef[]> {
+  const groups: Record<string, GuideDef[]> = {};
+  for (const g of GUIDES) {
+    if (filter && !filter(g)) continue;
+    const cat = g.category ?? "기타";
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push(g);
+  }
+  return groups;
 }
 
 // localStorage seen 관리

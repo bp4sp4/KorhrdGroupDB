@@ -69,10 +69,33 @@ export default function GuideProvider({
   const close = useCallback(() => {
     if (activeGuideId) markGuideSeen(activeGuideId);
     setActiveGuideId(null);
-    // 가이드 종료 시 데모 모달/목록도 자동 정리
+    // 가이드 종료 시 데모 모달/목록도 자동 정리 (모든 가이드 대상)
     if (typeof window !== "undefined") {
+      // hakjeom 가이드
       window.dispatchEvent(new CustomEvent("guide-demo-close"));
       window.dispatchEvent(new CustomEvent("guide-demo-list-off"));
+      // 등록학생관리 가이드
+      window.dispatchEvent(
+        new CustomEvent("guide-edu-action", {
+          detail: { type: "demo-list-off" },
+        }),
+      );
+      window.dispatchEvent(
+        new CustomEvent("guide-edu-action", {
+          detail: { type: "close-add-modal" },
+        }),
+      );
+      window.dispatchEvent(
+        new CustomEvent("guide-edu-modal-action", {
+          detail: { type: "demo-end" },
+        }),
+      );
+      // 전자결재 가이드
+      window.dispatchEvent(
+        new CustomEvent("guide-apv-action", {
+          detail: { type: "demo-end" },
+        }),
+      );
     }
   }, [activeGuideId]);
 

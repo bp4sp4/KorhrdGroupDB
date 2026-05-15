@@ -16,6 +16,7 @@ import styles from './EduStudentsTab.module.css';
 import { useGuide } from '@/components/guide/GuideProvider';
 import { getSeenGuideIds } from '@/lib/guide/steps';
 import ActivityLogDense, { type LogEvent, type LogChange } from '@/components/activity/ActivityLogDense';
+import { EDU_DEMO_STUDENTS } from '@/lib/guide/eduStudentsDemo';
 
 // detail 문자열을 LogChange[] 로 파싱
 // 지원 패턴:
@@ -129,6 +130,45 @@ export default function EduStudentsTab({ isActive }: Props) {
   const [activeTab, setActiveTab] = useState<SubTab>('학생관리');
   const [canManage, setCanManage] = useState(false);
   const { startById } = useGuide();
+
+  // 등록학생관리 가이드 데모 모드: 가짜 학생 목록 prepend + 모달 열기/닫기
+  const [guideDemoListActive, setGuideDemoListActive] = useState(false);
+  useEffect(() => {
+    const handleAction = (e: Event) => {
+      const detail = (e as CustomEvent<{ type: string }>).detail;
+      if (!detail) return;
+      switch (detail.type) {
+        case 'demo-list-on':
+          setGuideDemoListActive(true);
+          break;
+        case 'demo-list-off':
+          setGuideDemoListActive(false);
+          break;
+        case 'open-add-modal':
+          setEditTarget(null);
+          setModalOpen(true);
+          // 모달 마운트 후 데모 모드 활성화 (lookup·submit 차단)
+          setTimeout(() => {
+            window.dispatchEvent(
+              new CustomEvent('guide-edu-modal-action', {
+                detail: { type: 'demo-on' },
+              }),
+            );
+          }, 50);
+          break;
+        case 'close-add-modal':
+          setModalOpen(false);
+          break;
+      }
+    };
+    window.addEventListener('guide-edu-action', handleAction);
+    return () => window.removeEventListener('guide-edu-action', handleAction);
+  }, []);
+
+  // 가이드 데모 활성화 시 가짜 학생 prepend (음수 id로 실제 DB와 분리)
+  const displayStudents = guideDemoListActive
+    ? [...EDU_DEMO_STUDENTS, ...students]
+    : students;
 
   // 등록학생관리 가이드 첫 진입 1회 자동 시작
   useEffect(() => {
@@ -276,8 +316,8 @@ export default function EduStudentsTab({ isActive }: Props) {
     students.flatMap((s) => s.education_center_name?.split(',').map((v) => v.trim()).filter(Boolean) ?? [])
   )) as string[];
 
-  // 상태별 분리
-  const activeStudents  = students.filter((s) => s.status !== '환불' && s.status !== '삭제예정');
+  // 상태별 분리 (가이드 데모 모드에서는 displayStudents 사용)
+  const activeStudents  = displayStudents.filter((s) => s.status !== '환불' && s.status !== '삭제예정');
   const refundStudents  = students.filter((s) => s.status === '환불');
   const deleteStudents  = students.filter((s) => s.status === '삭제예정');
 

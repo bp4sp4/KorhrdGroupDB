@@ -93,6 +93,9 @@ export default function StudentModal({ student, courses, centers, managers = [],
   const consultTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const consultAppliedKey = useRef<string>(''); // 같은 이름+번호로 두 번 채움 방지
 
+  // 가이드 데모 모드 (lookup·submit 차단용)
+  const guideDemoActiveRef = useRef(false);
+
   useEffect(() => {
     const supabase = createClient();
     supabase
@@ -149,9 +152,11 @@ export default function StudentModal({ student, courses, centers, managers = [],
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.name, form.phone]);
 
+  // 가이드 데모 모드 ref (lookup useEffect에서 참조 — 위에서 선언)
   // 이름 + 전화번호 변경 시 문의 DB 매칭 → 빈 필드 자동 채움 (신규 추가 모드만)
   useEffect(() => {
     if (student) return; // 수정 모드면 자동 채움 X
+    if (guideDemoActiveRef.current) return; // 가이드 데모 모드면 실제 API 호출 안 함
     const name = form.name.trim();
     const phone = form.phone.trim();
     if (!name || !phone || phone.replace(/-/g, '').length < 10) return;
@@ -221,6 +226,74 @@ export default function StudentModal({ student, courses, centers, managers = [],
     return () => { if (consultTimer.current) clearTimeout(consultTimer.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.name, form.phone, student]);
+
+  // 가이드 데모 중 — 정확히 '홍길동'을 입력하면 다음 단계로 자동 진행
+  const guideNameDispatchedRef = useRef(false);
+  useEffect(() => {
+    if (!guideDemoActiveRef.current) return;
+    if (guideNameDispatchedRef.current) return;
+    if (form.name.trim() === '홍길동') {
+      guideNameDispatchedRef.current = true;
+      // 입력 결과를 사용자가 잠깐 보도록 700ms 후 진행
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('guide-edu-input-name-done'));
+      }, 700);
+    }
+  }, [form.name]);
+
+  // 가이드 데모 중 — 정확히 11자리 (01012345678) 입력 시 자동 진행
+  const guidePhoneDispatchedRef = useRef(false);
+  useEffect(() => {
+    if (!guideDemoActiveRef.current) return;
+    if (guidePhoneDispatchedRef.current) return;
+    const digits = form.phone.replace(/\D/g, '');
+    if (digits === '01012345678') {
+      guidePhoneDispatchedRef.current = true;
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('guide-edu-input-phone-done'));
+      }, 700);
+    }
+  }, [form.phone]);
+
+  // ── 가이드 데모 이벤트 리스너 (등록학생관리 가이드 전용) ──────────────
+  useEffect(() => {
+    const handleAction = (e: Event) => {
+      const detail = (e as CustomEvent<{ type: string }>).detail;
+      if (!detail) return;
+      switch (detail.type) {
+        case 'demo-on':
+          // 가이드 데모 시작 — 실제 lookup·submit 차단
+          guideDemoActiveRef.current = true;
+          consultAppliedKey.current = 'GUIDE_DEMO_BLOCK';
+          guideNameDispatchedRef.current = false;
+          guidePhoneDispatchedRef.current = false;
+          break;
+        case 'demo-end':
+          guideDemoActiveRef.current = false;
+          consultAppliedKey.current = '';
+          guideNameDispatchedRef.current = false;
+          guidePhoneDispatchedRef.current = false;
+          setForm(EMPTY_FORM);
+          setConsultationFound(null);
+          break;
+        case 'auto-fill':
+          // 실제 lookup API가 채우는 핵심 필드만 자동 입력
+          // (최종학력 · 희망자격증과정 · 담당자 · 과목당 비용 · 메모)
+          setForm((prev) => ({
+            ...prev,
+            education_level: '4년제졸업',
+            course_id: 1,
+            manager_name: '이규준',
+            unit_price: '150000',
+            notes: '가이드 예시 — 문의DB에서 자동 채움',
+          }));
+          setConsultationFound({ from: '문의DB (가이드 예시)' });
+          break;
+      }
+    };
+    window.addEventListener('guide-edu-modal-action', handleAction);
+    return () => window.removeEventListener('guide-edu-modal-action', handleAction);
+  }, []);
 
   const courseList = courses.length > 0 ? courses : DEFAULT_COURSES;
   const centerSuggestions = centers.length > 0 ? centers.map((c) => c.name) : DEFAULT_CENTERS;
@@ -309,6 +382,12 @@ export default function StudentModal({ student, courses, centers, managers = [],
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    // 가이드 데모 중이면 DB 저장 없이 모달만 닫음
+    if (guideDemoActiveRef.current) {
+      onClose();
+      window.dispatchEvent(new CustomEvent('guide-edu-modal-submitted'));
+      return;
+    }
     if (!form.phone.trim()) { alert('전화번호를 입력해주세요.'); return; }
     if (!form.education_level) { alert('최종학력을 선택해주세요.'); return; }
     if (!form.desired_degree) { alert('희망학위과정을 선택해주세요.'); return; }
@@ -353,14 +432,14 @@ export default function StudentModal({ student, courses, centers, managers = [],
             <div className={styles.form_grid}>
 
               {/* 이름 */}
-              <div className={styles.form_field}>
+              <div className={styles.form_field} data-guide="edu-modal-name">
                 <label className={styles.form_label}>이름<span className={styles.form_required}>*</span></label>
                 <input className={styles.form_input} placeholder="이름 입력" value={form.name}
                   onChange={(e) => set('name', e.target.value)} required />
               </div>
 
               {/* 전화번호 */}
-              <div className={styles.form_field}>
+              <div className={styles.form_field} data-guide="edu-modal-phone">
                 <label className={styles.form_label}>전화번호<span className={styles.form_required}>*</span></label>
                 <input className={styles.form_input} placeholder="010-0000-0000"
                   value={form.phone} inputMode="numeric"
@@ -368,7 +447,7 @@ export default function StudentModal({ student, courses, centers, managers = [],
               </div>
 
               {/* 최종학력 */}
-              <div className={styles.form_field}>
+              <div className={styles.form_field} data-guide="edu-modal-autofilled">
                 <label className={styles.form_label}>최종학력<span className={styles.form_required}>*</span></label>
                 <ModalSelect
                   value={form.education_level}
@@ -384,7 +463,7 @@ export default function StudentModal({ student, courses, centers, managers = [],
 
               {/* 희망학위과정 */}
               {showDesiredDegree && (
-                <div className={styles.form_field}>
+                <div className={styles.form_field} data-guide="edu-modal-degree">
                   <label className={styles.form_label}>희망학위과정<span className={styles.form_required}>*</span></label>
                   <ModalSelect
                     value={form.desired_degree}
@@ -400,7 +479,7 @@ export default function StudentModal({ student, courses, centers, managers = [],
 
               {/* 학과(전공) - 2/3/4년제 졸업 시 표시 */}
               {EDUCATION_LEVELS_WITH_MAJOR.includes(form.education_level as EducationLevel) && (
-                <div className={styles.form_field}>
+                <div className={styles.form_field} data-guide="edu-modal-major">
                   <label className={styles.form_label}>학과 (전공)</label>
                   <div className={styles.major_wrap} ref={majorRef}>
                     <input
@@ -443,7 +522,7 @@ export default function StudentModal({ student, courses, centers, managers = [],
               )}
 
               {/* 희망자격증과정 */}
-              <div className={styles.form_field}>
+              <div className={styles.form_field} data-guide="edu-modal-course">
                 <label className={styles.form_label}>희망자격증과정<span className={styles.form_required}>*</span></label>
                 <ModalSelect
                   value={form.course_id !== '' ? String(form.course_id) : ''}
@@ -458,7 +537,7 @@ export default function StudentModal({ student, courses, centers, managers = [],
               </div>
 
               {/* 담당자 */}
-              <div className={styles.form_field}>
+              <div className={styles.form_field} data-guide="edu-modal-manager">
                 <label className={styles.form_label}>담당자<span className={styles.form_required}>*</span></label>
                 <ModalSelect
                   value={form.manager_name}
@@ -469,7 +548,7 @@ export default function StudentModal({ student, courses, centers, managers = [],
               </div>
 
               {/* 등록교육원 (콤보박스) */}
-              <div className={styles.form_field}>
+              <div className={styles.form_field} data-guide="edu-modal-center">
                 <label className={styles.form_label}>등록교육원</label>
                 {centerTags.length > 0 && (
                   <div className={styles.center_tags}>
@@ -538,7 +617,7 @@ export default function StudentModal({ student, courses, centers, managers = [],
               </div>
 
               {/* 개강반 */}
-              <div className={styles.form_field}>
+              <div className={styles.form_field} data-guide="edu-modal-class-start">
                 <label className={styles.form_label}>개강반 (기수)</label>
                 <div className={styles.class_start_wrap}>
                   {form.class_start.split(',').filter(Boolean).map((tag, i) => (
@@ -591,7 +670,7 @@ export default function StudentModal({ student, courses, centers, managers = [],
               </div>
 
               {/* 비용 */}
-              <div className={styles.form_field}>
+              <div className={styles.form_field} data-guide="edu-modal-cost">
                 <label className={styles.form_label}>비용<span className={styles.form_required}>*</span></label>
                 <div className={styles.input_suffix_wrap}>
                   <input className={styles.form_input} inputMode="numeric" placeholder="0"
@@ -602,7 +681,7 @@ export default function StudentModal({ student, courses, centers, managers = [],
               </div>
 
               {/* 과목당 비용 */}
-              <div className={styles.form_field}>
+              <div className={styles.form_field} data-guide="edu-modal-unit-price">
                 <label className={styles.form_label}>
                   과목당 비용<span className={styles.form_required}>*</span>
                   {subjectCountPreview !== null && (
@@ -620,7 +699,7 @@ export default function StudentModal({ student, courses, centers, managers = [],
               </div>
 
               {/* 목표취득예정일 */}
-              <div className={styles.form_field}>
+              <div className={styles.form_field} data-guide="edu-modal-target-date">
                 <label className={styles.form_label}>목표취득예정일</label>
                 <DateInput
                   value={form.target_completion_date}
@@ -661,7 +740,7 @@ export default function StudentModal({ student, courses, centers, managers = [],
               </div>
 
               {/* 특이사항/메모 */}
-              <div className={`${styles.form_field} ${styles.form_field_full}`}>
+              <div className={`${styles.form_field} ${styles.form_field_full}`} data-guide="edu-modal-notes">
                 <label className={styles.form_label}>특이사항 / 메모</label>
                 <textarea className={styles.form_textarea} placeholder="특이사항 또는 메모를 입력하세요"
                   value={form.notes} onChange={(e) => set('notes', e.target.value)} />
