@@ -52,9 +52,9 @@ type ConsultationStatus =
   | "상담완료-높음"
   | "상담완료-중간"
   | "상담완료-낮음"
-  | "보류"
+  | "장기가망"
+  | "수신거부"
   | "등록완료"
-  | "취소"
   | "지인등록"
   | "지인취소"
   | "지인대기"
@@ -164,9 +164,9 @@ const CONSULTATION_STATUS_OPTIONS: ConsultationStatus[] = [
   "상담완료-높음",
   "상담완료-중간",
   "상담완료-낮음",
-  "보류",
+  "장기가망",
+  "수신거부",
   "등록완료",
-  "취소",
   "지인등록",
   "지인취소",
   "지인대기",
@@ -188,9 +188,9 @@ const CONSULTATION_STATUS_STYLE: Record<
   "상담완료-높음": { background: "#E0F7FA", color: "#0277BD" },
   "상담완료-중간": { background: "#FFFDE7", color: "#F57F17" },
   "상담완료-낮음": { background: "#FCE4EC", color: "#C62828" },
-  보류: { background: "#F3E8FF", color: "#7C3AED" },
+  장기가망: { background: "#F3E8FF", color: "#7C3AED" },
+  수신거부: { background: "#FEE2E2", color: "#DC2626" },
   등록완료: { background: "#DCFCE7", color: "#16A34A" },
-  취소: { background: "#FEE2E2", color: "#DC2626" },
   지인등록: { background: "#FFF0E6", color: "#EA580C" },
   지인취소: { background: "#FEF0F0", color: "#B91C1C" },
   지인대기: { background: "#FFF7ED", color: "#D97706" },
@@ -1759,9 +1759,9 @@ function HakjeomDetailPanel({
                       "부재중/추후통화",
                       "상담대기",
                       "상담완료",
-                      "보류",
+                      "장기가망",
                       "등록완료",
-                      "취소",
+                      "수신거부",
                       "지인등록",
                       "지인취소",
                       "지인대기",
@@ -1769,7 +1769,6 @@ function HakjeomDetailPanel({
                     ] as string[]
                   ).map((s) => {
                     const isConsultDone = s === "상담완료";
-                    const isCancel = s === "취소";
                     const isActive = isConsultDone
                       ? editStatus.startsWith("상담완료")
                       : editStatus === s;
@@ -1784,8 +1783,6 @@ function HakjeomDetailPanel({
                           if (isConsultDone) {
                             if (!editStatus.startsWith("상담완료"))
                               setEditStatus("상담완료-높음");
-                          } else if (isCancel) {
-                            setEditStatus("취소");
                           } else {
                             setEditStatus(s as ConsultationStatus);
                           }
@@ -1858,7 +1855,7 @@ function HakjeomDetailPanel({
                     ))}
                   </div>
                 )}
-                {editStatus === "취소" && (
+                {editStatus === "장기가망" && (
                   <div className={styles.clickSourceSubPanel}>
                     {COUNSEL_CHECK_OPTIONS.map((c) => (
                       <button
@@ -6881,9 +6878,9 @@ const STATS_STATUS_COLORS: Record<string, string> = {
   "상담완료-높음": "#0ea5e9",
   "상담완료-중간": "#eab308",
   "상담완료-낮음": "#f43f5e",
-  보류: "#8b5cf6",
+  장기가망: "#8b5cf6",
   등록완료: "#22c55e",
-  취소: "#dc2626",
+  수신거부: "#dc2626",
   지인등록: "#EA580C",
   지인취소: "#B91C1C",
   지인대기: "#D97706",
@@ -6895,9 +6892,9 @@ const STATS_STATUS_LIST: ConsultationStatus[] = [
   "상담완료-높음",
   "상담완료-중간",
   "상담완료-낮음",
-  "보류",
+  "장기가망",
   "등록완료",
-  "취소",
+  "수신거부",
   "지인등록",
   "지인취소",
   "지인대기",
@@ -7209,9 +7206,9 @@ function StatsTab() {
     "상담완료-높음",
     "상담완료-중간",
     "상담완료-낮음",
-    "보류",
+    "장기가망",
     "등록완료",
-    "취소",
+    "수신거부",
     "지인등록",
     "지인취소",
     "지인대기",

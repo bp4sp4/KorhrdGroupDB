@@ -754,14 +754,16 @@ select.input {
   color: #d97706;
 }
 
-/* ─── 미입력 셀 펄스 애니메이션 (결제방법·결제일·과목수) ──────────── */
+/* ─── 미입력 셀 펄스 (자주 깜빡이지 않도록 긴 휴식 + 부드러운 펄스) ──── */
 @keyframes pulse_blue {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.55);
+  0% {
+    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.35);
   }
-  50% {
-    box-shadow: 0 0 0 6px rgba(37, 99, 235, 0);
+  20% {
+    box-shadow: 0 0 0 5px rgba(37, 99, 235, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
   }
 }
 
@@ -771,7 +773,7 @@ select.input {
   align-items: center;
   justify-content: center;
   border-radius: 8px;
-  animation: pulse_blue 1.6s ease-in-out infinite;
+  animation: pulse_blue 4.5s ease-out infinite;
 }
 
 .cell_empty_hint:focus,
