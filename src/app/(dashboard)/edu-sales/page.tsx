@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import * as XLSX from "xlsx";
 import styles from "./page.module.css";
 import CustomSelect from "../marketing/CustomSelect";
 import { DateInput } from "@/components/ui/Calendar/DateInput";
@@ -38,9 +39,9 @@ interface SalesRow {
 
 
 const PAYMENT_METHOD_OPTIONS: { value: PaymentMethod; label: string }[] = [
+  { value: "card", label: "카드결제" },
   { value: "payapp_transfer", label: "페이앱 계좌이체" },
   { value: "bank_transfer", label: "계좌이체" },
-  { value: "card", label: "카드결제" },
 ];
 
 // ─── 한국시간(KST) 헬퍼 ────────────────────────────────────────────────
@@ -261,6 +262,65 @@ export default function EduSalesPage() {
     setNotesPopup(null);
   };
 
+  // 행을 엑셀용 객체로 변환
+  const rowToExportObject = (r: SalesRow) => ({
+    개강반: r.cohort ?? "",
+    학생명: r.student_name,
+    아이디: r.student_username ?? "",
+    전화번호: formatPhone(r.phone),
+    단가: r.unit_price ?? "",
+    매출: r.total_amount ?? "",
+    결제방법: r.payment_method
+      ? PAYMENT_METHOD_OPTIONS.find((o) => o.value === r.payment_method)?.label ?? ""
+      : "",
+    결제일: r.payment_date ?? "",
+    과목수: r.subject_count ?? "",
+    담당자: r.manager_name ?? "",
+    특이사항: r.notes ?? "",
+    "(현)처리번호": r.process_number ?? "",
+    "(현)발급일자": r.issue_date ?? "",
+    "발행 완료": r.is_published ? "Y" : "",
+    "환불 상태": r.refund_status,
+    "환불일": r.refund_date ?? "",
+  });
+
+  // ─── 엑셀 다운로드 ─────────────────────────────────────────────────
+  // 전체 탭: 월별 시트로 분리 다운로드 / 특정 월: 단일 시트
+  const handleExportExcel = () => {
+    const wb = XLSX.utils.book_new();
+    const today = new Date()
+      .toLocaleDateString("ko-KR", { timeZone: "Asia/Seoul" })
+      .replace(/\.\s?/g, "-")
+      .replace(/-$/, "");
+
+    if (activeMonth === "전체") {
+      // 월별 그룹핑 (cohortSortKey 순으로 정렬)
+      const groups = new Map<string, SalesRow[]>();
+      filteredRows.forEach((r) => {
+        const key = r.cohort ?? "기타";
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key)!.push(r);
+      });
+      const sortedCohorts = Array.from(groups.keys()).sort(
+        (a, b) => cohortSortKey(a) - cohortSortKey(b),
+      );
+
+      for (const cohort of sortedCohorts) {
+        const rowsForCohort = groups.get(cohort)!;
+        const ws = XLSX.utils.json_to_sheet(rowsForCohort.map(rowToExportObject));
+        // 시트명 제한: 31자 + 금지문자 [ ] : * ? / \
+        const safeSheetName = cohort.replace(/[[\]:*?/\\]/g, "_").slice(0, 31);
+        XLSX.utils.book_append_sheet(wb, ws, safeSheetName);
+      }
+      XLSX.writeFile(wb, `매출파일_전체_${today}.xlsx`);
+    } else {
+      // 특정 월 탭 — 단일 시트
+      const ws = XLSX.utils.json_to_sheet(filteredRows.map(rowToExportObject));
+      XLSX.utils.book_append_sheet(wb, ws, `매출_${activeMonth}`);
+      XLSX.writeFile(wb, `매출파일_${activeMonth}_${today}.xlsx`);
+    }
+  };
+
   const handleDelete = async (studentId: string) => {
     if (
       !confirm(
@@ -379,20 +439,31 @@ export default function EduSalesPage() {
               </span>
               <span className={styles.stat_sub}>{filteredRows.length}건</span>
             </div>
-            <div className={`${styles.stat_box} ${styles.stat_box_refund}`}>
-              <span className={styles.stat_label}>환불</span>
-              <span className={styles.stat_value}>
-                -{formatNumber(refundAmount)}원
-              </span>
-              <span className={styles.stat_sub}>
-                {
-                  filteredRows.filter((r) => r.refund_status === "환불완료")
-                    .length
-                }
-                건
-              </span>
-            </div>
+            {canViewAll && (
+              <div className={`${styles.stat_box} ${styles.stat_box_refund}`}>
+                <span className={styles.stat_label}>환불</span>
+                <span className={styles.stat_value}>
+                  -{formatNumber(refundAmount)}원
+                </span>
+                <span className={styles.stat_sub}>
+                  {
+                    filteredRows.filter((r) => r.refund_status === "환불완료")
+                      .length
+                  }
+                  건
+                </span>
+              </div>
+            )}
           </div>
+          <button
+            type="button"
+            className={styles.export_btn}
+            onClick={handleExportExcel}
+            disabled={filteredRows.length === 0}
+            title="현재 보이는 행을 엑셀로 다운로드"
+          >
+            ⬇ 엑셀 다운로드
+          </button>
         </div>
       </div>
 
@@ -455,43 +526,49 @@ export default function EduSalesPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <select
-          className={styles.filter_select}
-          value={filterManager}
-          onChange={(e) => setFilterManager(e.target.value)}
-        >
-          <option value="">전체 담당자</option>
-          {managerOptions.map((m) => (
-            <option key={m} value={m}>
-              {m}
-            </option>
-          ))}
-        </select>
-        <select
-          className={styles.filter_select}
-          value={filterPublished}
-          onChange={(e) =>
-            setFilterPublished(e.target.value as "all" | "done" | "pending")
-          }
-        >
-          <option value="all">발행 전체</option>
-          <option value="done">발행 완료</option>
-          <option value="pending">발행 대기</option>
-        </select>
-        <select
-          className={styles.filter_select}
-          value={filterRefund}
-          onChange={(e) =>
-            setFilterRefund(
-              e.target.value as "all" | "정상" | "환불대기" | "환불완료",
-            )
-          }
-        >
-          <option value="all">환불 전체</option>
-          <option value="정상">정상</option>
-          <option value="환불대기">환불대기</option>
-          <option value="환불완료">환불완료</option>
-        </select>
+        {canViewAll && (
+          <select
+            className={styles.filter_select}
+            value={filterManager}
+            onChange={(e) => setFilterManager(e.target.value)}
+          >
+            <option value="">전체 담당자</option>
+            {managerOptions.map((m) => (
+              <option key={m} value={m}>
+                {m}
+              </option>
+            ))}
+          </select>
+        )}
+        {canViewAll && (
+          <>
+            <select
+              className={styles.filter_select}
+              value={filterPublished}
+              onChange={(e) =>
+                setFilterPublished(e.target.value as "all" | "done" | "pending")
+              }
+            >
+              <option value="all">발행 전체</option>
+              <option value="done">발행 완료</option>
+              <option value="pending">발행 대기</option>
+            </select>
+            <select
+              className={styles.filter_select}
+              value={filterRefund}
+              onChange={(e) =>
+                setFilterRefund(
+                  e.target.value as "all" | "정상" | "환불대기" | "환불완료",
+                )
+              }
+            >
+              <option value="all">환불 전체</option>
+              <option value="정상">정상</option>
+              <option value="환불대기">환불대기</option>
+              <option value="환불완료">환불완료</option>
+            </select>
+          </>
+        )}
         <input
           type="date"
           className={styles.filter_date}
@@ -533,26 +610,26 @@ export default function EduSalesPage() {
           <table className={styles.table}>
             <thead className={styles.table_head}>
               <tr>
-                <th className={styles.th}>개강반</th>
-                <th className={styles.th}>학생명</th>
-                <th className={styles.th}>아이디</th>
-                <th className={styles.th}>전화번호</th>
-                <th className={`${styles.th} ${styles.th_right}`}>단가</th>
-                <th className={`${styles.th} ${styles.th_right}`}>매출</th>
-                <th className={styles.th}>결제방법</th>
-                <th className={styles.th}>결제일</th>
+                <th className={`${styles.th} ${styles.th_center}`}>개강반</th>
+                <th className={`${styles.th} ${styles.th_center}`}>학생명</th>
+                <th className={`${styles.th} ${styles.th_center}`}>아이디</th>
+                <th className={`${styles.th} ${styles.th_center}`}>전화번호</th>
+                <th className={`${styles.th} ${styles.th_center}`}>단가</th>
+                <th className={`${styles.th} ${styles.th_center}`}>매출</th>
+                <th className={`${styles.th} ${styles.th_center}`}>결제방법</th>
+                <th className={`${styles.th} ${styles.th_center}`}>결제일</th>
                 <th className={`${styles.th} ${styles.th_center}`}>과목수</th>
-                <th className={styles.th}>담당자</th>
-                <th className={styles.th}>특이사항</th>
-                <th className={styles.th}>(현)처리번호</th>
-                <th className={styles.th}>(현)발급일자</th>
-                <th className={`${styles.th} ${styles.th_center}`}>
-                  발행 완료
-                </th>
-                <th className={`${styles.th} ${styles.th_center}`}>
-                  환불 상태
-                </th>
-                <th className={`${styles.th} ${styles.th_center}`}>관리</th>
+                <th className={`${styles.th} ${styles.th_center}`}>담당자</th>
+                <th className={`${styles.th} ${styles.th_center}`}>특이사항</th>
+                {canViewAll && (
+                  <>
+                    <th className={`${styles.th} ${styles.th_center}`}>(현)처리번호</th>
+                    <th className={`${styles.th} ${styles.th_center}`}>(현)발급일자</th>
+                    <th className={`${styles.th} ${styles.th_center}`}>발행 완료</th>
+                    <th className={`${styles.th} ${styles.th_center}`}>환불 상태</th>
+                    <th className={`${styles.th} ${styles.th_center}`}>관리</th>
+                  </>
+                )}
               </tr>
             </thead>
             <tbody>
@@ -564,22 +641,15 @@ export default function EduSalesPage() {
                     `row-${r.student_name}-${r.phone ?? ""}`
                   }
                   className={`${styles.tr} ${r.sale_id ? "" : styles.tr_empty} ${
-                    // 환불 상태 우선
                     r.refund_status === "환불완료"
                       ? styles.tr_refunded
                       : r.refund_status === "환불대기"
                         ? styles.tr_refund_pending
-                        : // 검색 결과 중 현재 월이 아닌 행은 노란색으로 강조
-                          search.trim() &&
-                            r.cohort &&
-                            r.cohort !== activeMonth &&
-                            activeMonth !== "전체"
-                          ? styles.tr_search_match
-                          : ""
+                        : ""
                   }`}
                 >
                   {/* 개강반 — 인라인 텍스트 */}
-                  <td className={styles.td}>
+                  <td className={`${styles.td} ${styles.td_center}`}>
                     <InlineText
                       value={r.cohort ?? ""}
                       placeholder="-"
@@ -588,11 +658,11 @@ export default function EduSalesPage() {
                     />
                   </td>
                   {/* 학생명 — 읽기전용 */}
-                  <td className={`${styles.td} ${styles.td_strong}`}>
+                  <td className={`${styles.td} ${styles.td_center} ${styles.td_strong}`}>
                     {r.student_name}
                   </td>
                   {/* 아이디 — 인라인 텍스트 */}
-                  <td className={styles.td}>
+                  <td className={`${styles.td} ${styles.td_center}`}>
                     <InlineText
                       value={r.student_username ?? ""}
                       placeholder="-"
@@ -602,19 +672,19 @@ export default function EduSalesPage() {
                       width={90}
                     />
                   </td>
-                  <td className={styles.td}>{formatPhone(r.phone)}</td>
+                  <td className={`${styles.td} ${styles.td_center}`}>{formatPhone(r.phone)}</td>
                   {/* 단가 — 인라인 숫자 */}
-                  <td className={`${styles.td} ${styles.td_right}`}>
+                  <td className={`${styles.td} ${styles.td_center}`}>
                     <InlineNumber
                       value={r.unit_price}
                       onSave={(v) => updateRow(r, { unit_price: v })}
-                      align="right"
+                      align="center"
                       width={70}
                     />
                   </td>
                   {/* 매출 — 인라인 숫자 (환불완료 시 취소선) */}
                   <td
-                    className={`${styles.td} ${styles.td_right} ${styles.td_strong} ${
+                    className={`${styles.td} ${styles.td_center} ${styles.td_strong} ${
                       r.refund_status === "환불완료"
                         ? styles.td_strikethrough
                         : ""
@@ -623,53 +693,59 @@ export default function EduSalesPage() {
                     <InlineNumber
                       value={r.total_amount}
                       onSave={(v) => updateRow(r, { total_amount: v })}
-                      align="right"
+                      align="center"
                       width={90}
                     />
                   </td>
                   {/* 결제방법 — 커스텀 select */}
-                  <td className={styles.td}>
-                    <CustomSelect
-                      value={r.payment_method ?? ""}
-                      placeholder="-"
-                      size="sm"
-                      minWidth={120}
-                      options={[
-                        { value: "", label: "-" },
-                        ...PAYMENT_METHOD_OPTIONS,
-                      ]}
-                      onChange={(v) =>
-                        updateRow(r, {
-                          payment_method: (v || null) as PaymentMethod | null,
-                        })
-                      }
-                    />
+                  <td className={`${styles.td} ${styles.td_center}`}>
+                    <div className={!r.payment_method ? styles.cell_empty_hint : undefined}>
+                      <CustomSelect
+                        value={r.payment_method ?? ""}
+                        placeholder="-"
+                        size="sm"
+                        minWidth={120}
+                        options={[
+                          { value: "", label: "-" },
+                          ...PAYMENT_METHOD_OPTIONS,
+                        ]}
+                        onChange={(v) =>
+                          updateRow(r, {
+                            payment_method: (v || null) as PaymentMethod | null,
+                          })
+                        }
+                      />
+                    </div>
                   </td>
                   {/* 결제일 — 커스텀 달력 */}
-                  <td className={styles.td}>
-                    <DateInput
-                      value={r.payment_date ?? ""}
-                      onChange={(v) =>
-                        updateRow(r, { payment_date: v || null })
-                      }
-                      placeholder="결제일"
-                      triggerClassName={styles.inline_date_trigger}
-                    />
+                  <td className={`${styles.td} ${styles.td_center}`}>
+                    <div className={!r.payment_date ? styles.cell_empty_hint : undefined}>
+                      <DateInput
+                        value={r.payment_date ?? ""}
+                        onChange={(v) =>
+                          updateRow(r, { payment_date: v || null })
+                        }
+                        placeholder="결제일"
+                        triggerClassName={styles.inline_date_trigger}
+                      />
+                    </div>
                   </td>
                   {/* 과목수 — 인라인 숫자 */}
                   <td className={`${styles.td} ${styles.td_center}`}>
-                    <InlineNumber
-                      value={r.subject_count}
-                      onSave={(v) => updateRow(r, { subject_count: v })}
-                      align="center"
-                      width={48}
-                    />
+                    <div className={r.subject_count == null ? styles.cell_empty_hint : undefined}>
+                      <InlineNumber
+                        value={r.subject_count}
+                        onSave={(v) => updateRow(r, { subject_count: v })}
+                        align="center"
+                        width={48}
+                      />
+                    </div>
                   </td>
-                  <td className={styles.td}>
+                  <td className={`${styles.td} ${styles.td_center}`}>
                     {r.manager_name ?? <span className={styles.td_dim}>-</span>}
                   </td>
                   {/* 특이사항 — 클릭하면 팝업 */}
-                  <td className={`${styles.td} ${styles.td_notes}`}>
+                  <td className={`${styles.td} ${styles.td_center} ${styles.td_notes}`}>
                     <button
                       type="button"
                       className={styles.notes_btn}
@@ -687,81 +763,89 @@ export default function EduSalesPage() {
                       )}
                     </button>
                   </td>
-                  {/* (현)처리번호 — 자동 하이픈 */}
-                  <td className={styles.td}>
-                    <InlinePhone
-                      value={r.process_number ?? ""}
-                      onSave={(v) =>
-                        updateRow(r, { process_number: v.trim() || null })
-                      }
-                      width={130}
-                    />
-                  </td>
-                  {/* (현)발급일자 — 커스텀 달력 */}
-                  <td className={styles.td}>
-                    <DateInput
-                      value={r.issue_date ?? ""}
-                      onChange={(v) => updateRow(r, { issue_date: v || null })}
-                      placeholder="발급일"
-                      triggerClassName={styles.inline_date_trigger}
-                    />
-                  </td>
-                  {/* 발행 완료 — 체크박스 */}
-                  <td className={`${styles.td} ${styles.td_center}`}>
-                    <input
-                      type="checkbox"
-                      className={styles.inline_check}
-                      checked={r.is_published}
-                      onChange={(e) =>
-                        updateRow(r, { is_published: e.target.checked })
-                      }
-                    />
-                  </td>
-                  {/* 환불 상태 + 환불일 — 인라인 편집 */}
-                  <td className={`${styles.td} ${styles.td_center}`}>
-                    <div className={styles.refund_cell}>
-                      <CustomSelect
-                        value={r.refund_status}
-                        size="sm"
-                        minWidth={92}
-                        options={[
-                          { value: "정상", label: "정상" },
-                          { value: "환불대기", label: "환불대기" },
-                          { value: "환불완료", label: "환불완료" },
-                        ]}
-                        onChange={(v) =>
-                          updateRow(r, { refund_status: v as RefundStatus })
-                        }
-                      />
-                      {r.refund_status === "환불완료" && (
-                        <DateInput
-                          value={r.refund_date ?? ""}
-                          onChange={(v) =>
-                            updateRow(r, { refund_date: v || null })
+                  {canViewAll && (
+                    <>
+                      {/* (현)처리번호 — 자동 하이픈 */}
+                      <td className={`${styles.td} ${styles.td_center}`}>
+                        <InlinePhone
+                          value={r.process_number ?? ""}
+                          onSave={(v) =>
+                            updateRow(r, { process_number: v.trim() || null })
                           }
-                          placeholder="환불일"
-                          triggerClassName={styles.refund_date_trigger}
+                          width={130}
                         />
-                      )}
-                    </div>
-                  </td>
-                  {/* 관리 — 삭제만 */}
-                  <td className={`${styles.td} ${styles.td_actions}`}>
-                    {r.sale_id ? (
-                      <button
-                        className={styles.action_del_btn}
-                        onClick={() =>
-                          r.student_id
-                            ? handleDelete(r.student_id)
-                            : handleDeleteOrphan(r.sale_id!)
-                        }
-                      >
-                        삭제
-                      </button>
-                    ) : (
-                      <span className={styles.td_dim}>-</span>
-                    )}
-                  </td>
+                      </td>
+                      {/* (현)발급일자 — 커스텀 달력 */}
+                      <td className={`${styles.td} ${styles.td_center}`}>
+                        <DateInput
+                          value={r.issue_date ?? ""}
+                          onChange={(v) =>
+                            updateRow(r, { issue_date: v || null })
+                          }
+                          placeholder="발급일"
+                          triggerClassName={styles.inline_date_trigger}
+                        />
+                      </td>
+                      {/* 발행 완료 — 체크박스 */}
+                      <td className={`${styles.td} ${styles.td_center}`}>
+                        <input
+                          type="checkbox"
+                          className={styles.inline_check}
+                          checked={r.is_published}
+                          onChange={(e) =>
+                            updateRow(r, { is_published: e.target.checked })
+                          }
+                        />
+                      </td>
+                      {/* 환불 상태 + 환불일 — 인라인 편집 */}
+                      <td className={`${styles.td} ${styles.td_center}`}>
+                        <div className={styles.refund_cell}>
+                          <CustomSelect
+                            value={r.refund_status}
+                            size="sm"
+                            minWidth={92}
+                            options={[
+                              { value: "정상", label: "정상" },
+                              { value: "환불대기", label: "환불대기" },
+                              { value: "환불완료", label: "환불완료" },
+                            ]}
+                            onChange={(v) =>
+                              updateRow(r, {
+                                refund_status: v as RefundStatus,
+                              })
+                            }
+                          />
+                          {r.refund_status === "환불완료" && (
+                            <DateInput
+                              value={r.refund_date ?? ""}
+                              onChange={(v) =>
+                                updateRow(r, { refund_date: v || null })
+                              }
+                              placeholder="환불일"
+                              triggerClassName={styles.refund_date_trigger}
+                            />
+                          )}
+                        </div>
+                      </td>
+                      {/* 관리 — 삭제만 */}
+                      <td className={`${styles.td} ${styles.td_center} ${styles.td_actions}`}>
+                        {r.sale_id ? (
+                          <button
+                            className={styles.action_del_btn}
+                            onClick={() =>
+                              r.student_id
+                                ? handleDelete(r.student_id)
+                                : handleDeleteOrphan(r.sale_id!)
+                            }
+                          >
+                            삭제
+                          </button>
+                        ) : (
+                          <span className={styles.td_dim}>-</span>
+                        )}
+                      </td>
+                    </>
+                  )}
                 </tr>
               ))}
             </tbody>

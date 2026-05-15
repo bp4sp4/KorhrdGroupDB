@@ -177,8 +177,12 @@ export async function GET(request: NextRequest) {
     }
   })
 
-  // 검색 — 검색어 있을 땐 cohort 필터 무시 (전체 월에서 찾음)
+  // cohort 필터 (현재 월 탭)
   let filtered = items
+  if (cohort) {
+    filtered = filtered.filter((it) => it.cohort === cohort)
+  }
+  // 검색 (현재 월 안에서만)
   if (q) {
     const lq = q.toLowerCase()
     filtered = filtered.filter(
@@ -189,9 +193,6 @@ export async function GET(request: NextRequest) {
         (it.manager_name ?? '').toLowerCase().includes(lq) ||
         (it.process_number ?? '').toLowerCase().includes(lq),
     )
-  } else if (cohort) {
-    // 검색어 없을 때만 cohort 필터 적용
-    filtered = filtered.filter((it) => it.cohort === cohort)
   }
 
   // from/to (결제일 필터)는 sales 있는 행에만 의미가 있음
@@ -206,8 +207,8 @@ export async function GET(request: NextRequest) {
 
   if (from) orphanQuery = orphanQuery.gte('payment_date', from)
   if (to) orphanQuery = orphanQuery.lte('payment_date', to)
-  // 검색 시엔 cohort 무시 (전체 월에서 찾음)
-  if (cohort && !q) orphanQuery = orphanQuery.eq('cohort', cohort)
+  // 현재 월 탭에 한해 orphan 매출도 조회
+  if (cohort) orphanQuery = orphanQuery.eq('cohort', cohort)
   if (!canViewAll && appUser.display_name) {
     orphanQuery = orphanQuery.eq('manager_name', appUser.display_name)
   }

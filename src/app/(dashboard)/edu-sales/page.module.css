@@ -34,6 +34,30 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
+}
+
+.export_btn {
+  height: 38px;
+  padding: 0 16px;
+  background: #059669;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.export_btn:hover:not(:disabled) {
+  background: #047857;
+}
+
+.export_btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .total_chip {
@@ -606,6 +630,7 @@ select.input {
   font-size: 13px;
   color: #191f28;
   outline: none;
+  text-align: center;
   transition:
     background 0.12s,
     border-color 0.12s;
@@ -689,6 +714,8 @@ select.input {
   color: #191f28 !important;
   min-width: 110px;
   cursor: pointer;
+  text-align: center !important;
+  justify-content: center !important;
   transition:
     background 0.12s,
     border-color 0.12s;
@@ -708,7 +735,7 @@ select.input {
 
 .notes_btn {
   width: 100%;
-  text-align: left;
+  text-align: center;
   padding: 4px 8px;
   background: transparent;
   border: 1px dashed transparent;
@@ -725,6 +752,32 @@ select.input {
   background: #fffbeb;
   border-color: #fde68a;
   color: #d97706;
+}
+
+/* ─── 미입력 셀 펄스 애니메이션 (결제방법·결제일·과목수) ──────────── */
+@keyframes pulse_blue {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.55);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(37, 99, 235, 0);
+  }
+}
+
+/* select·달력·input 크기에 맞게 딱 붙는 펄스 효과 */
+.cell_empty_hint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  animation: pulse_blue 1.6s ease-in-out infinite;
+}
+
+.cell_empty_hint:focus,
+.cell_empty_hint:hover,
+.cell_empty_hint:focus-within {
+  animation: none;
 }
 
 /* ─── 환불 시각 효과 ──────────────────────────────────────────────── */
