@@ -3,6 +3,7 @@ export type PermissionScope = 'none' | 'all' | 'own'
 export type PermissionSection =
   | 'hakjeom'
   | 'edu-sales'
+  | 'edu-students'
   | 'cert'
   | 'practice'
   | 'allcare'
@@ -35,6 +36,7 @@ interface PermissionInput {
 export const ALL_PERMISSION_SECTIONS: PermissionSection[] = [
   'hakjeom',
   'edu-sales',
+  'edu-students',
   'cert',
   'practice',
   'allcare',

@@ -129,6 +129,8 @@ export default function EduStudentsTab({ isActive }: Props) {
 
   const [activeTab, setActiveTab] = useState<SubTab>('학생관리');
   const [canManage, setCanManage] = useState(false);
+  const [scopeOwnOnly, setScopeOwnOnly] = useState(false);
+  const [myDisplayName, setMyDisplayName] = useState<string | null>(null);
   const { startById } = useGuide();
 
   // 등록학생관리 가이드 데모 모드: 가짜 학생 목록 prepend + 모달 열기/닫기
@@ -182,8 +184,18 @@ export default function EduStudentsTab({ isActive }: Props) {
     fetch('/api/auth/me').then(r => r.ok ? r.json() : null).then(data => {
       if (!data) return;
       const isFullAccess = data.role === 'admin' || data.role === 'master-admin';
-      if (isFullAccess || isHigherPosition(data.positionName)) {
+      const higher = isHigherPosition(data.positionName);
+      if (isFullAccess || higher) {
         setCanManage(true);
+      }
+      setMyDisplayName(data.displayName ?? null);
+      // edu-students 권한 scope 확인: 'own'이면 본인 담당만 보이도록
+      if (!isFullAccess && !higher) {
+        const perms = (data.permissions ?? []) as { section: string; scope: string }[];
+        const eduStudentsPerm = perms.find((p) => p.section === 'edu-students');
+        if (eduStudentsPerm?.scope === 'own') {
+          setScopeOwnOnly(true);
+        }
       }
     });
   }, []);
@@ -316,10 +328,18 @@ export default function EduStudentsTab({ isActive }: Props) {
     students.flatMap((s) => s.education_center_name?.split(',').map((v) => v.trim()).filter(Boolean) ?? [])
   )) as string[];
 
+  // 권한이 'own'이면 본인 담당 학생만 노출
+  const scopedDisplayStudents = scopeOwnOnly && myDisplayName
+    ? displayStudents.filter((s) => s.manager_name === myDisplayName)
+    : displayStudents;
+  const scopedStudents = scopeOwnOnly && myDisplayName
+    ? students.filter((s) => s.manager_name === myDisplayName)
+    : students;
+
   // 상태별 분리 (가이드 데모 모드에서는 displayStudents 사용)
-  const activeStudents  = displayStudents.filter((s) => s.status !== '환불' && s.status !== '삭제예정');
-  const refundStudents  = students.filter((s) => s.status === '환불');
-  const deleteStudents  = students.filter((s) => s.status === '삭제예정');
+  const activeStudents  = scopedDisplayStudents.filter((s) => s.status !== '환불' && s.status !== '삭제예정');
+  const refundStudents  = scopedStudents.filter((s) => s.status === '환불');
+  const deleteStudents  = scopedStudents.filter((s) => s.status === '삭제예정');
 
   const filtered = activeStudents.filter((s) => {
     const q = search.toLowerCase();
