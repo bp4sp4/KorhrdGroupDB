@@ -1,0 +1,999 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ─── 헤더 ────────────────────────────────────────────────────────── */
+.header_row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.header_left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #191f28;
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 12px;
+  color: #6b7684;
+}
+
+.header_right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.total_chip {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1d4ed8;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  padding: 6px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.total_chip_sep {
+  color: #93c5fd;
+  margin: 0 2px;
+}
+
+/* ─── 월별 탭 ─────────────────────────────────────────────────────── */
+.month_tabs {
+  display: flex;
+  gap: 4px;
+  background: #fff;
+  border: 1px solid #e5e8eb;
+  border-radius: 10px;
+  padding: 6px;
+  width: fit-content;
+}
+
+.month_tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7684;
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    color 0.12s;
+}
+
+.month_tab_badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+
+.month_tab:hover {
+  background: #f5f6f8;
+  color: #191f28;
+}
+
+.month_tab_active {
+  background: #2563eb;
+  color: #fff;
+}
+
+.month_tab_active:hover {
+  background: #1d4ed8;
+  color: #fff;
+}
+
+/* ─── 담당자별 매출 요약 ──────────────────────────────────────────── */
+.manager_stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 12px 14px;
+  background: #fff;
+  border: 1px solid #e5e8eb;
+  border-radius: 10px;
+}
+
+.manager_chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #f9fafb;
+  border: 1px solid #e5e8eb;
+  border-radius: 8px;
+  font-size: 12px;
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    border-color 0.12s;
+}
+
+.manager_chip:hover {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.manager_chip_active {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+.manager_chip_active:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+.manager_chip_active .manager_chip_name,
+.manager_chip_active .manager_chip_count,
+.manager_chip_active .manager_chip_amount {
+  color: #fff;
+}
+
+.manager_chip_name {
+  font-weight: 600;
+  color: #191f28;
+}
+
+.manager_chip_count {
+  color: #6b7684;
+  font-size: 11px;
+}
+
+.manager_chip_amount {
+  font-weight: 600;
+  color: #2563eb;
+  font-variant-numeric: tabular-nums;
+}
+
+.add_btn {
+  height: 38px;
+  padding: 0 16px;
+  background-color: #3182f6;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.add_btn:hover {
+  background-color: #1b6ee8;
+}
+
+/* ─── 필터 ────────────────────────────────────────────────────────── */
+.filter_bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #fff;
+  border: 1px solid #e5e8eb;
+  border-radius: 10px;
+}
+
+.filter_input {
+  flex: 1;
+  min-width: 220px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1.5px solid #e5e8eb;
+  border-radius: 8px;
+  font-size: 13px;
+  outline: none;
+}
+
+.filter_input:focus {
+  border-color: #3182f6;
+}
+
+.filter_select,
+.filter_date {
+  height: 36px;
+  padding: 0 10px;
+  border: 1.5px solid #e5e8eb;
+  border-radius: 8px;
+  font-size: 13px;
+  background: #fff;
+  outline: none;
+}
+
+.filter_select:focus,
+.filter_date:focus {
+  border-color: #3182f6;
+}
+
+.date_sep {
+  color: #6b7684;
+  font-size: 13px;
+}
+
+.reset_btn {
+  height: 36px;
+  padding: 0 14px;
+  background: #fff;
+  border: 1.5px solid #e5e8eb;
+  border-radius: 8px;
+  color: #6b7684;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.reset_btn:hover {
+  background: #f5f6f8;
+}
+
+/* ─── 테이블 ──────────────────────────────────────────────────────── */
+.table_wrap {
+  background: #fff;
+  border: 1px solid #e5e8eb;
+  border-radius: 10px;
+  overflow: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 1400px;
+}
+
+.table_head {
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e8eb;
+}
+
+.th {
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: #4b5563;
+  white-space: nowrap;
+}
+
+.th_right {
+  text-align: right;
+}
+
+.th_center {
+  text-align: center;
+}
+
+.tr {
+  border-bottom: 1px solid #f0f1f3;
+  transition: background 0.1s;
+}
+
+.tr:hover {
+  background: #fafbfc;
+}
+
+/* 매출 정보 미입력 학생 행 */
+.tr_empty {
+  background: #fcfcfd;
+}
+
+.tr_empty:hover {
+  background: #f5f7fa;
+}
+
+.td_dim {
+  color: #d4d4d4;
+}
+
+.td {
+  padding: 10px 12px;
+  color: #191f28;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.td_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.td_center {
+  text-align: center;
+}
+
+.td_strong {
+  font-weight: 600;
+}
+
+.td_notes {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #525252;
+}
+
+.td_actions {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+
+.action_btn {
+  padding: 5px 10px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.action_btn:hover {
+  background: #dbeafe;
+}
+
+.action_del_btn {
+  padding: 5px 10px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.action_del_btn:hover {
+  background: #fee2e2;
+}
+
+.badge_done {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #ecfdf5;
+  color: #059669;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.badge_pending {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #fffbeb;
+  color: #d97706;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.empty_state {
+  padding: 60px 20px;
+  text-align: center;
+  color: #6b7684;
+  font-size: 14px;
+}
+
+/* ─── 모달 ────────────────────────────────────────────────────────── */
+.modal_overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  z-index: 8000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.modal {
+  width: 720px;
+  max-width: 100%;
+  max-height: 85vh;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modal_header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #f0f1f3;
+}
+
+.modal_title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #191f28;
+  margin: 0;
+}
+
+.modal_close {
+  background: none;
+  border: none;
+  font-size: 14px;
+  color: #6b7684;
+  cursor: pointer;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+}
+
+.modal_close:hover {
+  background: #f5f6f8;
+}
+
+.modal_body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.modal_footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 20px;
+  border-top: 1px solid #f0f1f3;
+  background: #fafbfc;
+}
+
+.btn_primary {
+  padding: 9px 20px;
+  background: #3182f6;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn_primary:hover {
+  background: #1b6ee8;
+}
+
+.btn_primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn_secondary {
+  padding: 9px 16px;
+  background: #fff;
+  color: #4b5563;
+  border: 1px solid #e5e8eb;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn_secondary:hover {
+  background: #f5f6f8;
+}
+
+.btn_ghost {
+  padding: 9px 12px;
+  background: transparent;
+  color: #6b7684;
+  border: 1px dashed #d1d5db;
+  border-radius: 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.btn_ghost:hover {
+  background: #f9fafb;
+  color: #2563eb;
+}
+
+/* ─── 폼 그리드 ───────────────────────────────────────────────────── */
+.form_grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field_wide {
+  grid-column: 1 / -1;
+}
+
+.field_label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.required {
+  color: #dc2626;
+  margin-left: 2px;
+}
+
+.input {
+  height: 36px;
+  padding: 0 12px;
+  border: 1.5px solid #e5e8eb;
+  border-radius: 8px;
+  font-size: 13px;
+  background: #fff;
+  outline: none;
+}
+
+.input:focus {
+  border-color: #3182f6;
+}
+
+select.input {
+  cursor: pointer;
+}
+
+.textarea {
+  padding: 10px 12px;
+  border: 1.5px solid #e5e8eb;
+  border-radius: 8px;
+  font-size: 13px;
+  background: #fff;
+  outline: none;
+  font-family: inherit;
+  resize: vertical;
+  width: 100%;
+}
+
+.textarea:focus {
+  border-color: #3182f6;
+}
+
+.checkbox_label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #191f28;
+  cursor: pointer;
+}
+
+.checkbox_label input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+/* ─── 인라인 편집 입력 ────────────────────────────────────────────── */
+.inline_input {
+  width: 100%;
+  height: 28px;
+  padding: 0 6px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  font-size: 13px;
+  color: #191f28;
+  outline: none;
+  transition:
+    background 0.12s,
+    border-color 0.12s;
+}
+
+.inline_input:hover {
+  background: #f9fafb;
+  border-color: #e5e8eb;
+}
+
+.inline_input:focus {
+  background: #fff;
+  border-color: #3182f6;
+}
+
+.inline_select {
+  height: 28px;
+  padding: 0 6px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  font-size: 13px;
+  color: #191f28;
+  outline: none;
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    border-color 0.12s;
+}
+
+.inline_select:hover {
+  background: #f9fafb;
+  border-color: #e5e8eb;
+}
+
+.inline_select:focus {
+  background: #fff;
+  border-color: #3182f6;
+}
+
+.inline_date {
+  height: 28px;
+  padding: 0 6px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  font-size: 12px;
+  color: #191f28;
+  outline: none;
+  font-family: inherit;
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    border-color 0.12s;
+}
+
+.inline_date:hover {
+  background: #f9fafb;
+  border-color: #e5e8eb;
+}
+
+.inline_date:focus {
+  background: #fff;
+  border-color: #3182f6;
+}
+
+.inline_check {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+/* 커스텀 달력 트리거 (DateInput) — 인라인 셀에 맞게 작게 */
+.inline_date_trigger {
+  height: 28px !important;
+  padding: 0 6px !important;
+  border: 1px solid transparent !important;
+  border-radius: 5px !important;
+  background: transparent !important;
+  font-size: 12px !important;
+  color: #191f28 !important;
+  min-width: 110px;
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    border-color 0.12s;
+}
+
+.inline_date_trigger:hover {
+  background: #f9fafb !important;
+  border-color: #e5e8eb !important;
+}
+
+.inline_date_trigger:focus,
+.inline_date_trigger:focus-visible {
+  background: #fff !important;
+  border-color: #3182f6 !important;
+  outline: none !important;
+}
+
+.notes_btn {
+  width: 100%;
+  text-align: left;
+  padding: 4px 8px;
+  background: transparent;
+  border: 1px dashed transparent;
+  border-radius: 5px;
+  font-size: 13px;
+  color: #525252;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.notes_btn:hover {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #d97706;
+}
+
+/* ─── 환불 시각 효과 ──────────────────────────────────────────────── */
+.tr_refunded {
+  background: #fdf2f8 !important;   /* pink-50 — 부드러운 연분홍 */
+}
+
+.tr_refunded .td_strong {
+  color: #be185d;   /* pink-700 */
+}
+
+.tr_refunded:hover {
+  background: #fce7f3 !important;   /* pink-100 */
+}
+
+.tr_refund_pending {
+  background: #fffbeb !important;
+}
+
+.tr_refund_pending:hover {
+  background: #fef3c7 !important;
+}
+
+/* 검색 결과 — 다른 월에서 찾아진 행 강조 */
+.tr_search_match {
+  background: #fef9c3 !important;
+}
+
+.tr_search_match:hover {
+  background: #fef08a !important;
+}
+
+.td_strikethrough {
+  text-decoration: line-through;
+  text-decoration-color: #ec4899;
+  text-decoration-thickness: 2px;
+  color: #be185d !important;   /* pink-700 */
+}
+
+.refund_date_sub {
+  font-size: 10px;
+  color: #6b7280;
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 환불 셀 — select + date 세로 배치 */
+.refund_cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 환불일 트리거 — 한 칸 안의 작은 달력 */
+.refund_date_trigger {
+  height: 24px !important;
+  padding: 0 6px !important;
+  border: 1px solid transparent !important;
+  border-radius: 5px !important;
+  background: transparent !important;
+  font-size: 11px !important;
+  color: #9d174d !important;
+  min-width: 92px;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.refund_date_trigger:hover {
+  background: #fbcfe8 !important;
+  border-color: #ec4899 !important;
+}
+
+.refund_date_trigger:focus,
+.refund_date_trigger:focus-visible {
+  background: #fff !important;
+  border-color: #ec4899 !important;
+  outline: none !important;
+}
+
+/* ─── 헤더 통계 박스 ──────────────────────────────────────────────── */
+.stat_row {
+  display: flex;
+  gap: 10px;
+}
+
+.stat_box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding: 10px 16px;
+  background: #fff;
+  border: 1px solid #e5e8eb;
+  border-radius: 12px;
+  min-width: 140px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.stat_box:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+}
+
+.stat_box_refund {
+  background: #fdf2f8;
+  border-color: #fbcfe8;
+}
+
+.stat_label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  letter-spacing: -0.2px;
+}
+
+.stat_box_refund .stat_label {
+  color: #be185d;
+}
+
+.stat_value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #191f28;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.3px;
+  margin-top: 2px;
+}
+
+.stat_box_refund .stat_value {
+  color: #db2777;
+}
+
+.stat_sub {
+  font-size: 10px;
+  color: #9ca3af;
+  margin-top: 1px;
+}
+
+/* ─── 학생 picker ─────────────────────────────────────────────────── */
+.picker_top {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #f0f1f3;
+  margin-bottom: 14px;
+}
+
+.picker_title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #4b5563;
+  margin: 0;
+}
+
+.picker_search {
+  height: 38px;
+  padding: 0 14px;
+  border: 1.5px solid #e5e8eb;
+  border-radius: 8px;
+  font-size: 13px;
+  outline: none;
+}
+
+.picker_search:focus {
+  border-color: #3182f6;
+}
+
+.picker_list {
+  min-height: 280px;
+  max-height: 380px;
+  overflow: auto;
+  border: 1px solid #e5e8eb;
+  border-radius: 8px;
+}
+
+.picker_table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.picker_thead {
+  background: #f9fafb;
+  position: sticky;
+  top: 0;
+}
+
+.picker_thead th {
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #4b5563;
+  text-align: left;
+  border-bottom: 1px solid #e5e8eb;
+}
+
+.picker_tr {
+  border-bottom: 1px solid #f0f1f3;
+}
+
+.picker_tr:hover {
+  background: #fafbfc;
+}
+
+.picker_tr td {
+  padding: 9px 10px;
+  vertical-align: middle;
+  color: #191f28;
+}
+
+.picker_select_btn {
+  padding: 5px 12px;
+  background: #3182f6;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.picker_select_btn:hover {
+  background: #1b6ee8;
+}
+
+.btn_ghost_inline {
+  margin-left: 8px;
+  padding: 4px 10px;
+  background: transparent;
+  border: 1px dashed #d1d5db;
+  border-radius: 6px;
+  color: #6b7684;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.btn_ghost_inline:hover {
+  color: #2563eb;
+  background: #f9fafb;
+}
+
+/* ─── 학생 정보 칩 (모달 상단) ──────────────────────────────────────── */
+.linked_chip {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 14px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 8px;
+  margin-bottom: 14px;
+}
+
+.linked_chip_main {
+  font-size: 13px;
+  color: #065f46;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.linked_chip_sep {
+  color: #a7f3d0;
+  margin: 0 6px;
+}
+
+.linked_chip_help {
+  font-size: 11px;
+  color: #047857;
+}

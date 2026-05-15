@@ -1765,6 +1765,7 @@ interface PermissionSection {
 
 const PERMISSION_SECTIONS: PermissionSection[] = [
   { key: 'hakjeom',    label: '학점은행제 사업부', description: '상담 목록 조회·수정',     allowOwn: true,  group: '교육운영' },
+  { key: 'edu-sales',  label: '매출파일',          description: '등록학생관리 매출 기록 (담당: 본인 학생, 대리 이상: 전체)', allowOwn: true,  group: '교육운영' },
   { key: 'cert',       label: '민간자격증 사업부', description: '상담 목록 조회·수정',     allowOwn: false, group: '교육운영' },
   { key: 'practice',   label: '실습/취업',         description: '실습·취업 상담 조회·수정', allowOwn: true,  group: '교육운영' },
   { key: 'allcare',    label: '올케어 관리자',      description: '올케어 데이터 관리',      allowOwn: false, group: '교육운영' },

@@ -45,6 +45,7 @@ const ALL_SECTIONS: NavSection[] = [
         children: [
           { id: 'hakjeom-tab-hakjeom',      label: '문의DB',     href: '/hakjeom?tab=hakjeom' },
           { id: 'hakjeom-tab-edu-students', label: '등록학생관리', href: '/hakjeom?tab=edu-students' },
+          { id: 'edu-sales-page',           label: '매출파일',     href: '/edu-sales' },
           { id: 'hakjeom-tab-agency',       label: '기관협약',   href: '/hakjeom?tab=agency' },
           { id: 'hakjeom-tab-bulk',         label: '일괄등록',   href: '/hakjeom?tab=bulk' },
           { id: 'hakjeom-tab-counsel_done', label: '연락예정',   href: '/hakjeom?tab=counsel_done' },

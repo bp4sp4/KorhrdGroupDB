@@ -20,6 +20,7 @@ const SECTION_NAV: NavSection[] = [
     href: "/hakjeom",
     activeOn: [
       "/hakjeom",
+      "/edu-sales",
       "/cert",
       "/practice",
       "/allcare",
@@ -52,6 +53,7 @@ const PATH_LABELS: Record<string, string> = {
   "/approvals": "전자결재",
   "/revenue-upload": "매출 데이터 관리",
   "/reports": "손익 리포트",
+  "/edu-sales": "매출파일",
 };
 
 // 경로 + 탭 → 헤더 표시 레이블
@@ -120,6 +122,7 @@ function hasPermission(
 
 const EDUCATION_SECTIONS = [
   "hakjeom",
+  "edu-sales",
   "cert",
   "practice",
   "allcare",
