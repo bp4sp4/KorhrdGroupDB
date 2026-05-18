@@ -30,9 +30,16 @@ export async function POST(req: NextRequest) {
       nameParts.join('_').replace(/[^a-zA-Z0-9_-]/g, '_') || 'file'
     const path = `${Date.now()}-${Math.random().toString(36).slice(2)}-${baseName}.${ext}`
 
+    // 텍스트 계열은 charset=utf-8 명시 (한글 깨짐 방지 — 직접 publicUrl 접근 시 대비)
+    const rawType = file.type || 'application/octet-stream'
+    const contentType =
+      rawType.startsWith('text/') && !rawType.includes('charset')
+        ? `${rawType}; charset=utf-8`
+        : rawType
+
     const { error } = await supabaseAdmin.storage
       .from('announcement-attachments')
-      .upload(path, buffer, { contentType: file.type, upsert: false })
+      .upload(path, buffer, { contentType, upsert: false })
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })

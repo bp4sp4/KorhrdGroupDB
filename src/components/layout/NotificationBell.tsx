@@ -18,6 +18,11 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import styles from "./NotificationBell.module.css";
 
+// 새 공지가 들어올 때 자동 팝업 표시 여부 — 관리자 설정에서 토글
+// app_settings.announcement_popup_enabled (boolean jsonb)
+// 기본값은 false (관리자가 켜기 전까지 OFF)
+const POPUP_SETTING_KEY = "announcement_popup_enabled";
+
 interface AnnouncementAttachment {
   name: string;
   url: string;
@@ -38,6 +43,17 @@ function formatFileSize(bytes?: number): string {
   if (bytes < 1024) return `${bytes}B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
+}
+
+// Storage publicUrl에서 storage path를 추출해 다운로드 프록시 URL을 만든다
+// (한글 깨짐 방지 + 강제 다운로드를 위해 API를 거침)
+function buildDownloadUrl(att: AnnouncementAttachment): string {
+  const marker = "/announcement-attachments/";
+  const idx = att.url?.indexOf(marker);
+  if (idx == null || idx === -1) return att.url;
+  const path = att.url.slice(idx + marker.length);
+  const params = new URLSearchParams({ path, filename: att.name });
+  return `/api/announcements/download?${params.toString()}`;
 }
 
 interface Notification {
@@ -184,6 +200,8 @@ export default function NotificationBell() {
   // 새 공지 안내 팝업 (한 번만)
   const [showNewPopup, setShowNewPopup] = useState(false);
   const [pendingNewIds, setPendingNewIds] = useState<number[]>([]);
+  // 관리자 설정: 새 공지 팝업 ON/OFF (DB에서 불러옴)
+  const popupEnabledRef = useRef<boolean>(false);
   // 업무 알림 팝업
   const [taskPopup, setTaskPopup] = useState<Notification | null>(null);
   const lastTaskIdRef = useRef<number | null>(null);
@@ -244,6 +262,16 @@ export default function NotificationBell() {
 
   useEffect(() => {
     fetch("/api/notifications/check-stale").catch(() => {});
+  }, []);
+
+  // 관리자 설정: 새 공지 팝업 ON/OFF 로드
+  useEffect(() => {
+    fetch(`/api/app-settings?key=${POPUP_SETTING_KEY}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        popupEnabledRef.current = data?.value === true;
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -334,7 +362,7 @@ export default function NotificationBell() {
       const newOnes = list.filter(
         (a) => isNewAnnouncement(a.date) && !seen.includes(a.id),
       );
-      if (newOnes.length > 0) {
+      if (newOnes.length > 0 && popupEnabledRef.current) {
         setPendingNewIds(newOnes.map((a) => a.id));
         setShowNewPopup(true);
       }
@@ -359,10 +387,12 @@ export default function NotificationBell() {
           );
           const seen = getSeenIds();
           if (!seen.includes(a.id) && isNewAnnouncement(a.date)) {
-            setPendingNewIds((prev) =>
-              prev.includes(a.id) ? prev : [...prev, a.id],
-            );
-            setShowNewPopup(true);
+            if (popupEnabledRef.current) {
+              setPendingNewIds((prev) =>
+                prev.includes(a.id) ? prev : [...prev, a.id],
+              );
+              setShowNewPopup(true);
+            }
             setUnseenCount((c) => c + 1);
           }
         },
@@ -575,9 +605,7 @@ export default function NotificationBell() {
                                   {a.attachments.map((att, i) => (
                                     <a
                                       key={i}
-                                      href={att.url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
+                                      href={buildDownloadUrl(att)}
                                       className={styles.attachmentItem}
                                       download={att.name}
                                     >

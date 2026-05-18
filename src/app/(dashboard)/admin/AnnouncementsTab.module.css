@@ -28,6 +28,101 @@
   justify-content: space-between;
 }
 
+.settingRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 10px;
+}
+
+.settingTextWrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.settingTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #191f28;
+}
+
+.settingDesc {
+  font-size: 12px;
+  color: #6b7684;
+  line-height: 1.5;
+}
+
+.toggleSwitch {
+  position: relative;
+  width: 76px;
+  height: 28px;
+  padding: 0;
+  background: #ced4da;
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.toggleSwitch:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.toggleSwitch:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.toggleOn {
+  background: #4263eb;
+}
+
+.toggleKnob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  transition: left 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.toggleOn .toggleKnob {
+  left: 51px;
+}
+
+.toggleLabel {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  pointer-events: none;
+  letter-spacing: 0.3px;
+}
+
+.toggleOn .toggleLabel {
+  right: auto;
+  left: 10px;
+}
+
+.divider {
+  border: none;
+  border-top: 1px solid #f1f3f5;
+  margin: 4px 0;
+}
+
 .formTitle {
   margin: 0;
   font-size: 16px;
@@ -223,6 +318,66 @@
   cursor: not-allowed;
 }
 
+/* ─── 오른쪽 영역 (미리보기 + 목록) ─────────────────────────────────────── */
+.rightColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* ─── 실시간 미리보기 카드 ─────────────────────────────────────────────── */
+.previewCard {
+  background: #fff;
+  border: 1px solid #c5d4ff;
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 1px 3px rgba(66, 99, 235, 0.06);
+}
+
+.previewHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.previewBadge {
+  display: inline-flex;
+  align-items: center;
+  background: #4263eb;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  letter-spacing: 0.2px;
+}
+
+.previewHint {
+  font-size: 11px;
+  color: #748ffc;
+}
+
+.previewItem {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: #f5f8ff;
+  border: 1px dashed #c5d4ff;
+  border-radius: 8px;
+}
+
+.previewPlaceholder {
+  color: #adb5bd;
+  font-weight: 500;
+  font-style: italic;
+}
+
 /* ─── 목록 카드 ─────────────────────────────────────────────────────────── */
 .listCard {
   background: #fff;
@@ -281,6 +436,30 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  transition:
+    background 0.6s ease-out,
+    border-color 0.6s ease-out,
+    box-shadow 0.6s ease-out;
+}
+
+.listItemHighlight {
+  background: #fff9db;
+  border-color: #ffd43b;
+  box-shadow: 0 0 0 3px rgba(255, 224, 102, 0.35);
+  animation: announceFlash 2.5s ease-out;
+}
+
+@keyframes announceFlash {
+  0% {
+    background: #fff3bf;
+    border-color: #fab005;
+    box-shadow: 0 0 0 5px rgba(250, 176, 5, 0.25);
+  }
+  100% {
+    background: #fff9db;
+    border-color: #ffd43b;
+    box-shadow: 0 0 0 3px rgba(255, 224, 102, 0.35);
+  }
 }
 
 .listItemHeader {

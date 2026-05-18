@@ -27,6 +27,16 @@ function formatFileSize(bytes?: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)}MB`
 }
 
+// 한글 파일명/강제 다운로드를 위해 API 프록시 URL로 변환
+function buildDownloadUrl(att: AnnouncementAttachment): string {
+  const marker = '/announcement-attachments/'
+  const idx = att.url?.indexOf(marker)
+  if (idx == null || idx === -1) return att.url
+  const path = att.url.slice(idx + marker.length)
+  const params = new URLSearchParams({ path, filename: att.name })
+  return `/api/announcements/download?${params.toString()}`
+}
+
 function todayStr(): string {
   const d = new Date()
   const y = d.getFullYear()
@@ -35,9 +45,19 @@ function todayStr(): string {
   return `${y}-${m}-${day}`
 }
 
+const POPUP_SETTING_KEY = 'announcement_popup_enabled'
+
 export default function AnnouncementsTab() {
   const [list, setList] = useState<Announcement[]>([])
   const [loading, setLoading] = useState(true)
+
+  // 설정: 새 공지 팝업 ON/OFF
+  const [popupEnabled, setPopupEnabled] = useState<boolean>(false)
+  const [popupLoading, setPopupLoading] = useState<boolean>(true)
+  const [popupSaving, setPopupSaving] = useState<boolean>(false)
+
+  // 방금 등록/수정된 항목 하이라이트
+  const [recentlyTouchedId, setRecentlyTouchedId] = useState<number | null>(null)
 
   // 폼 상태
   const [editingId, setEditingId] = useState<number | null>(null)
@@ -67,6 +87,44 @@ export default function AnnouncementsTab() {
   useEffect(() => {
     fetchList()
   }, [fetchList])
+
+  // 팝업 ON/OFF 설정 로드
+  useEffect(() => {
+    let cancelled = false
+    setPopupLoading(true)
+    fetch(`/api/app-settings?key=${POPUP_SETTING_KEY}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (cancelled) return
+        setPopupEnabled(data?.value === true)
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setPopupLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const handlePopupToggle = async (next: boolean) => {
+    setPopupSaving(true)
+    setPopupEnabled(next) // optimistic
+    try {
+      const res = await fetch('/api/admin/app-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: POPUP_SETTING_KEY, value: next }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: '저장 실패' }))
+        alert(err.error ?? '저장 실패')
+        setPopupEnabled(!next) // rollback
+      }
+    } finally {
+      setPopupSaving(false)
+    }
+  }
 
   const resetForm = () => {
     setEditingId(null)
@@ -155,6 +213,13 @@ export default function AnnouncementsTab() {
         alert(err.error ?? '저장 실패')
         return
       }
+      const saved = (await res.json().catch(() => null)) as
+        | { id?: number }
+        | null
+      if (saved?.id != null) {
+        setRecentlyTouchedId(saved.id)
+        setTimeout(() => setRecentlyTouchedId(null), 2500)
+      }
       resetForm()
       await fetchList()
     } finally {
@@ -182,6 +247,37 @@ export default function AnnouncementsTab() {
     <div className={styles.wrap}>
       {/* 작성/수정 폼 */}
       <section className={styles.formCard}>
+        {/* 팝업 ON/OFF 설정 */}
+        <div className={styles.settingRow}>
+          <div className={styles.settingTextWrap}>
+            <div className={styles.settingTitle}>새 공지 자동 팝업</div>
+            <div className={styles.settingDesc}>
+              켜면 사용자 접속 시 24시간 이내 작성된 새 공지를 자동 팝업으로 안내합니다.
+              {' '}끄면 알림 종 빨간 배지만 표시됩니다.
+            </div>
+          </div>
+          <button
+            type="button"
+            className={`${styles.toggleSwitch} ${popupEnabled ? styles.toggleOn : ''}`}
+            onClick={() => handlePopupToggle(!popupEnabled)}
+            disabled={popupLoading || popupSaving}
+            aria-pressed={popupEnabled}
+          >
+            <span className={styles.toggleKnob} />
+            <span className={styles.toggleLabel}>
+              {popupLoading
+                ? '...'
+                : popupSaving
+                  ? '저장 중'
+                  : popupEnabled
+                    ? 'ON'
+                    : 'OFF'}
+            </span>
+          </button>
+        </div>
+
+        <hr className={styles.divider} />
+
         <header className={styles.formHeader}>
           <h3 className={styles.formTitle}>
             {editingId ? '공지 수정' : '새 공지 작성'}
@@ -277,10 +373,9 @@ export default function AnnouncementsTab() {
                   <li key={i} className={styles.attachItem}>
                     <FileText size={14} />
                     <a
-                      href={a.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      href={buildDownloadUrl(a)}
                       className={styles.attachLink}
+                      download={a.name}
                     >
                       {a.name}
                     </a>
@@ -316,6 +411,65 @@ export default function AnnouncementsTab() {
         </div>
       </section>
 
+      {/* 오른쪽 영역: 미리보기 + 목록 */}
+      <div className={styles.rightColumn}>
+        {/* 실시간 미리보기 — 폼에 뭔가 입력되어 있을 때만 노출 */}
+        {(formTitle.trim() ||
+          formItems.some((v) => v.trim()) ||
+          formAtts.length > 0) && (
+          <section className={styles.previewCard}>
+            <header className={styles.previewHeader}>
+              <span className={styles.previewBadge}>
+                {editingId ? '수정 미리보기' : '실시간 미리보기'}
+              </span>
+              <span className={styles.previewHint}>
+                {editingId
+                  ? '저장하면 위 목록에 반영됩니다'
+                  : '등록 누르면 아래 목록 맨 위에 추가됩니다'}
+              </span>
+            </header>
+            <div className={styles.previewItem}>
+              <div className={styles.listItemHeader}>
+                <span className={styles.listItemDate}>{formDate}</span>
+                <span className={styles.listItemTitle}>
+                  {formTitle.trim() || (
+                    <span className={styles.previewPlaceholder}>
+                      (제목 미입력)
+                    </span>
+                  )}
+                </span>
+              </div>
+              {formItems.some((v) => v.trim()) && (
+                <ul className={styles.listItemBody}>
+                  {formItems
+                    .map((v) => v.trim())
+                    .filter(Boolean)
+                    .map((v, i) => (
+                      <li key={i}>{v}</li>
+                    ))}
+                </ul>
+              )}
+              {formAtts.length > 0 && (
+                <ul className={styles.listAttachList}>
+                  {formAtts.map((att, i) => (
+                    <li key={i} className={styles.listAttachItem}>
+                      <FileText size={13} />
+                      <a href={buildDownloadUrl(att)} download={att.name}>
+                        {att.name}
+                      </a>
+                      {att.size != null && (
+                        <span className={styles.attachSize}>
+                          {formatFileSize(att.size)}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </section>
+        )}
+
       {/* 목록 */}
       <section className={styles.listCard}>
         <header className={styles.listHeader}>
@@ -330,7 +484,12 @@ export default function AnnouncementsTab() {
         ) : (
           <ul className={styles.list}>
             {list.map((a) => (
-              <li key={a.id} className={styles.listItem}>
+              <li
+                key={a.id}
+                className={`${styles.listItem} ${
+                  recentlyTouchedId === a.id ? styles.listItemHighlight : ''
+                }`}
+              >
                 <div className={styles.listItemHeader}>
                   <span className={styles.listItemDate}>{a.date}</span>
                   <span className={styles.listItemTitle}>{a.title}</span>
@@ -363,11 +522,7 @@ export default function AnnouncementsTab() {
                     {a.attachments.map((att, i) => (
                       <li key={i} className={styles.listAttachItem}>
                         <FileText size={13} />
-                        <a
-                          href={att.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
+                        <a href={buildDownloadUrl(att)} download={att.name}>
                           {att.name}
                         </a>
                         {att.size != null && (
@@ -384,6 +539,7 @@ export default function AnnouncementsTab() {
           </ul>
         )}
       </section>
+      </div>
     </div>
   )
 }
