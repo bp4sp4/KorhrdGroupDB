@@ -317,6 +317,31 @@ function sanitize(body: Partial<SalesPayload>): Record<string, unknown> {
   return out
 }
 
+// 매출 환불 상태와 등록학생 상태 동기화
+// 환불완료 → 학생 status='환불' (환불목록 자동 편입)
+// 환불 해제(정상/환불대기) → 학생이 '환불'이었던 경우에만 '등록'으로 복구
+async function syncStudentStatusByRefund(
+  studentId: string | null | undefined,
+  refundStatus: '정상' | '환불대기' | '환불완료' | null | undefined,
+) {
+  if (!studentId || refundStatus === undefined) return
+  if (refundStatus === '환불완료') {
+    await supabaseAdmin
+      .from('edu_students')
+      .update({ status: '환불', updated_at: new Date().toISOString() })
+      .eq('id', studentId)
+      .neq('status', '환불') // 이미 환불이면 갱신 생략
+    return
+  }
+  if (refundStatus === '정상' || refundStatus === '환불대기') {
+    await supabaseAdmin
+      .from('edu_students')
+      .update({ status: '등록', updated_at: new Date().toISOString() })
+      .eq('id', studentId)
+      .eq('status', '환불') // 환불 상태였던 학생만 복구 (수동 변경된 다른 상태는 보존)
+  }
+}
+
 // ─── POST /api/edu-sales ──────────────────────────────────────────────
 // sale_id 있으면 해당 매출 row UPDATE (인라인 편집용)
 // student_id 있으면 학생에 연결된 매출 UPSERT (학생당 1건)
@@ -341,6 +366,12 @@ export async function POST(request: NextRequest) {
       .select()
       .single()
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if ('refund_status' in body) {
+      await syncStudentStatusByRefund(
+        data?.student_id as string | null,
+        body.refund_status,
+      )
+    }
     return NextResponse.json(data)
   }
 
@@ -368,6 +399,9 @@ export async function POST(request: NextRequest) {
         .select()
         .single()
       if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      if ('refund_status' in body) {
+        await syncStudentStatusByRefund(body.student_id, body.refund_status)
+      }
       return NextResponse.json(data)
     } else {
       const insertPayload = {
@@ -384,6 +418,9 @@ export async function POST(request: NextRequest) {
         .select()
         .single()
       if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      if ('refund_status' in body) {
+        await syncStudentStatusByRefund(body.student_id, body.refund_status)
+      }
       return NextResponse.json(data, { status: 201 })
     }
   }

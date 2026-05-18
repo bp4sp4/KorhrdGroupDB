@@ -255,12 +255,297 @@ const CURRENT_SITUATION_OPTIONS = [
 ];
 const REACTION_POINT_MAP: Record<string, string[]> = {
   가격: ["비싸다", "비교중", "할인에반응"],
-  취업: ["취업연계", "노후대비"],
+  취업: ["취업희망", "취업연계", "노후대비"],
   과정: ["공부부담", "시간부족"],
   신뢰: ["교육원의심", "자격증효력"],
   실습: ["거리부담", "시간부담", "섭외부담"],
   무반응: ["무반응"],
 };
+
+// 메모 텍스트 → 반응포인트 자동 매칭용 키워드 사전
+const REACTION_KEYWORD_MAP: Record<string, string[]> = {
+  비싸다: [
+    "비싸",
+    "비쌈",
+    "부담",
+    "가격",
+    "비용",
+    "금액",
+    "돈",
+    "여유",
+    "형편",
+    "경제",
+    "금전",
+    "생활비",
+    "카드값",
+    "카드한도",
+    "현금",
+    "할부",
+    "할인",
+    "지원",
+    "혜택",
+    "이벤트",
+    "저렴",
+    "싼",
+    "추가비용",
+    "발급비",
+    "수강료",
+    "등록금",
+    "예산",
+    "월급",
+    "사정",
+    "깎아",
+    "무료",
+    "국가지원",
+    "납부",
+    "자부담금",
+  ],
+  비교중: [
+    "비교",
+    "알아보",
+    "다른데",
+    "다른교육원",
+    "다른 데",
+    "다른 교육원",
+    "타교육원",
+    "상담",
+    "이런데",
+  ],
+  취업희망: [
+    "취업",
+    "취직",
+    "재취업",
+    "구직",
+    "채용",
+    "면접",
+    "출근",
+    "근무",
+    "일자리",
+    "일구하",
+    "회사",
+    "취업준비",
+    "취업목적",
+    "일하려고",
+    "일하고싶",
+    "취업생각",
+    "취업하려고",
+    "근무가능",
+    "취직하려고",
+  ],
+  취업연계: [
+    "취업연계",
+    "연계",
+    "연결",
+    "취업지원",
+    "취업상담",
+    "취업처",
+    "기관소개",
+    "센터소개",
+    "자리연결",
+    "연계해주",
+    "도움주",
+    "취업도움",
+    "취업알선",
+    "연결해주",
+    "연계가능",
+    "취업관리",
+    "취업케어",
+    "연계되는지",
+    "취업까지",
+  ],
+  노후대비: [
+    "노후",
+    "미래",
+    "은퇴",
+    "은퇴준비",
+    "노후준비",
+    "미래준비",
+    "평생직업",
+    "오래할일",
+    "안정적",
+    "안정적인",
+    "평생",
+    "나중대비",
+    "중년준비",
+    "5060준비",
+    "노후대책",
+    "미래걱정",
+    "오래일할",
+    "안정감",
+    "정년",
+    "제2의직업",
+  ],
+  공부부담: [
+    "공부",
+    "시험",
+    "과제",
+    "어렵",
+    "자신없",
+    "컴퓨터",
+    "못하겠",
+    "할수있을지",
+    "따라갈",
+    "이해",
+    "걱정",
+    "머리",
+    "학습",
+    "수업",
+  ],
+  시간부족: [
+    "시간",
+    "바쁘",
+    "육아",
+    "직장",
+    "스케줄",
+    "여유없",
+    "틈이없",
+    "언제듣",
+    "기간",
+    "오래걸",
+    "오래",
+    "출석",
+    "시간맞추",
+    "시간안",
+    "일정",
+    "병행",
+  ],
+  교육원의심: [
+    "의심",
+    "못믿",
+    "사기",
+    "진짜",
+    "실제",
+    "믿을수있",
+    "괜찮은곳",
+    "인증",
+    "정식",
+    "등록된",
+    "합법",
+    "문제없",
+    "안전한",
+    "후기",
+    "리뷰",
+    "평판",
+    "교육원맞",
+    "사업자",
+    "운영",
+    "확인",
+    "신뢰",
+    "불안",
+    "의심된",
+    "걱정된",
+    "광고같",
+    "너무좋",
+    "진짜되",
+    "실제되",
+    "진짜맞",
+    "정식기관",
+    "정부기관",
+  ],
+  자격증효력: [
+    "효력",
+    "인정",
+    "인정되",
+    "이력서",
+    "사용가능",
+    "쓸수있",
+    "도움되",
+    "국가인정",
+    "활용",
+    "취업가능",
+    "자격인정",
+    "효력있",
+    "의미있",
+    "인정받",
+    "실제사용",
+    "취업쓸수있",
+    "어디쓰",
+    "활용가능",
+    "민간자격증",
+    "효용",
+    "도움되는지",
+    "실효성",
+  ],
+  거리부담: [
+    "거리",
+    "멀다",
+    "왕복",
+    "이동",
+    "지역",
+    "근처",
+    "가까운곳",
+    "출퇴근",
+    "지방",
+    "인근",
+    "집근처",
+    "이동시간",
+    "왔다갔다",
+    "주말",
+    "평일",
+  ],
+  시간부담: [
+    "실습시간",
+    "실습 시간",
+    "실습기간",
+    "실습 기간",
+    "실습일정",
+    "실습 일정",
+    "실습출석",
+    "실습 출석",
+    "실습부담",
+    "실습 부담",
+    "실습오래",
+    "실습 오래",
+    "실습너무",
+    "실습 너무",
+    "실습이 길",
+    "실습이 오래",
+    "실습 못 빼",
+    "실습 못빼",
+    "실습 시간이",
+    "실습일이",
+    "실습일 때문",
+  ],
+  섭외부담: [
+    "섭외",
+    "구해야",
+    "알아봐야",
+    "전화돌리",
+    "기관찾",
+    "직접구하",
+    "자리없",
+    "안받아준",
+    "못구하",
+    "실습처구하",
+    "기관섭외",
+    "컨택",
+    "배정",
+    "연결해주",
+    "매칭",
+  ],
+  무반응: [
+    "그냥",
+    "잠수",
+    "회피",
+    "안받으심",
+    "부재",
+    "미응답",
+    "카톡안봄",
+    "계속부재",
+  ],
+};
+
+function matchReactionPoints(text: string): string[] {
+  if (!text) return [];
+  const lowered = text.toLowerCase();
+  const matched: string[] = [];
+  for (const [point, keywords] of Object.entries(REACTION_KEYWORD_MAP)) {
+    if (keywords.some((kw) => lowered.includes(kw.toLowerCase()))) {
+      matched.push(point);
+    }
+  }
+  return matched;
+}
 
 // ─── 검색어 하이라이트 ──────────────────────────────────────────────────────
 
@@ -842,7 +1127,9 @@ function HopeCourseSelect({
   value: string;
   onChange: (v: string) => void;
 }) {
-  const presets = HAKJEOM_COURSE_OPTIONS.filter((o) => o !== HOPE_COURSE_CUSTOM);
+  const presets = HAKJEOM_COURSE_OPTIONS.filter(
+    (o) => o !== HOPE_COURSE_CUSTOM,
+  );
   const [customMode, setCustomMode] = useState(false);
   const [customText, setCustomText] = useState("");
   const [open, setOpen] = useState(false);
@@ -867,12 +1154,25 @@ function HopeCourseSelect({
         onClick={() => setOpen((o) => !o)}
       >
         {/* 현재 값을 그대로 다 표시 (콤마구분 텍스트가 길어도 그대로) */}
-        <span style={{ flex: 1, textAlign: "left", overflow: "hidden", textOverflow: "ellipsis" }}>
+        <span
+          style={{
+            flex: 1,
+            textAlign: "left",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
           {value || "선택"}
         </span>
         <svg
-          width="12" height="12" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
           className={`${styles.eduSelectChevron} ${open ? styles.eduSelectChevronOpen : ""}`}
         >
           <polyline points="6 9 12 15 18 9" />
@@ -906,7 +1206,14 @@ function HopeCourseSelect({
             {HOPE_COURSE_CUSTOM}
           </button>
           {customMode && (
-            <div style={{ padding: "6px 4px 4px", display: "flex", gap: 4, borderTop: "1px solid #e5e7eb" }}>
+            <div
+              style={{
+                padding: "6px 4px 4px",
+                display: "flex",
+                gap: 4,
+                borderTop: "1px solid #e5e7eb",
+              }}
+            >
               <input
                 className={styles.eduSelectCustomInput}
                 placeholder="직접 입력 후 Enter"
@@ -1153,6 +1460,37 @@ function HakjeomDetailPanel({
   const [editName, setEditName] = useState(item.name ?? "");
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<"basic" | "info">(initialTab);
+  const [autoReactionToast, setAutoReactionToast] = useState<string[]>([]);
+  const autoReactionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+
+  const handleMemoAdded = (content: string) => {
+    const matched = matchReactionPoints(content);
+    if (matched.length === 0) return;
+    setEditReactionPoint((prev) => {
+      const additions = matched.filter((m) => !prev.includes(m));
+      if (additions.length === 0) return prev;
+      if (autoReactionTimerRef.current) {
+        clearTimeout(autoReactionTimerRef.current);
+      }
+      setAutoReactionToast(additions);
+      autoReactionTimerRef.current = setTimeout(() => {
+        setAutoReactionToast([]);
+        autoReactionTimerRef.current = null;
+      }, 3500);
+      return [...prev, ...additions];
+    });
+  };
+
+  useEffect(
+    () => () => {
+      if (autoReactionTimerRef.current) {
+        clearTimeout(autoReactionTimerRef.current);
+      }
+    },
+    [],
+  );
 
   // 가이드에서 탭 자동 전환 이벤트 리스닝
   useEffect(() => {
@@ -1328,16 +1666,20 @@ function HakjeomDetailPanel({
   };
 
   const handleSave = async () => {
-    const finalStatus = (editStatus === "기타" && editStatusEtc.trim()
-      ? `기타(${editStatusEtc.trim()})`
-      : editStatus) as ConsultationStatus;
+    const finalStatus = (
+      editStatus === "기타" && editStatusEtc.trim()
+        ? `기타(${editStatusEtc.trim()})`
+        : editStatus
+    ) as ConsultationStatus;
     // '등록완료'로 저장 시 과목당 비용(subject_cost) 필수 검증
     if (finalStatus === "등록완료") {
       const costNum = editSubjectCost
         ? parseInt(editSubjectCost.replace(/,/g, ""), 10) || 0
         : 0;
       if (costNum <= 0) {
-        alert("과목당 비용이 입력되어야 '등록완료'로 변경할 수 있습니다.\n과목당 비용을 먼저 입력해주세요.");
+        alert(
+          "과목당 비용이 입력되어야 '등록완료'로 변경할 수 있습니다.\n과목당 비용을 먼저 입력해주세요.",
+        );
         return;
       }
       // 최종학력 필수
@@ -1533,6 +1875,7 @@ function HakjeomDetailPanel({
                   recordId={String(item.id)}
                   legacyMemo={item.memo}
                   onCountChange={setMemoCount}
+                  onAdd={handleMemoAdded}
                 />
               </div>
 
@@ -1751,7 +2094,10 @@ function HakjeomDetailPanel({
               </div>
 
               {/* 상태 */}
-              <div className={styles.detailChipSection} data-guide="detail-status">
+              <div
+                className={styles.detailChipSection}
+                data-guide="detail-status"
+              >
                 <span className={styles.detailChipSectionLabel}>상태</span>
                 <div className={styles.detailChipRow}>
                   {(
@@ -1965,7 +2311,10 @@ function HakjeomDetailPanel({
               </div>
 
               {/* 과목당비용 */}
-              <div className={styles.detailFieldRow} data-guide="detail-subject-cost">
+              <div
+                className={styles.detailFieldRow}
+                data-guide="detail-subject-cost"
+              >
                 <span className={styles.detailFieldLabel}>과목당비용</span>
                 <input
                   type="text"
@@ -2005,6 +2354,12 @@ function HakjeomDetailPanel({
             {saving ? "저장 중..." : "변경사항 저장"}
           </button>
         </div>
+
+        {autoReactionToast.length > 0 && (
+          <div className={styles.autoReactionToast}>
+            <span>반응포인트 자동 체크: {autoReactionToast.join(", ")}</span>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -3101,9 +3456,7 @@ function HakjeomTab({
       setSelectedItem(demo);
     };
     const onClose = () => {
-      setSelectedItem((prev) =>
-        prev && prev.id === -999999 ? null : prev,
-      );
+      setSelectedItem((prev) => (prev && prev.id === -999999 ? null : prev));
     };
     window.addEventListener("guide-demo-open", onOpen);
     window.addEventListener("guide-demo-close", onClose);
@@ -3275,18 +3628,26 @@ function HakjeomTab({
   const handleStatusChange = async (id: number, status: ConsultationStatus) => {
     // '등록완료'로 바꿀 때 필수 검증
     if (status === "등록완료") {
-      const target = items.find((c) => c.id === id) ?? (selectedItem?.id === id ? selectedItem : null);
+      const target =
+        items.find((c) => c.id === id) ??
+        (selectedItem?.id === id ? selectedItem : null);
       const cost = target?.subject_cost;
       if (!cost || Number(cost) <= 0) {
-        alert("과목당 비용이 입력되어야 '등록완료'로 변경할 수 있습니다.\n상세창에서 과목당 비용을 먼저 저장해주세요.");
+        alert(
+          "과목당 비용이 입력되어야 '등록완료'로 변경할 수 있습니다.\n상세창에서 과목당 비용을 먼저 저장해주세요.",
+        );
         return;
       }
       if (!target?.education || !String(target.education).trim()) {
-        alert("'등록완료'로 변경하려면 최종학력을 먼저 입력해주세요.\n상세창에서 학력을 선택 후 저장해주세요.");
+        alert(
+          "'등록완료'로 변경하려면 최종학력을 먼저 입력해주세요.\n상세창에서 학력을 선택 후 저장해주세요.",
+        );
         return;
       }
       if (!target?.hope_course || !String(target.hope_course).trim()) {
-        alert("'등록완료'로 변경하려면 희망과정을 먼저 선택해주세요.\n상세창에서 희망과정을 선택 후 저장해주세요.");
+        alert(
+          "'등록완료'로 변경하려면 희망과정을 먼저 선택해주세요.\n상세창에서 희망과정을 선택 후 저장해주세요.",
+        );
         return;
       }
     }
@@ -3797,7 +4158,11 @@ function HakjeomTab({
                 className={`${styles.input} ${styles.searchInput}`}
               />
             </div>
-            <div ref={dateRangeRef} className={styles.dateRangeWrap} data-guide="hakjeom-daterange">
+            <div
+              ref={dateRangeRef}
+              className={styles.dateRangeWrap}
+              data-guide="hakjeom-daterange"
+            >
               <button
                 type="button"
                 className={styles.dateRangeBtn}
@@ -4340,7 +4705,10 @@ function HakjeomTab({
                     </div>
                   </th>
 
-                  <th className={styles.thFilterable} data-guide="hakjeom-status-col">
+                  <th
+                    className={styles.thFilterable}
+                    data-guide="hakjeom-status-col"
+                  >
                     <div className={styles.thInner}>
                       상태
                       <button
@@ -6867,6 +7235,7 @@ type StatsSubTab =
   | "conversion"
   | "manager"
   | "status"
+  | "long-prospect"
   | "source"
   | "time"
   | "mamcafe";
@@ -6922,10 +7291,36 @@ const STATS_SUB_TABS: { id: StatsSubTab; label: string }[] = [
   { id: "conversion", label: "등록 전환 추적" },
   { id: "manager", label: "담당자별" },
   { id: "status", label: "상태 분석" },
+  { id: "long-prospect", label: "장기가망" },
   { id: "source", label: "유입 경로" },
   { id: "time", label: "시간 패턴" },
   { id: "mamcafe", label: "맘카페" },
 ];
+
+const LONG_PROSPECT_REASONS = [
+  "비용",
+  "주변반대",
+  "시간부족",
+  "의지부족",
+  "타교육원",
+  "연락두절",
+  "개인사정",
+  "당장 불필요",
+  "기타",
+] as const;
+
+const LONG_PROSPECT_COLORS: Record<string, string> = {
+  비용: "#ef4444",
+  주변반대: "#f97316",
+  시간부족: "#f59e0b",
+  의지부족: "#eab308",
+  타교육원: "#10b981",
+  연락두절: "#6366f1",
+  개인사정: "#8b5cf6",
+  "당장 불필요": "#ec4899",
+  기타: "#94a3b8",
+  미입력: "#cbd5e1",
+};
 
 // 유틸
 function toKST(dateStr: string): Date {
@@ -7381,6 +7776,74 @@ function StatsTab() {
       }
     }
   });
+
+  // ── 장기가망 사유 분석
+  const longProspectItems = data.filter((c) => c.status === "장기가망");
+  const longProspectTotal = longProspectItems.length;
+  // counsel_check은 ", "로 join된 텍스트. 기타(자유입력)는 "기타"로 그룹핑
+  const reasonCounts: Record<string, number> = {};
+  for (const r of LONG_PROSPECT_REASONS) reasonCounts[r] = 0;
+  let longProspectNoReason = 0;
+  longProspectItems.forEach((c) => {
+    const raw = c.counsel_check;
+    if (!raw || !raw.trim()) {
+      longProspectNoReason += 1;
+      return;
+    }
+    const items = raw
+      .split(", ")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (items.length === 0) {
+      longProspectNoReason += 1;
+      return;
+    }
+    const normalized = new Set<string>();
+    items.forEach((s) => {
+      if (s.startsWith("기타(") && s.endsWith(")")) normalized.add("기타");
+      else if (LONG_PROSPECT_REASONS.includes(s as (typeof LONG_PROSPECT_REASONS)[number])) {
+        normalized.add(s);
+      }
+    });
+    normalized.forEach((n) => {
+      reasonCounts[n] = (reasonCounts[n] ?? 0) + 1;
+    });
+  });
+  const longProspectReasonData = [
+    ...LONG_PROSPECT_REASONS.map((r) => ({
+      name: r,
+      value: reasonCounts[r] ?? 0,
+      fill: LONG_PROSPECT_COLORS[r],
+    })),
+    {
+      name: "미입력",
+      value: longProspectNoReason,
+      fill: LONG_PROSPECT_COLORS["미입력"],
+    },
+  ];
+  const longProspectTopReason = [...longProspectReasonData]
+    .filter((d) => d.name !== "미입력")
+    .sort((a, b) => b.value - a.value)[0];
+  // 기타 사유 자유입력 모음 (상위 표시)
+  const longProspectEtcNotes: string[] = [];
+  longProspectItems.forEach((c) => {
+    const raw = c.counsel_check;
+    if (!raw) return;
+    raw.split(", ").forEach((s) => {
+      const t = s.trim();
+      if (t.startsWith("기타(") && t.endsWith(")")) {
+        const note = t.slice(3, -1).trim();
+        if (note) longProspectEtcNotes.push(note);
+      }
+    });
+  });
+  // 장기가망 중 등록완료로 전환된 케이스는 별도 추적 필요 — last_counsel_level이 장기가망인 등록자
+  // (현재 데이터 모델상 last_counsel_level은 상담완료-* 위주라 정확한 측정은 어렵지만 참고용)
+  const longProspectConverted = data.filter(
+    (c) =>
+      (c.status === "등록완료" || c.status === "지인등록") &&
+      c.last_counsel_level === "장기가망",
+  ).length;
 
   return (
     <div className={styles.statsContainer}>
@@ -8368,6 +8831,168 @@ function StatsTab() {
                       전체 {total}건 중 {registered}건 등록완료
                     </div>
                   </div>
+                </StatsPanel>
+              </div>
+            </div>
+          )}
+
+          {/* ════ 장기가망 사유 분석 ════ */}
+          {subTab === "long-prospect" && (
+            <div>
+              <div className={styles.statsGrid4}>
+                <StatsCard
+                  label="장기가망 전체"
+                  value={longProspectTotal.toLocaleString()}
+                  sub={`전체의 ${total > 0 ? Math.round((longProspectTotal / total) * 100) : 0}%`}
+                  color="#8b5cf6"
+                />
+                <StatsCard
+                  label="가장 많은 사유"
+                  value={longProspectTopReason?.value ? longProspectTopReason.name : "-"}
+                  sub={
+                    longProspectTopReason && longProspectTopReason.value > 0
+                      ? `${longProspectTopReason.value}건 (${longProspectTotal > 0 ? Math.round((longProspectTopReason.value / longProspectTotal) * 100) : 0}%)`
+                      : "데이터 없음"
+                  }
+                  color={
+                    longProspectTopReason
+                      ? LONG_PROSPECT_COLORS[longProspectTopReason.name]
+                      : "#94a3b8"
+                  }
+                />
+                <StatsCard
+                  label="사유 미입력"
+                  value={longProspectNoReason}
+                  sub={
+                    longProspectTotal > 0
+                      ? `장기가망의 ${Math.round((longProspectNoReason / longProspectTotal) * 100)}%`
+                      : "-"
+                  }
+                  color="#cbd5e1"
+                />
+                <StatsCard
+                  label="장기가망 → 등록"
+                  value={longProspectConverted}
+                  sub="last_counsel_level 기준 참고용"
+                  color="#22c55e"
+                />
+              </div>
+
+              <div className={styles.statsGridStatusDetail}>
+                <StatsPanel
+                  title="사유별 분포"
+                  sub={`장기가망 ${longProspectTotal}건 기준 (복수 선택 가능)`}
+                >
+                  {longProspectTotal === 0 ? (
+                    <div className={styles.longProspectEmpty}>
+                      장기가망 상태의 상담 건이 없습니다.
+                    </div>
+                  ) : (
+                    <>
+                      <ResponsiveContainer
+                        width="100%"
+                        height={Math.max(220, longProspectReasonData.length * 36)}
+                      >
+                        <BarChart
+                          data={longProspectReasonData}
+                          layout="vertical"
+                          margin={{ top: 4, right: 32, bottom: 0, left: 64 }}
+                        >
+                          <CartesianGrid
+                            strokeDasharray="3 3"
+                            stroke="#f0f0f0"
+                            horizontal={false}
+                          />
+                          <XAxis
+                            type="number"
+                            tick={{ fontSize: 11, fill: "#94a3b8" }}
+                            tickLine={false}
+                            axisLine={false}
+                            allowDecimals={false}
+                          />
+                          <YAxis
+                            type="category"
+                            dataKey="name"
+                            tick={{ fontSize: 12, fill: "#4e5968" }}
+                            tickLine={false}
+                            axisLine={false}
+                            width={64}
+                          />
+                          <Tooltip content={<StatsTip />} />
+                          <Bar
+                            dataKey="value"
+                            radius={[0, 4, 4, 0]}
+                            barSize={20}
+                            name="건수"
+                          >
+                            {longProspectReasonData.map((d, i) => (
+                              <Cell key={i} fill={d.fill} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </>
+                  )}
+                </StatsPanel>
+
+                <StatsPanel
+                  title="사유별 상세"
+                  sub="장기가망 건 중 해당 사유를 체크한 비율"
+                >
+                  <div className={styles.funnelList}>
+                    {longProspectReasonData.map((d) => {
+                      const pct =
+                        longProspectTotal > 0
+                          ? (d.value / longProspectTotal) * 100
+                          : 0;
+                      return (
+                        <div key={d.name} className={styles.funnelItem}>
+                          <div className={styles.funnelItemHeader}>
+                            <span className={styles.funnelItemName}>
+                              {d.name}
+                            </span>
+                            <span className={styles.funnelItemStat}>
+                              {d.value}건 ({Math.round(pct)}%)
+                            </span>
+                          </div>
+                          <div className={styles.funnelBarTrack}>
+                            <div
+                              className={styles.funnelBarInner}
+                              style={{
+                                width: `${pct}%`,
+                                background: d.fill,
+                              }}
+                            >
+                              {pct > 8 && (
+                                <span className={styles.funnelBarLabel}>
+                                  {d.value}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {longProspectEtcNotes.length > 0 && (
+                    <div className={styles.longProspectEtcWrap}>
+                      <div className={styles.longProspectEtcTitle}>
+                        기타 사유 메모 ({longProspectEtcNotes.length}건)
+                      </div>
+                      <div className={styles.longProspectEtcList}>
+                        {longProspectEtcNotes.slice(0, 20).map((note, i) => (
+                          <div key={i} className={styles.longProspectEtcItem}>
+                            • {note}
+                          </div>
+                        ))}
+                        {longProspectEtcNotes.length > 20 && (
+                          <div className={styles.longProspectEtcMore}>
+                            … 외 {longProspectEtcNotes.length - 20}건
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </StatsPanel>
               </div>
             </div>
