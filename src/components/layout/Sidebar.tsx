@@ -311,8 +311,6 @@ export default function Sidebar({ userRole, permissions = [], revenueOwnDivision
       if (!sectionForTabs) return item
 
       const allowed = allowedTabsBySection.get(sectionForTabs)
-      // null 또는 없음 = 전체 허용 → 그대로
-      if (allowed === undefined || allowed === null) return item
 
       // 권한 시스템에 등록된 탭 ID 목록 — 이 목록에 없는 탭은 새로 추가된 탭으로 간주해 자동 허용
       const MANAGED_TAB_IDS: Record<string, Set<string>> = {
@@ -329,11 +327,21 @@ export default function Sidebar({ userRole, permissions = [], revenueOwnDivision
           'abroad-tab-users', 'abroad-tab-consult', 'abroad-tab-applications', 'abroad-tab-payments',
         ]),
       }
-
       const managedSet = MANAGED_TAB_IDS[sectionForTabs]
-      const filteredChildren = item.children.filter(child =>
-        allowed.has(child.id) || !managedSet?.has(child.id)
-      )
+
+      // education 그룹의 'edu-sales-page'는 별도 'edu-sales' section의 scope로 결정
+      // (hakjeom 권한과 분리 — 권한 관리 UI에서도 별도 항목으로 노출됨)
+      const isEducationItem = item.id === 'education'
+      const eduSalesAllowed = allowedSections.has('edu-sales')
+
+      const filteredChildren = item.children.filter(child => {
+        if (isEducationItem && child.id === 'edu-sales-page') {
+          return eduSalesAllowed
+        }
+        // hakjeom allowed_tabs가 null 또는 없음 = 전체 허용
+        if (allowed === undefined || allowed === null) return true
+        return allowed.has(child.id) || !managedSet?.has(child.id)
+      })
       return { ...item, children: filteredChildren }
     })
     .filter(item => !item.children || item.children.length > 0)
