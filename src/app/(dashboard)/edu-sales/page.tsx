@@ -9,6 +9,7 @@ import { DateRangeCalendar, type DateRange } from "@/components/DateRangeCalenda
 import { useGuide } from "@/components/guide/GuideProvider";
 import SalesHeaderAdmin from "./SalesHeaderAdmin";
 import SalesHeaderManager from "./SalesHeaderManager";
+import { createClient } from "@/lib/supabase/client";
 
 // ─── 타입 ─────────────────────────────────────────────────────────────
 type PaymentMethod = "payapp_transfer" | "bank_transfer" | "card";
@@ -22,6 +23,7 @@ interface SalesRow {
   student_name: string;
   phone: string | null;
   manager_name: string | null;
+  education_center_name: string | null;
   class_start: string | null;
   course_name: string | null;
   // 매출 (sale이 없으면 null/false)
@@ -150,6 +152,27 @@ export default function EduSalesPage() {
       .catch(() => {});
   }, []);
 
+  // 교육원 목록 (인라인 셀렉트 옵션)
+  const [centerOptions, setCenterOptions] = useState<
+    { value: string; label: string }[]
+  >([]);
+  useEffect(() => {
+    const supabase = createClient();
+    supabase
+      .from("edu_education_centers")
+      .select("name")
+      .order("id")
+      .then(({ data }) => {
+        const list = (data ?? [])
+          .map((c) => c.name as string)
+          .filter((n): n is string => Boolean(n));
+        setCenterOptions([
+          { value: "", label: "-" },
+          ...list.map((n) => ({ value: n, label: n })),
+        ]);
+      });
+  }, []);
+
   // 월별 탭 — API에서 받은 cohorts + 기본 탭 머지 (정렬)
   const [apiCohorts, setApiCohorts] = useState<string[]>([]);
   const monthTabs = useMemo(() => {
@@ -255,6 +278,8 @@ export default function EduSalesPage() {
       is_published: boolean;
       refund_status: RefundStatus;
       refund_date: string | null;
+      // 학생 row 필드 (edu_students 업데이트)
+      education_center_name: string | null;
     }>,
   ) => {
     // 낙관적 업데이트
@@ -318,6 +343,7 @@ export default function EduSalesPage() {
 
   // 행을 엑셀용 객체로 변환
   const rowToExportObject = (r: SalesRow) => ({
+    교육원: r.education_center_name ?? "",
     개강반: r.cohort ?? "",
     학생명: r.student_name,
     아이디: r.student_username ?? "",
@@ -760,6 +786,7 @@ export default function EduSalesPage() {
           <table className={styles.table}>
             <thead className={styles.table_head}>
               <tr>
+                <th className={`${styles.th} ${styles.th_center}`}>교육원</th>
                 <th className={`${styles.th} ${styles.th_center}`}>개강반</th>
                 <th className={`${styles.th} ${styles.th_center}`}>학생명</th>
                 <th className={`${styles.th} ${styles.th_center}`}>아이디</th>
@@ -798,6 +825,33 @@ export default function EduSalesPage() {
                         : ""
                   }`}
                 >
+                  {/* 교육원 — 인라인 셀렉트 (학생 있으면 edu_students, orphan이면 edu_sales) */}
+                  <td className={`${styles.td} ${styles.td_center}`}>
+                    <div
+                      className={
+                        !r.education_center_name
+                          ? styles.cell_empty_hint
+                          : undefined
+                      }
+                    >
+                      <CustomSelect
+                        value={r.education_center_name ?? ""}
+                        placeholder="-"
+                        size="sm"
+                        minWidth={110}
+                        options={
+                          centerOptions.length > 0
+                            ? centerOptions
+                            : [{ value: "", label: "-" }]
+                        }
+                        onChange={(v) =>
+                          updateRow(r, {
+                            education_center_name: v || null,
+                          })
+                        }
+                      />
+                    </div>
+                  </td>
                   {/* 개강반 — 인라인 텍스트 */}
                   <td className={`${styles.td} ${styles.td_center}`}>
                     <InlineText

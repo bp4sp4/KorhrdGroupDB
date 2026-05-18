@@ -124,6 +124,7 @@ export async function GET(request: NextRequest) {
     student_name: string
     phone: string | null
     manager_name: string | null
+    education_center_name: string | null
     class_start: string | null
     course_name: string | null
     cohort: string | null
@@ -151,6 +152,10 @@ export async function GET(request: NextRequest) {
       student_name: s.name,
       phone: s.phone,
       manager_name: s.manager_name,
+      // 학생이 있는 경우 학생 값 우선, 없으면 sale 행의 값(과거 데이터 보호용)
+      education_center_name:
+        s.education_center_name ??
+        ((sale?.education_center_name as string | null | undefined) ?? null),
       class_start: s.class_start,
       course_name: Array.isArray(s.edu_courses)
         ? s.edu_courses[0]?.name ?? null
@@ -220,6 +225,7 @@ export async function GET(request: NextRequest) {
     student_name: (r.student_name as string) ?? '',
     phone: (r.phone as string | null) ?? null,
     manager_name: (r.manager_name as string | null) ?? null,
+    education_center_name: (r.education_center_name as string | null) ?? null,
     class_start: null as string | null,
     course_name: null as string | null,
     cohort: (r.cohort as string | null) ?? null,
@@ -287,6 +293,8 @@ interface SalesPayload {
   is_published?: boolean
   refund_status?: '정상' | '환불대기' | '환불완료' | null
   refund_date?: string | null
+  // sale 자체에 보관 (학생이 없는 orphan 매출의 교육원)
+  education_center_name?: string | null
 }
 
 function sanitize(body: Partial<SalesPayload>): Record<string, unknown> {
@@ -296,6 +304,7 @@ function sanitize(body: Partial<SalesPayload>): Record<string, unknown> {
     'payment_method', 'payment_date', 'subject_count', 'notes',
     'process_number', 'issue_date', 'is_published',
     'refund_status', 'refund_date',
+    'education_center_name',
   ]
   for (const key of allowed) {
     if (key in body) out[key] = body[key]
@@ -355,6 +364,31 @@ export async function POST(request: NextRequest) {
     student_name?: string
     phone?: string | null
     manager_name?: string | null
+    // 학생 행 직접 수정용 (edu_students 업데이트)
+    education_center_name?: string | null
+  }
+
+  // 학생 필드(education_center_name)는 sale이 아닌 edu_students를 업데이트
+  // student_id를 직접 받거나, sale_id로부터 조회해서 결정
+  if ('education_center_name' in body) {
+    let targetStudentId: string | null = body.student_id ?? null
+    if (!targetStudentId && body.sale_id) {
+      const { data: saleRow } = await supabaseAdmin
+        .from('edu_sales')
+        .select('student_id')
+        .eq('id', body.sale_id)
+        .maybeSingle()
+      targetStudentId = (saleRow?.student_id as string | null) ?? null
+    }
+    if (targetStudentId) {
+      await supabaseAdmin
+        .from('edu_students')
+        .update({
+          education_center_name: body.education_center_name ?? null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', targetStudentId)
+    }
   }
 
   // sale_id가 있으면: 기존 row 직접 UPDATE (인라인 편집)
