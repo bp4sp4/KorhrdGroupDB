@@ -238,8 +238,7 @@ export default function EduSalesPage() {
     try {
       const params = new URLSearchParams();
       // '전체' 탭이 아니면 월별 필터 적용
-      if (activeMonth && activeMonth !== "전체")
-        params.set("cohort", activeMonth);
+      // cohort 파라미터는 클라이언트에서 필터링 (월별 추이 차트가 항상 모든 월을 보여주려면 전체 데이터 필요)
       if (filterFrom) params.set("from", filterFrom);
       if (filterTo) params.set("to", filterTo);
       if (search.trim()) params.set("q", search.trim());
@@ -255,7 +254,7 @@ export default function EduSalesPage() {
     } finally {
       setLoading(false);
     }
-  }, [activeMonth, filterFrom, filterTo, search]);
+  }, [filterFrom, filterTo, search]);
 
   useEffect(() => {
     fetchRows();
@@ -438,6 +437,10 @@ export default function EduSalesPage() {
   // 발행 상태 필터
   const filteredRows = useMemo(() => {
     let out = rows;
+    // 활성 월 필터 (서버 cohort 파라미터 제거 → 클라이언트 필터)
+    if (activeMonth && activeMonth !== "전체") {
+      out = out.filter((r) => r.cohort === activeMonth);
+    }
     if (filterPublished !== "all") {
       out = out.filter((r) =>
         filterPublished === "done" ? r.is_published : !r.is_published,
@@ -450,7 +453,7 @@ export default function EduSalesPage() {
       out = out.filter((r) => r.refund_status === filterRefund);
     }
     return out;
-  }, [rows, filterPublished, filterManager, filterRefund]);
+  }, [rows, activeMonth, filterPublished, filterManager, filterRefund]);
 
   // 담당자 옵션 — 현재 월에 등장한 담당자만
   const managerOptions = useMemo(() => {
