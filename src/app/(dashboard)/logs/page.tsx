@@ -180,6 +180,7 @@ const RESOURCE_LABEL_MAP: Record<string, string> = {
   '민간자격증 학생관리': '학생관리(자격증)',
   '자격증신청': '자격증 신청',
   '기관협약': '기관협약',
+  '매출파일': '매출파일',
   '휴지통': '삭제목록',
   '어드민관리': '어드민 관리',
 }
@@ -190,6 +191,7 @@ const RESOURCE_OPTIONS = [
   { value: '민간자격증 학생관리', label: '학생관리(자격증)' },
   { value: '자격증신청', label: '자격증 신청' },
   { value: '기관협약', label: '기관협약' },
+  { value: '매출파일', label: '매출파일' },
   { value: '휴지통', label: '삭제목록' },
   { value: '어드민관리', label: '어드민 관리' },
 ]

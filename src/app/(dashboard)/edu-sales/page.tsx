@@ -152,10 +152,8 @@ export default function EduSalesPage() {
       .catch(() => {});
   }, []);
 
-  // 교육원 목록 (인라인 셀렉트 옵션)
-  const [centerOptions, setCenterOptions] = useState<
-    { value: string; label: string }[]
-  >([]);
+  // 교육원 마스터 목록 (edu_education_centers 테이블)
+  const [centersFromDB, setCentersFromDB] = useState<string[]>([]);
   useEffect(() => {
     const supabase = createClient();
     supabase
@@ -166,10 +164,7 @@ export default function EduSalesPage() {
         const list = (data ?? [])
           .map((c) => c.name as string)
           .filter((n): n is string => Boolean(n));
-        setCenterOptions([
-          { value: "", label: "-" },
-          ...list.map((n) => ({ value: n, label: n })),
-        ]);
+        setCentersFromDB(list);
       });
   }, []);
 
@@ -454,6 +449,20 @@ export default function EduSalesPage() {
     }
     return out;
   }, [rows, activeMonth, filterPublished, filterManager, filterRefund]);
+
+  // 교육원 옵션 — DB의 마스터 목록 + 현재 rows에 등장한 교육원 (학생 등록 시 입력된 신규 교육원 자동 포함)
+  const centerOptions = useMemo(() => {
+    const set = new Set<string>();
+    centersFromDB.forEach((n) => set.add(n));
+    rows.forEach((r) => {
+      if (r.education_center_name) set.add(r.education_center_name);
+    });
+    const sorted = Array.from(set).sort((a, b) => a.localeCompare(b, "ko"));
+    return [
+      { value: "", label: "-" },
+      ...sorted.map((n) => ({ value: n, label: n })),
+    ];
+  }, [centersFromDB, rows]);
 
   // 담당자 옵션 — 현재 월에 등장한 담당자만
   const managerOptions = useMemo(() => {
@@ -801,9 +810,9 @@ export default function EduSalesPage() {
                 <th className={`${styles.th} ${styles.th_center}`}>과목수</th>
                 <th className={`${styles.th} ${styles.th_center}`}>담당자</th>
                 <th className={`${styles.th} ${styles.th_center}`}>특이사항</th>
+                <th className={`${styles.th} ${styles.th_center}`}>(현)처리번호</th>
                 {canViewAll && (
                   <>
-                    <th className={`${styles.th} ${styles.th_center}`}>(현)처리번호</th>
                     <th className={`${styles.th} ${styles.th_center}`}>(현)발급일자</th>
                     <th className={`${styles.th} ${styles.th_center}`}>발행 완료</th>
                     <th className={`${styles.th} ${styles.th_center}`}>환불 상태</th>
@@ -970,18 +979,18 @@ export default function EduSalesPage() {
                       )}
                     </button>
                   </td>
+                  {/* (현)처리번호 — 자동 하이픈 (모두 노출, 본인 행만 편집 가능) */}
+                  <td className={`${styles.td} ${styles.td_center}`}>
+                    <InlinePhone
+                      value={r.process_number ?? ""}
+                      onSave={(v) =>
+                        updateRow(r, { process_number: v.trim() || null })
+                      }
+                      width={130}
+                    />
+                  </td>
                   {canViewAll && (
                     <>
-                      {/* (현)처리번호 — 자동 하이픈 */}
-                      <td className={`${styles.td} ${styles.td_center}`}>
-                        <InlinePhone
-                          value={r.process_number ?? ""}
-                          onSave={(v) =>
-                            updateRow(r, { process_number: v.trim() || null })
-                          }
-                          width={130}
-                        />
-                      </td>
                       {/* (현)발급일자 — 커스텀 달력 */}
                       <td className={`${styles.td} ${styles.td_center}`}>
                         <DateInput

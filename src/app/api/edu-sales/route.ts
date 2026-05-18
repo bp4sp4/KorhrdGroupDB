@@ -1,6 +1,52 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuthFull } from '@/lib/auth/requireAuth'
 import { supabaseAdmin } from '@/lib/supabase/admin'
+import { logAction } from '@/lib/audit/logAction'
+
+// 매출파일 인라인 편집 — audit_logs용 한글 필드 라벨
+const FIELD_LABELS: Record<string, string> = {
+  cohort: '개강반',
+  student_username: '학생ID',
+  unit_price: '단가',
+  total_amount: '매출',
+  payment_method: '결제방법',
+  payment_date: '결제일',
+  subject_count: '과목수',
+  notes: '특이사항',
+  process_number: '처리번호',
+  issue_date: '발급일자',
+  is_published: '발행완료',
+  refund_status: '환불상태',
+  refund_date: '환불일',
+  education_center_name: '교육원',
+}
+
+const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  payapp_transfer: '페이앱 계좌이체',
+  bank_transfer: '계좌이체',
+  card: '카드결제',
+}
+
+function formatDetailValue(key: string, value: unknown): string {
+  if (value === null || value === undefined || value === '') return '비움'
+  if (key === 'payment_method' && typeof value === 'string') {
+    return PAYMENT_METHOD_LABELS[value] ?? value
+  }
+  if (key === 'is_published') return value ? '완료' : '대기'
+  return String(value)
+}
+
+function buildSalesDetail(
+  studentName: string | null | undefined,
+  changes: Record<string, unknown>,
+): string {
+  const prefix = studentName ? `${studentName} - ` : ''
+  const parts = Object.entries(changes)
+    .filter(([k]) => k !== 'updated_at' && k !== 'created_by' && k in FIELD_LABELS)
+    .map(([k, v]) => `${FIELD_LABELS[k]}: ${formatDetailValue(k, v)}`)
+  if (parts.length === 0) return `${prefix}수정`
+  return `${prefix}${parts.join(', ')}`
+}
 
 // 대리 이상 직급 = 전체 조회 가능
 const HIGHER_POSITION_KEYWORDS = [
@@ -356,7 +402,7 @@ async function syncStudentStatusByRefund(
 // student_id 있으면 학생에 연결된 매출 UPSERT (학생당 1건)
 // student_id 없으면 orphan 매출로 INSERT (과거 데이터 등)
 export async function POST(request: NextRequest) {
-  const { appUser, errorResponse } = await requireAuthFull()
+  const { user, appUser, errorResponse } = await requireAuthFull()
   if (errorResponse) return errorResponse
 
   const body = (await request.json()) as Partial<SalesPayload> & {
@@ -393,9 +439,10 @@ export async function POST(request: NextRequest) {
 
   // sale_id가 있으면: 기존 row 직접 UPDATE (인라인 편집)
   if (body.sale_id) {
+    const cleanBody = sanitize(body)
     const { data, error } = await supabaseAdmin
       .from('edu_sales')
-      .update(sanitize(body))
+      .update(cleanBody)
       .eq('id', body.sale_id)
       .select()
       .single()
@@ -406,6 +453,22 @@ export async function POST(request: NextRequest) {
         body.refund_status,
       )
     }
+    // education_center_name만 단독으로 보낸 경우(학생 행만 업데이트)도 로그에 포함
+    const changesForLog: Record<string, unknown> = { ...cleanBody }
+    if ('education_center_name' in body) {
+      changesForLog.education_center_name = body.education_center_name
+    }
+    await logAction({
+      user_id: user.id,
+      user_email: user.email ?? null,
+      action: 'update',
+      resource: '매출파일',
+      resource_id: body.sale_id,
+      detail: buildSalesDetail(
+        (data?.student_name as string | null) ?? null,
+        changesForLog,
+      ),
+    })
     return NextResponse.json(data)
   }
 
@@ -426,9 +489,10 @@ export async function POST(request: NextRequest) {
       .maybeSingle()
 
     if (existing) {
+      const cleanBody = sanitize(body)
       const { data, error } = await supabaseAdmin
         .from('edu_sales')
-        .update(sanitize(body))
+        .update(cleanBody)
         .eq('id', existing.id)
         .select()
         .single()
@@ -436,6 +500,18 @@ export async function POST(request: NextRequest) {
       if ('refund_status' in body) {
         await syncStudentStatusByRefund(body.student_id, body.refund_status)
       }
+      const changesForLog: Record<string, unknown> = { ...cleanBody }
+      if ('education_center_name' in body) {
+        changesForLog.education_center_name = body.education_center_name
+      }
+      await logAction({
+        user_id: user.id,
+        user_email: user.email ?? null,
+        action: 'update',
+        resource: '매출파일',
+        resource_id: existing.id,
+        detail: buildSalesDetail(student.name as string | null, changesForLog),
+      })
       return NextResponse.json(data)
     } else {
       const insertPayload = {
@@ -455,6 +531,14 @@ export async function POST(request: NextRequest) {
       if ('refund_status' in body) {
         await syncStudentStatusByRefund(body.student_id, body.refund_status)
       }
+      await logAction({
+        user_id: user.id,
+        user_email: user.email ?? null,
+        action: 'create',
+        resource: '매출파일',
+        resource_id: (data?.id as string) ?? null,
+        detail: `${student.name as string} - 매출 신규 생성`,
+      })
       return NextResponse.json(data, { status: 201 })
     }
   }
@@ -480,13 +564,21 @@ export async function POST(request: NextRequest) {
     .select()
     .single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  await logAction({
+    user_id: user.id,
+    user_email: user.email ?? null,
+    action: 'create',
+    resource: '매출파일',
+    resource_id: (data?.id as string) ?? null,
+    detail: `${body.student_name?.trim() ?? '이름없음'} - orphan 매출 생성`,
+  })
   return NextResponse.json(data, { status: 201 })
 }
 
 // ─── DELETE /api/edu-sales?student_id=xxx or ?sale_id=xxx ─────────────
 // 학생의 매출 기록 또는 orphan 매출 직접 삭제
 export async function DELETE(request: NextRequest) {
-  const { appUser, errorResponse } = await requireAuthFull()
+  const { user, appUser, errorResponse } = await requireAuthFull()
   if (errorResponse) return errorResponse
 
   const { searchParams } = new URL(request.url)
@@ -502,12 +594,12 @@ export async function DELETE(request: NextRequest) {
   const { data: existing } = saleId
     ? await supabaseAdmin
         .from('edu_sales')
-        .select('id, created_by')
+        .select('id, created_by, student_name')
         .eq('id', saleId)
         .maybeSingle()
     : await supabaseAdmin
         .from('edu_sales')
-        .select('id, created_by')
+        .select('id, created_by, student_name')
         .eq('student_id', studentId!)
         .maybeSingle()
 
@@ -520,5 +612,13 @@ export async function DELETE(request: NextRequest) {
 
   const { error } = await supabaseAdmin.from('edu_sales').delete().eq('id', existing.id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  await logAction({
+    user_id: user.id,
+    user_email: user.email ?? null,
+    action: 'delete',
+    resource: '매출파일',
+    resource_id: existing.id as string,
+    detail: `${(existing.student_name as string) ?? '이름없음'} - 매출 삭제`,
+  })
   return NextResponse.json({ ok: true })
 }
