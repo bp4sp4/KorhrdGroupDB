@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search') ?? ''
     const from = searchParams.get('from') ?? ''
     const to = searchParams.get('to') ?? ''
+    const actor = searchParams.get('actor') ?? '' // user_email
     const page = Math.max(1, parseInt(searchParams.get('page') ?? '1'))
     const from_idx = (page - 1) * PAGE_SIZE
     const to_idx = from_idx + PAGE_SIZE - 1
@@ -27,6 +28,7 @@ export async function GET(request: NextRequest) {
 
     if (resource) query = query.eq('resource', resource)
     if (action) query = query.eq('action', action)
+    if (actor) query = query.eq('user_email', actor)
     if (search) {
       // PostgREST .or() 인젝션 방어: 특수문자 제거
       const safeSearch = search.replace(/[,()*\\]/g, '').slice(0, 100)

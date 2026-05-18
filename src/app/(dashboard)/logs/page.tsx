@@ -436,7 +436,30 @@ export default function LogsPage() {
   const [search, setSearch] = useState('')
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
+  const [actor, setActor] = useState('') // user_email
+  const [actorOptions, setActorOptions] = useState<
+    { value: string; label: string }[]
+  >([])
 
+  // 담당자 옵션 1회 로드
+  useEffect(() => {
+    fetch('/api/logs/actors')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!data?.actors) return
+        const opts: { value: string; label: string }[] = [
+          { value: '', label: '전체 담당자' },
+          ...data.actors.map(
+            (a: { email: string; displayName: string }) => ({
+              value: a.email,
+              label: a.displayName,
+            }),
+          ),
+        ]
+        setActorOptions(opts)
+      })
+      .catch(() => {})
+  }, [])
 
   const fetchLogs = useCallback(async (p: number) => {
     setLoading(true)
@@ -447,6 +470,7 @@ export default function LogsPage() {
       if (search) params.set('search', search)
       if (fromDate) params.set('from', fromDate)
       if (toDate) params.set('to', toDate)
+      if (actor) params.set('actor', actor)
       params.set('page', String(p))
 
       const res = await fetch(`/api/logs?${params.toString()}`)
@@ -459,11 +483,11 @@ export default function LogsPage() {
     } finally {
       setLoading(false)
     }
-  }, [resource, action, search, fromDate, toDate])
+  }, [resource, action, search, fromDate, toDate, actor])
 
   useEffect(() => {
     setPage(1)
-  }, [resource, action, search, fromDate, toDate])
+  }, [resource, action, search, fromDate, toDate, actor])
 
   useEffect(() => {
     fetchLogs(page)
@@ -477,6 +501,7 @@ export default function LogsPage() {
     setSearch('')
     setFromDate('')
     setToDate('')
+    setActor('')
   }
 
   return (
@@ -493,6 +518,16 @@ export default function LogsPage() {
           value={action}
           onChange={setAction}
           options={ACTION_OPTIONS}
+        />
+
+        <CustomSelect
+          value={actor}
+          onChange={setActor}
+          options={
+            actorOptions.length > 0
+              ? actorOptions
+              : [{ value: '', label: '전체 담당자' }]
+          }
         />
 
         <input

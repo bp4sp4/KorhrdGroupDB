@@ -1,0 +1,396 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ─── Title bar ──────────────────────────────────────────────────── */
+.titleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.titleLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0a0a0a;
+  letter-spacing: -0.02em;
+}
+
+.badgeAdmin {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: #fef3c7;
+  color: #92400e;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* ─── Action buttons ─────────────────────────────────────────────── */
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.excelBtn {
+  cursor: pointer;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  background: #16a34a;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.excelBtn:hover {
+  background: #15803d;
+}
+
+.guideBtn {
+  cursor: pointer;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #525252;
+  border: 1px solid #ececec;
+  background: #ffffff;
+  white-space: nowrap;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.guideBtn:hover {
+  background: #f5f4f0;
+  border-color: #d4d4d4;
+}
+
+/* ─── Main 2-col layout ──────────────────────────────────────────── */
+.mainGrid {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 12px;
+  align-items: stretch;
+}
+
+@media (max-width: 1024px) {
+  .mainGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ─── LEFT card ──────────────────────────────────────────────────── */
+.leftCard {
+  background: #ffffff;
+  border: 1px solid #ececec;
+  border-radius: 14px;
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.heroLabel {
+  font-size: 11px;
+  color: #737373;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+.heroValueRow {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.heroValue {
+  font-size: 44px;
+  font-weight: 700;
+  color: #0a0a0a;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.heroUnit {
+  font-size: 18px;
+  font-weight: 500;
+  color: #737373;
+}
+
+.heroMeta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: #737373;
+  flex-wrap: wrap;
+}
+
+.diff {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.diffUp {
+  color: #15803d;
+}
+
+.diffDown {
+  color: #b91c1c;
+}
+
+.metaStrong {
+  color: #0a0a0a;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.metaFaint {
+  color: #a3a3a3;
+  font-weight: 600;
+}
+
+.divider {
+  color: #f5f5f5;
+}
+
+.hr {
+  height: 1px;
+  background: #f5f5f5;
+}
+
+/* ─── Section ────────────────────────────────────────────────────── */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sectionLabel {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.sectionLabelText {
+  font-size: 11px;
+  font-weight: 600;
+  color: #737373;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sectionLabelRight {
+  font-size: 11px;
+  color: #a3a3a3;
+}
+
+/* ─── Person breakdown ───────────────────────────────────────────── */
+.personList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.personRow {
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: 60px 40px 1fr 100px 36px;
+  gap: 10px;
+  align-items: center;
+  background: transparent;
+  border: none;
+  padding: 0;
+  text-align: left;
+}
+
+.personName {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0a0a0a;
+}
+
+.personCount {
+  font-size: 11px;
+  color: #a3a3a3;
+  font-variant-numeric: tabular-nums;
+}
+
+.personBarTrack {
+  height: 18px;
+  background: #f5f4f0;
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+.personBarFill {
+  position: absolute;
+  inset: 0;
+  border-radius: 4px;
+}
+
+.personBarTop {
+  background: linear-gradient(90deg, #0a0a0a, #404040);
+}
+
+.personBarMid {
+  background: #525252;
+}
+
+.personBarLow {
+  background: #a3a3a3;
+}
+
+.personAmount {
+  font-size: 12px;
+  font-weight: 600;
+  color: #0a0a0a;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.personPct {
+  font-size: 11px;
+  color: #a3a3a3;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.emptyHint {
+  padding: 16px 0;
+  font-size: 12px;
+  color: #a3a3a3;
+  text-align: center;
+}
+
+/* ─── RIGHT — month rail ─────────────────────────────────────────── */
+.railCard {
+  background: #ffffff;
+  border: 1px solid #ececec;
+  border-radius: 14px;
+  padding: 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.railTitle {
+  font-size: 11px;
+  font-weight: 600;
+  color: #737373;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 4px 8px 10px;
+}
+
+.railRow {
+  cursor: pointer;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  text-align: left;
+  transition: background 0.12s;
+}
+
+.railRow:hover {
+  background: #f9fafb;
+}
+
+.railRowActive {
+  background: #f5f4f0;
+}
+
+.railRowActive:hover {
+  background: #f5f4f0;
+}
+
+.railMonth {
+  font-size: 13px;
+  font-weight: 500;
+  color: #525252;
+  font-variant-numeric: tabular-nums;
+}
+
+.railMonthActive {
+  font-weight: 700;
+  color: #0a0a0a;
+}
+
+.railBarTrack {
+  position: relative;
+  height: 6px;
+  background: #f5f5f5;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.railBarFill {
+  position: absolute;
+  inset: 0;
+  background: #d4d4d4;
+  border-radius: 3px;
+}
+
+.railBarFillActive {
+  background: #0a0a0a;
+}
+
+.railValue {
+  font-size: 12px;
+  color: #737373;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  min-width: 56px;
+  text-align: right;
+}
+
+.railValueActive {
+  color: #0a0a0a;
+  font-weight: 700;
+}
+
+.railViewAll {
+  cursor: pointer;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #a3a3a3;
+  font-weight: 500;
+  text-align: center;
+  margin-top: 4px;
+  border: none;
+  border-top: 1px solid #f5f5f5;
+  background: transparent;
+}
+
+.railViewAll:hover {
+  color: #525252;
+  background: #f9fafb;
+}

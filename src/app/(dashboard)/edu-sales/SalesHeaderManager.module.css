@@ -1,0 +1,595 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ─── Title bar ──────────────────────────────────────────────────── */
+.titleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.titleLeft {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0a0a0a;
+  letter-spacing: -0.02em;
+}
+
+.badgeManager {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.managerName {
+  font-size: 13px;
+  color: #737373;
+  margin-left: 4px;
+}
+
+/* ─── Action buttons ─────────────────────────────────────────────── */
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.excelBtn {
+  cursor: pointer;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  background: #16a34a;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.excelBtn:hover {
+  background: #15803d;
+}
+
+.guideBtn {
+  cursor: pointer;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #525252;
+  border: 1px solid #ececec;
+  background: #ffffff;
+  white-space: nowrap;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.guideBtn:hover {
+  background: #f5f4f0;
+  border-color: #d4d4d4;
+}
+
+/* ─── Main 2-col layout ──────────────────────────────────────────── */
+.mainGrid {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 12px;
+  align-items: stretch;
+}
+
+@media (max-width: 1024px) {
+  .mainGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ─── LEFT card ──────────────────────────────────────────────────── */
+.leftCard {
+  background: #ffffff;
+  border: 1px solid #ececec;
+  border-radius: 14px;
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.heroLabel {
+  font-size: 11px;
+  color: #737373;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+.heroValueRow {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.heroValue {
+  font-size: 44px;
+  font-weight: 700;
+  color: #0a0a0a;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.heroUnit {
+  font-size: 18px;
+  font-weight: 500;
+  color: #737373;
+}
+
+.heroMeta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: #737373;
+  flex-wrap: wrap;
+}
+
+.diff {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.diffUp {
+  color: #15803d;
+}
+
+.diffDown {
+  color: #b91c1c;
+}
+
+.metaStrong {
+  color: #0a0a0a;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.metaFaint {
+  color: #a3a3a3;
+  font-weight: 600;
+}
+
+.divider {
+  color: #f5f5f5;
+}
+
+/* ─── Target progress ────────────────────────────────────────────── */
+.targetCard {
+  background: #f5f4f0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.targetRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.targetLabel {
+  font-size: 12px;
+  color: #737373;
+  font-weight: 600;
+}
+
+.targetValueWrap {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.targetValue {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0a0a0a;
+  font-variant-numeric: tabular-nums;
+}
+
+.targetUnit {
+  font-size: 12px;
+  color: #a3a3a3;
+}
+
+.targetSub {
+  font-size: 11px;
+  color: #a3a3a3;
+  font-variant-numeric: tabular-nums;
+  margin-left: 6px;
+}
+
+.targetBarTrack {
+  position: relative;
+  height: 8px;
+  background: #ffffff;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid #f5f5f5;
+}
+
+.targetBarFill {
+  position: absolute;
+  inset: 0;
+  background: #0a0a0a;
+  border-radius: 4px;
+  transition: width 0.3s;
+}
+
+.targetBarFillDone {
+  background: #15803d;
+}
+
+.targetPaceMark {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  background: #a3a3a3;
+  opacity: 0.5;
+}
+
+.targetFooter {
+  font-size: 11px;
+  color: #a3a3a3;
+  display: flex;
+  justify-content: space-between;
+}
+
+.targetRemain {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Daily distribution ─────────────────────────────────────────── */
+.dailyWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.dailyHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.dailyTitle {
+  font-size: 11px;
+  font-weight: 600;
+  color: #737373;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dailyRange {
+  font-size: 11px;
+  color: #a3a3a3;
+}
+
+.dailyBars {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 64px;
+  position: relative;
+}
+
+.dailyBarCol {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+  cursor: default;
+}
+
+.dailyBar {
+  width: 100%;
+  border-radius: 2px 2px 0 0;
+  transition:
+    background 0.12s ease,
+    transform 0.12s ease;
+}
+
+.dailyBarToday {
+  background: #2563eb;
+}
+
+.dailyBarPast {
+  background: #0a0a0a;
+}
+
+.dailyBarFuture {
+  background: #d4d4d4;
+}
+
+.dailyBarHovered {
+  background: #2563eb;
+  transform: scaleY(1.03);
+  transform-origin: bottom;
+}
+
+/* 커스텀 호버 툴팁 */
+.dailyTooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%);
+  background: #0a0a0a;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 10;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+  animation: dailyTooltipIn 0.12s ease-out;
+}
+
+.dailyTooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #0a0a0a;
+}
+
+.dailyTooltipDate {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.dailyTooltipTodayBadge {
+  font-size: 9px;
+  font-weight: 700;
+  background: #2563eb;
+  color: #fff;
+  padding: 1px 5px;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+}
+
+.dailyTooltipAmount {
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+@keyframes dailyTooltipIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.dailyAxis {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: #a3a3a3;
+  font-variant-numeric: tabular-nums;
+  padding-top: 4px;
+  border-top: 1px solid #f5f5f5;
+}
+
+.dailyToday {
+  color: #2563eb;
+  font-weight: 600;
+}
+
+/* ─── RIGHT column ───────────────────────────────────────────────── */
+.rightCol {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ─── Rank card ──────────────────────────────────────────────────── */
+.rankCard {
+  background: #0a0a0a;
+  color: #fff;
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rankLabel {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.rankValueRow {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.rankValue {
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.rankTotal {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.rankShare {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+  font-variant-numeric: tabular-nums;
+}
+
+.rankShareStrong {
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ─── History card ───────────────────────────────────────────────── */
+.historyCard {
+  background: #ffffff;
+  border: 1px solid #ececec;
+  border-radius: 14px;
+  padding: 16px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.historyTitle {
+  font-size: 11px;
+  font-weight: 600;
+  color: #737373;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 4px 8px 10px;
+}
+
+.historyRow {
+  cursor: pointer;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  text-align: left;
+  transition: background 0.12s;
+}
+
+.historyRow:hover {
+  background: #f9fafb;
+}
+
+.historyRowActive {
+  background: #f5f4f0;
+}
+
+.historyRowActive:hover {
+  background: #f5f4f0;
+}
+
+.historyMonth {
+  font-size: 13px;
+  font-weight: 500;
+  color: #525252;
+  font-variant-numeric: tabular-nums;
+}
+
+.historyMonthActive {
+  font-weight: 700;
+  color: #0a0a0a;
+}
+
+.historyBarTrack {
+  position: relative;
+  height: 6px;
+  background: #f5f5f5;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.historyBarFill {
+  position: absolute;
+  inset: 0;
+  background: #d4d4d4;
+  border-radius: 3px;
+}
+
+.historyBarFillActive {
+  background: #0a0a0a;
+}
+
+.historyValue {
+  font-size: 12px;
+  color: #737373;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  min-width: 56px;
+  text-align: right;
+}
+
+.historyValueActive {
+  color: #0a0a0a;
+  font-weight: 700;
+}
+
+.historyViewAll {
+  cursor: pointer;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  color: #a3a3a3;
+  font-weight: 500;
+  text-align: center;
+  margin-top: 4px;
+  border: none;
+  border-top: 1px solid #f5f5f5;
+  background: transparent;
+}
+
+.historyViewAll:hover {
+  color: #525252;
+  background: #f9fafb;
+}
+
+.emptyHint {
+  padding: 16px 0;
+  font-size: 12px;
+  color: #a3a3a3;
+  text-align: center;
+}

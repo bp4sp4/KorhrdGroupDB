@@ -7,6 +7,8 @@ import CustomSelect from "../marketing/CustomSelect";
 import { DateInput } from "@/components/ui/Calendar/DateInput";
 import { DateRangeCalendar, type DateRange } from "@/components/DateRangeCalendar";
 import { useGuide } from "@/components/guide/GuideProvider";
+import SalesHeaderAdmin from "./SalesHeaderAdmin";
+import SalesHeaderManager from "./SalesHeaderManager";
 
 // ─── 타입 ─────────────────────────────────────────────────────────────
 type PaymentMethod = "payapp_transfer" | "bank_transfer" | "card";
@@ -135,6 +137,18 @@ export default function EduSalesPage() {
   const [rows, setRows] = useState<SalesRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [canViewAll, setCanViewAll] = useState(false);
+  const [myDisplayName, setMyDisplayName] = useState<string>("");
+
+  // 현재 로그인 사용자 이름 (담당자 헤더용)
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        const name = (data?.displayName ?? data?.display_name ?? "").trim();
+        if (name) setMyDisplayName(name);
+      })
+      .catch(() => {});
+  }, []);
 
   // 월별 탭 — API에서 받은 cohorts + 기본 탭 머지 (정렬)
   const [apiCohorts, setApiCohorts] = useState<string[]>([]);
@@ -461,58 +475,133 @@ export default function EduSalesPage() {
       .sort((a, b) => b.amount - a.amount);
   }, [filteredRows]);
 
+  // 현재 활성 월의 숫자 (활성 탭이 '전체'면 오늘 월)
+  const now = new Date();
+  const activeMonthNum = useMemo(() => {
+    const m = activeMonth.match(/^(\d+)월$/);
+    if (m) return Number(m[1]);
+    return now.getMonth() + 1;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeMonth]);
+  const activeYear = now.getFullYear();
+  const refundCountFiltered = useMemo(
+    () => filteredRows.filter((r) => r.refund_status === "환불완료").length,
+    [filteredRows],
+  );
+
+  // 본인 매출 (Manager 헤더 — own scope이거나 일치하는 manager_name 행만)
+  const myRows = useMemo(() => {
+    if (!myDisplayName) return filteredRows;
+    return filteredRows.filter((r) => r.manager_name === myDisplayName);
+  }, [filteredRows, myDisplayName]);
+  const myRevenue = useMemo(
+    () =>
+      myRows
+        .filter((r) => r.refund_status !== "환불완료")
+        .reduce((s, r) => s + (r.total_amount ?? 0), 0),
+    [myRows],
+  );
+  const myCount = myRows.length;
+  const myRefundCount = useMemo(
+    () => myRows.filter((r) => r.refund_status === "환불완료").length,
+    [myRows],
+  );
+
+  // 일별 매출 분포 (활성 월 + 결제일 기준)
+  const dailyDistribution = useMemo(() => {
+    const totalDays = new Date(activeYear, activeMonthNum, 0).getDate();
+    const arr: { d: number; amt: number }[] = [];
+    for (let d = 1; d <= totalDays; d++) arr.push({ d, amt: 0 });
+    const source = canViewAll ? filteredRows : myRows;
+    source.forEach((r) => {
+      if (r.refund_status === "환불완료") return;
+      if (!r.payment_date) return;
+      const parts = r.payment_date.split("-");
+      if (parts.length !== 3) return;
+      const y = Number(parts[0]);
+      const m = Number(parts[1]);
+      const d = Number(parts[2]);
+      if (y !== activeYear || m !== activeMonthNum) return;
+      const idx = d - 1;
+      if (idx >= 0 && idx < arr.length) arr[idx].amt += r.total_amount ?? 0;
+    });
+    return { daily: arr, totalDays };
+  }, [filteredRows, myRows, canViewAll, activeYear, activeMonthNum]);
+
+  // 월별 히스토리 (현재 보유한 rows의 cohort 기준, 최대 5개월 — 활성 월 포함 직전 4개월)
+  const monthHistory = useMemo(() => {
+    const target = canViewAll ? rows : rows.filter((r) => r.manager_name === myDisplayName);
+    const monthly: Record<number, number> = {};
+    target.forEach((r) => {
+      if (r.refund_status === "환불완료") return;
+      const m = r.cohort?.match(/^(\d+)월$/);
+      if (!m) return;
+      const num = Number(m[1]);
+      monthly[num] = (monthly[num] ?? 0) + (r.total_amount ?? 0);
+    });
+    const result: { m: number; revenue: number; amount: number }[] = [];
+    for (let offset = 4; offset >= 0; offset--) {
+      let mm = activeMonthNum - offset;
+      if (mm <= 0) mm += 12;
+      const v = monthly[mm] ?? 0;
+      result.push({ m: mm, revenue: v, amount: v });
+    }
+    return result;
+  }, [rows, canViewAll, myDisplayName, activeMonthNum]);
+
+  const prevMonthRevenue = useMemo(() => {
+    const prev = monthHistory[monthHistory.length - 2];
+    return prev?.revenue ?? 0;
+  }, [monthHistory]);
+
+  const todayDay =
+    now.getFullYear() === activeYear && now.getMonth() + 1 === activeMonthNum
+      ? now.getDate()
+      : null;
+
+  const handleGuideClick = () => startById("edu-sales-basics");
+
   return (
     <div className={styles.wrap}>
-      {/* 헤더 */}
-      <div className={styles.header_row}>
-        <div className={styles.header_left}>
-          <h1 className={styles.title}>매출파일</h1>
-        </div>
-        <div className={styles.header_right}>
-          <div className={styles.stat_row} data-guide="edu-sales-stats">
-            <div className={styles.stat_box}>
-              <span className={styles.stat_label}>
-                {activeMonth === "전체" ? "전체" : activeMonth} 매출
-              </span>
-              <span className={styles.stat_value}>
-                {formatNumber(totalAmount)}원
-              </span>
-              <span className={styles.stat_sub}>{filteredRows.length}건</span>
-            </div>
-            {canViewAll && (
-              <div className={`${styles.stat_box} ${styles.stat_box_refund}`}>
-                <span className={styles.stat_label}>환불</span>
-                <span className={styles.stat_value}>
-                  -{formatNumber(refundAmount)}원
-                </span>
-                <span className={styles.stat_sub}>
-                  {
-                    filteredRows.filter((r) => r.refund_status === "환불완료")
-                      .length
-                  }
-                  건
-                </span>
-              </div>
-            )}
-          </div>
-          <button
-            type="button"
-            className={styles.export_btn}
-            onClick={handleExportExcel}
-            disabled={filteredRows.length === 0}
-            title="현재 보이는 행을 엑셀로 다운로드"
-          >
-            ⬇ 엑셀 다운로드
-          </button>
-          <button
-            type="button"
-            className={styles.guide_btn}
-            onClick={() => startById("edu-sales-basics")}
-            title="매출파일 사용법 보기"
-          >
-            가이드
-          </button>
-        </div>
+      {/* 헤더 — 권한별 분기 */}
+      <div data-guide="edu-sales-stats">
+        {canViewAll ? (
+          <SalesHeaderAdmin
+            year={activeYear}
+            month={activeMonthNum}
+            totalRevenue={totalAmount}
+            totalCount={filteredRows.length}
+            refundCount={refundCountFiltered}
+            people={managerStats}
+            history={monthHistory.map(({ m, revenue }) => ({ m, revenue }))}
+            prevMonthRevenue={prevMonthRevenue}
+            onExcelDownload={handleExportExcel}
+            onGuide={handleGuideClick}
+            onPersonClick={(p) =>
+              setFilterManager(filterManager === p.name ? "" : p.name)
+            }
+            onMonthClick={(m) => setActiveMonth(`${m}월`)}
+            onViewAllPeriod={() => setActiveMonth("전체")}
+          />
+        ) : (
+          <SalesHeaderManager
+            year={activeYear}
+            month={activeMonthNum}
+            managerName={myDisplayName}
+            myRevenue={myRevenue}
+            myCount={myCount}
+            myRefundCount={myRefundCount}
+            prevMonthRevenue={prevMonthRevenue}
+            daily={dailyDistribution.daily}
+            todayDay={todayDay}
+            totalDaysInMonth={dailyDistribution.totalDays}
+            history={monthHistory.map(({ m, amount }) => ({ m, amount }))}
+            onExcelDownload={handleExportExcel}
+            onGuide={handleGuideClick}
+            onMonthClick={(m) => setActiveMonth(`${m}월`)}
+            onViewAllPeriod={() => setActiveMonth("전체")}
+          />
+        )}
       </div>
 
       {/* 월별 탭 */}
