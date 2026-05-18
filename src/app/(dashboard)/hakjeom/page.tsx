@@ -262,6 +262,11 @@ const REACTION_POINT_MAP: Record<string, string[]> = {
   무반응: ["무반응"],
 };
 
+// 반응포인트 자동 체크 시 토스트 알림 표시 여부
+// 테스트 기간 동안 false로 두면 자동 체크는 그대로 동작하되 토스트만 안 뜸
+// 운영 배포 전 true로 복원
+const SHOW_AUTO_REACTION_TOAST = false;
+
 // 메모 텍스트 → 반응포인트 자동 매칭용 키워드 사전
 const REACTION_KEYWORD_MAP: Record<string, string[]> = {
   비싸다: [
@@ -1471,14 +1476,16 @@ function HakjeomDetailPanel({
     setEditReactionPoint((prev) => {
       const additions = matched.filter((m) => !prev.includes(m));
       if (additions.length === 0) return prev;
-      if (autoReactionTimerRef.current) {
-        clearTimeout(autoReactionTimerRef.current);
+      if (SHOW_AUTO_REACTION_TOAST) {
+        if (autoReactionTimerRef.current) {
+          clearTimeout(autoReactionTimerRef.current);
+        }
+        setAutoReactionToast(additions);
+        autoReactionTimerRef.current = setTimeout(() => {
+          setAutoReactionToast([]);
+          autoReactionTimerRef.current = null;
+        }, 3500);
       }
-      setAutoReactionToast(additions);
-      autoReactionTimerRef.current = setTimeout(() => {
-        setAutoReactionToast([]);
-        autoReactionTimerRef.current = null;
-      }, 3500);
       return [...prev, ...additions];
     });
   };

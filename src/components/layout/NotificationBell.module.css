@@ -485,6 +485,46 @@
   background: #ced4da;
 }
 
+.attachmentList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed #e9ecef;
+}
+
+.attachmentItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #f8f9fa;
+  color: #4e5968;
+  font-size: 12px;
+  text-decoration: none;
+  transition: background 0.15s;
+  border: 1px solid #e9ecef;
+}
+
+.attachmentItem:hover {
+  background: #f1f3f5;
+  color: #191f28;
+}
+
+.attachmentName {
+  flex: 1;
+  word-break: break-all;
+  font-weight: 500;
+}
+
+.attachmentSize {
+  color: #adb5bd;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
 /* ─── 모바일 (≤ 480px) ─────────────────────────────────────────────────── */
 
 @media (max-width: 480px) {

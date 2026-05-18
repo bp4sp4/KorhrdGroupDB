@@ -18,11 +18,26 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import styles from "./NotificationBell.module.css";
 
+interface AnnouncementAttachment {
+  name: string;
+  url: string;
+  type?: string;
+  size?: number;
+}
+
 interface Announcement {
   id: number;
   date: string;
   title: string;
   items: string[];
+  attachments?: AnnouncementAttachment[] | null;
+}
+
+function formatFileSize(bytes?: number): string {
+  if (!bytes && bytes !== 0) return "";
+  if (bytes < 1024) return `${bytes}B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
 }
 
 interface Notification {
@@ -555,6 +570,32 @@ export default function NotificationBell() {
                                   <li key={i}>{item}</li>
                                 ))}
                               </ul>
+                              {a.attachments && a.attachments.length > 0 && (
+                                <div className={styles.attachmentList}>
+                                  {a.attachments.map((att, i) => (
+                                    <a
+                                      key={i}
+                                      href={att.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className={styles.attachmentItem}
+                                      download={att.name}
+                                    >
+                                      <FileText size={14} />
+                                      <span className={styles.attachmentName}>
+                                        {att.name}
+                                      </span>
+                                      {att.size != null && (
+                                        <span
+                                          className={styles.attachmentSize}
+                                        >
+                                          {formatFileSize(att.size)}
+                                        </span>
+                                      )}
+                                    </a>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>

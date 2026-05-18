@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Plus, X, Trash2, Pencil, RotateCcw, UserPlus } from 'lucide-react'
 import styles from './page.module.css'
+import AnnouncementsTab from './AnnouncementsTab'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -94,7 +95,7 @@ const ROLE_LABELS: Record<AccountRole, string> = {
 
 // ─── Tab Type ─────────────────────────────────────────────────────────────────
 
-type TabKey = 'departments' | 'positions' | 'expense-categories' | 'approval-templates' | 'accounts' | 'permissions'
+type TabKey = 'departments' | 'positions' | 'expense-categories' | 'approval-templates' | 'accounts' | 'permissions' | 'announcements'
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: 'departments', label: '사업부' },
@@ -103,6 +104,7 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: 'approval-templates', label: '결재선 템플릿' },
   { key: 'accounts', label: '계정 관리' },
   { key: 'permissions', label: '권한 관리' },
+  { key: 'announcements', label: '공지 관리' },
 ]
 
 const CATEGORIES = ['출장', '인사', '회계']
@@ -186,6 +188,11 @@ export default function AdminPage() {
       {visitedTabs.has('permissions') && (
         <div className={activeTab !== 'permissions' ? styles.tabHidden : undefined}>
           <PermissionsTab />
+        </div>
+      )}
+      {visitedTabs.has('announcements') && (
+        <div className={activeTab !== 'announcements' ? styles.tabHidden : undefined}>
+          <AnnouncementsTab />
         </div>
       )}
     </div>
