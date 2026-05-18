@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import * as XLSX from "xlsx";
 import styles from "./page.module.css";
 import CustomSelect from "../marketing/CustomSelect";
 import { DateInput } from "@/components/ui/Calendar/DateInput";
+import { DateRangeCalendar, type DateRange } from "@/components/DateRangeCalendar";
+import { useGuide } from "@/components/guide/GuideProvider";
 
 // ─── 타입 ─────────────────────────────────────────────────────────────
 type PaymentMethod = "payapp_transfer" | "bank_transfer" | "card";
@@ -129,6 +131,7 @@ function autoHyphenPhone(raw: string): string {
   return `${d.slice(0, 3)}-${d.slice(3, 7)}-${d.slice(7)}`;
 }
 export default function EduSalesPage() {
+  const { startById } = useGuide();
   const [rows, setRows] = useState<SalesRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [canViewAll, setCanViewAll] = useState(false);
@@ -152,6 +155,43 @@ export default function EduSalesPage() {
   const [filterRefund, setFilterRefund] = useState<
     "all" | "정상" | "환불대기" | "환불완료"
   >("all");
+
+  // 기간 선택 (DateRangeCalendar)
+  const [dateRangeOpen, setDateRangeOpen] = useState(false);
+  const dateRangeRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!dateRangeOpen) return;
+    function handleOutside(e: MouseEvent) {
+      if (
+        dateRangeRef.current &&
+        !dateRangeRef.current.contains(e.target as Node)
+      ) {
+        setDateRangeOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
+  }, [dateRangeOpen]);
+
+  function ymd(d: Date) {
+    return d.toISOString().slice(0, 10);
+  }
+
+  const dateRangeValue: DateRange | undefined =
+    filterFrom || filterTo
+      ? {
+          from: filterFrom ? new Date(filterFrom + "T00:00:00") : undefined,
+          to: filterTo ? new Date(filterTo + "T00:00:00") : undefined,
+        }
+      : undefined;
+
+  const dateRangeLabel = (() => {
+    if (filterFrom && filterTo) return `${filterFrom} ~ ${filterTo}`;
+    if (filterFrom) return `${filterFrom} ~`;
+    if (filterTo) return `~ ${filterTo}`;
+    return "결제일 기간 선택";
+  })();
 
   // 모달
   // (구) 매출 등록/수정 모달 — 인라인 편집으로 대체됨
@@ -429,7 +469,7 @@ export default function EduSalesPage() {
           <h1 className={styles.title}>매출파일</h1>
         </div>
         <div className={styles.header_right}>
-          <div className={styles.stat_row}>
+          <div className={styles.stat_row} data-guide="edu-sales-stats">
             <div className={styles.stat_box}>
               <span className={styles.stat_label}>
                 {activeMonth === "전체" ? "전체" : activeMonth} 매출
@@ -464,11 +504,19 @@ export default function EduSalesPage() {
           >
             ⬇ 엑셀 다운로드
           </button>
+          <button
+            type="button"
+            className={styles.guide_btn}
+            onClick={() => startById("edu-sales-basics")}
+            title="매출파일 사용법 보기"
+          >
+            가이드
+          </button>
         </div>
       </div>
 
       {/* 월별 탭 */}
-      <div className={styles.month_tabs}>
+      <div className={styles.month_tabs} data-guide="edu-sales-month-tabs">
         {monthTabs.map((m) => {
           const cnt = monthTabCounts[m];
           const isActive = activeMonth === m;
@@ -527,61 +575,74 @@ export default function EduSalesPage() {
           onChange={(e) => setSearch(e.target.value)}
         />
         {canViewAll && (
-          <select
-            className={styles.filter_select}
+          <CustomSelect
             value={filterManager}
-            onChange={(e) => setFilterManager(e.target.value)}
-          >
-            <option value="">전체 담당자</option>
-            {managerOptions.map((m) => (
-              <option key={m} value={m}>
-                {m}
-              </option>
-            ))}
-          </select>
+            onChange={setFilterManager}
+            options={[
+              { value: "", label: "전체 담당자" },
+              ...managerOptions.map((m) => ({ value: m, label: m })),
+            ]}
+            ariaLabel="담당자 필터"
+            minWidth={140}
+          />
         )}
         {canViewAll && (
           <>
-            <select
-              className={styles.filter_select}
+            <CustomSelect
               value={filterPublished}
-              onChange={(e) =>
-                setFilterPublished(e.target.value as "all" | "done" | "pending")
+              onChange={(v) =>
+                setFilterPublished(v as "all" | "done" | "pending")
               }
-            >
-              <option value="all">발행 전체</option>
-              <option value="done">발행 완료</option>
-              <option value="pending">발행 대기</option>
-            </select>
-            <select
-              className={styles.filter_select}
+              options={[
+                { value: "all", label: "발행 전체" },
+                { value: "done", label: "발행 완료" },
+                { value: "pending", label: "발행 대기" },
+              ]}
+              ariaLabel="발행 상태 필터"
+              minWidth={120}
+            />
+            <CustomSelect
               value={filterRefund}
-              onChange={(e) =>
-                setFilterRefund(
-                  e.target.value as "all" | "정상" | "환불대기" | "환불완료",
-                )
+              onChange={(v) =>
+                setFilterRefund(v as "all" | "정상" | "환불대기" | "환불완료")
               }
-            >
-              <option value="all">환불 전체</option>
-              <option value="정상">정상</option>
-              <option value="환불대기">환불대기</option>
-              <option value="환불완료">환불완료</option>
-            </select>
+              options={[
+                { value: "all", label: "환불 전체" },
+                { value: "정상", label: "정상" },
+                { value: "환불대기", label: "환불대기" },
+                { value: "환불완료", label: "환불완료" },
+              ]}
+              ariaLabel="환불 상태 필터"
+              minWidth={120}
+            />
           </>
         )}
-        <input
-          type="date"
-          className={styles.filter_date}
-          value={filterFrom}
-          onChange={(e) => setFilterFrom(e.target.value)}
-        />
-        <span className={styles.date_sep}>~</span>
-        <input
-          type="date"
-          className={styles.filter_date}
-          value={filterTo}
-          onChange={(e) => setFilterTo(e.target.value)}
-        />
+        <div ref={dateRangeRef} className={styles.dateRangeWrap}>
+          <button
+            type="button"
+            className={`${styles.dateRangeBtn} ${(filterFrom || filterTo) ? styles.dateRangeBtn_active : ""}`}
+            onClick={() => setDateRangeOpen((v) => !v)}
+          >
+            {dateRangeLabel}
+          </button>
+          {dateRangeOpen && (
+            <div className={styles.dateRangePopover}>
+              <DateRangeCalendar
+                variant="month"
+                value={dateRangeValue}
+                onChange={(r) => {
+                  setFilterFrom(r?.from ? ymd(r.from) : "");
+                  setFilterTo(r?.to ? ymd(r.to) : "");
+                }}
+                onConfirm={() => setDateRangeOpen(false)}
+                onReset={() => {
+                  setFilterFrom("");
+                  setFilterTo("");
+                }}
+              />
+            </div>
+          )}
+        </div>
         <button
           className={styles.reset_btn}
           onClick={() => {
@@ -598,7 +659,7 @@ export default function EduSalesPage() {
       </div>
 
       {/* 테이블 */}
-      <div className={styles.table_wrap}>
+      <div className={styles.table_wrap} data-guide="edu-sales-table">
         {loading ? (
           <div className={styles.empty_state}>불러오는 중...</div>
         ) : filteredRows.length === 0 ? (

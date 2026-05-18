@@ -60,6 +60,31 @@
   cursor: not-allowed;
 }
 
+.guide_btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 14px;
+  background: #eff6ff;
+  border: 1.5px solid #bfdbfe;
+  border-radius: 8px;
+  color: #2563eb;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s;
+  flex-shrink: 0;
+}
+
+.guide_btn:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
 .total_chip {
   font-size: 13px;
   font-weight: 600;
@@ -268,6 +293,51 @@
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
+}
+
+/* ─── DateRangeCalendar 트리거 ──────────────────────────────────── */
+.dateRangeWrap {
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.dateRangeBtn {
+  height: 36px;
+  padding: 0 14px;
+  min-width: 200px;
+  text-align: left;
+  border: 1.5px solid #e5e8eb;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 13px;
+  color: #191f28;
+  cursor: pointer;
+  outline: none;
+  transition:
+    border-color 0.15s,
+    background 120ms ease;
+  white-space: nowrap;
+}
+
+.dateRangeBtn:hover {
+  background: #f9fafb;
+}
+
+.dateRangeBtn:focus {
+  border-color: #3182f6;
+}
+
+.dateRangeBtn_active {
+  font-weight: 700;
+  color: #191f28;
+}
+
+.dateRangePopover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 40;
 }
 
 .reset_btn:hover {
@@ -754,45 +824,33 @@ select.input {
   color: #d97706;
 }
 
-/* ─── 미입력 셀 펄스 (자주 깜빡이지 않도록 긴 휴식 + 부드러운 펄스) ──── */
-@keyframes pulse_blue {
-  0% {
-    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.35);
-  }
-  20% {
-    box-shadow: 0 0 0 5px rgba(37, 99, 235, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
-  }
-}
-
-/* select·달력·input 크기에 맞게 딱 붙는 펄스 효과 */
+/* ─── 미입력 셀 강조 (정적 outline — 깜빡임 없이 항상 유지) ──── */
 .cell_empty_hint {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 8px;
-  animation: pulse_blue 4.5s ease-out infinite;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.35);
+  transition: box-shadow 0.15s ease;
 }
 
 .cell_empty_hint:focus,
 .cell_empty_hint:hover,
 .cell_empty_hint:focus-within {
-  animation: none;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.4);
 }
 
 /* ─── 환불 시각 효과 ──────────────────────────────────────────────── */
 .tr_refunded {
-  background: #fdf2f8 !important;   /* pink-50 — 부드러운 연분홍 */
+  background: #fdf2f8 !important; /* pink-50 — 부드러운 연분홍 */
 }
 
 .tr_refunded .td_strong {
-  color: #be185d;   /* pink-700 */
+  color: #be185d; /* pink-700 */
 }
 
 .tr_refunded:hover {
-  background: #fce7f3 !important;   /* pink-100 */
+  background: #fce7f3 !important; /* pink-100 */
 }
 
 .tr_refund_pending {
@@ -816,7 +874,7 @@ select.input {
   text-decoration: line-through;
   text-decoration-color: #ec4899;
   text-decoration-thickness: 2px;
-  color: #be185d !important;   /* pink-700 */
+  color: #be185d !important; /* pink-700 */
 }
 
 .refund_date_sub {
@@ -845,7 +903,9 @@ select.input {
   color: #9d174d !important;
   min-width: 92px;
   cursor: pointer;
-  transition: background 0.12s, border-color 0.12s;
+  transition:
+    background 0.12s,
+    border-color 0.12s;
 }
 
 .refund_date_trigger:hover {
@@ -876,7 +936,9 @@ select.input {
   border-radius: 12px;
   min-width: 140px;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
 }
 
 .stat_box:hover {

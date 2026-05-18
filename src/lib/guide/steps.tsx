@@ -588,8 +588,7 @@ export const GUIDES: GuideDef[] = [
         content: (
           <>
             방금 입력한 <B>이름·전화번호</B>로 문의DB를 검색해서 핵심 정보를{" "}
-            <S>한 번에 채워줘요</S>.
-            {"\n\n"}
+            <S>한 번에 채워줘요</S>.{"\n\n"}
             매칭되는 필드:
             {"\n"}• <C>최종학력</C>
             {"\n"}• <C>희망자격증과정</C>
@@ -607,28 +606,44 @@ export const GUIDES: GuideDef[] = [
       {
         target: '[data-guide="edu-modal-autofilled"]',
         title: "최종학력",
-        content: <><B>4년제졸업</B>으로 자동 매칭됐어요.</>,
+        content: (
+          <>
+            <B>4년제졸업</B>으로 자동 매칭됐어요.
+          </>
+        ),
         placement: "right",
         compact: true,
       },
       {
         target: '[data-guide="edu-modal-course"]',
         title: "희망자격증과정",
-        content: <><B>사회복지사2급(구법)</B>으로 자동 매칭됐어요.</>,
+        content: (
+          <>
+            <B>사회복지사2급(구법)</B>으로 자동 매칭됐어요.
+          </>
+        ),
         placement: "right",
         compact: true,
       },
       {
         target: '[data-guide="edu-modal-manager"]',
         title: "담당자",
-        content: <><B>이규준</B>으로 자동 매칭됐어요.</>,
+        content: (
+          <>
+            <B>이규준</B>으로 자동 매칭됐어요.
+          </>
+        ),
         placement: "right",
         compact: true,
       },
       {
         target: '[data-guide="edu-modal-unit-price"]',
         title: "과목당 비용",
-        content: <><B>150,000원</B>으로 자동 매칭됐어요.</>,
+        content: (
+          <>
+            <B>150,000원</B>으로 자동 매칭됐어요.
+          </>
+        ),
         placement: "right",
         compact: true,
       },
@@ -672,6 +687,74 @@ export const GUIDES: GuideDef[] = [
           </>
         ),
         fireEvent: "guide-edu-action:close-add-modal",
+      },
+    ],
+  },
+  // ─── 매출파일 가이드 ──────────────────────────────────────────────────────
+  {
+    id: "edu-sales-basics",
+    label: "매출파일 사용법",
+    matchPath: "/edu-sales",
+    steps: [
+      {
+        title: "매출파일 가이드(최초 1회)",
+        content: (
+          <>
+            매출파일은 <S>등록학생관리에서 학생을 추가하면 자동으로 생성</S>되는
+            행입니다.
+            {"\n\n"}
+            여기서는 <B>인라인 편집</B>으로 단가·결제일·발행 정보 등을 채웁니다.
+          </>
+        ),
+      },
+      {
+        target: '[data-guide="edu-sales-month-tabs"]',
+        title: "월별 탭 (개강반 기준)",
+        content: (
+          <>
+            상단의 <B>5월/6월/…</B> 탭은 <C>개강반</C> 기준이에요.
+            {"\n"}• 학생 등록 시점의 <S>해당 월</S>로 자동 분류됩니다.
+            {"\n"}• <B>전체</B> 탭에서는 모든 기수를 한 번에 볼 수 있어요.
+          </>
+        ),
+        placement: "bottom",
+      },
+
+      {
+        title: "테이블 - 인라인 편집",
+        content: (
+          <>
+            아래 표의 대부분 칸이 <B>클릭 즉시 편집</B> 가능해요.
+            {"\n"}• <C>학생ID</C>, <C>단가</C>, <C>결제일</C>, <C>결제방법</C>,{" "}
+            <C>과목수</C> 등{"\n"}• 입력 후 포커스 밖으로 나가면{" "}
+            <S>자동 저장</S>됩니다.
+            {"\n\n"}
+            <W>학생 이름/연락처/담당자는 등록학생관리에서만 수정합니다.</W>
+          </>
+        ),
+      },
+
+      {
+        title: "엑셀 다운로드",
+        content: (
+          <>
+            우측 상단의 <B>⬇ 엑셀 다운로드</B>를 누르면 <S>현재 화면의 행</S>
+            (월/필터/검색 적용 상태)이 그대로 엑셀로 받아져요.
+            {"\n"}월별 시트로 분리되어 저장됩니다.
+          </>
+        ),
+      },
+      {
+        title: "끝났어요!",
+        content: (
+          <>
+            요약:
+            {"\n"}• 매출 행은 <S>등록학생관리에서 자동 생성</S>
+            {"\n"}• 이 페이지는 <B>인라인 편집</B>으로 매출 정보를 채우는 곳
+            {"\n\n"}
+            언제든 헤더의 <C>[가이드] 버튼</C>으로 다시 볼 수 있어요.
+          </>
+        ),
       },
     ],
   },
@@ -746,7 +829,8 @@ export const GUIDES: GuideDef[] = [
         title: "근태사유서 가이드",
         content: (
           <>
-            <B>지각·조퇴·결근</B> 등 근태 이슈 발생 시 사유를 보고하는 양식이에요.
+            <B>지각·조퇴·결근</B> 등 근태 이슈 발생 시 사유를 보고하는
+            양식이에요.
             {"\n\n"}
             양식을 자동으로 열어드릴게요.
           </>
@@ -799,7 +883,8 @@ export const GUIDES: GuideDef[] = [
         title: "명함 신청서 가이드",
         content: (
           <>
-            <B>신규 입사</B>·<B>직책 변경</B> 시 명함 발주를 요청하는 양식이에요.
+            <B>신규 입사</B>·<B>직책 변경</B> 시 명함 발주를 요청하는
+            양식이에요.
             {"\n\n"}
             양식을 자동으로 열어드릴게요.
           </>
@@ -827,7 +912,11 @@ export const GUIDES: GuideDef[] = [
       {
         target: '[data-guide="approvals-submit-btn"]',
         title: "결재 신청",
-        content: <><B>[결재요청]</B>으로 신청 완료!</>,
+        content: (
+          <>
+            <B>[결재요청]</B>으로 신청 완료!
+          </>
+        ),
         placement: "left",
         compact: true,
       },
@@ -876,7 +965,11 @@ export const GUIDES: GuideDef[] = [
       {
         target: '[data-guide="approvals-submit-btn"]',
         title: "결재 신청",
-        content: <><B>[결재요청]</B>으로 신청 완료!</>,
+        content: (
+          <>
+            <B>[결재요청]</B>으로 신청 완료!
+          </>
+        ),
         placement: "left",
         compact: true,
       },
@@ -926,7 +1019,11 @@ export const GUIDES: GuideDef[] = [
       {
         target: '[data-guide="approvals-submit-btn"]',
         title: "결재 신청",
-        content: <><B>[결재요청]</B>으로 인계 처리 시작!</>,
+        content: (
+          <>
+            <B>[결재요청]</B>으로 인계 처리 시작!
+          </>
+        ),
         placement: "left",
         compact: true,
       },
@@ -977,7 +1074,11 @@ export const GUIDES: GuideDef[] = [
       {
         target: '[data-guide="approvals-submit-btn"]',
         title: "결재 신청",
-        content: <><B>[결재요청]</B>으로 제출하면 인사팀에서 확정 진행!</>,
+        content: (
+          <>
+            <B>[결재요청]</B>으로 제출하면 인사팀에서 확정 진행!
+          </>
+        ),
         placement: "left",
         compact: true,
       },
