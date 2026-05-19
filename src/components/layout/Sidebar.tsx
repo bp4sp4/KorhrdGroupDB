@@ -5,7 +5,7 @@ import { usePathname, useSearchParams } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import {
   GraduationCap, Users, UserCog, Trash2,
-  ClipboardList, Copy, TrendingUp, FileCheck, BarChart2, Settings, UserCheck, Plane, Link2, ChevronRight, Upload, Landmark, Megaphone, LayoutGrid,
+  ClipboardList, Copy, TrendingUp, FileCheck, BarChart2, Settings, UserCheck, Plane, Link2, ChevronRight, Upload, Landmark, Megaphone, LayoutGrid, FileText,
 } from 'lucide-react'
 import styles from './layout.module.css'
 import { createClient } from '@/lib/supabase/client'
@@ -37,7 +37,7 @@ interface NavSection {
 const ALL_SECTIONS: NavSection[] = [
   {
     sectionKey: '교육운영',
-    activeOn: ['/hakjeom', '/cert', '/practice', '/allcare', '/abroad', '/revenues', '/revenue-upload', '/approvals', '/reports', '/bankaccount', '/marketing', '/task-board', '/duplicate', '/trash', '/ref-manage', '/logs', '/assignment', '/links'],
+    activeOn: ['/hakjeom', '/cert', '/practice', '/allcare', '/abroad', '/revenues', '/revenue-upload', '/approvals', '/reports', '/bankaccount', '/marketing', '/task-board', '/duplicate', '/trash', '/ref-manage', '/logs', '/assignment', '/links', '/me'],
     items: [
       {
         id: 'education', label: '학점은행제 사업부', href: '/hakjeom', icon: <GraduationCap size={16} />, groupLabel: '사업부서',
@@ -104,6 +104,7 @@ const ALL_SECTIONS: NavSection[] = [
         ],
       },
       { id: 'task-board', label: '통합 업무보드', href: '/task-board', icon: <LayoutGrid size={16} />, groupLabel: '시스템' },
+      { id: 'me-hr-record', label: '인사기록카드', href: '/me/hr-record', icon: <FileText size={16} /> },
       { id: 'duplicate', label: '중복 조회', href: '/duplicate', icon: <Copy size={16} /> },
       { id: 'trash', label: '삭제목록', href: '/trash', icon: <Trash2 size={16} /> },
       { id: 'ref-manage', label: '어드민 관리', href: '/ref-manage', icon: <UserCog size={16} /> },
@@ -119,6 +120,7 @@ const ALL_SECTIONS: NavSection[] = [
       { id: 'admin-settings', label: '시스템 설정', href: '/admin', icon: <Settings size={16} />, groupLabel: '관리자', exactMatch: true },
       { id: 'admin-approval-forms', label: '결재 양식 관리', href: '/admin/approval-forms', icon: <FileCheck size={16} /> },
       { id: 'admin-customers', label: '전체고객관리', href: '/admin/customers', icon: <Users size={16} /> },
+      { id: 'admin-hr-records', label: '인사기록카드 승인', href: '/admin/hr-records', icon: <FileText size={16} /> },
     ],
   },
 ]

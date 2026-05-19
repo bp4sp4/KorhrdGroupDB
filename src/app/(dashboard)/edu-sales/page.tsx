@@ -85,6 +85,18 @@ function getDefaultMonthTabs(): string[] {
 
 // cohort 문자열에서 정렬 키 추출
 // "5월" → 5, "2026년 5월" → 202605, "2026년 5월 4일" → 20260504, "2026-05-04" → 20260504
+// cohort("5월") → DateInput value("2026-05-01") 변환
+function cohortToDate(cohort: string | null, year: number): string {
+  if (!cohort) return "";
+  const m = cohort.trim().match(/^(\d+)월$/);
+  if (!m) return "";
+  const month = String(Math.min(12, Math.max(1, Number(m[1])))).padStart(
+    2,
+    "0",
+  );
+  return `${year}-${month}-01`;
+}
+
 function cohortSortKey(c: string): number {
   const trimmed = c.trim();
   // YYYY-MM-DD 형식
@@ -864,13 +876,23 @@ export default function EduSalesPage() {
                       />
                     </div>
                   </td>
-                  {/* 개강반 — 인라인 텍스트 */}
+                  {/* 개강반 — 달력에서 월 선택 → "X월"로 저장 */}
                   <td className={`${styles.td} ${styles.td_center}`}>
-                    <InlineText
-                      value={r.cohort ?? ""}
-                      placeholder="-"
-                      onSave={(v) => updateRow(r, { cohort: v.trim() || null })}
-                      width={56}
+                    <DateInput
+                      value={cohortToDate(r.cohort, activeYear)}
+                      onChange={(v) => {
+                        if (!v) {
+                          updateRow(r, { cohort: null });
+                          return;
+                        }
+                        const parts = v.split("-");
+                        const m = parts.length >= 2 ? Number(parts[1]) : NaN;
+                        if (Number.isFinite(m) && m >= 1 && m <= 12) {
+                          updateRow(r, { cohort: `${m}월` });
+                        }
+                      }}
+                      placeholder="개강반"
+                      triggerClassName={styles.inline_date_trigger}
                     />
                   </td>
                   {/* 학생명 — 읽기전용 */}

@@ -1,0 +1,556 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ─── 툴바 ──────────────────────────────────────────────────────────── */
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.tabRow {
+  display: flex;
+  gap: 4px;
+  background: #fff;
+  border: 1px solid #e5e8eb;
+  border-radius: 10px;
+  padding: 4px;
+}
+
+.tabBtn {
+  padding: 6px 14px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7684;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.tabBtn:hover {
+  background: #f5f6f8;
+  color: #191f28;
+}
+
+.tabBtnActive {
+  background: #2563eb;
+  color: #fff;
+}
+
+.tabBtnActive:hover {
+  background: #1d4ed8;
+  color: #fff;
+}
+
+.searchWrap {
+  position: relative;
+}
+
+.searchIcon {
+  position: absolute;
+  top: 50%;
+  left: 10px;
+  transform: translateY(-50%);
+  color: #adb5bd;
+}
+
+.searchInput {
+  padding: 8px 12px 8px 32px;
+  border: 1px solid #e5e8eb;
+  border-radius: 8px;
+  font-size: 13px;
+  width: 240px;
+  outline: none;
+  background: #fff;
+}
+
+.searchInput:focus {
+  border-color: #2563eb;
+}
+
+/* ─── 상태 ──────────────────────────────────────────────────────────── */
+.loadingWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 40px;
+  color: #6b7684;
+  font-size: 13px;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ─── Pagination ────────────────────────────────────────────────────── */
+.paginationWrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 4px;
+}
+
+.paginationInfo {
+  font-size: 12px;
+  color: #6b7684;
+}
+
+.paginationButtons {
+  display: inline-flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.paginationBtn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid #e5e8eb;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  color: #4e5968;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.paginationBtn:hover:not(:disabled) {
+  background: #f5f6f8;
+}
+
+.paginationBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.paginationBtnActive {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+  font-weight: 700;
+}
+
+.paginationBtnActive:hover:not(:disabled) {
+  background: #1d4ed8;
+  color: #fff;
+}
+
+.empty {
+  padding: 60px 20px;
+  text-align: center;
+  color: #adb5bd;
+  font-size: 14px;
+  background: #f9fafb;
+  border-radius: 12px;
+}
+
+/* ─── 테이블 ────────────────────────────────────────────────────────── */
+.tableCard {
+  background: #fff;
+  border: 1px solid #e5e8eb;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table thead {
+  background: #f9fafb;
+}
+
+.table th,
+.table td {
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid #f0f1f3;
+}
+
+.table th {
+  font-size: 12px;
+  font-weight: 600;
+  color: #4e5968;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.table tr:hover td {
+  background: #fafbfc;
+}
+
+.nameCell {
+  font-weight: 600;
+  color: #191f28;
+}
+
+.detailBtn {
+  padding: 6px 12px;
+  font-size: 12px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 6px;
+  color: #1d4ed8;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.detailBtn:hover {
+  background: #dbeafe;
+}
+
+/* ─── 뱃지 ──────────────────────────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+.badgeDraft {
+  background: #f1f3f5;
+  color: #4e5968;
+}
+
+.badgeSubmitted {
+  background: #fff7e6;
+  color: #d97706;
+}
+
+.badgeApproved {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.badgeRejected {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+/* ─── 모달 ──────────────────────────────────────────────────────────── */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal {
+  background: #fff;
+  border-radius: 14px;
+  width: 100%;
+  max-width: 880px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  border-bottom: 1px solid #f0f1f3;
+}
+
+.modalTitleWrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modalTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #191f28;
+}
+
+.closeBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #6b7684;
+  font-size: 18px;
+}
+
+.closeBtn:hover {
+  background: #f5f6f8;
+}
+
+.modalBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* ─── 모달 섹션 ─────────────────────────────────────────────────────── */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #191f28;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #f0f1f3;
+}
+
+.profileRow {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.profileImg {
+  width: 100px;
+  height: 100px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid #e5e8eb;
+}
+
+.profilePlaceholder {
+  width: 100px;
+  height: 100px;
+  border-radius: 10px;
+  background: #f9fafb;
+  border: 1px dashed #d1d8e0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: #adb5bd;
+}
+
+.detailGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 14px;
+}
+
+.detailGrid3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px 14px;
+  padding-top: 10px;
+  border-top: 1px dashed #e9ecef;
+}
+
+@media (max-width: 640px) {
+  .detailGrid,
+  .detailGrid3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.detailFull {
+  grid-column: 1 / -1;
+}
+
+.detailLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7684;
+}
+
+.detailValue {
+  font-size: 13px;
+  color: #191f28;
+  font-weight: 500;
+  word-break: break-all;
+}
+
+.detailValueWarn {
+  color: #b91c1c;
+  font-weight: 700;
+}
+
+.warningInline {
+  font-size: 12px;
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-top: 4px;
+}
+
+/* ─── 하위 테이블 ───────────────────────────────────────────────────── */
+.subTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.subTable th,
+.subTable td {
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid #f0f1f3;
+}
+
+.subTable th {
+  background: #f9fafb;
+  font-size: 11px;
+  font-weight: 600;
+  color: #4e5968;
+}
+
+.modalEmpty {
+  padding: 14px;
+  text-align: center;
+  color: #adb5bd;
+  font-size: 12px;
+  background: #f9fafb;
+  border-radius: 6px;
+}
+
+.prevReject {
+  font-size: 12px;
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+/* ─── 푸터 ──────────────────────────────────────────────────────────── */
+.modalFooter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 24px;
+  border-top: 1px solid #f0f1f3;
+  background: #f9fafb;
+}
+
+.footerInfo {
+  flex: 1;
+  font-size: 12px;
+  color: #6b7684;
+}
+
+.btnApprove,
+.btnReject,
+.btnSecondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+.btnApprove {
+  background: #047857;
+  color: #fff;
+}
+
+.btnApprove:hover:not(:disabled) {
+  background: #065f46;
+}
+
+.btnReject {
+  background: #b91c1c;
+  color: #fff;
+}
+
+.btnReject:hover:not(:disabled) {
+  background: #991b1b;
+}
+
+.btnSecondary {
+  background: #fff;
+  color: #4e5968;
+  border: 1px solid #e5e8eb;
+}
+
+.btnSecondary:hover:not(:disabled) {
+  background: #f9fafb;
+}
+
+.btnApprove:disabled,
+.btnReject:disabled,
+.btnSecondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ─── 반려 폼 ──────────────────────────────────────────────────────── */
+.rejectForm {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rejectInput {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  font-size: 13px;
+  outline: none;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.rejectInput:focus {
+  border-color: #b91c1c;
+}
+
+.rejectActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}

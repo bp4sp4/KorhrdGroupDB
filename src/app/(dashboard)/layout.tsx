@@ -21,6 +21,7 @@ export default function DashboardLayout({
   const [permissions, setPermissions] = useState<{ section: string; scope: string; allowed_tabs?: string[] | null }[]>([])
   const [revenueOwnDivisions, setRevenueOwnDivisions] = useState<('nms' | 'cert' | 'abroad')[]>([])
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [hrRecordStatus, setHrRecordStatus] = useState<'unknown' | 'approved' | 'blocked'>('unknown')
   const supabase = createClient()
 
   const refreshMe = useCallback(async () => {
@@ -48,6 +49,25 @@ export default function DashboardLayout({
     setDisplayName(name)
     setPermissions(perms)
     setRevenueOwnDivisions(divisions)
+
+    // 인사기록카드 승인 여부 — master-admin은 체크 생략
+    if (role === 'master-admin') {
+      setHrRecordStatus('approved')
+    } else {
+      try {
+        const hrRes = await fetch('/api/hr-records/me', { cache: 'no-store' })
+        if (hrRes.ok) {
+          const d = await hrRes.json()
+          setHrRecordStatus(
+            d?.record?.status === 'approved' ? 'approved' : 'blocked',
+          )
+        } else {
+          setHrRecordStatus('blocked')
+        }
+      } catch {
+        setHrRecordStatus('blocked')
+      }
+    }
   }, [])
 
   // 1) 최초 1회: 세션 확인 + 유저 정보 로드
@@ -67,11 +87,36 @@ export default function DashboardLayout({
     const handlePermissionsUpdated = () => {
       void refreshMe()
     }
+    // 작성 페이지에서 제출/저장 직후 즉시 가드 갱신용 (같은 탭)
+    const handleHrUpdated = () => {
+      void refreshMe()
+    }
 
     window.addEventListener('permissions-updated', handlePermissionsUpdated)
+    window.addEventListener('hr-record-updated', handleHrUpdated)
     return () => {
       window.removeEventListener('permissions-updated', handlePermissionsUpdated)
+      window.removeEventListener('hr-record-updated', handleHrUpdated)
     }
+  }, [refreshMe])
+
+  // hr_records Realtime 구독 — 어드민 승인/반려/타사용자 작성 즉시 반영
+  useEffect(() => {
+    const channel = supabase
+      .channel('hr-records-self')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'hr_records' },
+        () => {
+          // 어떤 행이든 변경되면 자기 상태 다시 확인 (서버에서 user_id 매칭)
+          void refreshMe()
+        },
+      )
+      .subscribe()
+    return () => {
+      void supabase.removeChannel(channel)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshMe])
 
   // 2) 권한 체크 + 리다이렉트 — userRole/permissions/pathname 바뀔 때마다 실행
@@ -116,6 +161,21 @@ export default function DashboardLayout({
       return
     }
 
+    // 인사기록카드 승인 가드 — master-admin 제외
+    // 승인 안 됐고, 인사기록카드 작성 페이지가 아니면 강제 리다이렉트
+    if (
+      userRole !== 'master-admin' &&
+      hrRecordStatus === 'blocked' &&
+      !pathname.startsWith('/me/hr-record')
+    ) {
+      router.replace('/me/hr-record')
+      return
+    }
+    // hr 상태 로드 전(unknown)에는 차단 화면을 보여주지 않게 진행 보류
+    if (userRole !== 'master-admin' && hrRecordStatus === 'unknown') {
+      return
+    }
+
     const isAdminRole = userRole === 'admin' || userRole === 'master-admin'
     if (!isAdminRole) {
       const getFirstAllowedPath = () => {
@@ -141,7 +201,7 @@ export default function DashboardLayout({
 
     // 리다이렉트 없이 여기까지 오면 권한 OK → 콘텐츠 표시
     setIsChecking(false)
-  }, [pathname, userRole, permissions, router])
+  }, [pathname, userRole, permissions, hrRecordStatus, router])
 
   if (isChecking) {
     return (

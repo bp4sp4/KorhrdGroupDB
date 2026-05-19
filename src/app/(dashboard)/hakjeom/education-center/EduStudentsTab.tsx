@@ -9,6 +9,7 @@ import StudentModal from './components/StudentModal';
 import FilterDropdown from './components/FilterDropdown';
 import EduSubjectsTab from './EduSubjectsTab';
 import EduManagersTab from './EduManagersTab';
+import EduCentersTab from './EduCentersTab';
 import { DateRangeCalendar } from '@/components/DateRangeCalendar';
 import type { DateRange } from '@/components/DateRangeCalendar';
 import type { EduStudent, EduCourse, EduEducationCenter, EduStudentFormData, EduMonthlyEnrollment } from './types';
@@ -81,10 +82,10 @@ function getLogActionType(action: string): { label: string; color: string; bg: s
   return { label: '기타', color: '#6B7684', bg: '#F2F4F6' };
 }
 
-type SubTab = '학생관리' | '활동로그' | '환불목록' | '삭제목록' | '교육원 과목' | '교육원 관리자';
+type SubTab = '학생관리' | '활동로그' | '환불목록' | '삭제목록' | '교육원 과목' | '교육원 관리자' | '교육원 기관';
 
 // 사원·주임 급은 학생관리만 보임. 대리 이상부터 전체 탭 노출.
-const MANAGER_ONLY_TABS: SubTab[] = ['활동로그', '환불목록', '삭제목록', '교육원 과목', '교육원 관리자'];
+const MANAGER_ONLY_TABS: SubTab[] = ['활동로그', '환불목록', '삭제목록', '교육원 과목', '교육원 관리자', '교육원 기관'];
 
 // 대리 이상 직급 키워드 (lib/auth/managementAccess.ts 와 동일)
 const HIGHER_POSITION_KEYWORDS = ['대리', '과장', '차장', '부장', '이사', '대표', '원장', '실장', '본부장', '팀장'];
@@ -472,7 +473,7 @@ export default function EduStudentsTab({ isActive }: Props) {
     <>
       {/* 탭 네비게이션 */}
       <div className={styles.tab_bar}>
-        {((['학생관리', '활동로그', '환불목록', '삭제목록', '교육원 과목', '교육원 관리자'] as const).filter((tab) => !MANAGER_ONLY_TABS.includes(tab) || canManage)).map((tab) => (
+        {((['학생관리', '활동로그', '환불목록', '삭제목록', '교육원 과목', '교육원 관리자', '교육원 기관'] as const).filter((tab) => !MANAGER_ONLY_TABS.includes(tab) || canManage)).map((tab) => (
           <button
             key={tab}
             className={`${styles.tab_btn} ${activeTab === tab ? styles.tab_btn_active : ''}`}
@@ -1008,6 +1009,11 @@ export default function EduStudentsTab({ isActive }: Props) {
       {/* ── 교육원 관리자 (대리 이상) ── */}
       {activeTab === '교육원 관리자' && canManage && (
         <EduManagersTab isActive={activeTab === '교육원 관리자'} />
+      )}
+
+      {/* ── 교육원 기관 (대리 이상) ── */}
+      {activeTab === '교육원 기관' && canManage && (
+        <EduCentersTab isActive={activeTab === '교육원 기관'} />
       )}
 
       {modalOpen && (
