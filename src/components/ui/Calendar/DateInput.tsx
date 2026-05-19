@@ -18,6 +18,9 @@ interface DateInputProps {
   variant?: 'input' | 'button' // 트리거 스타일 (기본 input)
   label?: string               // variant="button" 일 때 버튼 텍스트 (기본 "연락예정")
   showIcon?: boolean           // 트리거에 캘린더 아이콘 표시 여부 (기본 true)
+  minDate?: Date               // 선택 가능 최소 날짜 (포함)
+  maxDate?: Date               // 선택 가능 최대 날짜 (포함)
+  defaultMonth?: Date          // value가 없을 때 캘린더 첫 진입 월 (미지정 시 minDate로 fallback)
 }
 
 function parseDate(str: string): Date | undefined {
@@ -45,6 +48,9 @@ export function DateInput({
   variant = 'input',
   label = '연락예정',
   showIcon = true,
+  minDate,
+  maxDate,
+  defaultMonth,
 }: DateInputProps) {
   const [open, setOpen] = useState(false)
   const [popoverStyle, setPopoverStyle] = useState<React.CSSProperties>({})
@@ -145,6 +151,15 @@ export function DateInput({
           <Calendar
             value={selected}
             onChange={handleSelect}
+            disabled={
+              minDate || maxDate
+                ? [
+                    ...(minDate ? [{ before: minDate }] : []),
+                    ...(maxDate ? [{ after: maxDate }] : []),
+                  ]
+                : undefined
+            }
+            defaultMonth={defaultMonth ?? minDate ?? maxDate}
           />
         </div>
       )}

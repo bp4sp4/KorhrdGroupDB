@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Image from 'next/image'
-import { CheckCircle2, XCircle, Clock, Search, Loader2 } from 'lucide-react'
+import Link from 'next/link'
+import { CheckCircle2, XCircle, Clock, Search, Loader2, Pencil } from 'lucide-react'
 import styles from './HrRecordsTab.module.css'
 
 type Status = 'draft' | 'submitted' | 'approved' | 'rejected'
@@ -509,6 +510,12 @@ function DetailModal({
               </div>
             ) : (
               <>
+                <Link
+                  href={`/admin/hr-records/${record.id}/edit`}
+                  className={styles.btnSecondary}
+                >
+                  <Pencil size={14} /> 편집
+                </Link>
                 <button
                   type="button"
                   className={styles.btnReject}
@@ -536,6 +543,12 @@ function DetailModal({
                 ? '이미 승인된 카드입니다.'
                 : '아직 제출되지 않은 카드입니다.'}
             </span>
+            <Link
+              href={`/admin/hr-records/${record.id}/edit`}
+              className={styles.btnSecondary}
+            >
+              <Pencil size={14} /> 편집
+            </Link>
             <button
               type="button"
               className={styles.btnSecondary}

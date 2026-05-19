@@ -83,18 +83,69 @@ function getDefaultMonthTabs(): string[] {
   return tabs;
 }
 
-// cohort 문자열에서 정렬 키 추출
-// "5월" → 5, "2026년 5월" → 202605, "2026년 5월 4일" → 20260504, "2026-05-04" → 20260504
-// cohort("5월") → DateInput value("2026-05-01") 변환
+// cohort 문자열에서 월(1~12) 추출
+// "5월" → 5, "2026-05-15" → 5, "2026년 5월" → 5, "2026년 5월 4일" → 5
+function cohortToMonth(cohort: string | null | undefined): number | null {
+  if (!cohort) return null;
+  const trimmed = cohort.trim();
+  // YYYY-MM-DD 또는 YYYY-MM
+  const ymd = trimmed.match(/^(\d{4})-(\d{1,2})(?:-(\d{1,2}))?$/);
+  if (ymd) {
+    const m = Number(ymd[2]);
+    return m >= 1 && m <= 12 ? m : null;
+  }
+  // "YYYY년 M월 D일" / "YYYY년 M월"
+  const kr = trimmed.match(/(\d{4})년\s*(\d{1,2})월/);
+  if (kr) {
+    const m = Number(kr[2]);
+    return m >= 1 && m <= 12 ? m : null;
+  }
+  // "M월"
+  const mo = trimmed.match(/^(\d{1,2})월$/);
+  if (mo) {
+    const m = Number(mo[1]);
+    return m >= 1 && m <= 12 ? m : null;
+  }
+  return null;
+}
+
+// cohort 문자열을 표시용 라벨로 변환: 항상 "M월" 형식
+// "2026-05-15" → "5월", "5월" → "5월"
+function cohortToMonthLabel(cohort: string | null | undefined): string | null {
+  const m = cohortToMonth(cohort);
+  return m ? `${m}월` : null;
+}
+
+// cohort → DateInput value (YYYY-MM-DD)
+// "2026-05-15" → "2026-05-15" (그대로)
+// "5월" → "{year}-05-01" (월의 1일로 보정)
+// "YYYY-MM" → "YYYY-MM-01"
 function cohortToDate(cohort: string | null, year: number): string {
   if (!cohort) return "";
-  const m = cohort.trim().match(/^(\d+)월$/);
-  if (!m) return "";
-  const month = String(Math.min(12, Math.max(1, Number(m[1])))).padStart(
-    2,
-    "0",
-  );
-  return `${year}-${month}-01`;
+  const trimmed = cohort.trim();
+  // 이미 YYYY-MM-DD 형식이면 그대로
+  const ymd = trimmed.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (ymd) {
+    const y = ymd[1];
+    const mo = ymd[2].padStart(2, "0");
+    const d = ymd[3].padStart(2, "0");
+    return `${y}-${mo}-${d}`;
+  }
+  // YYYY-MM 형식이면 1일 추가
+  const ym = trimmed.match(/^(\d{4})-(\d{1,2})$/);
+  if (ym) {
+    return `${ym[1]}-${ym[2].padStart(2, "0")}-01`;
+  }
+  // "M월" 형식: 활성 연도 + 월 1일
+  const mo = trimmed.match(/^(\d+)월$/);
+  if (mo) {
+    const month = String(Math.min(12, Math.max(1, Number(mo[1])))).padStart(
+      2,
+      "0",
+    );
+    return `${year}-${month}-01`;
+  }
+  return "";
 }
 
 function cohortSortKey(c: string): number {
@@ -180,10 +231,14 @@ export default function EduSalesPage() {
       });
   }, []);
 
-  // 월별 탭 — API에서 받은 cohorts + 기본 탭 머지 (정렬)
+  // 월별 탭 — API에서 받은 cohorts + 기본 탭 머지, cohort 값에서 월만 추출해 "X월"로 정규화
   const [apiCohorts, setApiCohorts] = useState<string[]>([]);
   const monthTabs = useMemo(() => {
-    const set = new Set<string>([...getDefaultMonthTabs(), ...apiCohorts]);
+    const set = new Set<string>(getDefaultMonthTabs());
+    apiCohorts.forEach((c) => {
+      const label = cohortToMonthLabel(c);
+      if (label) set.add(label);
+    });
     return Array.from(set).sort((a, b) => cohortSortKey(a) - cohortSortKey(b));
   }, [apiCohorts]);
   const [activeMonth, setActiveMonth] = useState<string>(() => defaultCohort());
@@ -380,10 +435,10 @@ export default function EduSalesPage() {
       .replace(/-$/, "");
 
     if (activeMonth === "전체") {
-      // 월별 그룹핑 (cohortSortKey 순으로 정렬)
+      // 월별 그룹핑 (cohort에서 월 추출해 "X월" 단위로)
       const groups = new Map<string, SalesRow[]>();
       filteredRows.forEach((r) => {
-        const key = r.cohort ?? "기타";
+        const key = cohortToMonthLabel(r.cohort) ?? "기타";
         if (!groups.has(key)) groups.set(key, []);
         groups.get(key)!.push(r);
       });
@@ -444,9 +499,9 @@ export default function EduSalesPage() {
   // 발행 상태 필터
   const filteredRows = useMemo(() => {
     let out = rows;
-    // 활성 월 필터 (서버 cohort 파라미터 제거 → 클라이언트 필터)
+    // 활성 월 필터 — cohort에서 월 추출해서 "X월" 라벨과 매칭 (일자 단위 cohort도 포함)
     if (activeMonth && activeMonth !== "전체") {
-      out = out.filter((r) => r.cohort === activeMonth);
+      out = out.filter((r) => cohortToMonthLabel(r.cohort) === activeMonth);
     }
     if (filterPublished !== "all") {
       out = out.filter((r) =>
@@ -485,12 +540,12 @@ export default function EduSalesPage() {
     return Array.from(set).sort();
   }, [rows]);
 
-  // 월별 탭당 건수 (API의 cohort 기준, 전체 탭에서 계산 어려우니 별도 fetch 없이 현재 rows 기반으로 추정)
-  // → 정확한 건수는 활성 월 변경 시 갱신
+  // 월별 탭당 건수 — cohort에서 월 추출해 "X월" 단위로 집계
   const monthTabCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     rows.forEach((r) => {
-      if (r.cohort) counts[r.cohort] = (counts[r.cohort] ?? 0) + 1;
+      const label = cohortToMonthLabel(r.cohort);
+      if (label) counts[label] = (counts[label] ?? 0) + 1;
     });
     return counts;
   }, [rows]);
@@ -534,6 +589,15 @@ export default function EduSalesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeMonth]);
   const activeYear = now.getFullYear();
+  // 월 탭(예: "5월") 활성화 여부 — true면 그 월에서 cohort/payment_date 변경 금지
+  const isMonthTab = /^\d+월$/.test(activeMonth);
+  // 활성 월의 1일/말일 (payment_date 캘린더 제한용)
+  const activeMonthRange = useMemo(() => {
+    if (!isMonthTab) return null;
+    const first = new Date(activeYear, activeMonthNum - 1, 1);
+    const last = new Date(activeYear, activeMonthNum, 0); // 다음 달 0일 = 이번 달 말일
+    return { first, last };
+  }, [isMonthTab, activeYear, activeMonthNum]);
   const refundCountFiltered = useMemo(
     () => filteredRows.filter((r) => r.refund_status === "환불완료").length,
     [filteredRows],
@@ -584,9 +648,8 @@ export default function EduSalesPage() {
     const monthly: Record<number, number> = {};
     target.forEach((r) => {
       if (r.refund_status === "환불완료") return;
-      const m = r.cohort?.match(/^(\d+)월$/);
-      if (!m) return;
-      const num = Number(m[1]);
+      const num = cohortToMonth(r.cohort);
+      if (!num) return;
       monthly[num] = (monthly[num] ?? 0) + (r.total_amount ?? 0);
     });
     const result: { m: number; revenue: number; amount: number }[] = [];
@@ -876,7 +939,7 @@ export default function EduSalesPage() {
                       />
                     </div>
                   </td>
-                  {/* 개강반 — 달력에서 월 선택 → "X월"로 저장 */}
+                  {/* 개강반 — 캘린더에서 선택한 일자 그대로 저장 (예: "2026-05-15") */}
                   <td className={`${styles.td} ${styles.td_center}`}>
                     <DateInput
                       value={cohortToDate(r.cohort, activeYear)}
@@ -887,12 +950,21 @@ export default function EduSalesPage() {
                         }
                         const parts = v.split("-");
                         const m = parts.length >= 2 ? Number(parts[1]) : NaN;
-                        if (Number.isFinite(m) && m >= 1 && m <= 12) {
-                          updateRow(r, { cohort: `${m}월` });
+                        if (!Number.isFinite(m) || m < 1 || m > 12) return;
+                        // 월 탭에서는 활성 월 외 선택 무시 (안전장치)
+                        if (isMonthTab && m !== activeMonthNum) {
+                          alert(
+                            `개강반은 ${activeMonth} 범위에서만 선택할 수 있습니다.`,
+                          );
+                          return;
                         }
+                        // 일자까지 보존 — DB에 "YYYY-MM-DD" 형식으로 저장
+                        updateRow(r, { cohort: v });
                       }}
                       placeholder="개강반"
                       triggerClassName={styles.inline_date_trigger}
+                      minDate={activeMonthRange?.first}
+                      maxDate={activeMonthRange?.last}
                     />
                   </td>
                   {/* 학생명 — 읽기전용 */}
@@ -955,16 +1027,33 @@ export default function EduSalesPage() {
                       />
                     </div>
                   </td>
-                  {/* 결제일 — 커스텀 달력 */}
+                  {/* 결제일 — 월 탭에서는 그 월 범위 내만 선택 가능 */}
                   <td className={`${styles.td} ${styles.td_center}`}>
                     <div className={!r.payment_date ? styles.cell_empty_hint : undefined}>
                       <DateInput
                         value={r.payment_date ?? ""}
-                        onChange={(v) =>
-                          updateRow(r, { payment_date: v || null })
-                        }
+                        onChange={(v) => {
+                          if (!v) {
+                            updateRow(r, { payment_date: null });
+                            return;
+                          }
+                          // 월 탭에서는 해당 월 외 날짜는 무시 (안전장치)
+                          if (isMonthTab) {
+                            const parts = v.split("-");
+                            const m = Number(parts[1]);
+                            if (m !== activeMonthNum) {
+                              alert(
+                                `결제일은 ${activeMonth} 범위에서만 선택할 수 있습니다.`,
+                              );
+                              return;
+                            }
+                          }
+                          updateRow(r, { payment_date: v });
+                        }}
                         placeholder="결제일"
                         triggerClassName={styles.inline_date_trigger}
+                        minDate={activeMonthRange?.first}
+                        maxDate={activeMonthRange?.last}
                       />
                     </div>
                   </td>

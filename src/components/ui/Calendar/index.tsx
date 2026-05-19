@@ -12,6 +12,8 @@ import styles from './Calendar.module.css'
 interface CalendarBaseProps {
   /** 비활성화할 날짜 (react-day-picker Matcher 형식) */
   disabled?: Matcher | Matcher[]
+  /** value가 없을 때 처음 표시할 월 */
+  defaultMonth?: Date
 }
 
 export interface CalendarSingleProps extends CalendarBaseProps {
@@ -82,7 +84,7 @@ const START_MONTH = new Date(2020, 0)
 const END_MONTH   = new Date(2035, 11)
 
 export function Calendar(props: CalendarProps) {
-  const { disabled, mode = 'single' } = props
+  const { disabled, defaultMonth, mode = 'single' } = props
 
   const baseProps = {
     locale: ko,
@@ -92,6 +94,7 @@ export function Calendar(props: CalendarProps) {
     endMonth: END_MONTH,
     components: { Chevron: NavChevron },
     ...(disabled !== undefined && { disabled }),
+    ...(defaultMonth !== undefined && { defaultMonth }),
   }
 
   if (mode === 'range') {
