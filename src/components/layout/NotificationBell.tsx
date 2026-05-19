@@ -165,6 +165,23 @@ function setSeenTaskIds(ids: number[]) {
   }
 }
 
+// 결재 도착 알림(APPROVAL_SUBMITTED)용 seen IDs
+function getSeenApprovalIds(): number[] {
+  try {
+    return JSON.parse(localStorage.getItem("seenApprovalNotifIds") ?? "[]");
+  } catch {
+    return [];
+  }
+}
+function setSeenApprovalIds(ids: number[]) {
+  try {
+    const capped = ids.slice(-200);
+    localStorage.setItem("seenApprovalNotifIds", JSON.stringify(capped));
+  } catch {
+    /* ignore */
+  }
+}
+
 const RESTRICTED_POSITIONS = new Set(["사원", "주임"]);
 const HIDDEN_TYPES_FOR_RESTRICTED = new Set(["NEW_CONSULTATION"]);
 
@@ -205,6 +222,9 @@ export default function NotificationBell() {
   // 업무 알림 팝업
   const [taskPopup, setTaskPopup] = useState<Notification | null>(null);
   const lastTaskIdRef = useRef<number | null>(null);
+  // 결재 도착 알림 팝업
+  const [approvalPopup, setApprovalPopup] = useState<Notification | null>(null);
+  const lastApprovalIdRef = useRef<number | null>(null);
   // 본인 작성 알림 억제용 자기 ID (ref + state — state는 useEffect 트리거용)
   const myIdRef = useRef<number | null>(null);
   const [myId, setMyId] = useState<number | null>(null);
@@ -307,6 +327,22 @@ export default function NotificationBell() {
     }
   }, [notifications, myId, taskPopup]);
 
+  // 로그인/마운트 시 미확인 결재 도착(APPROVAL_SUBMITTED) 알림이 있으면 팝업으로 1회 노출
+  useEffect(() => {
+    if (approvalPopup) return;
+    const seen = getSeenApprovalIds();
+    const candidate = notifications.find(
+      (n) =>
+        n.type === "APPROVAL_SUBMITTED" &&
+        !n.is_read &&
+        !seen.includes(n.id),
+    );
+    if (candidate && lastApprovalIdRef.current !== candidate.id) {
+      lastApprovalIdRef.current = candidate.id;
+      setApprovalPopup(candidate);
+    }
+  }, [notifications, approvalPopup]);
+
   useEffect(() => {
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 15000);
@@ -330,6 +366,17 @@ export default function NotificationBell() {
             if (todayActive && !isMine && !alreadySeen) {
               lastTaskIdRef.current = n.id;
               setTaskPopup(n);
+            }
+          }
+          // 결재 도착 알림(APPROVAL_SUBMITTED) — 본인에게 결재선이 지정된 경우 즉시 팝업
+          if (
+            n?.type === "APPROVAL_SUBMITTED" &&
+            n.id !== lastApprovalIdRef.current
+          ) {
+            const alreadySeen = getSeenApprovalIds().includes(n.id);
+            if (!alreadySeen) {
+              lastApprovalIdRef.current = n.id;
+              setApprovalPopup(n);
             }
           }
         },
@@ -727,6 +774,52 @@ export default function NotificationBell() {
     </div>
   ) : null;
 
+  // 결재 도착 알림 팝업
+  const dismissApprovalPopup = (openLink: boolean) => {
+    if (approvalPopup) {
+      const seen = getSeenApprovalIds();
+      setSeenApprovalIds(Array.from(new Set([...seen, approvalPopup.id])));
+    }
+    const link = approvalPopup?.link ?? null;
+    setApprovalPopup(null);
+    if (openLink && link) window.location.href = link;
+  };
+
+  const approvalPopupEl = approvalPopup ? (
+    <div
+      className={styles.newPopupOverlay}
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) dismissApprovalPopup(false);
+      }}
+    >
+      <div className={styles.newPopup} role="dialog" aria-modal="true">
+        <div className={styles.typeIcon} style={{ marginBottom: 8 }}>
+          <FileText size={28} />
+        </div>
+        <div className={styles.newPopupTitle}>
+          {approvalPopup.title || "결재선이 지정되었습니다"}
+        </div>
+        <div className={styles.newPopupDesc} style={{ whiteSpace: "pre-wrap" }}>
+          {approvalPopup.message}
+        </div>
+        <div className={styles.newPopupActions}>
+          <button
+            className={styles.newPopupBtnGhost}
+            onClick={() => dismissApprovalPopup(false)}
+          >
+            나중에
+          </button>
+          <button
+            className={styles.newPopupBtnPrimary}
+            onClick={() => dismissApprovalPopup(true)}
+          >
+            결재하러 가기
+          </button>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
   // 새 공지 팝업
   const newPopup = showNewPopup ? (
     <div
@@ -794,6 +887,9 @@ export default function NotificationBell() {
       {typeof document !== "undefined" &&
         taskPopupEl &&
         createPortal(taskPopupEl, document.body)}
+      {typeof document !== "undefined" &&
+        approvalPopupEl &&
+        createPortal(approvalPopupEl, document.body)}
     </div>
   );
 }

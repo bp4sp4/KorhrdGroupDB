@@ -104,6 +104,19 @@
 }
 
 /* ─── 월별 탭 ─────────────────────────────────────────────────────── */
+.readonly_notice {
+  background: #fef3c7;
+  border: 1px solid #fcd34d;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #92400e;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
 .month_tabs {
   display: flex;
   gap: 4px;

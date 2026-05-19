@@ -18,13 +18,14 @@ interface Props {
   fullWidth?: boolean
   minWidth?: number
   size?: 'sm' | 'md'
+  disabled?: boolean
 }
 
 function normalize(opts: (string | Option)[]): Option[] {
   return opts.map((o) => typeof o === 'string' ? { value: o, label: o } : o)
 }
 
-export default function CustomSelect({ value, options, onChange, ariaLabel, placeholder, fullWidth, minWidth, size = 'md' }: Props) {
+export default function CustomSelect({ value, options, onChange, ariaLabel, placeholder, fullWidth, minWidth, size = 'md', disabled }: Props) {
   const [open, setOpen] = useState(false)
   const [panelStyle, setPanelStyle] = useState<React.CSSProperties>({})
   const [mounted, setMounted] = useState(false)
@@ -92,6 +93,7 @@ export default function CustomSelect({ value, options, onChange, ariaLabel, plac
         aria-label={ariaLabel}
         aria-haspopup="listbox"
         aria-expanded={open}
+        disabled={disabled}
         onClick={() => setOpen((v) => !v)}
       >
         <span className={styles.value}>{selectedLabel}</span>

@@ -203,14 +203,17 @@ export default function EduSalesPage() {
   const [loading, setLoading] = useState(true);
   const [canViewAll, setCanViewAll] = useState(false);
   const [myDisplayName, setMyDisplayName] = useState<string>("");
+  const [isAdmin, setIsAdmin] = useState(false);
 
-  // 현재 로그인 사용자 이름 (담당자 헤더용)
+  // 현재 로그인 사용자 이름 + 권한 (admin/master-admin은 모든 월 편집 가능)
   useEffect(() => {
     fetch("/api/auth/me")
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         const name = (data?.displayName ?? data?.display_name ?? "").trim();
         if (name) setMyDisplayName(name);
+        const role = data?.role ?? "";
+        setIsAdmin(role === "admin" || role === "master-admin");
       })
       .catch(() => {});
   }, []);
@@ -343,6 +346,13 @@ export default function EduSalesPage() {
       education_center_name: string | null;
     }>,
   ) => {
+    // 권한 안전장치: 어드민이 아닌 사용자는 현재 월에서만 편집 가능
+    if (!canEdit) {
+      alert(
+        `${activeMonth} 데이터는 수정할 수 없습니다. (현재 월(${currentMonthLabel})만 수정 가능)`,
+      );
+      return;
+    }
     // 낙관적 업데이트
     setRows((prev) =>
       prev.map((r) =>
@@ -591,6 +601,10 @@ export default function EduSalesPage() {
   const activeYear = now.getFullYear();
   // 월 탭(예: "5월") 활성화 여부 — true면 그 월에서 cohort/payment_date 변경 금지
   const isMonthTab = /^\d+월$/.test(activeMonth);
+  // 현재 월 라벨 ("5월" 등) — 일반 사용자는 이 탭에서만 편집 가능, 어드민은 모두 가능
+  const currentMonthLabel = `${kstNow().getMonth() + 1}월`;
+  // 편집 가능 여부 — 어드민이거나 활성 탭이 현재 월일 때만 true
+  const canEdit = isAdmin || activeMonth === currentMonthLabel;
   // 활성 월의 1일/말일 (payment_date 캘린더 제한용)
   const activeMonthRange = useMemo(() => {
     if (!isMonthTab) return null;
@@ -716,6 +730,14 @@ export default function EduSalesPage() {
           />
         )}
       </div>
+
+      {/* 권한 안내 — 어드민이 아니고 현재 월 탭이 아닐 때 표시 */}
+      {!canEdit && (
+        <div className={styles.readonly_notice}>
+          🔒 {activeMonth} 데이터는 보기 전용입니다. 현재 월({currentMonthLabel})만 수정 가능하며,
+          지난 월 또는 전체 탭은 관리자만 수정할 수 있습니다.
+        </div>
+      )}
 
       {/* 월별 탭 */}
       <div className={styles.month_tabs} data-guide="edu-sales-month-tabs">
@@ -936,6 +958,7 @@ export default function EduSalesPage() {
                             education_center_name: v || null,
                           })
                         }
+                        disabled={!canEdit}
                       />
                     </div>
                   </td>
@@ -965,6 +988,7 @@ export default function EduSalesPage() {
                       triggerClassName={styles.inline_date_trigger}
                       minDate={activeMonthRange?.first}
                       maxDate={activeMonthRange?.last}
+                      disabled={!canEdit}
                     />
                   </td>
                   {/* 학생명 — 읽기전용 */}
@@ -980,6 +1004,7 @@ export default function EduSalesPage() {
                         updateRow(r, { student_username: v.trim() || null })
                       }
                       width={90}
+                      disabled={!canEdit}
                     />
                   </td>
                   <td className={`${styles.td} ${styles.td_center}`}>{formatPhone(r.phone)}</td>
@@ -990,6 +1015,7 @@ export default function EduSalesPage() {
                       onSave={(v) => updateRow(r, { unit_price: v })}
                       align="center"
                       width={70}
+                      disabled={!canEdit}
                     />
                   </td>
                   {/* 매출 — 인라인 숫자 (환불완료 시 취소선) */}
@@ -1005,6 +1031,7 @@ export default function EduSalesPage() {
                       onSave={(v) => updateRow(r, { total_amount: v })}
                       align="center"
                       width={90}
+                      disabled={!canEdit}
                     />
                   </td>
                   {/* 결제방법 — 커스텀 select */}
@@ -1024,6 +1051,7 @@ export default function EduSalesPage() {
                             payment_method: (v || null) as PaymentMethod | null,
                           })
                         }
+                        disabled={!canEdit}
                       />
                     </div>
                   </td>
@@ -1054,6 +1082,7 @@ export default function EduSalesPage() {
                         triggerClassName={styles.inline_date_trigger}
                         minDate={activeMonthRange?.first}
                         maxDate={activeMonthRange?.last}
+                        disabled={!canEdit}
                       />
                     </div>
                   </td>
@@ -1065,6 +1094,7 @@ export default function EduSalesPage() {
                         onSave={(v) => updateRow(r, { subject_count: v })}
                         align="center"
                         width={48}
+                        disabled={!canEdit}
                       />
                     </div>
                   </td>
@@ -1077,7 +1107,8 @@ export default function EduSalesPage() {
                       type="button"
                       className={styles.notes_btn}
                       onClick={() => openNotes(r)}
-                      title={r.notes ?? "클릭해 입력"}
+                      title={canEdit ? (r.notes ?? "클릭해 입력") : (r.notes ?? "수정 불가")}
+                      disabled={!canEdit && !r.notes}
                     >
                       {r.notes ? (
                         r.notes.length > 18 ? (
@@ -1098,6 +1129,7 @@ export default function EduSalesPage() {
                         updateRow(r, { process_number: v.trim() || null })
                       }
                       width={130}
+                      disabled={!canEdit}
                     />
                   </td>
                   {canViewAll && (
@@ -1111,6 +1143,7 @@ export default function EduSalesPage() {
                           }
                           placeholder="발급일"
                           triggerClassName={styles.inline_date_trigger}
+                          disabled={!canEdit}
                         />
                       </td>
                       {/* 발행 완료 — 체크박스 */}
@@ -1119,6 +1152,7 @@ export default function EduSalesPage() {
                           type="checkbox"
                           className={styles.inline_check}
                           checked={r.is_published}
+                          disabled={!canEdit}
                           onChange={(e) =>
                             updateRow(r, { is_published: e.target.checked })
                           }
@@ -1141,6 +1175,7 @@ export default function EduSalesPage() {
                                 refund_status: v as RefundStatus,
                               })
                             }
+                            disabled={!canEdit}
                           />
                           {r.refund_status === "환불완료" && (
                             <DateInput
@@ -1150,13 +1185,14 @@ export default function EduSalesPage() {
                               }
                               placeholder="환불일"
                               triggerClassName={styles.refund_date_trigger}
+                              disabled={!canEdit}
                             />
                           )}
                         </div>
                       </td>
                       {/* 관리 — 삭제만 */}
                       <td className={`${styles.td} ${styles.td_center} ${styles.td_actions}`}>
-                        {r.sale_id ? (
+                        {r.sale_id && canEdit ? (
                           <button
                             className={styles.action_del_btn}
                             onClick={() =>
@@ -1237,11 +1273,13 @@ function InlineText({
   placeholder,
   onSave,
   width,
+  disabled,
 }: {
   value: string;
   placeholder?: string;
   onSave: (v: string) => void;
   width?: number;
+  disabled?: boolean;
 }) {
   const [local, setLocal] = useState(value);
   const [prevValue, setPrevValue] = useState(value);
@@ -1256,6 +1294,7 @@ function InlineText({
       value={local}
       placeholder={placeholder}
       style={width ? { width } : undefined}
+      disabled={disabled}
       onChange={(e) => setLocal(e.target.value)}
       onBlur={() => {
         if (local !== value) onSave(local);
@@ -1272,10 +1311,12 @@ function InlinePhone({
   value,
   onSave,
   width,
+  disabled,
 }: {
   value: string;
   onSave: (v: string) => void;
   width?: number;
+  disabled?: boolean;
 }) {
   const [local, setLocal] = useState(autoHyphenPhone(value));
   const [prevValue, setPrevValue] = useState(value);
@@ -1291,6 +1332,7 @@ function InlinePhone({
       placeholder="010-XXXX-XXXX"
       inputMode="numeric"
       style={width ? { width } : undefined}
+      disabled={disabled}
       onChange={(e) => setLocal(autoHyphenPhone(e.target.value))}
       onBlur={() => {
         const cleaned = local || "";
@@ -1309,11 +1351,13 @@ function InlineNumber({
   onSave,
   align = "left",
   width,
+  disabled,
 }: {
   value: number | null;
   onSave: (v: number | null) => void;
   align?: "left" | "right" | "center";
   width?: number;
+  disabled?: boolean;
 }) {
   const [local, setLocal] = useState(value != null ? String(value) : "");
   const [prevValue, setPrevValue] = useState(value);
@@ -1331,6 +1375,7 @@ function InlineNumber({
       inputMode="numeric"
       className={styles.inline_input}
       value={display}
+      disabled={disabled}
       style={{
         ...(width ? { width } : {}),
         textAlign: align,

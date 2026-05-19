@@ -50,7 +50,7 @@ export default function DashboardLayout({
     setPermissions(perms)
     setRevenueOwnDivisions(divisions)
 
-    // 인사기록카드 승인 여부 — master-admin은 체크 생략
+    // 인사기록카드 승인 여부 — master-admin은 체크 생략, exempt=true 도 우회
     if (role === 'master-admin') {
       setHrRecordStatus('approved')
     } else {
@@ -58,9 +58,14 @@ export default function DashboardLayout({
         const hrRes = await fetch('/api/hr-records/me', { cache: 'no-store' })
         if (hrRes.ok) {
           const d = await hrRes.json()
-          setHrRecordStatus(
-            d?.record?.status === 'approved' ? 'approved' : 'blocked',
-          )
+          // 면제 플래그가 켜져있으면 작성 강제 우회
+          if (d?.exempt === true) {
+            setHrRecordStatus('approved')
+          } else {
+            setHrRecordStatus(
+              d?.record?.status === 'approved' ? 'approved' : 'blocked',
+            )
+          }
         } else {
           setHrRecordStatus('blocked')
         }

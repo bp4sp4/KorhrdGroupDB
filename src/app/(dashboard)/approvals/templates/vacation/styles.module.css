@@ -65,6 +65,13 @@
   margin-left: 6px;
 }
 
+.half_day_hint {
+  font-size: 12px;
+  color: #6b7684;
+  margin-left: 6px;
+  font-style: italic;
+}
+
 .textarea_full {
   width: 100%;
   border: 1px solid #ccc;
@@ -88,4 +95,61 @@
   font-size: 12px;
   color: #444;
   line-height: 2;
+}
+
+/* ─── 휴가 잔여 박스 (작성 모드 전용) ────────────────────────────── */
+.balance_box {
+  margin-top: 12px;
+  background: #f8f9fa;
+  border: 1px solid #e5e8eb;
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.balance_row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.balance_label {
+  color: #4e5968;
+}
+
+.balance_value {
+  color: #047857;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.balance_deduct {
+  color: #b91c1c;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.balance_warn {
+  color: #b91c1c;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.balance_hint {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #6b7684;
+}
+
+.balance_warn_msg {
+  margin-top: 6px;
+  padding: 6px 10px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  color: #b91c1c;
+  font-size: 12px;
 }

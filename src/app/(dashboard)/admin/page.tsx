@@ -1784,6 +1784,7 @@ const PERMISSION_SECTIONS: PermissionSection[] = [
   { key: 'ref-manage', label: '어드민 관리',        description: '기준 데이터 관리',        allowOwn: false, group: '시스템' },
   { key: 'assignment', label: '배정 현황',          description: '담당자 배정 통계 열람',   allowOwn: false, group: '시스템' },
   { key: 'links',      label: '링크모음',           description: '자주 쓰는 링크 모음',     allowOwn: false, group: '시스템' },
+  { key: 'task-board', label: '통합 업무보드',       description: '월별 업무 보드 (사이드바 노출 여부)', allowOwn: false, group: '시스템' },
   { key: 'marketing',  label: '마케팅개발본부',      description: '채널/소재별 성과 관리',   allowOwn: false, group: '경영관리' },
   { key: 'approvals',  label: '전자결재',           description: '전자결재 열람·처리',      allowOwn: false, group: '경영관리' },
   { key: 'revenues',   label: '팀별 매출 관리',      description: '사업부별 매출 현황 열람 (담당: 사원/주임은 본인 사업부만, 대리 이상은 전체)',  allowOwn: true,  group: '경영관리' },

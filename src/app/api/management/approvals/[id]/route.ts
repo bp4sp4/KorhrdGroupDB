@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin'
 import { requireAuth } from '@/lib/auth/requireAuth'
 import { genDocNumber } from '@/lib/management/utils'
 import { writeAuditLog } from '@/lib/management/auditLog'
+import { applyVacationDeduction } from '@/lib/leave/applyVacationDeduction'
 
 type ApprovalContent = Record<string, unknown>
 type ExpenseInsert = {
@@ -481,6 +482,18 @@ export async function POST(
       .from('approvals')
       .update({ status: 'APPROVED', completed_at: completedAt })
       .eq('id', id)
+
+    // 휴가신청서 자동 차감 — 실패해도 결재 승인은 진행 (감사 로그만 남김)
+    try {
+      await applyVacationDeduction({
+        id: approval.id as string,
+        document_type: (approval.document_type as string | null) ?? null,
+        applicant_id: (approval.applicant_id as number | null) ?? null,
+        content: (approval.content as Record<string, unknown> | null) ?? null,
+      })
+    } catch (e) {
+      console.error('[leave-deduction] failed:', e)
+    }
 
     // 최종 승인 알림
     await notifyUser(

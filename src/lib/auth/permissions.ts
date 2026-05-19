@@ -20,6 +20,7 @@ export type PermissionSection =
   | 'revenue-upload'
   | 'reports'
   | 'bankaccount'
+  | 'task-board'
 
 export interface PermissionRecord {
   section: PermissionSection
@@ -53,11 +54,12 @@ export const ALL_PERMISSION_SECTIONS: PermissionSection[] = [
   'revenue-upload',
   'reports',
   'bankaccount',
+  'task-board',
 ]
 
 // 직책별 기본 권한 (position_permissions 테이블이 비어있을 때 fallback)
-// links / marketing 은 모든 직책 공통 (전사 도구로 누구나 접근)
-const COMMON_SECTIONS: PermissionSection[] = ['links', 'marketing']
+// links / marketing / task-board 은 모든 직책 공통 (전사 도구로 누구나 접근)
+const COMMON_SECTIONS: PermissionSection[] = ['links', 'marketing', 'task-board']
 
 const MANAGEMENT_ACCESS_BY_POSITION: Record<string, PermissionSection[]> = {
   사원: [...COMMON_SECTIONS],

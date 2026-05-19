@@ -121,6 +121,7 @@ const ALL_SECTIONS: NavSection[] = [
       { id: 'admin-approval-forms', label: '결재 양식 관리', href: '/admin/approval-forms', icon: <FileCheck size={16} /> },
       { id: 'admin-customers', label: '전체고객관리', href: '/admin/customers', icon: <Users size={16} /> },
       { id: 'admin-hr-records', label: '인사기록카드 승인', href: '/admin/hr-records', icon: <FileText size={16} /> },
+      { id: 'admin-leave-balances', label: '휴가 잔여 관리', href: '/admin/leave-balances', icon: <FileText size={16} /> },
     ],
   },
 ]
@@ -147,6 +148,7 @@ const SECTION_ITEM_MAP: Record<string, string> = {
   'ref-manage':     'ref-manage',
   assignment:       'assignment',
   links:            'links',
+  'task-board':     'task-board',
 }
 
 interface SidebarProps {

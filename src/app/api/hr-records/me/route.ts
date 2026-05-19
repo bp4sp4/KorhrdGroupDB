@@ -52,10 +52,18 @@ interface UpsertBody {
   certificates?: CertItem[]
 }
 
-// GET /api/hr-records/me — 내 인사기록카드 조회
+// GET /api/hr-records/me — 내 인사기록카드 조회 + 면제 플래그
 export async function GET() {
   const { appUser, errorResponse } = await requireAuthFull()
   if (errorResponse) return errorResponse
+
+  // 면제 여부 조회 (가드 우회용)
+  const { data: userRow } = await supabaseAdmin
+    .from('app_users')
+    .select('hr_record_exempt')
+    .eq('id', appUser.id)
+    .maybeSingle()
+  const exempt = Boolean(userRow?.hr_record_exempt)
 
   const { data, error } = await supabaseAdmin
     .from('hr_records')
@@ -66,7 +74,7 @@ export async function GET() {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
-  return NextResponse.json({ record: data ?? null })
+  return NextResponse.json({ record: data ?? null, exempt })
 }
 
 // POST /api/hr-records/me — 저장(draft) 또는 제출(submit)
