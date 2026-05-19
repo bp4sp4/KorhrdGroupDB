@@ -1,0 +1,556 @@
+/* 한평생그룹 휴가현황 — Variant C 디자인 */
+
+.wrap {
+  background: #f3f4f6;
+  padding: 20px 24px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 100%;
+  font-family: Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}
+
+.loadingWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 80px;
+  color: #6b7684;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ─── 페이지 헤더 ──────────────────────────────────────────── */
+.pageHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e5e8eb;
+}
+
+.title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #191f28;
+  letter-spacing: -0.02em;
+}
+
+.todayBadge {
+  font-size: 13px;
+  color: #6b7684;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── HERO ROW ────────────────────────────────────────────── */
+.heroRow {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr 1fr 1fr;
+  gap: 12px;
+}
+
+.heroMain {
+  background: #fff;
+  border: 1px solid #e5e8eb;
+  border-radius: 16px;
+  padding: 22px 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.heroBody {
+  flex: 1;
+}
+
+.heroLabel {
+  font-size: 11px;
+  color: #6b7684;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.heroNumRow {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.heroNum {
+  font-size: 48px;
+  font-weight: 700;
+  color: #191f28;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.heroNumNegative {
+  color: #b91c1c;
+}
+
+.heroUnit {
+  font-size: 18px;
+  color: #6b7684;
+  font-weight: 500;
+}
+
+.heroTotal {
+  font-size: 12px;
+  color: #8b95a1;
+  margin-left: 8px;
+}
+
+.heroSub {
+  margin-top: 10px;
+  font-size: 11px;
+  color: #6b7684;
+}
+
+.heroSubStrong {
+  color: #191f28;
+  font-weight: 600;
+}
+
+.heroSubBlue {
+  color: #3182f6;
+  font-weight: 600;
+}
+
+.heroSubWarn {
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+/* ─── InsightCard ─────────────────────────────────────────── */
+.insightCard {
+  border-radius: 16px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  justify-content: center;
+}
+
+.insightInfo {
+  background: #e8f3ff;
+  color: #1b64da;
+  border: none;
+}
+
+.insightWarn {
+  background: #fff5e6;
+  color: #cc7700;
+  border: none;
+}
+
+.insightNeutral {
+  background: #fff;
+  color: #191f28;
+  border: 1px solid #e5e8eb;
+}
+
+.insightLabelRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+.insightIcon {
+  font-size: 13px;
+}
+
+.insightValue {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  margin-top: 2px;
+}
+
+.insightSub {
+  font-size: 11px;
+  opacity: 0.7;
+  line-height: 1.4;
+}
+
+/* ─── Quick Apply ─────────────────────────────────────────── */
+.quickCard {
+  background: #fff;
+  border: 1px solid #e5e8eb;
+  border-radius: 16px;
+  padding: 20px 22px;
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 24px;
+  align-items: center;
+}
+
+.quickLeftLabel {
+  font-size: 11px;
+  color: #6b7684;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.quickPrimaryBtn {
+  all: unset;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 22px;
+  background: #3182f6;
+  color: #fff;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.quickPrimaryBtn:hover {
+  background: #1b64da;
+}
+
+.quickPrimarySub {
+  font-size: 11px;
+  opacity: 0.8;
+  font-weight: 500;
+}
+
+.quickChips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.quickChip {
+  all: unset;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #f2f4f6;
+  border: 1px solid transparent;
+  transition: all 0.15s;
+}
+
+.quickChip:hover {
+  border-color: #e5e8eb;
+  background: #fff;
+}
+
+.quickChipTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: #191f28;
+}
+
+.quickChipSub {
+  font-size: 10px;
+  color: #8b95a1;
+}
+
+/* ─── Timeline + Monthly Pattern ──────────────────────────── */
+.bottomRow {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 12px;
+}
+
+.panel {
+  background: #fff;
+  border: 1px solid #e5e8eb;
+  border-radius: 16px;
+  padding: 18px 22px;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.panelTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: #191f28;
+}
+
+.panelMeta {
+  font-size: 11px;
+  color: #8b95a1;
+}
+
+.empty {
+  padding: 20px 0;
+  text-align: center;
+  font-size: 13px;
+  color: #8b95a1;
+}
+
+.moreBtn {
+  margin-top: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  background: #f8f9fa;
+  border: 1px solid #e5e8eb;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #4e5968;
+  cursor: pointer;
+}
+
+.moreBtn:hover {
+  background: #f1f3f5;
+}
+
+/* ─── 모달 ─────────────────────────────────────────────── */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  width: 640px;
+  max-width: 90vw;
+  max-height: 86vh;
+  background: #fff;
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.modalHeader {
+  padding: 14px 18px;
+  border-bottom: 1px solid #f1f3f5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modalTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #191f28;
+}
+
+.modalCloseBtn {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #6b7684;
+}
+
+.modalCloseBtn:hover {
+  background: #f1f3f5;
+}
+
+.modalBody {
+  padding: 14px 18px;
+  overflow: auto;
+  flex: 1;
+}
+
+.modalTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.modalTable th,
+.modalTable td {
+  padding: 9px 10px;
+  text-align: left;
+  border-bottom: 1px solid #f1f3f5;
+}
+
+.modalTable th {
+  background: #f8f9fa;
+  font-size: 12px;
+  font-weight: 600;
+  color: #4e5968;
+}
+
+.modalWeekday {
+  color: #8b95a1;
+  font-size: 11px;
+}
+
+.modalFooter {
+  padding: 12px 18px;
+  border-top: 1px solid #f1f3f5;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.modalCloseFooter {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  background: #fff;
+  color: #4e5968;
+  border: 1px solid #e5e8eb;
+  cursor: pointer;
+}
+
+.modalCloseFooter:hover {
+  background: #f9fafb;
+}
+
+/* ─── Timeline ──────────────────────────────────────────── */
+.timeline {
+  position: relative;
+  padding-left: 24px;
+}
+
+.timelineLine {
+  position: absolute;
+  left: 8px;
+  top: 4px;
+  bottom: 4px;
+  width: 2px;
+  background: #eef0f3;
+}
+
+.timelineRow {
+  position: relative;
+  padding: 10px 0;
+  border-bottom: 1px dashed #eef0f3;
+}
+
+.timelineRowLast {
+  border-bottom: none;
+}
+
+.timelineDot {
+  position: absolute;
+  left: -22px;
+  top: 15px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid #3182f6;
+}
+
+.timelineGrid {
+  display: grid;
+  grid-template-columns: 70px 1fr auto;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.timelineDate {
+  font-size: 13px;
+  font-weight: 700;
+  color: #191f28;
+  font-variant-numeric: tabular-nums;
+}
+
+.timelineMid {
+  font-size: 12px;
+  color: #6b7684;
+}
+
+.timelineWeekend {
+  color: #3182f6;
+}
+
+.timelineWeekday {
+  color: #8b95a1;
+}
+
+.timelineRight {
+  font-size: 11px;
+  color: #8b95a1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Monthly Pattern ──────────────────────────────────── */
+.monthlyBars {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 130px;
+}
+
+.monthlyCol {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.monthlyCount {
+  font-size: 10px;
+  color: #8b95a1;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.monthlyBar {
+  width: 100%;
+  border-radius: 3px 3px 0 0;
+}
+
+.monthlyBarActive {
+  background: #3182f6;
+}
+
+.monthlyBarEmpty {
+  background: #f2f4f6;
+}
+
+.monthlyLabel {
+  font-size: 10px;
+  color: #8b95a1;
+}
+
+/* ─── 반응형 ──────────────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .heroRow {
+    grid-template-columns: 1fr 1fr;
+  }
+  .bottomRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .heroRow {
+    grid-template-columns: 1fr;
+  }
+  .quickCard {
+    grid-template-columns: 1fr;
+  }
+}

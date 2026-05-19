@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   Plus,
   X,
@@ -438,6 +439,10 @@ function ApprovalStepsPanel({ steps, currentStep }: ApprovalStepsPanelProps) {
 // ---------------------------------------------------------------------------
 
 export default function ApprovalsPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const quickActionHandledRef = useRef(false);
+
   // 뷰 상태
   const [currentView, setCurrentView] = useState<ViewType>("home");
   const [activeMenuKey, setActiveMenuKey] = useState<SidebarMenuKey>("home");
@@ -624,6 +629,53 @@ export default function ApprovalsPage() {
     const t = setTimeout(() => startApprovalGuide("approvals-basics"), 400);
     return () => clearTimeout(t);
   }, [startApprovalGuide, templates.length]);
+
+  // 쿼리 파라미터로 빠른 신청 진입 (예: ?new=휴가신청서&vacation_type=연차)
+  useEffect(() => {
+    if (quickActionHandledRef.current) return;
+    if (templates.length === 0) return;
+    const newType = searchParams.get("new");
+    if (!newType) return;
+
+    const normalizedKey = newType.replace(/\s/g, "");
+    const tpl = templates.find(
+      (t) => t.document_type.replace(/\s/g, "") === normalizedKey,
+    );
+    if (!tpl) return;
+    quickActionHandledRef.current = true;
+
+    // 양식 자동 선택
+    const defaultApproverIds = (tpl.steps ?? [])
+      .filter((s) => s.type !== "APPLICANT" && s.user_id)
+      .map((s) => String(s.user_id));
+
+    // 추가 prefill 값 — 휴가신청서면 vacation_type 채움
+    const prefill: Record<string, string> = {};
+    const vt = searchParams.get("vacation_type");
+    if (vt && normalizedKey === "휴가신청서") {
+      prefill.vacation_type = vt;
+    }
+
+    setModalSelectedTemplate(tpl);
+    setTemplateModalOpen(false);
+    setSelectedCategory(null);
+    setFormState({
+      template: tpl,
+      title: tpl.document_type,
+      department_id: myDepartmentId ?? "",
+      content: prefill,
+      approver_ids: defaultApproverIds,
+      reference_ids: [],
+    });
+    setFormError("");
+    setAttachedFiles([]);
+    setEditingDraftId(null);
+    setLinkedProposal(null);
+    setCurrentView("new_form");
+
+    // URL에서 쿼리 제거 (재진입 방지)
+    router.replace("/approvals");
+  }, [templates, searchParams, myDepartmentId, router]);
 
   useEffect(() => {
     fetchHomeData();
@@ -827,19 +879,19 @@ export default function ApprovalsPage() {
 
   // 각 양식별 예시 본문 데이터 (가이드 시뮬레이션용)
   const DEMO_FORM_CONTENTS: Record<string, Record<string, string>> = {
-    "휴가신청서": {
+    휴가신청서: {
       vacation_type: "연차",
       vacation_start: "2026-05-20",
       vacation_end: "2026-05-22",
       vacation_reason: "개인 휴식 (가이드 예시)",
     },
-    "근태사유서": {
+    근태사유서: {
       attend_start_date: "2026-05-15",
       attend_end_date: "2026-05-15",
       attend_type: "지각",
       reason: "교통 지연으로 인한 지각 (가이드 예시)",
     },
-    "명함신청서": {
+    명함신청서: {
       company_name: "한평생교육원",
       department: "교육사업부",
       name: "홍길동",
@@ -849,12 +901,12 @@ export default function ApprovalsPage() {
       position: "대리",
       address: "서울특별시 강남구 (가이드 예시)",
     },
-    "사원증신청서": {
+    사원증신청서: {
       department: "교육사업부",
       name: "홍길동",
       name_en: "Hong Gildong",
     },
-    "인수인계요청서": {
+    인수인계요청서: {
       receiver_name: "김인수",
       receiver_dept: "교육사업부 / 대리",
       receiver_task: "문의DB 관리, 등록학생관리 (가이드 예시)",
@@ -862,7 +914,7 @@ export default function ApprovalsPage() {
       giver_dept: "교육사업부 / 사원",
       giver_task: "기존 담당 학생 인계 (가이드 예시)",
     },
-    "퇴사확정일요청서": {
+    퇴사확정일요청서: {
       dept: "교육사업부",
       hire_date: "2025-01-15",
       handover_start: "2026-05-20",
@@ -972,8 +1024,7 @@ export default function ApprovalsPage() {
         case "open-proposal-form":
           // 1단계: 품의서 양식 자동 선택해 폼 열기
           autoPickTemplate(
-            (t) =>
-              t.document_type.replace(/\s/g, "") === "[품의서]지출품의서",
+            (t) => t.document_type.replace(/\s/g, "") === "[품의서]지출품의서",
           );
           break;
         case "fill-proposal":
@@ -988,8 +1039,7 @@ export default function ApprovalsPage() {
           // 2단계: 결의서(법인카드) 자동 선택해 폼 열기
           autoPickTemplate(
             (t) =>
-              t.document_type.replace(/\s/g, "") ===
-                "지출결의서(법인카드)" ||
+              t.document_type.replace(/\s/g, "") === "지출결의서(법인카드)" ||
               t.document_type.replace(/\s/g, "") === "[결의서]지출결의서",
           );
           break;
@@ -1232,6 +1282,24 @@ export default function ApprovalsPage() {
     if (action === "submit" && approver_ids.length === 0) {
       setFormError("결재자를 최소 1명 이상 추가해주세요.");
       return;
+    }
+
+    // 휴가신청서 — 경조휴가/예비군/병가는 증빙 첨부파일 필수
+    if (
+      action === "submit" &&
+      (template.document_type ?? "").replace(/\s/g, "") === "휴가신청서"
+    ) {
+      const vacationType = String(content["vacation_type"] ?? "");
+      const REQUIRE_ATTACHMENT_TYPES = new Set(["경조휴가", "예비군", "병가"]);
+      if (
+        REQUIRE_ATTACHMENT_TYPES.has(vacationType) &&
+        attachedFiles.length === 0
+      ) {
+        setFormError(
+          `${vacationType}은(는) 증빙 서류 첨부파일이 필수입니다. (예비군: 통지서, 경조휴가: 청첩장/등본 등, 병가: 진단서/소견서)`,
+        );
+        return;
+      }
     }
 
     setSubmitting(true);
@@ -1998,7 +2066,7 @@ export default function ApprovalsPage() {
                             </button>
                           ) : (
                             <span className={d.doc_file_icon}>
-                              {file.type === "application/pdf" ? "📕" : "📄"}
+                              <FileText size={16} />
                             </span>
                           )}
                           <div className={d.doc_file_info}>
@@ -2358,7 +2426,10 @@ export default function ApprovalsPage() {
               )}
             </h2>
           </div>
-          <div className={f.new_form_actions} data-guide="approvals-submit-actions">
+          <div
+            className={f.new_form_actions}
+            data-guide="approvals-submit-actions"
+          >
             <button
               className={styles.btn_primary}
               onClick={() => handleSubmitNewApproval("submit")}
@@ -2691,11 +2762,7 @@ export default function ApprovalsPage() {
                           <X size={12} />
                         </button>
                         <span className={f.doc_file_row_icon}>
-                          {file.type.startsWith("image/")
-                            ? "🖼"
-                            : file.type === "application/pdf"
-                              ? "📕"
-                              : "📄"}
+                          <FileText size={14} />
                         </span>
                         <span className={f.doc_file_row_name}>{file.name}</span>
                         <span className={f.doc_file_row_size}>
@@ -3196,7 +3263,7 @@ export default function ApprovalsPage() {
                       {attachedFiles.map((file, i) => (
                         <div key={i} className={f.doc_file_row}>
                           <span className={f.doc_file_row_icon}>
-                            {file.type.startsWith("image/") ? "🖼" : "📄"}
+                            <FileText size={14} />
                           </span>
                           <span className={f.doc_file_row_name}>
                             {file.name}
@@ -3409,7 +3476,10 @@ export default function ApprovalsPage() {
               if (e.target === e.currentTarget) setProposalModalOpen(false);
             }}
           >
-            <div className={styles.proposalModal} data-guide="approvals-proposal-modal">
+            <div
+              className={styles.proposalModal}
+              data-guide="approvals-proposal-modal"
+            >
               <div className={styles.tplHeader}>
                 <span className={styles.tplTitle}>품의서 선택</span>
                 <button
@@ -3554,11 +3624,7 @@ export default function ApprovalsPage() {
                               className={styles.linkedProposalViewFileRow}
                             >
                               <span>
-                                {file.type.startsWith("image/")
-                                  ? "🖼"
-                                  : file.type === "application/pdf"
-                                    ? "📕"
-                                    : "📄"}
+                                <FileText size={14} />
                               </span>
                               <span
                                 className={styles.linkedProposalViewFileName}

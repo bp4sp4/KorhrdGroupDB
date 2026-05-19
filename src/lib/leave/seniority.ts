@@ -77,3 +77,30 @@ export function parseJoinDate(joinedAt: string | null | undefined): Date | null 
   if (Number.isNaN(date.getTime())) return null
   return date
 }
+
+// 생일 휴가 보너스 적용 시점 (정책 도입일)
+// 이 날짜 이전에 지난 생일에 대해서는 보너스가 미적용된다.
+const BIRTHDAY_BONUS_CUTOFF = new Date(2026, 4, 19) // 2026-05-19
+
+// 생일 보너스 휴가 — 매년 본인의 생일이 지나면 그 해 +0.5 (누적 X, 매년 reset)
+// 단, 코드 도입(BIRTHDAY_BONUS_CUTOFF) 이전에 이미 지난 생일은 미적용.
+export function birthdayBonus(
+  joinedDate: Date | null,
+  birthDate: Date | null,
+  asOf: Date,
+): number {
+  if (!joinedDate || !birthDate) return 0
+  // 올해 생일 날짜
+  const thisYearBirthday = new Date(
+    asOf.getFullYear(),
+    birthDate.getMonth(),
+    birthDate.getDate(),
+  )
+  // 입사 전 생일 (첫 해 입사 시점 이전) — 적용 안 함
+  if (thisYearBirthday < joinedDate) return 0
+  // 미래 생일 — 아직 안 도래 → 적용 안 함
+  if (thisYearBirthday > asOf) return 0
+  // 정책 도입 이전 생일은 미적용
+  if (thisYearBirthday < BIRTHDAY_BONUS_CUTOFF) return 0
+  return 0.5
+}

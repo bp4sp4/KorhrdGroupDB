@@ -62,9 +62,13 @@ export async function applyVacationDeduction(
     content.vacation_start,
     content.vacation_end,
   )
-  if (deduct <= 0) return { deducted: 0, balance: null }
+  // 음수 차감은 없음 (방어)
+  if (deduct < 0) return { deducted: 0, balance: null }
 
-  // 중복 차감 방지 — 동일 approval_id로 이미 차감 이력이 있으면 skip
+  // 휴가 종류가 비어있으면 기록 의미 없음
+  if (!content.vacation_type) return { deducted: 0, balance: null }
+
+  // 중복 처리 방지 — 동일 approval_id로 이미 이력이 있으면 skip
   const { data: existing } = await supabaseAdmin
     .from('leave_transactions')
     .select('id')
@@ -72,35 +76,38 @@ export async function applyVacationDeduction(
     .maybeSingle()
   if (existing) return { deducted: 0, balance: null }
 
-  // 현재 잔여 조회 → 차감 후 upsert
-  const { data: current } = await supabaseAdmin
-    .from('leave_balances')
-    .select('balance')
-    .eq('user_id', approval.applicant_id)
-    .maybeSingle()
+  // 차감이 있는 경우만 balance 업데이트 (경조/예비군/병가는 잔여 변동 없음)
+  let after: number | null = null
+  if (deduct > 0) {
+    const { data: current } = await supabaseAdmin
+      .from('leave_balances')
+      .select('balance')
+      .eq('user_id', approval.applicant_id)
+      .maybeSingle()
 
-  const before = Number(current?.balance ?? 0)
-  const after = before - deduct
+    const before = Number(current?.balance ?? 0)
+    after = before - deduct
 
-  await supabaseAdmin
-    .from('leave_balances')
-    .upsert(
-      {
-        user_id: approval.applicant_id,
-        balance: after,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'user_id' },
-    )
+    await supabaseAdmin
+      .from('leave_balances')
+      .upsert(
+        {
+          user_id: approval.applicant_id,
+          balance: after,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id' },
+      )
+  }
 
-  // 이력 기록
-  const reason = `${content.vacation_type ?? '휴가'} 사용 (${content.vacation_start ?? '-'}~${content.vacation_end ?? '-'})`
+  // 이력 기록 — 차감 0이어도 사용일자 표시를 위해 항상 INSERT
+  const reason = `${content.vacation_type} 사용 (${content.vacation_start ?? '-'}~${content.vacation_end ?? '-'})`
   await supabaseAdmin.from('leave_transactions').insert({
     user_id: approval.applicant_id,
-    delta: -deduct,
+    delta: -deduct, // 0 또는 음수
     reason,
     approval_id: approval.id,
-    created_by: null, // 시스템 자동 차감
+    created_by: null, // 시스템 자동
   })
 
   return { deducted: deduct, balance: after }

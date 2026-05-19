@@ -19,9 +19,11 @@ interface BalanceItem {
   position_name: string | null;
   department_name: string | null;
   joined_at: string | null;
+  birth_date: string | null;
   auto_grant: number;
+  birthday_grant: number;
   manual_grant: number;
-  granted: number; // 발생 (자동 + 수동)
+  granted: number; // 발생 (자동 + 생일 + 수동)
   used: number;
   balance: number;
   usage_list: UsageEntry[];
@@ -162,11 +164,15 @@ export default function AdminLeaveBalancesPage() {
                   <td className={styles.dim}>{r.joined_at ?? "-"}</td>
                   <td className={styles.grantedCell}>
                     {formatDays(r.granted)}
-                    {r.manual_grant !== 0 && (
+                    {(r.birthday_grant !== 0 || r.manual_grant !== 0) && (
                       <span className={styles.manualHint}>
                         {" "}
-                        ({formatDaysWithSign(r.auto_grant)}+
-                        {formatDaysWithSign(r.manual_grant)})
+                        (자동 {formatDaysWithSign(r.auto_grant)}
+                        {r.birthday_grant !== 0 &&
+                          ` + 생일 ${formatDaysWithSign(r.birthday_grant)}`}
+                        {r.manual_grant !== 0 &&
+                          ` + 수동 ${formatDaysWithSign(r.manual_grant)}`}
+                        )
                       </span>
                     )}
                   </td>
@@ -477,10 +483,14 @@ function HistoryModal({
               <span className={styles.summaryLabel}>발생</span>
               <span className={styles.summaryValue}>
                 {target.granted.toFixed(1)}개{" "}
-                {target.manual_grant !== 0 && (
+                {(target.birthday_grant !== 0 || target.manual_grant !== 0) && (
                   <span className={styles.summarySub}>
-                    (자동 {target.auto_grant.toFixed(1)} + 수동{" "}
-                    {target.manual_grant.toFixed(1)})
+                    (자동 {target.auto_grant.toFixed(1)}
+                    {target.birthday_grant !== 0 &&
+                      ` + 생일 ${target.birthday_grant.toFixed(1)}`}
+                    {target.manual_grant !== 0 &&
+                      ` + 수동 ${target.manual_grant.toFixed(1)}`}
+                    )
                   </span>
                 )}
               </span>
@@ -552,8 +562,12 @@ function HistoryModal({
                     <tr key={`${u.date}-${i}`}>
                       <td>{u.date}</td>
                       <td>{u.type_full}</td>
-                      <td className={styles.deltaMinus}>
-                        -{u.delta.toFixed(1)}
+                      <td
+                        className={
+                          u.delta > 0 ? styles.deltaMinus : styles.dim
+                        }
+                      >
+                        {u.delta > 0 ? `-${u.delta.toFixed(1)}` : "차감 없음"}
                       </td>
                     </tr>
                   ))}

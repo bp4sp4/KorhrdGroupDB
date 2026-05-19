@@ -235,6 +235,9 @@ export function VacationBody({ content, onChange }: DocBodyProps) {
       </table>
 
       <div className={styles.notes}>
+        <p>
+          <strong>※ 경조휴가 / 예비군 / 병가는 증빙 서류 첨부파일이 필수입니다.</strong>
+        </p>
         <p>[예비군 신청시] 통지서 스캔하여 파일 첨부</p>
         <p>[경조휴가 신청시] 증빙서류 스캔하여 파일 첨부 (예: 청첩장 등본 등)</p>
         <p>[병가 신청시] 진단서/소견서 스캔하여 파일 첨부</p>

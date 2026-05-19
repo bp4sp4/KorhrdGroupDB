@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireMasterAdmin } from '@/lib/auth/requireAuth'
 import { supabaseAdmin } from '@/lib/supabase/admin'
-import { getAnnualGrant, parseJoinDate } from '@/lib/leave/seniority'
+import { getAnnualGrant, parseJoinDate, birthdayBonus } from '@/lib/leave/seniority'
 
 interface UsageEntry {
   date: string // YYYY-MM-DD (시작일)
@@ -43,14 +43,16 @@ export async function GET() {
     return NextResponse.json({ items: [] })
   }
 
-  // 입사일 (hr_records.joined_at)
+  // 입사일 + 생년월일 (hr_records.joined_at, birth_date)
   const { data: hrRecords } = await supabaseAdmin
     .from('hr_records')
-    .select('user_id, joined_at')
+    .select('user_id, joined_at, birth_date')
     .in('user_id', userIds)
   const joinedMap = new Map<number, string | null>()
+  const birthMap = new Map<number, string | null>()
   for (const r of hrRecords ?? []) {
     joinedMap.set(r.user_id as number, (r.joined_at as string | null) ?? null)
+    birthMap.set(r.user_id as number, (r.birth_date as string | null) ?? null)
   }
 
   // 거래 이력 — 전체 (사용자별 합계 + 사용일자 추출)
@@ -84,6 +86,19 @@ export async function GET() {
         })
         usageListMap.set(uid, list)
       }
+    } else if (delta === 0) {
+      // 차감 없는 휴가(경조/예비군/병가) — 사용량은 그대로(0)이지만 사용일자에는 표시
+      const { date, type_full } = parseUsageReason((t.reason as string) ?? '')
+      if (date && type_full) {
+        const list = usageListMap.get(uid) ?? []
+        list.push({
+          date,
+          type_short: shortenType(type_full),
+          type_full,
+          delta: 0,
+        })
+        usageListMap.set(uid, list)
+      }
     }
   }
 
@@ -114,10 +129,13 @@ export async function GET() {
   const items = (users ?? []).map((u) => {
     const uid = u.id as number
     const joinedAt = joinedMap.get(uid) ?? null
+    const birthAt = birthMap.get(uid) ?? null
     const joinedDate = parseJoinDate(joinedAt)
+    const birthDate = parseJoinDate(birthAt)
     const autoGrant = joinedDate ? getAnnualGrant(joinedDate, today) : 0
+    const birthdayGrant = birthdayBonus(joinedDate, birthDate, today)
     const manualGrant = manualGrantMap.get(uid) ?? 0
-    const granted = autoGrant + manualGrant
+    const granted = autoGrant + birthdayGrant + manualGrant
     const used = usageMap.get(uid) ?? 0
     const balance = granted - used
     // 사용일자는 최신순(내림차순) 정렬
@@ -133,9 +151,11 @@ export async function GET() {
       position_name: u.position_id ? positionMap.get(u.position_id as string) ?? null : null,
       department_name: u.department_id ? departmentMap.get(u.department_id as string) ?? null : null,
       joined_at: joinedAt,
+      birth_date: birthAt,
       auto_grant: autoGrant,
+      birthday_grant: birthdayGrant,
       manual_grant: manualGrant,
-      granted, // 발생 (자동 + 수동)
+      granted, // 발생 (자동 + 생일 + 수동)
       used,
       balance,
       usage_list: usageList,
