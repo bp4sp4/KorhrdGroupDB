@@ -52,6 +52,43 @@
   background: #fff;
 }
 
+.dateSearchWrap {
+  position: relative;
+  width: 260px;
+}
+
+.dateSearchInput {
+  width: 100%;
+  height: 34px;
+  padding: 0 28px 0 12px;
+  border: 1px solid #e5e8eb;
+  border-radius: 8px;
+  font-size: 13px;
+  background: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
+.dateSearchClear {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.dateSearchClear:hover {
+  background: #f1f3f5;
+  color: #4e5968;
+}
+
 .loadingWrap {
   display: flex;
   align-items: center;
@@ -126,7 +163,37 @@
 }
 
 .balanceZero {
+  color: #6b7684;
+}
+
+.balanceNegative {
   color: #b91c1c;
+}
+
+.grantedCell {
+  color: #3182f6;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.usedCell {
+  color: #d97706;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.manualHint {
+  font-size: 11px;
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+.usageListCell {
+  font-size: 12px;
+  color: #4e5968;
+  max-width: 320px;
+  white-space: normal;
+  line-height: 1.5;
 }
 
 .dim {
@@ -374,4 +441,165 @@
   color: #047857;
   border-radius: 4px;
   margin-right: 4px;
+}
+
+/* ─── 이력 모달: 요약/섹션 ───────────────────────────────────────── */
+.summaryBox {
+  background: #f8f9fa;
+  border: 1px solid #e5e8eb;
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.summaryRow {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.summaryLabel {
+  font-size: 11px;
+  color: #6b7684;
+  font-weight: 600;
+}
+
+.summaryValue {
+  font-size: 14px;
+  color: #191f28;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.summaryValueBalance {
+  font-size: 16px;
+  color: #047857;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.summaryValueNegative {
+  font-size: 16px;
+  color: #b91c1c;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.summarySub {
+  font-size: 11px;
+  color: #9ca3af;
+  font-weight: 400;
+  margin-left: 2px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #4e5968;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #f1f3f5;
+}
+
+.sectionEmpty {
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 12px;
+}
+
+/* ─── 이력 모달 검색 ───────────────────────────────────────────── */
+.modalSearchWrap {
+  position: relative;
+  width: 100%;
+}
+
+.modalSearchIcon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+}
+
+.modalSearchInput {
+  width: 100%;
+  height: 34px;
+  padding: 0 28px 0 32px;
+  border: 1px solid #e5e8eb;
+  border-radius: 8px;
+  font-size: 13px;
+  background: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
+.modalSearchClear {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.modalSearchClear:hover {
+  background: #f1f3f5;
+  color: #4e5968;
+}
+
+/* ─── 페이지네이션 ────────────────────────────────────────────── */
+.paginator {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.pageBtn {
+  min-width: 30px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid #e5e8eb;
+  background: #fff;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #4e5968;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+
+.pageBtn:hover:not(:disabled) {
+  background: #f8f9fa;
+}
+
+.pageBtnActive {
+  background: #191f28;
+  color: #fff;
+  border-color: #191f28;
+}
+
+.pageBtnActive:hover:not(:disabled) {
+  background: #191f28;
+}
+
+.pageBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }

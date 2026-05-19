@@ -2685,6 +2685,19 @@
   flex-wrap: wrap;
 }
 
+.duplicateBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 999px;
+}
+
 .detailModalName {
   font-size: 18px;
   font-weight: 700;

@@ -1618,6 +1618,33 @@ function HakjeomDetailPanel({
   );
   const [reactionParentTab, setReactionParentTab] = useState<string>("");
   const [editContact, setEditContact] = useState(item.contact ?? "");
+
+  // 중복 데이터 카운트 (이름 + 전화번호 동일, 본인 제외)
+  const [duplicateCount, setDuplicateCount] = useState<number>(0);
+  useEffect(() => {
+    const name = (item.name || "").trim();
+    const phone = (editContact || item.contact || "").trim();
+    if (!name || !phone) {
+      setDuplicateCount(0);
+      return;
+    }
+    const params = new URLSearchParams({
+      name,
+      phone,
+      exclude_id: String(item.id),
+    });
+    let cancelled = false;
+    fetch(`/api/hakjeom/duplicates?${params.toString()}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (cancelled) return;
+        setDuplicateCount(Number(data?.count ?? 0));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [item.id, item.name, item.contact, editContact]);
   const [editName, setEditName] = useState(item.name ?? "");
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<"basic" | "info">(initialTab);
@@ -1931,6 +1958,11 @@ function HakjeomDetailPanel({
                     status={editStatus}
                     styleMap={CONSULTATION_STATUS_STYLE}
                   />
+                  {duplicateCount > 0 && (
+                    <span className={styles.duplicateBadge}>
+                      ⚠️ 중복데이터 {duplicateCount}건 있음
+                    </span>
+                  )}
                 </div>
                 <p className={styles.detailModalSub}>{item.contact}</p>
                 <div className={styles.detailModalSubRow}>

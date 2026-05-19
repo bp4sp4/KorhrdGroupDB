@@ -225,40 +225,115 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to save hakjeom consultation' }, { status: 500 });
     }
 
-    await logAction({ user_id: user.id, user_email: user.email, action: 'create', resource: '학점은행제 상담', resource_id: String(data.id), detail: `${data.name} 상담 등록` });
+    // ─── 중복 자동 삭제 처리 ────────────────────────────────────────────
+    // 이름 또는 전화번호(숫자 정규화) 가 기존 활성 행과 일치하면 → 새 행을 삭제목록으로 이동
+    // 사유: '중복데이터'
+    const newPhoneDigits = String(data.contact ?? '').replace(/\D/g, '')
+    let isDuplicate = false
+    if (data.name && newPhoneDigits) {
+      // 같은 이름인 다른 활성 행 1건이라도 있는지
+      const { data: byName } = await supabaseAdmin
+        .from(TABLE)
+        .select('id')
+        .eq('name', data.name)
+        .neq('id', data.id)
+        .is('deleted_at', null)
+        .limit(1)
+        .maybeSingle()
 
-    // 신규 신청 → 관리자 전원에게 알림 (실패해도 응답에 영향 없음)
-    getAdminUids().then(adminUids => {
-      if (adminUids.length > 0) {
-        supabaseAdmin.from('notifications').insert(
-          adminUids.map(uid => ({
-            user_id: uid,
-            type: 'NEW_CONSULTATION',
-            title: '새 학점은행제 상담 신청',
-            message: `${data.name}님이 학점은행제 상담을 신청했습니다.`,
-            link: `/hakjeom?highlight=${data.id}`,
-            is_read: false,
-          }))
-        ).then()
+      // 같은 전화번호(정규화)인 다른 활성 행 1건이라도 있는지
+      // — REGEXP_REPLACE 인덱스가 없으므로 같은 이름 후보가 없으면 전체에서 단순 contact 매칭
+      let byPhone: { id: number } | null = null
+      if (!byName) {
+        // 광범위 스캔을 피하기 위해 일단 같은 contact 문자열로 빠르게 찾고
+        // 못 찾으면 정규화 검사를 위해 활성 행 전체에서 후보를 추려본다
+        const { data: byContactExact } = await supabaseAdmin
+          .from(TABLE)
+          .select('id, contact')
+          .eq('contact', data.contact)
+          .neq('id', data.id)
+          .is('deleted_at', null)
+          .limit(1)
+          .maybeSingle()
+        if (byContactExact) {
+          byPhone = { id: byContactExact.id as number }
+        } else {
+          // 정규화 비교를 위해 동일 마지막 4자리로 1차 스크리닝
+          const last4 = newPhoneDigits.slice(-4)
+          if (last4) {
+            const { data: candidates } = await supabaseAdmin
+              .from(TABLE)
+              .select('id, contact')
+              .ilike('contact', `%${last4}`)
+              .neq('id', data.id)
+              .is('deleted_at', null)
+              .limit(50)
+            const match = (candidates ?? []).find(
+              (r) =>
+                String(r.contact ?? '').replace(/\D/g, '') === newPhoneDigits,
+            )
+            if (match) byPhone = { id: match.id as number }
+          }
+        }
       }
-    }).catch(() => {})
 
-    // 신규 문의 SMS 발송 (env 수신자 고정)
-    // 신규 문의 알림톡 — 고객 + 관리자 전원에게 승인 템플릿 그대로 발송
-    const newInquiryReceivers = [
-      ...(data.contact ? [String(data.contact)] : []),
-      ...parsePhones(process.env.ALIGO_NEW_INQUIRY_PHONES),
-    ]
-    if (newInquiryReceivers.length > 0) {
-      sendAlimtalk({
-        receivers: newInquiryReceivers,
-        tplCode: ALIMTALK_TEMPLATES.NEW_INQUIRY.tplCode,
-        message: ALIMTALK_TEMPLATES.NEW_INQUIRY.message,
-        vars: { 고객명: data.name ?? '고객' },
-      }).catch((e) => console.error('[hakjeom POST] 알림톡 실패:', e))
+      if (byName || byPhone) {
+        isDuplicate = true
+        const reasonText = '중복데이터'
+        await supabaseAdmin
+          .from(TABLE)
+          .update({
+            deleted_at: new Date().toISOString(),
+            delete_reason: reasonText,
+          })
+          .eq('id', data.id)
+        await logAction({
+          user_id: user.id,
+          user_email: user.email,
+          action: 'delete',
+          resource: '학점은행제 상담',
+          resource_id: String(data.id),
+          detail: `${data.name} - 중복으로 자동 삭제목록 이동 (${byName ? '이름' : '전화번호'} 일치)`,
+        })
+      }
     }
 
-    return NextResponse.json({ message: 'Created successfully', data }, { status: 201 });
+    if (!isDuplicate) {
+      await logAction({ user_id: user.id, user_email: user.email, action: 'create', resource: '학점은행제 상담', resource_id: String(data.id), detail: `${data.name} 상담 등록` });
+
+      // 신규 신청 → 관리자 전원에게 알림 (실패해도 응답에 영향 없음)
+      getAdminUids().then(adminUids => {
+        if (adminUids.length > 0) {
+          supabaseAdmin.from('notifications').insert(
+            adminUids.map(uid => ({
+              user_id: uid,
+              type: 'NEW_CONSULTATION',
+              title: '새 학점은행제 상담 신청',
+              message: `${data.name}님이 학점은행제 상담을 신청했습니다.`,
+              link: `/hakjeom?highlight=${data.id}`,
+              is_read: false,
+            }))
+          ).then()
+        }
+      }).catch(() => {})
+
+      // 신규 문의 SMS 발송 (env 수신자 고정)
+      // 신규 문의 알림톡 — 고객 + 관리자 전원에게 승인 템플릿 그대로 발송
+      const newInquiryReceivers = [
+        ...(data.contact ? [String(data.contact)] : []),
+        ...parsePhones(process.env.ALIGO_NEW_INQUIRY_PHONES),
+      ]
+      if (newInquiryReceivers.length > 0) {
+        sendAlimtalk({
+          receivers: newInquiryReceivers,
+          tplCode: ALIMTALK_TEMPLATES.NEW_INQUIRY.tplCode,
+          message: ALIMTALK_TEMPLATES.NEW_INQUIRY.message,
+          vars: { 고객명: data.name ?? '고객' },
+        }).catch((e) => console.error('[hakjeom POST] 알림톡 실패:', e))
+      }
+    }
+
+    return NextResponse.json({ message: isDuplicate ? 'Saved as duplicate (auto trash)' : 'Created successfully', data, duplicate: isDuplicate }, { status: 201 });
   } catch (err) {
     console.error('[hakjeom POST] Unexpected error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

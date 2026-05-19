@@ -4,6 +4,13 @@ import { useCallback, useEffect, useState } from "react";
 import { Loader2, Plus, Minus, Search, History } from "lucide-react";
 import styles from "./page.module.css";
 
+interface UsageEntry {
+  date: string;
+  type_short: string;
+  type_full: string;
+  delta: number;
+}
+
 interface BalanceItem {
   user_id: number;
   username: string | null;
@@ -11,8 +18,13 @@ interface BalanceItem {
   role: string | null;
   position_name: string | null;
   department_name: string | null;
+  joined_at: string | null;
+  auto_grant: number;
+  manual_grant: number;
+  granted: number; // 발생 (자동 + 수동)
+  used: number;
   balance: number;
-  updated_at: string | null;
+  usage_list: UsageEntry[];
 }
 
 interface Transaction {
@@ -29,6 +41,7 @@ export default function AdminLeaveBalancesPage() {
   const [items, setItems] = useState<BalanceItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [dateSearch, setDateSearch] = useState(""); // YYYY-MM-DD
   const [adjusting, setAdjusting] = useState<BalanceItem | null>(null);
   const [historyTarget, setHistoryTarget] = useState<BalanceItem | null>(null);
 
@@ -52,14 +65,35 @@ export default function AdminLeaveBalancesPage() {
   }, [fetchItems]);
 
   const filtered = items.filter((it) => {
-    if (!search.trim()) return true;
-    const q = search.trim().toLowerCase();
-    return (
-      (it.display_name ?? "").toLowerCase().includes(q) ||
-      (it.username ?? "").toLowerCase().includes(q) ||
-      (it.department_name ?? "").toLowerCase().includes(q)
-    );
+    // 이름/이메일/부서 검색
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      const matchText =
+        (it.display_name ?? "").toLowerCase().includes(q) ||
+        (it.username ?? "").toLowerCase().includes(q) ||
+        (it.department_name ?? "").toLowerCase().includes(q);
+      if (!matchText) return false;
+    }
+    // 날짜 검색 — 사용일자에 해당 날짜(prefix 일치)가 있는 사람만 표시
+    // - 완전한 날짜(YYYY-MM-DD) 입력 시: 정확히 그 날짜
+    // - 부분 입력(예: 2026-05) 시: 해당 월 전체 매칭
+    if (dateSearch.trim()) {
+      const q = dateSearch.trim();
+      const matchDate = it.usage_list.some((u) => u.date.startsWith(q));
+      if (!matchDate) return false;
+    }
+    return true;
   });
+
+  // 0.5 단위 일수 → "X.X일" 또는 "X일" (정수면 소수점 생략)
+  function formatDays(n: number): string {
+    if (Number.isInteger(n)) return `${n}개`;
+    return `${n.toFixed(1)}개`;
+  }
+  function formatDaysWithSign(n: number): string {
+    if (Number.isInteger(n)) return `${n}`;
+    return `${n.toFixed(1)}`;
+  }
 
   return (
     <div className={styles.wrap}>
@@ -81,6 +115,25 @@ export default function AdminLeaveBalancesPage() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
+        <div className={styles.dateSearchWrap}>
+          <input
+            type="text"
+            className={styles.dateSearchInput}
+            placeholder="사용일자 검색 (YYYY-MM-DD 또는 YYYY-MM)"
+            value={dateSearch}
+            onChange={(e) => setDateSearch(e.target.value)}
+          />
+          {dateSearch && (
+            <button
+              type="button"
+              className={styles.dateSearchClear}
+              onClick={() => setDateSearch("")}
+              aria-label="검색 초기화"
+            >
+              ✕
+            </button>
+          )}
+        </div>
       </div>
 
       {loading ? (
@@ -95,11 +148,10 @@ export default function AdminLeaveBalancesPage() {
             <thead>
               <tr>
                 <th>이름</th>
-                <th>이메일</th>
-                <th>부서</th>
-                <th>직급</th>
-                <th>잔여(일)</th>
-                <th>최근 갱신</th>
+                <th>입사일</th>
+                <th>발생</th>
+                <th>사용</th>
+                <th>잔여</th>
                 <th>관리</th>
               </tr>
             </thead>
@@ -107,20 +159,28 @@ export default function AdminLeaveBalancesPage() {
               {filtered.map((r) => (
                 <tr key={r.user_id}>
                   <td className={styles.nameCell}>{r.display_name ?? "-"}</td>
-                  <td>{r.username ?? "-"}</td>
-                  <td>{r.department_name ?? "-"}</td>
-                  <td>{r.position_name ?? "-"}</td>
+                  <td className={styles.dim}>{r.joined_at ?? "-"}</td>
+                  <td className={styles.grantedCell}>
+                    {formatDays(r.granted)}
+                    {r.manual_grant !== 0 && (
+                      <span className={styles.manualHint}>
+                        {" "}
+                        ({formatDaysWithSign(r.auto_grant)}+
+                        {formatDaysWithSign(r.manual_grant)})
+                      </span>
+                    )}
+                  </td>
+                  <td className={styles.usedCell}>{formatDays(r.used)}</td>
                   <td
                     className={`${styles.balanceCell} ${
-                      r.balance <= 0 ? styles.balanceZero : ""
+                      r.balance < 0
+                        ? styles.balanceNegative
+                        : r.balance === 0
+                          ? styles.balanceZero
+                          : ""
                     }`}
                   >
-                    {r.balance.toFixed(1)}
-                  </td>
-                  <td className={styles.dim}>
-                    {r.updated_at
-                      ? new Date(r.updated_at).toLocaleDateString("ko-KR")
-                      : "-"}
+                    {formatDays(r.balance)}
                   </td>
                   <td>
                     <div className={styles.actions}>
@@ -320,6 +380,8 @@ function AdjustModal({
 
 // ─── 이력 모달 ──────────────────────────────────────────────────────────
 
+const PAGE_SIZE = 5;
+
 function HistoryModal({
   target,
   onClose,
@@ -329,6 +391,9 @@ function HistoryModal({
 }) {
   const [items, setItems] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState("");
+  const [usagePage, setUsagePage] = useState(1);
+  const [historyPage, setHistoryPage] = useState(1);
 
   useEffect(() => {
     fetch(`/api/admin/leave-balances/${target.user_id}/transactions`)
@@ -336,6 +401,53 @@ function HistoryModal({
       .then((data) => setItems(data.items ?? []))
       .finally(() => setLoading(false));
   }, [target.user_id]);
+
+  const q = query.trim().toLowerCase();
+
+  // 검색어 변경 시 페이지 1로 리셋
+  useEffect(() => {
+    setUsagePage(1);
+    setHistoryPage(1);
+  }, [q]);
+
+  // 사용일자 필터링 — 날짜 prefix(YYYY-MM-DD/YYYY-MM/YYYY) 또는 휴가종류 텍스트 매칭
+  const filteredUsage = target.usage_list.filter((u) => {
+    if (!q) return true;
+    return (
+      u.date.startsWith(q) ||
+      u.type_full.toLowerCase().includes(q) ||
+      u.type_short.toLowerCase().includes(q)
+    );
+  });
+
+  // 변동 이력 필터링 — reason 또는 날짜(YYYY-MM-DD/YYYY-MM/YYYY) 매칭
+  const filteredItems = items.filter((t) => {
+    if (!q) return true;
+    const datePart = (t.created_at ?? "").slice(0, 10); // YYYY-MM-DD
+    return (
+      (t.reason ?? "").toLowerCase().includes(q) ||
+      datePart.startsWith(q) ||
+      (t.created_by_name ?? "").toLowerCase().includes(q)
+    );
+  });
+
+  // 페이지 계산
+  const usageTotalPages = Math.max(1, Math.ceil(filteredUsage.length / PAGE_SIZE));
+  const safeUsagePage = Math.min(usagePage, usageTotalPages);
+  const pagedUsage = filteredUsage.slice(
+    (safeUsagePage - 1) * PAGE_SIZE,
+    safeUsagePage * PAGE_SIZE,
+  );
+
+  const historyTotalPages = Math.max(
+    1,
+    Math.ceil(filteredItems.length / PAGE_SIZE),
+  );
+  const safeHistoryPage = Math.min(historyPage, historyTotalPages);
+  const pagedHistory = filteredItems.slice(
+    (safeHistoryPage - 1) * PAGE_SIZE,
+    safeHistoryPage * PAGE_SIZE,
+  );
 
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
@@ -353,53 +465,172 @@ function HistoryModal({
         </div>
 
         <div className={styles.modalBody}>
-          {loading ? (
-            <div className={styles.loadingWrap}>
-              <Loader2 className={styles.spinner} size={18} />
+          {/* 요약 박스 — 입사일/발생/사용/잔여 */}
+          <div className={styles.summaryBox}>
+            <div className={styles.summaryRow}>
+              <span className={styles.summaryLabel}>입사일</span>
+              <span className={styles.summaryValue}>
+                {target.joined_at ?? "-"}
+              </span>
             </div>
-          ) : items.length === 0 ? (
-            <div className={styles.empty}>이력이 없습니다.</div>
-          ) : (
-            <table className={styles.subTable}>
-              <thead>
-                <tr>
-                  <th>일시</th>
-                  <th>변동</th>
-                  <th>사유</th>
-                  <th>처리자</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((t) => (
-                  <tr key={t.id}>
-                    <td>
-                      {new Date(t.created_at).toLocaleString("ko-KR", {
-                        dateStyle: "short",
-                        timeStyle: "short",
-                      })}
-                    </td>
-                    <td
-                      className={
-                        t.delta >= 0 ? styles.deltaPlus : styles.deltaMinus
-                      }
-                    >
-                      {t.delta >= 0 ? "+" : ""}
-                      {t.delta.toFixed(1)}
-                    </td>
-                    <td>
-                      {t.approval_id ? (
-                        <span className={styles.approvalTag}>결재 승인</span>
-                      ) : null}{" "}
-                      {t.reason}
-                    </td>
-                    <td className={styles.dim}>
-                      {t.created_by_name ?? (t.approval_id ? "시스템" : "-")}
-                    </td>
+            <div className={styles.summaryRow}>
+              <span className={styles.summaryLabel}>발생</span>
+              <span className={styles.summaryValue}>
+                {target.granted.toFixed(1)}개{" "}
+                {target.manual_grant !== 0 && (
+                  <span className={styles.summarySub}>
+                    (자동 {target.auto_grant.toFixed(1)} + 수동{" "}
+                    {target.manual_grant.toFixed(1)})
+                  </span>
+                )}
+              </span>
+            </div>
+            <div className={styles.summaryRow}>
+              <span className={styles.summaryLabel}>사용</span>
+              <span className={styles.summaryValue}>
+                {target.used.toFixed(1)}개
+              </span>
+            </div>
+            <div className={styles.summaryRow}>
+              <span className={styles.summaryLabel}>잔여</span>
+              <strong
+                className={
+                  target.balance < 0
+                    ? styles.summaryValueNegative
+                    : styles.summaryValueBalance
+                }
+              >
+                {target.balance.toFixed(1)}개
+              </strong>
+            </div>
+          </div>
+
+          {/* 검색 input — 사용일자 + 변동 이력 동시 필터링 */}
+          <div className={styles.modalSearchWrap}>
+            <Search size={14} className={styles.modalSearchIcon} />
+            <input
+              type="text"
+              className={styles.modalSearchInput}
+              placeholder="날짜(YYYY-MM-DD 또는 YYYY-MM) / 휴가 종류 / 사유 검색"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            {query && (
+              <button
+                type="button"
+                className={styles.modalSearchClear}
+                onClick={() => setQuery("")}
+                aria-label="검색 초기화"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+
+          {/* 사용일자 섹션 */}
+          <div className={styles.section}>
+            <h4 className={styles.sectionTitle}>
+              사용일자 ({filteredUsage.length}
+              {q ? ` / ${target.usage_list.length}` : ""}건)
+            </h4>
+            {target.usage_list.length === 0 ? (
+              <div className={styles.sectionEmpty}>아직 사용한 휴가가 없습니다.</div>
+            ) : filteredUsage.length === 0 ? (
+              <div className={styles.sectionEmpty}>검색 결과가 없습니다.</div>
+            ) : (
+              <>
+              <table className={styles.subTable}>
+                <thead>
+                  <tr>
+                    <th>날짜</th>
+                    <th>휴가 종류</th>
+                    <th>차감</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+                </thead>
+                <tbody>
+                  {pagedUsage.map((u, i) => (
+                    <tr key={`${u.date}-${i}`}>
+                      <td>{u.date}</td>
+                      <td>{u.type_full}</td>
+                      <td className={styles.deltaMinus}>
+                        -{u.delta.toFixed(1)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <Paginator
+                page={safeUsagePage}
+                totalPages={usageTotalPages}
+                onChange={setUsagePage}
+              />
+              </>
+            )}
+          </div>
+
+          {/* 변동 이력 섹션 (어드민 부여 + 자동 차감 transactions) */}
+          <div className={styles.section}>
+            <h4 className={styles.sectionTitle}>
+              변동 이력 ({filteredItems.length}
+              {q ? ` / ${items.length}` : ""}건, 최근 200건)
+            </h4>
+            {loading ? (
+              <div className={styles.loadingWrap}>
+                <Loader2 className={styles.spinner} size={18} />
+              </div>
+            ) : items.length === 0 ? (
+              <div className={styles.sectionEmpty}>이력이 없습니다.</div>
+            ) : filteredItems.length === 0 ? (
+              <div className={styles.sectionEmpty}>검색 결과가 없습니다.</div>
+            ) : (
+              <>
+              <table className={styles.subTable}>
+                <thead>
+                  <tr>
+                    <th>일시</th>
+                    <th>변동</th>
+                    <th>사유</th>
+                    <th>처리자</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pagedHistory.map((t) => (
+                    <tr key={t.id}>
+                      <td>
+                        {new Date(t.created_at).toLocaleString("ko-KR", {
+                          dateStyle: "short",
+                          timeStyle: "short",
+                        })}
+                      </td>
+                      <td
+                        className={
+                          t.delta >= 0 ? styles.deltaPlus : styles.deltaMinus
+                        }
+                      >
+                        {t.delta >= 0 ? "+" : ""}
+                        {t.delta.toFixed(1)}
+                      </td>
+                      <td>
+                        {t.approval_id ? (
+                          <span className={styles.approvalTag}>결재 승인</span>
+                        ) : null}{" "}
+                        {t.reason}
+                      </td>
+                      <td className={styles.dim}>
+                        {t.created_by_name ?? (t.approval_id ? "시스템" : "-")}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <Paginator
+                page={safeHistoryPage}
+                totalPages={historyTotalPages}
+                onChange={setHistoryPage}
+              />
+              </>
+            )}
+          </div>
         </div>
 
         <div className={styles.modalFooter}>
@@ -412,6 +643,56 @@ function HistoryModal({
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─── 페이지네이션 ───────────────────────────────────────────────────────
+
+function Paginator({
+  page,
+  totalPages,
+  onChange,
+}: {
+  page: number;
+  totalPages: number;
+  onChange: (p: number) => void;
+}) {
+  if (totalPages <= 1) return null;
+  // ±2 윈도우
+  const start = Math.max(1, page - 2);
+  const end = Math.min(totalPages, page + 2);
+  const pages: number[] = [];
+  for (let i = start; i <= end; i++) pages.push(i);
+
+  return (
+    <div className={styles.paginator}>
+      <button
+        type="button"
+        className={styles.pageBtn}
+        onClick={() => onChange(Math.max(1, page - 1))}
+        disabled={page === 1}
+      >
+        이전
+      </button>
+      {pages.map((p) => (
+        <button
+          key={p}
+          type="button"
+          className={`${styles.pageBtn} ${p === page ? styles.pageBtnActive : ""}`}
+          onClick={() => onChange(p)}
+        >
+          {p}
+        </button>
+      ))}
+      <button
+        type="button"
+        className={styles.pageBtn}
+        onClick={() => onChange(Math.min(totalPages, page + 1))}
+        disabled={page === totalPages}
+      >
+        다음
+      </button>
     </div>
   );
 }
