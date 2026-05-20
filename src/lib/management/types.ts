@@ -39,9 +39,11 @@ export interface Revenue {
 
 export interface TemplateStep {
   step: number
-  type: 'APPLICANT' | 'SPECIFIC_PERSON' | 'DEPARTMENT_HEAD'
+  type: 'APPLICANT' | 'SPECIFIC_PERSON' | 'DEPARTMENT_HEAD' | 'REFERENCE'
   user_id?: string
   label: string
+  // 부서 매칭 — 값이 있으면 신청자 부서와 일치할 때만 활성화 (없으면 모든 부서 대상)
+  department_id?: string | null
 }
 
 export interface ApprovalTemplate {

@@ -32,9 +32,10 @@ interface ExpenseCategory {
 
 interface ApprovalStep {
   step: number
-  type: 'APPLICANT' | 'SPECIFIC_PERSON'
+  type: 'APPLICANT' | 'SPECIFIC_PERSON' | 'REFERENCE'
   user_id?: string
   label: string
+  department_id?: string | null
 }
 
 interface ApprovalTemplate {
@@ -1145,6 +1146,7 @@ function makeDefaultSteps(): ApprovalStep[] {
 function ApprovalTemplatesTab() {
   const [items, setItems] = useState<ApprovalTemplate[]>([])
   const [users, setUsers] = useState<AppUser[]>([])
+  const [departments, setDepartments] = useState<{ id: string; name: string }[]>([])
   const [loading, setLoading] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [editTarget, setEditTarget] = useState<ApprovalTemplate | null>(null)
@@ -1165,6 +1167,10 @@ function ApprovalTemplatesTab() {
       .then((r) => r.ok ? r.json() : [])
       .then(setUsers)
       .catch(() => {})
+    fetch('/api/management/departments')
+      .then((r) => r.ok ? r.json() : [])
+      .then((data) => Array.isArray(data) && setDepartments(data))
+      .catch(() => {})
   }, [fetchItems])
 
   const openAdd = () => {
@@ -1176,10 +1182,15 @@ function ApprovalTemplatesTab() {
 
   const openEdit = (item: ApprovalTemplate) => {
     setEditTarget(item)
+    // steps가 비어있거나 APPLICANT가 없으면 자동 보정 (편집 가능 상태로)
+    const safeSteps: ApprovalStep[] = item.steps.map((s) => ({ ...s }))
+    if (!safeSteps.some((s) => s.type === 'APPLICANT')) {
+      safeSteps.unshift({ step: 1, type: 'APPLICANT', label: '신청자' })
+    }
     setForm({
       document_type: item.document_type,
       category: item.category,
-      steps: item.steps.map((s) => ({ ...s })),
+      steps: safeSteps,
     })
     setFormError('')
     setShowModal(true)
@@ -1192,10 +1203,17 @@ function ApprovalTemplatesTab() {
     }
     // 2번 이후 단계에서 사용자가 미선택인 경우 검증
     const invalidStep = form.steps.find(
-      (s) => s.type === 'SPECIFIC_PERSON' && !s.user_id
+      (s) => s.type === 'SPECIFIC_PERSON' && !s.user_id,
     )
     if (invalidStep) {
       setFormError(`${invalidStep.step}단계 결재자를 선택해주세요.`)
+      return
+    }
+    const invalidRef = form.steps.find(
+      (s) => s.type === 'REFERENCE' && !s.user_id,
+    )
+    if (invalidRef) {
+      setFormError('참조자를 선택해주세요.')
       return
     }
 
@@ -1248,21 +1266,52 @@ function ApprovalTemplatesTab() {
   }
 
   const addStep = () => {
+    setForm((prev) => {
+      // 가장 큰 결재 단계 번호 +1
+      const approverSteps = prev.steps.filter((s) => s.type !== 'REFERENCE')
+      const maxStep = approverSteps.reduce(
+        (m, s) => Math.max(m, s.step ?? 0),
+        0,
+      )
+      const next: ApprovalStep = {
+        step: maxStep + 1,
+        type: 'SPECIFIC_PERSON',
+        user_id: '',
+        label: '',
+        department_id: null,
+      }
+      return { ...prev, steps: [...prev.steps, next] }
+    })
+  }
+
+  // 같은 단계에 부서별 결재자 추가 — base 행과 동일한 step 번호로 1명 추가
+  const addPeerStep = (baseStep: number) => {
+    setForm((prev) => {
+      const next: ApprovalStep = {
+        step: baseStep,
+        type: 'SPECIFIC_PERSON',
+        user_id: '',
+        label: '',
+        department_id: null,
+      }
+      return { ...prev, steps: [...prev.steps, next] }
+    })
+  }
+
+  const addReference = () => {
     setForm((prev) => ({
       ...prev,
       steps: [
         ...prev.steps,
-        { step: prev.steps.length + 1, type: 'SPECIFIC_PERSON', user_id: '', label: '' },
+        { step: 0, type: 'REFERENCE', user_id: '', label: '', department_id: null },
       ],
     }))
   }
 
   const removeStep = (index: number) => {
     setForm((prev) => {
-      const steps = prev.steps
-        .filter((_, i) => i !== index)
-        .map((s, i) => ({ ...s, step: i + 1 }))
-      return { ...prev, steps }
+      // 사용자가 직접 단계 번호를 지정하므로 자동 재정렬은 하지 않음
+      return { ...prev, steps: prev.steps.filter((_, i) => i !== index) }
     })
   }
 
@@ -1307,9 +1356,11 @@ function ApprovalTemplatesTab() {
                         const matchedUser = userIdStr ? users.find((u) => String(u.id).trim() === userIdStr) : undefined
                         const resolvedName = s.type === 'APPLICANT'
                           ? '신청자'
-                          : (matchedUser?.display_name || s.label || '-')
+                          : s.type === 'REFERENCE'
+                            ? `(참조) ${matchedUser?.display_name || s.label || '-'}`
+                            : (matchedUser?.display_name || s.label || '-')
                         return (
-                          <span key={s.step}>
+                          <span key={`${s.type}-${i}`}>
                             <span className={styles.stepChip}>{resolvedName}</span>
                             {i < item.steps.length - 1 && <span className={styles.stepArrow}>›</span>}
                           </span>
@@ -1381,41 +1432,133 @@ function ApprovalTemplatesTab() {
 
               <div className={styles.stepsEditor}>
                 <span className={styles.stepsEditorLabel}>결재 단계</span>
-                {form.steps.map((step, index) => (
-                  <div key={step.step} className={styles.stepRow}>
-                    <span className={`${styles.stepNum} ${index === 0 ? styles.stepNumFirst : ''}`}>
-                      {step.step}
-                    </span>
-                    <span className={styles.stepLabel}>
-                      {index === 0 ? '신청자' : `${step.step}단계`}
-                    </span>
-                    {index === 0 ? (
-                      <input
-                        className={styles.stepInput}
-                        value="신청자 (자동)"
-                        disabled
-                      />
-                    ) : (
+                <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 4 }}>
+                  ※ 부서를 지정하면 해당 부서 신청자만 적용됩니다. (비워두면 전체)
+                </div>
+                {form.steps.map((step, index) => {
+                  if (step.type === 'REFERENCE') return null
+                  return (
+                    <div key={`step-${index}`} className={styles.stepRow}>
+                      <span className={`${styles.stepNum} ${index === 0 ? styles.stepNumFirst : ''}`}>
+                        {step.step}
+                      </span>
+                      <span className={styles.stepLabel}>
+                        {index === 0 ? '신청자' : '단계'}
+                      </span>
+                      {index === 0 ? (
+                        <input
+                          className={styles.stepInput}
+                          value="신청자 (자동)"
+                          disabled
+                        />
+                      ) : (
+                        <>
+                          <input
+                            type="number"
+                            min={1}
+                            className={styles.stepInput}
+                            value={step.step}
+                            onChange={(e) =>
+                              updateStep(index, { step: Number(e.target.value) || 1 })
+                            }
+                            style={{ width: 56 }}
+                            title="단계 번호 (같은 번호 = 같은 단계, 부서별 결재자)"
+                          />
+                          <select
+                            className={styles.stepSelect}
+                            value={step.user_id ?? ''}
+                            onChange={(e) => updateStep(index, { user_id: e.target.value })}
+                          >
+                            <option value="">결재자 선택</option>
+                            {users.map((u) => (
+                              <option key={u.id} value={u.id}>{u.display_name}</option>
+                            ))}
+                          </select>
+                          <select
+                            className={styles.stepSelect}
+                            value={step.department_id ?? ''}
+                            onChange={(e) =>
+                              updateStep(index, {
+                                department_id: e.target.value || null,
+                              })
+                            }
+                            style={{ maxWidth: 160 }}
+                          >
+                            <option value="">부서 (전체)</option>
+                            {departments.map((d) => (
+                              <option key={d.id} value={d.id}>{d.name}</option>
+                            ))}
+                          </select>
+                          <button
+                            type="button"
+                            className={styles.btnAddStep}
+                            onClick={() => addPeerStep(step.step)}
+                            title="같은 단계에 다른 부서 결재자 추가"
+                            style={{ padding: '4px 8px', fontSize: 11 }}
+                          >
+                            + 부서
+                          </button>
+                        </>
+                      )}
+                      {index > 0 && (
+                        <button className={styles.btnRemoveStep} onClick={() => removeStep(index)}>
+                          <X size={14} />
+                        </button>
+                      )}
+                    </div>
+                  )
+                })}
+                <button className={styles.btnAddStep} onClick={addStep}>
+                  <Plus size={12} /> 새 결재 단계 추가
+                </button>
+
+                <span className={styles.stepsEditorLabel} style={{ marginTop: 18 }}>
+                  참조선
+                </span>
+                {form.steps.filter((s) => s.type === 'REFERENCE').length === 0 && (
+                  <div style={{ fontSize: 12, color: '#9ca3af', padding: '6px 0' }}>
+                    참조자가 지정되지 않았습니다.
+                  </div>
+                )}
+                {form.steps.map((step, index) => {
+                  if (step.type !== 'REFERENCE') return null
+                  return (
+                    <div key={`ref-${index}`} className={styles.stepRow}>
+                      <span className={styles.stepNum}>참조</span>
+                      <span className={styles.stepLabel}>참조자</span>
                       <select
                         className={styles.stepSelect}
                         value={step.user_id ?? ''}
                         onChange={(e) => updateStep(index, { user_id: e.target.value })}
                       >
-                        <option value="">결재자 선택</option>
+                        <option value="">참조자 선택</option>
                         {users.map((u) => (
                           <option key={u.id} value={u.id}>{u.display_name}</option>
                         ))}
                       </select>
-                    )}
-                    {index > 0 && (
+                      <select
+                        className={styles.stepSelect}
+                        value={step.department_id ?? ''}
+                        onChange={(e) =>
+                          updateStep(index, {
+                            department_id: e.target.value || null,
+                          })
+                        }
+                        style={{ maxWidth: 160 }}
+                      >
+                        <option value="">부서 (전체)</option>
+                        {departments.map((d) => (
+                          <option key={d.id} value={d.id}>{d.name}</option>
+                        ))}
+                      </select>
                       <button className={styles.btnRemoveStep} onClick={() => removeStep(index)}>
                         <X size={14} />
                       </button>
-                    )}
-                  </div>
-                ))}
-                <button className={styles.btnAddStep} onClick={addStep}>
-                  <Plus size={12} /> 단계 추가
+                    </div>
+                  )
+                })}
+                <button className={styles.btnAddStep} onClick={addReference}>
+                  <Plus size={12} /> 참조자 추가
                 </button>
               </div>
 

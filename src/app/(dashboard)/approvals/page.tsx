@@ -435,6 +435,84 @@ function ApprovalStepsPanel({ steps, currentStep }: ApprovalStepsPanelProps) {
 }
 
 // ---------------------------------------------------------------------------
+// 템플릿 steps → approver/reference user_id 추출 헬퍼
+// ---------------------------------------------------------------------------
+
+interface TemplateStepLike {
+  step: number;
+  type: string;
+  user_id?: string | null;
+  label?: string;
+  department_id?: string | null;
+}
+
+// 부서 매칭 — step.department_id가 없으면 모든 부서, 있으면 신청자 부서와 일치할 때만
+function isDepartmentMatch(
+  stepDept: string | null | undefined,
+  applicantDept: string | null | undefined,
+): boolean {
+  if (!stepDept) return true; // 전체 적용
+  if (!applicantDept) return false; // 신청자 부서 미확정이면 부서 제한 step은 제외
+  return String(stepDept) === String(applicantDept);
+}
+
+function extractApproverIds(
+  steps: TemplateStepLike[] | undefined,
+  applicantDept?: string | null,
+): string[] {
+  // 결재자 후보만 필터링
+  const candidates = (steps ?? []).filter(
+    (s) =>
+      (s.type === "SPECIFIC_PERSON" || s.type === "DEPARTMENT_HEAD") &&
+      s.user_id,
+  );
+  // step 번호 기준 그룹화
+  const groups = new Map<number, TemplateStepLike[]>();
+  for (const s of candidates) {
+    const k = s.step ?? 0;
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k)!.push(s);
+  }
+  // step 번호 오름차순 정렬, 각 그룹에서 부서 매칭 행 추출
+  // - 부서 지정된 행이 있으면 신청자 부서 매칭 행 우선
+  // - 매칭 없으면 부서 없는 행(전체) 사용
+  const sortedSteps = Array.from(groups.keys()).sort((a, b) => a - b);
+  const result: string[] = [];
+  for (const stepNum of sortedSteps) {
+    const group = groups.get(stepNum)!;
+    // 1순위: department_id 매칭
+    const matched = group.find(
+      (s) => s.department_id && isDepartmentMatch(s.department_id, applicantDept),
+    );
+    // 2순위: department 없는(전체) 행
+    const fallback = group.find((s) => !s.department_id);
+    const picked = matched ?? fallback;
+    if (picked) result.push(String(picked.user_id));
+  }
+  return result;
+}
+
+function extractReferenceIds(
+  steps: TemplateStepLike[] | undefined,
+  applicantDept?: string | null,
+): string[] {
+  // 참조 후보
+  const refs = (steps ?? []).filter((s) => s.type === "REFERENCE" && s.user_id);
+  // 신청자 부서 매칭된 참조 (department_id 지정된 행)
+  const matched = refs.filter(
+    (s) => s.department_id && isDepartmentMatch(s.department_id, applicantDept),
+  );
+  // 전체 참조 (department_id 없는 행 — 모든 신청자에게 적용)
+  const allDept = refs.filter((s) => !s.department_id);
+  // 중복 제거하여 합치기
+  const ids = new Set<string>();
+  for (const s of [...matched, ...allDept]) {
+    if (s.user_id) ids.add(String(s.user_id));
+  }
+  return Array.from(ids);
+}
+
+// ---------------------------------------------------------------------------
 // 메인 페이지 컴포넌트
 // ---------------------------------------------------------------------------
 
@@ -644,10 +722,9 @@ export default function ApprovalsPage() {
     if (!tpl) return;
     quickActionHandledRef.current = true;
 
-    // 양식 자동 선택
-    const defaultApproverIds = (tpl.steps ?? [])
-      .filter((s) => s.type !== "APPLICANT" && s.user_id)
-      .map((s) => String(s.user_id));
+    // 양식 자동 선택 + 결재선/참조선 prefill (신청자 부서 매칭)
+    const defaultApproverIds = extractApproverIds(tpl.steps, myDepartmentId ?? null);
+    const defaultReferenceIds = extractReferenceIds(tpl.steps, myDepartmentId ?? null);
 
     // 추가 prefill 값 — 휴가신청서면 vacation_type 채움
     const prefill: Record<string, string> = {};
@@ -665,7 +742,7 @@ export default function ApprovalsPage() {
       department_id: myDepartmentId ?? "",
       content: prefill,
       approver_ids: defaultApproverIds,
-      reference_ids: [],
+      reference_ids: defaultReferenceIds,
     });
     setFormError("");
     setAttachedFiles([]);
@@ -720,14 +797,29 @@ export default function ApprovalsPage() {
   useEffect(() => {
     const tpl = formState.template;
     if (!tpl) return;
-    if (formState.approver_ids.length > 0) return;
-    const autoIds = (tpl.steps ?? [])
-      .filter((s) => s.type !== "APPLICANT" && s.user_id)
-      .map((s) => String(s.user_id));
-    if (autoIds.length > 0) {
-      setFormState((prev) => ({ ...prev, approver_ids: autoIds }));
-    }
-  }, [formState.template, formState.approver_ids.length]);
+    const dept = formState.department_id || myDepartmentId || null;
+    const autoApprovers = extractApproverIds(tpl.steps, dept);
+    const autoReferences = extractReferenceIds(tpl.steps, dept);
+    setFormState((prev) => {
+      const next = { ...prev };
+      let changed = false;
+      if (prev.approver_ids.length === 0 && autoApprovers.length > 0) {
+        next.approver_ids = autoApprovers;
+        changed = true;
+      }
+      if (prev.reference_ids.length === 0 && autoReferences.length > 0) {
+        next.reference_ids = autoReferences;
+        changed = true;
+      }
+      return changed ? next : prev;
+    });
+  }, [
+    formState.template,
+    formState.approver_ids.length,
+    formState.reference_ids.length,
+    formState.department_id,
+    myDepartmentId,
+  ]);
 
   // 양식 진입 시 신청부서가 비어있으면 본인 소속 부서로 고정
   useEffect(() => {
@@ -961,16 +1053,15 @@ export default function ApprovalsPage() {
       setModalSelectedTemplate(tpl);
       setTemplateModalOpen(false);
       setSelectedCategory(null);
-      const defaultApproverIds = (tpl.steps ?? [])
-        .filter((s) => s.type !== "APPLICANT" && s.user_id)
-        .map((s) => String(s.user_id));
+      const defaultApproverIds = extractApproverIds(tpl.steps, myDepartmentId ?? null);
+      const defaultReferenceIds = extractReferenceIds(tpl.steps, myDepartmentId ?? null);
       setFormState({
         template: tpl,
         title: tpl.document_type,
         department_id: myDepartmentId ?? "",
         content: {},
         approver_ids: defaultApproverIds,
-        reference_ids: [],
+        reference_ids: defaultReferenceIds,
       });
       setFormError("");
       setAttachedFiles([]);
@@ -1069,16 +1160,16 @@ export default function ApprovalsPage() {
     setTemplateModalOpen(false);
     setSelectedCategory(null);
     const isDynamic = modalSelectedTemplate.document_type.startsWith("custom_");
-    const defaultApproverIds = (modalSelectedTemplate.steps ?? [])
-      .filter((s) => s.type !== "APPLICANT" && s.user_id)
-      .map((s) => String(s.user_id));
+    const deptForMatch = modalDepartmentId || myDepartmentId || null;
+    const defaultApproverIds = extractApproverIds(modalSelectedTemplate.steps, deptForMatch);
+    const defaultReferenceIds = extractReferenceIds(modalSelectedTemplate.steps, deptForMatch);
     setFormState({
       template: modalSelectedTemplate,
       title: isDynamic ? "" : modalSelectedTemplate.document_type,
       department_id: modalDepartmentId,
       content: {},
       approver_ids: defaultApproverIds,
-      reference_ids: [],
+      reference_ids: defaultReferenceIds,
     });
     setFormError("");
     setAttachedFiles([]);
@@ -1234,16 +1325,15 @@ export default function ApprovalsPage() {
 
   const handleSelectTemplate = (tpl: ApprovalTemplate) => {
     const isDynamic = tpl.document_type.startsWith("custom_");
-    const defaultApproverIds = (tpl.steps ?? [])
-      .filter((s) => s.type !== "APPLICANT" && s.user_id)
-      .map((s) => String(s.user_id));
+    const defaultApproverIds = extractApproverIds(tpl.steps, myDepartmentId ?? null);
+    const defaultReferenceIds = extractReferenceIds(tpl.steps, myDepartmentId ?? null);
     setFormState({
       template: tpl,
       title: isDynamic ? "" : tpl.document_type,
       department_id: "",
       content: {},
       approver_ids: defaultApproverIds,
-      reference_ids: [],
+      reference_ids: defaultReferenceIds,
     });
     setLinkedProposal(null);
     setCurrentView("new_form");
