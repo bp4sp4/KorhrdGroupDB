@@ -219,6 +219,10 @@ export default function NotificationBell() {
   const [pendingNewIds, setPendingNewIds] = useState<number[]>([]);
   // 관리자 설정: 새 공지 팝업 ON/OFF (DB에서 불러옴)
   const popupEnabledRef = useRef<boolean>(false);
+  // 설정 로드 완료 여부 — 마운트 시 announcements 조회 결과 처리 가능 시점 동기화용
+  const [popupSettingLoaded, setPopupSettingLoaded] = useState(false);
+  // 마운트 시 초기 팝업 검사를 1회만 수행하도록 가드
+  const initialPopupCheckedRef = useRef(false);
   // 업무 알림 팝업
   const [taskPopup, setTaskPopup] = useState<Notification | null>(null);
   const lastTaskIdRef = useRef<number | null>(null);
@@ -291,7 +295,10 @@ export default function NotificationBell() {
       .then((data) => {
         popupEnabledRef.current = data?.value === true;
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => {
+        setPopupSettingLoaded(true);
+      });
   }, []);
 
   useEffect(() => {
@@ -404,15 +411,8 @@ export default function NotificationBell() {
       const list = (data ?? []) as Announcement[];
       setAnnouncements(list);
 
-      // 마운트 시 새 공지(24h 이내 + seen 안 됨) 감지 → 팝업
+      // 벨 카운트는 즉시 갱신 (팝업 여부와 무관)
       const seen = getSeenIds();
-      const newOnes = list.filter(
-        (a) => isNewAnnouncement(a.date) && !seen.includes(a.id),
-      );
-      if (newOnes.length > 0 && popupEnabledRef.current) {
-        setPendingNewIds(newOnes.map((a) => a.id));
-        setShowNewPopup(true);
-      }
       const count = list.filter(
         (a) => isNewAnnouncement(a.date) && !seen.includes(a.id),
       ).length;
@@ -453,6 +453,23 @@ export default function NotificationBell() {
       supabase.removeChannel(channel);
     };
   }, []);
+
+  // 설정 로드 + announcements 모두 준비되면 마운트 시 1회 새 공지 팝업 검사
+  useEffect(() => {
+    if (!popupSettingLoaded) return;
+    if (initialPopupCheckedRef.current) return;
+    if (announcements.length === 0) return;
+    initialPopupCheckedRef.current = true;
+    if (!popupEnabledRef.current) return;
+    const seen = getSeenIds();
+    const newOnes = announcements.filter(
+      (a) => isNewAnnouncement(a.date) && !seen.includes(a.id),
+    );
+    if (newOnes.length > 0) {
+      setPendingNewIds(newOnes.map((a) => a.id));
+      setShowNewPopup(true);
+    }
+  }, [popupSettingLoaded, announcements]);
 
   // 공지 탭 열면 현재 NEW 공지를 seen 처리
   useEffect(() => {

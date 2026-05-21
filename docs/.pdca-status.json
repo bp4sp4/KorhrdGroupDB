@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-05-21T03:59:05.847Z",
+  "lastUpdated": "2026-05-21T05:20:48.170Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -192,9 +192,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:20:57.368Z",
-        "lastUpdated": "2026-05-20T06:01:40.760Z"
+        "lastUpdated": "2026-05-21T05:20:48.170Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/components/layout/Sidebar.tsx"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/components/layout/NotificationBell.tsx"
     },
     "hakjeom": {
       "phase": "do",
@@ -1960,7 +1960,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-05-21T03:59:05.847Z"
+    "lastActivity": "2026-05-21T05:20:48.170Z"
   },
   "history": [
     {
@@ -25978,6 +25978,30 @@
     {
       "timestamp": "2026-05-21T03:59:05.847Z",
       "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-05-21T05:20:16.447Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-05-21T05:20:23.601Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-05-21T05:20:35.230Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-05-21T05:20:48.170Z",
+      "feature": "layout",
       "phase": "do",
       "action": "updated"
     }
