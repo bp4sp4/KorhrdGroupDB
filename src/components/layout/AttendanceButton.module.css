@@ -1,0 +1,82 @@
+.wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #1f2937;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    border-color 0.12s;
+  font-family: Pretendard, sans-serif;
+  white-space: nowrap;
+}
+
+.btn:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.btnIn {
+  background: #0084fe;
+  border-color: #0084fe;
+  color: #fff;
+}
+.btnIn:hover {
+  background: #0070dc;
+  border-color: #0070dc;
+}
+
+.btnOut {
+  background: #f43f5e;
+  border-color: #f43f5e;
+  color: #fff;
+}
+.btnOut:hover {
+  background: #e11d48;
+  border-color: #e11d48;
+}
+
+.btnDisabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #f3f4f6;
+  color: #6b7280;
+  border-color: #e5e7eb;
+}
+
+.statusChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #f3f4f6;
+  color: #374151;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: Pretendard, sans-serif;
+}
+
+.statusChipActive {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}

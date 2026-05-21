@@ -24,6 +24,7 @@ import {
   LayoutGrid,
   FileText,
   CalendarDays,
+  Clock,
 } from "lucide-react";
 import styles from "./layout.module.css";
 import { createClient } from "@/lib/supabase/client";
@@ -322,6 +323,12 @@ const ALL_SECTIONS: NavSection[] = [
         icon: <FileText size={16} />,
       },
       {
+        id: "me-attendance",
+        label: "근태현황",
+        href: "/me/attendance",
+        icon: <Clock size={16} />,
+      },
+      {
         id: "duplicate",
         label: "중복 조회",
         href: "/duplicate",
@@ -376,6 +383,12 @@ const ALL_SECTIONS: NavSection[] = [
         label: "결재 양식 관리",
         href: "/admin/approval-forms",
         icon: <FileCheck size={16} />,
+      },
+      {
+        id: "admin-attendance",
+        label: "근태현황",
+        href: "/admin/attendance",
+        icon: <Clock size={16} />,
       },
       {
         id: "admin-customers",

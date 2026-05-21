@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import styles from "./layout.module.css";
 import NotificationBell from "./NotificationBell";
 import QuickSearch from "./QuickSearch";
+import AttendanceButton from "./AttendanceButton";
 
 interface NavSection {
   label: string;
@@ -248,6 +249,10 @@ export default function Header({
         </div>
 
         <div className={`${styles.headerDivider} ${styles.quickSearchHide}`} />
+
+        <AttendanceButton />
+
+        <div className={styles.headerDivider} />
 
         <NotificationBell />
 
