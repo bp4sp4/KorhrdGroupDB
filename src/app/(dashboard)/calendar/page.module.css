@@ -1,0 +1,83 @@
+.viewBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 24px;
+  background: #fff;
+  border-bottom: 1px solid #eef0f3;
+  flex-wrap: wrap;
+}
+
+.viewBarLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.viewBarLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7684;
+}
+
+.viewToggle {
+  display: inline-flex;
+  background: #f2f4f6;
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.viewToggleBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 0;
+  background: transparent;
+  color: #4e5968;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: Pretendard, sans-serif;
+  transition:
+    background 0.12s,
+    color 0.12s;
+}
+
+.viewToggleBtn:hover {
+  color: #191f28;
+}
+
+.viewToggleBtnActive {
+  background: #fff;
+  color: #191f28;
+  box-shadow: 0 1px 2px rgba(17, 24, 39, 0.06);
+}
+
+.viewToggleCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #e5e8eb;
+  color: #4e5968;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.viewToggleBtnActive .viewToggleCount {
+  background: #e8f3ff;
+  color: #3182f6;
+}
+
+.viewBarHint {
+  font-size: 11.5px;
+  color: #8b95a1;
+  font-weight: 500;
+}

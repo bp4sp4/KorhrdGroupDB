@@ -563,6 +563,26 @@ function RightPanel({
 }: RightPanelProps) {
   const isToday = isSameDay(selected, today);
   const dow = WEEK_KO[selected.getDay()];
+  const [query, setQuery] = useState("");
+  const [showAll, setShowAll] = useState(false);
+
+  // 선택 날짜가 바뀌면 검색어 / 더보기 초기화
+  React.useEffect(() => {
+    setQuery("");
+    setShowAll(false);
+  }, [selected]);
+
+  const PAGE_SIZE = 10;
+  const q = query.trim().toLowerCase();
+  const filtered = q
+    ? events.filter(
+        (e) =>
+          e.title.toLowerCase().includes(q) ||
+          (e.where ?? "").toLowerCase().includes(q),
+      )
+    : events;
+  const visible = showAll ? filtered : filtered.slice(0, PAGE_SIZE);
+  const hiddenCount = filtered.length - visible.length;
 
   return (
     <aside className="right">
@@ -591,7 +611,24 @@ function RightPanel({
         </div>
 
         <div className="schedule">
-          {events.map((e) => (
+          {events.length > PAGE_SIZE && (
+            <div className="day-search">
+              <input
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setShowAll(false);
+                }}
+                placeholder="이름으로 검색 (예: 윤경민)"
+                className="day-search-input"
+              />
+              {query && (
+                <span className="day-search-count">{filtered.length}건</span>
+              )}
+            </div>
+          )}
+
+          {visible.map((e) => (
             <div
               key={e.id}
               className="item"
@@ -615,8 +652,31 @@ function RightPanel({
             </div>
           ))}
 
+          {hiddenCount > 0 && (
+            <button
+              type="button"
+              className="show-more-btn"
+              onClick={() => setShowAll(true)}
+            >
+              외 {hiddenCount}건 더 보기
+            </button>
+          )}
+
+          {showAll && filtered.length > PAGE_SIZE && (
+            <button
+              type="button"
+              className="show-more-btn"
+              onClick={() => setShowAll(false)}
+            >
+              접기
+            </button>
+          )}
+
           {events.length === 0 && (
             <div className="empty">아직 등록된 일정이 없어요.</div>
+          )}
+          {events.length > 0 && filtered.length === 0 && (
+            <div className="empty">검색 결과가 없어요.</div>
           )}
 
           <button className="add-item" onClick={onAdd}>
