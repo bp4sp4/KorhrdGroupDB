@@ -2628,134 +2628,244 @@
   background: rgba(0, 0, 0, 0.4);
   z-index: 200;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   padding: 20px;
+  overflow-y: auto;
 }
 
 .detailModal {
-  background: #fff;
-  border-radius: 8px;
-  width: 100%;
-  max-width: 520px;
-  max-height: 90vh;
   display: flex;
+  width: 1156px;
+  padding: 24px;
   flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  border-radius: 16px;
+  background: #fff;
   box-shadow: 0 8px 48px rgba(0, 0, 0, 0.16);
-  overflow: hidden;
+  overflow: visible;
   position: relative;
+  margin: auto;
 }
 
 .detailModalHeader {
-  padding: 24px 24px 0;
-  flex-shrink: 0;
-}
-
-.detailModalHeaderTop {
   display: flex;
-  align-items: flex-start;
+  padding-right: 40px;
   justify-content: space-between;
-  margin-bottom: 16px;
+  align-items: center;
+  align-self: stretch;
+  flex-shrink: 0;
 }
 
 .detailModalHeaderLeft {
   display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.detailModalAvatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--toss-blue-subtle);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--toss-blue);
-  flex-shrink: 0;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .detailModalNameRow {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
-.duplicateBadge {
-  display: inline-flex;
+.detailModalNameInner {
+  display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px 9px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #b91c1c;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 999px;
+  gap: 6px;
 }
 
 .detailModalName {
-  font-size: 18px;
+  color: #1f2937;
+  font-family: Pretendard, sans-serif;
+  font-size: 22px;
+  font-style: normal;
   font-weight: 700;
-  color: var(--toss-text-primary);
+  line-height: normal;
   margin: 0;
 }
 
+.detailModalEditBtn {
+  width: 20px;
+  height: 20px;
+  aspect-ratio: 1 / 1;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .detailModalNameInput {
-  font-size: 18px;
+  color: #1f2937;
+  font-family: Pretendard, sans-serif;
+  font-size: 22px;
+  font-style: normal;
   font-weight: 700;
-  color: var(--toss-text-primary);
+  line-height: normal;
   margin: 0;
   border: none;
   border-bottom: 2px solid var(--toss-blue);
   background: transparent;
   outline: none;
   padding: 0 0 2px 0;
-  width: 100%;
   max-width: 200px;
-  font-family: inherit;
 }
 
-.detailModalSub {
-  font-size: 13px;
-  color: var(--toss-text-secondary);
-  margin: 3px 0 0;
-}
-
-.detailModalContactRow {
+.detailModalBadgeRow {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 6px;
+  gap: 4px;
 }
 
 .detailModalContactBadge {
+  display: flex;
+  padding: 4px 9px;
+  align-items: center;
+  gap: 10px;
+  border-radius: 999px;
+  background: #f5f5f5;
+  color: #7a8086;
+  font-family: Pretendard, sans-serif;
   font-size: 12px;
+  font-style: normal;
   font-weight: 600;
-  color: #3182f6;
-  background: #ebf3fe;
-  border-radius: 20px;
-  padding: 2px 9px;
+  line-height: normal;
 }
 
-.detailModalContactSub {
+.detailModalLastContactBadge {
+  display: flex;
+  padding: 4px 9px;
+  align-items: center;
+  gap: 10px;
+  color: #7a8086;
+  font-family: Pretendard, sans-serif;
   font-size: 12px;
-  color: var(--toss-text-secondary);
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+}
+
+.detailModalSub {
+  color: #8995a2;
+  font-family: Pretendard;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+}
+
+.detailModalHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+}
+
+.detailModalDateGroup {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.detailModalDateLabel {
+  color: #8995a2;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+}
+
+.detailModalDateValue {
+  display: flex;
+  width: 150px;
+  padding: 8px 12px;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 8px;
+  background: #f9fafc;
+  color: #8995a2;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+}
+
+.detailModalDivider {
+  width: 1px;
+  align-self: stretch;
+  background: #e6e7eb;
+}
+
+.detailModalScheduleTrigger {
+  display: flex;
+  width: 150px;
+  padding: 8px 10px;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  color: #8995a2;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: normal;
+  cursor: pointer;
+}
+
+.detailModalScheduleTrigger span {
+  color: #8995a2 !important;
+  font-family: Pretendard, sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+}
+
+.detailModalScheduleTriggerSelected {
+  display: flex;
+  width: 150px;
+  padding: 8px 10px;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 8px;
+  border: 1px solid #e03535;
+  background: #fff5f5;
+  color: #e03535;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: normal;
+  cursor: pointer;
+}
+
+.detailModalScheduleTriggerSelected span {
+  color: #e03535 !important;
+  font-family: Pretendard, sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 400 !important;
 }
 
 .detailModalCloseBtn {
+  width: 24px;
+  height: 24px;
+  aspect-ratio: 1 / 1;
+  position: absolute;
+  right: 24px;
+  top: 24px;
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--toss-text-secondary);
-  padding: 4px;
-  font-size: 20px;
-  line-height: 1;
-  flex-shrink: 0;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Tab bar */
@@ -2789,18 +2899,192 @@
 
 /* Body */
 .detailModalBody {
-  padding: 20px 24px;
-  overflow-y: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  align-self: stretch;
   flex: 1;
+}
+
+.detailModalBodyCol {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 16px;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* ─── 좌측 컬럼 (기본정보) 전용 디자인 ─────────────────────────────────── */
+.detailColLeft {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  align-self: stretch;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.detailColLeft .detailFieldRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  align-self: stretch;
+  grid-template-columns: none;
+}
+
+.detailColLeft .detailFieldLabel {
+  display: flex;
+  width: 80px;
+  align-items: center;
+  gap: 10px;
+  color: #8995a2;
+  font-family: Pretendard, sans-serif;
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  white-space: nowrap;
+}
+
+.detailFieldControl {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.detailFieldBox {
+  display: flex;
+  padding: 10px 14px;
+  align-items: center;
+  gap: 10px;
+  flex: 1 0 0;
+  min-width: 0;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  color: #1f2937;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  outline: none;
+}
+
+.detailFieldBox::placeholder {
+  color: #8995a2;
+}
+
+.detailFieldBoxFull {
+  display: flex;
+  padding: 10px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  flex: 1 0 0;
+  min-width: 0;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  color: #1f2937;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  outline: none;
+}
+
+.detailFieldBoxFull::placeholder {
+  color: #8995a2;
+}
+
+/* 좌측 컬럼 안에서 EducationSelect / HopeCourseSelect wrap을 flex 자식으로 */
+.detailColLeft .eduSelectWrap {
+  flex: 1 1 0;
+  min-width: 0;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+
+.detailColLeft .eduSelectTrigger {
+  padding: 10px;
+  border: 1px solid #e6e7eb;
+  border-radius: 8px;
+  color: #8995a2;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.detailColLeft .eduSelectActive {
+  color: #1f2937;
+}
+
+.eduSelectTriggerWrap {
+  position: relative;
+  flex: 1 0 0;
+  min-width: 0;
+}
+
+.eduSelectCustomInputInline {
+  display: flex;
+  flex: 1 0 0;
+  min-width: 0;
+  padding: 10px 14px;
+  align-items: center;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  color: #1f2937;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  outline: none;
+}
+
+.eduSelectCustomInputInline::placeholder {
+  color: #8995a2;
+}
+
+.eduSelectCustomInputInline:disabled {
+  background: #f9fafc;
+  color: #c4cad1;
+  cursor: not-allowed;
+}
+
+.eduSelectCustomInputInline:disabled::placeholder {
+  color: #c4cad1;
 }
 
 .detailMemoSection {
+  width: 100%;
   margin-top: 8px;
   border-top: 1px solid var(--toss-border);
   padding-top: 16px;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.detailMemoSection > * {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* MemoTimeline의 타임라인 영역이 남은 공간 차지 → 입력칸이 항상 아래 */
+.detailMemoSection [class*="timeline"] {
+  flex: 1 1 auto;
 }
 
 /* Field row: label left, control right */
@@ -3592,4 +3876,1434 @@
 .hopeCourseChipRemove:hover {
   background: #2563eb;
   color: #fff;
+}
+
+/* ─── 우측 컬럼 (취득 정보) 전용 디자인 ─────────────────────────────────── */
+.detailColRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 20px;
+  flex: 1 0 0;
+  min-width: 0;
+  align-self: stretch;
+}
+
+.detailColRightTitle {
+  color: #000;
+  font-family: Pretendard, sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  margin: 0;
+}
+
+.detailColRightRow {
+  display: flex;
+  align-items: flex-start;
+
+  align-self: stretch;
+}
+
+.detailColRightLabel {
+  display: flex;
+  width: 80px;
+  align-items: center;
+  gap: 10px;
+  color: #8995a2;
+  font-family: Pretendard, sans-serif;
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  white-space: nowrap;
+  padding-top: 10px;
+}
+
+.detailColRightControl {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 9px;
+  flex: 1 0 0;
+  min-width: 0;
+}
+
+/* ── 유입경로 카드 그리드 ──────────────────────────────────────────── */
+.referrerGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-self: stretch;
+}
+
+.referrerCardWrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.referrerCard {
+  display: flex;
+  height: 32px;
+  padding: 0 12px;
+  align-items: center;
+  gap: 6px;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+  box-sizing: border-box;
+}
+
+.referrerCard:hover {
+  border-color: #c7cdd6;
+}
+
+.referrerCardActive {
+  border: 1px solid #3182f6;
+  background: #f0f6ff;
+}
+
+.referrerIcon {
+  width: 16px;
+  height: 16px;
+  aspect-ratio: 1 / 1;
+  border-radius: 4px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  flex-shrink: 0;
+}
+
+.referrerIconSvg {
+  width: 16px;
+  height: 16px;
+  aspect-ratio: 1 / 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.referrerCardLabel {
+  color: #8d99a5;
+  font-family: Pretendard, sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  white-space: nowrap;
+}
+
+.referrerCardActive .referrerCardLabel {
+  color: #3182f6;
+}
+
+.referrerCardChip {
+  display: flex;
+  padding: 3px;
+  align-items: center;
+  gap: 2px;
+  border-radius: 4px;
+  background: #c6e3ff;
+  color: #0084fe;
+  font-family: Pretendard, sans-serif;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 90%;
+}
+
+.referrerCardChipRemove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 2px;
+  color: #0084fe;
+  font-size: 10px;
+  line-height: 1;
+}
+
+.referrerChevron {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+}
+
+.referrerEtcExtra {
+  display: flex;
+  align-self: stretch;
+  margin-top: 4px;
+}
+
+/* ─── 당근 sub-panel: 라디오 팝업 ─────────────────────────────────────── */
+.danggeunPopupWrap {
+  display: flex;
+  padding: 10px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 15px;
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 50;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 0 12px 0 rgba(0, 0, 0, 0.3);
+}
+
+.popupBottomRow {
+  position: relative;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+}
+
+.popupConfirmBtn {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  padding: 8px 14px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  background: #0084fe;
+  color: #fff;
+  font-family: Pretendard, sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  border: 0;
+  cursor: pointer;
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+.popupConfirmBtn:hover {
+  background: #0070dc;
+}
+
+.danggeunPopupBox {
+  display: flex;
+  width: 262px;
+  padding: 10px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  border-radius: 8px;
+  background: #f7f8fa;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.danggeunRadioRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  width: 100%;
+  text-align: left;
+}
+
+.danggeunRadioRowWithDelete {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.danggeunRadioCircle {
+  display: flex;
+  width: 14px;
+  height: 14px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 12px;
+  border: 1px solid #d0d0d0;
+  background: #fff;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.danggeunRadioCircleActive {
+  border-color: #0084fe;
+}
+
+.danggeunRadioDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #0084fe;
+}
+
+.danggeunRadioLabel {
+  color: #010101;
+  font-family: Pretendard, sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 100%;
+  flex: 1;
+}
+
+.danggeunRowDelete {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #c4cad1;
+  font-size: 12px;
+  padding: 2px 4px;
+}
+
+.danggeunRowDelete:hover {
+  color: #ef4444;
+}
+
+.danggeunAddBtn {
+  display: flex;
+  padding: 8px 12px;
+  align-items: center;
+  gap: 6px;
+  background: #eaf3ff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.danggeunAddCancel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: 1px solid #e6e7eb;
+  border-radius: 6px;
+  color: #8995a2;
+  font-size: 14px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.danggeunAddCancel:hover {
+  background: #f5f5f5;
+  color: #ef4444;
+}
+
+.danggeunAddBtnText {
+  color: #0084fe;
+  font-family: Pretendard, sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+}
+
+.danggeunAddInput {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid #d0d0d0;
+  border-radius: 6px;
+  font-size: 12px;
+  outline: none;
+}
+
+.danggeunAddInput:focus {
+  border-color: #0084fe;
+}
+
+.danggeunAddConfirm {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  background: #0084fe;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ─── 맘카페 sub-panel: 최근 선택 + 전체 목록 + 직접 추가 ─────────────── */
+.cafePopupWrap {
+  display: flex;
+  padding: 10px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 15px;
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 0 12px 0 rgba(0, 0, 0, 0.3);
+  z-index: 50;
+  width: 320px;
+}
+
+.cafeRecentSection {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  align-self: stretch;
+}
+
+.cafeSectionLabel {
+  color: #1f2937;
+  font-family: Pretendard, sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+}
+
+.cafeRecentChipRow {
+  display: flex;
+  align-items: flex-start;
+  align-content: flex-start;
+  gap: 6px;
+  align-self: stretch;
+  flex-wrap: wrap;
+}
+
+.cafeRecentChip {
+  display: flex;
+  padding: 8px 12px;
+  align-items: center;
+  gap: 6px;
+  border-radius: 8px;
+  background: #f7f8fa;
+  color: #1f2937;
+  font-family: Pretendard, sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  cursor: pointer;
+  border: none;
+}
+
+.cafeRecentChip:hover {
+  background: #eef2f7;
+}
+
+.cafeRecentChipActive {
+  background: #eaf3ff;
+  color: #0084fe;
+}
+
+.cafeSearchWrap {
+  display: flex;
+  padding: 12px 14px;
+  justify-content: space-between;
+  align-items: center;
+  align-self: stretch;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  gap: 8px;
+}
+
+.cafeSearchInput {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #1f2937;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: normal;
+  padding: 0;
+  min-width: 0;
+}
+
+.cafeSearchInput::placeholder {
+  color: #7a8086;
+}
+
+.cafeSearchIcon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cafeListSection {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  align-self: stretch;
+}
+
+.cafeListBox {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  align-self: stretch;
+  background: #f7f8fa;
+  padding: 10px;
+  border-radius: 8px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.cafeListRowWithDelete {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+/* ─── 지인소개 전용 상태 카드 ────────────────────────────────────────── */
+.referralStatusRow {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 9px;
+  align-self: stretch;
+}
+
+.referralStatusLabel {
+  display: flex;
+  width: 80px;
+  align-items: center;
+  gap: 10px;
+  color: #8995a2;
+  font-family: Pretendard, sans-serif;
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+}
+
+.referralStatusGrid {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  align-self: stretch;
+}
+
+.referralStatusCard {
+  display: flex;
+  height: 70px;
+  padding: 8px 10px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  flex: 1 0 0;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+
+.referralStatusCard:hover {
+  border-color: #c7cdd6;
+}
+
+.referralStatusCardActive {
+  border: 1px solid #0084fe;
+  background: #eaf3ff;
+}
+
+.referralStatusIcon {
+  width: 24px;
+  height: 24px;
+  aspect-ratio: 1 / 1;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.referralStatusCardLabel {
+  color: #7a8086;
+  text-align: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+}
+
+.referralStatusCardActive .referralStatusCardLabel {
+  color: #0084fe;
+}
+
+/* ─── 유입경로 "기타" 입력 ─────────────────────────────────────────── */
+.referrerEtcWrap {
+  display: flex;
+  padding: 10px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 50;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 0 12px 0 rgba(0, 0, 0, 0.3);
+  width: 280px;
+}
+
+.referrerEtcInput {
+  display: flex;
+  height: 32px;
+  padding: 0 12px;
+  align-items: center;
+  border-radius: 8px;
+  border: 1px solid #0084fe;
+  background: #fff;
+  color: #1f2937;
+  font-family: Pretendard, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: normal;
+  outline: none;
+  box-sizing: border-box;
+  min-width: 120px;
+}
+
+.referrerEtcInput::placeholder {
+  color: #8995a2;
+}
+
+.referrerEtcInput:focus {
+  border-color: #0084fe;
+}
+
+/* ─── 취득사유 (우측 컬럼) ──────────────────────────────────────────── */
+.reasonRow {
+  display: flex;
+  align-items: center;
+
+  align-self: stretch;
+}
+
+.reasonLabel {
+  display: flex;
+  width: 80px;
+  align-items: center;
+  gap: 10px;
+  color: #8995a2;
+  font-family: Pretendard, sans-serif;
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+}
+
+.reasonChips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.reasonChip {
+  display: flex;
+  padding: 8px 10px;
+  align-items: center;
+  gap: 6px;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  color: #8d99a5;
+  font-family: Pretendard, sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s,
+    color 0.15s;
+}
+
+.reasonChip:hover {
+  border-color: #c7cdd6;
+}
+
+.reasonChipActive {
+  border: 1px solid #0084fe;
+  background: #eaf3ff;
+  color: #0084fe;
+}
+
+.situationEmoji {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+  font-size: 10px;
+  line-height: 1;
+}
+
+.situationEtcInput {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #0084fe;
+  background: #fff;
+  color: #1f2937;
+  font-family: Pretendard, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: normal;
+  outline: none;
+  width: 140px;
+  box-sizing: border-box;
+}
+
+.situationEtcInput::placeholder {
+  color: #8995a2;
+}
+
+/* ─── 현재상황 select ──────────────────────────────────────────────── */
+.situationSelectWrap {
+  position: relative;
+  width: 256px;
+}
+
+.situationSelectTrigger {
+  display: flex;
+  width: 256px;
+  padding: 10px 14px;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  color: #8995a2;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.situationSelectTrigger:hover {
+  border-color: #c7cdd6;
+}
+
+.situationSelectTriggerActive {
+  color: #1f2937;
+}
+
+.situationSelectChevron {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+
+.situationSelectChevronOpen {
+  transform: rotate(180deg);
+}
+
+.situationSelectDropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid #e6e7eb;
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.situationSelectOption {
+  display: flex;
+  padding: 10px 14px;
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #1f2937;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  text-align: left;
+}
+
+.situationSelectOption:hover {
+  background: #f3f4f6;
+}
+
+.situationSelectOptionActive {
+  background: #eaf3ff;
+  color: #0084fe;
+  font-weight: 600;
+}
+
+/* ─── 반응포인트 trigger + 팝업 ──────────────────────────────────────── */
+.reactionWrap {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.reactionTrigger {
+  display: flex;
+  width: 444px;
+  height: 37px;
+  padding: 0 10px;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  color: #8995a2;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.reactionTrigger:hover {
+  border-color: #c7cdd6;
+}
+
+.reactionTriggerActive {
+  color: #1f2937;
+}
+
+.reactionChevron {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+
+.reactionChevronOpen {
+  transform: rotate(180deg);
+}
+
+.reactionPopup {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  padding: 14px;
+  width: 444px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  box-sizing: border-box;
+}
+
+.reactionGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 12px;
+  row-gap: 12px;
+}
+
+.reactionGroupRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.reactionGroupLabel {
+  display: flex;
+  width: 60px;
+  padding-top: 12px;
+  align-items: center;
+  gap: 6px;
+  color: #010101;
+  font-family: Pretendard, sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  flex-shrink: 0;
+}
+
+.reactionGroupEmoji {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.reactionGroupBox {
+  display: flex;
+  padding: 10px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  flex: 1 0 0;
+  border-radius: 8px;
+  background: #f7f8fa;
+}
+
+.reactionCheckRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+}
+
+.reactionCheckbox {
+  display: flex;
+  width: 18px;
+  height: 18px;
+  padding: 2px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 4px;
+  border: 1px solid #d0d0d0;
+  background: #fff;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.reactionCheckboxActive {
+  border: 0;
+  background: #2469ff;
+}
+
+.reactionCheckLabel {
+  color: #010101;
+  font-family: Pretendard, sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 100%;
+}
+
+.reactionConfirmRow {
+  display: none;
+}
+
+.reactionConfirmBtn {
+  display: flex;
+  padding: 8px 12px;
+  align-items: center;
+  gap: 6px;
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  border-radius: 8px;
+  background: #0084fe;
+  color: #fff;
+  font-family: Pretendard, sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  border: 0;
+  cursor: pointer;
+}
+
+.reactionConfirmBtn:hover {
+  background: #0070dc;
+}
+
+/* ─── 반응포인트 trigger 안 칩 목록 ─────────────────────────────────── */
+.reactionTriggerChipRow {
+  display: flex;
+  align-items: center;
+  align-content: center;
+  gap: 2px;
+  flex-wrap: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.reactionTriggerChip {
+  display: flex;
+  padding: 6px 4px;
+  align-items: center;
+  gap: 2px;
+  border-radius: 4px;
+  background: #eaf3fe;
+  color: #0084fe;
+  font-family: Pretendard, sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 100%;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.reactionTriggerChipEmoji {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+  font-size: 12px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.reactionTriggerMore {
+  color: #6b7684;
+  font-family: Pretendard, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 100%;
+  white-space: nowrap;
+  margin-left: 4px;
+}
+
+/* ─── 일반 상태 카드 (지인소개 아닐 때) ─────────────────────────────── */
+.statusFieldCol {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 9px;
+  align-self: stretch;
+}
+
+.statusCardCol {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  align-self: stretch;
+}
+
+.statusCardGrid {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-self: stretch;
+}
+
+.statusCard {
+  display: flex;
+  height: 69.714px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  flex: 1 1 0;
+  padding: 14px 0;
+  aspect-ratio: 1 / 1;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+  color: #7a8086;
+}
+
+.statusCard:hover {
+  border-color: #c7cdd6;
+}
+
+.statusCardActive {
+  border: 1px solid #0084fe;
+  background: #eaf3ff;
+  color: #0084fe;
+}
+
+.statusCardIcon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.statusCardLabel {
+  display: flex;
+  width: 35px;
+  height: 24px;
+  flex-direction: column;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #7a8086;
+  font-family: Pretendard, sans-serif;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  text-align: center;
+  white-space: pre-line;
+}
+
+.statusCardActive .statusCardLabel {
+  color: inherit;
+}
+
+.statusCardLabelWide {
+  width: 45px;
+}
+
+/* ─── 상태 sub-panel (상담완료 / 장기가망 / 기타) ─────────────────── */
+.statusSubPanel {
+  position: relative;
+  width: 524px;
+  padding: 20px;
+  border-radius: 8px;
+  align-self: stretch;
+  margin-top: 12px;
+  box-sizing: border-box;
+}
+
+/* 꼬리 SVG (컴포넌트에서 inline 렌더링) */
+.statusSubPanelTail {
+  position: absolute;
+  top: -15.5px;
+  left: var(--tail-left, 50%);
+  margin-left: -11px;
+  width: 22px;
+  height: 18px;
+  pointer-events: none;
+  display: block;
+  overflow: visible;
+}
+
+/* 상담완료 (파란 톤) */
+.statusSubPanelConsult {
+  background: #e0f7fa;
+  border: 1px solid #0277bd;
+  display: flex;
+  align-items: center;
+  gap: 50px;
+}
+
+.statusSubPanelConsult::before {
+  background: #e0f7fa;
+  border-color: #0277bd;
+}
+
+/* 장기가망 (보라 톤) */
+.statusSubPanelLong {
+  background: #f9f3ff;
+  border: 1px solid #c9a9ff;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  row-gap: 16px;
+  column-gap: 10px;
+}
+
+.statusSubPanelLong::before {
+  background: #f9f3ff;
+  border-color: #c9a9ff;
+}
+
+/* 기타 (초록 톤 외곽) */
+.statusSubPanelEtc {
+  background: #f0fff4;
+  border: 1px solid #059669;
+  width: 524px;
+  padding: 10px 16.29px 8.71px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+/* 기타 안의 input 박스 (회색 테두리) */
+.statusSubPanelEtcInputBox {
+  display: flex;
+  width: 100%;
+  padding: 10px 14px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.statusSubPanelEtc::before {
+  background: #fff;
+  border-color: #059669;
+}
+
+.statusSubPanelEtcInput {
+  flex: 1;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: #1f2937;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: normal;
+  padding: 0;
+}
+
+.statusSubPanelEtcInput::placeholder {
+  color: #8995a2;
+}
+
+/* 라디오 버튼 */
+.statusRadioRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  color: #1f2937;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.statusRadioCircle {
+  display: flex;
+  width: 14px;
+  height: 14px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 12px;
+  border: 1px solid #d0d0d0;
+  background: #fff;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.statusRadioDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #2469ff;
+}
+
+/* ─── 과목당비용 + 담당자 한 줄 ───────────────────────────────────────── */
+.costManagerRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  align-self: stretch;
+}
+
+.costManagerField {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.costManagerInput {
+  display: flex;
+  padding: 10px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  flex: 1 0 0;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  color: #1f2937;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  outline: none;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.costManagerInput::placeholder {
+  color: #8995a2;
+}
+
+.costManagerInput:focus {
+  border-color: #0084fe;
+}
+
+/* ─── 우하단 푸터 (취소 + 변경사항 저장) ─────────────────────────────── */
+.detailFooterRow {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+  gap: 10px;
+  align-self: stretch;
+}
+
+.detailFooterCancel {
+  display: flex;
+  padding: 14px 24px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  border-radius: 8px;
+  background: #f0f0f0;
+  color: #565656;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  border: 0;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.detailFooterCancel:hover {
+  background: #e5e5e5;
+}
+
+.detailFooterSave {
+  display: flex;
+  padding: 14px 24px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  border-radius: 8px;
+  background: #0084fe;
+  color: #fff;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  border: 0;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.detailFooterSave:hover {
+  background: #0070dc;
+}
+
+.detailFooterSave:disabled {
+  background: #b3d4ff;
+  cursor: not-allowed;
+}
+
+/* ─── 헤더 이름/연락처 인라인 편집 폼 ─────────────────────────────────── */
+.nameEditForm {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.nameEditField {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nameEditLabel {
+  color: #4e5968;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.nameEditInput {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid #3182f6;
+  background: #fff;
+  color: #191f28;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  outline: none;
+  width: 180px;
+  box-sizing: border-box;
+}
+
+.nameEditInput:focus {
+  border-color: #1b64da;
+  box-shadow: 0 0 0 3px rgba(49, 130, 246, 0.15);
+}
+
+.nameEditBtnGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nameEditCancel {
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: #f0f0f0;
+  color: #565656;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  border: 0;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.nameEditCancel:hover {
+  background: #e5e5e5;
+}
+
+.nameEditSave {
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: #3182f6;
+  color: #fff;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  border: 0;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.nameEditSave:hover {
+  background: #1b64da;
 }

@@ -118,7 +118,6 @@ export default function LinksPage() {
                     </span>
                   </div>
                   <ExternalLink size={14} className={styles.cardIcon} />
-                  💰💼🎯🤝📚😶
                 </a>
               ))}
             </div>

@@ -14,7 +14,14 @@ import { createClient } from "@/lib/supabase/client";
 // ─── 타입 ─────────────────────────────────────────────────────────────
 type PaymentMethod = "payapp_transfer" | "bank_transfer" | "card";
 
-type RefundStatus = "정상" | "환불대기" | "환불완료";
+type RefundStatus = "정상" | "당월 환불" | "환불" | "정산" | "보류";
+
+// 행 색상 매핑
+const REFUND_ROW_COLORS: Partial<Record<RefundStatus, string>> = {
+  환불: "#F3C8DE",
+  정산: "#D2DBE9",
+  보류: "#FDF3D1",
+};
 
 // API GET 응답 — 학생 + 매출 머지된 행
 interface SalesRow {
@@ -255,8 +262,12 @@ export default function EduSalesPage() {
   >("all");
   const [filterManager, setFilterManager] = useState<string>("");
   const [filterRefund, setFilterRefund] = useState<
-    "all" | "정상" | "환불대기" | "환불완료"
+    "all" | "정상" | "당월 환불" | "환불" | "정산" | "보류"
   >("all");
+
+  // 일괄 변경용 행 선택
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkRefundOpen, setBulkRefundOpen] = useState(false);
 
   // 기간 선택 (DateRangeCalendar)
   const [dateRangeOpen, setDateRangeOpen] = useState(false);
@@ -412,6 +423,20 @@ export default function EduSalesPage() {
     setNotesPopup(null);
   };
 
+  // 환불 일괄 변경
+  const bulkUpdateRefund = async (status: RefundStatus) => {
+    if (selectedIds.size === 0) return;
+    const targets = rows.filter(
+      (r) => r.sale_id && selectedIds.has(r.sale_id),
+    );
+    if (targets.length === 0) return;
+    await Promise.all(
+      targets.map((r) => updateRow(r, { refund_status: status })),
+    );
+    setSelectedIds(new Set());
+    setBulkRefundOpen(false);
+  };
+
   // 행을 엑셀용 객체로 변환
   const rowToExportObject = (r: SalesRow) => ({
     교육원: r.education_center_name ?? "",
@@ -431,7 +456,7 @@ export default function EduSalesPage() {
     "(현)처리번호": r.process_number ?? "",
     "(현)발급일자": r.issue_date ?? "",
     "발행 완료": r.is_published ? "Y" : "",
-    "환불 상태": r.refund_status,
+    "환불": r.refund_status,
     "환불일": r.refund_date ?? "",
   });
 
@@ -568,7 +593,7 @@ export default function EduSalesPage() {
   // 환불 합계 (환불완료만)
   const refundAmount = useMemo(() => {
     return filteredRows
-      .filter((r) => r.refund_status === "환불완료")
+      .filter((r) => r.refund_status === "환불")
       .reduce((sum, r) => sum + (r.total_amount ?? 0), 0);
   }, [filteredRows]);
 
@@ -577,7 +602,7 @@ export default function EduSalesPage() {
   const managerStats = useMemo(() => {
     const map = new Map<string, { count: number; amount: number }>();
     filteredRows.forEach((r) => {
-      if (r.refund_status === "환불완료") return; // 순매출 기준
+      if (r.refund_status === "환불") return; // 순매출 기준
       const key = r.manager_name ?? "미지정";
       const prev = map.get(key) ?? { count: 0, amount: 0 };
       map.set(key, {
@@ -613,7 +638,7 @@ export default function EduSalesPage() {
     return { first, last };
   }, [isMonthTab, activeYear, activeMonthNum]);
   const refundCountFiltered = useMemo(
-    () => filteredRows.filter((r) => r.refund_status === "환불완료").length,
+    () => filteredRows.filter((r) => r.refund_status === "환불").length,
     [filteredRows],
   );
 
@@ -625,13 +650,13 @@ export default function EduSalesPage() {
   const myRevenue = useMemo(
     () =>
       myRows
-        .filter((r) => r.refund_status !== "환불완료")
+        .filter((r) => r.refund_status !== "환불")
         .reduce((s, r) => s + (r.total_amount ?? 0), 0),
     [myRows],
   );
   const myCount = myRows.length;
   const myRefundCount = useMemo(
-    () => myRows.filter((r) => r.refund_status === "환불완료").length,
+    () => myRows.filter((r) => r.refund_status === "환불").length,
     [myRows],
   );
 
@@ -642,7 +667,7 @@ export default function EduSalesPage() {
     for (let d = 1; d <= totalDays; d++) arr.push({ d, amt: 0 });
     const source = canViewAll ? filteredRows : myRows;
     source.forEach((r) => {
-      if (r.refund_status === "환불완료") return;
+      if (r.refund_status === "환불") return;
       if (!r.payment_date) return;
       const parts = r.payment_date.split("-");
       if (parts.length !== 3) return;
@@ -661,7 +686,7 @@ export default function EduSalesPage() {
     const target = canViewAll ? rows : rows.filter((r) => r.manager_name === myDisplayName);
     const monthly: Record<number, number> = {};
     target.forEach((r) => {
-      if (r.refund_status === "환불완료") return;
+      if (r.refund_status === "환불") return;
       const num = cohortToMonth(r.cohort);
       if (!num) return;
       monthly[num] = (monthly[num] ?? 0) + (r.total_amount ?? 0);
@@ -828,15 +853,25 @@ export default function EduSalesPage() {
             <CustomSelect
               value={filterRefund}
               onChange={(v) =>
-                setFilterRefund(v as "all" | "정상" | "환불대기" | "환불완료")
+                setFilterRefund(
+                  v as
+                    | "all"
+                    | "정상"
+                    | "당월 환불"
+                    | "환불"
+                    | "정산"
+                    | "보류",
+                )
               }
               options={[
                 { value: "all", label: "환불 전체" },
                 { value: "정상", label: "정상" },
-                { value: "환불대기", label: "환불대기" },
-                { value: "환불완료", label: "환불완료" },
+                { value: "당월 환불", label: "당월 환불" },
+                { value: "환불", label: "환불" },
+                { value: "정산", label: "정산" },
+                { value: "보류", label: "보류" },
               ]}
-              ariaLabel="환불 상태 필터"
+              ariaLabel="환불 필터"
               minWidth={120}
             />
           </>
@@ -882,6 +917,48 @@ export default function EduSalesPage() {
         </button>
       </div>
 
+      {/* 일괄 변경 액션바 */}
+      {canViewAll && selectedIds.size > 0 && (
+        <div className={styles.bulk_action_bar}>
+          <span className={styles.bulk_action_count}>
+            <b>{selectedIds.size}</b>건 선택됨
+          </span>
+          <div className={styles.bulk_action_spacer} />
+          <div className={styles.bulk_refund_wrap}>
+            <button
+              type="button"
+              className={styles.bulk_refund_btn}
+              onClick={() => setBulkRefundOpen((v) => !v)}
+            >
+              환불 일괄 변경 ▾
+            </button>
+            {bulkRefundOpen && (
+              <div className={styles.bulk_refund_menu}>
+                {(["정상", "당월 환불", "환불", "정산", "보류"] as RefundStatus[]).map(
+                  (s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      className={styles.bulk_refund_item}
+                      onClick={() => bulkUpdateRefund(s)}
+                    >
+                      {s}
+                    </button>
+                  ),
+                )}
+              </div>
+            )}
+          </div>
+          <button
+            type="button"
+            className={styles.bulk_cancel_btn}
+            onClick={() => setSelectedIds(new Set())}
+          >
+            선택 취소
+          </button>
+        </div>
+      )}
+
       {/* 테이블 */}
       <div className={styles.table_wrap} data-guide="edu-sales-table">
         {loading ? (
@@ -895,6 +972,36 @@ export default function EduSalesPage() {
           <table className={styles.table}>
             <thead className={styles.table_head}>
               <tr>
+                {canViewAll && (
+                  <th
+                    className={`${styles.th} ${styles.th_center}`}
+                    style={{ width: 36 }}
+                  >
+                    <input
+                      type="checkbox"
+                      className={styles.inline_check}
+                      checked={
+                        filteredRows.length > 0 &&
+                        filteredRows.every(
+                          (r) => r.sale_id && selectedIds.has(r.sale_id),
+                        )
+                      }
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedIds(
+                            new Set(
+                              filteredRows
+                                .filter((r) => r.sale_id)
+                                .map((r) => r.sale_id as string),
+                            ),
+                          );
+                        } else {
+                          setSelectedIds(new Set());
+                        }
+                      }}
+                    />
+                  </th>
+                )}
                 <th className={`${styles.th} ${styles.th_center}`}>교육원</th>
                 <th className={`${styles.th} ${styles.th_center}`}>개강반</th>
                 <th className={`${styles.th} ${styles.th_center}`}>학생명</th>
@@ -912,14 +1019,16 @@ export default function EduSalesPage() {
                   <>
                     <th className={`${styles.th} ${styles.th_center}`}>(현)발급일자</th>
                     <th className={`${styles.th} ${styles.th_center}`}>발행 완료</th>
-                    <th className={`${styles.th} ${styles.th_center}`}>환불 상태</th>
+                    <th className={`${styles.th} ${styles.th_center}`}>환불</th>
                     <th className={`${styles.th} ${styles.th_center}`}>관리</th>
                   </>
                 )}
               </tr>
             </thead>
             <tbody>
-              {filteredRows.map((r) => (
+              {filteredRows.map((r) => {
+                const rowBg = REFUND_ROW_COLORS[r.refund_status];
+                return (
                 <tr
                   key={
                     r.sale_id ??
@@ -927,13 +1036,34 @@ export default function EduSalesPage() {
                     `row-${r.student_name}-${r.phone ?? ""}`
                   }
                   className={`${styles.tr} ${r.sale_id ? "" : styles.tr_empty} ${
-                    r.refund_status === "환불완료"
-                      ? styles.tr_refunded
-                      : r.refund_status === "환불대기"
-                        ? styles.tr_refund_pending
-                        : ""
+                    r.refund_status === "환불" ? styles.tr_refunded : ""
                   }`}
+                  style={rowBg ? { background: rowBg } : undefined}
                 >
+                  {canViewAll && (
+                    <td
+                      className={`${styles.td} ${styles.td_center}`}
+                      style={{ width: 36 }}
+                    >
+                      {r.sale_id && (
+                        <input
+                          type="checkbox"
+                          className={styles.inline_check}
+                          checked={selectedIds.has(r.sale_id)}
+                          onChange={(e) => {
+                            const id = r.sale_id as string;
+                            setSelectedIds((prev) => {
+                              const next = new Set(prev);
+                              if (e.target.checked) next.add(id);
+                              else next.delete(id);
+                              return next;
+                            });
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      )}
+                    </td>
+                  )}
                   {/* 교육원 — 인라인 셀렉트 (학생 있으면 edu_students, orphan이면 edu_sales) */}
                   <td className={`${styles.td} ${styles.td_center}`}>
                     <div
@@ -1021,7 +1151,7 @@ export default function EduSalesPage() {
                   {/* 매출 — 인라인 숫자 (환불완료 시 취소선) */}
                   <td
                     className={`${styles.td} ${styles.td_center} ${styles.td_strong} ${
-                      r.refund_status === "환불완료"
+                      r.refund_status === "환불"
                         ? styles.td_strikethrough
                         : ""
                     }`}
@@ -1158,17 +1288,19 @@ export default function EduSalesPage() {
                           }
                         />
                       </td>
-                      {/* 환불 상태 + 환불일 — 인라인 편집 */}
+                      {/* 환불 + 환불일 — 인라인 편집 */}
                       <td className={`${styles.td} ${styles.td_center}`}>
                         <div className={styles.refund_cell}>
                           <CustomSelect
                             value={r.refund_status}
                             size="sm"
-                            minWidth={92}
+                            minWidth={110}
                             options={[
                               { value: "정상", label: "정상" },
-                              { value: "환불대기", label: "환불대기" },
-                              { value: "환불완료", label: "환불완료" },
+                              { value: "당월 환불", label: "당월 환불" },
+                              { value: "환불", label: "환불" },
+                              { value: "정산", label: "정산" },
+                              { value: "보류", label: "보류" },
                             ]}
                             onChange={(v) =>
                               updateRow(r, {
@@ -1177,7 +1309,7 @@ export default function EduSalesPage() {
                             }
                             disabled={!canEdit}
                           />
-                          {r.refund_status === "환불완료" && (
+                          {r.refund_status === "환불" && (
                             <DateInput
                               value={r.refund_date ?? ""}
                               onChange={(v) =>
@@ -1210,7 +1342,8 @@ export default function EduSalesPage() {
                     </>
                   )}
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         )}

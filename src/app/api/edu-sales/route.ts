@@ -16,7 +16,7 @@ const FIELD_LABELS: Record<string, string> = {
   process_number: '처리번호',
   issue_date: '발급일자',
   is_published: '발행완료',
-  refund_status: '환불상태',
+  refund_status: '환불',
   refund_date: '환불일',
   education_center_name: '교육원',
 }
@@ -184,7 +184,7 @@ export async function GET(request: NextRequest) {
     process_number: string | null
     issue_date: string | null
     is_published: boolean
-    refund_status: '정상' | '환불대기' | '환불완료'
+    refund_status: '정상' | '당월 환불' | '환불' | '정산' | '보류'
     refund_date: string | null
     created_at: string
   }
@@ -222,7 +222,7 @@ export async function GET(request: NextRequest) {
       process_number: (sale?.process_number as string | null | undefined) ?? null,
       issue_date: (sale?.issue_date as string | null | undefined) ?? null,
       is_published: (sale?.is_published as boolean | undefined) ?? false,
-      refund_status: ((sale?.refund_status as '정상' | '환불대기' | '환불완료' | undefined) ?? '정상'),
+      refund_status: ((sale?.refund_status as '정상' | '당월 환불' | '환불' | '정산' | '보류' | undefined) ?? '정상'),
       refund_date: (sale?.refund_date as string | null | undefined) ?? null,
       created_at: (sale?.created_at as string | undefined) ?? s.created_at,
     }
@@ -285,7 +285,7 @@ export async function GET(request: NextRequest) {
     process_number: (r.process_number as string | null) ?? null,
     issue_date: (r.issue_date as string | null) ?? null,
     is_published: (r.is_published as boolean) ?? false,
-    refund_status: ((r.refund_status as '정상' | '환불대기' | '환불완료' | undefined) ?? '정상'),
+    refund_status: ((r.refund_status as '정상' | '당월 환불' | '환불' | '정산' | '보류' | undefined) ?? '정상'),
     refund_date: (r.refund_date as string | null) ?? null,
     created_at: (r.created_at as string) ?? new Date().toISOString(),
   }))
@@ -337,7 +337,7 @@ interface SalesPayload {
   process_number?: string | null
   issue_date?: string | null
   is_published?: boolean
-  refund_status?: '정상' | '환불대기' | '환불완료' | null
+  refund_status?: '정상' | '당월 환불' | '환불' | '정산' | '보류' | null
   refund_date?: string | null
   // sale 자체에 보관 (학생이 없는 orphan 매출의 교육원)
   education_center_name?: string | null
@@ -356,7 +356,7 @@ function sanitize(body: Partial<SalesPayload>): Record<string, unknown> {
     if (key in body) out[key] = body[key]
   }
   // 환불완료 시 refund_date 자동 (오늘 KST) — 명시적으로 빈값이 안 왔을 때만
-  if (body.refund_status === '환불완료' && !('refund_date' in body)) {
+  if (body.refund_status === '환불' && !('refund_date' in body)) {
     const kst = new Date(
       new Date().toLocaleString('en-US', { timeZone: 'Asia/Seoul' }),
     )
@@ -366,7 +366,7 @@ function sanitize(body: Partial<SalesPayload>): Record<string, unknown> {
     out.refund_date = `${y}-${m}-${d}`
   }
   // 정상 또는 환불대기로 되돌리면 refund_date 비우기
-  if (body.refund_status === '정상' || body.refund_status === '환불대기') {
+  if (body.refund_status === '정상' || body.refund_status === '당월 환불') {
     out.refund_date = null
   }
   return out
@@ -377,10 +377,10 @@ function sanitize(body: Partial<SalesPayload>): Record<string, unknown> {
 // 환불 해제(정상/환불대기) → 학생이 '환불'이었던 경우에만 '등록'으로 복구
 async function syncStudentStatusByRefund(
   studentId: string | null | undefined,
-  refundStatus: '정상' | '환불대기' | '환불완료' | null | undefined,
+  refundStatus: '정상' | '당월 환불' | '환불' | '정산' | '보류' | null | undefined,
 ) {
   if (!studentId || refundStatus === undefined) return
-  if (refundStatus === '환불완료') {
+  if (refundStatus === '환불') {
     await supabaseAdmin
       .from('edu_students')
       .update({ status: '환불', updated_at: new Date().toISOString() })
@@ -388,7 +388,7 @@ async function syncStudentStatusByRefund(
       .neq('status', '환불') // 이미 환불이면 갱신 생략
     return
   }
-  if (refundStatus === '정상' || refundStatus === '환불대기') {
+  if (refundStatus === '정상' || refundStatus === '당월 환불') {
     await supabaseAdmin
       .from('edu_students')
       .update({ status: '등록', updated_at: new Date().toISOString() })

@@ -124,6 +124,7 @@ export async function GET(request: NextRequest) {
     const name = searchParams.get('name');
     const contact = searchParams.get('contact');
     const status = searchParams.get('status');
+    const hasScheduled = searchParams.get('has_scheduled');
 
     let query = supabaseAdmin
       .from(TABLE)
@@ -137,6 +138,7 @@ export async function GET(request: NextRequest) {
     if (name) query = query.ilike('name', `%${name}%`);
     if (contact) query = query.ilike('contact', `%${contact}%`);
     if (status && status !== 'all') query = query.eq('status', status);
+    if (hasScheduled === '1') query = query.not('contact_scheduled_at', 'is', null);
 
     // 데이터 + 메모를 병렬로 조회
     const [queryResult, memoResult] = await Promise.all([
@@ -226,58 +228,26 @@ export async function POST(request: NextRequest) {
     }
 
     // ─── 중복 자동 삭제 처리 ────────────────────────────────────────────
-    // 이름 또는 전화번호(숫자 정규화) 가 기존 활성 행과 일치하면 → 새 행을 삭제목록으로 이동
-    // 사유: '중복데이터'
+    // 이름 AND 전화번호(숫자 정규화) 가 모두 일치하는 기존 활성 행이 있으면
+    //   → 새 행을 삭제목록으로 이동 (사유: '중복데이터')
     const newPhoneDigits = String(data.contact ?? '').replace(/\D/g, '')
     let isDuplicate = false
     if (data.name && newPhoneDigits) {
-      // 같은 이름인 다른 활성 행 1건이라도 있는지
-      const { data: byName } = await supabaseAdmin
+      // 같은 이름인 다른 활성 행 후보 + 그 전화번호 같이 조회
+      const { data: nameMatches } = await supabaseAdmin
         .from(TABLE)
-        .select('id')
+        .select('id, contact')
         .eq('name', data.name)
         .neq('id', data.id)
         .is('deleted_at', null)
-        .limit(1)
-        .maybeSingle()
+        .limit(50)
 
-      // 같은 전화번호(정규화)인 다른 활성 행 1건이라도 있는지
-      // — REGEXP_REPLACE 인덱스가 없으므로 같은 이름 후보가 없으면 전체에서 단순 contact 매칭
-      let byPhone: { id: number } | null = null
-      if (!byName) {
-        // 광범위 스캔을 피하기 위해 일단 같은 contact 문자열로 빠르게 찾고
-        // 못 찾으면 정규화 검사를 위해 활성 행 전체에서 후보를 추려본다
-        const { data: byContactExact } = await supabaseAdmin
-          .from(TABLE)
-          .select('id, contact')
-          .eq('contact', data.contact)
-          .neq('id', data.id)
-          .is('deleted_at', null)
-          .limit(1)
-          .maybeSingle()
-        if (byContactExact) {
-          byPhone = { id: byContactExact.id as number }
-        } else {
-          // 정규화 비교를 위해 동일 마지막 4자리로 1차 스크리닝
-          const last4 = newPhoneDigits.slice(-4)
-          if (last4) {
-            const { data: candidates } = await supabaseAdmin
-              .from(TABLE)
-              .select('id, contact')
-              .ilike('contact', `%${last4}`)
-              .neq('id', data.id)
-              .is('deleted_at', null)
-              .limit(50)
-            const match = (candidates ?? []).find(
-              (r) =>
-                String(r.contact ?? '').replace(/\D/g, '') === newPhoneDigits,
-            )
-            if (match) byPhone = { id: match.id as number }
-          }
-        }
-      }
+      // 후보 중 전화번호(정규화)까지 일치하는 행이 1건이라도 있는지
+      const phoneAlsoMatches = (nameMatches ?? []).some(
+        (r) => String(r.contact ?? '').replace(/\D/g, '') === newPhoneDigits,
+      )
 
-      if (byName || byPhone) {
+      if (phoneAlsoMatches) {
         isDuplicate = true
         const reasonText = '중복데이터'
         await supabaseAdmin
@@ -293,7 +263,7 @@ export async function POST(request: NextRequest) {
           action: 'delete',
           resource: '학점은행제 상담',
           resource_id: String(data.id),
-          detail: `${data.name} - 중복으로 자동 삭제목록 이동 (${byName ? '이름' : '전화번호'} 일치)`,
+          detail: `${data.name} - 중복으로 자동 삭제목록 이동 (이름+전화번호 모두 일치)`,
         })
       }
     }

@@ -23,6 +23,7 @@ import {
   Megaphone,
   LayoutGrid,
   FileText,
+  CalendarDays,
 } from "lucide-react";
 import styles from "./layout.module.css";
 import { createClient } from "@/lib/supabase/client";
@@ -301,6 +302,12 @@ const ALL_SECTIONS: NavSection[] = [
         href: "/task-board",
         icon: <LayoutGrid size={16} />,
         groupLabel: "시스템",
+      },
+      {
+        id: "calendar",
+        label: "개인 캘린더",
+        href: "/calendar",
+        icon: <CalendarDays size={16} />,
       },
       {
         id: "me-hr-record",

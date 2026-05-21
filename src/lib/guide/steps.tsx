@@ -166,19 +166,139 @@ export const GUIDES: GuideDef[] = [
         waitMs: 800,
       },
       {
+        target: '[data-guide="detail-name-edit"]',
+        title: "이름·연락처 수정",
+        content: (
+          <>
+            이름 옆 <B>연필 아이콘</B>을 누르면 <B>이름</B>과 <B>연락처</B>를
+            바로 수정할 수 있어요.
+            {"\n"}편집창에서 <C>저장</C>을 누르면 즉시 반영됩니다.
+          </>
+        ),
+        placement: "bottom",
+      },
+      {
+        target: '[data-guide="detail-header-dates"]',
+        title: "등록일 · 연락예정일",
+        content: (
+          <>
+            우측 상단의 <B>등록일</B>은 자동으로 표시되고, <B>연락예정일</B>은
+            드롭다운으로 선택할 수 있어요.
+            {"\n"}연락예정일이 잡히면 <S>빨간색</S>으로 강조되어 한 눈에
+            확인할 수 있어요.
+          </>
+        ),
+        placement: "bottom",
+      },
+      {
+        target: '[data-guide="detail-education"]',
+        title: "최종학력 — 직접 입력",
+        content: (
+          <>
+            드롭다운에서 <C>직접 입력</C>을 선택하면 오른쪽 빈 칸이{" "}
+            <S>활성화</S>되어 직접 입력할 수 있어요.
+            {"\n"}그 외 옵션을 선택하면 오른쪽 칸은 비활성화 상태입니다.
+          </>
+        ),
+        placement: "right",
+      },
+      {
+        target: '[data-guide="detail-hope-course"]',
+        title: "희망과정 — 직접 입력",
+        content: (
+          <>
+            희망과정도 <C>직접 입력</C> 선택 시 오른쪽 칸이 활성화돼요.
+            {"\n"}최종학력과 동일한 방식입니다.
+          </>
+        ),
+        placement: "right",
+      },
+      {
+        target: '[data-guide="detail-memo"]',
+        title: "메모 — 반응포인트 자동 기입",
+        content: (
+          <>
+            왼쪽 <B>메모</B>에 텍스트를 입력하면, 내용을 분석해 오른쪽{" "}
+            <B>반응포인트</B>에{" "}
+            <S>자동으로 체크</S>됩니다.
+            {"\n"}예: &quot;비싸요&quot; → <C>비싸다</C>, &quot;취업하고
+            싶어요&quot; → <C>취업희망</C>
+          </>
+        ),
+        placement: "top",
+      },
+      {
+        target: '[data-guide="detail-referrer"]',
+        title: "유입경로 — 지인소개 눌러보기",
+        content: (
+          <>
+            <B>당근 / 맘카페</B>는 카드 클릭 시 세부 채널/카페를 선택할 수
+            있고, <B>기타</B>는 자유롭게 입력 가능해요.
+            {"\n"}
+            지금 <S>&apos;지인소개&apos;</S> 카드를 직접 눌러보세요.
+            {"\n"}아래 <B>상태</B>가 자동으로 바뀌는 걸 볼 수 있어요.
+          </>
+        ),
+        placement: "top",
+        advanceOn: "guide-referrer-set",
+        hideNext: true,
+      },
+      {
+        target: '[data-guide="detail-status"]',
+        title: "상태가 바뀌었어요!",
+        content: (
+          <>
+            <B>지인소개</B>를 누르니 상태가 자동으로{" "}
+            <C>지인대기 / 지인등록 / 지인취소</C> 카드로 바뀌었죠?
+            {"\n"}이렇게 유입경로에 따라 상태 옵션이 달라져요.
+            {"\n"}다음 단계에서 <S>지인소개를 해제</S>하고 기본 상태 카드를
+            볼게요.
+          </>
+        ),
+        placement: "top",
+      },
+      {
+        target: '[data-guide="detail-status"]',
+        title: "상태 — 하위 선택지",
+        content: (
+          <>
+            지인소개를 해제하면 상태가 기본 카드로 돌아와요.
+            {"\n"}상태 카드 중 <B>상담완료 / 장기가망 / 기타</B>를 선택하면,
+            아래에 <S>말풍선 형태의 하위 선택 창</S>이 나타나요.
+            {"\n"}• <C>상담완료</C> → 높음/중간/낮음 선택
+            {"\n"}• <C>장기가망</C> → 비용/주변반대/시간부족 등 사유 선택
+            {"\n"}• <C>기타</C> → 직접 입력
+          </>
+        ),
+        placement: "top",
+        fireEvent: "guide-referrer-clear",
+        waitMs: 600,
+      },
+      {
+        title: "등록완료 조건",
+        content: (
+          <>
+            상태를 <S>&apos;등록완료&apos;</S>로 바꾸려면 두 가지가 필요해요:
+            {"\n"}1) 상태 카드에서 <B>등록완료</B> 클릭
+            {"\n"}2) 오른쪽 하단 <B>과목당 비용</B> 입력
+            {"\n"}
+            <W>둘 중 하나라도 비어있으면 등록완료로 변경되지 않아요.</W>
+          </>
+        ),
+      },
+      {
         target: '[data-guide="detail-education"]',
         title: "등록완료로 바꾸기 ① 최종학력",
         content: (
           <>
-            먼저 <B>최종학력</B>을 선택하세요.{"\n"}선택하면{" "}
-            <S>자동으로 다음 단계</S>로 넘어가요.
-            {"\n"}
-            (예: 4년제 졸업, 2년제 중퇴)
+            상세창의 <B>왼쪽 컬럼</B>에서 <B>최종학력</B>을 선택하세요.
+            {"\n"}선택하면 <S>자동으로 다음 단계</S>로 넘어가요.
+            {"\n"}(예: 4년제 졸업, 2년제 중퇴)
           </>
         ),
         placement: "right",
         waitMs: 800,
-        fireEvent: "guide-tab-basic",
+        fireEvent: "guide-referrer-clear",
         advanceOn: "guide-edu-set",
         hideNext: true,
       },
@@ -195,7 +315,6 @@ export const GUIDES: GuideDef[] = [
           </>
         ),
         placement: "right",
-        fireEvent: "guide-tab-basic",
         advanceOn: "guide-hope-set",
         hidePrev: true,
         hideNext: true,
@@ -205,31 +324,29 @@ export const GUIDES: GuideDef[] = [
         title: "등록완료로 바꾸기 ③ 상태 변경",
         content: (
           <>
-            <B>취득정보 탭</B>으로 이동했어요. 상태를{" "}
-            <S>&apos;등록완료&apos;</S>로 바꿉니다.
+            상세창의 <B>오른쪽 컬럼</B>에서 상태를{" "}
+            <S>&apos;등록완료&apos;</S> 카드로 바꿉니다.
             {"\n"}
             <W>(아래 과목당비용이 비어있으면 통과되지 않아요.)</W>
           </>
         ),
         placement: "top",
-        fireEvent: "guide-tab-info",
-        waitMs: 800,
+        waitMs: 600,
         advanceOn: "guide-status-set",
         hidePrev: true,
         hideNext: true,
       },
       {
         target: '[data-guide="detail-subject-cost"]',
-        title: "등록완료로 바꾸기 ④ 과목당비용",
+        title: "등록완료로 바꾸기 ④ 과목당 비용",
         content: (
           <>
-            <B>과목당 비용</B>을 입력하세요. {"\n"}
+            오른쪽 하단의 <B>과목당 비용</B>을 입력하세요. {"\n"}
             <W>비어있으면 등록완료로 변경되지 않아요.</W>
-            {"\n"}예) <C>150000</C>
+            {"\n"}예) <C>25000</C>
           </>
         ),
-        placement: "right",
-        fireEvent: "guide-tab-info",
+        placement: "top",
         advanceOn: "guide-cost-set",
         hidePrev: true,
         hideNext: true,
@@ -238,8 +355,8 @@ export const GUIDES: GuideDef[] = [
         title: "등록완료로 바꾸기 ⑤ 저장",
         content: (
           <>
-            <B>저장 버튼</B>을 누르면 상태가 <S>&apos;등록완료&apos;</S>로
-            변경됩니다.
+            오른쪽 하단의 <B>[변경사항 저장]</B> 버튼을 누르면 상태가{" "}
+            <S>&apos;등록완료&apos;</S>로 변경됩니다.
             {"\n"}
             <B>등록학생관리</B>는 별도로 직접 추가해주세요.
             {"\n"}(등록학생관리 → 학생 추가 → 이름·번호 입력 시 문의 DB에서{" "}

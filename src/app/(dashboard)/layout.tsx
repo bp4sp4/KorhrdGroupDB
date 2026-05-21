@@ -228,7 +228,10 @@ export default function DashboardLayout({
             <div className={styles.sidebarOverlay} onClick={() => setSidebarOpen(false)} />
           )}
 
-          <main className={`${styles.mainContent}${pathname.startsWith('/approvals') ? ` ${styles.mainContentWhite}` : ''}`}>
+          <main
+            className={`${styles.mainContent}${pathname.startsWith('/approvals') ? ` ${styles.mainContentWhite}` : ''}`}
+            style={pathname.startsWith('/calendar') ? { padding: 0 } : undefined}
+          >
             {children}
           </main>
         </div>
