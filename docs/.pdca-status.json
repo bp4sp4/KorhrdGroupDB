@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-05-21T05:20:48.170Z",
+  "lastUpdated": "2026-05-21T05:33:21.716Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -192,7 +192,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:20:57.368Z",
-        "lastUpdated": "2026-05-21T05:20:48.170Z"
+        "lastUpdated": "2026-05-21T05:33:21.716Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/components/layout/NotificationBell.tsx"
     },
@@ -1921,7 +1921,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-05-20T03:11:12.208Z",
-        "lastUpdated": "2026-05-21T03:56:08.307Z"
+        "lastUpdated": "2026-05-21T05:27:52.371Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/hakjeom/_detail/HakjeomDetailPanel.tsx"
     },
@@ -1960,7 +1960,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-05-21T05:20:48.170Z"
+    "lastActivity": "2026-05-21T05:33:21.716Z"
   },
   "history": [
     {
@@ -26001,6 +26001,60 @@
     },
     {
       "timestamp": "2026-05-21T05:20:48.170Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-05-21T05:27:33.013Z",
+      "feature": "_detail",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-05-21T05:27:39.942Z",
+      "feature": "_detail",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-05-21T05:27:45.835Z",
+      "feature": "_detail",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-05-21T05:27:52.371Z",
+      "feature": "_detail",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-05-21T05:30:37.210Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-05-21T05:32:36.839Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-05-21T05:32:56.245Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-05-21T05:33:08.525Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-05-21T05:33:21.716Z",
       "feature": "layout",
       "phase": "do",
       "action": "updated"

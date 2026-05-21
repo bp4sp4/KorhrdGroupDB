@@ -43,6 +43,13 @@ function getReactionEmoji(child: string): string {
   return "";
 }
 
+// 지인소개 전용 상태 (지인등록/지인대기/지인취소) — 이 상태면 상세 패널에서
+// 유입경로를 "지인소개"로 자동 활성화하고 지인 카드형 상태 UI를 사용
+const REFERRAL_STATUSES = ["지인대기", "지인등록", "지인취소"] as const;
+function isReferralStatus(status: string): boolean {
+  return (REFERRAL_STATUSES as readonly string[]).includes(status);
+}
+
 // 상태 카드 아이콘
 function StatusCardIcon({ status }: { status: string }) {
   const common = {
@@ -485,9 +492,12 @@ export function HakjeomDetailPanel({
   const [editCounselCheckEtc, setEditCounselCheckEtc] = useState(
     initCounsel.etc,
   );
-  const [editSourceMajor, setEditSourceMajor] = useState(
-    () => initSource(item.click_source).major,
-  );
+  const [editSourceMajor, setEditSourceMajor] = useState(() => {
+    const m = initSource(item.click_source).major;
+    // 유입경로가 비어있고 상태가 지인-관련이면 "지인소개"로 자동 활성화
+    if (!m && isReferralStatus(item.status)) return "지인소개";
+    return m;
+  });
   const [editSourceMinor, setEditSourceMinor] = useState(
     () => initSource(item.click_source).minor,
   );
@@ -750,7 +760,8 @@ export function HakjeomDetailPanel({
     const counsel = parseCounselCheck(item.counsel_check);
     setEditCounselCheck(counsel.checks);
     setEditCounselCheckEtc(counsel.etc);
-    setEditSourceMajor(major);
+    // 유입경로 비어있는데 상태가 지인-관련이면 자동으로 "지인소개"로 활성화
+    setEditSourceMajor(!major && isReferralStatus(item.status) ? "지인소개" : major);
     setEditSourceMinor(minor);
     setEditResidence(item.residence ?? "");
     setEditSubjectCost(item.subject_cost ? String(item.subject_cost) : "");
@@ -1087,8 +1098,7 @@ export function HakjeomDetailPanel({
                     </span>
                     {item.latest_memo_at && (
                       <span className={styles.detailModalLastContactBadge}>
-                        마지막 연락일:{" "}
-                        {formatDateShort(item.latest_memo_at)}
+                        마지막 연락일: {formatDateShort(item.latest_memo_at)}
                       </span>
                     )}
                   </div>
@@ -1220,10 +1230,7 @@ export function HakjeomDetailPanel({
             </div>
 
             {/* 메모 */}
-            <div
-              className={styles.detailMemoSection}
-              data-guide="detail-memo"
-            >
+            <div className={styles.detailMemoSection} data-guide="detail-memo">
               <MemoTimeline
                 tableName="hakjeom_consultations"
                 recordId={String(item.id)}
@@ -1594,7 +1601,9 @@ export function HakjeomDetailPanel({
                                           fill="#0084FE"
                                         />
                                       </svg>
-                                      <span className={styles.danggeunAddBtnText}>
+                                      <span
+                                        className={styles.danggeunAddBtnText}
+                                      >
                                         직접 추가
                                       </span>
                                     </button>
@@ -1813,7 +1822,7 @@ export function HakjeomDetailPanel({
                         : s === "자영업자"
                           ? "🏪"
                           : s === "대학생"
-                            ? "🏪"
+                            ? "🎓"
                             : null;
                   // 기타 활성 시 인풋으로 교체
                   if (s === "기타" && isActive) {
@@ -1857,9 +1866,7 @@ export function HakjeomDetailPanel({
                       className={`${styles.reasonChip} ${isActive ? styles.reasonChipActive : ""}`}
                     >
                       {emoji ? (
-                        <span className={styles.situationEmoji}>
-                          {emoji}
-                        </span>
+                        <span className={styles.situationEmoji}>{emoji}</span>
                       ) : s === "기타" ? (
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -1993,8 +2000,8 @@ export function HakjeomDetailPanel({
               </div>
             </div>
 
-            {/* 상태 - 지인소개일 때 카드형 / 그 외 칩형 */}
-            {editSourceMajor === "지인소개" ? (
+            {/* 상태 - 지인소개일 때 카드형 / 그 외 칩형 (지인 상태값이면 fallback) */}
+            {editSourceMajor === "지인소개" || isReferralStatus(editStatus) ? (
               <div className={styles.referralStatusRow}>
                 <span className={styles.referralStatusLabel}>상태</span>
                 <div className={styles.referralStatusGrid}>

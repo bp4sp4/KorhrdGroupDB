@@ -217,6 +217,8 @@ export default function NotificationBell() {
   // 새 공지 안내 팝업 (한 번만)
   const [showNewPopup, setShowNewPopup] = useState(false);
   const [pendingNewIds, setPendingNewIds] = useState<number[]>([]);
+  // pendingNewIds 중 "수정으로 인해" 들어온 ID 집합 — 팝업에 "수정됨" 배지 표시용
+  const [editedIds, setEditedIds] = useState<number[]>([]);
   // 관리자 설정: 새 공지 팝업 ON/OFF (DB에서 불러옴)
   const popupEnabledRef = useRef<boolean>(false);
   // 설정 로드 완료 여부 — 마운트 시 announcements 조회 결과 처리 가능 시점 동기화용
@@ -438,10 +440,43 @@ export default function NotificationBell() {
               setPendingNewIds((prev) =>
                 prev.includes(a.id) ? prev : [...prev, a.id],
               );
+              // INSERT는 "새 공지" — editedIds에서 (혹시 있다면) 제거
+              setEditedIds((prev) => prev.filter((id) => id !== a.id));
               setShowNewPopup(true);
             }
             setUnseenCount((c) => c + 1);
           }
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "announcements" },
+        (payload) => {
+          console.log('[announcements] realtime UPDATE', payload)
+          const a = payload.new as Announcement;
+          // 목록 내 동일 id 교체 (없으면 prepend)
+          setAnnouncements((prev) => {
+            const exists = prev.some((p) => p.id === a.id);
+            if (exists) return prev.map((p) => (p.id === a.id ? a : p));
+            return [a, ...prev];
+          });
+          // 수정된 공지는 seen 풀어서 재팝업 허용
+          const seen = getSeenIds();
+          if (seen.includes(a.id)) {
+            setSeenIds(seen.filter((id) => id !== a.id));
+          }
+          if (popupEnabledRef.current) {
+            setPendingNewIds((prev) =>
+              prev.includes(a.id) ? prev : [...prev, a.id],
+            );
+            // 수정 케이스 — 배지 표시용 editedIds에 등록
+            setEditedIds((prev) =>
+              prev.includes(a.id) ? prev : [...prev, a.id],
+            );
+            setShowNewPopup(true);
+          }
+          // 벨 카운트도 재증가 (이미 unseen이면 그대로 유지하기 위해 재계산)
+          setUnseenCount((c) => (seen.includes(a.id) ? c + 1 : c));
         },
       )
       .subscribe((status, err) => {
@@ -493,6 +528,7 @@ export default function NotificationBell() {
         setSeenIds(Array.from(new Set([...seen, ...pendingNewIds])));
         setPendingNewIds([]);
       }
+      setEditedIds([]);
       if (openModal) {
         setTab("announcements");
         setOpen(true);
@@ -838,6 +874,22 @@ export default function NotificationBell() {
   ) : null;
 
   // 새 공지 팝업
+  const hasEdited = pendingNewIds.some((id) => editedIds.includes(id));
+  const allEdited =
+    pendingNewIds.length > 0 &&
+    pendingNewIds.every((id) => editedIds.includes(id));
+  const popupTitle = allEdited
+    ? "공지가 수정되었습니다"
+    : "새로운 공지가 있습니다";
+  const popupDesc = allEdited
+    ? pendingNewIds.length > 1
+      ? "수정된 공지가 있어요. 확인하시겠습니까?"
+      : "수정된 내용을 확인하시겠습니까?"
+    : pendingNewIds.length > 1
+      ? hasEdited
+        ? "새 공지 / 수정된 공지가 있어요. 확인하시겠습니까?"
+        : "읽지 않은 공지가 있어요. 확인하시겠습니까?"
+      : "확인하시겠습니까?";
   const newPopup = showNewPopup ? (
     <div
       className={styles.newPopupOverlay}
@@ -849,17 +901,18 @@ export default function NotificationBell() {
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/noti.png"
-          alt="새 공지"
+          alt={allEdited ? "공지 수정" : "새 공지"}
           width={88}
           height={88}
           className={styles.newPopupImage}
         />
-        <div className={styles.newPopupTitle}>새로운 공지가 있습니다</div>
-        <div className={styles.newPopupDesc}>
-          {pendingNewIds.length > 1
-            ? `읽지 않은 공지가 있어요. 확인하시겠습니까?`
-            : "확인하시겠습니까?"}
+        <div className={styles.newPopupTitle}>
+          {popupTitle}
+          {hasEdited && (
+            <span className={styles.newPopupEditedBadge}>수정됨</span>
+          )}
         </div>
+        <div className={styles.newPopupDesc}>{popupDesc}</div>
         <div className={styles.newPopupActions}>
           <button
             className={styles.newPopupBtnGhost}
