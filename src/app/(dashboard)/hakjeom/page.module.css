@@ -5355,3 +5355,185 @@
 .nameEditSave:hover {
   background: #1b64da;
 }
+
+/* ═════════════════════════════════════════════════════════════════
+   모바일 탭 (480px 이하에서만 노출)
+   ═════════════════════════════════════════════════════════════════ */
+.detailMobileTabs {
+  display: none;
+}
+
+.detailMobileTab {
+  flex: 1;
+  padding: 12px 0;
+  border: 0;
+  background: transparent;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #8d99a5;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition:
+    color 0.12s,
+    border-color 0.12s;
+}
+
+.detailMobileTabActive {
+  color: #0084fe;
+  border-bottom-color: #0084fe;
+}
+
+/* ═════════════════════════════════════════════════════════════════
+   모바일 반응형 (480px 이하)
+   ═════════════════════════════════════════════════════════════════ */
+@media (max-width: 480px) {
+  /* 오버레이는 풀스크린 */
+  .detailModalOverlay {
+    align-items: stretch;
+  }
+
+  /* 모달 전체 풀스크린 */
+  .detailModal {
+    width: 100vw;
+    max-width: 100vw;
+    min-height: 100vh;
+    max-height: 100vh;
+    padding: 16px;
+    gap: 12px;
+    border-radius: 0;
+    margin: 0;
+    overflow-y: auto;
+  }
+
+  /* 헤더 — 패딩 줄이고 컴팩트 */
+  .detailModalHeader {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding-right: 0 !important;
+  }
+
+  .detailModalHeaderLeft {
+    width: 100%;
+  }
+
+  .detailModalHeaderRight {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .detailModalCloseBtn {
+    top: 12px;
+    right: 12px;
+  }
+
+  /* 이름 row */
+  .detailModalNameRow {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .detailModalName {
+    font-size: 20px;
+  }
+
+  .detailModalSub {
+    font-size: 12px;
+  }
+
+  /* 등록일/연락예정일 가로 → 세로 */
+  .detailModalDateGroup {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .detailModalDivider {
+    display: none;
+  }
+
+  /* 모바일 탭 표시 */
+  .detailMobileTabs {
+    display: flex;
+    width: 100%;
+    border-bottom: 1px solid #e6e7eb;
+    position: sticky;
+    top: 0;
+    background: #fff;
+    z-index: 10;
+  }
+
+  /* 바디: 세로로 (활성 탭만 보임) */
+  .detailModalBody {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* 모바일에서 비활성 컬럼 숨김 */
+  .detailMobileShowLeft .detailColRight {
+    display: none;
+  }
+
+  .detailMobileShowRight .detailColLeft {
+    display: none;
+  }
+
+  /* 컬럼 자체는 풀폭 */
+  .detailColLeft,
+  .detailColRight {
+    width: 100%;
+    flex: 1 1 100%;
+  }
+
+  /* 푸터 (저장/취소 버튼) — 풀폭, 세로 정렬 가능 */
+  .detailFooterRow {
+    flex-direction: row;
+    gap: 8px;
+    width: 100%;
+  }
+
+  /* 좌측 - 폼 행 라벨 위치 조정 */
+  .detailColLeft .detailFieldRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  .detailColLeft .detailFieldLabel {
+    width: auto;
+  }
+
+  /* 우측 - 폼 행 라벨 위치 조정 */
+  .detailColRight .detailColRightRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  .detailColRight .detailColRightLabel {
+    width: auto;
+  }
+
+  /* 칩 그리드는 가로 wrap 그대로 */
+  .referrerGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* select / dropdown 너비 100% */
+  .eduSelectWrap,
+  .hopeCourseSelectWrap,
+  .situationSelectWrap {
+    width: 100%;
+  }
+
+  .eduSelectTrigger,
+  .hopeCourseSelectTrigger,
+  .situationSelectTrigger {
+    width: 100%;
+  }
+
+  /* 메모 입력 영역 — 모바일에서 더 크게 */
+  .detailMemoSection {
+    width: 100%;
+  }
+}

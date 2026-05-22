@@ -1150,8 +1150,28 @@ export function HakjeomDetailPanel({
           </div>
         </div>
 
-        {/* 바디: 좌(기본정보) / 우(취득정보) 2단 */}
-        <div className={styles.detailModalBody}>
+        {/* 모바일 탭 — 480px 이하에서만 노출 */}
+        <div className={styles.detailMobileTabs}>
+          <button
+            type="button"
+            className={`${styles.detailMobileTab} ${activeTab === "basic" ? styles.detailMobileTabActive : ""}`}
+            onClick={() => setActiveTab("basic")}
+          >
+            기본정보
+          </button>
+          <button
+            type="button"
+            className={`${styles.detailMobileTab} ${activeTab === "info" ? styles.detailMobileTabActive : ""}`}
+            onClick={() => setActiveTab("info")}
+          >
+            취득정보
+          </button>
+        </div>
+
+        {/* 바디: 좌(기본정보) / 우(취득정보) 2단 (모바일에선 탭에 따라 한 쪽만 표시) */}
+        <div
+          className={`${styles.detailModalBody} ${activeTab === "basic" ? styles.detailMobileShowLeft : styles.detailMobileShowRight}`}
+        >
           {/* 좌측: 기본정보 */}
           <div className={styles.detailColLeft}>
             {/* 최종학력 */}

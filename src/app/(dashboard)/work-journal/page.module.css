@@ -1,0 +1,726 @@
+/* ─── 업무일지 페이지 ─────────────────────────────────────────────── */
+
+.app {
+  font-family:
+    Pretendard,
+    "Pretendard Variable",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Apple SD Gothic Neo",
+    Inter,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  color: #191f28;
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.01em;
+  background: #f3f4f6;
+  height: 772px;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ─── 상단 stats 행 ───────────────────────────────────────────── */
+.topRow {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+}
+
+/* 우측 4 stat 합쳐진 하나의 카드 */
+.statGroup {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1 0 0;
+  align-self: stretch;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  padding: 14px 18px;
+  min-width: 0;
+}
+
+/* 카드 사이 세로 구분선 */
+.statDivider {
+  width: 1px;
+  height: 40px;
+  background: #e6e7eb;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+/* 좌측 날짜 카드 */
+.dateCard {
+  display: flex;
+  min-width: 264px;
+  max-width: 300px;
+  padding: 16px;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  align-self: stretch;
+  border-radius: 8px;
+  background: #0084fe;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+  gap: 14px;
+}
+
+/* 흰 select 박스 (날짜 선택) */
+.dateSelectWrap {
+  position: relative;
+  display: flex;
+  padding: 8px 12px;
+  justify-content: space-between;
+  align-items: center;
+  align-self: stretch;
+  width: 100%;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.dateSelectText {
+  color: #1f2937;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: normal;
+}
+
+.dateSelectIcon {
+  width: 16px;
+  height: 16px;
+  aspect-ratio: 1 / 1;
+  color: #1f2937;
+  flex-shrink: 0;
+}
+
+/* 진짜 input을 박스 위에 투명 오버레이로 깔아 클릭하면 날짜 피커가 뜸 */
+.dateInputOverlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.dateInputOverlay::-webkit-calendar-picker-indicator {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* 하단 "오늘 연락 예정 / 000건" 행 */
+.dateRow {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  align-self: stretch;
+  width: 100%;
+}
+
+.dateLabel {
+  color: #fff;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: normal;
+}
+
+.dateRowRight {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dateValue {
+  color: #fff;
+  text-align: right;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: normal;
+}
+
+.dateRowIcon {
+  width: 16px;
+  height: 16px;
+  aspect-ratio: 1 / 1;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+/* stat 항목 (그룹 카드 내부에 배치) */
+.statCard {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  flex: 1 0 0;
+  align-self: stretch;
+  border-radius: 8px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  min-width: 0;
+}
+
+.statIcon {
+  width: 42px;
+  height: 42px;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: #7a8086;
+  flex-shrink: 0;
+}
+
+.statTexts {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.statLabel {
+  color: #1f2937;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 100%;
+}
+
+.statValueRow {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.statValue {
+  color: #1f2937;
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 100%;
+  font-variant-numeric: tabular-nums;
+}
+
+.statUnit {
+  font-size: 14px;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.statSub {
+  color: #7a8086;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: normal;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.statSubArrow {
+  width: 12px;
+  height: 12px;
+  aspect-ratio: 1 / 1;
+  flex-shrink: 0;
+}
+
+.statSubUp {
+  color: #00c471;
+}
+
+.statSubDown {
+  color: #f04452;
+}
+
+/* ─── 3컬럼 본문 ───────────────────────────────────────────────── */
+.bodyRow {
+  display: grid;
+  grid-template-columns: 264px minmax(730px, 1fr) 264px;
+  gap: 12px;
+  flex: 1;
+  min-height: 600px;
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  align-self: stretch;
+  padding: 20px;
+  gap: 16px;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  overflow: hidden;
+}
+
+.colTitle {
+  color: #000;
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: normal;
+  margin: 0;
+}
+
+/* ─── 오늘의 업무 (체크박스 리스트) ─────────────────────────────── */
+.taskList {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  align-self: stretch;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.taskItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  align-self: stretch;
+  padding: 0;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.taskItem:hover {
+  background: transparent;
+}
+
+.taskCheckbox {
+  width: 18px;
+  height: 18px;
+  aspect-ratio: 1 / 1;
+  border-radius: 4px;
+  border: 1px solid #d0d0d0;
+  background: #fff;
+  flex-shrink: 0;
+  /* line-height 140% 의 14px 텍스트 첫 줄 중앙과 맞추기 */
+  margin-top: 0.8px;
+  appearance: none;
+  cursor: pointer;
+  position: relative;
+}
+
+.taskCheckbox:checked {
+  background: #2469ff;
+  border-color: #2469ff;
+}
+
+.taskCheckbox:checked::after {
+  content: "";
+  position: absolute;
+  left: 2.6px;
+  top: 2.6px;
+  width: 10.8px;
+  height: 10.8px;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 11 11' fill='none'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M9.69591 2.30039C9.82245 2.42698 9.89354 2.59863 9.89354 2.77762C9.89354 2.95661 9.82245 3.12826 9.69591 3.25484L4.63656 8.3142C4.5697 8.38107 4.49032 8.43412 4.40295 8.47031C4.31559 8.50651 4.22195 8.52514 4.12738 8.52514C4.03282 8.52514 3.93918 8.50651 3.85181 8.47031C3.76445 8.43412 3.68507 8.38107 3.61821 8.3142L1.10451 5.80095C1.04004 5.73868 0.988615 5.6642 0.953239 5.58184C0.917863 5.49949 0.899242 5.41092 0.898463 5.32129C0.897684 5.23166 0.914763 5.14278 0.948702 5.05983C0.982642 4.97687 1.03276 4.90151 1.09614 4.83813C1.15952 4.77475 1.23488 4.72463 1.31784 4.69069C1.40079 4.65675 1.48968 4.63967 1.5793 4.64045C1.66893 4.64123 1.7575 4.65985 1.83986 4.69523C1.92221 4.7306 1.99669 4.78203 2.05896 4.8465L4.12716 6.9147L8.74101 2.30039C8.80369 2.23767 8.87812 2.18791 8.96005 2.15396C9.04197 2.12001 9.12978 2.10254 9.21846 2.10254C9.30714 2.10254 9.39495 2.12001 9.47687 2.15396C9.55879 2.18791 9.63322 2.23767 9.69591 2.30039Z' fill='white'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 10.8px 10.8px;
+}
+
+.taskText {
+  color: #1f2937;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 140%;
+  flex: 1;
+  word-break: keep-all;
+}
+
+.taskInput {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  color: #1f2937;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 140%;
+  background: transparent;
+  padding: 0;
+  /* textarea 자동 wrap + 자동 height 조정 (JS와 함께) */
+  resize: none;
+  overflow: hidden;
+  display: block;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.taskInput::placeholder {
+  color: #b0b8c1;
+}
+
+.taskTextDone {
+  color: #b0b8c1;
+  text-decoration: line-through;
+}
+
+/* ─── 업무 일지 (중앙) ─────────────────────────────────────────── */
+/* 중앙 컬럼 modifier — 폭/gap 조정 */
+.colJournal {
+  min-width: 730px;
+  gap: 18px;
+}
+
+.journalScroll {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  align-self: stretch;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  padding-right: 4px;
+}
+
+/* 섹션 헤더 — 파란 톤 박스 */
+.sectionTitle {
+  display: flex;
+  padding: 12px 14px;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  align-self: stretch;
+  border-radius: 8px;
+  border: 1px solid #c7e4ff;
+  background: #eaf3ff;
+  color: #1f2937;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: normal;
+  cursor: pointer;
+  user-select: none;
+}
+
+.sectionTitleArrow {
+  color: #1f2937;
+  flex-shrink: 0;
+}
+
+/* 행 컨테이너 */
+.journalRow {
+  display: flex;
+  padding: 12px 14px;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 5px;
+  align-self: stretch;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+}
+
+/* 행 내부: 분류 + 세부 내용 그룹 */
+.journalRowMain {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1 0 0;
+  min-width: 0;
+}
+
+/* 분류 박스 (왼쪽, 180px) */
+.journalCategoryBox {
+  display: flex;
+  width: 180px;
+  padding: 10px 14px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.journalCategoryInput {
+  width: 100%;
+  border: 0;
+  outline: none;
+  color: #1f2937;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: normal;
+  background: transparent;
+  padding: 0;
+}
+
+.journalCategoryInput::placeholder {
+  color: #b0b8c1;
+}
+
+/* 세부 내용 input (분류 박스 옆, 박스 없음) */
+.journalDetailInput {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  color: #1f2937;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: normal;
+  background: transparent;
+  padding: 0;
+}
+
+.journalDetailInput::placeholder {
+  color: #b0b8c1;
+}
+
+.journalDeleteBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: transparent;
+  border: 0;
+  color: #b0b8c1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.journalDeleteBtn:hover {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.journalDeleteRed {
+  background: #fef2f2;
+  color: #dc2626;
+  width: auto;
+  padding: 0 10px;
+  font-size: 11px;
+  font-weight: 700;
+  height: 28px;
+  gap: 4px;
+}
+
+.journalDeleteRed:hover {
+  background: #fee2e2;
+}
+
+/* "추가" 버튼 (공통) */
+.addBtn {
+  display: flex;
+  padding: 14px;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  align-self: stretch;
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  color: #8d99a5;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: normal;
+  cursor: pointer;
+}
+
+.addBtnIcon {
+  width: 12px;
+  height: 12px;
+  aspect-ratio: 1 / 1;
+  flex-shrink: 0;
+}
+
+.addRowBtn:hover {
+  border-color: #3182f6;
+  color: #3182f6;
+  background: #f4f9ff;
+}
+
+/* ─── 내일 예정 업무 ─────────────────────────────────────────── */
+/* 우측 컬럼 wrapper — 박스 + footer 묶음, cell 전체 높이 stretch */
+.colRight {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-self: stretch;
+  min-height: 0;
+}
+
+/* wrapper 안 박스가 남은 공간 차지 → 박스 = 다른 컬럼과 거의 동일 높이 */
+.colRight > .col {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.tomorrowList {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  align-self: stretch;
+  /* flex: 1 제거 → 콘텐츠 만큼만 차지 */
+  min-height: 0;
+}
+
+.tomorrowItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  align-self: stretch;
+  padding: 0;
+  border-radius: 0;
+  cursor: text;
+}
+
+.tomorrowItem:hover {
+  background: transparent;
+}
+
+.tomorrowNum {
+  color: #0084fe;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: normal;
+  flex-shrink: 0;
+  min-width: 18px;
+}
+
+.tomorrowInput {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  color: #1f2937;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: normal;
+  background: transparent;
+  padding: 0;
+  /* textarea 자동 wrap */
+  resize: none;
+  overflow: hidden;
+  display: block;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.tomorrowInput::placeholder {
+  color: #b0b8c1;
+}
+
+/* ─── 푸터 버튼 (내일 예정 업무 컬럼 박스 바로 아래) ─────────── */
+.footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  align-self: stretch;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.btnDraft {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #e6e7eb;
+  color: #1f2937;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: normal;
+  cursor: pointer;
+}
+
+.btnDraft:hover {
+  background: #f9fafb;
+}
+
+.btnSubmit {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: #2469ff;
+  color: #fff;
+  border: 0;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: normal;
+  cursor: pointer;
+}
+
+.btnSubmit:hover {
+  background: #1b54d6;
+}
+
+/* ─── 반응형 ──────────────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .topRow {
+    flex-direction: column;
+  }
+  .dateCard {
+    max-width: 100%;
+    width: 100%;
+  }
+  .statGroup {
+    flex-wrap: wrap;
+    row-gap: 16px;
+  }
+  .statCard {
+    flex: 1 1 40%;
+    min-width: 0;
+  }
+  .statDivider {
+    display: none;
+  }
+  .bodyRow {
+    grid-template-columns: 1fr;
+  }
+}

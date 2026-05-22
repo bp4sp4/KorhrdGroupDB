@@ -1,0 +1,661 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Inbox,
+  Send,
+  FileText,
+  Trash2,
+  RefreshCcw,
+  Pencil,
+  X,
+  Paperclip,
+  Reply,
+  Forward,
+  AlertCircle,
+  Link2,
+  Link2Off,
+  CheckCircle2,
+} from "lucide-react";
+import styles from "./page.module.css";
+
+// ─── 타입 ──────────────────────────────────────────────────────────────
+interface MailAddress {
+  emailAddress: { address: string; name?: string };
+}
+interface MailListItem {
+  messageId: string;
+  subject: string;
+  from?: MailAddress;
+  to?: MailAddress[];
+  receivedTime?: string;
+  sentTime?: string;
+  hasAttachment?: boolean;
+  isRead?: boolean;
+  bodyPreview?: string;
+}
+interface MailDetail extends MailListItem {
+  body?: { contentType: "HTML" | "TEXT"; content: string };
+  attachments?: {
+    attachmentId: string;
+    fileName: string;
+    size: number;
+    contentType?: string;
+  }[];
+}
+
+const FOLDERS = [
+  { key: "INBOX", label: "받은편지함", icon: Inbox },
+  { key: "SENT", label: "보낸편지함", icon: Send },
+  { key: "DRAFTS", label: "임시보관", icon: FileText },
+  { key: "DELETED", label: "휴지통", icon: Trash2 },
+] as const;
+type FolderKey = (typeof FOLDERS)[number]["key"];
+
+// ─── 유틸 ──────────────────────────────────────────────────────────────
+function fmtDate(iso: string | undefined): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const now = new Date();
+  const sameDay =
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate();
+  if (sameDay) {
+    return d.toLocaleTimeString("ko-KR", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+  }
+  return d.toLocaleDateString("ko-KR", { month: "2-digit", day: "2-digit" });
+}
+
+function fmtFullDate(iso: string | undefined): string {
+  if (!iso) return "";
+  return new Date(iso).toLocaleString("ko-KR", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function formatBytes(n: number): string {
+  if (n < 1024) return `${n}B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)}KB`;
+  return `${(n / (1024 * 1024)).toFixed(1)}MB`;
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+// ─── 메인 ──────────────────────────────────────────────────────────────
+interface ConnectionStatus {
+  connected: boolean;
+  email?: string | null;
+}
+
+export default function MailPage() {
+  const [folder, setFolder] = useState<FolderKey>("INBOX");
+  const [query, setQuery] = useState("");
+  const [searchDebounced, setSearchDebounced] = useState("");
+  const [list, setList] = useState<MailListItem[]>([]);
+  const [listLoading, setListLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [detail, setDetail] = useState<MailDetail | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [showCompose, setShowCompose] = useState(false);
+
+  // ── 네이버 웍스 OAuth 연결 상태 ──
+  const [connection, setConnection] = useState<ConnectionStatus | null>(null);
+  const [connectionLoading, setConnectionLoading] = useState(true);
+  const [connectionMessage, setConnectionMessage] = useState<string | null>(null);
+
+  // mount 시 연결 상태 조회 + URL 파라미터 처리
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.has("nw_connected")) {
+        setConnectionMessage("네이버 웍스 연결 완료!");
+        // 파라미터 제거
+        window.history.replaceState({}, "", window.location.pathname);
+      } else if (params.has("nw_error")) {
+        setConnectionMessage(`연결 실패: ${params.get("nw_error")}`);
+        window.history.replaceState({}, "", window.location.pathname);
+      }
+    }
+
+    let cancelled = false;
+    setConnectionLoading(true);
+    fetch("/api/auth/naverworks/status", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d: ConnectionStatus) => {
+        if (!cancelled) setConnection(d);
+      })
+      .catch(() => {
+        if (!cancelled) setConnection({ connected: false });
+      })
+      .finally(() => {
+        if (!cancelled) setConnectionLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // 연결 해제
+  const handleDisconnect = useCallback(async () => {
+    if (!confirm("네이버 웍스 연결을 해제하시겠습니까?")) return;
+    try {
+      await fetch("/api/auth/naverworks/status", { method: "DELETE" });
+      setConnection({ connected: false });
+      setList([]);
+      setDetail(null);
+      setSelectedId(null);
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  // 검색 디바운스
+  useEffect(() => {
+    const t = setTimeout(() => setSearchDebounced(query), 350);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  // 목록 fetch
+  const fetchList = useCallback(async () => {
+    setListLoading(true);
+    setError(null);
+    try {
+      const params = new URLSearchParams({ folder, count: "50" });
+      if (searchDebounced) params.set("q", searchDebounced);
+      const res = await fetch(`/api/mail/list?${params}`, {
+        cache: "no-store",
+      });
+      const data = await res.json();
+      // 토큰 만료/없음 → 연결 화면으로 전환
+      if (res.status === 401 && data?.code === "NW_AUTH_REQUIRED") {
+        setConnection({ connected: false });
+        setList([]);
+        return;
+      }
+      if (!res.ok || !data.ok) {
+        setError(data.error || "메일 목록을 불러올 수 없습니다");
+        setList([]);
+        return;
+      }
+      setList((data.messages ?? []) as MailListItem[]);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setListLoading(false);
+    }
+  }, [folder, searchDebounced]);
+
+  useEffect(() => {
+    fetchList();
+    setSelectedId(null);
+    setDetail(null);
+  }, [fetchList]);
+
+  // 상세 fetch
+  useEffect(() => {
+    if (!selectedId) {
+      setDetail(null);
+      return;
+    }
+    let cancelled = false;
+    setDetailLoading(true);
+    fetch(`/api/mail/${encodeURIComponent(selectedId)}`, { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => {
+        if (cancelled) return;
+        if (d.ok) {
+          setDetail(d.data);
+          fetch(`/api/mail/${encodeURIComponent(selectedId)}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ isRead: true }),
+          }).catch(() => {});
+          setList((prev) =>
+            prev.map((m) =>
+              m.messageId === selectedId ? { ...m, isRead: true } : m,
+            ),
+          );
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setDetailLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedId]);
+
+  const handleDelete = async () => {
+    if (!selectedId) return;
+    if (!confirm("이 메일을 휴지통으로 이동하시겠습니까?")) return;
+    const res = await fetch(`/api/mail/${encodeURIComponent(selectedId)}`, {
+      method: "DELETE",
+    });
+    if (res.ok) {
+      setList((prev) => prev.filter((m) => m.messageId !== selectedId));
+      setSelectedId(null);
+      setDetail(null);
+    }
+  };
+
+  const replyTo = useMemo(() => {
+    if (!detail?.from) return [];
+    return [detail.from.emailAddress.address];
+  }, [detail]);
+
+  // 연결 상태 로딩 중
+  if (connectionLoading) {
+    return (
+      <div className={styles.app}>
+        <div className={styles.connectWrap}>
+          <p className={styles.connectMuted}>연결 상태 확인 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 미연결 상태 → 연결 안내 카드
+  if (!connection?.connected) {
+    return (
+      <div className={styles.app}>
+        <div className={styles.connectWrap}>
+          <div className={styles.connectCard}>
+            <div className={styles.connectIcon}>
+              <Link2 size={28} />
+            </div>
+            <h2 className={styles.connectTitle}>네이버 웍스 메일 연결</h2>
+            <p className={styles.connectDesc}>
+              본인 네이버 웍스 계정으로 한 번 로그인하면
+              <br />
+              받은편지함과 메일 발송 기능을 사용할 수 있습니다.
+            </p>
+            {connectionMessage && (
+              <div className={styles.connectMessage}>{connectionMessage}</div>
+            )}
+            <a className={styles.connectBtn} href="/api/auth/naverworks/start">
+              <Link2 size={16} />
+              네이버 웍스 연결하기
+            </a>
+            <p className={styles.connectFootnote}>
+              연결 시 메일 조회/발송 권한(mail, mail.read)이 부여됩니다.
+              <br />
+              언제든 해제할 수 있습니다.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.app}>
+      {/* 연결 정보 배지 (상단) */}
+      <div className={styles.connectionBar}>
+        <span className={styles.connectionBadge}>
+          <CheckCircle2 size={14} />
+          {connection.email || "네이버 웍스 연결됨"}
+        </span>
+        {connectionMessage && (
+          <span className={styles.connectionMessageInline}>{connectionMessage}</span>
+        )}
+        <button
+          type="button"
+          className={styles.disconnectBtn}
+          onClick={handleDisconnect}
+        >
+          <Link2Off size={13} />
+          연결 해제
+        </button>
+      </div>
+
+      <div className={styles.layout}>
+        {/* Left: 폴더 사이드바 */}
+        <aside className={styles.folderSide}>
+          <button
+            type="button"
+            className={styles.composeBtn}
+            onClick={() => setShowCompose(true)}
+          >
+            <Pencil size={14} />
+            메일 쓰기
+          </button>
+          <div className={styles.folderList}>
+            {FOLDERS.map((f) => {
+              const Icon = f.icon;
+              const active = folder === f.key;
+              return (
+                <button
+                  key={f.key}
+                  type="button"
+                  className={`${styles.folderItem} ${active ? styles.folderItemActive : ""}`}
+                  onClick={() => setFolder(f.key)}
+                >
+                  <Icon size={15} />
+                  <span>{f.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </aside>
+
+        {/* Middle: 메일 목록 */}
+        <section className={styles.listCol}>
+          <div className={styles.listHead}>
+            <input
+              className={styles.searchInput}
+              placeholder="메일 검색 (제목/보낸이/내용)"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            <button
+              type="button"
+              className={styles.refreshBtn}
+              onClick={() => fetchList()}
+              title="새로고침"
+            >
+              <RefreshCcw size={14} />
+            </button>
+          </div>
+
+          {error && (
+            <div className={styles.errorBox}>
+              <AlertCircle size={14} style={{ marginRight: 6 }} />
+              {error}
+            </div>
+          )}
+
+          <div className={styles.listBody}>
+            {listLoading ? (
+              <div className={styles.listEmpty}>불러오는 중...</div>
+            ) : list.length === 0 ? (
+              <div className={styles.listEmpty}>메일이 없습니다.</div>
+            ) : (
+              list.map((m) => {
+                const active = selectedId === m.messageId;
+                const unread = m.isRead === false;
+                const date = m.receivedTime ?? m.sentTime ?? "";
+                const fromName =
+                  m.from?.emailAddress.name ||
+                  m.from?.emailAddress.address ||
+                  "(보낸이 없음)";
+                return (
+                  <div
+                    key={m.messageId}
+                    className={`${styles.mailItem} ${active ? styles.mailItemActive : ""} ${unread ? styles.mailItemUnread : ""}`}
+                    onClick={() => setSelectedId(m.messageId)}
+                  >
+                    <div className={styles.mailItemTop}>
+                      <span className={styles.mailFrom}>{fromName}</span>
+                      <span className={styles.mailDate}>{fmtDate(date)}</span>
+                    </div>
+                    <div className={styles.mailSubject}>
+                      {m.hasAttachment && (
+                        <Paperclip size={12} className={styles.attachIcon} />
+                      )}
+                      {m.subject || "(제목 없음)"}
+                    </div>
+                    {m.bodyPreview && (
+                      <div className={styles.mailPreview}>{m.bodyPreview}</div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </section>
+
+        {/* Right: 메일 상세 */}
+        <section className={styles.detailCol}>
+          {!selectedId ? (
+            <div className={styles.detailEmpty}>
+              <Inbox size={32} />
+              <div>메일을 선택해 주세요</div>
+            </div>
+          ) : detailLoading ? (
+            <div className={styles.detailEmpty}>불러오는 중...</div>
+          ) : detail ? (
+            <>
+              <div className={styles.detailHead}>
+                <h2 className={styles.detailSubject}>
+                  {detail.subject || "(제목 없음)"}
+                </h2>
+                <div className={styles.detailMeta}>
+                  <div className={styles.detailFromBlock}>
+                    <span className={styles.detailFromName}>
+                      {detail.from?.emailAddress.name ||
+                        detail.from?.emailAddress.address ||
+                        "-"}
+                    </span>
+                    <span className={styles.detailFromAddr}>
+                      {detail.from?.emailAddress.address}
+                    </span>
+                  </div>
+                  <span className={styles.detailDate}>
+                    {fmtFullDate(detail.receivedTime ?? detail.sentTime)}
+                  </span>
+                </div>
+              </div>
+
+              <div className={styles.detailActions}>
+                <button
+                  type="button"
+                  className={styles.actionBtn}
+                  onClick={() => setShowCompose(true)}
+                >
+                  <Reply size={13} />
+                  답장
+                </button>
+                <button type="button" className={styles.actionBtn}>
+                  <Forward size={13} />
+                  전달
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
+                  onClick={handleDelete}
+                  style={{ marginLeft: "auto" }}
+                >
+                  <Trash2 size={13} />
+                  삭제
+                </button>
+              </div>
+
+              <div
+                className={styles.detailBody}
+                dangerouslySetInnerHTML={{
+                  __html:
+                    detail.body?.contentType === "HTML"
+                      ? detail.body.content
+                      : `<pre style="white-space: pre-wrap; font-family: inherit;">${escapeHtml(detail.body?.content ?? "")}</pre>`,
+                }}
+              />
+
+              {detail.attachments && detail.attachments.length > 0 && (
+                <div className={styles.detailAttachments}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "#4e5968" }}>
+                    첨부파일 {detail.attachments.length}개
+                  </div>
+                  {detail.attachments.map((a) => (
+                    <div key={a.attachmentId} className={styles.attachItem}>
+                      <Paperclip size={13} />
+                      <span>{a.fileName}</span>
+                      <span style={{ marginLeft: "auto", color: "#8b95a1", fontSize: 11 }}>
+                        {formatBytes(a.size)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
+            <div className={styles.detailEmpty}>불러올 수 없습니다.</div>
+          )}
+        </section>
+      </div>
+
+      {/* 작성 모달 */}
+      {showCompose && (
+        <ComposeModal
+          replyTo={replyTo}
+          replySubject={detail?.subject ? `Re: ${detail.subject}` : undefined}
+          onClose={() => setShowCompose(false)}
+          onSent={() => {
+            setShowCompose(false);
+            if (folder === "SENT") fetchList();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+// ─── 작성 모달 ──────────────────────────────────────────────────────────
+interface ComposeModalProps {
+  replyTo?: string[];
+  replySubject?: string;
+  onClose: () => void;
+  onSent: () => void;
+}
+function ComposeModal({
+  replyTo = [],
+  replySubject = "",
+  onClose,
+  onSent,
+}: ComposeModalProps) {
+  const [to, setTo] = useState(replyTo.join(", "));
+  const [subject, setSubject] = useState(replySubject);
+  const [body, setBody] = useState("");
+  const [sending, setSending] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const handleSend = async () => {
+    setErr(null);
+    const toList = to
+      .split(/[,;\s]+/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (toList.length === 0) {
+      setErr("받는 사람을 입력해주세요");
+      return;
+    }
+    if (!subject.trim()) {
+      setErr("제목을 입력해주세요");
+      return;
+    }
+    setSending(true);
+    try {
+      const res = await fetch("/api/mail/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: toList,
+          subject: subject.trim(),
+          bodyText: body,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        setErr(data.error || "발송 실패");
+        return;
+      }
+      onSent();
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div
+      className={styles.modalOverlay}
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className={styles.composeModal}>
+        <div className={styles.composeHead}>
+          <h3 className={styles.composeTitle}>새 메일 작성</h3>
+          <button
+            type="button"
+            className={styles.composeCloseBtn}
+            onClick={onClose}
+            aria-label="닫기"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        {err && (
+          <div className={styles.errorBox}>
+            <AlertCircle size={14} style={{ marginRight: 6 }} />
+            {err}
+          </div>
+        )}
+
+        <div className={styles.composeBody}>
+          <div className={styles.composeRow}>
+            <span className={styles.composeLabel}>받는 사람</span>
+            <input
+              className={styles.composeInput}
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+              placeholder="example@email.com, ..."
+            />
+          </div>
+          <div className={styles.composeRow}>
+            <span className={styles.composeLabel}>제목</span>
+            <input
+              className={styles.composeInput}
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              placeholder="제목을 입력하세요"
+            />
+          </div>
+          <textarea
+            className={styles.composeTextarea}
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            placeholder="내용을 입력하세요"
+          />
+        </div>
+
+        <div className={styles.composeFooter}>
+          <button
+            type="button"
+            className={styles.composeBtnGhost}
+            onClick={onClose}
+            disabled={sending}
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            className={styles.composeBtnPrimary}
+            onClick={handleSend}
+            disabled={sending}
+          >
+            {sending ? "전송 중..." : "보내기"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

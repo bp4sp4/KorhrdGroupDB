@@ -13,9 +13,22 @@ interface NavSection {
   label: string;
   href: string;
   activeOn: string[];
+  badge?: string;
 }
 
 const SECTION_NAV: NavSection[] = [
+  {
+    label: "대시보드",
+    href: "/dashboard",
+    activeOn: ["/dashboard"],
+    badge: "개발중",
+  },
+  {
+    label: "업무일지",
+    href: "/work-journal",
+    activeOn: ["/work-journal"],
+    badge: "개발중",
+  },
   {
     label: "교육운영",
     href: "/hakjeom",
@@ -45,6 +58,8 @@ const SECTION_NAV: NavSection[] = [
 
 // 탭 없는 단일 페이지 레이블
 const PATH_LABELS: Record<string, string> = {
+  "/dashboard": "대시보드",
+  "/work-journal": "업무일지",
   "/duplicate": "중복 조회",
   "/trash": "삭제목록",
   "/ref-manage": "어드민 관리",
@@ -234,6 +249,9 @@ export default function Header({
                 className={`${styles.headerNavItem} ${isActive ? styles.headerNavItemActive : ""}`}
               >
                 {getDynamicLabel(sec)}
+                {sec.badge && (
+                  <span className={styles.navBadge}>{sec.badge}</span>
+                )}
               </Link>
             );
           })}

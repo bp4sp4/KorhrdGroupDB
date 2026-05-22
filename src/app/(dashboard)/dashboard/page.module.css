@@ -1,0 +1,555 @@
+/* ─── 대시보드 메인 ─────────────────────────────────────────────────── */
+
+.app {
+  font-family:
+    Pretendard,
+    "Pretendard Variable",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Apple SD Gothic Neo",
+    Inter,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  color: #191f28;
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.01em;
+  background: #f3f4f6;
+  min-height: calc(100vh - 60px);
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.layout {
+  width: 100%;
+
+  display: grid;
+  grid-template-columns: 320px 1fr 360px;
+  grid-template-rows: auto auto auto auto;
+  gap: 16px;
+}
+
+/* 카드 공통 */
+.card {
+  background: #fff;
+  border: 1px solid #e5e8eb;
+  border-radius: 14px;
+  padding: 20px;
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.cardTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #191f28;
+  margin: 0;
+}
+
+.cardSub {
+  font-size: 11px;
+  color: #8b95a1;
+  font-weight: 500;
+}
+
+/* ─── 1행: 근태(왼쪽) / 목표(가운데) / 문의출처(오른쪽) ──────────────── */
+
+.attendanceCard {
+  grid-column: 1;
+  grid-row: 1;
+  min-height: 440px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.attTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: #191f28;
+  margin: 0;
+}
+
+.attDateRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.attDateText {
+  font-size: 12.5px;
+  color: #6b7684;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.attBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.attBadgeWorking {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.attBadgeOff {
+  background: #f3f4f6;
+  color: #6b7684;
+}
+
+.attBadgeDone {
+  background: #e8f3ff;
+  color: #3182f6;
+}
+
+/* 출근/퇴근 시간 박스 */
+.attTimeBox {
+  background: #f6f8fa;
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: grid;
+  grid-template-columns: 1fr 24px 1fr;
+  gap: 8px;
+  align-items: center;
+}
+
+.attTimeCol {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: center;
+}
+
+.attTimeLabel {
+  font-size: 11px;
+  color: #8b95a1;
+  font-weight: 600;
+}
+
+.attTimeValue {
+  font-size: 16px;
+  font-weight: 700;
+  color: #191f28;
+  font-variant-numeric: tabular-nums;
+}
+
+.attTimeValueEmpty {
+  color: #b0b8c1;
+}
+
+.attTimeArrow {
+  text-align: center;
+  color: #b0b8c1;
+  font-size: 14px;
+}
+
+/* 주간 누적 + 진행 바 */
+.attWeekBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.attWeekTitleRow {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.attWeekLabel {
+  font-size: 12.5px;
+  color: #6b7684;
+  font-weight: 600;
+}
+
+.attWeekValue {
+  font-size: 16px;
+  font-weight: 800;
+  color: #00c471;
+  font-variant-numeric: tabular-nums;
+}
+
+.attWeekHint {
+  font-size: 11px;
+  color: #8b95a1;
+  font-weight: 500;
+}
+
+.attProgressWrap {
+  position: relative;
+  height: 100px;
+  margin-top: 18px;
+  margin-bottom: 8px;
+  padding-top: 50px;
+}
+
+.attProgressBar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 56px;
+  height: 10px;
+  border-radius: 999px;
+  background: #e6e7eb;
+  overflow: visible;
+}
+
+.attProgressFill {
+  height: 100%;
+  background: #00c471;
+  border-radius: 999px;
+  transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+}
+
+.attProgressFillWarn {
+  background: linear-gradient(
+    to right,
+    #00c471 0%,
+    #00c471 76.92%,
+    #ff9500 76.92%,
+    #ff9500 100%
+  );
+}
+
+.attProgressFillDanger {
+  background: linear-gradient(
+    to right,
+    #00c471 0%,
+    #00c471 76.92%,
+    #ff9500 76.92%,
+    #ff9500 100%
+  );
+}
+
+.attProgressOver {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: #f04452;
+  border-radius: 0 999px 999px 0;
+}
+
+/* 봇 — 진행 바 끝에 떠다님 */
+.attBotVideo {
+  position: absolute;
+  right: -30px;
+  top: -50px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #fff;
+  box-shadow: 0 4px 16px rgba(0, 196, 113, 0.4);
+  background: #fff;
+  pointer-events: none;
+  animation: botFloat 2.2s ease-in-out infinite;
+}
+
+@keyframes botFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.attMarker {
+  position: absolute;
+  top: 50px;
+  height: 22px;
+  width: 2px;
+  background: #b0b8c1;
+  border-radius: 1px;
+}
+
+.attMarkerLabel {
+  position: absolute;
+  top: 76px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #8b95a1;
+  white-space: nowrap;
+}
+
+/* 출근/퇴근 버튼 */
+.attActions {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.attActionBtn {
+  flex: 1;
+  height: 38px;
+  border-radius: 10px;
+  background: #fff;
+  color: #191f28;
+  border: 1px solid #e5e8eb;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: inherit;
+  transition:
+    background 0.12s,
+    border-color 0.12s;
+}
+
+.attActionBtn:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.attActionBtn:disabled {
+  color: #b0b8c1;
+  cursor: not-allowed;
+  background: #fff;
+}
+
+.attActionBtn:disabled:hover {
+  background: #fff;
+  border-color: #e5e8eb;
+}
+
+/* ─── 목표 카드 ──────────────────────────────────────────────────── */
+
+.goalCard {
+  grid-column: 2;
+  grid-row: 1;
+  min-height: 220px;
+}
+
+.placeholderText {
+  font-size: 12px;
+  color: #8b95a1;
+  text-align: center;
+  padding: 40px 0;
+}
+
+/* ─── 문의 출처 ──────────────────────────────────────────────────── */
+
+.sourceCard {
+  grid-column: 3;
+  grid-row: 1;
+  min-height: 220px;
+}
+
+/* ─── 2행: 통계 4개 카드 ──────────────────────────────────────────── */
+
+.statsRow {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.statBox {
+  background: #fff;
+  border: 1px solid #e5e8eb;
+  border-radius: 14px;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.statIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3f4f6;
+  color: #4e5968;
+}
+
+.statTexts {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.statLabel {
+  font-size: 11.5px;
+  color: #6b7684;
+  font-weight: 600;
+}
+
+.statValue {
+  font-size: 18px;
+  font-weight: 700;
+  color: #191f28;
+  font-variant-numeric: tabular-nums;
+}
+
+.statSub {
+  font-size: 10.5px;
+  color: #8b95a1;
+  font-weight: 500;
+  margin-top: 1px;
+}
+
+/* ─── 3행: 메일 / 캘린더 / 게시판 ─────────────────────────────────── */
+
+.mailCard {
+  grid-column: 1;
+  grid-row: 3;
+  min-height: 240px;
+}
+
+.calendarCard {
+  grid-column: 2;
+  grid-row: 3;
+  min-height: 240px;
+}
+
+.boardCard {
+  grid-column: 3;
+  grid-row: 3;
+  min-height: 240px;
+}
+
+.cardSubtitleList {
+  font-size: 11px;
+  color: #6b7684;
+  margin: -8px 0 12px;
+}
+
+/* ─── 4행: KPI ────────────────────────────────────────────────── */
+
+.kpiCard {
+  grid-column: 1;
+  grid-row: 4;
+  min-height: 160px;
+}
+
+/* placeholder / coming-soon */
+.comingSoon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 24px 12px;
+  color: #b0b8c1;
+}
+
+.comingSoonIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.comingSoonText {
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+/* ─── 반응형 ──────────────────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .layout {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .attendanceCard {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .goalCard {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .sourceCard {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  .statsRow {
+    grid-row: 3;
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .mailCard {
+    grid-column: 1;
+    grid-row: 4;
+  }
+  .calendarCard {
+    grid-column: 2;
+    grid-row: 4;
+  }
+  .boardCard {
+    grid-column: 1 / -1;
+    grid-row: 5;
+  }
+  .kpiCard {
+    grid-column: 1 / -1;
+    grid-row: 6;
+  }
+}
+
+@media (max-width: 640px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .attendanceCard,
+  .goalCard,
+  .sourceCard,
+  .mailCard,
+  .calendarCard,
+  .boardCard,
+  .kpiCard {
+    grid-column: 1;
+  }
+  .attendanceCard {
+    grid-row: 1;
+  }
+  .goalCard {
+    grid-row: 2;
+  }
+  .sourceCard {
+    grid-row: 3;
+  }
+  .statsRow {
+    grid-column: 1;
+    grid-row: 4;
+    grid-template-columns: 1fr 1fr;
+  }
+  .mailCard {
+    grid-row: 5;
+  }
+  .calendarCard {
+    grid-row: 6;
+  }
+  .boardCard {
+    grid-row: 7;
+  }
+  .kpiCard {
+    grid-row: 8;
+  }
+}

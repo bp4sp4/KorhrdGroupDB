@@ -230,7 +230,13 @@ export default function DashboardLayout({
 
           <main
             className={`${styles.mainContent}${pathname.startsWith('/approvals') ? ` ${styles.mainContentWhite}` : ''}`}
-            style={pathname.startsWith('/calendar') ? { padding: 0 } : undefined}
+            style={
+              pathname.startsWith('/calendar') ||
+              pathname.startsWith('/dashboard') ||
+              pathname.startsWith('/work-journal')
+                ? { padding: 0 }
+                : undefined
+            }
           >
             {children}
           </main>

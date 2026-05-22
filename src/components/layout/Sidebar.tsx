@@ -25,6 +25,7 @@ import {
   FileText,
   CalendarDays,
   Clock,
+  Mail,
 } from "lucide-react";
 import styles from "./layout.module.css";
 import { createClient } from "@/lib/supabase/client";
@@ -45,6 +46,7 @@ interface NavItem {
   exactMatch?: boolean;
   groupLabel?: string;
   children?: NavSubItem[];
+  badge?: string;
 }
 
 interface NavSection {
@@ -327,6 +329,13 @@ const ALL_SECTIONS: NavSection[] = [
         label: "근태현황",
         href: "/me/attendance",
         icon: <Clock size={16} />,
+      },
+      {
+        id: "mail",
+        label: "시스템 메일",
+        href: "/mail",
+        icon: <Mail size={16} />,
+        badge: "개발중",
       },
       {
         id: "duplicate",
@@ -851,6 +860,9 @@ export default function Sidebar({
                     <span className={styles.sidebarLinkLabel}>
                       {item.label}
                     </span>
+                    {item.badge && (
+                      <span className={styles.sidebarDevBadge}>{item.badge}</span>
+                    )}
                     {isTrash && trashCount > 0 && (
                       <span className={styles.sidebarBadge}>{trashCount}</span>
                     )}

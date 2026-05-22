@@ -220,6 +220,70 @@ export default function GuideTour({ steps, open, onClose }: Props) {
     tooltipStyle = { top, left };
   }
 
+  // 마스코트 봇 위치 계산 — 타겟 옆 (좌 또는 우)에 세로 가운데 정렬
+  const BOT_SIZE = 96;
+  const BOT_GAP = 16;
+  const SAFE_TOP = 110; // 헤더(로고/메뉴/알림벨) 영역 충분히 피하기
+  const SAFE_BOTTOM = 24;
+  let botStyle: React.CSSProperties;
+  let bubbleStyle: React.CSSProperties;
+  const vw = typeof window !== "undefined" ? window.innerWidth : 1200;
+  const vh = typeof window !== "undefined" ? window.innerHeight : 800;
+
+  if (!rect) {
+    // 타겟 없음 — 우측 하단에 떠다님
+    const bx = vw - BOT_SIZE - 32;
+    const by = vh - BOT_SIZE - SAFE_BOTTOM - 60;
+    botStyle = { top: by, left: bx };
+    // 머리 위 말풍선
+    bubbleStyle = {
+      top: by - 30,
+      left: bx + BOT_SIZE / 2,
+      transform: "translateX(-50%)",
+    };
+  } else {
+    // 툴팁과 반대편에 배치 (겹침 방지)
+    const placement = current.placement ?? "bottom";
+    let placedRight: boolean;
+    if (placement === "right") {
+      placedRight = false; // 툴팁이 우측 → 봇은 좌측
+    } else if (placement === "left") {
+      placedRight = true; // 툴팁이 좌측 → 봇은 우측
+    } else {
+      // bottom/top — 좌우 공간 더 넓은 쪽
+      const rightSpace = vw - (rect.left + rect.width);
+      const leftSpace = rect.left;
+      placedRight = rightSpace >= leftSpace;
+    }
+
+    let bx = placedRight
+      ? rect.left + rect.width + BOT_GAP
+      : rect.left - BOT_SIZE - BOT_GAP;
+
+    // 선택한 쪽 공간 부족 시 반대쪽
+    if (placedRight && bx + BOT_SIZE > vw - 16) {
+      bx = rect.left - BOT_SIZE - BOT_GAP;
+      placedRight = false;
+    } else if (!placedRight && bx < 16) {
+      bx = rect.left + rect.width + BOT_GAP;
+      placedRight = true;
+    }
+    // 최종 화면 안 클램프
+    bx = Math.max(16, Math.min(vw - BOT_SIZE - 16, bx));
+
+    // 세로: 타겟 중앙, 헤더 회피
+    let by = rect.top + rect.height / 2 - BOT_SIZE / 2;
+    by = Math.max(SAFE_TOP, Math.min(vh - BOT_SIZE - SAFE_BOTTOM, by));
+    botStyle = { top: by, left: bx };
+
+    // 말풍선: 봇 머리 위 가운데
+    bubbleStyle = {
+      top: by - 30,
+      left: bx + BOT_SIZE / 2,
+      transform: "translateX(-50%)",
+    };
+  }
+
   // 외부 클릭 차단용 4-패널 (spotlight 영역은 비워두어 클릭 통과)
   const blockers = rect ? (
     <>
@@ -260,6 +324,15 @@ export default function GuideTour({ steps, open, onClose }: Props) {
     <div className={styles.blockerFull} />
   );
 
+  // 마스코트 말풍선 텍스트 (현 스텝 인덱스 기반 인사말)
+  const botGreetings = [
+    "이쪽이에요!",
+    "이 버튼이에요",
+    "잘 따라오고 계세요",
+    "다음 단계로!",
+  ];
+  const botMessage = botGreetings[index % botGreetings.length];
+
   const overlay = (
     <div className={styles.overlay}>
       {!isCompact && <div className={styles.backdrop} />}
@@ -275,36 +348,65 @@ export default function GuideTour({ steps, open, onClose }: Props) {
           }}
         />
       )}
-      <div className={tooltipClass} style={tooltipStyle} role="dialog" aria-modal="true">
-        <div className={styles.header}>
-          <h3 className={styles.title}>{current.title}</h3>
-          <button className={styles.closeBtn} onClick={onClose} aria-label="닫기">
-            <X size={16} />
-          </button>
-        </div>
-        <div className={styles.body}>{current.content}</div>
-        <div className={styles.footer}>
-          <span className={styles.progress}>
-            {index + 1} / {total}
-          </span>
-          <div className={styles.actions}>
-            {!isFirst && !current.hidePrev && (
-              <button className={styles.btnGhost} onClick={prev}>
-                이전
-              </button>
-            )}
-            {!current.hideNext && (
-              <button className={styles.btnPrimary} onClick={next}>
-                {isLast ? "완료" : "다음"}
-              </button>
-            )}
-          </div>
-        </div>
+      {/* 마스코트 봇 — 가이드 진행 내내 떠다님 */}
+      <div className={styles.botBubble} style={bubbleStyle}>
+        {botMessage}
       </div>
+      <video
+        className={styles.bot}
+        src="/bot.mp4"
+        autoPlay
+        loop
+        muted
+        playsInline
+        style={botStyle}
+      />
     </div>
   );
 
+  // (원래 overlay 닫는 코드는 아래에서 제거됨 — 위에서 통합)
   return typeof document !== "undefined"
-    ? createPortal(overlay, document.body)
+    ? createPortal(
+        <>
+          {overlay}
+          <div
+            className={tooltipClass}
+            style={{ ...tooltipStyle, position: "fixed", zIndex: 9200 }}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className={styles.header}>
+              <h3 className={styles.title}>{current.title}</h3>
+              <button
+                className={styles.closeBtn}
+                onClick={onClose}
+                aria-label="닫기"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className={styles.body}>{current.content}</div>
+            <div className={styles.footer}>
+              <span className={styles.progress}>
+                {index + 1} / {total}
+              </span>
+              <div className={styles.actions}>
+                {!isFirst && !current.hidePrev && (
+                  <button className={styles.btnGhost} onClick={prev}>
+                    이전
+                  </button>
+                )}
+                {!current.hideNext && (
+                  <button className={styles.btnPrimary} onClick={next}>
+                    {isLast ? "완료" : "다음"}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </>,
+        document.body,
+      )
     : null;
 }
+

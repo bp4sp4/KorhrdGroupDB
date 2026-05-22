@@ -30,6 +30,40 @@
   z-index: 9050;
 }
 
+/* 마스코트 봇 — 가이드 진행 동안 떠다니며 타겟을 가리키는 캐릭터 */
+.bot {
+  position: fixed;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #fff;
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.28);
+  background: #fff;
+  pointer-events: none;
+  z-index: 9100;
+  transition:
+    top 0.7s cubic-bezier(0.34, 1.56, 0.64, 1),
+    left 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.botBubble {
+  position: fixed;
+  background: #2563eb;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 9101;
+  transition:
+    top 0.7s cubic-bezier(0.34, 1.56, 0.64, 1),
+    left 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+
 .spotlight {
   position: absolute;
   border-radius: 12px;
