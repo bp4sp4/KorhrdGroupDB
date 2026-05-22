@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import styles from "./page.module.css";
+import { createClient } from "@/lib/supabase/client";
 
 // ─── 타입 ────────────────────────────────────────────────────────────────
 interface Employee {
@@ -275,6 +276,27 @@ export default function AdminAttendancePage() {
   useEffect(() => {
     fetchRecords(selectedId);
   }, [selectedId, fetchRecords]);
+
+  // Supabase Realtime — 변경 시 요약 + 상세 동시 새로고침
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel("admin-attendance-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "attendance_records" },
+        () => {
+          fetchEmployees();
+          if (selectedId) fetchRecords(selectedId);
+        },
+      )
+      .subscribe((status, err) => {
+        if (err) console.log("[admin attendance] subscribe error:", err);
+      });
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchEmployees, fetchRecords, selectedId]);
 
   // ─── 필터 / 통계 ─────────────────────────────────────────────────────
   const filtered = useMemo(() => {

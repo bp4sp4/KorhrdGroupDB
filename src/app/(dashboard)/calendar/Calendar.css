@@ -673,6 +673,135 @@
     color 0.12s;
   margin-top: 2px;
 }
+
+/* 상태 그룹 칩 */
+.app .day-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+.app .day-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--bg-card-2);
+  color: var(--text-500);
+  font-size: 11.5px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition:
+    background 0.12s,
+    color 0.12s,
+    border-color 0.12s;
+}
+.app .day-chip:hover {
+  background: var(--bg-card);
+  color: var(--text-900);
+}
+.app .day-chip.on {
+  background: var(--text-900);
+  color: #fff;
+  border-color: var(--text-900);
+}
+.app .day-chip .n {
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0 5px;
+  border-radius: 4px;
+  font-size: 10.5px;
+  min-width: 16px;
+  text-align: center;
+}
+.app .day-chip:not(.on) .n {
+  background: #fff;
+  color: var(--text-500);
+}
+
+/* 그룹 토글 */
+.app .day-group-toggle {
+  display: inline-flex;
+  background: var(--bg-card-2);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+  margin-bottom: 4px;
+  align-self: flex-start;
+}
+.app .group-btn {
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 0;
+  background: transparent;
+  color: var(--text-400);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.app .group-btn.on {
+  background: #fff;
+  color: var(--text-900);
+  box-shadow: 0 1px 2px rgba(17, 24, 39, 0.04);
+}
+
+/* 담당자별 그룹 */
+.app .day-group {
+  margin-bottom: 8px;
+}
+.app .day-group-h {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: var(--bg-card-2);
+  border-radius: 8px;
+  margin-bottom: 4px;
+}
+.app .day-group-name {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-900);
+}
+.app .day-group-cnt {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--blue);
+  background: var(--blue-soft);
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+.app .day-group-more {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-400);
+  padding: 4px 0 8px;
+}
+
+/* 컴팩트 모드 — 30건 이상일 때 자동 적용 */
+.app .schedule.compact .item {
+  padding: 8px 12px;
+  gap: 8px;
+}
+.app .schedule.compact .item .time {
+  font-size: 11px;
+  min-width: 40px;
+}
+.app .schedule.compact .item .info .name {
+  font-size: 12.5px;
+}
+.app .schedule.compact .item .info .where {
+  font-size: 10.5px;
+}
+.app .schedule.compact .item .more-dots {
+  display: none;
+}
 .app .show-more-btn:hover {
   background: var(--bg-card);
   color: var(--text-900);

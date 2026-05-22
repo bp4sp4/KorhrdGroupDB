@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-05-21T09:48:34.335Z",
+  "lastUpdated": "2026-05-22T02:16:40.487Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -208,9 +208,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:30:16.038Z",
-        "lastUpdated": "2026-05-21T03:59:05.847Z"
+        "lastUpdated": "2026-05-22T02:16:40.487Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/api/hakjeom/route.ts"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/hakjeom/page.tsx"
     },
     "practice": {
       "phase": "do",
@@ -1170,9 +1170,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-06T03:03:38.074Z",
-        "lastUpdated": "2026-05-21T07:26:24.982Z"
+        "lastUpdated": "2026-05-22T00:57:10.804Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/me/attendance/page.tsx"
+      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/admin/attendance/page.tsx"
     },
     "businessCard": {
       "phase": "do",
@@ -1924,7 +1924,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-05-20T03:11:12.208Z",
-        "lastUpdated": "2026-05-21T05:27:52.371Z"
+        "lastUpdated": "2026-05-22T02:11:27.715Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/hakjeom/_detail/HakjeomDetailPanel.tsx"
     },
@@ -1937,7 +1937,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-05-20T06:02:21.810Z",
-        "lastUpdated": "2026-05-21T09:48:34.335Z"
+        "lastUpdated": "2026-05-22T01:13:25.226Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/calendar/Calendar.tsx"
     },
@@ -2002,7 +2002,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-05-21T09:48:34.335Z"
+    "lastActivity": "2026-05-22T02:16:40.487Z"
   },
   "history": [
     {
@@ -26512,6 +26512,126 @@
     {
       "timestamp": "2026-05-21T09:48:34.335Z",
       "feature": "calendar",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-05-22T00:54:38.399Z",
+      "feature": "attendance",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-05-22T00:54:45.526Z",
+      "feature": "attendance",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-05-22T00:54:52.814Z",
+      "feature": "attendance",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-05-22T00:55:03.431Z",
+      "feature": "attendance",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-05-22T00:55:09.038Z",
+      "feature": "attendance",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-05-22T00:56:34.116Z",
+      "feature": "attendance",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-05-22T00:56:42.704Z",
+      "feature": "attendance",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-05-22T00:56:54.061Z",
+      "feature": "attendance",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-05-22T00:57:10.804Z",
+      "feature": "attendance",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-05-22T01:12:30.299Z",
+      "feature": "calendar",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-05-22T01:12:38.855Z",
+      "feature": "calendar",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-05-22T01:12:58.930Z",
+      "feature": "calendar",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-05-22T01:13:25.226Z",
+      "feature": "calendar",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-05-22T02:11:05.123Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-05-22T02:11:14.121Z",
+      "feature": "_detail",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-05-22T02:11:27.715Z",
+      "feature": "_detail",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-05-22T02:11:47.757Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-05-22T02:11:55.652Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-05-22T02:12:20.729Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-05-22T02:16:40.487Z",
+      "feature": "hakjeom",
       "phase": "do",
       "action": "updated"
     }

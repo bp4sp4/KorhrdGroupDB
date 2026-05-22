@@ -7,6 +7,7 @@ import {
   CONSULTATION_STATUS_STYLE,
   COUNSEL_CHECK_OPTIONS,
   CURRENT_SITUATION_OPTIONS,
+  DANGGEUN_DEFAULT_OPTIONS,
   EDUCATION_CUSTOM,
   EDUCATION_OPTIONS,
   HAKJEOM_COURSE_OPTIONS,
@@ -23,7 +24,7 @@ import { matchReactionPoints } from "../_constants";
 import { StatusBadge } from "../_components/StatusBadge";
 
 // 당근 sub-panel의 기본 옵션
-const DANGGEUN_DEFAULT_OPTIONS = ["채팅", "소식", "대표전화", "폼"];
+// DANGGEUN_DEFAULT_OPTIONS 는 _constants 에서 import
 
 // 반응포인트 카테고리 이모지
 const REACTION_GROUP_EMOJI: Record<string, string> = {

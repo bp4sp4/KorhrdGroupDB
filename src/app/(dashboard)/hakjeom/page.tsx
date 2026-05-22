@@ -75,6 +75,7 @@ import {
   HOPE_COURSE_CUSTOM,
   SOURCE_MAJORS,
   REFERRER_CARD_META,
+  DANGGEUN_DEFAULT_OPTIONS,
 } from "./_constants";
 import type { ReferrerCardMeta } from "./_constants";
 import {
@@ -1257,6 +1258,9 @@ function HakjeomTab({
   const bulkMenuRef = useRef<HTMLDivElement>(null);
   const [bulkSourceMajor, setBulkSourceMajor] = useState("");
   const [bulkSourceMinor, setBulkSourceMinor] = useState("");
+  // 일괄변경 패널에서 인라인 소재 추가용 (당근/맘카페 공용)
+  const [bulkAddInputVisible, setBulkAddInputVisible] = useState(false);
+  const [bulkAddInputValue, setBulkAddInputValue] = useState("");
   const [assigningSource, setAssigningSource] = useState(false);
   const sourceAssignRef = useRef<HTMLDivElement>(null);
   const [customCafes, setCustomCafes] = useState<string[]>([]);
@@ -2145,47 +2149,134 @@ function HakjeomTab({
                           ))}
                         </div>
                       )}
-                      {bulkSourceMajor === "당근" &&
-                        customDanggeun.length > 0 && (
-                          <div className={styles.sourceAssignSubPanel}>
-                            {customDanggeun.map((name) => (
-                              <span
-                                key={name}
-                                className={styles.customItemWrap}
+                      {bulkSourceMajor === "당근" && (
+                        <div className={styles.sourceAssignSubPanel}>
+                          {/* 기본 소재 옵션 */}
+                          {DANGGEUN_DEFAULT_OPTIONS.map((opt) => (
+                            <button
+                              key={opt}
+                              type="button"
+                              className={
+                                bulkSourceMinor === opt
+                                  ? styles.tagBtnSmActive
+                                  : styles.tagBtnSm
+                              }
+                              onClick={() =>
+                                setBulkSourceMinor((prev) =>
+                                  prev === opt ? "" : opt,
+                                )
+                              }
+                            >
+                              {opt}
+                            </button>
+                          ))}
+                          {/* 사용자 추가 소재 */}
+                          {customDanggeun.map((name) => (
+                            <span key={name} className={styles.customItemWrap}>
+                              <button
+                                type="button"
+                                className={
+                                  bulkSourceMinor === name
+                                    ? styles.tagBtnSmActive
+                                    : styles.tagBtnSm
+                                }
+                                onClick={() =>
+                                  setBulkSourceMinor((prev) =>
+                                    prev === name ? "" : name,
+                                  )
+                                }
                               >
-                                <button
-                                  type="button"
-                                  className={
-                                    bulkSourceMinor === name
-                                      ? styles.tagBtnSmActive
-                                      : styles.tagBtnSm
-                                  }
-                                  onClick={() =>
-                                    setBulkSourceMinor((prev) =>
-                                      prev === name ? "" : name,
+                                {name}
+                              </button>
+                              <button
+                                type="button"
+                                className={styles.customItemDeleteBtn}
+                                onClick={() => {
+                                  if (
+                                    window.confirm(
+                                      `"${name}"을(를) 삭제하시겠습니까?`,
                                     )
-                                  }
-                                >
-                                  {name}
-                                </button>
-                                <button
-                                  type="button"
-                                  className={styles.customItemDeleteBtn}
-                                  onClick={() => {
+                                  )
+                                    handleDeleteDanggeun(name);
+                                }}
+                              >
+                                ✕
+                              </button>
+                            </span>
+                          ))}
+                          {/* 추가 버튼 / 입력칸 */}
+                          {bulkAddInputVisible ? (
+                            <span className={styles.sourceAssignAddRow}>
+                              <input
+                                autoFocus
+                                className={styles.sourceAssignAddInput}
+                                placeholder="소재명 입력"
+                                value={bulkAddInputValue}
+                                onChange={(e) =>
+                                  setBulkAddInputValue(e.target.value)
+                                }
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    const name = bulkAddInputValue.trim();
                                     if (
-                                      window.confirm(
-                                        `"${name}"을(를) 삭제하시겠습니까?`,
-                                      )
-                                    )
-                                      handleDeleteDanggeun(name);
-                                  }}
-                                >
-                                  ✕
-                                </button>
-                              </span>
-                            ))}
-                          </div>
-                        )}
+                                      name &&
+                                      !customDanggeun.includes(name) &&
+                                      !DANGGEUN_DEFAULT_OPTIONS.includes(name)
+                                    ) {
+                                      handleAddDanggeun(name);
+                                      setBulkSourceMinor(name);
+                                      setBulkAddInputValue("");
+                                      setBulkAddInputVisible(false);
+                                    }
+                                  }
+                                  if (e.key === "Escape") {
+                                    setBulkAddInputValue("");
+                                    setBulkAddInputVisible(false);
+                                  }
+                                }}
+                              />
+                              <button
+                                type="button"
+                                className={styles.tagBtnSm}
+                                onClick={() => {
+                                  const name = bulkAddInputValue.trim();
+                                  if (
+                                    name &&
+                                    !customDanggeun.includes(name) &&
+                                    !DANGGEUN_DEFAULT_OPTIONS.includes(name)
+                                  ) {
+                                    handleAddDanggeun(name);
+                                    setBulkSourceMinor(name);
+                                    setBulkAddInputValue("");
+                                    setBulkAddInputVisible(false);
+                                  }
+                                }}
+                              >
+                                추가
+                              </button>
+                              <button
+                                type="button"
+                                className={styles.sourceAssignAddCancel}
+                                aria-label="취소"
+                                onClick={() => {
+                                  setBulkAddInputValue("");
+                                  setBulkAddInputVisible(false);
+                                }}
+                              >
+                                ✕
+                              </button>
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              className={styles.tagBtnSm}
+                              onClick={() => setBulkAddInputVisible(true)}
+                            >
+                              + 추가
+                            </button>
+                          )}
+                        </div>
+                      )}
                       {bulkSourceMajor && (
                         <input
                           className={styles.sourceAssignMinorInput}

@@ -221,6 +221,9 @@ export const HOPE_COURSE_CUSTOM = "직접입력";
 
 // ─── 유입경로 (대분류 + 카드 메타) ─────────────────────────────────────────
 
+// 당근 기본 소재 옵션
+export const DANGGEUN_DEFAULT_OPTIONS = ["채팅", "소식", "대표전화", "폼"];
+
 export const SOURCE_MAJORS = [
   "당근",
   "맘카페",

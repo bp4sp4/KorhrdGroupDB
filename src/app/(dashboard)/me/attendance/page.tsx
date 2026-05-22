@@ -8,6 +8,7 @@ import {
   getTodayKstDate,
   WORK_END_HOUR,
 } from "@/lib/attendance";
+import { createClient } from "@/lib/supabase/client";
 
 // ─── 타입 ────────────────────────────────────────────────────────────────
 interface AttendanceRec {
@@ -170,6 +171,43 @@ function liveWorkMinutes(today: AttendanceRec | null, todayDate: string): number
   ).workMinutes;
 }
 
+// 오늘 실시간 누적 근무 초 (시:분:초 표시용)
+function liveWorkSeconds(today: AttendanceRec | null, todayDate: string): number {
+  if (!today) return 0;
+  if (today.clock_out_at) return (today.work_minutes ?? 0) * 60;
+  // 점심 시간 제외하면서 초 단위로
+  const clockIn = new Date(today.clock_in_at);
+  const KST_OFFSET = 9 * 60 * 60 * 1000;
+  const [y, m, d] = todayDate.split("-").map(Number);
+  const dayStartUtcMs = Date.UTC(y, m - 1, d, 10 - 9, 0);
+  const dayEndUtcMs = Date.UTC(y, m - 1, d, 19 - 9, 0);
+  const lunchStartMs = Date.UTC(y, m - 1, d, 13 - 9, 0);
+  const lunchEndMs = Date.UTC(y, m - 1, d, 14 - 9, 0);
+  // recognized in: max(actual, 10:00)
+  const recIn = Math.max(clockIn.getTime(), dayStartUtcMs);
+  const nowMs = Date.now();
+  const effStart = Math.max(recIn, dayStartUtcMs);
+  const effEnd = Math.min(nowMs, dayEndUtcMs);
+  let workMs = effEnd > effStart ? effEnd - effStart : 0;
+  const lOverlapStart = Math.max(effStart, lunchStartMs);
+  const lOverlapEnd = Math.min(effEnd, lunchEndMs);
+  if (lOverlapEnd > lOverlapStart) workMs -= lOverlapEnd - lOverlapStart;
+  void KST_OFFSET;
+  return Math.max(0, Math.floor(workMs / 1000));
+}
+
+// 초 → "Xh Ym Zs"
+function formatHMS(totalSec: number): string {
+  if (totalSec <= 0) return "0초";
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  if (h > 0)
+    return `${h}시간 ${String(m).padStart(2, "0")}분 ${String(s).padStart(2, "0")}초`;
+  if (m > 0) return `${m}분 ${String(s).padStart(2, "0")}초`;
+  return `${s}초`;
+}
+
 function remainingUntilOff(): string {
   const kst = getKstNow();
   const h = kst.getHours();
@@ -228,10 +266,10 @@ export default function MyAttendancePage() {
     ot: 0,
   });
 
-  // 실시간 시계
+  // 실시간 시계 (1초마다 — 누적 근무시간 초 단위 갱신)
   const [, setTick] = useState(0);
   useEffect(() => {
-    const t = setInterval(() => setTick((v) => v + 1), 60_000);
+    const t = setInterval(() => setTick((v) => v + 1), 1000);
     return () => clearInterval(t);
   }, []);
 
@@ -284,6 +322,34 @@ export default function MyAttendancePage() {
     fetchAll();
   }, [fetchAll]);
 
+  // 30초마다 자동 데이터 갱신 (외부 변경 — 관리자 수정 등 — 감지 백업용)
+  useEffect(() => {
+    const t = setInterval(() => {
+      fetchAll();
+    }, 30_000);
+    return () => clearInterval(t);
+  }, [fetchAll]);
+
+  // Supabase Realtime — attendance_records 변경 시 즉시 fetch
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel("attendance-records-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "attendance_records" },
+        () => {
+          fetchAll();
+        },
+      )
+      .subscribe((status, err) => {
+        if (err) console.log("[attendance] subscribe error:", err);
+      });
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchAll]);
+
   const todayRecord = useMemo(
     () => records.find((r) => r.date === today) ?? null,
     [records, today],
@@ -324,6 +390,7 @@ export default function MyAttendancePage() {
 
   // ─── 헤로 ─────────────────────────────────────────────────────────────
   const liveMin = liveWorkMinutes(todayRecord, today);
+  const liveSec = liveWorkSeconds(todayRecord, today);
   const isWorking = !!todayRecord && !todayRecord.clock_out_at;
   const checkInTime = todayRecord ? formatTime(todayRecord.clock_in_at) : null;
   const checkOutTime = todayRecord?.clock_out_at
@@ -543,7 +610,13 @@ export default function MyAttendancePage() {
               <div className={styles.greet}>
                 {userName ? `${userName}님, ` : ""}오늘도 수고하고 계세요.
                 <br />
-                지금까지 <em>{hoursFromMinutes(liveMin)}</em> 일하셨어요.
+                지금까지{" "}
+                <em>
+                  {todayRecord && !todayRecord.clock_out_at
+                    ? formatHMS(liveSec)
+                    : hoursFromMinutes(liveMin)}
+                </em>{" "}
+                일하셨어요.
               </div>
               <div className={styles.nowLine}>
                 {todayKstDateKo().split(" ").pop()}

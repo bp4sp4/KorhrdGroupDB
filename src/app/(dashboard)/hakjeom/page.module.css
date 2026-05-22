@@ -497,6 +497,8 @@
   font-size: 12px;
   font-weight: 600;
   transition: all 0.12s;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* tagBtn: active=true, sm=true */
@@ -507,6 +509,8 @@
   border: 2px solid #3182f6;
   background: #ebf3fe;
   color: #3182f6;
+  white-space: nowrap;
+  flex-shrink: 0;
   font-size: 12px;
   font-weight: 600;
   transition: all 0.12s;
@@ -2433,6 +2437,50 @@
 
 .sourceAssignMinorInput:focus {
   border-color: var(--toss-blue);
+}
+
+/* 인라인 추가 입력 — 칩 행 안에 들어갈 때 (커스텀 소재 추가용) */
+.sourceAssignAddRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sourceAssignAddInput {
+  padding: 4px 10px;
+  border: 1.5px solid var(--toss-border);
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--toss-text-primary);
+  background: #fff;
+  outline: none;
+  font-family: inherit;
+  height: 26px;
+  box-sizing: border-box;
+  min-width: 110px;
+}
+
+.sourceAssignAddInput:focus {
+  border-color: var(--toss-blue);
+}
+
+.sourceAssignAddCancel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fee2e2;
+  color: #dc2626;
+  border: 0;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 0;
+  flex-shrink: 0;
+}
+.sourceAssignAddCancel:hover {
+  background: #fecaca;
 }
 
 /* ─── 메인 페이지 ────────────────────────────────────────────────────────── */

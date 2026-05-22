@@ -10,6 +10,7 @@ interface ContactScheduledItem {
   id: number;
   name: string;
   manager: string | null;
+  status: string | null;
   contact_scheduled_at: string | null;
 }
 
@@ -82,16 +83,21 @@ export default function CalendarPage() {
     return scheduledItems.filter((i) => i.manager === me.displayName);
   }, [scheduledItems, viewMode, me.displayName]);
 
-  // 캘린더 이벤트로 변환
+  // 캘린더 이벤트로 변환 (담당자·상태도 함께)
   const events = useMemo<CalendarEvent[]>(() => {
     return filteredItems
       .filter((i) => i.contact_scheduled_at)
       .map((i) => {
         const date = (i.contact_scheduled_at ?? "").slice(0, 10);
+        const status = i.status ?? "";
+        const meta: string[] = [];
+        if (i.manager) meta.push(`담당 ${i.manager}`);
+        if (status) meta.push(status);
         return {
           id: `contact-${i.id}`,
           date,
-          title: `연락예정 · ${i.name}`,
+          title: i.name,
+          where: meta.join(" · "),
           category: "work" as const,
         };
       });

@@ -553,6 +553,31 @@ interface RightPanelProps {
   onSelectEvent?: (id: string) => void;
 }
 
+// where 값에서 상태 큰 그룹 추출 (검색·필터용)
+function extractStatusGroup(where: string | undefined): string {
+  if (!where) return "기타";
+  const s = where;
+  if (s.includes("상담완료")) return "상담완료";
+  if (s.includes("부재중")) return "부재중";
+  if (s.includes("장기가망")) return "장기가망";
+  if (s.includes("상담대기")) return "상담대기";
+  if (s.includes("등록완료")) return "등록완료";
+  if (s.includes("지인")) return "지인";
+  if (s.includes("수신거부")) return "수신거부";
+  return "기타";
+}
+
+const STATUS_GROUPS = [
+  "상담완료",
+  "상담대기",
+  "부재중",
+  "장기가망",
+  "지인",
+  "등록완료",
+  "수신거부",
+  "기타",
+] as const;
+
 function RightPanel({
   selected,
   today,
@@ -565,24 +590,59 @@ function RightPanel({
   const dow = WEEK_KO[selected.getDay()];
   const [query, setQuery] = useState("");
   const [showAll, setShowAll] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [groupBy, setGroupBy] = useState<"none" | "manager">("none");
 
-  // 선택 날짜가 바뀌면 검색어 / 더보기 초기화
+  // 선택 날짜가 바뀌면 검색어 / 필터 / 더보기 초기화
   React.useEffect(() => {
     setQuery("");
     setShowAll(false);
+    setStatusFilter(null);
+    setGroupBy("none");
   }, [selected]);
 
   const PAGE_SIZE = 10;
   const q = query.trim().toLowerCase();
-  const filtered = q
+  const filteredBySearch = q
     ? events.filter(
         (e) =>
           e.title.toLowerCase().includes(q) ||
           (e.where ?? "").toLowerCase().includes(q),
       )
     : events;
+  const filtered = statusFilter
+    ? filteredBySearch.filter(
+        (e) => extractStatusGroup(e.where) === statusFilter,
+      )
+    : filteredBySearch;
+
+  // 상태별 카운트 (필터 칩에 표시)
+  const statusCounts = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const e of filteredBySearch) {
+      const g = extractStatusGroup(e.where);
+      map[g] = (map[g] ?? 0) + 1;
+    }
+    return map;
+  }, [filteredBySearch]);
+
+  // 담당자 그룹화
+  const managerGroups = useMemo(() => {
+    if (groupBy !== "manager") return null;
+    const map = new Map<string, CalendarEvent[]>();
+    for (const e of filtered) {
+      const manager =
+        (e.where ?? "").match(/담당\s+([^·]+)/)?.[1]?.trim() ?? "미배정";
+      const arr = map.get(manager) ?? [];
+      arr.push(e);
+      map.set(manager, arr);
+    }
+    return Array.from(map.entries()).sort((a, b) => b[1].length - a[1].length);
+  }, [filtered, groupBy]);
+
   const visible = showAll ? filtered : filtered.slice(0, PAGE_SIZE);
   const hiddenCount = filtered.length - visible.length;
+  const isManyEvents = events.length > 30;
 
   return (
     <aside className="right">
@@ -610,73 +670,159 @@ function RightPanel({
           </div>
         </div>
 
-        <div className="schedule">
+        <div className={`schedule${isManyEvents ? " compact" : ""}`}>
           {events.length > PAGE_SIZE && (
-            <div className="day-search">
-              <input
-                value={query}
-                onChange={(e) => {
-                  setQuery(e.target.value);
-                  setShowAll(false);
-                }}
-                placeholder="이름으로 검색 (예: 윤경민)"
-                className="day-search-input"
-              />
-              {query && (
-                <span className="day-search-count">{filtered.length}건</span>
-              )}
-            </div>
-          )}
-
-          {visible.map((e) => (
-            <div
-              key={e.id}
-              className="item"
-              onClick={() => onSelectEvent?.(e.id)}
-            >
-              <div className="time">
-                {e.start ?? "종일"}
-                {e.end && <span className="end">~{e.end}</span>}
+            <>
+              <div className="day-search">
+                <input
+                  value={query}
+                  onChange={(e) => {
+                    setQuery(e.target.value);
+                    setShowAll(false);
+                  }}
+                  placeholder="이름으로 검색 (예: 윤경민)"
+                  className="day-search-input"
+                />
+                {query && (
+                  <span className="day-search-count">{filtered.length}건</span>
+                )}
               </div>
-              <div className="info">
-                <div className="name">
-                  <span
-                    className="tag"
-                    style={{ background: CATEGORY_META[e.category].color }}
-                  />
-                  {e.title}
+
+              {/* 상태 그룹 칩 — 많이 있을 때만 */}
+              {isManyEvents && (
+                <div className="day-chips">
+                  <button
+                    type="button"
+                    className={`day-chip${statusFilter === null ? " on" : ""}`}
+                    onClick={() => setStatusFilter(null)}
+                  >
+                    전체
+                    <span className="n">{filteredBySearch.length}</span>
+                  </button>
+                  {STATUS_GROUPS.filter((s) => statusCounts[s] > 0).map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      className={`day-chip${statusFilter === s ? " on" : ""}`}
+                      onClick={() =>
+                        setStatusFilter(statusFilter === s ? null : s)
+                      }
+                    >
+                      {s}
+                      <span className="n">{statusCounts[s]}</span>
+                    </button>
+                  ))}
                 </div>
-                {e.where && <div className="where">{e.where}</div>}
-              </div>
-              <div className="more-dots">···</div>
-            </div>
-          ))}
+              )}
 
-          {hiddenCount > 0 && (
-            <button
-              type="button"
-              className="show-more-btn"
-              onClick={() => setShowAll(true)}
-            >
-              외 {hiddenCount}건 더 보기
-            </button>
+              {/* 그룹화 토글 */}
+              {isManyEvents && (
+                <div className="day-group-toggle">
+                  <button
+                    type="button"
+                    className={`group-btn${groupBy === "none" ? " on" : ""}`}
+                    onClick={() => setGroupBy("none")}
+                  >
+                    목록
+                  </button>
+                  <button
+                    type="button"
+                    className={`group-btn${groupBy === "manager" ? " on" : ""}`}
+                    onClick={() => setGroupBy("manager")}
+                  >
+                    담당자별
+                  </button>
+                </div>
+              )}
+            </>
           )}
 
-          {showAll && filtered.length > PAGE_SIZE && (
-            <button
-              type="button"
-              className="show-more-btn"
-              onClick={() => setShowAll(false)}
-            >
-              접기
-            </button>
+          {/* 담당자별 그룹 모드 */}
+          {groupBy === "manager" && managerGroups ? (
+            managerGroups.map(([manager, items]) => (
+              <div key={manager} className="day-group">
+                <div className="day-group-h">
+                  <span className="day-group-name">{manager}</span>
+                  <span className="day-group-cnt">{items.length}건</span>
+                </div>
+                {items.slice(0, 5).map((e) => (
+                  <div
+                    key={e.id}
+                    className="item"
+                    onClick={() => onSelectEvent?.(e.id)}
+                  >
+                    <div className="info">
+                      <div className="name">
+                        <span
+                          className="tag"
+                          style={{
+                            background: CATEGORY_META[e.category].color,
+                          }}
+                        />
+                        {e.title}
+                      </div>
+                      {e.where && <div className="where">{e.where}</div>}
+                    </div>
+                  </div>
+                ))}
+                {items.length > 5 && (
+                  <div className="day-group-more">외 {items.length - 5}건</div>
+                )}
+              </div>
+            ))
+          ) : (
+            <>
+              {visible.map((e) => (
+                <div
+                  key={e.id}
+                  className="item"
+                  onClick={() => onSelectEvent?.(e.id)}
+                >
+                  <div className="time">
+                    {e.start ?? "종일"}
+                    {e.end && <span className="end">~{e.end}</span>}
+                  </div>
+                  <div className="info">
+                    <div className="name">
+                      <span
+                        className="tag"
+                        style={{ background: CATEGORY_META[e.category].color }}
+                      />
+                      {e.title}
+                    </div>
+                    {e.where && <div className="where">{e.where}</div>}
+                  </div>
+                  <div className="more-dots">···</div>
+                </div>
+              ))}
+
+              {hiddenCount > 0 && (
+                <button
+                  type="button"
+                  className="show-more-btn"
+                  onClick={() => setShowAll(true)}
+                >
+                  외 {hiddenCount}건 더 보기
+                </button>
+              )}
+
+              {showAll && filtered.length > PAGE_SIZE && (
+                <button
+                  type="button"
+                  className="show-more-btn"
+                  onClick={() => setShowAll(false)}
+                >
+                  접기
+                </button>
+              )}
+            </>
           )}
 
           {events.length === 0 && (
             <div className="empty">아직 등록된 일정이 없어요.</div>
           )}
           {events.length > 0 && filtered.length === 0 && (
-            <div className="empty">검색 결과가 없어요.</div>
+            <div className="empty">필터 결과가 없어요.</div>
           )}
 
           <button className="add-item" onClick={onAdd}>
