@@ -4,6 +4,16 @@
 // 인정 출근: clock_in_at < 10:00 → 10:00 으로 캡 (그 외 실시각)
 // 인정 퇴근: 실제 clock_out_at 그대로
 
+// 퇴근 처리 confirm 다이얼로그 메시지 (근태현황/대시보드/헤더 공통)
+// ConfirmDialog 컴포넌트에 그대로 spread 해서 사용
+export const CLOCK_OUT_CONFIRM = {
+  title: "퇴근 처리 후에는 다음 날 출근 전까지 수정 및 취소가 불가능합니다.",
+  description:
+    "승인되지 않은 조기 퇴근은 무단 조퇴로 처리될 수 있으며 인사평가에 반영될 수 있습니다.",
+  confirmText: "퇴근하기",
+  cancelText: "취소",
+} as const;
+
 const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
 
 export const WORK_START_HOUR = 10;

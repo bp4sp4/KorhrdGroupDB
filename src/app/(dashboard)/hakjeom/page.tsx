@@ -743,6 +743,26 @@ function HakjeomAddModal({
                     className={styles.clickSourceSubPanel}
                     style={{ marginTop: 8 }}
                   >
+                    {DANGGEUN_DEFAULT_OPTIONS.map((opt) => (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() =>
+                          setForm((p) => ({
+                            ...p,
+                            sourceMinor:
+                              p.sourceMinor === opt ? "" : opt,
+                          }))
+                        }
+                        className={
+                          form.sourceMinor === opt
+                            ? styles.tagBtnSmActive
+                            : styles.tagBtnSm
+                        }
+                      >
+                        {opt}
+                      </button>
+                    ))}
                     {customDanggeun.map((area) => (
                       <span key={area} className={styles.customItemWrap}>
                         <button
@@ -750,7 +770,8 @@ function HakjeomAddModal({
                           onClick={() =>
                             setForm((p) => ({
                               ...p,
-                              sourceMinor: p.sourceMinor === area ? "" : area,
+                              sourceMinor:
+                                p.sourceMinor === area ? "" : area,
                             }))
                           }
                           className={
@@ -783,7 +804,7 @@ function HakjeomAddModal({
                             if (e.key === "Escape")
                               setModalShowDanggeunAdd(false);
                           }}
-                          placeholder="지역 이름"
+                          placeholder="소재명"
                           autoFocus
                         />
                         <button
@@ -800,9 +821,29 @@ function HakjeomAddModal({
                         className={styles.subPanelAddBtn}
                         onClick={() => setModalShowDanggeunAdd(true)}
                       >
-                        + 지역
+                        + 직접 추가
                       </button>
                     )}
+                  </div>
+                )}
+                {form.sourceMajor === "기타" && (
+                  <div
+                    className={styles.clickSourceSubPanel}
+                    style={{ marginTop: 8 }}
+                  >
+                    <input
+                      type="text"
+                      className={styles.subPanelAddInput}
+                      style={{ flex: 1 }}
+                      value={form.sourceMinor}
+                      onChange={(e) =>
+                        setForm((p) => ({
+                          ...p,
+                          sourceMinor: e.target.value,
+                        }))
+                      }
+                      placeholder="유입 경로를 입력하세요"
+                    />
                   </div>
                 )}
                 {form.sourceMajor && (

@@ -4,10 +4,12 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import styles from "./page.module.css";
 import {
   calculateAttendance,
+  CLOCK_OUT_CONFIRM,
   formatMinutes,
   getTodayKstDate,
   WORK_END_HOUR,
 } from "@/lib/attendance";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { createClient } from "@/lib/supabase/client";
 
 // ─── 타입 ────────────────────────────────────────────────────────────────
@@ -260,6 +262,7 @@ export default function MyAttendancePage() {
   const [userName, setUserName] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [showClockOutConfirm, setShowClockOutConfirm] = useState(false);
   // 항상 "이번 주" 기준 누적 (range 와 무관) — 주 52시간 한도 표시용
   const [weekStat, setWeekStat] = useState<{ work: number; ot: number }>({
     work: 0,
@@ -371,9 +374,13 @@ export default function MyAttendancePage() {
     }
   };
 
-  const handleCheckOut = async () => {
+  const handleCheckOut = () => {
     if (submitting) return;
-    if (!confirm("퇴근 처리하시겠습니까?")) return;
+    setShowClockOutConfirm(true);
+  };
+
+  const confirmClockOut = async () => {
+    setShowClockOutConfirm(false);
     setSubmitting(true);
     try {
       const res = await fetch("/api/attendance/clock-out", { method: "POST" });
@@ -790,7 +797,9 @@ export default function MyAttendancePage() {
 
           {/* 주 52시간 한도 진행률 (항상 이번 주 기준) */}
           {(() => {
-            const weekTotalMin = weekStat.work + weekStat.ot;
+            // 출근 중인 동안엔 DB에 work_minutes이 아직 0이므로 라이브 분을 더해
+            // 출근 즉시 진행률(및 work.mp4)이 표시되도록 한다
+            const weekTotalMin = weekStat.work + weekStat.ot + (isWorking ? liveMin : 0);
             const LEGAL_MAX = 52 * 60; // 3120분
             const NORMAL_MAX = 40 * 60; // 2400분
             // 막대 시각화: 0~LEGAL_MAX 를 100% 로 매핑, 초과분은 별도 빨간 strip
@@ -846,20 +855,23 @@ export default function MyAttendancePage() {
                   <div className={styles.legalBar}>
                     <div
                       className={`${styles.legalBarFill} ${fillCls}`}
-                      style={{ width: `${pctFill}%` }}
+                      style={{
+                        width: `${pctFill}%`,
+                        minWidth:
+                          isWorking || todayRecord?.clock_out_at ? 80 : 0,
+                      }}
                     >
-                      {pctFill > 0 &&
-                        (isWorking || todayRecord?.clock_out_at) && (
-                          <video
-                            key={isWorking ? "work" : "finish"}
-                            className={styles.legalBarVideo}
-                            src={isWorking ? "/work.mp4" : "/finish.mp4"}
-                            autoPlay
-                            loop
-                            muted
-                            playsInline
-                          />
-                        )}
+                      {(isWorking || todayRecord?.clock_out_at) && (
+                        <video
+                          key={isWorking ? "work" : "finish"}
+                          className={styles.legalBarVideo}
+                          src={isWorking ? "/work.mp4" : "/finish.mp4"}
+                          autoPlay
+                          loop
+                          muted
+                          playsInline
+                        />
+                      )}
                     </div>
                   </div>
                   {isOver && (
@@ -1031,6 +1043,12 @@ export default function MyAttendancePage() {
           )}
         </main>
       </div>
+      <ConfirmDialog
+        open={showClockOutConfirm}
+        {...CLOCK_OUT_CONFIRM}
+        onConfirm={confirmClockOut}
+        onCancel={() => setShowClockOutConfirm(false)}
+      />
     </div>
   );
 }

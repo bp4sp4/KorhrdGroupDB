@@ -1,15 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  ChevronDown,
-  ChevronRight,
-  ChevronUp,
-  Plus,
-  Save,
-  Send,
-  Trash2,
-} from "lucide-react";
+import type { DragEvent as ReactDragEvent } from "react";
+import { ChevronDown, ChevronRight, ChevronUp, Plus } from "lucide-react";
 import styles from "./page.module.css";
 
 type Task = { id: string; text: string; done: boolean };
@@ -40,17 +33,54 @@ function uid() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+/** 호버 시 빨간 알약 + "삭제" 라벨 토글되는 삭제 버튼 */
+function DeleteButton({
+  onClick,
+  disabled,
+}: {
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  if (disabled) return null;
+  return (
+    <button
+      type="button"
+      className={styles.journalDeleteBtn}
+      onClick={onClick}
+      aria-label="삭제"
+    >
+      <svg
+        className={styles.journalDeleteIcon}
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 16 16"
+        fill="none"
+        aria-hidden="true"
+      >
+        <path
+          d="M11.3997 5.2666H4.60026V12.6663C4.60026 12.8608 4.67758 13.047 4.8151 13.1846C4.95263 13.3221 5.13884 13.3994 5.33333 13.3994H10.6667C10.8612 13.3994 11.0474 13.3221 11.1849 13.1846C11.3224 13.047 11.3997 12.8608 11.3997 12.6663V5.2666ZM6.06641 11.333V7.33301C6.06641 7.00164 6.3353 6.73275 6.66667 6.73275C6.99804 6.73275 7.26693 7.00164 7.26693 7.33301V11.333C7.26693 11.6644 6.99804 11.9333 6.66667 11.9333C6.3353 11.9333 6.06641 11.6644 6.06641 11.333ZM8.73307 11.333V7.33301C8.73307 7.00164 9.00196 6.73275 9.33333 6.73275C9.6647 6.73275 9.93359 7.00164 9.93359 7.33301V11.333C9.93359 11.6644 9.6647 11.9333 9.33333 11.9333C9.00196 11.9333 8.73307 11.6644 8.73307 11.333ZM5.63737 4.06608H10.3626L9.62956 2.59993H6.37044L5.63737 4.06608ZM12.6003 12.6663C12.6003 13.1791 12.3964 13.671 12.0339 14.0335C11.6713 14.3961 11.1794 14.5999 10.6667 14.5999H5.33333C4.82058 14.5999 4.32872 14.3961 3.96615 14.0335C3.60358 13.671 3.39974 13.1791 3.39974 12.6663V5.2666H2.66667C2.3353 5.2666 2.06641 4.99771 2.06641 4.66634C2.06641 4.33497 2.3353 4.06608 2.66667 4.06608H4.29622L5.46354 1.73145L5.50651 1.65853C5.61749 1.49793 5.80125 1.39941 6 1.39941H10L10.084 1.40527C10.2775 1.43258 10.4475 1.55352 10.5365 1.73145L11.7038 4.06608H13.3333C13.6647 4.06608 13.9336 4.33497 13.9336 4.66634C13.9336 4.99771 13.6647 5.2666 13.3333 5.2666H12.6003V12.6663Z"
+          fill="currentColor"
+        />
+      </svg>
+      <span className={styles.journalDeleteLabel}>삭제</span>
+    </button>
+  );
+}
+
 /** 내용 길이에 따라 height 자동 조정되는 textarea */
 function AutoSizeTextarea({
   value,
   onChange,
   placeholder,
   className,
+  autoFocus,
+  onBlur,
 }: {
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
   className?: string;
+  autoFocus?: boolean;
+  onBlur?: () => void;
 }) {
   const ref = useRef<HTMLTextAreaElement>(null);
 
@@ -62,6 +92,16 @@ function AutoSizeTextarea({
     el.style.height = `${el.scrollHeight}px`;
   }, [value]);
 
+  // autoFocus 시 커서를 텍스트 끝으로
+  useEffect(() => {
+    if (autoFocus && ref.current) {
+      const el = ref.current;
+      el.focus();
+      const len = el.value.length;
+      el.setSelectionRange(len, len);
+    }
+  }, [autoFocus]);
+
   return (
     <textarea
       ref={ref}
@@ -70,6 +110,7 @@ function AutoSizeTextarea({
       value={value}
       placeholder={placeholder}
       onChange={(e) => onChange(e.target.value)}
+      onBlur={onBlur}
     />
   );
 }
@@ -78,37 +119,101 @@ export default function WorkJournalPage() {
   const today = useMemo(() => toISODate(new Date()), []);
   const [date, setDate] = useState<string>(today);
 
-  const [tasks, setTasks] = useState<Task[]>([
-    { id: uid(), text: "오전 11시 김하준 상담 진행", done: true },
-    { id: uid(), text: "개인 블로그 업로드", done: true },
-    { id: uid(), text: "상담 완료 등록 처리 - 김민지/박서영", done: false },
-    { id: uid(), text: "신규 문의 응대 (네이버 폼 / 카톡 채널)", done: false },
-    { id: uid(), text: "오후 3시 팀 미팅 참석", done: false },
-    { id: uid(), text: "주간 매출 시트 정리", done: false },
-  ]);
+  const [tasks, setTasks] = useState<Task[]>([]);
 
   const [morningOpen, setMorningOpen] = useState(true);
   const [afternoonOpen, setAfternoonOpen] = useState(true);
 
-  const [morning, setMorning] = useState<JournalRow[]>([
-    {
-      id: uid(),
-      category: "상담 / 등록",
-      detail: "김하준 사복 상담 완료 후 결제 진행",
-    },
-    { id: uid(), category: "응대 / 문의", detail: "신규 카톡 문의 4건 응대" },
-  ]);
-  const [afternoon, setAfternoon] = useState<JournalRow[]>([
-    { id: uid(), category: "회의 / 보고", detail: "팀 주간 회의 (KPI 점검)" },
-    { id: uid(), category: "정리 / 기타", detail: "" },
-  ]);
+  const [morning, setMorning] = useState<JournalRow[]>([]);
+  const [afternoon, setAfternoon] = useState<JournalRow[]>([]);
+  const [tomorrow, setTomorrow] = useState<Tomorrow[]>([]);
 
-  const [tomorrow, setTomorrow] = useState<Tomorrow[]>([
-    { id: uid(), text: "오전 10시 박지원 상담" },
-    { id: uid(), text: "주간 보고서 작성 마감" },
-    { id: uid(), text: "신규 광고 소재 검토" },
-    { id: uid(), text: "" },
-  ]);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState<"draft" | "submitted" | null>(null);
+
+  const [stats, setStats] = useState<{
+    totalInquiries: number;
+    registrations: number;
+    registrationRate: number;
+    salesThisMonth: number;
+    delta: {
+      inquiries: number;
+      registrations: number;
+      rate: number;
+      sales: number;
+    };
+  } | null>(null);
+
+  // stats (본인 담당자 기준 누적/이번달)
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/work-journal/stats", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (cancelled || !d) return;
+        setStats({
+          totalInquiries: Number(d.totalInquiries ?? 0),
+          registrations: Number(d.registrations ?? 0),
+          registrationRate: Number(d.registrationRate ?? 0),
+          salesThisMonth: Number(d.salesThisMonth ?? 0),
+          delta: {
+            inquiries: Number(d?.delta?.inquiries ?? 0),
+            registrations: Number(d?.delta?.registrations ?? 0),
+            rate: Number(d?.delta?.rate ?? 0),
+            sales: Number(d?.delta?.sales ?? 0),
+          },
+        });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // 날짜 변경 시 해당 일자 일지 로드
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/work-journal?date=${date}`, {
+          cache: "no-store",
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (cancelled) return;
+        const j = data?.journal;
+        const carry = Array.isArray(data?.carryOverTasks)
+          ? (data.carryOverTasks as Task[])
+          : [];
+        if (j) {
+          // tasks가 비어있으면 직전 제출 일지의 tomorrow 자동 이월
+          const existingTasks = Array.isArray(j.tasks)
+            ? (j.tasks as Task[])
+            : [];
+          setTasks(existingTasks.length > 0 ? existingTasks : carry);
+          setMorning(Array.isArray(j.morning) ? j.morning : []);
+          setAfternoon(Array.isArray(j.afternoon) ? j.afternoon : []);
+          setTomorrow(Array.isArray(j.tomorrow) ? j.tomorrow : []);
+          setStatus(j.status ?? "draft");
+        } else {
+          // 새 일지 — 이월 데이터로 시작
+          setTasks(carry);
+          setMorning([]);
+          setAfternoon([]);
+          setTomorrow([]);
+          setStatus(null);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [date]);
 
   // ── 핸들러 ──────────────────────────────────────────────
   const toggleTask = (id: string) =>
@@ -161,22 +266,258 @@ export default function WorkJournalPage() {
     }
   }, [tomorrow]);
 
-  // ── 임시저장 / 제출 (현재는 로컬만) ─────────────────────
-  const handleDraft = () => {
-    const payload = { date, tasks, morning, afternoon, tomorrow };
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(
-        "work-journal-draft",
-        JSON.stringify(payload),
-      );
-      alert("임시저장 완료");
+  // ── 임시저장 / 제출 (DB) ────────────────────────────────
+  const persist = async (nextStatus: "draft" | "submitted") => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      // 자동으로 추가된 마지막 빈 슬롯은 저장에서 제외
+      const cleanedTasks = tasks.filter((t) => t.text.trim() !== "");
+      const cleanedTomorrow = tomorrow.filter((t) => t.text.trim() !== "");
+
+      const res = await fetch("/api/work-journal", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date,
+          tasks: cleanedTasks,
+          morning,
+          afternoon,
+          tomorrow: cleanedTomorrow,
+          status: nextStatus,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(data?.error ?? "저장에 실패했습니다.");
+        return;
+      }
+      setStatus(data?.journal?.status ?? nextStatus);
+      alert(nextStatus === "submitted" ? "제출 완료" : "임시저장 완료");
+    } finally {
+      setSaving(false);
     }
   };
 
+  const handleDraft = () => persist("draft");
   const handleSubmit = () => {
-    // TODO: 추후 DB 연동
-    alert("제출 기능은 곧 활성화됩니다.");
+    if (!confirm("업무일지를 제출하시겠습니까?")) return;
+    persist("submitted");
   };
+
+  // 오늘의 업무 — 편집 중인 task id (편집 모드에서만 textarea 표시, 그 외엔 div 표시 → 어디서나 드래그 가능)
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+
+  // 오늘의 업무 내 순서 변경(reorder) 전용 state
+  const draggedTaskIndexRef = useRef<number | null>(null);
+  const [dropTaskTarget, setDropTaskTarget] = useState<number | null>(null);
+
+  const handleTaskGripDragStart =
+    (index: number, row: HTMLElement | null) => (e: ReactDragEvent) => {
+      draggedTaskIndexRef.current = index;
+      e.dataTransfer.setData("text/plain", "__task_row__");
+      e.dataTransfer.effectAllowed = "all";
+      if (row) e.dataTransfer.setDragImage(row, 12, 12);
+    };
+
+  const handleTaskItemDragOver =
+    (index: number) => (e: ReactDragEvent) => {
+      // task 끼리 reorder 중일 때만 처리
+      if (draggedTaskIndexRef.current === null) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+      const isAbove = e.clientY - rect.top < rect.height / 2;
+      const insertAt = isAbove ? index : index + 1;
+      setDropTaskTarget((prev) => (prev === insertAt ? prev : insertAt));
+    };
+
+  const handleTaskItemDrop = (e: ReactDragEvent) => {
+    const srcIndex = draggedTaskIndexRef.current;
+    if (srcIndex === null) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const insertAt = dropTaskTarget ?? -1;
+    draggedTaskIndexRef.current = null;
+    setDropTaskTarget(null);
+    setTasks((prev) => {
+      const next = [...prev];
+      const [moved] = next.splice(srcIndex, 1);
+      const target =
+        insertAt < 0
+          ? next.length
+          : insertAt > srcIndex
+            ? insertAt - 1
+            : insertAt;
+      next.splice(Math.min(target, next.length), 0, moved);
+      return next;
+    });
+  };
+
+  const handleTaskListDragLeave = (e: ReactDragEvent) => {
+    const next = e.relatedTarget as Node | null;
+    if (next && e.currentTarget instanceof Node && e.currentTarget.contains(next))
+      return;
+    setDropTaskTarget(null);
+  };
+
+  // ── 드래그 앤 드롭: 오늘의 업무 → 업무 일지 (복사) ─────────
+  // dropTarget: 드롭 시 어느 섹션의 몇 번째 위치에 삽입할지
+  const [dropTarget, setDropTarget] = useState<{
+    section: "morning" | "afternoon";
+    insertAt: number;
+  } | null>(null);
+  const dragTextRef = useRef<string>("");
+
+  const handleTaskDragStart = (e: ReactDragEvent, text: string) => {
+    dragTextRef.current = text;
+    e.dataTransfer.setData("text/plain", text);
+    e.dataTransfer.effectAllowed = "copy";
+    // grip 만 잡아도 행 전체가 미리보기로 따라오도록
+    const handle = e.currentTarget as HTMLElement;
+    const row = handle.closest(`.${styles.taskItem}`) as HTMLElement | null;
+    if (row) e.dataTransfer.setDragImage(row, 12, 12);
+  };
+
+  // row 위/아래 절반 기준으로 insertAt 결정
+  const handleRowDragOver =
+    (section: "morning" | "afternoon", index: number) =>
+    (e: ReactDragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      // row 끼리 이동(reorder/섹션이동)은 'move', 외부 task 추가는 'copy'
+      e.dataTransfer.dropEffect = draggedRowRef.current ? "move" : "copy";
+      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+      const isAbove = e.clientY - rect.top < rect.height / 2;
+      const insertAt = isAbove ? index : index + 1;
+      setDropTarget((prev) =>
+        prev && prev.section === section && prev.insertAt === insertAt
+          ? prev
+          : { section, insertAt },
+      );
+    };
+
+  // 섹션 전체 dragOver: row 가 없을 때(빈 섹션) 또는 row 사이가 아닌 영역
+  const handleSectionDragOver =
+    (section: "morning" | "afternoon", total: number) =>
+    (e: ReactDragEvent) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "copy";
+      // row 가 비어있으면 항상 index 0, 그 외엔 row 핸들러가 이미 setDropTarget 했을 것
+      if (total === 0) {
+        setDropTarget((prev) =>
+          prev && prev.section === section && prev.insertAt === 0
+            ? prev
+            : { section, insertAt: 0 },
+        );
+      }
+    };
+
+  const handleSectionDragLeave = (e: ReactDragEvent) => {
+    const next = e.relatedTarget as Node | null;
+    if (
+      next &&
+      e.currentTarget instanceof Node &&
+      e.currentTarget.contains(next)
+    ) {
+      return;
+    }
+    setDropTarget(null);
+  };
+
+  // 일지 row 드래그 정보를 ref 로 전달 (dataTransfer custom MIME 은 브라우저별 차이 있음)
+  const draggedRowRef = useRef<{
+    section: "morning" | "afternoon";
+    index: number;
+    row: JournalRow;
+  } | null>(null);
+
+  // 일지 row 드래그 시작 (같은 섹션 내 reorder 또는 다른 섹션으로 이동용)
+  const handleJournalRowDragStart =
+    (section: "morning" | "afternoon", index: number, row: JournalRow) =>
+    (e: ReactDragEvent) => {
+      // textarea/input 안에서 시작된 드래그는 텍스트 편집 우선 → 차단
+      const target = e.target as HTMLElement;
+      if (target.closest("textarea, input")) {
+        e.preventDefault();
+        return;
+      }
+      draggedRowRef.current = { section, index, row };
+      // Firefox 는 dataTransfer 가 비어있으면 dragstart 가 작동 안 함
+      e.dataTransfer.setData("text/plain", "__journal_row__");
+      // 'all' 로 두어 dragOver 의 dropEffect 와 mismatch 로 인한 drop 차단 회피
+      e.dataTransfer.effectAllowed = "all";
+    };
+
+  // dragEnd 에서 ref 를 null 로 만들지 않음 (drop 보다 먼저 호출되는 브라우저 케이스 회피)
+  // drop 핸들러에서 사용 직후 null 처리 + 다음 dragStart 가 자연스레 덮어씀
+
+  const handleSectionDrop =
+    (section: "morning" | "afternoon") => (e: ReactDragEvent) => {
+      e.preventDefault();
+      // row에서 drop이 발생한 경우 부모(sectionDropZone)로 버블되어 두 번 호출되는 것을 막음
+      e.stopPropagation();
+      const insertAt =
+        dropTarget?.section === section ? dropTarget.insertAt : -1;
+      setDropTarget(null);
+
+      // 1) 일지 row 자체를 옮기는 경우 (reorder 또는 섹션 이동) — ref 로 확인
+      const dragged = draggedRowRef.current;
+      if (dragged) {
+        const { section: srcSection, index: srcIndex, row } = dragged;
+        draggedRowRef.current = null;
+
+        if (srcSection === section) {
+          // 같은 섹션 내 reorder
+          const setter = section === "morning" ? setMorning : setAfternoon;
+          setter((prev) => {
+            const next = [...prev];
+            const [moved] = next.splice(srcIndex, 1);
+            const target =
+              insertAt < 0
+                ? next.length
+                : insertAt > srcIndex
+                  ? insertAt - 1
+                  : insertAt;
+            next.splice(Math.min(target, next.length), 0, moved);
+            return next;
+          });
+        } else {
+          // 다른 섹션으로 이동 (오전 ↔ 오후)
+          const srcSetter =
+            srcSection === "morning" ? setMorning : setAfternoon;
+          const destSetter = section === "morning" ? setMorning : setAfternoon;
+          srcSetter((prev) => prev.filter((_, i) => i !== srcIndex));
+          destSetter((prev) => {
+            const next = [...prev];
+            const target =
+              insertAt < 0 || insertAt > next.length ? next.length : insertAt;
+            next.splice(target, 0, row);
+            return next;
+          });
+        }
+        if (section === "morning") setMorningOpen(true);
+        else setAfternoonOpen(true);
+        return;
+      }
+
+      // 2) 외부(오늘의 업무) 에서 텍스트 추가
+      const text =
+        dragTextRef.current || e.dataTransfer.getData("text/plain") || "";
+      dragTextRef.current = "";
+      if (!text.trim()) return;
+      const newRow: JournalRow = { id: uid(), category: "", detail: text };
+      const setter = section === "morning" ? setMorning : setAfternoon;
+      setter((prev) => {
+        const idx =
+          insertAt < 0 || insertAt > prev.length ? prev.length : insertAt;
+        const next = [...prev];
+        next.splice(idx, 0, newRow);
+        return next;
+      });
+      if (section === "morning") setMorningOpen(true);
+      else setAfternoonOpen(true);
+    };
 
   // ── 카운트 ──────────────────────────────────────────────
   const doneCount = tasks.filter((t) => t.done).length;
@@ -236,7 +577,9 @@ export default function WorkJournalPage() {
                 </svg>
               </div>
               <span className={styles.statLabel}>전체문의</span>
-              <span className={styles.statValue}>166건</span>
+              <span className={styles.statValue}>
+                {(stats?.totalInquiries ?? 0).toLocaleString()}건
+              </span>
             </div>
 
             <span className={styles.statDivider} aria-hidden="true" />
@@ -266,11 +609,18 @@ export default function WorkJournalPage() {
               <div className={styles.statTexts}>
                 <div className={styles.statValueRow}>
                   <span className={styles.statLabel}>등록 건수</span>
-                  <span className={styles.statValue}>6건</span>
+                  <span className={styles.statValue}>
+                    {(stats?.registrations ?? 0).toLocaleString()}건
+                  </span>
                 </div>
                 <div className={styles.statSub}>
                   <span>전일대비</span>
-                  <span>1건</span>
+                  <span>
+                    {(() => {
+                      const n = stats?.delta.registrations ?? 0;
+                      return `${n > 0 ? "+" : ""}${n}건`;
+                    })()}
+                  </span>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className={styles.statSubArrow}
@@ -314,11 +664,18 @@ export default function WorkJournalPage() {
               <div className={styles.statTexts}>
                 <div className={styles.statValueRow}>
                   <span className={styles.statLabel}>등록률</span>
-                  <span className={styles.statValue}>34.2%</span>
+                  <span className={styles.statValue}>
+                    {(stats?.registrationRate ?? 0).toFixed(1)}%
+                  </span>
                 </div>
                 <div className={styles.statSub}>
                   <span>전일대비</span>
-                  <span>5.1%p</span>
+                  <span>
+                    {(() => {
+                      const n = stats?.delta.rate ?? 0;
+                      return `${n > 0 ? "+" : ""}${n.toFixed(1)}%p`;
+                    })()}
+                  </span>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className={styles.statSubArrow}
@@ -366,11 +723,21 @@ export default function WorkJournalPage() {
               <div className={styles.statTexts}>
                 <div className={styles.statValueRow}>
                   <span className={styles.statLabel}>매출</span>
-                  <span className={styles.statValue}>914만원</span>
+                  <span className={styles.statValue}>
+                    {Math.round(
+                      (stats?.salesThisMonth ?? 0) / 10000,
+                    ).toLocaleString()}
+                    만원
+                  </span>
                 </div>
                 <div className={styles.statSub}>
                   <span>전일대비</span>
-                  <span>120만원</span>
+                  <span>
+                    {(() => {
+                      const n = Math.round((stats?.delta.sales ?? 0) / 10000);
+                      return `${n > 0 ? "+" : ""}${n.toLocaleString()}만원`;
+                    })()}
+                  </span>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     className={styles.statSubArrow}
@@ -399,30 +766,81 @@ export default function WorkJournalPage() {
           <section className={styles.col}>
             <h3 className={styles.colTitle}>오늘의 업무</h3>
             <div className={styles.taskList}>
-              {tasks.map((t) => (
-                <div key={t.id} className={styles.taskItem}>
-                  <input
-                    type="checkbox"
-                    className={styles.taskCheckbox}
-                    checked={t.done}
-                    onChange={() => toggleTask(t.id)}
-                  />
-                  <AutoSizeTextarea
-                    value={t.text}
-                    placeholder="할 일을 입력하세요"
-                    className={`${styles.taskInput} ${t.done ? styles.taskTextDone : ""}`}
-                    onChange={(v) => updateTaskText(t.id, v)}
-                  />
-                  <button
-                    type="button"
-                    className={styles.journalDeleteBtn}
-                    onClick={() => removeTask(t.id)}
-                    aria-label="삭제"
+              {tasks.map((t, idx) => {
+                const isEditing = editingTaskId === t.id;
+                const isEmpty = t.text.trim() === "";
+                const canDrag = !isEmpty && !isEditing;
+                const isDropAbove = dropTaskTarget === idx;
+                const isDropBelowLast =
+                  idx === tasks.length - 1 && dropTaskTarget === tasks.length;
+                return (
+                  <div
+                    key={t.id}
+                    className={`${styles.taskItem} ${isDropAbove ? styles.taskItemDropAbove : ""} ${isDropBelowLast ? styles.taskItemDropBelow : ""}`}
+                    onDragOver={handleTaskItemDragOver(idx)}
+                    onDrop={handleTaskItemDrop}
+                    onDragLeave={handleTaskListDragLeave}
                   >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              ))}
+                    <input
+                      type="checkbox"
+                      className={styles.taskCheckbox}
+                      checked={t.done}
+                      onChange={() => toggleTask(t.id)}
+                    />
+                    {isEditing || isEmpty ? (
+                      <AutoSizeTextarea
+                        value={t.text}
+                        placeholder="할 일을 입력하세요"
+                        className={`${styles.taskInput} ${t.done ? styles.taskTextDone : ""}`}
+                        onChange={(v) => updateTaskText(t.id, v)}
+                        autoFocus={isEditing}
+                        onBlur={() => setEditingTaskId(null)}
+                      />
+                    ) : (
+                      <div
+                        className={`${styles.taskInput} ${styles.taskTextDisplay} ${t.done ? styles.taskTextDone : ""}`}
+                        onClick={() => setEditingTaskId(t.id)}
+                      >
+                        {t.text}
+                      </div>
+                    )}
+                    {canDrag ? (
+                      <span
+                        className={styles.taskDragHandle}
+                        draggable
+                        onDragStart={(e) =>
+                          handleTaskGripDragStart(
+                            idx,
+                            (e.currentTarget as HTMLElement).closest(
+                              `.${styles.taskItem}`,
+                            ) as HTMLElement | null,
+                          )(e)
+                        }
+                        title="잡고 위/아래로 끌어 순서를 바꿀 수 있어요"
+                        aria-label="순서 변경 핸들"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="6"
+                          height="10"
+                          viewBox="0 0 6 10"
+                          fill="none"
+                        >
+                          <path
+                            d="M1 0C1.26522 0 1.51957 0.105357 1.70711 0.292893C1.89464 0.480429 2 0.734784 2 1C2 1.26522 1.89464 1.51957 1.70711 1.70711C1.51957 1.89464 1.26522 2 1 2C0.734784 2 0.480429 1.89464 0.292893 1.70711C0.105357 1.51957 0 1.26522 0 1C0 0.734784 0.105357 0.480429 0.292893 0.292893C0.480429 0.105357 0.734784 0 1 0ZM2 5C2 4.73478 1.89464 4.48043 1.70711 4.29289C1.51957 4.10536 1.26522 4 1 4C0.734784 4 0.480429 4.10536 0.292893 4.29289C0.105357 4.48043 0 4.73478 0 5C0 5.26522 0.105357 5.51957 0.292893 5.70711C0.480429 5.89464 0.734784 6 1 6C1.26522 6 1.51957 5.89464 1.70711 5.70711C1.89464 5.51957 2 5.26522 2 5ZM2 9C2 8.73478 1.89464 8.48043 1.70711 8.29289C1.51957 8.10536 1.26522 8 1 8C0.734784 8 0.480429 8.10536 0.292893 8.29289C0.105357 8.48043 0 8.73478 0 9C0 9.26522 0.105357 9.51957 0.292893 9.70711C0.480429 9.89464 0.734784 10 1 10C1.26522 10 1.51957 9.89464 1.70711 9.70711C1.89464 9.51957 2 9.26522 2 9ZM6 5C6 4.73478 5.89464 4.48043 5.70711 4.29289C5.51957 4.10536 5.26522 4 5 4C4.73478 4 4.48043 4.10536 4.29289 4.29289C4.10536 4.48043 4 4.73478 4 5C4 5.26522 4.10536 5.51957 4.29289 5.70711C4.48043 5.89464 4.73478 6 5 6C5.26522 6 5.51957 5.89464 5.70711 5.70711C5.89464 5.51957 6 5.26522 6 5ZM5 8C5.26522 8 5.51957 8.10536 5.70711 8.29289C5.89464 8.48043 6 8.73478 6 9C6 9.26522 5.89464 9.51957 5.70711 9.70711C5.51957 9.89464 5.26522 10 5 10C4.73478 10 4.48043 9.89464 4.29289 9.70711C4.10536 9.51957 4 9.26522 4 9C4 8.73478 4.10536 8.48043 4.29289 8.29289C4.48043 8.10536 4.73478 8 5 8ZM6 1C6 0.734784 5.89464 0.480429 5.70711 0.292893C5.51957 0.105357 5.26522 0 5 0C4.73478 0 4.48043 0.105357 4.29289 0.292893C4.10536 0.480429 4 0.734784 4 1C4 1.26522 4.10536 1.51957 4.29289 1.70711C4.48043 1.89464 4.73478 2 5 2C5.26522 2 5.51957 1.89464 5.70711 1.70711C5.89464 1.51957 6 1.26522 6 1Z"
+                            fill="#7A8086"
+                          />
+                        </svg>
+                      </span>
+                    ) : (
+                      <span
+                        className={styles.taskDragHandlePlaceholder}
+                        aria-hidden="true"
+                      />
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </section>
 
@@ -432,131 +850,209 @@ export default function WorkJournalPage() {
             <div className={styles.journalScroll}>
               {/* 오전 */}
               <div
-                className={styles.sectionTitle}
-                onClick={() => setMorningOpen((v) => !v)}
+                className={`${styles.sectionDropZone} ${dropTarget?.section === "morning" ? styles.sectionDropZoneActive : ""}`}
+                onDragOver={handleSectionDragOver("morning", morning.length)}
+                onDragLeave={handleSectionDragLeave}
+                onDrop={handleSectionDrop("morning")}
               >
-                <span>오전 업무 (10:00 ~ 13:00)</span>
-                <span className={styles.sectionTitleArrow}>
-                  {morningOpen ? (
-                    <ChevronUp size={14} />
-                  ) : (
-                    <ChevronDown size={14} />
-                  )}
-                </span>
-              </div>
-              {morningOpen && (
-                <>
-                  {morning.map((row) => (
-                    <div key={row.id} className={styles.journalRow}>
-                      <div className={styles.journalRowMain}>
-                        <div className={styles.journalCategoryBox}>
-                          <input
-                            type="text"
-                            className={styles.journalCategoryInput}
-                            placeholder="업무 분류를 작성해주세요."
-                            value={row.category}
-                            onChange={(e) =>
-                              updateRow("morning", row.id, {
-                                category: e.target.value,
-                              })
+                <div
+                  className={styles.sectionTitle}
+                  onClick={() => setMorningOpen((v) => !v)}
+                >
+                  <span>오전 업무 (10:00 ~ 13:00)</span>
+                  <span className={styles.sectionTitleArrow}>
+                    {morningOpen ? (
+                      <ChevronUp size={14} />
+                    ) : (
+                      <ChevronDown size={14} />
+                    )}
+                  </span>
+                </div>
+                {morningOpen && (
+                  <>
+                    {morning.map((row, i) => {
+                      const isDropAbove =
+                        dropTarget?.section === "morning" &&
+                        dropTarget.insertAt === i;
+                      const isDropBelowLast =
+                        i === morning.length - 1 &&
+                        dropTarget?.section === "morning" &&
+                        dropTarget.insertAt === morning.length;
+                      return (
+                        <div
+                          key={row.id}
+                          className={`${styles.journalRow} ${isDropAbove ? styles.journalRowDropAbove : ""} ${isDropBelowLast ? styles.journalRowDropBelow : ""}`}
+                          draggable
+                          onDragStart={(e) => {
+                            // input 안에서 시작된 드래그는 텍스트 편집 우선 → 차단
+                            const target = e.target as HTMLElement;
+                            if (target.closest("textarea, input")) {
+                              e.preventDefault();
+                              return;
                             }
+                            draggedRowRef.current = {
+                              section: "morning",
+                              index: i,
+                              row,
+                            };
+                            e.dataTransfer.setData(
+                              "text/plain",
+                              "__journal_row__",
+                            );
+                            e.dataTransfer.effectAllowed = "all";
+                          }}
+                          onDragOver={handleRowDragOver("morning", i)}
+                          onDrop={handleSectionDrop("morning")}
+                        >
+                          <div className={styles.journalRowMain}>
+                            <div className={styles.journalCategoryBox}>
+                              <input
+                                type="text"
+                                className={styles.journalCategoryInput}
+                                placeholder="업무 분류를 작성해주세요."
+                                value={row.category}
+                                onChange={(e) =>
+                                  updateRow("morning", row.id, {
+                                    category: e.target.value,
+                                  })
+                                }
+                                onDragOver={(e) => e.preventDefault()}
+                                onDrop={(e) => e.preventDefault()}
+                              />
+                            </div>
+                            <input
+                              type="text"
+                              className={styles.journalDetailInput}
+                              placeholder="세부 업무 내용을 작성해주세요."
+                              value={row.detail}
+                              onChange={(e) =>
+                                updateRow("morning", row.id, {
+                                  detail: e.target.value,
+                                })
+                              }
+                              onDragOver={(e) => e.preventDefault()}
+                              onDrop={(e) => e.preventDefault()}
+                            />
+                          </div>
+                          <DeleteButton
+                            onClick={() => removeRow("morning", row.id)}
                           />
                         </div>
-                        <input
-                          type="text"
-                          className={styles.journalDetailInput}
-                          placeholder="세부 업무 내용을 작성해주세요."
-                          value={row.detail}
-                          onChange={(e) =>
-                            updateRow("morning", row.id, {
-                              detail: e.target.value,
-                            })
-                          }
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        className={styles.journalDeleteBtn}
-                        onClick={() => removeRow("morning", row.id)}
-                        aria-label="삭제"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  ))}
-                  <button
-                    type="button"
-                    className={styles.addBtn}
-                    onClick={() => addRow("morning")}
-                  >
-                    <Plus size={12} /> 추가
-                  </button>
-                </>
-              )}
+                      );
+                    })}
+                    <button
+                      type="button"
+                      className={styles.addBtn}
+                      onClick={() => addRow("morning")}
+                    >
+                      <Plus size={12} /> 추가
+                    </button>
+                  </>
+                )}
+              </div>
 
               {/* 오후 */}
               <div
-                className={styles.sectionTitle}
-                onClick={() => setAfternoonOpen((v) => !v)}
+                className={`${styles.sectionDropZone} ${dropTarget?.section === "afternoon" ? styles.sectionDropZoneActive : ""}`}
+                onDragOver={handleSectionDragOver(
+                  "afternoon",
+                  afternoon.length,
+                )}
+                onDragLeave={handleSectionDragLeave}
+                onDrop={handleSectionDrop("afternoon")}
               >
-                <span>오후 업무 (14:00 ~ 19:00)</span>
-                <span className={styles.sectionTitleArrow}>
-                  {afternoonOpen ? (
-                    <ChevronUp size={14} />
-                  ) : (
-                    <ChevronDown size={14} />
-                  )}
-                </span>
-              </div>
-              {afternoonOpen && (
-                <>
-                  {afternoon.map((row) => (
-                    <div key={row.id} className={styles.journalRow}>
-                      <div className={styles.journalRowMain}>
-                        <div className={styles.journalCategoryBox}>
-                          <input
-                            type="text"
-                            className={styles.journalCategoryInput}
-                            placeholder="업무 분류를 작성해주세요."
-                            value={row.category}
-                            onChange={(e) =>
-                              updateRow("afternoon", row.id, {
-                                category: e.target.value,
-                              })
+                <div
+                  className={styles.sectionTitle}
+                  onClick={() => setAfternoonOpen((v) => !v)}
+                >
+                  <span>오후 업무 (14:00 ~ 19:00)</span>
+                  <span className={styles.sectionTitleArrow}>
+                    {afternoonOpen ? (
+                      <ChevronUp size={14} />
+                    ) : (
+                      <ChevronDown size={14} />
+                    )}
+                  </span>
+                </div>
+                {afternoonOpen && (
+                  <>
+                    {afternoon.map((row, i) => {
+                      const isDropAbove =
+                        dropTarget?.section === "afternoon" &&
+                        dropTarget.insertAt === i;
+                      const isDropBelowLast =
+                        i === afternoon.length - 1 &&
+                        dropTarget?.section === "afternoon" &&
+                        dropTarget.insertAt === afternoon.length;
+                      return (
+                        <div
+                          key={row.id}
+                          className={`${styles.journalRow} ${isDropAbove ? styles.journalRowDropAbove : ""} ${isDropBelowLast ? styles.journalRowDropBelow : ""}`}
+                          draggable
+                          onDragStart={(e) => {
+                            const target = e.target as HTMLElement;
+                            if (target.closest("textarea, input")) {
+                              e.preventDefault();
+                              return;
                             }
+                            draggedRowRef.current = {
+                              section: "afternoon",
+                              index: i,
+                              row,
+                            };
+                            e.dataTransfer.setData(
+                              "text/plain",
+                              "__journal_row__",
+                            );
+                            e.dataTransfer.effectAllowed = "all";
+                          }}
+                          onDragOver={handleRowDragOver("afternoon", i)}
+                          onDrop={handleSectionDrop("afternoon")}
+                        >
+                          <div className={styles.journalRowMain}>
+                            <div className={styles.journalCategoryBox}>
+                              <input
+                                type="text"
+                                className={styles.journalCategoryInput}
+                                placeholder="업무 분류를 작성해주세요."
+                                value={row.category}
+                                onChange={(e) =>
+                                  updateRow("afternoon", row.id, {
+                                    category: e.target.value,
+                                  })
+                                }
+                              />
+                            </div>
+                            <input
+                              type="text"
+                              className={styles.journalDetailInput}
+                              placeholder="세부 업무 내용을 작성해주세요."
+                              value={row.detail}
+                              onChange={(e) =>
+                                updateRow("afternoon", row.id, {
+                                  detail: e.target.value,
+                                })
+                              }
+                              onDragOver={(e) => e.preventDefault()}
+                              onDrop={(e) => e.preventDefault()}
+                            />
+                          </div>
+                          <DeleteButton
+                            onClick={() => removeRow("afternoon", row.id)}
                           />
                         </div>
-                        <input
-                          type="text"
-                          className={styles.journalDetailInput}
-                          placeholder="세부 업무 내용을 작성해주세요."
-                          value={row.detail}
-                          onChange={(e) =>
-                            updateRow("afternoon", row.id, {
-                              detail: e.target.value,
-                            })
-                          }
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        className={styles.journalDeleteBtn}
-                        onClick={() => removeRow("afternoon", row.id)}
-                        aria-label="삭제"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  ))}
-                  <button
-                    type="button"
-                    className={styles.addBtn}
-                    onClick={() => addRow("afternoon")}
-                  >
-                    <Plus size={12} /> 추가
-                  </button>
-                </>
-              )}
+                      );
+                    })}
+                    <button
+                      type="button"
+                      className={styles.addBtn}
+                      onClick={() => addRow("afternoon")}
+                    >
+                      <Plus size={12} /> 추가
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </section>
 
@@ -574,14 +1070,10 @@ export default function WorkJournalPage() {
                       className={styles.tomorrowInput}
                       onChange={(v) => updateTomorrow(t.id, v)}
                     />
-                    <button
-                      type="button"
-                      className={styles.journalDeleteBtn}
+                    <DeleteButton
                       onClick={() => removeTomorrow(t.id)}
-                      aria-label="삭제"
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                      disabled={t.text.trim() === ""}
+                    />
                   </div>
                 ))}
               </div>
@@ -593,15 +1085,43 @@ export default function WorkJournalPage() {
                 type="button"
                 className={styles.btnDraft}
                 onClick={handleDraft}
+                disabled={saving || loading}
               >
-                <Save size={14} /> 임시저장
+                <svg
+                  className={styles.btnIcon}
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    fillRule="evenodd"
+                    clipRule="evenodd"
+                    d="M14.3702 3.40738C14.5577 3.59491 14.663 3.84921 14.663 4.11438C14.663 4.37954 14.5577 4.63385 14.3702 4.82138L6.87487 12.3167C6.77582 12.4158 6.65822 12.4944 6.52879 12.548C6.39936 12.6016 6.26063 12.6292 6.12054 12.6292C5.98044 12.6292 5.84171 12.6016 5.71228 12.548C5.58285 12.4944 5.46526 12.4158 5.3662 12.3167L1.6422 8.59338C1.54669 8.50113 1.47051 8.39079 1.4181 8.26878C1.36569 8.14678 1.33811 8.01556 1.33695 7.88278C1.3358 7.75 1.3611 7.61832 1.41138 7.49542C1.46166 7.37253 1.53591 7.26088 1.62981 7.16698C1.7237 7.07309 1.83535 6.99884 1.95825 6.94856C2.08114 6.89828 2.21282 6.87297 2.3456 6.87413C2.47838 6.87528 2.6096 6.90287 2.73161 6.95528C2.85361 7.00769 2.96396 7.08387 3.0562 7.17938L6.1202 10.2434L12.9555 3.40738C13.0484 3.31445 13.1587 3.24073 13.28 3.19044C13.4014 3.14014 13.5315 3.11426 13.6629 3.11426C13.7942 3.11426 13.9243 3.14014 14.0457 3.19044C14.1671 3.24073 14.2773 3.31445 14.3702 3.40738Z"
+                    fill="#565656"
+                  />
+                </svg>
+                임시저장
               </button>
               <button
                 type="button"
                 className={styles.btnSubmit}
                 onClick={handleSubmit}
+                disabled={saving || loading}
               >
-                <Send size={14} /> 제출하기
+                <svg
+                  className={styles.btnIcon}
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M1.4033 7.10263H12.3215L8.27595 3.24975C7.90793 2.89925 7.90793 2.33113 8.27595 1.98064C8.64397 1.63015 9.2405 1.63015 9.60851 1.98064L15.2627 7.36557L15.3271 7.43393C15.629 7.78644 15.6077 8.30609 15.2627 8.63467L9.60851 14.0196C9.2405 14.3701 8.64397 14.3701 8.27595 14.0196C7.90793 13.6691 7.90793 13.101 8.27595 12.7505L12.3215 8.89761L1.4033 8.89761C0.882849 8.89761 0.460937 8.49579 0.460938 8.00012C0.460938 7.50445 0.882849 7.10263 1.4033 7.10263Z"
+                    fill="white"
+                  />
+                </svg>
+                제출하기
               </button>
             </div>
           </div>

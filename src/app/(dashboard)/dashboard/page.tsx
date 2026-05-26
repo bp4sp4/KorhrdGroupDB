@@ -13,7 +13,8 @@ import {
   Sparkles,
 } from "lucide-react";
 import styles from "./page.module.css";
-import { getTodayKstDate } from "@/lib/attendance";
+import { CLOCK_OUT_CONFIRM, getTodayKstDate } from "@/lib/attendance";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 
 interface AttendanceRec {
   id: number;
@@ -121,9 +122,15 @@ export default function DashboardPage() {
     }
   };
 
-  const handleClockOut = async () => {
+  const [showClockOutConfirm, setShowClockOutConfirm] = useState(false);
+
+  const handleClockOut = () => {
     if (submitting) return;
-    if (!confirm("퇴근 처리하시겠습니까?")) return;
+    setShowClockOutConfirm(true);
+  };
+
+  const confirmClockOut = async () => {
+    setShowClockOutConfirm(false);
     setSubmitting(true);
     try {
       const res = await fetch("/api/attendance/clock-out", { method: "POST" });
@@ -146,8 +153,16 @@ export default function DashboardPage() {
   const isWorking = !!todayRec && !todayRec.clock_out_at;
   const isDone = !!todayRec && !!todayRec.clock_out_at;
 
-  // 주간 누적 합산 (정규 + 야근, 분 단위)
-  const weekTotalAll = weekTotal + weekOt;
+  // 출근 중일 때 오늘 라이브 분 (DB의 work_minutes은 퇴근 시점에야 채워지므로
+  // 출근 즉시 progress bar / work.mp4 가 표시되도록 라이브 계산값을 더한다)
+  const todayLiveMin = (() => {
+    if (!isWorking || !todayRec?.clock_in_at) return 0;
+    const start = new Date(todayRec.clock_in_at).getTime();
+    return Math.max(0, Math.floor((Date.now() - start) / 60000));
+  })();
+
+  // 주간 누적 합산 (정규 + 야근 + 오늘 라이브, 분 단위)
+  const weekTotalAll = weekTotal + weekOt + todayLiveMin;
   // 진행률 계산 (52h = 100%)
   const LEGAL_MAX = 52 * 60; // 3120분
   const NORMAL_MAX = 40 * 60; // 2400분
@@ -242,11 +257,14 @@ export default function DashboardPage() {
               <div className={styles.attProgressBar}>
                 <div
                   className={`${styles.attProgressFill} ${fillCls}`}
-                  style={{ width: `${pctFill}%` }}
+                  style={{
+                    width: `${pctFill}%`,
+                    minWidth: isWorking || isDone ? 56 : 0,
+                  }}
                 >
-                  {pctFill > 0 && (
+                  {(isWorking || isDone) && (
                     <video
-                      key={isWorking ? "work" : isDone ? "finish" : "idle"}
+                      key={isWorking ? "work" : "finish"}
                       className={styles.attBotVideo}
                       src={isDone ? "/finish.mp4" : "/work.mp4"}
                       autoPlay
@@ -395,6 +413,12 @@ export default function DashboardPage() {
           <ComingSoon icon={<Sparkles size={20} />} text="곧 연결 예정" />
         </section>
       </div>
+      <ConfirmDialog
+        open={showClockOutConfirm}
+        {...CLOCK_OUT_CONFIRM}
+        onConfirm={confirmClockOut}
+        onCancel={() => setShowClockOutConfirm(false)}
+      />
     </div>
   );
 }

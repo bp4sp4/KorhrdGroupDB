@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { LogIn, LogOut } from "lucide-react";
+import { CLOCK_OUT_CONFIRM } from "@/lib/attendance";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import styles from "./AttendanceButton.module.css";
 
 interface TodayRecord {
@@ -26,6 +28,7 @@ export default function AttendanceButton() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [today, setToday] = useState<TodayRecord | null>(null);
+  const [showClockOutConfirm, setShowClockOutConfirm] = useState(false);
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -63,9 +66,13 @@ export default function AttendanceButton() {
     }
   };
 
-  const handleClockOut = async () => {
+  const handleClockOut = () => {
     if (submitting) return;
-    if (!confirm("퇴근 처리하시겠습니까?")) return;
+    setShowClockOutConfirm(true);
+  };
+
+  const confirmClockOut = async () => {
+    setShowClockOutConfirm(false);
     setSubmitting(true);
     try {
       const res = await fetch("/api/attendance/clock-out", { method: "POST" });
@@ -110,21 +117,29 @@ export default function AttendanceButton() {
   // 케이스 2: 출근만 한 상태 → 퇴근 버튼
   if (!today.clock_out_at) {
     return (
-      <div className={styles.wrap}>
-        <span className={`${styles.statusChip} ${styles.statusChipActive}`}>
-          <span className={styles.dot} />
-          {formatKstTime(today.clock_in_at)} 출근
-        </span>
-        <button
-          className={`${styles.btn} ${styles.btnOut}`}
-          onClick={handleClockOut}
-          disabled={submitting}
-          title="퇴근하기"
-        >
-          <LogOut size={14} />
-          퇴근하기
-        </button>
-      </div>
+      <>
+        <div className={styles.wrap}>
+          <span className={`${styles.statusChip} ${styles.statusChipActive}`}>
+            <span className={styles.dot} />
+            {formatKstTime(today.clock_in_at)} 출근
+          </span>
+          <button
+            className={`${styles.btn} ${styles.btnOut}`}
+            onClick={handleClockOut}
+            disabled={submitting}
+            title="퇴근하기"
+          >
+            <LogOut size={14} />
+            퇴근하기
+          </button>
+        </div>
+        <ConfirmDialog
+          open={showClockOutConfirm}
+          {...CLOCK_OUT_CONFIRM}
+          onConfirm={confirmClockOut}
+          onCancel={() => setShowClockOutConfirm(false)}
+        />
+      </>
     );
   }
 

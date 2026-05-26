@@ -9,8 +9,12 @@ const CLIENT_ID = process.env.SHINHAN_APP_KEY ?? ''
 const CLIENT_SECRET = process.env.SHINHAN_APP_SECRET ?? ''
 const SUB_CHANNEL = process.env.SHINHAN_SUB_CHANNEL ?? 'P6'
 
-const PROXY_URL = process.env.SHINHAN_PROXY_URL ?? ''
-const PROXY_SECRET = process.env.SHINHAN_PROXY_SECRET ?? ''
+const RAW_PROXY_URL = process.env.SHINHAN_PROXY_URL ?? process.env.PROXY_URL ?? ''
+// scheme 누락된 값(예: "1.2.3.4:3001")도 허용 — http:// 자동 부여
+const PROXY_URL = RAW_PROXY_URL && !/^https?:\/\//i.test(RAW_PROXY_URL)
+  ? `http://${RAW_PROXY_URL}`
+  : RAW_PROXY_URL
+const PROXY_SECRET = process.env.SHINHAN_PROXY_SECRET ?? process.env.PROXY_SECRET ?? ''
 
 // 운영 서버 — 개발 서버는 dev-shbapi.shinhan.com:6443
 const SHINHAN_BASE_URL = 'https://shbapi.shinhan.com:6443'
@@ -51,9 +55,9 @@ async function getAccessToken(): Promise<string> {
   if (_cachedToken && _cachedToken.expiresAt > now + 60) return _cachedToken.value
 
   const timestamp = now
-  // client_hash: HMAC-SHA256("timestamp|client_id", client_secret) → Base64 → URLEncode
-  const rawHash = hmacSha256Base64(CLIENT_SECRET, `${timestamp}|${CLIENT_ID}`)
-  const clientHash = encodeURIComponent(rawHash)
+  // client_hash: HMAC-SHA256("timestamp|client_id", client_secret) → Base64
+  // URL 인코딩은 URLSearchParams.toString()이 자동 처리하므로 중복 인코딩 금지
+  const clientHash = hmacSha256Base64(CLIENT_SECRET, `${timestamp}|${CLIENT_ID}`)
 
   const body = new URLSearchParams({
     client_id: CLIENT_ID,

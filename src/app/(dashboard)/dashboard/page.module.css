@@ -247,27 +247,15 @@
 /* 봇 — 진행 바 끝에 떠다님 */
 .attBotVideo {
   position: absolute;
-  right: -30px;
-  top: -50px;
-  width: 56px;
-  height: 56px;
+  right: -36px;
+  top: -65px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
   object-fit: cover;
-  border: 3px solid #fff;
   box-shadow: 0 4px 16px rgba(0, 196, 113, 0.4);
-  background: #fff;
-  pointer-events: none;
-  animation: botFloat 2.2s ease-in-out infinite;
-}
 
-@keyframes botFloat {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-6px);
-  }
+  pointer-events: none;
 }
 
 .attMarker {
