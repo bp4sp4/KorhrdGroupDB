@@ -137,6 +137,7 @@ export default function WorkJournalPage() {
     registrations: number;
     registrationRate: number;
     salesThisMonth: number;
+    todayScheduledContacts: number;
     delta: {
       inquiries: number;
       registrations: number;
@@ -157,6 +158,7 @@ export default function WorkJournalPage() {
           registrations: Number(d.registrations ?? 0),
           registrationRate: Number(d.registrationRate ?? 0),
           salesThisMonth: Number(d.salesThisMonth ?? 0),
+          todayScheduledContacts: Number(d.todayScheduledContacts ?? 0),
           delta: {
             inquiries: Number(d?.delta?.inquiries ?? 0),
             registrations: Number(d?.delta?.registrations ?? 0),
@@ -546,7 +548,9 @@ export default function WorkJournalPage() {
             <div className={styles.dateRow}>
               <span className={styles.dateLabel}>오늘 연락 예정</span>
               <div className={styles.dateRowRight}>
-                <span className={styles.dateValue}>000건</span>
+                <span className={styles.dateValue}>
+                  {(stats?.todayScheduledContacts ?? 0).toLocaleString()}건
+                </span>
                 <ChevronRight className={styles.dateRowIcon} size={16} />
               </div>
             </div>

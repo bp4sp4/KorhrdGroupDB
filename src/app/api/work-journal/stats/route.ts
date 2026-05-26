@@ -91,24 +91,38 @@ export async function GET() {
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
   const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1)
 
-  const [inqAll, regAll, salesMonth, baseStat, prevStat] = await Promise.all([
-    supabaseAdmin
-      .from('hakjeom_consultations')
-      .select('id', { count: 'exact', head: true })
-      .eq('manager', managerName),
-    supabaseAdmin
-      .from('edu_students')
-      .select('id', { count: 'exact', head: true })
-      .eq('manager_name', managerName),
-    supabaseAdmin
-      .from('edu_sales')
-      .select('total_amount')
-      .eq('manager_name', managerName)
-      .gte('payment_date', iso(monthStart))
-      .lt('payment_date', iso(monthEnd)),
-    collectDay(baseDay, managerName),
-    collectDay(prevDay, managerName),
-  ])
+  // 오늘(KST) 연락 예정 범위: 오늘 00:00 ~ 내일 00:00 KST
+  const todayStartISO = `${iso(today)}T00:00:00+09:00`
+  const todayEnd = new Date(today)
+  todayEnd.setDate(todayEnd.getDate() + 1)
+  const todayEndISO = `${iso(todayEnd)}T00:00:00+09:00`
+
+  const [inqAll, regAll, salesMonth, baseStat, prevStat, todayContactsRes] =
+    await Promise.all([
+      supabaseAdmin
+        .from('hakjeom_consultations')
+        .select('id', { count: 'exact', head: true })
+        .eq('manager', managerName),
+      supabaseAdmin
+        .from('edu_students')
+        .select('id', { count: 'exact', head: true })
+        .eq('manager_name', managerName),
+      supabaseAdmin
+        .from('edu_sales')
+        .select('total_amount')
+        .eq('manager_name', managerName)
+        .gte('payment_date', iso(monthStart))
+        .lt('payment_date', iso(monthEnd)),
+      collectDay(baseDay, managerName),
+      collectDay(prevDay, managerName),
+      // 오늘 본인 담당 연락 예정 (학점은행제 - hakjeom_consultations)
+      supabaseAdmin
+        .from('hakjeom_consultations')
+        .select('id', { count: 'exact', head: true })
+        .eq('manager', managerName)
+        .gte('contact_scheduled_at', todayStartISO)
+        .lt('contact_scheduled_at', todayEndISO),
+    ])
 
   const totalInquiries = inqAll.count ?? 0
   const registrations = regAll.count ?? 0
@@ -125,6 +139,7 @@ export async function GET() {
     registrations,
     registrationRate: Math.round(registrationRate * 10) / 10,
     salesThisMonth,
+    todayScheduledContacts: todayContactsRes.count ?? 0,
     delta: {
       // 오늘 - 직전 영업일
       inquiries: baseStat.inquiries - prevStat.inquiries,

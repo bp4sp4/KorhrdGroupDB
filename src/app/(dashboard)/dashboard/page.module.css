@@ -14,21 +14,20 @@
   color: #191f28;
   -webkit-font-smoothing: antialiased;
   letter-spacing: -0.01em;
-  background: #f3f4f6;
+  background: #ffffff;
   min-height: calc(100vh - 60px);
-  padding: 20px;
+  padding: 20px 17px 0 20px;
   display: flex;
   justify-content: center;
-  align-items: flex-start;
+  align-items: center;
 }
 
 .layout {
   width: 100%;
-
   display: grid;
-  grid-template-columns: 320px 1fr 360px;
+  grid-template-columns: 331px 593px 337px;
   grid-template-rows: auto auto auto auto;
-  gap: 16px;
+  gap: 12px;
 }
 
 /* 카드 공통 */
@@ -63,8 +62,9 @@
 
 .attendanceCard {
   grid-column: 1;
-  grid-row: 1;
-  min-height: 440px;
+  /* 가운데/우측 카드 + 통계 행을 합친 만큼 길게 차지 */
+  grid-row: 1 / 3;
+  width: 331px;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -75,6 +75,47 @@
   font-weight: 700;
   color: #191f28;
   margin: 0;
+}
+
+/* 인사말 + 우측 날짜/시각 한 행 */
+.attGreetingRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+/* 인사말 — "안녕하세요, OOO님!" */
+.attGreeting {
+  margin: 0;
+  color: #1f2937;
+  font-family: Pretendard, inherit;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+}
+
+/* 우측 날짜 박스 — 두 줄 (날짜 / 시각) */
+.attGreetingDateBox {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.attGreetingDate,
+.attGreetingTime {
+  color: #8d99a5;
+  text-align: right;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  font-variant-numeric: tabular-nums;
 }
 
 .attDateRow {
@@ -166,20 +207,22 @@
 
 .attWeekTitleRow {
   display: flex;
-  align-items: baseline;
-  gap: 6px;
+  justify-content: space-between;
+  align-items: flex-start;
+  align-self: stretch;
 }
 
-.attWeekLabel {
-  font-size: 12.5px;
-  color: #6b7684;
+.attWeekLabel,
+.attWeekValue {
+  color: #1f2937;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-style: normal;
   font-weight: 600;
+  line-height: normal;
 }
 
 .attWeekValue {
-  font-size: 16px;
-  font-weight: 800;
-  color: #00c471;
   font-variant-numeric: tabular-nums;
 }
 
@@ -191,10 +234,11 @@
 
 .attProgressWrap {
   position: relative;
-  height: 100px;
-  margin-top: 18px;
-  margin-bottom: 8px;
-  padding-top: 50px;
+  margin-bottom: 4px;
+  padding-top: 38px;
+  /* 마커 라벨(40h, 52h, 0h)이 progressBar 바로 아래 absolute로 들어가므로
+     그 라벨 공간 확보용 padding-bottom */
+  padding-bottom: 26px;
 }
 
 .attProgressBar {
@@ -210,7 +254,7 @@
 
 .attProgressFill {
   height: 100%;
-  background: #00c471;
+  background: #0084fe;
   border-radius: 999px;
   transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
   position: relative;
@@ -248,12 +292,12 @@
 .attBotVideo {
   position: absolute;
   right: -36px;
-  top: -65px;
-  width: 60px;
-  height: 60px;
+  top: -35px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   object-fit: cover;
-  box-shadow: 0 4px 16px rgba(0, 196, 113, 0.4);
+  box-shadow: 0 4px 16px #0083fe59;
 
   pointer-events: none;
 }
@@ -281,31 +325,35 @@
   display: flex;
   gap: 8px;
   margin-top: auto;
+  align-self: stretch;
 }
 
 .attActionBtn {
-  flex: 1;
-  height: 38px;
-  border-radius: 10px;
-  background: #fff;
-  color: #191f28;
-  border: 1px solid #e5e8eb;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
   display: flex;
-  align-items: center;
+  padding: 12px 0;
   justify-content: center;
+  align-items: center;
   gap: 6px;
-  font-family: inherit;
+  flex: 1 0 0;
+  align-self: stretch;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  color: #0084fe;
+  font-family: Pretendard, inherit;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  cursor: pointer;
   transition:
     background 0.12s,
     border-color 0.12s;
 }
 
 .attActionBtn:hover {
-  background: #f9fafb;
-  border-color: #d1d5db;
+  background: #f6faff;
+  border-color: #b3d9ff;
 }
 
 .attActionBtn:disabled {
@@ -316,7 +364,104 @@
 
 .attActionBtn:disabled:hover {
   background: #fff;
-  border-color: #e5e8eb;
+  border-color: #e6e7eb;
+}
+
+/* ─── 내 연차 카드 (사용자 디자인 스펙 그대로) ──────────────────────── */
+.attLeaveCard {
+  display: flex;
+  height: 66px;
+  padding: 10px 14px;
+  justify-content: space-between;
+  align-items: center;
+  align-self: stretch;
+  border-radius: 8px;
+  background: #eaf3ff;
+  box-sizing: border-box;
+}
+
+.attLeaveLeft {
+  display: flex;
+  width: 147px;
+  align-items: center;
+  gap: 6px;
+}
+
+.attLeaveIcon {
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  aspect-ratio: 1 / 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.attLeaveTextBox {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.attLeaveLabel {
+  color: #1f2937;
+  font-family: Pretendard, inherit;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+}
+
+.attLeaveValueRow {
+  display: flex;
+  align-items: baseline;
+  gap: 1px;
+}
+
+.attLeaveBalance {
+  color: #0084fe;
+  font-family: Pretendard, inherit;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  font-variant-numeric: tabular-nums;
+}
+
+.attLeaveTotal {
+  color: #1f2937;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  font-variant-numeric: tabular-nums;
+}
+
+.attLeaveBtn {
+  display: flex;
+  padding: 8px 10px;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  color: #1f2937;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    border-color 0.12s;
+}
+.attLeaveBtn:hover {
+  background: #f6faff;
+  border-color: #b3d9ff;
 }
 
 /* ─── 목표 카드 ──────────────────────────────────────────────────── */
@@ -324,7 +469,276 @@
 .goalCard {
   grid-column: 2;
   grid-row: 1;
-  min-height: 220px;
+  height: 330px;
+  min-height: 330px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.goalHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.goalSettingBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  color: #4e5968;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: normal;
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    border-color 0.12s;
+}
+.goalSettingBtn:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.goalBody {
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  gap: 18px;
+  flex: 1;
+  min-height: 0;
+}
+
+/* 좌측: 도넛 + 매출 세로 묶음 */
+.goalLeftStack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-self: stretch;
+  flex-shrink: 0;
+}
+
+/* 좌측 스택 안 도넛 박스 (캡션 위 + 도넛 아래) */
+.goalDonutBox {
+  display: flex;
+  width: 110px;
+  padding: 10px 12px;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  border-radius: 10px;
+  background: #f2f8ff;
+  box-sizing: border-box;
+}
+.goalDonut {
+  display: block;
+}
+.goalDonutText {
+  fill: #0084fe;
+  font-family: Pretendard, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  dominant-baseline: middle;
+}
+.goalDonutCaption {
+  color: #6b7684;
+  font-family: Pretendard, inherit;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* 도넛/매출 박스 공통 캡션 (박스 위쪽) */
+.goalBoxCaption {
+  color: #1f2937;
+  text-align: center;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  align-self: center;
+}
+
+/* 좌측 스택 안 매출 박스 (캡션 위 + 콘텐츠 아래) */
+.goalSalesBox {
+  display: flex;
+  width: 110px;
+  padding: 10px 12px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  border-radius: 10px;
+  background: #f2f8ff;
+  box-sizing: border-box;
+}
+
+.goalSalesInner {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  align-self: stretch;
+}
+
+.goalSalesValue {
+  color: #0084fe;
+  font-family: Pretendard, inherit;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 140%;
+  font-variant-numeric: tabular-nums;
+}
+
+.goalSalesTarget {
+  color: #1f2937;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 140%;
+  font-variant-numeric: tabular-nums;
+}
+
+.goalSalesCaption {
+  color: #1f2937;
+  text-align: center;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+}
+
+/* 매출 박스 안 미니 progress bar (도넛 박스의 도넛처럼 시각 강조) */
+.goalSalesBar {
+  width: 100%;
+  height: 5px;
+  background: #d6e6fa;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+.goalSalesBarFill {
+  display: block;
+  height: 100%;
+  background: #0084fe;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+/* 우측: 주차별 진행 — 2줄 (라벨+% / bar) — 5주차까지 컴팩트 */
+.goalWeeksBox {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+  justify-content: space-between;
+}
+.goalWeekRow {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-family: Pretendard, inherit;
+  color: #4e5968;
+}
+.goalWeekTopRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 600;
+}
+.goalWeekRowCurrent .goalWeekLabel,
+.goalWeekRowCurrent .goalWeekPct {
+  color: #0084fe;
+  font-weight: 700;
+}
+.goalWeekLabel {
+  font-weight: 600;
+}
+.goalWeekPct {
+  font-variant-numeric: tabular-nums;
+}
+/* bar + 금액 한 줄 (bottom row) */
+.goalWeekBottomRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.goalWeekBar {
+  position: relative;
+  flex: 1;
+  height: 10px;
+  background: #eaeef3;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.goalWeekAmountRow {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-family: Pretendard, inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.goalWeekAmountValue {
+  color: #4e5968;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.goalWeekAmountTarget {
+  color: #8b95a1;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.goalWeekRowCurrent .goalWeekAmountValue {
+  color: #0084fe;
+  font-weight: 700;
+}
+.goalWeekFill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: #c8dffd;
+  border-radius: 999px;
+}
+.goalWeekRowCurrent .goalWeekFill {
+  background: #0084fe;
+}
+.goalWeekPct {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.goalWeekAmount {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: #4e5968;
+}
+.goalWeekTarget {
+  color: #8b95a1;
+  font-weight: 500;
 }
 
 .placeholderText {
@@ -339,17 +753,269 @@
 .sourceCard {
   grid-column: 3;
   grid-row: 1;
-  min-height: 220px;
+  height: 330px;
+  min-height: 330px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
-/* ─── 2행: 통계 4개 카드 ──────────────────────────────────────────── */
+.sourceHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sourceTabs {
+  display: flex;
+  padding: 3px;
+  background: #f2f4f6;
+  border-radius: 8px;
+  gap: 2px;
+}
+
+.sourceTab {
+  padding: 5px 12px;
+  border-radius: 6px;
+  background: transparent;
+  border: 0;
+  color: #6b7684;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: normal;
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    color 0.12s;
+}
+
+.sourceTabActive {
+  background: #fff;
+  color: #0084fe;
+  box-shadow: 0 1px 2px rgba(0, 132, 254, 0.15);
+}
+
+/* TOP 1 강조 라벨 */
+/* TOP1 강조 + 오늘 총합 한 행 */
+.sourceTopRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sourceTopLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: Pretendard, inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.sourceTotalChip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #f2f4f6;
+  color: #4e5968;
+  font-family: Pretendard, inherit;
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.sourceTopName {
+  color: #4e5968;
+}
+
+.sourceTopCount {
+  color: #1f2937;
+  font-weight: 700;
+}
+
+.sourceDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* 가로 누적 막대 */
+.sourceBar {
+  display: flex;
+  width: 100%;
+  height: 18px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #f2f4f6;
+}
+
+.sourceBarSegment {
+  height: 100%;
+  display: block;
+  transition: width 0.3s;
+}
+
+/* TOP 3 박스 */
+.sourceTop3Box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #f9fafb;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-top: auto;
+}
+
+.sourceTop3Title {
+  color: #1f2937;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.sourceTop3List {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.sourceTop3Item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sourceTop3Name {
+  color: #4e5968;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sourceTop3Count {
+  color: #6b7684;
+  font-family: Pretendard, inherit;
+  font-size: 11px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.sourceTop3Pct {
+  color: #0084fe;
+  font-family: Pretendard, inherit;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── 2행: 통계 4개 카드 (가운데 + 우측 column만 차지) ─────────────── */
 
 .statsRow {
-  grid-column: 1 / -1;
+  /* 근태 카드(1column)는 1+2행 길게, 통계 행은 가운데~우측 column만 차지 */
+  grid-column: 2 / 4;
   grid-row: 2;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: 1fr;
   gap: 16px;
+}
+
+/* 4 stat 합쳐진 하나의 카드 */
+.statGroup {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-radius: 14px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  padding: 14px 18px;
+  min-width: 0;
+}
+
+.statDivider {
+  width: 1px;
+  height: 40px;
+  background: #e6e7eb;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.statCard {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  flex: 1 0 0;
+  align-self: stretch;
+  border-radius: 8px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  min-width: 0;
+}
+
+.statIcon {
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #7a8086;
+  flex-shrink: 0;
+}
+
+.statTexts {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.statLabel {
+  color: #1f2937;
+  font-family: Pretendard, inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 100%;
+}
+
+.statValueRow {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.statValue {
+  color: #1f2937;
+  font-family: Pretendard, inherit;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 100%;
+  font-variant-numeric: tabular-nums;
+}
+
+.statSub {
+  color: #7a8086;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: normal;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .statBox {
