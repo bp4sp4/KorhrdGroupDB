@@ -133,6 +133,7 @@ export interface MailListItem {
   seq: number
   subject: string
   from: { name?: string; address: string } | null
+  to: { name?: string; address: string }[]
   date: string | null
   flags: string[]
   isUnread: boolean
@@ -253,6 +254,10 @@ export async function listMessages(
         }
         const sender = env?.from?.[0]
         const rawDate = env?.date ?? msg.internalDate
+        const toList = (env?.to ?? []).map((t) => ({
+          name: t.name ?? undefined,
+          address: t.address ?? '',
+        }))
         result.push({
           uid: msg.uid,
           seq: msg.seq,
@@ -263,6 +268,7 @@ export async function listMessages(
                 address: sender.address ?? '',
               }
             : null,
+          to: toList,
           date: rawDate ? new Date(rawDate).toISOString() : null,
           flags: Array.from(msg.flags ?? []),
           isUnread,

@@ -392,10 +392,28 @@ export default function MailPage() {
                 const active = selectedId === m.messageId;
                 const unread = m.isRead === false;
                 const date = m.receivedTime ?? m.sentTime ?? "";
-                const fromName =
-                  m.from?.emailAddress.name ||
-                  m.from?.emailAddress.address ||
-                  "(보낸이 없음)";
+                const isOutbox = folder === "SENT" || folder === "DRAFTS";
+                let displayName: string;
+                if (isOutbox) {
+                  const recipients = m.to ?? [];
+                  if (recipients.length === 0) {
+                    displayName = "(받는 사람 없음)";
+                  } else {
+                    const first =
+                      recipients[0].emailAddress.name ||
+                      recipients[0].emailAddress.address;
+                    displayName =
+                      recipients.length > 1
+                        ? `${first} 외 ${recipients.length - 1}명`
+                        : first;
+                  }
+                  displayName = `받는 사람: ${displayName}`;
+                } else {
+                  displayName =
+                    m.from?.emailAddress.name ||
+                    m.from?.emailAddress.address ||
+                    "(보낸이 없음)";
+                }
                 return (
                   <div
                     key={m.messageId}
@@ -403,7 +421,7 @@ export default function MailPage() {
                     onClick={() => setSelectedId(m.messageId)}
                   >
                     <div className={styles.mailItemTop}>
-                      <span className={styles.mailFrom}>{fromName}</span>
+                      <span className={styles.mailFrom}>{displayName}</span>
                       <span className={styles.mailDate}>{fmtDate(date)}</span>
                     </div>
                     <div className={styles.mailSubject}>

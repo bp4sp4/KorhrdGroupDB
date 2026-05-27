@@ -49,7 +49,11 @@ export async function GET(request: NextRequest) {
             },
           }
         : undefined,
-      to: undefined,
+      to: m.to.length
+        ? m.to.map((t) => ({
+            emailAddress: { address: t.address, name: t.name || undefined },
+          }))
+        : undefined,
       receivedTime: m.date,
       sentTime: m.date,
       hasAttachment: m.hasAttachment,
