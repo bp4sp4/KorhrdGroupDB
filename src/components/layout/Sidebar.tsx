@@ -180,10 +180,9 @@ const ALL_SECTIONS: NavSection[] = [
       {
         id: "practice",
         label: "실습 사업부",
-        href: "/practice",
+        href: "/practice-sales",
         icon: <GraduationCap size={16} />,
         children: [
-          { id: "practice-tab-home", label: "실습 관리", href: "/practice" },
           {
             id: "practice-sales-page",
             label: "매출파일",
@@ -728,7 +727,6 @@ export default function Sidebar({
       // practice 그룹의 'practice-sales-page'도 동일 패턴 — 별도 'practice-sales' section 권한으로 분리
       const isPracticeItem = item.id === "practice";
       const practiceSalesAllowed = allowedSections.has("practice-sales");
-      const practiceAllowed = allowedSections.has("practice");
 
       const filteredChildren = item.children.filter((child) => {
         if (isEducationItem && child.id === "edu-sales-page") {
@@ -737,9 +735,8 @@ export default function Sidebar({
         if (isCertItem && child.id === "cert-sales-page") {
           return certSalesAllowed;
         }
-        if (isPracticeItem) {
-          if (child.id === "practice-sales-page") return practiceSalesAllowed;
-          if (child.id === "practice-tab-home") return practiceAllowed;
+        if (isPracticeItem && child.id === "practice-sales-page") {
+          return practiceSalesAllowed;
         }
         // hakjeom allowed_tabs가 null 또는 없음 = 전체 허용
         if (allowed === undefined || allowed === null) return true;
