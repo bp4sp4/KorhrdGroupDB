@@ -1920,6 +1920,7 @@ const PERMISSION_SECTIONS: PermissionSection[] = [
   { key: 'cert',       label: '민간자격증 사업부', description: '상담 목록 조회·수정',     allowOwn: false, group: '교육운영' },
   { key: 'cert-sales', label: '민간자격증 매출파일', description: '학점연계 결제완료 매출 기록 (담당: 본인 건, 대리 이상: 전체)', allowOwn: true, group: '교육운영' },
   { key: 'practice',   label: '실습/취업',         description: '실습·취업 상담 조회·수정', allowOwn: true,  group: '교육운영' },
+  { key: 'practice-sales', label: '실습 매출파일', description: '실습 결제완료 매출 기록 (담당: 본인 건, 대리 이상: 전체)', allowOwn: true, group: '교육운영' },
   { key: 'allcare',    label: '올케어 관리자',      description: '올케어 데이터 관리',      allowOwn: false, group: '교육운영' },
   { key: 'abroad',     label: '한평생유학',         description: '유학 신청·결제 관리',     allowOwn: false, group: '교육운영' },
   { key: 'duplicate',  label: '중복 조회',          description: '연락처 중복 조회',        allowOwn: false, group: '시스템' },

@@ -178,6 +178,20 @@ const ALL_SECTIONS: NavSection[] = [
         ],
       },
       {
+        id: "practice",
+        label: "실습 사업부",
+        href: "/practice",
+        icon: <GraduationCap size={16} />,
+        children: [
+          { id: "practice-tab-home", label: "실습 관리", href: "/practice" },
+          {
+            id: "practice-sales-page",
+            label: "매출파일",
+            href: "/practice-sales",
+          },
+        ],
+      },
+      {
         id: "abroad",
         label: "유학 사업부",
         href: "/abroad",
@@ -441,8 +455,9 @@ const SECTION_ITEM_MAP: Record<string, string> = {
   "edu-sales": "education",
   cert: "cert",
   "cert-sales": "cert",
-  abroad: "abroad",
   practice: "practice",
+  "practice-sales": "practice",
+  abroad: "abroad",
   allcare: "education",
   revenues: "management",
   "revenue-upload": "management",
@@ -710,6 +725,10 @@ export default function Sidebar({
       // cert 그룹의 'cert-sales-page'도 동일 패턴 — 별도 'cert-sales' section 권한으로 분리
       const isCertItem = item.id === "cert";
       const certSalesAllowed = allowedSections.has("cert-sales");
+      // practice 그룹의 'practice-sales-page'도 동일 패턴 — 별도 'practice-sales' section 권한으로 분리
+      const isPracticeItem = item.id === "practice";
+      const practiceSalesAllowed = allowedSections.has("practice-sales");
+      const practiceAllowed = allowedSections.has("practice");
 
       const filteredChildren = item.children.filter((child) => {
         if (isEducationItem && child.id === "edu-sales-page") {
@@ -717,6 +736,10 @@ export default function Sidebar({
         }
         if (isCertItem && child.id === "cert-sales-page") {
           return certSalesAllowed;
+        }
+        if (isPracticeItem) {
+          if (child.id === "practice-sales-page") return practiceSalesAllowed;
+          if (child.id === "practice-tab-home") return practiceAllowed;
         }
         // hakjeom allowed_tabs가 null 또는 없음 = 전체 허용
         if (allowed === undefined || allowed === null) return true;

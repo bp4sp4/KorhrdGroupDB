@@ -7,6 +7,7 @@ export type PermissionSection =
   | 'cert'
   | 'cert-sales'
   | 'practice'
+  | 'practice-sales'
   | 'allcare'
   | 'abroad'
   | 'duplicate'
@@ -43,6 +44,7 @@ export const ALL_PERMISSION_SECTIONS: PermissionSection[] = [
   'cert',
   'cert-sales',
   'practice',
+  'practice-sales',
   'allcare',
   'abroad',
   'duplicate',

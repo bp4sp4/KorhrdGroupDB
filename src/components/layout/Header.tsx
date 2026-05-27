@@ -142,6 +142,7 @@ const EDUCATION_SECTIONS = [
   "cert",
   "cert-sales",
   "practice",
+  "practice-sales",
   "allcare",
   "duplicate",
   "trash",
