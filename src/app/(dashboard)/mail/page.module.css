@@ -334,7 +334,16 @@
   padding: 24px;
   font-size: 14px;
   line-height: 1.6;
-  color: #191f28;
+  color: #000;
+}
+
+.detailBody,
+.detailBody * {
+  color: #000 !important;
+}
+
+.detailBody a {
+  color: #1d4ed8 !important;
 }
 
 .detailBody img {
@@ -444,7 +453,7 @@
   border: 0;
   outline: none;
   font-size: 14px;
-  color: #191f28;
+  color: #000;
   background: transparent;
   font-family: inherit;
 }
@@ -454,7 +463,7 @@
   border: 0;
   outline: none;
   font-size: 14px;
-  color: #191f28;
+  color: #000;
   background: transparent;
   font-family: inherit;
   resize: none;
