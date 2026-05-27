@@ -114,31 +114,24 @@ export default function MailPage() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [showCompose, setShowCompose] = useState(false);
 
-  // ── 네이버 웍스 OAuth 연결 상태 ──
+  // ── 메일 자격증명 연결 상태 ──
   const [connection, setConnection] = useState<ConnectionStatus | null>(null);
   const [connectionLoading, setConnectionLoading] = useState(true);
   const [connectionMessage, setConnectionMessage] = useState<string | null>(null);
 
-  // mount 시 연결 상태 조회 + URL 파라미터 처리
+  // mount 시 자격증명 상태 조회
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      if (params.has("nw_connected")) {
-        setConnectionMessage("네이버 웍스 연결 완료!");
-        // 파라미터 제거
-        window.history.replaceState({}, "", window.location.pathname);
-      } else if (params.has("nw_error")) {
-        setConnectionMessage(`연결 실패: ${params.get("nw_error")}`);
-        window.history.replaceState({}, "", window.location.pathname);
-      }
-    }
-
     let cancelled = false;
     setConnectionLoading(true);
-    fetch("/api/auth/naverworks/status", { cache: "no-store" })
-      .then((r) => r.json())
-      .then((d: ConnectionStatus) => {
-        if (!cancelled) setConnection(d);
+    fetch("/api/mail-credentials/me", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (cancelled) return;
+        if (d?.credentials) {
+          setConnection({ connected: true, email: d.credentials.email });
+        } else {
+          setConnection({ connected: false });
+        }
       })
       .catch(() => {
         if (!cancelled) setConnection({ connected: false });
@@ -151,11 +144,11 @@ export default function MailPage() {
     };
   }, []);
 
-  // 연결 해제
+  // 연결 해제 (자격증명 삭제는 메일 설정 페이지에서)
   const handleDisconnect = useCallback(async () => {
-    if (!confirm("네이버 웍스 연결을 해제하시겠습니까?")) return;
+    if (!confirm("메일 자격증명을 삭제하시겠습니까? (메일 설정 페이지에서도 가능)")) return;
     try {
-      await fetch("/api/auth/naverworks/status", { method: "DELETE" });
+      await fetch("/api/mail-credentials/me", { method: "DELETE" });
       setConnection({ connected: false });
       setList([]);
       setDetail(null);
@@ -288,7 +281,7 @@ export default function MailPage() {
             <div className={styles.connectIcon}>
               <Link2 size={28} />
             </div>
-            <h2 className={styles.connectTitle}>네이버 웍스 메일 연결</h2>
+            <h2 className={styles.connectTitle}>메일 자격증명 등록 필요</h2>
             <p className={styles.connectDesc}>
               본인 메일 자격증명(다음 스마트워크 등)을 등록하면
               <br />
@@ -318,7 +311,7 @@ export default function MailPage() {
       <div className={styles.connectionBar}>
         <span className={styles.connectionBadge}>
           <CheckCircle2 size={14} />
-          {connection.email || "네이버 웍스 연결됨"}
+          {connection.email || "메일 연결됨"}
         </span>
         {connectionMessage && (
           <span className={styles.connectionMessageInline}>{connectionMessage}</span>
