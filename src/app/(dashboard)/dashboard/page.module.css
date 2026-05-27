@@ -324,8 +324,9 @@
   position: absolute;
   right: -36px;
   top: -35px;
-  width: 30px;
-  height: 30px;
+  width: 68px;
+  height: 68px;
+  aspect-ratio: 1 / 1;
   border-radius: 50%;
   object-fit: cover;
   box-shadow: 0 4px 16px #0083fe59;
