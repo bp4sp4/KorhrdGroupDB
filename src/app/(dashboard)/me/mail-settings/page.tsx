@@ -126,6 +126,34 @@ export default function MailSettingsPage() {
           </p>
         </header>
 
+        {/* 가이드 카드 */}
+        <section className={styles.guideCard}>
+          <div className={styles.guideText}>
+            <div className={styles.guideTitle}>📘 메일 설정 가이드</div>
+            <p className={styles.guideDesc}>
+              앱 비밀번호 발급부터 IMAP/SMTP 설정까지 단계별로 안내된 PDF예요.
+              처음 설정한다면 먼저 확인해보세요.
+            </p>
+          </div>
+          <div className={styles.guideActions}>
+            <a
+              href="/guides/mail-setup-guide.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.guideBtnGhost}
+            >
+              새 창에서 보기
+            </a>
+            <a
+              href="/guides/mail-setup-guide.pdf"
+              download="메일_설정_가이드.pdf"
+              className={styles.guideBtnPrimary}
+            >
+              PDF 다운로드
+            </a>
+          </div>
+        </section>
+
         {/* 현재 상태 카드 */}
         {!loading && (
           <section className={styles.statusCard}>
