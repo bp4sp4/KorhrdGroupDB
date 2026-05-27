@@ -335,6 +335,9 @@ export default function CertSalesPage() {
     }
   };
 
+  // 매출 추가 모달
+  const [addModalOpen, setAddModalOpen] = useState(false);
+
   // 특이사항 팝업
   const [notesPopup, setNotesPopup] = useState<{
     row: SalesRow;
@@ -832,6 +835,15 @@ export default function CertSalesPage() {
         >
           초기화
         </button>
+        {canEdit && (
+          <button
+            type="button"
+            className={styles.add_btn}
+            onClick={() => setAddModalOpen(true)}
+          >
+            + 매출 추가
+          </button>
+        )}
       </div>
 
       {/* 일괄 변경 액션바 */}
@@ -1256,6 +1268,17 @@ export default function CertSalesPage() {
         )}
       </div>
 
+      {/* 매출 추가 모달 */}
+      {addModalOpen && (
+        <AddCertSalesModal
+          onClose={() => setAddModalOpen(false)}
+          onCreated={() => {
+            setAddModalOpen(false);
+            fetchRows();
+          }}
+        />
+      )}
+
       {/* 특이사항 팝업 */}
       {notesPopup && (
         <div
@@ -1303,6 +1326,260 @@ export default function CertSalesPage() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── 매출 추가 모달 ──────────────────────────────────────────────────
+function AddCertSalesModal({
+  onClose,
+  onCreated,
+}: {
+  onClose: () => void;
+  onCreated: () => void;
+}) {
+  const todayKst = (() => {
+    const d = kstNow();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  })();
+
+  const [form, setForm] = useState({
+    student_name: "",
+    phone: "",
+    manager_name: "",
+    category: "후납" as Category,
+    payment_method: "card" as PaymentMethod,
+    payment_date: todayKst,
+    total_amount: "",
+    unit_price: "5000",
+    subject_count: "",
+    notes: "",
+    process_number: "",
+  });
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (!form.student_name.trim()) {
+      alert("학생명은 필수입니다.");
+      return;
+    }
+    setSaving(true);
+    try {
+      const payload = {
+        student_name: form.student_name.trim(),
+        phone: form.phone.trim() || null,
+        manager_name: form.manager_name.trim() || null,
+        category: form.category,
+        payment_method: form.payment_method,
+        payment_date: form.payment_date || null,
+        cohort: form.payment_date || null,
+        total_amount: form.total_amount
+          ? Number(form.total_amount.replace(/[^\d]/g, ""))
+          : null,
+        unit_price: form.unit_price
+          ? Number(form.unit_price.replace(/[^\d]/g, ""))
+          : 5000,
+        subject_count: form.subject_count
+          ? Number(form.subject_count.replace(/[^\d]/g, ""))
+          : null,
+        notes: form.notes.trim() || null,
+        process_number: form.process_number.trim() || null,
+      };
+      const res = await fetch("/api/cert-sales", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(err.error ?? "등록 실패");
+        return;
+      }
+      onCreated();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div
+      className={styles.modal_overlay}
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className={styles.modal} style={{ maxWidth: 520 }}>
+        <div className={styles.modal_header}>
+          <h3 className={styles.modal_title}>민간자격증 매출 추가</h3>
+          <button
+            className={styles.modal_close}
+            onClick={onClose}
+            aria-label="닫기"
+          >
+            ✕
+          </button>
+        </div>
+        <div className={styles.modal_body}>
+          <div className={styles.modal_field}>
+            <label className={styles.modal_label}>학생명 *</label>
+            <input
+              className={styles.modal_input}
+              autoFocus
+              value={form.student_name}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, student_name: e.target.value }))
+              }
+            />
+          </div>
+          <div className={styles.modal_field}>
+            <label className={styles.modal_label}>연락처</label>
+            <input
+              className={styles.modal_input}
+              value={form.phone}
+              inputMode="numeric"
+              onChange={(e) =>
+                setForm((p) => ({ ...p, phone: autoHyphenPhone(e.target.value) }))
+              }
+              placeholder="010-XXXX-XXXX"
+            />
+          </div>
+          <div className={styles.modal_field}>
+            <label className={styles.modal_label}>분류</label>
+            <CustomSelect
+              value={form.category}
+              options={[
+                { value: "학점연계", label: "학점연계" },
+                { value: "후납", label: "후납" },
+              ]}
+              onChange={(v) =>
+                setForm((p) => ({ ...p, category: v as Category }))
+              }
+              minWidth={140}
+            />
+          </div>
+          <div className={styles.modal_field}>
+            <label className={styles.modal_label}>결제방법</label>
+            <CustomSelect
+              value={form.payment_method}
+              options={[
+                { value: "card", label: "카드결제" },
+                { value: "bank_transfer", label: "계좌이체" },
+              ]}
+              onChange={(v) =>
+                setForm((p) => ({
+                  ...p,
+                  payment_method: v as PaymentMethod,
+                }))
+              }
+              minWidth={140}
+            />
+          </div>
+          <div className={styles.modal_field}>
+            <label className={styles.modal_label}>결제일</label>
+            <input
+              type="date"
+              className={styles.modal_input}
+              value={form.payment_date}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, payment_date: e.target.value }))
+              }
+            />
+          </div>
+          <div className={styles.modal_field}>
+            <label className={styles.modal_label}>결제금액</label>
+            <input
+              className={styles.modal_input}
+              inputMode="numeric"
+              value={form.total_amount}
+              onChange={(e) =>
+                setForm((p) => ({
+                  ...p,
+                  total_amount: e.target.value.replace(/[^\d]/g, ""),
+                }))
+              }
+              placeholder="100000"
+            />
+          </div>
+          <div className={styles.modal_field}>
+            <label className={styles.modal_label}>담당자</label>
+            <input
+              className={styles.modal_input}
+              value={form.manager_name}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, manager_name: e.target.value }))
+              }
+            />
+          </div>
+          <div className={styles.modal_field}>
+            <label className={styles.modal_label}>단가</label>
+            <input
+              className={styles.modal_input}
+              inputMode="numeric"
+              value={form.unit_price}
+              onChange={(e) =>
+                setForm((p) => ({
+                  ...p,
+                  unit_price: e.target.value.replace(/[^\d]/g, ""),
+                }))
+              }
+            />
+          </div>
+          <div className={styles.modal_field}>
+            <label className={styles.modal_label}>과목수</label>
+            <input
+              className={styles.modal_input}
+              inputMode="numeric"
+              value={form.subject_count}
+              onChange={(e) =>
+                setForm((p) => ({
+                  ...p,
+                  subject_count: e.target.value.replace(/[^\d]/g, ""),
+                }))
+              }
+            />
+          </div>
+          <div className={styles.modal_field}>
+            <label className={styles.modal_label}>(현)처리번호</label>
+            <input
+              className={styles.modal_input}
+              value={form.process_number}
+              onChange={(e) =>
+                setForm((p) => ({
+                  ...p,
+                  process_number: autoHyphenPhone(e.target.value),
+                }))
+              }
+              placeholder="010-XXXX-XXXX"
+            />
+          </div>
+          <div className={styles.modal_field}>
+            <label className={styles.modal_label}>특이사항</label>
+            <textarea
+              className={styles.textarea}
+              rows={3}
+              value={form.notes}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, notes: e.target.value }))
+              }
+            />
+          </div>
+        </div>
+        <div className={styles.modal_footer}>
+          <button className={styles.btn_secondary} onClick={onClose}>
+            취소
+          </button>
+          <button
+            className={styles.btn_primary}
+            onClick={handleSave}
+            disabled={saving}
+          >
+            {saving ? "저장 중..." : "추가"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

@@ -566,6 +566,33 @@
   padding: 20px;
 }
 
+.modal_field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.modal_label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.modal_input {
+  padding: 9px 12px;
+  border: 1px solid #e5e8eb;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #191f28;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.modal_input:focus {
+  border-color: #3182f6;
+}
+
 .modal_footer {
   display: flex;
   justify-content: flex-end;
