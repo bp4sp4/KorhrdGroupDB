@@ -1,27 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuthFull } from "@/lib/auth/requireAuth";
-import { sendMail } from "@/lib/naverWorks/mail";
-import { NaverWorksError } from "@/lib/naverWorks/token";
 import {
-  getUserNaverWorksAccess,
-  NaverWorksAuthRequiredError,
-} from "@/lib/naverWorks/userTokens";
+  getUserMailCredentials,
+  sendMail,
+  MailCredentialsNotFoundError,
+} from "@/lib/imapMail";
 
 // POST /api/mail/send
+// body: { to: string[], cc?: string[], bcc?: string[], subject, bodyHtml?, bodyText? }
 export async function POST(req: NextRequest) {
   const { appUser, errorResponse } = await requireAuthFull();
   if (errorResponse) return errorResponse;
 
-  let accessToken: string;
-  let worksUserEmail: string | null;
+  let creds;
   try {
-    const ctx = await getUserNaverWorksAccess(appUser.id);
-    accessToken = ctx.accessToken;
-    worksUserEmail = ctx.worksUserEmail;
+    creds = await getUserMailCredentials(appUser.id);
   } catch (err) {
-    if (err instanceof NaverWorksAuthRequiredError) {
+    if (err instanceof MailCredentialsNotFoundError) {
       return NextResponse.json(
-        { ok: false, error: err.message, code: "NW_AUTH_REQUIRED" },
+        {
+          ok: false,
+          error: err.message,
+          code: "MAIL_CREDENTIALS_REQUIRED",
+        },
         { status: 401 },
       );
     }
@@ -31,33 +32,33 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const body = (await req.json()) as {
-    to: string[];
+  const body = (await req.json().catch(() => null)) as {
+    to?: string[];
     cc?: string[];
     bcc?: string[];
-    subject: string;
+    subject?: string;
     bodyHtml?: string;
     bodyText?: string;
-    attachmentIds?: string[];
-  };
+  } | null;
 
-  if (!body.to?.length || !body.subject) {
+  if (!body || !body.to?.length || !body.subject) {
     return NextResponse.json(
-      { error: "to / subject 는 필수입니다." },
+      { ok: false, error: "to / subject 는 필수입니다." },
       { status: 400 },
     );
   }
 
   try {
-    const data = await sendMail(accessToken, worksUserEmail || "me", body);
-    return NextResponse.json({ ok: true, ...data });
+    const data = await sendMail(creds, {
+      to: body.to,
+      cc: body.cc,
+      bcc: body.bcc,
+      subject: body.subject,
+      bodyHtml: body.bodyHtml,
+      bodyText: body.bodyText,
+    });
+    return NextResponse.json({ ok: true, messageId: data.messageId });
   } catch (err) {
-    if (err instanceof NaverWorksError) {
-      return NextResponse.json(
-        { ok: false, error: err.message, body: err.body },
-        { status: err.status },
-      );
-    }
     return NextResponse.json(
       { ok: false, error: (err as Error).message },
       { status: 500 },

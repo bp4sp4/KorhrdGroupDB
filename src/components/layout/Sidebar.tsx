@@ -332,10 +332,15 @@ const ALL_SECTIONS: NavSection[] = [
       },
       {
         id: "mail",
-        label: "시스템 메일",
+        label: "메일",
         href: "/mail",
         icon: <Mail size={16} />,
-        badge: "개발중",
+      },
+      {
+        id: "mail-settings",
+        label: "메일 설정",
+        href: "/me/mail-settings",
+        icon: <Mail size={16} />,
       },
       {
         id: "duplicate",

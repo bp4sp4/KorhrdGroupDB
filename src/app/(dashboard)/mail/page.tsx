@@ -182,8 +182,12 @@ export default function MailPage() {
         cache: "no-store",
       });
       const data = await res.json();
-      // 토큰 만료/없음 → 연결 화면으로 전환
-      if (res.status === 401 && data?.code === "NW_AUTH_REQUIRED") {
+      // 자격증명 없음 → 연결 화면으로 전환
+      if (
+        res.status === 401 &&
+        (data?.code === "MAIL_CREDENTIALS_REQUIRED" ||
+          data?.code === "NW_AUTH_REQUIRED")
+      ) {
         setConnection({ connected: false });
         setList([]);
         return;
@@ -215,13 +219,16 @@ export default function MailPage() {
     }
     let cancelled = false;
     setDetailLoading(true);
-    fetch(`/api/mail/${encodeURIComponent(selectedId)}`, { cache: "no-store" })
+    const folderQS = `?folder=${encodeURIComponent(folder)}`;
+    fetch(`/api/mail/${encodeURIComponent(selectedId)}${folderQS}`, {
+      cache: "no-store",
+    })
       .then((r) => r.json())
       .then((d) => {
         if (cancelled) return;
         if (d.ok) {
           setDetail(d.data);
-          fetch(`/api/mail/${encodeURIComponent(selectedId)}`, {
+          fetch(`/api/mail/${encodeURIComponent(selectedId)}${folderQS}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ isRead: true }),
@@ -240,14 +247,15 @@ export default function MailPage() {
     return () => {
       cancelled = true;
     };
-  }, [selectedId]);
+  }, [selectedId, folder]);
 
   const handleDelete = async () => {
     if (!selectedId) return;
     if (!confirm("이 메일을 휴지통으로 이동하시겠습니까?")) return;
-    const res = await fetch(`/api/mail/${encodeURIComponent(selectedId)}`, {
-      method: "DELETE",
-    });
+    const res = await fetch(
+      `/api/mail/${encodeURIComponent(selectedId)}?folder=${encodeURIComponent(folder)}`,
+      { method: "DELETE" },
+    );
     if (res.ok) {
       setList((prev) => prev.filter((m) => m.messageId !== selectedId));
       setSelectedId(null);
@@ -282,21 +290,21 @@ export default function MailPage() {
             </div>
             <h2 className={styles.connectTitle}>네이버 웍스 메일 연결</h2>
             <p className={styles.connectDesc}>
-              본인 네이버 웍스 계정으로 한 번 로그인하면
+              본인 메일 자격증명(다음 스마트워크 등)을 등록하면
               <br />
               받은편지함과 메일 발송 기능을 사용할 수 있습니다.
             </p>
             {connectionMessage && (
               <div className={styles.connectMessage}>{connectionMessage}</div>
             )}
-            <a className={styles.connectBtn} href="/api/auth/naverworks/start">
+            <a className={styles.connectBtn} href="/me/mail-settings">
               <Link2 size={16} />
-              네이버 웍스 연결하기
+              메일 설정으로 이동
             </a>
             <p className={styles.connectFootnote}>
-              연결 시 메일 조회/발송 권한(mail, mail.read)이 부여됩니다.
+              앱 비밀번호로 IMAP/SMTP 연결 — 본인 메일함 조회/발송 가능.
               <br />
-              언제든 해제할 수 있습니다.
+              언제든 자격증명을 삭제할 수 있습니다.
             </p>
           </div>
         </div>
