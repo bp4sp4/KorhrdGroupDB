@@ -113,6 +113,17 @@ export default function MailPage() {
   const [detail, setDetail] = useState<MailDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [showCompose, setShowCompose] = useState(false);
+  const [toast, setToast] = useState<{
+    type: "success" | "warn";
+    message: string;
+  } | null>(null);
+
+  // 토스트 자동 사라짐
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 3500);
+    return () => clearTimeout(t);
+  }, [toast]);
 
   // ── 메일 자격증명 연결 상태 ──
   const [connection, setConnection] = useState<ConnectionStatus | null>(null);
@@ -535,11 +546,29 @@ export default function MailPage() {
           replyTo={replyTo}
           replySubject={detail?.subject ? `Re: ${detail.subject}` : undefined}
           onClose={() => setShowCompose(false)}
-          onSent={() => {
+          onSent={(sentFolderSynced) => {
             setShowCompose(false);
+            setToast({
+              type: sentFolderSynced ? "success" : "warn",
+              message: sentFolderSynced
+                ? "메일을 발송했어요."
+                : "메일은 발송됐어요. (보낸편지함 동기화는 잠시 후 반영될 수 있어요)",
+            });
             if (folder === "SENT") fetchList();
           }}
         />
+      )}
+
+      {/* 발송 토스트 */}
+      {toast && (
+        <div
+          className={`${styles.toast} ${
+            toast.type === "success" ? styles.toastSuccess : styles.toastWarn
+          }`}
+          role="status"
+        >
+          {toast.message}
+        </div>
       )}
     </div>
   );
@@ -550,7 +579,7 @@ interface ComposeModalProps {
   replyTo?: string[];
   replySubject?: string;
   onClose: () => void;
-  onSent: () => void;
+  onSent: (sentFolderSynced: boolean) => void;
 }
 function ComposeModal({
   replyTo = [],
@@ -590,7 +619,12 @@ function ComposeModal({
         }),
       });
       const raw = await res.text();
-      let data: { ok?: boolean; error?: string; messageId?: string } = {};
+      let data: {
+        ok?: boolean;
+        error?: string;
+        messageId?: string;
+        sentFolderSynced?: boolean;
+      } = {};
       try {
         data = raw ? JSON.parse(raw) : {};
       } catch {
@@ -606,7 +640,7 @@ function ComposeModal({
         setErr(data.error || `발송 실패 (HTTP ${res.status})`);
         return;
       }
-      onSent();
+      onSent(Boolean(data.sentFolderSynced));
     } catch (e) {
       setErr((e as Error).message);
     } finally {

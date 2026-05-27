@@ -61,7 +61,11 @@ export async function POST(req: NextRequest) {
       bodyHtml: body.bodyHtml,
       bodyText: body.bodyText,
     });
-    return NextResponse.json({ ok: true, messageId: data.messageId });
+    return NextResponse.json({
+      ok: true,
+      messageId: data.messageId,
+      sentFolderSynced: data.sentFolderSynced,
+    });
   } catch (err) {
     return NextResponse.json(
       { ok: false, error: (err as Error).message },

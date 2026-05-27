@@ -666,3 +666,39 @@
   border-color: #fecaca;
   color: #dc2626;
 }
+
+/* ─── 발송 토스트 ────────────────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 9999;
+  padding: 14px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  animation: toastIn 0.25s ease-out;
+  max-width: 360px;
+  line-height: 1.45;
+}
+
+.toastSuccess {
+  background: #16a34a;
+}
+
+.toastWarn {
+  background: #f59e0b;
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

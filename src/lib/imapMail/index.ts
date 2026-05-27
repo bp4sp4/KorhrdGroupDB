@@ -69,7 +69,7 @@ export interface SendMailParams {
 export async function sendMail(
   creds: MailCredentials,
   params: SendMailParams,
-): Promise<{ messageId: string }> {
+): Promise<{ messageId: string; sentFolderSynced: boolean }> {
   // 1) raw RFC822 메시지를 먼저 빌드 (SMTP 전송 + IMAP append 양쪽에 재사용)
   const composer = nodemailer.createTransport({
     streamTransport: true,
@@ -100,30 +100,37 @@ export async function sendMail(
   })
 
   // 3) IMAP "보낸편지함" 에도 동일 메시지 append
-  //    - fire-and-forget: 사용자 응답을 빨리 돌려주기 위해 await 하지 않음
-  //    - 실패해도 발송 자체는 성공이므로 무시
-  void (async () => {
-    try {
-      const client = new ImapFlow({
-        host: creds.imap_host,
-        port: creds.imap_port,
-        secure: creds.use_tls,
-        auth: { user: creds.email, pass: creds.password },
-        logger: false,
-      })
-      await client.connect()
-      try {
-        const sentFolder = await resolveFolderPath(client, 'SENT')
-        await client.append(sentFolder, rawMessage, ['\\Seen'])
-      } finally {
-        await client.logout().catch(() => {})
-      }
-    } catch {
-      // append 실패는 사용자에게 영향 없음
-    }
-  })()
+  //    - 사용자 응답이 너무 늦어지지 않도록 8초 타임아웃 으로 보호
+  //    - 실패/타임아웃 시에도 발송 자체는 성공으로 처리 (sentFolderSynced=false)
+  let sentFolderSynced = false
+  try {
+    await Promise.race([
+      (async () => {
+        const client = new ImapFlow({
+          host: creds.imap_host,
+          port: creds.imap_port,
+          secure: creds.use_tls,
+          auth: { user: creds.email, pass: creds.password },
+          logger: false,
+        })
+        await client.connect()
+        try {
+          const sentFolder = await resolveFolderPath(client, 'SENT')
+          await client.append(sentFolder, rawMessage, ['\\Seen'])
+          sentFolderSynced = true
+        } finally {
+          await client.logout().catch(() => {})
+        }
+      })(),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('IMAP append timeout')), 8000),
+      ),
+    ])
+  } catch {
+    // 보낸편지함 저장 실패 — 발송은 성공
+  }
 
-  return { messageId: sendInfo.messageId }
+  return { messageId: sendInfo.messageId, sentFolderSynced }
 }
 
 // ─── IMAP (수신/조회) ────────────────────────────────────────────────
