@@ -77,13 +77,43 @@
   margin: 0;
 }
 
-/* 인사말 + 우측 날짜/시각 한 행 */
+/* 날짜(좌) + 상태 뱃지(우) 한 행 */
 .attGreetingRow {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
   width: 100%;
+}
+
+/* 상태 뱃지 — 출근전 / 출근 / 퇴근 */
+.attStatusBadge {
+  display: inline-flex;
+  padding: 4px 8px;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+  flex-shrink: 0;
+}
+
+.attStatusBadgeBefore {
+  color: #8d99a5;
+}
+
+.attStatusBadgeWorking {
+  color: #51c629;
+}
+
+.attStatusBadgeDone {
+  color: #51c629;
 }
 
 /* 인사말 — "안녕하세요, OOO님!" */
@@ -100,6 +130,7 @@
 /* 우측 날짜 박스 — 두 줄 (날짜 / 시각) */
 .attGreetingDateBox {
   display: flex;
+
   flex-direction: column;
   align-items: flex-end;
   gap: 2px;

@@ -323,19 +323,24 @@ export default function DashboardPage() {
         {/* 1행 좌: 근태 */}
         <section className={`${styles.card} ${styles.attendanceCard}`}>
           <div className={styles.attGreetingRow}>
-            <h3 className={styles.attGreeting}>
-              안녕하세요, {userName || "회원"}님!
-            </h3>
-            <div className={styles.attGreetingDateBox}>
-              <span className={styles.attGreetingDate}>
-                {formatNowDateLine()}
-              </span>
-              <span className={styles.attGreetingTime}>
-                {formatNowTimeLine()}
-              </span>
-            </div>
+            <span className={styles.attGreetingDate}>
+              {formatNowDateLine()} {formatNowTimeLine()}
+            </span>
+            <span
+              className={`${styles.attStatusBadge} ${
+                isDone
+                  ? styles.attStatusBadgeDone
+                  : isWorking
+                    ? styles.attStatusBadgeWorking
+                    : styles.attStatusBadgeBefore
+              }`}
+            >
+              {isDone ? "퇴근" : isWorking ? "출근" : "출근전"}
+            </span>
           </div>
-
+          <h3 className={styles.attGreeting}>
+            안녕하세요, {userName || "회원"}님!
+          </h3>
           {/* 오늘 근무시간 + 진행 바 */}
           <div className={styles.attWeekBlock}>
             <div className={styles.attWeekTitleRow}>
@@ -402,10 +407,7 @@ export default function DashboardPage() {
                 40h
               </div>
               <div className={styles.attMarker} style={{ right: 0 }} />
-              <div
-                className={styles.attMarkerLabel}
-                style={{ right: 0 }}
-              >
+              <div className={styles.attMarkerLabel} style={{ right: 0 }}>
                 52h
               </div>
             </div>
@@ -427,7 +429,9 @@ export default function DashboardPage() {
               <span
                 className={`${styles.attTimeValue} ${!todayRec?.clock_out_at ? styles.attTimeValueEmpty : ""}`}
               >
-                {todayRec?.clock_out_at ? formatTime(todayRec.clock_out_at) : "-"}
+                {todayRec?.clock_out_at
+                  ? formatTime(todayRec.clock_out_at)
+                  : "-"}
               </span>
             </div>
           </div>
@@ -520,60 +524,60 @@ export default function DashboardPage() {
               <div className={styles.goalBody}>
                 {/* 좌측: 도넛 + 매출 (세로 묶음) */}
                 <div className={styles.goalLeftStack}>
-                <div className={styles.goalDonutBox}>
-                  <span className={styles.goalBoxCaption}>
-                    {monthLabel} 달성률
-                  </span>
-                  <svg
-                    width="80"
-                    height="80"
-                    viewBox="0 0 80 80"
-                    className={styles.goalDonut}
-                  >
-                    <circle
-                      cx="40"
-                      cy="40"
-                      r="32"
-                      fill="none"
-                      stroke="#e8eef5"
-                      strokeWidth="10"
-                    />
-                    <circle
-                      cx="40"
-                      cy="40"
-                      r="32"
-                      fill="none"
-                      stroke="#0084fe"
-                      strokeWidth="10"
-                      strokeLinecap="round"
-                      strokeDasharray={`${(pct / 100) * 2 * Math.PI * 32} ${2 * Math.PI * 32}`}
-                      transform="rotate(-90 40 40)"
-                    />
-                    <text
-                      x="40"
-                      y="45"
-                      textAnchor="middle"
-                      className={styles.goalDonutText}
+                  <div className={styles.goalDonutBox}>
+                    <span className={styles.goalBoxCaption}>
+                      {monthLabel} 달성률
+                    </span>
+                    <svg
+                      width="80"
+                      height="80"
+                      viewBox="0 0 80 80"
+                      className={styles.goalDonut}
                     >
-                      {pct}%
-                    </text>
-                  </svg>
-                </div>
+                      <circle
+                        cx="40"
+                        cy="40"
+                        r="32"
+                        fill="none"
+                        stroke="#e8eef5"
+                        strokeWidth="10"
+                      />
+                      <circle
+                        cx="40"
+                        cy="40"
+                        r="32"
+                        fill="none"
+                        stroke="#0084fe"
+                        strokeWidth="10"
+                        strokeLinecap="round"
+                        strokeDasharray={`${(pct / 100) * 2 * Math.PI * 32} ${2 * Math.PI * 32}`}
+                        transform="rotate(-90 40 40)"
+                      />
+                      <text
+                        x="40"
+                        y="45"
+                        textAnchor="middle"
+                        className={styles.goalDonutText}
+                      >
+                        {pct}%
+                      </text>
+                    </svg>
+                  </div>
 
-                {/* 가운데: 매출 + 미니 progress */}
-                <div className={styles.goalSalesBox}>
-                  <span className={styles.goalBoxCaption}>
-                    {monthLabel} 매출
-                  </span>
-                  <div className={styles.goalSalesInner}>
-                    <div className={styles.goalSalesValue}>
-                      {goalAchieved.toLocaleString()}만원
-                    </div>
-                    <div className={styles.goalSalesTarget}>
-                      /목표 {goalTotal.toLocaleString()}만원
+                  {/* 가운데: 매출 + 미니 progress */}
+                  <div className={styles.goalSalesBox}>
+                    <span className={styles.goalBoxCaption}>
+                      {monthLabel} 매출
+                    </span>
+                    <div className={styles.goalSalesInner}>
+                      <div className={styles.goalSalesValue}>
+                        {goalAchieved.toLocaleString()}만원
+                      </div>
+                      <div className={styles.goalSalesTarget}>
+                        /목표 {goalTotal.toLocaleString()}만원
+                      </div>
                     </div>
                   </div>
-                </div>
                 </div>
 
                 {/* 우측: 주차별 진행 (라벨+% / bar / 금액) */}
@@ -680,9 +684,10 @@ export default function DashboardPage() {
             <span className={styles.sourceTop3Title}>오늘의 TOP 3</span>
             <ul className={styles.sourceTop3List}>
               {sourceData.slice(0, 3).map((s) => {
-                const pct = sourceTotal > 0
-                  ? Math.round((s.count / sourceTotal) * 100)
-                  : 0;
+                const pct =
+                  sourceTotal > 0
+                    ? Math.round((s.count / sourceTotal) * 100)
+                    : 0;
                 return (
                   <li key={s.name} className={styles.sourceTop3Item}>
                     <span
@@ -782,9 +787,7 @@ export default function DashboardPage() {
                   <span>전일대비</span>
                   <span>
                     {(() => {
-                      const n = Math.round(
-                        (stats?.delta.sales ?? 0) / 10000,
-                      );
+                      const n = Math.round((stats?.delta.sales ?? 0) / 10000);
                       return `${n > 0 ? "+" : ""}${n.toLocaleString()}만원`;
                     })()}
                   </span>
@@ -806,7 +809,9 @@ export default function DashboardPage() {
         <section className={`${styles.card} ${styles.calendarCard}`}>
           <div className={styles.cardHead}>
             <h3 className={styles.cardTitle}>캘린더</h3>
-            <span className={styles.cardSub}>연락예정/중요일정/연차/업무요청</span>
+            <span className={styles.cardSub}>
+              연락예정/중요일정/연차/업무요청
+            </span>
           </div>
           <ComingSoon icon={<CalendarDays size={20} />} text="곧 연결 예정" />
         </section>
@@ -861,13 +866,7 @@ function StatBox({
   );
 }
 
-function ComingSoon({
-  icon,
-  text,
-}: {
-  icon: React.ReactNode;
-  text: string;
-}) {
+function ComingSoon({ icon, text }: { icon: React.ReactNode; text: string }) {
   return (
     <div className={styles.comingSoon}>
       <div className={styles.comingSoonIcon}>{icon}</div>
