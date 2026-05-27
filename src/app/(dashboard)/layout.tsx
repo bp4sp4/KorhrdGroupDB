@@ -130,15 +130,22 @@ export default function DashboardLayout({
 
     const SECTION_PATHS = [
       { section: 'hakjeom',   path: '/hakjeom' },
+      { section: 'edu-sales', path: '/edu-sales' },
       { section: 'cert',      path: '/cert' },
+      { section: 'cert-sales', path: '/cert-sales' },
       { section: 'practice',  path: '/practice' },
+      { section: 'practice-sales', path: '/practice-sales' },
       { section: 'allcare',   path: '/allcare' },
       { section: 'abroad',    path: '/abroad' },
       { section: 'approvals', path: '/approvals' },
       { section: 'revenues',  path: '/revenues' },
       { section: 'revenue-upload', path: '/revenue-upload' },
     ]
+    // 더 구체적인 경로(-sales 등)를 위에 둬서 매칭 우선순위 확보
     const PERM_PATHS: { path: string; section: string }[] = [
+      { path: '/edu-sales',  section: 'edu-sales' },
+      { path: '/cert-sales', section: 'cert-sales' },
+      { path: '/practice-sales', section: 'practice-sales' },
       { path: '/assignment', section: 'assignment' },
       { path: '/duplicate',  section: 'duplicate' },
       { path: '/trash',      section: 'trash' },
