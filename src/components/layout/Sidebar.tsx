@@ -153,6 +153,7 @@ const ALL_SECTIONS: NavSection[] = [
             label: "민간자격증",
             href: "/cert?tab=private-cert",
           },
+          { id: "cert-sales-page", label: "매출파일", href: "/cert-sales" },
           {
             id: "cert-tab-student-mgmt",
             label: "학생관리",
@@ -437,7 +438,9 @@ const MINI_ADMIN_ITEMS: NavItem[] = [
 
 const SECTION_ITEM_MAP: Record<string, string> = {
   hakjeom: "education",
+  "edu-sales": "education",
   cert: "cert",
+  "cert-sales": "cert",
   abroad: "abroad",
   practice: "practice",
   allcare: "education",
@@ -704,10 +707,16 @@ export default function Sidebar({
       // (hakjeom 권한과 분리 — 권한 관리 UI에서도 별도 항목으로 노출됨)
       const isEducationItem = item.id === "education";
       const eduSalesAllowed = allowedSections.has("edu-sales");
+      // cert 그룹의 'cert-sales-page'도 동일 패턴 — 별도 'cert-sales' section 권한으로 분리
+      const isCertItem = item.id === "cert";
+      const certSalesAllowed = allowedSections.has("cert-sales");
 
       const filteredChildren = item.children.filter((child) => {
         if (isEducationItem && child.id === "edu-sales-page") {
           return eduSalesAllowed;
+        }
+        if (isCertItem && child.id === "cert-sales-page") {
+          return certSalesAllowed;
         }
         // hakjeom allowed_tabs가 null 또는 없음 = 전체 허용
         if (allowed === undefined || allowed === null) return true;

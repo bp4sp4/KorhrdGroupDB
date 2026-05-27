@@ -119,10 +119,28 @@ export async function GET(request: NextRequest) {
       countMap[m.record_id] = (countMap[m.record_id] || 0) + 1;
       if (!latestMemoMap[m.record_id]) latestMemoMap[m.record_id] = m.content;
     }
+
+    // cert_sales overlay에서 manager_name 가져오기 (is_hidden 제외)
+    const itemIds = items.map((it: { id: string }) => it.id)
+    let managerMap: Record<string, string | null> = {}
+    if (itemIds.length > 0) {
+      const { data: salesRows } = await supabaseAdmin
+        .from('cert_sales')
+        .select('cert_application_id, manager_name')
+        .in('cert_application_id', itemIds)
+        .eq('is_hidden', false)
+      for (const r of salesRows ?? []) {
+        if (r.cert_application_id) {
+          managerMap[String(r.cert_application_id)] = (r.manager_name as string | null) ?? null
+        }
+      }
+    }
+
     return NextResponse.json(items.map(item => ({
       ...item,
       memo_count: countMap[String(item.id)] || 0,
       latest_memo: latestMemoMap[String(item.id)] ?? null,
+      manager_name: managerMap[String(item.id)] ?? null,
     })));
   } catch (err) {
     console.error('[cert GET] Unexpected error:', err);
@@ -265,6 +283,8 @@ export async function POST(request: NextRequest) {
     const source = formData.get('source') as string | null;
     const amountRaw = formData.get('amount') as string | null;
     const photo = formData.get('photo') as File | null;
+    const paymentStatusRaw = formData.get('payment_status') as string | null;
+    const payMethodRaw = formData.get('pay_method') as string | null;
 
     if (!name || !contact) {
       return NextResponse.json({ error: '이름과 연락처는 필수입니다.' }, { status: 400 });
@@ -272,6 +292,10 @@ export async function POST(request: NextRequest) {
 
     const certificates = certificatesRaw ? JSON.parse(certificatesRaw) : [];
     const amount = amountRaw ? Number(amountRaw) : null;
+    const paymentStatus =
+      paymentStatusRaw && ['pending', 'paid', 'failed', 'cancelled'].includes(paymentStatusRaw)
+        ? (paymentStatusRaw as PaymentStatus)
+        : 'pending';
 
     // 사진 업로드
     let photo_url: string | null = null;
@@ -304,7 +328,9 @@ export async function POST(request: NextRequest) {
         source: source || null,
         amount,
         photo_url,
-        payment_status: 'pending',
+        payment_status: paymentStatus,
+        pay_method: payMethodRaw || null,
+        paid_at: paymentStatus === 'paid' ? new Date().toISOString() : null,
       })
       .select()
       .single();

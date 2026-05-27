@@ -136,6 +136,7 @@ interface CertApplication {
   updated_at?: string | null;
   memo_count?: number;
   latest_memo?: string | null;
+  manager_name?: string | null;
 }
 
 interface Stats {
@@ -1745,7 +1746,12 @@ function AddCertModal({
     address_detail: "",
     cash_receipt: "",
     amount: "",
+    manager_name: "",
   });
+  // 분류: 'card' = 카드결제 (학점연계 자동), 'postpaid' = 후납
+  const [salesCategory, setSalesCategory] = useState<"card" | "postpaid">(
+    "card",
+  );
   const [selectedCerts, setSelectedCerts] = useState<string[]>([]);
   const [certSearch, setCertSearch] = useState("");
   const [certCategory, setCertCategory] = useState("전체과정");
@@ -1820,9 +1826,34 @@ function AddCertModal({
       if (form.amount) fd.append("amount", form.amount);
       if (source) fd.append("source", source);
       if (photoFile) fd.append("photo", photoFile);
+      // 학점연계 신청 추가 시: 매출파일에 즉시 노출되도록 paid 처리
+      // 카드결제 = pay_method=card, 후납 = pay_method=postpaid
+      if (sourceTab === "hakjeom") {
+        fd.append("payment_status", "paid");
+        fd.append("pay_method", salesCategory === "card" ? "card" : "postpaid");
+      }
 
       const res = await fetch("/api/cert", { method: "POST", body: fd });
       if (!res.ok) throw new Error("등록 실패");
+      const created = await res.json().catch(() => null);
+      const certAppId: string | undefined =
+        created?.data?.id ?? created?.id ?? undefined;
+
+      // 학점연계 신청이면 cert_sales overlay에 분류/담당자 함께 저장
+      if (sourceTab === "hakjeom" && certAppId) {
+        await fetch("/api/cert-sales", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            cert_application_id: certAppId,
+            category: salesCategory === "card" ? "학점연계" : "후납",
+            manager_name: form.manager_name.trim() || null,
+            payment_method:
+              salesCategory === "card" ? "card" : "bank_transfer",
+          }),
+        }).catch(() => {});
+      }
+
       onCreated();
       onClose();
     } catch {
@@ -2093,6 +2124,54 @@ function AddCertModal({
             <div className={styles.funnelStep}>
               <p className={styles.funnelQuestion}>결제 정보를 입력해주세요</p>
               <p className={styles.funnelSubQuestion}>모두 선택사항이에요</p>
+              {sourceTab === "hakjeom" && (
+                <>
+                  <div className={styles.funnelFieldGroup}>
+                    <label className={styles.funnelLabel}>분류</label>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button
+                        type="button"
+                        onClick={() => setSalesCategory("card")}
+                        className={
+                          salesCategory === "card"
+                            ? styles.tagBtnV2Active
+                            : styles.tagBtnV2
+                        }
+                      >
+                        카드결제
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSalesCategory("postpaid")}
+                        className={
+                          salesCategory === "postpaid"
+                            ? styles.tagBtnV2Active
+                            : styles.tagBtnV2
+                        }
+                      >
+                        후납
+                      </button>
+                    </div>
+                  </div>
+                  <div className={styles.funnelFieldGroup}>
+                    <label className={styles.funnelLabel}>
+                      담당자{" "}
+                      <span className={styles.funnelOptional}>(선택)</span>
+                    </label>
+                    <input
+                      value={form.manager_name}
+                      onChange={(e) =>
+                        setForm((p) => ({
+                          ...p,
+                          manager_name: e.target.value,
+                        }))
+                      }
+                      placeholder="담당자 이름"
+                      className={styles.funnelInput}
+                    />
+                  </div>
+                </>
+              )}
               <div className={styles.funnelFieldGroup}>
                 <label className={styles.funnelLabel}>현금영수증</label>
                 <input
@@ -4472,15 +4551,16 @@ function ApplicationTab({
                     </button>
                   </div>
                 </th>
+                <th className={styles.th}>담당자</th>
                 <th className={styles.th}>신청일</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <TableSkeleton cols={9} rows={8} />
+                <TableSkeleton cols={10} rows={8} />
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className={styles.tableEmptyMsg}>
+                  <td colSpan={10} className={styles.tableEmptyMsg}>
                     신청 내역이 없습니다.
                   </td>
                 </tr>
@@ -4581,6 +4661,18 @@ function ApplicationTab({
                           >
                             {app.ref}
                           </span>
+                        )}
+                      </td>
+
+                      {/* 담당자 */}
+                      <td
+                        className={`${styles.td} ${certStyles.tdClickable}`}
+                        onClick={() => setSelectedApp(app)}
+                      >
+                        {app.manager_name ? (
+                          app.manager_name
+                        ) : (
+                          <span className={styles.tdSecondary}>-</span>
                         )}
                       </td>
 

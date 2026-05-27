@@ -140,6 +140,7 @@ const EDUCATION_SECTIONS = [
   "hakjeom",
   "edu-sales",
   "cert",
+  "cert-sales",
   "practice",
   "allcare",
   "duplicate",
