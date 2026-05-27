@@ -371,7 +371,6 @@ export default function CertSalesPage() {
     분류: r.category,
     학생명: r.student_name,
     연락처: formatPhone(r.phone),
-    단가: r.unit_price ?? "",
     결제금액: r.total_amount ?? "",
     결제방법: r.payment_method
       ? PAYMENT_METHOD_OPTIONS.find((o) => o.value === r.payment_method)?.label ??
@@ -942,7 +941,6 @@ export default function CertSalesPage() {
                 <th className={`${styles.th} ${styles.th_center}`}>분류</th>
                 <th className={`${styles.th} ${styles.th_center}`}>학생명</th>
                 <th className={`${styles.th} ${styles.th_center}`}>연락처</th>
-                <th className={`${styles.th} ${styles.th_center}`}>단가</th>
                 <th className={`${styles.th} ${styles.th_center}`}>결제금액</th>
                 <th className={`${styles.th} ${styles.th_center}`}>결제방법</th>
                 <th className={`${styles.th} ${styles.th_center}`}>결제일</th>
@@ -1030,16 +1028,6 @@ export default function CertSalesPage() {
                     {/* 연락처 — 읽기전용 */}
                     <td className={`${styles.td} ${styles.td_center}`}>
                       {formatPhone(r.phone)}
-                    </td>
-                    {/* 단가 — 5000 기본, 인라인 숫자 */}
-                    <td className={`${styles.td} ${styles.td_center}`}>
-                      <InlineNumber
-                        value={r.unit_price}
-                        onSave={(v) => updateRow(r, { unit_price: v })}
-                        align="center"
-                        width={70}
-                        disabled={!canEdit}
-                      />
                     </td>
                     {/* 결제금액 — 인라인 숫자 */}
                     <td
@@ -1354,7 +1342,6 @@ function AddCertSalesModal({
     payment_method: "card" as PaymentMethod,
     payment_date: todayKst,
     total_amount: "",
-    unit_price: "5000",
     subject_count: "",
     notes: "",
     process_number: "",
@@ -1379,9 +1366,6 @@ function AddCertSalesModal({
         total_amount: form.total_amount
           ? Number(form.total_amount.replace(/[^\d]/g, ""))
           : null,
-        unit_price: form.unit_price
-          ? Number(form.unit_price.replace(/[^\d]/g, ""))
-          : 5000,
         subject_count: form.subject_count
           ? Number(form.subject_count.replace(/[^\d]/g, ""))
           : null,
@@ -1510,20 +1494,6 @@ function AddCertSalesModal({
               value={form.manager_name}
               onChange={(e) =>
                 setForm((p) => ({ ...p, manager_name: e.target.value }))
-              }
-            />
-          </div>
-          <div className={styles.modal_field}>
-            <label className={styles.modal_label}>단가</label>
-            <input
-              className={styles.modal_input}
-              inputMode="numeric"
-              value={form.unit_price}
-              onChange={(e) =>
-                setForm((p) => ({
-                  ...p,
-                  unit_price: e.target.value.replace(/[^\d]/g, ""),
-                }))
               }
             />
           </div>
