@@ -248,6 +248,7 @@ export async function listMessages(
           // ignore
         }
         const sender = env?.from?.[0]
+        const rawDate = env?.date ?? msg.internalDate
         result.push({
           uid: msg.uid,
           seq: msg.seq,
@@ -258,7 +259,7 @@ export async function listMessages(
                 address: sender.address ?? '',
               }
             : null,
-          date: (env?.date ?? msg.internalDate)?.toISOString() ?? null,
+          date: rawDate ? new Date(rawDate).toISOString() : null,
           flags: Array.from(msg.flags ?? []),
           isUnread,
           hasAttachment,
