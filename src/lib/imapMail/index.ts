@@ -99,25 +99,29 @@ export async function sendMail(
     raw: rawMessage,
   })
 
-  // 3) IMAP "보낸편지함" 에도 동일 메시지 append (실패는 무시 — 발송 자체는 성공)
-  try {
-    const client = new ImapFlow({
-      host: creds.imap_host,
-      port: creds.imap_port,
-      secure: creds.use_tls,
-      auth: { user: creds.email, pass: creds.password },
-      logger: false,
-    })
-    await client.connect()
+  // 3) IMAP "보낸편지함" 에도 동일 메시지 append
+  //    - fire-and-forget: 사용자 응답을 빨리 돌려주기 위해 await 하지 않음
+  //    - 실패해도 발송 자체는 성공이므로 무시
+  void (async () => {
     try {
-      const sentFolder = await resolveFolderPath(client, 'SENT')
-      await client.append(sentFolder, rawMessage, ['\\Seen'])
-    } finally {
-      await client.logout().catch(() => {})
+      const client = new ImapFlow({
+        host: creds.imap_host,
+        port: creds.imap_port,
+        secure: creds.use_tls,
+        auth: { user: creds.email, pass: creds.password },
+        logger: false,
+      })
+      await client.connect()
+      try {
+        const sentFolder = await resolveFolderPath(client, 'SENT')
+        await client.append(sentFolder, rawMessage, ['\\Seen'])
+      } finally {
+        await client.logout().catch(() => {})
+      }
+    } catch {
+      // append 실패는 사용자에게 영향 없음
     }
-  } catch {
-    // append 실패는 사용자에게 영향 없음
-  }
+  })()
 
   return { messageId: sendInfo.messageId }
 }

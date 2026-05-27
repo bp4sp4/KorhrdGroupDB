@@ -6,6 +6,10 @@ import {
   MailCredentialsNotFoundError,
 } from "@/lib/imapMail";
 
+// Vercel: SMTP/IMAP 통신은 10초 초과될 수 있음
+export const runtime = "nodejs";
+export const maxDuration = 60;
+
 // POST /api/mail/send
 // body: { to: string[], cc?: string[], bcc?: string[], subject, bodyHtml?, bodyText? }
 export async function POST(req: NextRequest) {

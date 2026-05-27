@@ -571,9 +571,21 @@ function ComposeModal({
           bodyText: body,
         }),
       });
-      const data = await res.json();
+      const raw = await res.text();
+      let data: { ok?: boolean; error?: string; messageId?: string } = {};
+      try {
+        data = raw ? JSON.parse(raw) : {};
+      } catch {
+        // Vercel 함수 타임아웃/에러 시 plain text 가 올 수 있음
+        setErr(
+          res.status === 504 || res.status === 408
+            ? "발송 시간이 초과되었습니다. 잠시 후 다시 시도해주세요."
+            : `발송 실패 (HTTP ${res.status})`,
+        );
+        return;
+      }
       if (!res.ok || !data.ok) {
-        setErr(data.error || "발송 실패");
+        setErr(data.error || `발송 실패 (HTTP ${res.status})`);
         return;
       }
       onSent();
