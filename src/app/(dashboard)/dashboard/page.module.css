@@ -26,7 +26,7 @@
   width: 100%;
   display: grid;
   grid-template-columns: 331px 593px 337px;
-  grid-template-rows: auto auto auto auto;
+  justify-content: center;
   gap: 12px;
 }
 
@@ -233,7 +233,7 @@
 .attWeekBlock {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 16px;
 }
 
 .attWeekTitleRow {
@@ -265,11 +265,14 @@
 
 .attProgressWrap {
   position: relative;
-  margin-bottom: 4px;
+  margin-bottom: 0;
   padding-top: 38px;
   /* 마커 라벨(40h, 52h, 0h)이 progressBar 바로 아래 absolute로 들어가므로
-     그 라벨 공간 확보용 padding-bottom */
-  padding-bottom: 26px;
+     그 라벨이 wrap 내부에 완전히 들어가도록 padding-bottom 확보 */
+  padding-bottom: 28px;
+  /* 라벨 absolute top: 76px + text height ≈ 13px → wrap 높이는 최소 89px 필요 */
+  min-height: 92px;
+  box-sizing: border-box;
 }
 
 .attProgressBar {
@@ -501,8 +504,7 @@
 .goalCard {
   grid-column: 2;
   grid-row: 1;
-  height: 330px;
-  min-height: 330px;
+
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -544,7 +546,7 @@
   display: flex;
   justify-content: space-between;
   align-items: stretch;
-  gap: 18px;
+  gap: 12px;
   flex: 1;
   min-height: 0;
 }
@@ -553,7 +555,7 @@
 .goalLeftStack {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
   align-self: stretch;
   flex-shrink: 0;
 }
@@ -561,12 +563,12 @@
 /* 좌측 스택 안 도넛 박스 (캡션 위 + 도넛 아래) */
 .goalDonutBox {
   display: flex;
-  width: 110px;
-  padding: 10px 12px;
+  width: 120px;
+  padding: 16px 12px;
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
-  gap: 4px;
+  gap: 18px;
   flex: 1;
   border-radius: 10px;
   background: #f2f8ff;
@@ -605,8 +607,8 @@
 /* 좌측 스택 안 매출 박스 (캡션 위 + 콘텐츠 아래) */
 .goalSalesBox {
   display: flex;
-  width: 110px;
-  padding: 10px 12px;
+  width: 120px;
+  padding: 16px 12px;
   flex-direction: column;
   justify-content: center;
   align-items: center;
@@ -677,18 +679,30 @@
 .goalWeeksBox {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  min-width: 0;
+  justify-content: center;
   flex: 1;
-  justify-content: space-between;
 }
+/* 한 주차 행 — 좌(주차+%+bar) ↔ 우(120만원//200만원) */
 .goalWeekRow {
   display: flex;
-  flex-direction: column;
-  gap: 3px;
+  padding: 12px;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  align-self: stretch;
   font-family: Pretendard, inherit;
   color: #4e5968;
 }
+
+/* 좌측: 주차/% 텍스트 + 진행 바 세로 스택 */
+.goalWeekLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
 .goalWeekTopRow {
   display: flex;
   align-items: center;
@@ -696,6 +710,7 @@
   font-size: 12px;
   font-weight: 600;
 }
+
 .goalWeekRowCurrent .goalWeekLabel,
 .goalWeekRowCurrent .goalWeekPct {
   color: #0084fe;
@@ -707,42 +722,42 @@
 .goalWeekPct {
   font-variant-numeric: tabular-nums;
 }
-/* bar + 금액 한 줄 (bottom row) */
-.goalWeekBottomRow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
 
 .goalWeekBar {
   position: relative;
-  flex: 1;
   height: 10px;
   background: #eaeef3;
   border-radius: 999px;
   overflow: hidden;
 }
 
+/* 우측 금액 — 120만원(굵게) / /200만원(연하게) 세로 스택 */
 .goalWeekAmountRow {
   display: flex;
-  align-items: baseline;
+  flex-direction: column;
+  align-items: flex-end;
   gap: 2px;
   flex-shrink: 0;
   white-space: nowrap;
   font-family: Pretendard, inherit;
   font-variant-numeric: tabular-nums;
+  line-height: 1.2;
 }
 
 .goalWeekAmountValue {
   color: #4e5968;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .goalWeekAmountTarget {
   color: #8b95a1;
   font-size: 11px;
   font-weight: 500;
+}
+
+.goalWeekRowCurrent .goalWeekAmountValue {
+  color: #0084fe;
 }
 
 .goalWeekRowCurrent .goalWeekAmountValue {
@@ -785,13 +800,17 @@
 .sourceCard {
   grid-column: 3;
   grid-row: 1;
-  height: 330px;
-  min-height: 330px;
   display: flex;
+  width: 337px;
+  height: 382px;
+  padding: 20px;
   flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
   gap: 14px;
   box-sizing: border-box;
-  overflow: hidden;
+  /* 호버 툴팁이 카드 밖으로 튀어나올 수 있도록 visible */
+  overflow: visible;
 }
 
 .sourceHead {
@@ -887,14 +906,101 @@
   width: 100%;
   height: 18px;
   border-radius: 999px;
-  overflow: hidden;
   background: #f2f4f6;
+  position: relative;
+  /* 툴팁이 위로 튀어나오므로 overflow visible */
+  overflow: visible;
 }
 
 .sourceBarSegment {
   height: 100%;
-  display: block;
-  transition: width 0.3s;
+  position: relative;
+  cursor: pointer;
+  transition:
+    width 0.3s,
+    filter 0.12s;
+}
+
+.sourceBarSegment:first-child {
+  border-top-left-radius: 999px;
+  border-bottom-left-radius: 999px;
+}
+
+.sourceBarSegment:last-child {
+  border-top-right-radius: 999px;
+  border-bottom-right-radius: 999px;
+}
+
+.sourceBarSegment:hover {
+  filter: brightness(1.05);
+}
+
+/* 호버 툴팁 — 막대 위에 떠있음, 점선으로 막대와 연결 */
+.sourceBarTooltip {
+  display: none;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 9px;
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 4px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  white-space: nowrap;
+  z-index: 20;
+}
+
+.sourceBarSegment:hover .sourceBarTooltip {
+  display: inline-flex;
+}
+
+/* 첫/마지막 segment는 가장자리에 맞춰 정렬 — 카드 좌우 경계 넘침 방지 */
+.sourceBarSegment:first-child .sourceBarTooltip {
+  left: 0;
+  transform: none;
+}
+
+.sourceBarSegment:last-child .sourceBarTooltip {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+
+.sourceBarSegment:first-child .sourceBarTooltipLine {
+  left: 12px;
+  transform: none;
+}
+
+.sourceBarSegment:last-child .sourceBarTooltipLine {
+  left: auto;
+  right: 12px;
+  transform: none;
+}
+
+.sourceBarTooltipName {
+  color: #1f2937;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: normal;
+}
+
+.sourceBarTooltipCount {
+  color: #8d99a5;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: normal;
+  font-variant-numeric: tabular-nums;
+}
+
+.sourceBarTooltipLine {
+  position: absolute;
+  left: 50%;
+  bottom: -10px;
+  transform: translateX(-50%);
 }
 
 /* TOP 3 박스 */
@@ -948,8 +1054,87 @@
 .sourceTop3Pct {
   color: #0084fe;
   font-family: Pretendard, inherit;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── 문의 유입경로 그래프들 묶음 (회사 배정 + 직접 유입) ─── */
+.sourceSectionsWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  margin-top: auto;
+}
+
+/* ─── 문의 유입경로 섹션 (회사 배정 / 직접 유입) ─── */
+.sourceSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sourceSectionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sourceSectionLabel {
+  color: #1f2937;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sourceSectionTopText {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #4e5968;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.sourceChipRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.sourceChipCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 8px;
+  background: #f9fafb;
+  border-radius: 10px;
+}
+
+.sourceChipNameRow {
+  display: inline-flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sourceChipName {
+  color: #1f2937;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sourceChipCount {
+  color: #6b7684;
+  font-family: Pretendard, inherit;
+  font-size: 11px;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1106,10 +1291,506 @@
   min-height: 240px;
 }
 
+/* ─── 메일/결재/업무 요청 InboxCard ─── */
+.inboxCard {
+  grid-column: 1;
+  grid-row: 3;
+  display: flex;
+  height: 406px;
+  padding: 20px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  flex: 1 0 0;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.inboxTabs {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  border-bottom: 1px solid #f0f1f3;
+}
+
+.inboxTab {
+  display: flex;
+  padding: 6px 10px;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  flex: 1 0 0;
+  border-radius: 10px 10px 0 0;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  color: #8b95a1;
+  cursor: pointer;
+  transition:
+    color 0.12s,
+    border-color 0.12s;
+  /* tabs 행의 border-bottom과 겹치도록 1px 아래로 */
+  margin-bottom: -1px;
+}
+
+.inboxTab:hover {
+  color: #4e5968;
+}
+
+.inboxTabActive {
+  color: #0084fe;
+  border-bottom-color: #0084fe;
+}
+
+.inboxTabCount {
+  display: flex;
+  height: 16px;
+  padding: 0 5px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  border-radius: 999px;
+  background: #f2f4f6;
+  color: #8b95a1;
+  text-align: center;
+  font-family: Pretendard, inherit;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 100%;
+  font-variant-numeric: tabular-nums;
+}
+
+.inboxTabActive .inboxTabCount {
+  background: #eaf3ff;
+  color: #0084fe;
+}
+
+.inboxList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  align-self: stretch;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.inboxEmpty {
+  width: 100%;
+  color: #8b95a1;
+  font-size: 13px;
+  text-align: center;
+  padding: 24px 0;
+}
+
+.inboxItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  align-self: stretch;
+  cursor: pointer;
+}
+
+.inboxItemIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  aspect-ratio: 1 / 1;
+}
+
+.inboxItemBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.inboxItemTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+/* 긴급 뱃지 — 결재 등 */
+.inboxItemUrgent {
+  display: inline-flex;
+  padding: 4px 7px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  border-radius: 999px;
+  background: #ffdada;
+  color: #ff4a4a;
+  text-align: center;
+  font-family: Pretendard, inherit;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 100%;
+  flex-shrink: 0;
+}
+
+.inboxItemTitle {
+  flex: 1;
+  min-width: 0;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  color: #4e5968;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.inboxItemTitleUnread {
+  color: #000;
+}
+
+.inboxItemSender {
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  color: #8d99a5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.inboxItemDate {
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  text-align: right;
+  color: #8d99a5;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.inboxMoreLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  padding-top: 12px;
+
+  color: #1f2937;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  text-decoration: none;
+  margin-top: auto;
+}
+
+.inboxMoreLink svg {
+  width: 13px;
+  height: 13px;
+  aspect-ratio: 1 / 1;
+}
+
+.inboxMoreLink:hover {
+  color: #0084fe;
+}
+
+.inboxMoreLink:hover svg path {
+  fill: #0084fe;
+}
+
 .calendarCard {
   grid-column: 2;
   grid-row: 3;
   min-height: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px;
+}
+
+/* 월 네비게이션 */
+.calNav {
+  display: flex;
+  padding: 8px 12px;
+  align-items: center;
+  justify-content: center;
+  gap: 57px;
+}
+
+.calNavBtn {
+  width: 16px;
+  height: 16px;
+  aspect-ratio: 1 / 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.calNavBtn svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+.calNavBtn:hover svg path {
+  fill: #0084fe;
+}
+
+.calNavTitle {
+  color: #1f2937;
+  font-family: Pretendard, inherit;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 요일 헤더 */
+.calWeekRow {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  width: 100%;
+  padding-bottom: 6px;
+}
+
+.calWeek {
+  text-align: center;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: #4e5968;
+}
+
+.calWeekSun {
+  color: #ff4a4a;
+}
+
+.calWeekSat {
+  color: #0084fe;
+}
+
+/* 날짜 그리드 */
+.calGrid {
+  display: grid;
+  height: 236px;
+  row-gap: 6px;
+  column-gap: 6px;
+  align-self: stretch;
+  grid-template-rows: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.calCell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 2px;
+  padding: 6px 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: none;
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    border-color 0.12s;
+  min-width: 0;
+  min-height: 0;
+}
+
+.calCell:hover {
+  background: #f6f8fa;
+}
+
+.calCellNum {
+  font-family: Pretendard, inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1f2937;
+  line-height: 1;
+}
+
+.calCellSun {
+  color: #ff4a4a;
+}
+
+.calCellSat {
+  color: #0084fe;
+}
+
+.calCellDim {
+  color: #b0b8c1;
+}
+
+.calCellOut .calCellNum {
+  color: #d1d5db;
+}
+
+.calCellSelected .calCellNum {
+  color: #0084fe;
+  font-weight: 700;
+}
+
+/* 오늘 날짜 — 파란색 강조 (요일별 색상 override) */
+.calCellToday .calCellNum,
+.calCellToday .calCellNum.calCellSun,
+.calCellToday .calCellNum.calCellSat,
+.calCellToday .calCellNum.calCellDim {
+  color: #0084fe;
+  font-weight: 700;
+}
+
+.calCellDot {
+  display: flex;
+  height: 16px;
+  padding: 0 5px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  border-radius: 999px;
+  background: #e6e7eb;
+  color: #8d99a5;
+  text-align: center;
+  font-family: Pretendard, inherit;
+  font-size: 8px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 100%;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 선택일 이벤트 리스트 */
+.calEventsArea {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  margin-top: auto;
+  padding-top: 14px;
+}
+
+.calEventsDateCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  width: 32px;
+  flex-shrink: 0;
+}
+
+.calEventsDateNum {
+  font-family: Pretendard, inherit;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1;
+}
+
+.calEventsDateWk {
+  font-family: Pretendard, inherit;
+  font-size: 11px;
+  font-weight: 600;
+  color: #8d99a5;
+}
+
+.calEventsList {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 6px;
+  min-width: 0;
+}
+
+.calEventsEmpty {
+  color: #b0b8c1;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 8px 0;
+}
+
+.calEventItem {
+  display: flex;
+  padding: 10px;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  align-self: stretch;
+  border-radius: 8px;
+  background: #f6f8fa;
+  min-width: 0;
+}
+
+.calEventTitleRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.calEventDot {
+  width: 8px;
+  height: 8px;
+  aspect-ratio: 1 / 1;
+  flex-shrink: 0;
+}
+
+.calEventTitle {
+  color: #1f2937;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.calEventTime {
+  color: #8d99a5;
+  font-family: Pretendard, inherit;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 100%;
+  font-variant-numeric: tabular-nums;
 }
 
 .boardCard {
@@ -1124,12 +1805,158 @@
   margin: -8px 0 12px;
 }
 
-/* ─── 4행: KPI ────────────────────────────────────────────────── */
+/* 우측 컬럼 — KPI + 공지사항 세로 스택 */
+.rightStack {
+  grid-column: 3;
+  grid-row: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-self: start;
+}
 
+/* ─── KPI 목표 카드 ─── */
 .kpiCard {
-  grid-column: 1;
-  grid-row: 4;
-  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+}
+
+/* KPI 목표 / 공지사항 타이틀 — 동일 스펙 */
+.kpiCard .cardTitle,
+.noticeCard .cardTitle {
+  color: #000;
+  font-family: Pretendard, inherit;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+}
+
+.kpiHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kpiRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.kpiTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: #0084fe;
+  color: #fff;
+  font-family: Pretendard, inherit;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.kpiTargetValue {
+  font-family: Pretendard, inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1f2937;
+  font-variant-numeric: tabular-nums;
+}
+
+.kpiBar {
+  position: relative;
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: #e6e7eb;
+  overflow: hidden;
+}
+
+.kpiBarFill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  background: #0084fe;
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+.kpiBottomRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kpiAchieved {
+  font-family: Pretendard, inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1f2937;
+  font-variant-numeric: tabular-nums;
+}
+
+.kpiPct {
+  font-family: Pretendard, inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0084fe;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── 공지사항 카드 ─── */
+.noticeCard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+}
+
+.noticeList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.noticeItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.noticeTitle {
+  flex: 1;
+  color: #1f2937;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.noticeDate {
+  color: #8d99a5;
+  text-align: right;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
 }
 
 /* placeholder / coming-soon */
