@@ -65,6 +65,7 @@ interface Account {
   position_id: string | null
   department_id: string | null
   phone: string | null
+  is_division_admin: boolean
 }
 
 interface AccountForm {
@@ -1688,6 +1689,28 @@ function AccountsTab() {
     if (res.ok) fetchItems()
   }
 
+  const handleToggleDivisionAdmin = async (item: Account) => {
+    const next = !item.is_division_admin
+    const ok = window.confirm(
+      next
+        ? `"${item.display_name ?? item.username}" 을(를) 부서 관리자로 지정하시겠습니까?\n\n` +
+          `이 사용자는 자신의 부서 멤버들의 업무일지/통계를 조회할 수 있게 됩니다.`
+        : `"${item.display_name ?? item.username}" 의 부서 관리자 권한을 해제하시겠습니까?`,
+    )
+    if (!ok) return
+    const res = await fetch(`/api/admin/accounts/${item.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_division_admin: next }),
+    })
+    if (res.ok) {
+      fetchItems()
+    } else {
+      const err = await res.json().catch(() => ({}))
+      alert(err.error ?? '부서 관리자 설정 변경에 실패했습니다.')
+    }
+  }
+
   const handleDelete = async (item: Account) => {
     const ok = window.confirm(
       `정말 "${item.display_name ?? item.username}" 계정을 삭제하시겠습니까?\n\n` +
@@ -1731,6 +1754,7 @@ function AccountsTab() {
                 <th>직급</th>
                 <th>사업부</th>
                 <th>역할</th>
+                <th>부서 관리자</th>
                 <th>상태</th>
                 <th>액션</th>
               </tr>
@@ -1747,6 +1771,17 @@ function AccountsTab() {
                     <span className={`${styles.statusBadge} ${styles.roleBadge}`}>
                       {ROLE_LABELS[item.role] ?? item.role}
                     </span>
+                  </td>
+                  <td>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleDivisionAdmin(item)}
+                      className={`${styles.statusBadge} ${item.is_division_admin ? styles.statusActive : styles.statusInactive}`}
+                      style={{ border: 'none', cursor: 'pointer' }}
+                      title={item.is_division_admin ? '클릭하여 해제' : '클릭하여 지정'}
+                    >
+                      {item.is_division_admin ? '지정됨' : '미지정'}
+                    </button>
                   </td>
                   <td>
                     <span className={`${styles.statusBadge} ${item.is_active ? styles.statusActive : styles.statusInactive}`}>

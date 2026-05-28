@@ -449,6 +449,17 @@ const MINI_ADMIN_ITEMS: NavItem[] = [
   },
 ];
 
+// 관리자 전용 도구 — master-admin / admin / division_admin 에게 모든 섹션에서 영구 노출
+const ADMIN_TOOLS_ITEMS: NavItem[] = [
+  {
+    id: "wj-admin",
+    label: "직원 업무일지 현황",
+    href: "/work-journal/admin",
+    icon: <FileText size={16} />,
+    groupLabel: "관리 도구",
+  },
+];
+
 const SECTION_ITEM_MAP: Record<string, string> = {
   hakjeom: "education",
   "edu-sales": "education",
@@ -482,6 +493,8 @@ interface SidebarProps {
     allowed_tabs?: string[] | null;
   }[];
   revenueOwnDivisions?: ("nms" | "cert" | "abroad")[];
+  // 사용자가 부서 관리자(is_division_admin) 인 경우 work-journal admin 메뉴 노출
+  isDivisionAdmin?: boolean;
   isOpen?: boolean;
   onClose?: () => void;
 }
@@ -490,6 +503,7 @@ export default function Sidebar({
   userRole,
   permissions = [],
   revenueOwnDivisions = [],
+  isDivisionAdmin = false,
   isOpen,
   onClose,
 }: SidebarProps) {
@@ -762,11 +776,39 @@ export default function Sidebar({
     }
   }, [pathname, searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // 관리자 도구 노출 여부 — master-admin / admin / division_admin
+  const showAdminTools =
+    isFullAccess || (!!isDivisionAdmin && userRole !== "mini-admin");
+
   return (
     <aside
       className={`${styles.sidebar}${isOpen ? ` ${styles.sidebarOpen}` : ""}`}
     >
       <nav className={styles.sidebarNav}>
+        {showAdminTools && (
+          <ul className={`${styles.sidebarList} ${styles.sidebarAdminTools}`}>
+            {ADMIN_TOOLS_ITEMS.map((item) => {
+              const isActive = pathname.startsWith(item.href.split("?")[0]);
+              return (
+                <li key={item.id}>
+                  {item.groupLabel && (
+                    <p className={styles.sidebarMenuLabel}>{item.groupLabel}</p>
+                  )}
+                  <Link
+                    href={item.href}
+                    onClick={() => onClose?.()}
+                    className={`${styles.sidebarLink} ${isActive ? styles.sidebarLinkActive : ""}`}
+                  >
+                    <span className={styles.sidebarLinkIcon}>{item.icon}</span>
+                    <span className={styles.sidebarLinkLabel}>
+                      {item.label}
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
         <ul className={styles.sidebarList}>
           {currentItems.map((item) => {
             const [basePath, itemQuery = ""] = item.href.split("?");

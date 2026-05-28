@@ -30,6 +30,7 @@ interface AppUser {
   role: string
   position_id?: string | null
   department_id?: string | null
+  is_division_admin?: boolean
 }
 
 type AuthFullResult =
@@ -60,12 +61,13 @@ export async function requireAuthFull(): Promise<AuthFullResult> {
     position_id: string | null
     department_id: string | null
     auth_user_id: string | null
+    is_division_admin: boolean | null
   }
 
   // 1차: auth_user_id로 매칭 (가장 안전)
   const byAuthId = await supabaseAdmin
     .from('app_users')
-    .select('id, display_name, role, position_id, department_id, auth_user_id')
+    .select('id, display_name, role, position_id, department_id, auth_user_id, is_division_admin')
     .eq('auth_user_id', user.id)
     .maybeSingle()
 
@@ -75,7 +77,7 @@ export async function requireAuthFull(): Promise<AuthFullResult> {
     // 2차 fallback: username(이메일) 매칭 + auth_user_id 백필
     const byUsername = await supabaseAdmin
       .from('app_users')
-      .select('id, display_name, role, position_id, department_id, auth_user_id')
+      .select('id, display_name, role, position_id, department_id, auth_user_id, is_division_admin')
       .eq('username', user.email)
       .maybeSingle()
 
@@ -101,6 +103,7 @@ export async function requireAuthFull(): Promise<AuthFullResult> {
         role: 'master-admin',
         position_id: appUser.position_id ?? null,
         department_id: appUser.department_id ?? null,
+        is_division_admin: !!appUser.is_division_admin,
       },
       errorResponse: null,
     }
@@ -111,7 +114,23 @@ export async function requireAuthFull(): Promise<AuthFullResult> {
   // - auth.users에는 있지만 app_users 미등록 사용자는 로그인은 되지만 데이터 접근 차단
   return {
     user,
-    appUser: appUser ?? { id: 0, display_name: null, role: 'guest', position_id: null, department_id: null },
+    appUser: appUser
+      ? {
+          id: appUser.id,
+          display_name: appUser.display_name,
+          role: appUser.role,
+          position_id: appUser.position_id ?? null,
+          department_id: appUser.department_id ?? null,
+          is_division_admin: !!appUser.is_division_admin,
+        }
+      : {
+          id: 0,
+          display_name: null,
+          role: 'guest',
+          position_id: null,
+          department_id: null,
+          is_division_admin: false,
+        },
     errorResponse: null,
   }
 }

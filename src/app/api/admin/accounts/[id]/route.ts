@@ -13,26 +13,38 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
   const { id } = await params
   const body = await request.json()
-  const { role, display_name, is_active, position_id, department_id, phone } = body as {
+  const {
+    role,
+    display_name,
+    is_active,
+    position_id,
+    department_id,
+    phone,
+    is_division_admin,
+  } = body as {
     role?: string
     display_name?: string
     is_active?: boolean
     position_id?: string | null
     department_id?: string | null
     phone?: string | null
+    is_division_admin?: boolean
   }
 
-  // ── 권한 강화: role 변경 또는 is_active 변경은 master-admin 전용 ─────────
-  const isPrivilegedChange = role !== undefined || is_active !== undefined
+  // ── 권한 강화: role / is_active / is_division_admin 변경은 master-admin 전용 ──
+  const isPrivilegedChange =
+    role !== undefined ||
+    is_active !== undefined ||
+    is_division_admin !== undefined
   if (isPrivilegedChange && appUser.role !== 'master-admin') {
     return NextResponse.json(
-      { error: '계정 권한/활성화 상태 변경은 최고 관리자만 가능합니다.' },
+      { error: '계정 권한/활성화/부서 관리자 상태 변경은 최고 관리자만 가능합니다.' },
       { status: 403 }
     )
   }
 
-  // ── 자기 자신의 role/is_active 변경 금지 ─────────────────────────────────
-  if (isPrivilegedChange && Number(id) === appUser.id) {
+  // ── 자기 자신의 role/is_active 변경 금지 (is_division_admin 은 본인 셀프 OK) ──
+  if ((role !== undefined || is_active !== undefined) && Number(id) === appUser.id) {
     return NextResponse.json(
       { error: '본인 계정의 권한은 변경할 수 없습니다.' },
       { status: 403 }
@@ -54,6 +66,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   if (position_id !== undefined) updates.position_id = position_id
   if (department_id !== undefined) updates.department_id = department_id
   if (phone !== undefined) updates.phone = phone || null
+  if (is_division_admin !== undefined) updates.is_division_admin = !!is_division_admin
 
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: '변경할 항목이 없습니다.' }, { status: 400 })

@@ -224,6 +224,13 @@
   gap: 2px;
 }
 
+/* 관리 도구 영역 — 일반 메뉴와 구분하기 위한 하단 여백/구분선 */
+.sidebarAdminTools {
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #f1f3f5;
+}
+
 .sidebarLink {
   display: flex;
   align-items: center;

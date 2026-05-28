@@ -20,6 +20,7 @@ export default function DashboardLayout({
   const [displayName, setDisplayName] = useState<string>('관리자')
   const [permissions, setPermissions] = useState<{ section: string; scope: string; allowed_tabs?: string[] | null }[]>([])
   const [revenueOwnDivisions, setRevenueOwnDivisions] = useState<('nms' | 'cert' | 'abroad')[]>([])
+  const [isDivisionAdmin, setIsDivisionAdmin] = useState<boolean>(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [hrRecordStatus, setHrRecordStatus] = useState<'unknown' | 'approved' | 'blocked'>('unknown')
   const supabase = createClient()
@@ -29,6 +30,7 @@ export default function DashboardLayout({
     let perms: { section: string; scope: string; allowed_tabs?: string[] | null }[] = []
     let name = '관리자'
     let divisions: ('nms' | 'cert' | 'abroad')[] = []
+    let divisionAdminFlag = false
     try {
       const res = await fetch('/api/auth/me', { cache: 'no-store' })
       if (res.ok) {
@@ -41,6 +43,7 @@ export default function DashboardLayout({
               division === 'nms' || division === 'cert' || division === 'abroad'
             ))
           : []
+        divisionAdminFlag = !!data.isDivisionAdmin
       }
     } catch {
       // keep defaults
@@ -49,6 +52,7 @@ export default function DashboardLayout({
     setDisplayName(name)
     setPermissions(perms)
     setRevenueOwnDivisions(divisions)
+    setIsDivisionAdmin(divisionAdminFlag)
 
     // 인사기록카드 승인 여부 — master-admin은 체크 생략, exempt=true 도 우회
     if (role === 'master-admin') {
@@ -229,7 +233,7 @@ export default function DashboardLayout({
         <Header userName={displayName} userRole={userRole} permissions={permissions} revenueOwnDivisions={revenueOwnDivisions} onMenuToggle={() => setSidebarOpen(v => !v)} />
 
         <div className={styles.dashboardBody}>
-          <Sidebar userRole={userRole} permissions={permissions} revenueOwnDivisions={revenueOwnDivisions} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+          <Sidebar userRole={userRole} permissions={permissions} revenueOwnDivisions={revenueOwnDivisions} isDivisionAdmin={isDivisionAdmin} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
           {sidebarOpen && (
             <div className={styles.sidebarOverlay} onClick={() => setSidebarOpen(false)} />
