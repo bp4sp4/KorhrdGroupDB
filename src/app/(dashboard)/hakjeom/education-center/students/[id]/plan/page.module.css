@@ -43,6 +43,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  border: 1px solid #e5e8eb;
 }
 
 .header_left {
@@ -217,6 +218,7 @@
   background: #ffffff;
   border-radius: 16px;
   padding: 20px 24px;
+  border: 1px solid #e5e8eb;
 }
 
 .credit_section_header {
@@ -707,6 +709,7 @@
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 12px;
   width: 100%;
+  
 }
 
 .stat_card {
@@ -717,6 +720,7 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  border: 1px solid #e5e8eb;
 }
 
 .stat_label {
@@ -894,6 +898,7 @@
   flex-direction: column;
   position: sticky;
   top: 20px;
+  border: 1px solid #e5e8eb;
 }
 
 .subject_search_input {
@@ -1873,6 +1878,7 @@
   border: none;
   border-radius: 16px;
   padding: 20px;
+  border: 1px solid #e5e8eb;
 }
 
 /* 학기 탭 */
@@ -2734,6 +2740,7 @@
 
   border-radius: 6px;
   padding: 16px 20px;
+  border: 1px solid #e5e8eb;
 }
 
 .fv_title {
