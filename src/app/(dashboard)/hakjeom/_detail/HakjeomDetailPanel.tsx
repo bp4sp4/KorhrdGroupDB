@@ -12,10 +12,13 @@ import {
   EDUCATION_OPTIONS,
   HAKJEOM_COURSE_OPTIONS,
   HOPE_COURSE_CUSTOM,
+  PERSONAL_MARKETING_DEFAULT_OPTIONS,
+  PERSONAL_MARKETING_KEY,
   REACTION_POINT_MAP,
   REASON_OPTIONS,
   REFERRER_CARD_META,
   SHOW_AUTO_REACTION_TOAST,
+  SOURCE_MAJOR_LABEL,
   SOURCE_MAJORS,
 } from "../_constants";
 import { CAFE_NAME_LIST, CAFE_NAMES, parseClickSource } from "../_cafe";
@@ -495,13 +498,16 @@ export function HakjeomDetailPanel({
   );
   const [editSourceMajor, setEditSourceMajor] = useState(() => {
     const m = initSource(item.click_source).major;
-    // 유입경로가 비어있고 상태가 지인-관련이면 "지인소개"로 자동 활성화
-    if (!m && isReferralStatus(item.status)) return "지인소개";
+    // 유입경로가 비어있고 상태가 지인-관련이면 개인마케팅으로 자동 활성화
+    if (!m && isReferralStatus(item.status)) return PERSONAL_MARKETING_KEY;
     return m;
   });
-  const [editSourceMinor, setEditSourceMinor] = useState(
-    () => initSource(item.click_source).minor,
-  );
+  const [editSourceMinor, setEditSourceMinor] = useState(() => {
+    const parsed = initSource(item.click_source);
+    // 유입경로가 비어있고 상태가 지인-관련이면 minor 도 "지인소개" 로 자동 설정
+    if (!parsed.major && isReferralStatus(item.status)) return "지인소개";
+    return parsed.minor;
+  });
   const [editResidence, setEditResidence] = useState(item.residence ?? "");
   const [editSubjectCost, setEditSubjectCost] = useState(
     item.subject_cost ? String(item.subject_cost) : "",
@@ -601,6 +607,7 @@ export function HakjeomDetailPanel({
       setEditSourceMinor("");
       setShowDanggeunPanel(false);
       setShowCafePanel(false);
+      setShowPersonalMarketingPanel(false);
     };
     window.addEventListener("guide-tab-basic", toBasic);
     window.addEventListener("guide-tab-info", toInfo);
@@ -662,6 +669,15 @@ export function HakjeomDetailPanel({
   const [showDanggeunAdd, setShowDanggeunAdd] = useState(false);
   const [showDanggeunPanel, setShowDanggeunPanel] = useState(false);
   const [showCafePanel, setShowCafePanel] = useState(false);
+  const [showPersonalMarketingPanel, setShowPersonalMarketingPanel] =
+    useState(false);
+  const [personalMarketingAddInput, setPersonalMarketingAddInput] =
+    useState("");
+  const [showPersonalMarketingAdd, setShowPersonalMarketingAdd] =
+    useState(false);
+  const [customPersonalMarketing, setCustomPersonalMarketing] = useState<
+    string[]
+  >([]);
   const [recentCafes, setRecentCafes] = useState<string[]>([]);
   const [cafeSearchQuery, setCafeSearchQuery] = useState("");
   const [showReactionPanel, setShowReactionPanel] = useState(false);
@@ -683,9 +699,10 @@ export function HakjeomDetailPanel({
     return () => document.removeEventListener("mousedown", handleClick);
   }, [showReactionPanel]);
 
-  // 당근/맘카페 팝업 외부 클릭 시 닫기
+  // 당근/맘카페/개인마케팅 팝업 외부 클릭 시 닫기
   useEffect(() => {
-    if (!showDanggeunPanel && !showCafePanel) return;
+    if (!showDanggeunPanel && !showCafePanel && !showPersonalMarketingPanel)
+      return;
     function handleClick(e: MouseEvent) {
       if (
         referrerGridRef.current &&
@@ -693,11 +710,12 @@ export function HakjeomDetailPanel({
       ) {
         setShowDanggeunPanel(false);
         setShowCafePanel(false);
+        setShowPersonalMarketingPanel(false);
       }
     }
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
-  }, [showDanggeunPanel, showCafePanel]);
+  }, [showDanggeunPanel, showCafePanel, showPersonalMarketingPanel]);
 
   // localStorage에서 최근 선택한 맘카페 5개 로드
   useEffect(() => {
@@ -715,6 +733,63 @@ export function HakjeomDetailPanel({
       // ignore
     }
   }, []);
+
+  // localStorage에서 사용자 추가한 개인마케팅 옵션 로드
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("hakjeom_custom_personal_marketing");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          setCustomPersonalMarketing(
+            parsed.filter(
+              (v) =>
+                typeof v === "string" &&
+                !PERSONAL_MARKETING_DEFAULT_OPTIONS.includes(v),
+            ),
+          );
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const persistCustomPersonalMarketing = (next: string[]) => {
+    try {
+      localStorage.setItem(
+        "hakjeom_custom_personal_marketing",
+        JSON.stringify(next),
+      );
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleAddPersonalMarketing = () => {
+    const name = personalMarketingAddInput.trim();
+    if (
+      !name ||
+      PERSONAL_MARKETING_DEFAULT_OPTIONS.includes(name) ||
+      customPersonalMarketing.includes(name)
+    ) {
+      return;
+    }
+    const next = [...customPersonalMarketing, name];
+    setCustomPersonalMarketing(next);
+    persistCustomPersonalMarketing(next);
+    setEditSourceMinor(name);
+    setPersonalMarketingAddInput("");
+    setShowPersonalMarketingAdd(false);
+  };
+
+  const handleDeletePersonalMarketing = (name: string) => {
+    if (!window.confirm(`"${name}"을(를) 삭제하시겠습니까?`)) return;
+    const next = customPersonalMarketing.filter((v) => v !== name);
+    setCustomPersonalMarketing(next);
+    persistCustomPersonalMarketing(next);
+    if (editSourceMinor === name) setEditSourceMinor("");
+  };
 
   // 카페 선택 시 최근 목록 갱신
   const pushRecentCafe = (name: string) => {
@@ -761,9 +836,13 @@ export function HakjeomDetailPanel({
     const counsel = parseCounselCheck(item.counsel_check);
     setEditCounselCheck(counsel.checks);
     setEditCounselCheckEtc(counsel.etc);
-    // 유입경로 비어있는데 상태가 지인-관련이면 자동으로 "지인소개"로 활성화
-    setEditSourceMajor(!major && isReferralStatus(item.status) ? "지인소개" : major);
-    setEditSourceMinor(minor);
+    // 유입경로 비어있는데 상태가 지인-관련이면 자동으로 개인마케팅 + 지인소개 sub 로 활성화
+    setEditSourceMajor(
+      !major && isReferralStatus(item.status) ? PERSONAL_MARKETING_KEY : major,
+    );
+    setEditSourceMinor(
+      !major && isReferralStatus(item.status) ? "지인소개" : minor,
+    );
     setEditResidence(item.residence ?? "");
     setEditSubjectCost(item.subject_cost ? String(item.subject_cost) : "");
     {
@@ -790,6 +869,7 @@ export function HakjeomDetailPanel({
     setEditName(item.name ?? "");
     setShowDanggeunPanel(false);
     setShowCafePanel(false);
+    setShowPersonalMarketingPanel(false);
     setCafeSearchQuery("");
   }, [item.id]);
 
@@ -813,32 +893,49 @@ export function HakjeomDetailPanel({
 
   const handleMajorSelect = (m: string) => {
     if (editSourceMajor === m) {
-      // 같은 카드 재클릭: 당근/맘카페는 sub-panel 토글, 그 외는 deselect
+      // 같은 카드 재클릭: 당근/맘카페/개인마케팅은 sub-panel 토글, 그 외는 deselect
       if (m === "당근") {
         setShowDanggeunPanel((v) => !v);
       } else if (m === "맘카페") {
         setShowCafePanel((v) => !v);
+      } else if (m === PERSONAL_MARKETING_KEY) {
+        setShowPersonalMarketingPanel((v) => !v);
       } else {
         setEditSourceMajor("");
         setEditSourceMinor("");
         setShowDanggeunPanel(false);
         setShowCafePanel(false);
+        setShowPersonalMarketingPanel(false);
       }
     } else {
       setEditSourceMajor(m);
       setEditSourceMinor("");
-      // 새 카드 선택: 당근/맘카페일 때만 sub-panel 열기
+      // 새 카드 선택: 당근/맘카페/개인마케팅일 때만 sub-panel 열기
       setShowDanggeunPanel(m === "당근");
       setShowCafePanel(m === "맘카페");
-      // 가이드: 지인소개 선택 시 이벤트 발사
-      if (m === "지인소개" && isDemoStudent) {
+      setShowPersonalMarketingPanel(m === PERSONAL_MARKETING_KEY);
+      // 가이드: 지인소개(개인마케팅) 선택 시 이벤트 발사
+      if (m === PERSONAL_MARKETING_KEY && isDemoStudent) {
         window.dispatchEvent(new CustomEvent("guide-referrer-set"));
       }
     }
   };
 
   const handleMinorSelect = (cafeName: string) => {
-    setEditSourceMinor((prev) => (prev === cafeName ? "" : cafeName));
+    setEditSourceMinor((prev) => {
+      const next = prev === cafeName ? "" : cafeName;
+      // 개인마케팅 컨텍스트에서 "지인소개" → 다른 옵션으로 전환 시
+      // 잔류하는 referral status 를 일반 카드의 기본값(상담대기)으로 리셋
+      if (
+        editSourceMajor === PERSONAL_MARKETING_KEY &&
+        prev === "지인소개" &&
+        next !== "지인소개" &&
+        isReferralStatus(editStatus)
+      ) {
+        setEditStatus("상담대기");
+      }
+      return next;
+    });
   };
 
   const handleAddCafe = async () => {
@@ -1352,13 +1449,16 @@ export function HakjeomDetailPanel({
                               </svg>
                             </span>
                           )}
-                          <span className={styles.referrerCardLabel}>{m}</span>
+                          <span className={styles.referrerCardLabel}>
+                            {SOURCE_MAJOR_LABEL[m] ?? m}
+                          </span>
                           {isActive && editSourceMinor && (
                             <span className={styles.referrerCardChip}>
                               {editSourceMinor}
                             </span>
                           )}
-                          {meta.type === "img" && meta.hasChevron && (
+                          {(meta.type === "img" || meta.type === "person") &&
+                            meta.hasChevron && (
                             <svg
                               className={styles.referrerChevron}
                               xmlns="http://www.w3.org/2000/svg"
@@ -1786,6 +1886,183 @@ export function HakjeomDetailPanel({
                             )}
                           </div>
                         )}
+                        {isActive &&
+                          m === PERSONAL_MARKETING_KEY &&
+                          showPersonalMarketingPanel && (
+                            <div className={styles.danggeunPopupWrap}>
+                              <div className={styles.danggeunPopupBox}>
+                                {PERSONAL_MARKETING_DEFAULT_OPTIONS.map(
+                                  (opt) => {
+                                    const isOptActive =
+                                      editSourceMinor === opt;
+                                    return (
+                                      <button
+                                        key={opt}
+                                        type="button"
+                                        className={styles.danggeunRadioRow}
+                                        onClick={() =>
+                                          handleMinorSelect(opt)
+                                        }
+                                      >
+                                        <span
+                                          className={`${styles.danggeunRadioCircle} ${isOptActive ? styles.danggeunRadioCircleActive : ""}`}
+                                        >
+                                          {isOptActive && (
+                                            <span
+                                              className={
+                                                styles.danggeunRadioDot
+                                              }
+                                            />
+                                          )}
+                                        </span>
+                                        <span
+                                          className={
+                                            styles.danggeunRadioLabel
+                                          }
+                                        >
+                                          {opt}
+                                        </span>
+                                      </button>
+                                    );
+                                  },
+                                )}
+                                {customPersonalMarketing.map((name) => {
+                                  const isOptActive =
+                                    editSourceMinor === name;
+                                  return (
+                                    <div
+                                      key={name}
+                                      className={
+                                        styles.danggeunRadioRowWithDelete
+                                      }
+                                    >
+                                      <button
+                                        type="button"
+                                        className={styles.danggeunRadioRow}
+                                        onClick={() =>
+                                          handleMinorSelect(name)
+                                        }
+                                      >
+                                        <span
+                                          className={`${styles.danggeunRadioCircle} ${isOptActive ? styles.danggeunRadioCircleActive : ""}`}
+                                        >
+                                          {isOptActive && (
+                                            <span
+                                              className={
+                                                styles.danggeunRadioDot
+                                              }
+                                            />
+                                          )}
+                                        </span>
+                                        <span
+                                          className={
+                                            styles.danggeunRadioLabel
+                                          }
+                                        >
+                                          {name}
+                                        </span>
+                                      </button>
+                                      <button
+                                        type="button"
+                                        className={styles.danggeunRowDelete}
+                                        onClick={() =>
+                                          handleDeletePersonalMarketing(name)
+                                        }
+                                        aria-label="삭제"
+                                      >
+                                        ✕
+                                      </button>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                              {showPersonalMarketingAdd ? (
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    gap: 6,
+                                    width: "100%",
+                                  }}
+                                >
+                                  <input
+                                    className={styles.danggeunAddInput}
+                                    value={personalMarketingAddInput}
+                                    onChange={(e) =>
+                                      setPersonalMarketingAddInput(
+                                        e.target.value,
+                                      )
+                                    }
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter")
+                                        handleAddPersonalMarketing();
+                                      if (e.key === "Escape") {
+                                        setPersonalMarketingAddInput("");
+                                        setShowPersonalMarketingAdd(false);
+                                      }
+                                    }}
+                                    placeholder="직접 추가"
+                                    autoFocus
+                                  />
+                                  <button
+                                    type="button"
+                                    className={styles.danggeunAddConfirm}
+                                    onClick={handleAddPersonalMarketing}
+                                  >
+                                    추가
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className={styles.danggeunAddCancel}
+                                    onClick={() => {
+                                      setPersonalMarketingAddInput("");
+                                      setShowPersonalMarketingAdd(false);
+                                    }}
+                                    aria-label="취소"
+                                    title="취소 (Esc)"
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className={styles.popupBottomRow}>
+                                  <button
+                                    type="button"
+                                    className={styles.danggeunAddBtn}
+                                    onClick={() =>
+                                      setShowPersonalMarketingAdd(true)
+                                    }
+                                  >
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      width="10"
+                                      height="10"
+                                      viewBox="0 0 10 10"
+                                      fill="none"
+                                    >
+                                      <path
+                                        d="M5.01945 0.635377C5.31741 0.636225 5.55854 0.878718 5.55784 1.17662L5.54996 4.44998L8.82367 4.44266C9.12124 4.44221 9.36333 4.68223 9.36432 4.97996C9.36503 5.2778 9.1243 5.52021 8.82649 5.5212L5.54714 5.52909L5.53869 8.84751C5.53774 9.14533 5.29532 9.38605 4.99748 9.38537C4.6998 9.38427 4.45838 9.14196 4.45909 8.84413L4.4681 5.53191L1.15553 5.54035C0.857899 5.54082 0.615317 5.30018 0.61432 5.00249C0.613632 4.70471 0.854956 4.4623 1.15271 4.46125L4.47036 4.45224L4.4788 1.1738C4.47964 0.876171 4.72158 0.634924 5.01945 0.635377Z"
+                                        fill="#0084FE"
+                                      />
+                                    </svg>
+                                    <span
+                                      className={styles.danggeunAddBtnText}
+                                    >
+                                      직접 추가
+                                    </span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className={styles.popupConfirmBtn}
+                                    onClick={() =>
+                                      setShowPersonalMarketingPanel(false)
+                                    }
+                                  >
+                                    선택완료
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          )}
                       </div>
                     );
                   })}
@@ -2021,8 +2298,13 @@ export function HakjeomDetailPanel({
               </div>
             </div>
 
-            {/* 상태 - 지인소개일 때 카드형 / 그 외 칩형 (지인 상태값이면 fallback) */}
-            {editSourceMajor === "지인소개" || isReferralStatus(editStatus) ? (
+            {/* 상태 - 개인마케팅 > 지인소개 선택 시 카드형 (시점미정/자진등록/미관심) */}
+            {/*   개인마케팅 컨텍스트에선 minor 로만 판단하여, 지인소개에서 다른 sub-option */}
+            {/*   으로 전환했을 때 referral 상태 카드가 잔류하지 않도록 한다.              */}
+            {/*   그 외(레거시 데이터 등)는 status 값 기준으로 카드형 노출.                */}
+            {(editSourceMajor === PERSONAL_MARKETING_KEY
+              ? editSourceMinor === "지인소개"
+              : isReferralStatus(editStatus)) ? (
               <div className={styles.referralStatusRow}>
                 <span className={styles.referralStatusLabel}>상태</span>
                 <div className={styles.referralStatusGrid}>
@@ -2030,7 +2312,7 @@ export function HakjeomDetailPanel({
                     [
                       {
                         status: "지인대기" as ConsultationStatus,
-                        label: "지인대기",
+                        label: "시점미정",
                         icon: (
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -2058,7 +2340,7 @@ export function HakjeomDetailPanel({
                       },
                       {
                         status: "지인등록" as ConsultationStatus,
-                        label: "지인등록",
+                        label: "자진등록",
                         icon: (
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -2082,7 +2364,7 @@ export function HakjeomDetailPanel({
                       },
                       {
                         status: "지인취소" as ConsultationStatus,
-                        label: "지인취소",
+                        label: "미관심",
                         icon: (
                           <svg
                             xmlns="http://www.w3.org/2000/svg"

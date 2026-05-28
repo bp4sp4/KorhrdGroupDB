@@ -224,6 +224,19 @@ export const HOPE_COURSE_CUSTOM = "직접입력";
 // 당근 기본 소재 옵션
 export const DANGGEUN_DEFAULT_OPTIONS = ["채팅", "소식", "대표전화", "폼"];
 
+// 개인마케팅(구 "지인소개") 기본 소재 옵션
+export const PERSONAL_MARKETING_DEFAULT_OPTIONS = [
+  "맘카페",
+  "최적블로그",
+  "지인소개",
+];
+
+// 개인마케팅 카드의 내부 식별자.
+// 기존 데이터/백엔드 필터(`click_source LIKE '지인소개%'` 등)와의 호환을 위해
+// 내부 value 는 "지인소개"를 그대로 사용하고, UI 라벨만 "개인마케팅"으로 노출한다.
+export const PERSONAL_MARKETING_KEY = "지인소개";
+export const PERSONAL_MARKETING_LABEL = "개인마케팅";
+
 export const SOURCE_MAJORS = [
   "당근",
   "맘카페",
@@ -236,10 +249,15 @@ export const SOURCE_MAJORS = [
   "기타",
 ];
 
+// 유입경로 카드 표시 라벨 (내부 value → 사용자에게 보여줄 라벨)
+export const SOURCE_MAJOR_LABEL: Record<string, string> = {
+  지인소개: PERSONAL_MARKETING_LABEL,
+};
+
 // 유입경로 카드 메타: 아이콘 타입과 화살표 표시 여부
 export type ReferrerCardMeta =
   | { type: "img"; src: string; hasChevron?: boolean }
-  | { type: "person" }
+  | { type: "person"; hasChevron?: boolean }
   | { type: "etc" };
 
 export const REFERRER_CARD_META: Record<string, ReferrerCardMeta> = {
