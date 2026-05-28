@@ -117,14 +117,24 @@ export async function GET(request: NextRequest) {
     )
   }
 
-  // 대상 사용자 정보
+  // 대상 사용자 정보 + 팀 (양식 분기용)
   const { data: targetUser } = await supabaseAdmin
     .from('app_users')
-    .select('id, display_name, position_id, department_id')
+    .select('id, display_name, position_id, department_id, team_id')
     .eq('id', userId)
     .maybeSingle()
   if (!targetUser) {
     return NextResponse.json({ error: '사용자를 찾을 수 없습니다.' }, { status: 404 })
+  }
+
+  let teamJournalForm: 'default' | 'academic' = 'default'
+  if (targetUser.team_id) {
+    const { data: team } = await supabaseAdmin
+      .from('teams')
+      .select('journal_form')
+      .eq('id', targetUser.team_id)
+      .maybeSingle()
+    if (team?.journal_form === 'academic') teamJournalForm = 'academic'
   }
 
   const [positionRes, departmentRes] = await Promise.all([
@@ -153,7 +163,7 @@ export async function GET(request: NextRequest) {
   // 1) 일지 본문
   const { data: journal } = await supabaseAdmin
     .from('work_journals')
-    .select('morning, afternoon, tomorrow, tasks, status, submitted_at, updated_at')
+    .select('morning, afternoon, tomorrow, tasks, issues, status, submitted_at, updated_at')
     .eq('user_id', userId)
     .eq('date', dateStr)
     .maybeSingle()
@@ -339,12 +349,55 @@ export async function GET(request: NextRequest) {
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count)
 
+  // 학사팀이면 이번주 목표도 fetch (app_settings 의 user.{id}.weekly_goal.{Monday})
+  let weeklyGoal:
+    | { id: string; date: string; text: string; done: boolean }[]
+    | null = null
+  if (teamJournalForm === 'academic') {
+    // 해당 date 가 속한 주의 월요일 계산
+    const d = new Date(`${dateStr}T00:00:00`)
+    const dow = d.getDay()
+    const offset = dow === 0 ? -6 : 1 - dow
+    const monday = new Date(d)
+    monday.setDate(d.getDate() + offset)
+    const my = monday.getFullYear()
+    const mm2 = String(monday.getMonth() + 1).padStart(2, '0')
+    const md = String(monday.getDate()).padStart(2, '0')
+    const weekKey = `user.${userId}.weekly_goal.${my}-${mm2}-${md}`
+    const { data: setting } = await supabaseAdmin
+      .from('app_settings')
+      .select('value')
+      .eq('key', weekKey)
+      .maybeSingle()
+    const v = setting?.value
+    if (Array.isArray(v)) {
+      weeklyGoal = v
+        .map((g) => {
+          if (!g || typeof g !== 'object') return null
+          const o = g as Record<string, unknown>
+          return {
+            id: typeof o.id === 'string' ? o.id : String(o.id ?? ''),
+            date: typeof o.date === 'string' ? o.date : '',
+            text: typeof o.text === 'string' ? o.text : '',
+            done: Boolean(o.done),
+          }
+        })
+        .filter(
+          (g): g is { id: string; date: string; text: string; done: boolean } =>
+            g !== null,
+        )
+    } else {
+      weeklyGoal = []
+    }
+  }
+
   return NextResponse.json({
     user: {
       id: targetUser.id,
       display_name: targetUser.display_name,
       position_name: positionRes.data?.name ?? null,
       department_name: departmentRes.data?.name ?? null,
+      team_journal_form: teamJournalForm,
     },
     journal: journal ?? null,
     stats,
@@ -357,5 +410,6 @@ export async function GET(request: NextRequest) {
       company: toSorted(company),
       direct: toSorted(direct),
     },
+    weeklyGoal,
   })
 }

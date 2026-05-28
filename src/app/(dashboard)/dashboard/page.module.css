@@ -325,15 +325,15 @@
 /* 봇 — 진행 바 끝에 떠다님 */
 .attBotVideo {
   position: absolute;
-  right: -36px;
-  top: -35px;
+  /* left 는 인라인 style 로 진행률(pctFill)에 따라 주입됨 (attProgressWrap 기준) */
+  top: 21px;
   width: 68px;
   height: 68px;
   aspect-ratio: 1 / 1;
   border-radius: 50%;
   object-fit: cover;
   box-shadow: 0 4px 16px #0083fe59;
-
+  z-index: 2;
   pointer-events: none;
 }
 
@@ -742,6 +742,7 @@
   font-family: Pretendard, inherit;
   font-variant-numeric: tabular-nums;
   line-height: 1.2;
+  width: 65px;
 }
 
 .goalWeekAmountValue {

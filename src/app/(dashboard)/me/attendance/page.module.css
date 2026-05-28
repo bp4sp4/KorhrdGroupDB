@@ -532,8 +532,8 @@
 
 .legalBarVideo {
   position: absolute;
-  right: -56px;
-  top: 50%;
+  /* left 는 인라인 style 로 진행률에 따라 주입됨 (legalBarWrap 기준) */
+  top: 6px;
   transform: translateY(-50%);
   width: 80px;
   height: 80px;
@@ -541,6 +541,7 @@
   object-fit: cover;
   box-shadow: 0 4px 12px rgba(49, 130, 246, 0.35);
   pointer-events: none;
+  z-index: 2;
 }
 
 .legalBottom {

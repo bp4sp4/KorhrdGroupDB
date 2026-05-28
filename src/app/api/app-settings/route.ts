@@ -2,17 +2,23 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAuthFull } from '@/lib/auth/requireAuth'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 
-// 인증 사용자 누구나 upsert 가능한 화이트리스트 key 패턴.
+// 인증 사용자 누구나 upsert 가능한 화이트리스트 key 패턴 — 본인 user_id 일치 시만 허용.
 // (master-admin 전용 키는 /api/admin/app-settings 에서만 갱신)
-// dashboard.monthly_goal.{user_id}.{YYYY-MM} — 본인 user_id 와 일치할 때만 허용
-const USER_GOAL_KEY_RE = /^dashboard\.monthly_goal\.(\d+)\.\d{4}-\d{2}$/
+//
+// 1) dashboard.monthly_goal.{user_id}.{YYYY-MM} — 대시보드 이번달 목표
+// 2) user.{user_id}.weekly_goal.{YYYY-MM-DD}   — 학사팀 등 이번주 목표
+//    (YYYY-MM-DD = 그 주의 월요일. 월요일마다 새 키가 되어 자동 초기화)
+const USER_WRITABLE_KEY_PATTERNS: RegExp[] = [
+  /^dashboard\.monthly_goal\.(\d+)\.\d{4}-\d{2}$/,
+  /^user\.(\d+)\.weekly_goal\.\d{4}-\d{2}-\d{2}$/,
+]
 
 function isUserWritableKey(key: string, currentUserId: number | null): boolean {
-  const m = key.match(USER_GOAL_KEY_RE)
-  if (m && currentUserId != null && parseInt(m[1], 10) === currentUserId) {
-    return true
-  }
-  return false
+  if (currentUserId == null) return false
+  return USER_WRITABLE_KEY_PATTERNS.some((re) => {
+    const m = key.match(re)
+    return !!m && parseInt(m[1], 10) === currentUserId
+  })
 }
 
 // GET /api/app-settings?key=xxx

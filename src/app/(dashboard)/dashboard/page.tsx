@@ -498,21 +498,8 @@ export default function DashboardPage() {
                   className={`${styles.attProgressFill} ${fillCls}`}
                   style={{
                     width: `${pctFill}%`,
-                    minWidth: isWorking || isDone ? 56 : 0,
                   }}
-                >
-                  {(isWorking || isDone) && (
-                    <video
-                      key={isWorking ? "work" : "finish"}
-                      className={styles.attBotVideo}
-                      src={isDone ? "/finish.mp4" : "/work.mp4"}
-                      autoPlay
-                      loop
-                      muted
-                      playsInline
-                    />
-                  )}
-                </div>
+                />
                 {isOver && (
                   <div
                     className={styles.attProgressOver}
@@ -524,6 +511,18 @@ export default function DashboardPage() {
                   />
                 )}
               </div>
+              {(isWorking || isDone) && (
+                <video
+                  key={isWorking ? "work" : "finish"}
+                  className={styles.attBotVideo}
+                  src={isDone ? "/finish.mp4" : "/work.mp4"}
+                  style={{ left: `calc(${pctFill}% - 32px)` }}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                />
+              )}
               {/* 0h / 40h / 52h 라벨 */}
               <div className={styles.attMarkerLabel} style={{ left: 0 }}>
                 0h

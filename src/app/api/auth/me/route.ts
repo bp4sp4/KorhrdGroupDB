@@ -17,7 +17,7 @@ export async function GET() {
     // app_users에서 role 조회 (email로 매칭)
     const { data: appUser } = await supabaseAdmin
       .from('app_users')
-      .select('id, role, display_name, ref_code, department_id, position_id, is_division_admin')
+      .select('id, role, display_name, ref_code, department_id, position_id, is_division_admin, team_id')
       .eq('username', user.email)
       .single();
 
@@ -41,6 +41,21 @@ export async function GET() {
         .maybeSingle()
       departmentCode = department?.code ?? null
       departmentName = department?.name ?? null
+    }
+
+    // sub-team 정보 (학사팀 등) + 업무일지 양식 식별자
+    let teamCode: string | null = null
+    let teamName: string | null = null
+    let teamJournalForm: string = 'default'
+    if (appUser?.team_id) {
+      const { data: team } = await supabaseAdmin
+        .from('teams')
+        .select('code, name, journal_form')
+        .eq('id', appUser.team_id)
+        .maybeSingle()
+      teamCode = team?.code ?? null
+      teamName = team?.name ?? null
+      teamJournalForm = (team?.journal_form as string | undefined) ?? 'default'
     }
 
     // master-admin 판정은 DB role 컬럼 기반
@@ -103,6 +118,10 @@ export async function GET() {
       departmentName,
       positionId: appUser?.position_id ?? null,
       positionName,
+      teamId: appUser?.team_id ?? null,
+      teamCode,
+      teamName,
+      teamJournalForm,
       isDivisionAdmin: !!appUser?.is_division_admin,
       basePermissions,
       overridePermissions,

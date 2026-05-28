@@ -5,6 +5,8 @@ import { supabaseAdmin } from '@/lib/supabase/admin'
 type Task = { id: string; text: string; done: boolean }
 type JournalRow = { id: string; category: string; detail: string }
 type Tomorrow = { id: string; text: string }
+// 학사팀 전용
+type WeeklyGoal = { id: string; date: string; text: string; done: boolean }
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 
@@ -52,6 +54,23 @@ function sanitizeTomorrow(input: unknown): Tomorrow[] {
     .filter((t): t is Tomorrow => t !== null)
 }
 
+// 학사팀 전용 — 이번주 목표
+function sanitizeWeeklyGoal(input: unknown): WeeklyGoal[] {
+  if (!Array.isArray(input)) return []
+  return input
+    .map((r) => {
+      if (!r || typeof r !== 'object') return null
+      const o = r as Record<string, unknown>
+      return {
+        id: String(o.id ?? ''),
+        date: typeof o.date === 'string' ? o.date : '',
+        text: typeof o.text === 'string' ? o.text : '',
+        done: Boolean(o.done),
+      }
+    })
+    .filter((g): g is WeeklyGoal => g !== null)
+}
+
 // GET /api/work-journal?date=YYYY-MM-DD — 본인 해당 날짜 일지 조회
 // - 일지 존재: { journal }
 // - 일지 없음: { journal: null, carryOverTasks?, carryOverFrom? }
@@ -67,7 +86,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await supabaseAdmin
     .from('work_journals')
-    .select('id, date, tasks, morning, afternoon, tomorrow, status, submitted_at, updated_at')
+    .select('id, date, tasks, morning, afternoon, tomorrow, weekly_goal, issues, status, submitted_at, updated_at')
     .eq('user_id', appUser.id)
     .eq('date', date)
     .maybeSingle()
@@ -129,6 +148,24 @@ export async function PUT(request: NextRequest) {
 
   const status = (body as Record<string, unknown>).status === 'submitted' ? 'submitted' : 'draft'
 
+  // 기존 일지가 이미 제출(submitted_at) 되어 있으면 최초 제출 시점을 보존한다.
+  // - 첫 제출: submitted_at = now
+  // - 저장하기/다시 제출(이미 제출된 일지의 재저장): submitted_at 그대로 유지
+  //   → updated_at 만 갱신되어 (admin 화면에서) "제출 완료 - 수정됨" 뱃지가 노출됨
+  // - draft 로 되돌리는 경우: submitted_at 은 그대로 유지(이력 보존), status 만 draft
+  const { data: existing } = await supabaseAdmin
+    .from('work_journals')
+    .select('submitted_at')
+    .eq('user_id', appUser.id)
+    .eq('date', date)
+    .maybeSingle()
+
+  const nowIso = new Date().toISOString()
+  const resolvedSubmittedAt =
+    status === 'submitted'
+      ? (existing?.submitted_at ?? nowIso)
+      : (existing?.submitted_at ?? null)
+
   const payload = {
     user_id: appUser.id,
     date,
@@ -136,8 +173,19 @@ export async function PUT(request: NextRequest) {
     morning: sanitizeRows((body as Record<string, unknown>).morning),
     afternoon: sanitizeRows((body as Record<string, unknown>).afternoon),
     tomorrow: sanitizeTomorrow((body as Record<string, unknown>).tomorrow),
+    // 학사팀 전용 — 일반 양식에서는 undefined 이므로 null 로 저장
+    weekly_goal:
+      'weekly_goal' in (body as Record<string, unknown>)
+        ? sanitizeWeeklyGoal((body as Record<string, unknown>).weekly_goal)
+        : null,
+    issues:
+      'issues' in (body as Record<string, unknown>)
+        ? sanitizeRows((body as Record<string, unknown>).issues)
+        : null,
     status,
-    submitted_at: status === 'submitted' ? new Date().toISOString() : null,
+    submitted_at: resolvedSubmittedAt,
+    // updated_at 을 명시적으로 갱신해 "수정됨" 뱃지 계산 (updated_at > submitted_at) 이 동작하도록
+    updated_at: nowIso,
   }
 
   const { data, error } = await supabaseAdmin

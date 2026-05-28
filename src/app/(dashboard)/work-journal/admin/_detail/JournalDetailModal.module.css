@@ -31,17 +31,24 @@
   position: absolute;
   top: 24px;
   right: 24px;
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
+  aspect-ratio: 1 / 1;
+  padding: 0;
   border: none;
   background: transparent;
   cursor: pointer;
-  color: #8d99a5;
-  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   z-index: 1;
+  transition: opacity 0.12s;
 }
 .closeBtn:hover {
-  color: #4e5968;
+  opacity: 0.7;
+}
+.closeBtn:hover svg path {
+  fill: #4e5968;
 }
 
 .loading,
@@ -700,6 +707,255 @@
   background: #d9d9d9;
   overflow: hidden;
   position: relative;
+}
+
+/* ─── 학사팀 모달 우측 — 공통 카드 ───────────────────────── */
+.academicCard {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px;
+  background: #fff;
+  border: 1px solid #e8edf2;
+  border-radius: 14px;
+  align-self: stretch;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.academicCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.academicCardHeaderLeft {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.academicCardHeaderIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #e6f1ff 0%, #d4e7ff 100%);
+  color: #0084fe;
+  flex-shrink: 0;
+}
+
+.academicCardHeaderIconWarn {
+  background: linear-gradient(135deg, #fff1e6 0%, #ffe0c2 100%);
+  color: #f08a3a;
+}
+
+.academicCardTitle {
+  color: #1f2937;
+  font-family: Pretendard, inherit;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.academicCardSub {
+  color: #8d99a5;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: -0.1px;
+}
+
+.academicCardCount {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: #f0f6ff;
+  color: #0084fe;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.academicProgressBar {
+  display: block;
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: #eef2f7;
+  overflow: hidden;
+}
+
+.academicProgressFill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #0084fe 0%, #5cb0ff 100%);
+  transition: width 0.4s ease;
+}
+
+.academicEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 28px 0;
+  text-align: center;
+  color: #8d99a5;
+  font-family: Pretendard, inherit;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.academicEmptyIcon {
+  color: #c4ccd5;
+}
+
+/* 이번주 목표 읽기 전용 리스트 */
+.weeklyGoalReadList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.weeklyGoalReadItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.weeklyGoalReadItem:hover {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+}
+
+.weeklyGoalReadItemDone {
+  background: #f0f6ff;
+  border-color: #d6e7ff;
+}
+
+.weeklyGoalReadItemDone:hover {
+  background: #e6f0ff;
+  border-color: #c2dafc;
+}
+
+.weeklyGoalReadCheckIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.iconDone {
+  color: #0084fe;
+}
+
+.iconUndone {
+  color: #c4ccd5;
+}
+
+.weeklyGoalReadBody {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex: 1 0 0;
+  min-width: 0;
+}
+
+.weeklyGoalReadText {
+  color: #1f2937;
+  font-family: Pretendard, inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  word-break: keep-all;
+  min-width: 0;
+}
+
+.weeklyGoalReadItemDone .weeklyGoalReadText {
+  text-decoration: line-through;
+  color: #8d99a5;
+  font-weight: 500;
+}
+
+.weeklyGoalReadDate {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: #fff;
+  border: 1px solid #e5e8eb;
+  color: #6b7684;
+  font-family: Pretendard, inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.weeklyGoalReadItemDone .weeklyGoalReadDate {
+  background: #e0eeff;
+  border-color: #c7dffd;
+  color: #0084fe;
+}
+
+/* 이슈 및 조치사항 읽기 전용 리스트 */
+.issuesReadList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.issuesReadItem {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  background: #fff8f1;
+  border-radius: 8px;
+}
+
+.issuesReadCategory {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  padding: 3px 9px;
+  border-radius: 6px;
+  background: #fff;
+  border: 1px solid #ffd9bd;
+  color: #b8580f;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: -0.1px;
+}
+
+.issuesReadDetail {
+  color: #4e5968;
+  font-family: Pretendard, inherit;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.55;
+  word-break: keep-all;
 }
 
 .srcBarSeg {

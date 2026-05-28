@@ -4,12 +4,46 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { DragEvent as ReactDragEvent } from "react";
 import { ChevronDown, ChevronRight, ChevronUp, Plus } from "lucide-react";
 import styles from "./page.module.css";
+import {
+  JOURNAL_FORM_TYPES,
+  normalizeJournalForm,
+  type JournalFormType,
+} from "@/lib/work-journal/formTypes";
 
 type Task = { id: string; text: string; done: boolean };
 type JournalRow = { id: string; category: string; detail: string };
 type Tomorrow = { id: string; text: string };
+// 학사팀(academic 양식) 전용
+type WeeklyGoal = { id: string; date: string; text: string; done: boolean };
 
 const DOW = ["일", "월", "화", "수", "목", "금", "토"];
+
+// 주어진 날짜가 속한 주의 월요일을 YYYY-MM-DD 로 반환 (KST 로컬, 월~일 기준)
+function weekMondayOf(isoDate: string): string {
+  const d = new Date(`${isoDate}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return isoDate;
+  const dow = d.getDay(); // 0=일, 1=월, ...
+  // 월요일까지 빼야 할 일수: 일요일(0) 이면 -6, 월요일(1) 이면 0, 화요일(2) 이면 -1 ...
+  const offset = dow === 0 ? -6 : 1 - dow;
+  const monday = new Date(d);
+  monday.setDate(d.getDate() + offset);
+  const y = monday.getFullYear();
+  const m = String(monday.getMonth() + 1).padStart(2, "0");
+  const dd = String(monday.getDate()).padStart(2, "0");
+  return `${y}-${m}-${dd}`;
+}
+
+// 학사팀 이번주 목표 날짜 — YYYY-MM-DD → "-MM.DD(요일)" 포맷, 빈값/비ISO 는 원본 또는 "미정"
+function formatGoalDate(value: string): string {
+  const v = (value ?? "").trim();
+  if (!v) return "미정";
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return v; // 자유 입력값(레거시) 그대로
+  const d = new Date(`${v}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return v;
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `-${mm}.${dd}(${DOW[d.getDay()]})`;
+}
 
 function toISODate(d: Date) {
   const yyyy = d.getFullYear();
@@ -128,9 +162,159 @@ export default function WorkJournalPage() {
   const [afternoon, setAfternoon] = useState<JournalRow[]>([]);
   const [tomorrow, setTomorrow] = useState<Tomorrow[]>([]);
 
+  // 팀별 업무일지 양식 식별자 — teams.journal_form 기반
+  const [journalForm, setJournalForm] = useState<JournalFormType>(
+    JOURNAL_FORM_TYPES.DEFAULT,
+  );
+  const isAcademic = journalForm === JOURNAL_FORM_TYPES.ACADEMIC;
+  // 본인 user_id — 주 단위 weekly_goal key 구성에 사용
+  const [userId, setUserId] = useState<number | null>(null);
+  const [weeklyGoal, setWeeklyGoal] = useState<WeeklyGoal[]>([]);
+  const [issues, setIssues] = useState<JournalRow[]>([]);
+  const [issuesOpen, setIssuesOpen] = useState(true);
+
+  // 학사팀 — 이번주 목표 설정 모달
+  const [goalModalOpen, setGoalModalOpen] = useState(false);
+  const [tempGoals, setTempGoals] = useState<WeeklyGoal[]>([]);
+  const [goalSaving, setGoalSaving] = useState(false);
+  const openGoalModal = () => {
+    // 깊은 복사 후 모달에서 편집
+    setTempGoals(weeklyGoal.map((g) => ({ ...g })));
+    setGoalModalOpen(true);
+  };
+  const closeGoalModal = () => setGoalModalOpen(false);
+
+  // weeklyGoal 의 영속 key — 그 주의 월요일 기준 (월요일이 바뀌면 새 키 = 자동 리셋)
+  const weeklyGoalKey =
+    userId != null
+      ? `user.${userId}.weekly_goal.${weekMondayOf(date)}`
+      : null;
+
+  const saveGoalModal = async () => {
+    if (!weeklyGoalKey) {
+      alert("사용자 정보를 불러오는 중입니다.");
+      return;
+    }
+    // 빈 행 정리
+    const cleaned = tempGoals.filter(
+      (g) => g.date.trim() !== "" || g.text.trim() !== "",
+    );
+    setGoalSaving(true);
+    try {
+      const res = await fetch("/api/app-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: weeklyGoalKey, value: cleaned }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(err.error ?? "저장에 실패했습니다.");
+        return;
+      }
+      setWeeklyGoal(cleaned);
+      setGoalModalOpen(false);
+    } finally {
+      setGoalSaving(false);
+    }
+  };
+  const updateTempGoal = (id: string, patch: Partial<WeeklyGoal>) =>
+    setTempGoals((prev) =>
+      prev.map((g) => (g.id === id ? { ...g, ...patch } : g)),
+    );
+  const addTempGoal = () =>
+    setTempGoals((prev) => [
+      ...prev,
+      { id: uid(), date: "", text: "", done: false },
+    ]);
+  const removeTempGoal = (id: string) =>
+    setTempGoals((prev) => prev.filter((g) => g.id !== id));
+
+  // 본인 팀 양식 + 사용자 id 조회
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/auth/me", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (cancelled) return;
+        setJournalForm(normalizeJournalForm(d?.teamJournalForm));
+        if (typeof d?.id === "number") setUserId(d.id);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // 학사팀 — 이번주 목표 fetch (주 단위 key, 월요일 바뀌면 자동 새 키 = 자동 초기화)
+  useEffect(() => {
+    if (!isAcademic || !weeklyGoalKey) return;
+    let cancelled = false;
+    fetch(`/api/app-settings?key=${encodeURIComponent(weeklyGoalKey)}`, {
+      cache: "no-store",
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (cancelled) return;
+        const v = data?.value;
+        if (Array.isArray(v)) {
+          // 안전 정규화
+          const goals: WeeklyGoal[] = v
+            .map((g) => {
+              if (!g || typeof g !== "object") return null;
+              const o = g as Record<string, unknown>;
+              return {
+                id: typeof o.id === "string" ? o.id : uid(),
+                date: typeof o.date === "string" ? o.date : "",
+                text: typeof o.text === "string" ? o.text : "",
+                done: Boolean(o.done),
+              };
+            })
+            .filter((g): g is WeeklyGoal => g !== null);
+          setWeeklyGoal(goals);
+        } else {
+          setWeeklyGoal([]);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [isAcademic, weeklyGoalKey]);
+
+  // 체크 토글도 즉시 저장 (낙관적 UI + persist)
+  useEffect(() => {
+    if (!isAcademic || !weeklyGoalKey) return;
+    // 초기 빈 상태에서 마운트 직후 저장 안 함
+    if (weeklyGoal.length === 0) return;
+    const t = setTimeout(() => {
+      fetch("/api/app-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: weeklyGoalKey, value: weeklyGoal }),
+      }).catch(() => {});
+    }, 400);
+    return () => clearTimeout(t);
+  }, [isAcademic, weeklyGoalKey, weeklyGoal]);
+
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<"draft" | "submitted" | null>(null);
+
+  // 제출 완료된 일지의 수정 모드 — true 일 때만 form 편집 가능
+  const [isEditing, setIsEditing] = useState(false);
+  // 수정 후 저장(저장하기)했지만 아직 "다시 제출" 하지 않은 상태 — 빨간 [다시 제출] 노출
+  const [hasEdits, setHasEdits] = useState(false);
+  // 수정 시작 시점의 스냅샷 — 취소 시 복원에 사용
+  const [snapshot, setSnapshot] = useState<{
+    tasks: Task[];
+    morning: JournalRow[];
+    afternoon: JournalRow[];
+    tomorrow: Tomorrow[];
+    issues: JournalRow[];
+  } | null>(null);
+
+  // status === "submitted" 이면서 편집 중이 아니면 잠금
+  const isLocked = status === "submitted" && !isEditing;
 
   const [stats, setStats] = useState<{
     totalInquiries: number;
@@ -176,6 +360,10 @@ export default function WorkJournalPage() {
   // 날짜 변경 시 해당 일자 일지 로드
   useEffect(() => {
     let cancelled = false;
+    // 날짜가 바뀌면 편집 모드/저장 직후 표시 초기화
+    setIsEditing(false);
+    setSnapshot(null);
+    setHasEdits(false);
     const load = async () => {
       setLoading(true);
       try {
@@ -198,6 +386,8 @@ export default function WorkJournalPage() {
           setMorning(Array.isArray(j.morning) ? j.morning : []);
           setAfternoon(Array.isArray(j.afternoon) ? j.afternoon : []);
           setTomorrow(Array.isArray(j.tomorrow) ? j.tomorrow : []);
+          // weeklyGoal 은 별도 app_settings 로 fetch (주 단위 key) — 여기선 처리하지 않음
+          setIssues(Array.isArray(j.issues) ? (j.issues as JournalRow[]) : []);
           setStatus(j.status ?? "draft");
         } else {
           // 새 일지 — 이월 데이터로 시작
@@ -205,6 +395,8 @@ export default function WorkJournalPage() {
           setMorning([]);
           setAfternoon([]);
           setTomorrow([]);
+          // weeklyGoal 은 별도 fetch
+          setIssues([]);
           setStatus(null);
         }
       } finally {
@@ -223,30 +415,47 @@ export default function WorkJournalPage() {
       prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t)),
     );
 
-  const updateTaskText = (id: string, text: string) =>
+  const updateTaskText = (id: string, text: string) => {
     setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, text } : t)));
+    // 빈 슬롯에서 첫 글자 입력 시 isEmpty 가 false 로 바뀌면서
+    // 조건 `isEditing || isEmpty` 가 false 가 되어 textarea 가 div 로 교체되고
+    // 커서가 풀리는 문제를 방지하기 위해 editing 상태를 명시적으로 유지한다.
+    if (text.length > 0) setEditingTaskId(id);
+  };
 
   const removeTask = (id: string) =>
     setTasks((prev) => prev.filter((t) => t.id !== id));
 
+  const pickRowSetter = (section: "morning" | "afternoon" | "issues") => {
+    if (section === "morning") return setMorning;
+    if (section === "afternoon") return setAfternoon;
+    return setIssues;
+  };
+
   const updateRow = (
-    section: "morning" | "afternoon",
+    section: "morning" | "afternoon" | "issues",
     id: string,
     patch: Partial<JournalRow>,
   ) => {
-    const setter = section === "morning" ? setMorning : setAfternoon;
+    const setter = pickRowSetter(section);
     setter((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
   };
 
-  const addRow = (section: "morning" | "afternoon") => {
-    const setter = section === "morning" ? setMorning : setAfternoon;
+  const addRow = (section: "morning" | "afternoon" | "issues") => {
+    const setter = pickRowSetter(section);
     setter((prev) => [...prev, { id: uid(), category: "", detail: "" }]);
   };
 
-  const removeRow = (section: "morning" | "afternoon", id: string) => {
-    const setter = section === "morning" ? setMorning : setAfternoon;
+  const removeRow = (section: "morning" | "afternoon" | "issues", id: string) => {
+    const setter = pickRowSetter(section);
     setter((prev) => prev.filter((r) => r.id !== id));
   };
+
+  // ── 학사팀 — 이번주 목표 (체크박스만 카드에서 직접 토글, 나머지는 모달) ──
+  const toggleWeeklyGoal = (id: string) =>
+    setWeeklyGoal((prev) =>
+      prev.map((g) => (g.id === id ? { ...g, done: !g.done } : g)),
+    );
 
   const updateTomorrow = (id: string, text: string) =>
     setTomorrow((prev) => prev.map((t) => (t.id === id ? { ...t, text } : t)));
@@ -276,6 +485,10 @@ export default function WorkJournalPage() {
       // 자동으로 추가된 마지막 빈 슬롯은 저장에서 제외
       const cleanedTasks = tasks.filter((t) => t.text.trim() !== "");
       const cleanedTomorrow = tomorrow.filter((t) => t.text.trim() !== "");
+      // 학사팀 — 빈 issue 행 제외 (weekly_goal 은 별도 app_settings 로 저장)
+      const cleanedIssues = issues.filter(
+        (r) => r.category.trim() !== "" || r.detail.trim() !== "",
+      );
 
       const res = await fetch("/api/work-journal", {
         method: "PUT",
@@ -286,6 +499,8 @@ export default function WorkJournalPage() {
           morning,
           afternoon,
           tomorrow: cleanedTomorrow,
+          // 학사팀이면 issues 함께 저장. weekly_goal 은 주 단위 별도 저장(app_settings)
+          ...(isAcademic ? { issues: cleanedIssues } : {}),
           status: nextStatus,
         }),
       });
@@ -305,6 +520,46 @@ export default function WorkJournalPage() {
   const handleSubmit = () => {
     if (!confirm("업무일지를 제출하시겠습니까?")) return;
     persist("submitted");
+  };
+
+  // 수정하기 — 잠금 해제 + 현재 상태 스냅샷 (취소 시 복원용)
+  const handleEdit = () => {
+    setSnapshot({
+      tasks: tasks.map((t) => ({ ...t })),
+      morning: morning.map((r) => ({ ...r })),
+      afternoon: afternoon.map((r) => ({ ...r })),
+      tomorrow: tomorrow.map((t) => ({ ...t })),
+      issues: issues.map((r) => ({ ...r })),
+    });
+    setIsEditing(true);
+  };
+
+  // 취소 — 스냅샷으로 복원 후 잠금 복귀
+  const handleCancel = () => {
+    if (snapshot) {
+      setTasks(snapshot.tasks);
+      setMorning(snapshot.morning);
+      setAfternoon(snapshot.afternoon);
+      setTomorrow(snapshot.tomorrow);
+      setIssues(snapshot.issues);
+    }
+    setSnapshot(null);
+    setIsEditing(false);
+  };
+
+  // 저장하기 — 제출 상태 유지하며 저장 후 잠금 복귀, "다시 제출" 노출용 hasEdits=true
+  const handleSave = async () => {
+    await persist("submitted");
+    setSnapshot(null);
+    setIsEditing(false);
+    setHasEdits(true);
+  };
+
+  // 다시 제출 — 변경분을 확정 제출, hasEdits 리셋해서 단일 [수정하기] 로 복귀
+  const handleResubmit = async () => {
+    if (!confirm("수정한 내용을 다시 제출하시겠습니까?")) return;
+    await persist("submitted");
+    setHasEdits(false);
   };
 
   // 오늘의 업무 — 편집 중인 task id (편집 모드에서만 textarea 표시, 그 외엔 div 표시 → 어디서나 드래그 가능)
@@ -528,7 +783,7 @@ export default function WorkJournalPage() {
   return (
     <div className={styles.app}>
       <div className={styles.container}>
-        {/* ── 상단 stats 행 ──────────────────────────────── */}
+        {/* ── 상단 행 (학사팀은 stats 자리에 이번주 목표 바 표시) ─── */}
         <div className={styles.topRow}>
           {/* 날짜 카드 */}
           <div className={styles.dateCard}>
@@ -556,7 +811,87 @@ export default function WorkJournalPage() {
             </div>
           </div>
 
-          {/* 4 stat 합쳐진 하나의 카드 (mock 데이터) */}
+          {/* 학사팀 — 이번주 목표 바 (stats 자리) */}
+          {isAcademic && (
+            <div className={styles.weeklyGoalBar}>
+              {/* 좌측 — 제목 + 목표 설정 버튼 */}
+              <div className={styles.weeklyGoalLeft}>
+                <span className={styles.weeklyGoalTitle}>이번주 목표</span>
+                <button
+                  type="button"
+                  className={styles.weeklyGoalSettingBtn}
+                  onClick={openGoalModal}
+                  title="목표 설정"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M13.2663 8.4396C13.1594 8.31795 13.1004 8.16154 13.1004 7.9996C13.1004 7.83767 13.1594 7.68126 13.2663 7.5596L14.1196 6.5996C14.2136 6.49472 14.272 6.36274 14.2864 6.22261C14.3008 6.08248 14.2704 5.9414 14.1996 5.8196L12.8663 3.51294C12.7962 3.39129 12.6895 3.29486 12.5614 3.2374C12.4333 3.17993 12.2904 3.16438 12.1529 3.19294L10.8996 3.44627C10.7401 3.47922 10.5741 3.45266 10.4329 3.3716C10.2916 3.29055 10.1849 3.16059 10.1329 3.00627L9.72627 1.78627C9.68155 1.65386 9.59634 1.53885 9.48269 1.4575C9.36904 1.37615 9.2327 1.33258 9.09294 1.33294H6.42627C6.28089 1.32535 6.13703 1.36556 6.01665 1.44741C5.89627 1.52927 5.80599 1.64828 5.7596 1.78627L5.38627 3.00627C5.33427 3.16059 5.22759 3.29055 5.08635 3.3716C4.94511 3.45266 4.77908 3.47922 4.6196 3.44627L3.33294 3.19294C3.20264 3.17453 3.06981 3.19509 2.95117 3.25203C2.83254 3.30898 2.73341 3.39976 2.66627 3.51294L1.33294 5.8196C1.26038 5.94004 1.22775 6.08033 1.23973 6.22042C1.2517 6.36051 1.30766 6.49323 1.39961 6.5996L2.24627 7.5596C2.35315 7.68126 2.41209 7.83767 2.41209 7.9996C2.41209 8.16154 2.35315 8.31795 2.24627 8.4396L1.39961 9.3996C1.30766 9.50598 1.2517 9.6387 1.23973 9.77879C1.22775 9.91888 1.26038 10.0592 1.33294 10.1796L2.66627 12.4863C2.73634 12.6079 2.84302 12.7044 2.97111 12.7618C3.0992 12.8193 3.24215 12.8348 3.37961 12.8063L4.63294 12.5529C4.79242 12.52 4.95844 12.5465 5.09968 12.6276C5.24092 12.7087 5.34761 12.8386 5.39961 12.9929L5.80627 14.2129C5.85266 14.3509 5.94294 14.4699 6.06332 14.5518C6.1837 14.6337 6.32756 14.6739 6.47294 14.6663H9.1396C9.27937 14.6666 9.41571 14.6231 9.52936 14.5417C9.64301 14.4604 9.72821 14.3454 9.77294 14.2129L10.1796 12.9929C10.2316 12.8386 10.3383 12.7087 10.4795 12.6276C10.6208 12.5465 10.7868 12.52 10.9463 12.5529L12.1996 12.8063C12.3371 12.8348 12.48 12.8193 12.6081 12.7618C12.7362 12.7044 12.8429 12.6079 12.9129 12.4863L14.2463 10.1796C14.3171 10.0578 14.3474 9.91673 14.3331 9.7766C14.3187 9.63647 14.2603 9.50449 14.1663 9.3996L13.2663 8.4396ZM12.2729 9.33294L12.8063 9.93294L11.9529 11.4129L11.1663 11.2529C10.6861 11.1548 10.1867 11.2364 9.76267 11.4821C9.33868 11.7279 9.0197 12.1208 8.86627 12.5863L8.61294 13.3329H6.90627L6.66627 12.5729C6.51284 12.1075 6.19386 11.7146 5.76988 11.4688C5.34589 11.223 4.84642 11.1415 4.36627 11.2396L3.57961 11.3996L2.71294 9.92627L3.24627 9.32627C3.57424 8.95959 3.75556 8.48489 3.75556 7.99294C3.75556 7.50098 3.57424 7.02629 3.24627 6.6596L2.71294 6.0596L3.56627 4.59294L4.35294 4.75294C4.83309 4.85109 5.33256 4.76953 5.75654 4.52374C6.18053 4.27795 6.49951 3.88504 6.65294 3.4196L6.90627 2.66627H8.61294L8.86627 3.42627C9.0197 3.89171 9.33868 4.28462 9.76267 4.5304C10.1867 4.77619 10.6861 4.85775 11.1663 4.7596L11.9529 4.5996L12.8063 6.0796L12.2729 6.67961C11.9486 7.04544 11.7696 7.51739 11.7696 8.00627C11.7696 8.49515 11.9486 8.9671 12.2729 9.33294ZM7.7596 5.33294C7.23219 5.33294 6.71662 5.48934 6.27808 5.78235C5.83955 6.07537 5.49776 6.49185 5.29593 6.97912C5.09409 7.46638 5.04128 8.00256 5.14418 8.51985C5.24707 9.03713 5.50105 9.51228 5.87399 9.88522C6.24693 10.2582 6.72208 10.5121 7.23936 10.615C7.75665 10.7179 8.29282 10.6651 8.78009 10.4633C9.26736 10.2614 9.68384 9.91966 9.97686 9.48112C10.2699 9.04259 10.4263 8.52702 10.4263 7.9996C10.4263 7.29236 10.1453 6.61408 9.64522 6.11399C9.14513 5.61389 8.46685 5.33294 7.7596 5.33294ZM7.7596 9.33294C7.4959 9.33294 7.23811 9.25474 7.01884 9.10823C6.79958 8.96172 6.62868 8.75348 6.52777 8.50985C6.42685 8.26621 6.40044 7.99813 6.45189 7.73948C6.50334 7.48084 6.63033 7.24327 6.8168 7.0568C7.00327 6.87033 7.24084 6.74334 7.49948 6.69189C7.75813 6.64044 8.02621 6.66685 8.26985 6.76777C8.51348 6.86868 8.72172 7.03958 8.86823 7.25884C9.01474 7.47811 9.09294 7.7359 9.09294 7.9996C9.09294 8.35323 8.95246 8.69237 8.70241 8.94241C8.45237 9.19246 8.11323 9.33294 7.7596 9.33294Z"
+                      fill="#8D99A5"
+                    />
+                  </svg>
+                  <span>목표 설정</span>
+                </button>
+              </div>
+
+              {/* 우측 — 목표 카드 리스트 (읽기 전용, 체크박스만 인터랙티브) */}
+              <div className={styles.weeklyGoalList}>
+                {weeklyGoal.length === 0 ? (
+                  <span className={styles.weeklyGoalEmpty}>
+                    이번주 목표가 없습니다. &quot;목표 설정&quot; 버튼으로 시작하세요.
+                  </span>
+                ) : (
+                  weeklyGoal.map((g) => (
+                    <div
+                      key={g.id}
+                      className={`${styles.weeklyGoalCard} ${g.done ? styles.weeklyGoalCardDone : ""}`}
+                    >
+                      <div className={styles.weeklyGoalCardTop}>
+                        <span className={styles.weeklyGoalDateText}>
+                          {formatGoalDate(g.date)}
+                        </span>
+                        <button
+                          type="button"
+                          className={`${styles.weeklyGoalCheckBtn} ${g.done ? styles.weeklyGoalCheckBtnOn : ""}`}
+                          onClick={() => toggleWeeklyGoal(g.id)}
+                          aria-pressed={g.done}
+                          aria-label="완료 토글"
+                        >
+                          {g.done && (
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="11"
+                              height="11"
+                              viewBox="0 0 11 11"
+                              fill="none"
+                              aria-hidden="true"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                clipRule="evenodd"
+                                d="M9.69591 2.30039C9.82245 2.42698 9.89354 2.59863 9.89354 2.77762C9.89354 2.95661 9.82245 3.12826 9.69591 3.25484L4.63656 8.3142C4.5697 8.38107 4.49032 8.43412 4.40295 8.47031C4.31559 8.50651 4.22195 8.52514 4.12738 8.52514C4.03282 8.52514 3.93918 8.50651 3.85181 8.47031C3.76445 8.43412 3.68507 8.38107 3.61821 8.3142L1.10451 5.80095C1.04004 5.73868 0.988615 5.6642 0.953239 5.58184C0.917863 5.49949 0.899242 5.41092 0.898463 5.32129C0.897684 5.23166 0.914763 5.14278 0.948702 5.05983C0.982642 4.97687 1.03276 4.90151 1.09614 4.83813C1.15952 4.77475 1.23488 4.72463 1.31784 4.69069C1.40079 4.65675 1.48968 4.63967 1.5793 4.64045C1.66893 4.64123 1.7575 4.65985 1.83986 4.69523C1.92221 4.7306 1.99669 4.78203 2.05896 4.8465L4.12716 6.9147L8.74101 2.30039C8.80369 2.23767 8.87812 2.18791 8.96005 2.15396C9.04197 2.12001 9.12978 2.10254 9.21846 2.10254C9.30714 2.10254 9.39495 2.12001 9.47687 2.15396C9.55879 2.18791 9.63322 2.23767 9.69591 2.30039Z"
+                                fill="white"
+                              />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
+                      <span className={styles.weeklyGoalText}>{g.text}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 4 stat 합쳐진 하나의 카드 (mock 데이터) — 학사팀은 stats 숨김 */}
+          {!isAcademic && (
           <div className={styles.statGroup}>
             <div className={styles.statCard}>
               <div className={styles.statIcon}>
@@ -775,10 +1110,13 @@ export default function WorkJournalPage() {
               </div>
             </div>
           </div>
+          )}
         </div>
 
-        {/* ── 3컬럼 본문 ───────────────────────────────── */}
-        <div className={styles.bodyRow}>
+        {/* ── 3컬럼 본문 — 제출 완료 후 잠금 ───────────────────── */}
+        <div
+          className={`${styles.bodyRow} ${isLocked ? styles.bodyRowLocked : ""}`}
+        >
           {/* 좌: 오늘의 업무 */}
           <section className={styles.col}>
             <h3 className={styles.colTitle}>오늘의 업무</h3>
@@ -1070,6 +1408,71 @@ export default function WorkJournalPage() {
                   </>
                 )}
               </div>
+
+              {/* 이슈 및 요청사항 — 학사팀 전용 */}
+              {isAcademic && (
+                <div className={styles.sectionDropZone}>
+                  <div
+                    className={styles.sectionTitle}
+                    onClick={() => setIssuesOpen((v) => !v)}
+                  >
+                    <span>이슈 및 요청사항</span>
+                    <span className={styles.sectionTitleArrow}>
+                      {issuesOpen ? (
+                        <ChevronUp size={14} />
+                      ) : (
+                        <ChevronDown size={14} />
+                      )}
+                    </span>
+                  </div>
+                  {issuesOpen && (
+                    <>
+                      {issues.map((row) => (
+                        <div key={row.id} className={styles.issueRow}>
+                          <div className={styles.issueRowMain}>
+                            <div className={styles.issueField}>
+                              <input
+                                type="text"
+                                className={styles.issueFieldInput}
+                                placeholder="이슈 내용을 작성해주세요."
+                                value={row.category}
+                                onChange={(e) =>
+                                  updateRow("issues", row.id, {
+                                    category: e.target.value,
+                                  })
+                                }
+                              />
+                            </div>
+                            <div className={`${styles.issueField} ${styles.issueFieldBorderless}`}>
+                              <input
+                                type="text"
+                                className={styles.issueFieldInput}
+                                placeholder="조치·요청 사항을 작성해주세요."
+                                value={row.detail}
+                                onChange={(e) =>
+                                  updateRow("issues", row.id, {
+                                    detail: e.target.value,
+                                  })
+                                }
+                              />
+                            </div>
+                          </div>
+                          <DeleteButton
+                            onClick={() => removeRow("issues", row.id)}
+                          />
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        className={styles.addBtn}
+                        onClick={() => addRow("issues")}
+                      >
+                        <Plus size={12} /> 추가
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           </section>
 
@@ -1096,54 +1499,254 @@ export default function WorkJournalPage() {
               </div>
             </section>
 
-            {/* 박스 바깥 푸터 (박스 폭에 맞춰 정렬) */}
+            {/* 박스 바깥 푸터 — 상태별 분기
+                 1) submitted + 잠금 + 저장후         → [수정하기] [다시 제출]
+                 2) submitted + 잠금 + 저장후 아님    → [수정하기]
+                 3) submitted + 편집중                → [취소] [저장하기]
+                 4) draft/null                        → [임시저장] [제출하기] */}
             <div className={styles.footer}>
-              <button
-                type="button"
-                className={styles.btnDraft}
-                onClick={handleDraft}
-                disabled={saving || loading}
-              >
-                <svg
-                  className={styles.btnIcon}
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  aria-hidden="true"
+              {status === "submitted" && !isEditing ? (
+                <>
+                <button
+                  type="button"
+                  className={styles.btnEdit}
+                  onClick={handleEdit}
+                  disabled={saving || loading}
                 >
-                  <path
-                    fillRule="evenodd"
-                    clipRule="evenodd"
-                    d="M14.3702 3.40738C14.5577 3.59491 14.663 3.84921 14.663 4.11438C14.663 4.37954 14.5577 4.63385 14.3702 4.82138L6.87487 12.3167C6.77582 12.4158 6.65822 12.4944 6.52879 12.548C6.39936 12.6016 6.26063 12.6292 6.12054 12.6292C5.98044 12.6292 5.84171 12.6016 5.71228 12.548C5.58285 12.4944 5.46526 12.4158 5.3662 12.3167L1.6422 8.59338C1.54669 8.50113 1.47051 8.39079 1.4181 8.26878C1.36569 8.14678 1.33811 8.01556 1.33695 7.88278C1.3358 7.75 1.3611 7.61832 1.41138 7.49542C1.46166 7.37253 1.53591 7.26088 1.62981 7.16698C1.7237 7.07309 1.83535 6.99884 1.95825 6.94856C2.08114 6.89828 2.21282 6.87297 2.3456 6.87413C2.47838 6.87528 2.6096 6.90287 2.73161 6.95528C2.85361 7.00769 2.96396 7.08387 3.0562 7.17938L6.1202 10.2434L12.9555 3.40738C13.0484 3.31445 13.1587 3.24073 13.28 3.19044C13.4014 3.14014 13.5315 3.11426 13.6629 3.11426C13.7942 3.11426 13.9243 3.14014 14.0457 3.19044C14.1671 3.24073 14.2773 3.31445 14.3702 3.40738Z"
-                    fill="#565656"
-                  />
-                </svg>
-                임시저장
-              </button>
-              <button
-                type="button"
-                className={styles.btnSubmit}
-                onClick={handleSubmit}
-                disabled={saving || loading}
-              >
-                <svg
-                  className={styles.btnIcon}
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M1.4033 7.10263H12.3215L8.27595 3.24975C7.90793 2.89925 7.90793 2.33113 8.27595 1.98064C8.64397 1.63015 9.2405 1.63015 9.60851 1.98064L15.2627 7.36557L15.3271 7.43393C15.629 7.78644 15.6077 8.30609 15.2627 8.63467L9.60851 14.0196C9.2405 14.3701 8.64397 14.3701 8.27595 14.0196C7.90793 13.6691 7.90793 13.101 8.27595 12.7505L12.3215 8.89761L1.4033 8.89761C0.882849 8.89761 0.460937 8.49579 0.460938 8.00012C0.460938 7.50445 0.882849 7.10263 1.4033 7.10263Z"
-                    fill="white"
-                  />
-                </svg>
-                제출하기
-              </button>
+                  <svg
+                    className={styles.btnIcon}
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M13.9997 13.3338C14.3679 13.3338 14.6663 13.6323 14.6663 14.0005C14.6663 14.3686 14.3678 14.6672 13.9997 14.6672H1.99967C1.63154 14.6672 1.3331 14.3686 1.33301 14.0005C1.33301 13.6323 1.63148 13.3338 1.99967 13.3338H13.9997Z"
+                      fill="white"
+                    />
+                    <path
+                      fillRule="evenodd"
+                      clipRule="evenodd"
+                      d="M10.9124 1.48357C11.1743 1.27 11.5603 1.28506 11.8044 1.52914L14.471 4.19581C14.7313 4.45616 14.7314 4.87819 14.471 5.13852L7.80436 11.8052C7.67935 11.9302 7.50978 12.0005 7.33301 12.0005H4.66634C4.2982 12.0005 3.99976 11.7019 3.99967 11.3338V8.66716C3.99967 8.49039 4.07001 8.32082 4.19499 8.19581L10.8617 1.52914L10.9124 1.48357ZM5.33301 8.9432V10.6672H7.05697L11.057 6.66716L9.33301 4.9432L5.33301 8.9432ZM10.2757 4.00049L11.9997 5.72445L13.057 4.66716L11.333 2.9432L10.2757 4.00049Z"
+                      fill="white"
+                    />
+                  </svg>
+                  수정하기
+                </button>
+                {hasEdits && (
+                  <button
+                    type="button"
+                    className={styles.btnResubmit}
+                    onClick={handleResubmit}
+                    disabled={saving || loading}
+                  >
+                    다시 제출
+                    <svg
+                      className={styles.btnIcon}
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M1.4033 7.10263H12.3215L8.27595 3.24975C7.90793 2.89925 7.90793 2.33113 8.27595 1.98064C8.64397 1.63015 9.2405 1.63015 9.60851 1.98064L15.2627 7.36557L15.3271 7.43393C15.629 7.78644 15.6077 8.30609 15.2627 8.63467L9.60851 14.0196C9.2405 14.3701 8.64397 14.3701 8.27595 14.0196C7.90793 13.6691 7.90793 13.101 8.27595 12.7505L12.3215 8.89761L1.4033 8.89761C0.882849 8.89761 0.460937 8.49579 0.460938 8.00012C0.460938 7.50445 0.882849 7.10263 1.4033 7.10263Z"
+                        fill="white"
+                      />
+                    </svg>
+                  </button>
+                )}
+                </>
+              ) : status === "submitted" && isEditing ? (
+                <>
+                  <button
+                    type="button"
+                    className={styles.btnCancel}
+                    onClick={handleCancel}
+                    disabled={saving}
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.btnSave}
+                    onClick={handleSave}
+                    disabled={saving}
+                  >
+                    <svg
+                      className={styles.btnIcon}
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        clipRule="evenodd"
+                        d="M14.3692 3.40738C14.5567 3.59491 14.662 3.84921 14.662 4.11438C14.662 4.37954 14.5567 4.63385 14.3692 4.82138L6.87389 12.3167C6.77484 12.4158 6.65724 12.4944 6.52781 12.548C6.39838 12.6016 6.25966 12.6292 6.11956 12.6292C5.97946 12.6292 5.84074 12.6016 5.71131 12.548C5.58188 12.4944 5.46428 12.4158 5.36523 12.3167L1.64123 8.59338C1.54572 8.50113 1.46953 8.39079 1.41712 8.26878C1.36472 8.14678 1.33713 8.01556 1.33598 7.88278C1.33482 7.75 1.36012 7.61832 1.4104 7.49542C1.46069 7.37253 1.53494 7.26088 1.62883 7.16698C1.72272 7.07309 1.83438 6.99884 1.95727 6.94856C2.08017 6.89828 2.21185 6.87297 2.34463 6.87413C2.47741 6.87528 2.60863 6.90287 2.73063 6.95528C2.85263 7.00769 2.96298 7.08387 3.05523 7.17938L6.11923 10.2434L12.9546 3.40738C13.0474 3.31445 13.1577 3.24073 13.2791 3.19044C13.4004 3.14014 13.5305 3.11426 13.6619 3.11426C13.7933 3.11426 13.9234 3.14014 14.0447 3.19044C14.1661 3.24073 14.2764 3.31445 14.3692 3.40738Z"
+                        fill="white"
+                      />
+                    </svg>
+                    저장하기
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className={styles.btnDraft}
+                    onClick={handleDraft}
+                    disabled={saving || loading}
+                  >
+                    <svg
+                      className={styles.btnIcon}
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        clipRule="evenodd"
+                        d="M14.3702 3.40738C14.5577 3.59491 14.663 3.84921 14.663 4.11438C14.663 4.37954 14.5577 4.63385 14.3702 4.82138L6.87487 12.3167C6.77582 12.4158 6.65822 12.4944 6.52879 12.548C6.39936 12.6016 6.26063 12.6292 6.12054 12.6292C5.98044 12.6292 5.84171 12.6016 5.71228 12.548C5.58285 12.4944 5.46526 12.4158 5.3662 12.3167L1.6422 8.59338C1.54669 8.50113 1.47051 8.39079 1.4181 8.26878C1.36569 8.14678 1.33811 8.01556 1.33695 7.88278C1.3358 7.75 1.3611 7.61832 1.41138 7.49542C1.46166 7.37253 1.53591 7.26088 1.62981 7.16698C1.7237 7.07309 1.83535 6.99884 1.95825 6.94856C2.08114 6.89828 2.21282 6.87297 2.3456 6.87413C2.47838 6.87528 2.6096 6.90287 2.73161 6.95528C2.85361 7.00769 2.96396 7.08387 3.0562 7.17938L6.1202 10.2434L12.9555 3.40738C13.0484 3.31445 13.1587 3.24073 13.28 3.19044C13.4014 3.14014 13.5315 3.11426 13.6629 3.11426C13.7942 3.11426 13.9243 3.14014 14.0457 3.19044C14.1671 3.24073 14.2773 3.31445 14.3702 3.40738Z"
+                        fill="#565656"
+                      />
+                    </svg>
+                    임시저장
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.btnSubmit}
+                    onClick={handleSubmit}
+                    disabled={saving || loading}
+                  >
+                    <svg
+                      className={styles.btnIcon}
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M1.4033 7.10263H12.3215L8.27595 3.24975C7.90793 2.89925 7.90793 2.33113 8.27595 1.98064C8.64397 1.63015 9.2405 1.63015 9.60851 1.98064L15.2627 7.36557L15.3271 7.43393C15.629 7.78644 15.6077 8.30609 15.2627 8.63467L9.60851 14.0196C9.2405 14.3701 8.64397 14.3701 8.27595 14.0196C7.90793 13.6691 7.90793 13.101 8.27595 12.7505L12.3215 8.89761L1.4033 8.89761C0.882849 8.89761 0.460937 8.49579 0.460938 8.00012C0.460938 7.50445 0.882849 7.10263 1.4033 7.10263Z"
+                        fill="white"
+                      />
+                    </svg>
+                    제출하기
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* 학사팀 — 이번주 목표 설정 모달 */}
+      {goalModalOpen && (
+        <div
+          className={styles.goalModalOverlay}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) closeGoalModal();
+          }}
+        >
+          <div className={styles.goalModal}>
+            <div className={styles.goalModalHeader}>
+              <h3 className={styles.goalModalTitle}>이번주 목표 설정</h3>
+              <button
+                type="button"
+                className={styles.goalModalClose}
+                onClick={closeGoalModal}
+                aria-label="닫기"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className={styles.goalModalBody}>
+              {tempGoals.length === 0 ? (
+                <div className={styles.goalModalEmpty}>
+                  추가된 목표가 없습니다. 아래 &quot;+ 목표 추가&quot;
+                  버튼으로 시작하세요.
+                </div>
+              ) : (
+                tempGoals.map((g, i) => {
+                  const isUndefined = g.date === "미정";
+                  const isIsoDate = /^\d{4}-\d{2}-\d{2}$/.test(g.date);
+                  return (
+                    <div key={g.id} className={styles.goalModalRow}>
+                      <span className={styles.goalModalRowIndex}>{i + 1}</span>
+                      <input
+                        type="date"
+                        className={styles.goalModalDateInput}
+                        // YYYY-MM-DD 만 input[type=date] 가 받음
+                        value={isIsoDate ? g.date : ""}
+                        onChange={(e) =>
+                          updateTempGoal(g.id, { date: e.target.value })
+                        }
+                        disabled={isUndefined}
+                      />
+                      <button
+                        type="button"
+                        className={`${styles.goalModalUndefinedBtn} ${isUndefined ? styles.goalModalUndefinedBtnOn : ""}`}
+                        onClick={() =>
+                          updateTempGoal(g.id, {
+                            date: isUndefined ? "" : "미정",
+                          })
+                        }
+                        title="날짜 미정"
+                      >
+                        미정
+                      </button>
+                      <input
+                        type="text"
+                        className={styles.goalModalTextInput}
+                        placeholder="목표 내용"
+                        value={g.text}
+                        onChange={(e) =>
+                          updateTempGoal(g.id, { text: e.target.value })
+                        }
+                      />
+                      <button
+                        type="button"
+                        className={styles.goalModalRowRemove}
+                        onClick={() => removeTempGoal(g.id)}
+                        aria-label="삭제"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  );
+                })
+              )}
+
+              <button
+                type="button"
+                className={styles.goalModalAddBtn}
+                onClick={addTempGoal}
+              >
+                <Plus size={14} /> 목표 추가
+              </button>
+            </div>
+
+            <div className={styles.goalModalFooter}>
+              <button
+                type="button"
+                className={styles.goalModalCancel}
+                onClick={closeGoalModal}
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                className={styles.goalModalSave}
+                onClick={saveGoalModal}
+                disabled={goalSaving}
+              >
+                {goalSaving ? "저장 중..." : "저장"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

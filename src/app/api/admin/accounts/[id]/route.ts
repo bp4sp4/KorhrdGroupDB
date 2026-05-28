@@ -21,6 +21,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     department_id,
     phone,
     is_division_admin,
+    team_id,
   } = body as {
     role?: string
     display_name?: string
@@ -29,6 +30,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     department_id?: string | null
     phone?: string | null
     is_division_admin?: boolean
+    team_id?: string | null
   }
 
   // ── 권한 강화: role / is_active / is_division_admin 변경은 master-admin 전용 ──
@@ -67,6 +69,12 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   if (department_id !== undefined) updates.department_id = department_id
   if (phone !== undefined) updates.phone = phone || null
   if (is_division_admin !== undefined) updates.is_division_admin = !!is_division_admin
+  if (team_id !== undefined) updates.team_id = team_id
+
+  // 부서 변경 시 team_id 자동 정리 — 다른 부서의 팀이 남아있으면 안 되므로
+  if (department_id !== undefined && team_id === undefined) {
+    updates.team_id = null
+  }
 
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: '변경할 항목이 없습니다.' }, { status: 400 })

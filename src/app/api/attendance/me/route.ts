@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAuthFull } from "@/lib/auth/requireAuth";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { getTodayKstDate, isInvalidRecord } from "@/lib/attendance";
+import { autoCloseStaleRecords } from "@/lib/attendance-server";
 
 // GET /api/attendance/me?from=YYYY-MM-DD&to=YYYY-MM-DD
 // from~to 사이 본인 기록 + 오늘 상태 반환. 파라미터 생략 시 이번 달.
@@ -11,6 +12,9 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const today = getTodayKstDate();
+
+  // 자정 경과한 미퇴근 기록을 19:00 KST 로 자동 마감 (조회 이전 처리)
+  await autoCloseStaleRecords(appUser.id, today);
 
   // 기본: 이번 달 1일 ~ 오늘
   const [yStr, mStr] = today.split("-");

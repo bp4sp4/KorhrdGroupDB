@@ -123,6 +123,19 @@ function cohortToMonthLabel(cohort: string | null | undefined): string | null {
   return m ? `${m}월` : null;
 }
 
+// payment_date(YYYY-MM-DD) → "M월" 라벨
+// 매출이 어느 월 탭에 속할지를 결정할 때 사용 — 개강반과는 독립
+function paymentDateToMonthLabel(
+  pd: string | null | undefined,
+): string | null {
+  if (!pd) return null;
+  const parts = pd.split("-");
+  if (parts.length < 2) return null;
+  const m = Number(parts[1]);
+  if (!Number.isFinite(m) || m < 1 || m > 12) return null;
+  return `${m}월`;
+}
+
 // cohort → DateInput value (YYYY-MM-DD)
 // "2026-05-15" → "2026-05-15" (그대로)
 // "5월" → "{year}-05-01" (월의 1일로 보정)
@@ -534,9 +547,15 @@ export default function EduSalesPage() {
   // 발행 상태 필터
   const filteredRows = useMemo(() => {
     let out = rows;
-    // 활성 월 필터 — cohort에서 월 추출해서 "X월" 라벨과 매칭 (일자 단위 cohort도 포함)
+    // 활성 월 필터 — 결제일(payment_date) 월 기준으로 매칭.
+    // (개강반=수업 일자는 다음 달 이후가 될 수 있어 탭 분류 기준으로는 부적절)
+    // 결제일이 비어있는 legacy 행은 fallback 으로 cohort 월로 분류.
     if (activeMonth && activeMonth !== "전체") {
-      out = out.filter((r) => cohortToMonthLabel(r.cohort) === activeMonth);
+      out = out.filter((r) => {
+        const payLabel = paymentDateToMonthLabel(r.payment_date);
+        if (payLabel) return payLabel === activeMonth;
+        return cohortToMonthLabel(r.cohort) === activeMonth;
+      });
     }
     if (filterPublished !== "all") {
       out = out.filter((r) =>
@@ -1092,7 +1111,10 @@ export default function EduSalesPage() {
                       />
                     </div>
                   </td>
-                  {/* 개강반 — 캘린더에서 선택한 일자 그대로 저장 (예: "2026-05-15") */}
+                  {/* 개강반 — 캘린더에서 선택한 일자 그대로 저장 (예: "2026-06-15")
+                       정책: 개강반(=수업이 개강하는 일자)은 결제 월과 다를 수 있음
+                       (예: 5월에 결제한 매출의 개강반이 6월일 수 있음)
+                       → 월 탭 제약을 두지 않고 자유롭게 선택 가능 */}
                   <td className={`${styles.td} ${styles.td_center}`}>
                     <DateInput
                       value={cohortToDate(r.cohort, activeYear)}
@@ -1104,20 +1126,11 @@ export default function EduSalesPage() {
                         const parts = v.split("-");
                         const m = parts.length >= 2 ? Number(parts[1]) : NaN;
                         if (!Number.isFinite(m) || m < 1 || m > 12) return;
-                        // 월 탭에서는 활성 월 외 선택 무시 (안전장치)
-                        if (isMonthTab && m !== activeMonthNum) {
-                          alert(
-                            `개강반은 ${activeMonth} 범위에서만 선택할 수 있습니다.`,
-                          );
-                          return;
-                        }
                         // 일자까지 보존 — DB에 "YYYY-MM-DD" 형식으로 저장
                         updateRow(r, { cohort: v });
                       }}
                       placeholder="개강반"
                       triggerClassName={styles.inline_date_trigger}
-                      minDate={activeMonthRange?.first}
-                      maxDate={activeMonthRange?.last}
                       disabled={!canEdit}
                     />
                   </td>

@@ -29,6 +29,472 @@
   gap: 12px;
 }
 
+/* ─── 학사팀 — 이슈 및 요청사항 행 ─────────────────────────── */
+/* 각 행: 카테고리 박스 + 디테일 박스 1:1 + 우측 삭제 버튼 */
+.issueRow {
+  display: flex;
+  padding: 12px 14px;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 5px;
+  align-self: stretch;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+}
+
+.issueRowMain {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1 0 0;
+}
+
+/* 각 필드 (카테고리 / 디테일) — 독립 박스 1:1 */
+.issueField {
+  display: flex;
+  padding: 10px 14px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  flex: 1 0 0;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  transition: border-color 0.12s;
+}
+
+.issueField:focus-within {
+  border-color: #0084fe;
+}
+
+/* 오른쪽(디테일) 필드 — border 없이 */
+.issueFieldBorderless {
+  border-color: transparent;
+}
+.issueFieldBorderless:focus-within {
+  border-color: transparent;
+}
+
+.issueFieldInput {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #1f2937;
+  font-family: Pretendard, inherit;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+  padding: 0;
+}
+
+.issueFieldInput::placeholder {
+  color: #c0c7d1;
+}
+
+/* ─── 학사팀 — 이번주 목표 바 (topRow 안, dateCard 옆) ───────── */
+.weeklyGoalBar {
+  display: flex;
+  padding: 16px;
+  align-items: flex-start;
+  gap: 16px;
+  flex: 1 0 0;
+  align-self: stretch;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  min-width: 0;
+}
+
+/* 좌측 — 제목 + 목표 설정 버튼 */
+.weeklyGoalLeft {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  align-self: stretch;
+  flex-shrink: 0;
+}
+
+.weeklyGoalTitle {
+  color: #000;
+  font-family: Pretendard, inherit;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+}
+
+.weeklyGoalSettingBtn {
+  display: flex;
+  padding: 7px 8px;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  color: #8d99a5;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.weeklyGoalSettingBtn:hover {
+  background: #f5f7fa;
+}
+
+/* 우측 — 목표 카드 리스트 */
+.weeklyGoalList {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex: 1 0 0;
+  align-self: stretch;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.weeklyGoalEmpty {
+  display: flex;
+  align-items: center;
+  color: #8d99a5;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+}
+
+/* 개별 목표 카드 */
+.weeklyGoalCard {
+  display: flex;
+  width: 180px;
+  padding: 10px 14px;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  align-self: stretch;
+  gap: 8px;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  position: relative;
+}
+
+/* 호버 시 삭제 버튼 노출 */
+.weeklyGoalCard:hover .weeklyGoalRemove {
+  opacity: 1;
+}
+
+.weeklyGoalCardTop {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+/* 읽기 전용 날짜 라벨 (카드 안) */
+.weeklyGoalDateText {
+  flex: 1;
+  min-width: 0;
+  color: #8d99a5;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 체크박스 — 18x18, 기본은 외곽선만, 체크 시 파란 배경 + 흰 체크 */
+.weeklyGoalCheckBtn {
+  display: flex;
+  width: 18px;
+  height: 18px;
+  padding: 4px;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  aspect-ratio: 1 / 1;
+  border: 1px solid #e6e7eb;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    border-color 0.12s;
+}
+
+.weeklyGoalCheckBtn:hover {
+  border-color: #c7e4ff;
+}
+
+.weeklyGoalCheckBtnOn {
+  background: #2469ff;
+  border-color: #2469ff;
+}
+
+/* 카드 내 목표 텍스트 (읽기 전용) */
+.weeklyGoalText {
+  width: 100%;
+  color: #1f2937;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 1.4;
+  word-break: keep-all;
+}
+
+.weeklyGoalCardDone .weeklyGoalText {
+  text-decoration: line-through;
+  color: #8d99a5;
+}
+
+/* ─── 학사팀 — 이번주 목표 설정 모달 ───────────────────────── */
+.goalModalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.goalModal {
+  width: 100%;
+  max-width: 540px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.18);
+  overflow: hidden;
+}
+
+.goalModalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 12px;
+  border-bottom: 1px solid #f1f3f5;
+}
+
+.goalModalTitle {
+  margin: 0;
+  font-family: Pretendard, inherit;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.goalModalClose {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #8d99a5;
+  font-size: 14px;
+}
+.goalModalClose:hover {
+  color: #4e5968;
+}
+
+.goalModalBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 24px;
+  overflow-y: auto;
+}
+
+.goalModalEmpty {
+  padding: 16px;
+  text-align: center;
+  color: #8d99a5;
+  font-family: Pretendard, inherit;
+  font-size: 13px;
+}
+
+.goalModalRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.goalModalRowIndex {
+  width: 22px;
+  text-align: center;
+  color: #8d99a5;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.goalModalDateInput {
+  width: 140px;
+  padding: 8px 10px;
+  border: 1px solid #e6e7eb;
+  border-radius: 8px;
+  outline: none;
+  font-family: Pretendard, inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1f2937;
+  flex-shrink: 0;
+  transition: border-color 0.12s;
+}
+.goalModalDateInput:focus {
+  border-color: #0084fe;
+}
+.goalModalDateInput:disabled {
+  background: #f5f7fa;
+  color: #b0b8c1;
+  cursor: not-allowed;
+}
+
+/* "미정" 토글 버튼 — 활성화 시 날짜 input disable + 표시값 "미정" */
+.goalModalUndefinedBtn {
+  padding: 6px 10px;
+  border: 1px solid #e6e7eb;
+  border-radius: 8px;
+  background: #fff;
+  color: #8d99a5;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    background 0.12s,
+    border-color 0.12s,
+    color 0.12s;
+}
+.goalModalUndefinedBtn:hover {
+  background: #f5f7fa;
+}
+.goalModalUndefinedBtnOn {
+  background: #2469ff;
+  border-color: #2469ff;
+  color: #fff;
+}
+.goalModalUndefinedBtnOn:hover {
+  background: #1f5fe6;
+}
+
+.goalModalTextInput {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid #e6e7eb;
+  border-radius: 8px;
+  outline: none;
+  font-family: Pretendard, inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1f2937;
+  transition: border-color 0.12s;
+}
+.goalModalTextInput:focus {
+  border-color: #0084fe;
+}
+
+.goalModalRowRemove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: #8d99a5;
+  font-size: 12px;
+  flex-shrink: 0;
+  border-radius: 6px;
+}
+.goalModalRowRemove:hover {
+  color: #dc2626;
+  background: #fef2f2;
+}
+
+.goalModalAddBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px;
+  margin-top: 4px;
+  border: 1px dashed #c7e4ff;
+  border-radius: 8px;
+  background: #f5fbff;
+  color: #0084fe;
+  font-family: Pretendard, inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    border-color 0.12s;
+}
+.goalModalAddBtn:hover {
+  background: #ebf6ff;
+  border-color: #0084fe;
+}
+
+.goalModalFooter {
+  display: flex;
+  gap: 8px;
+  padding: 12px 24px 20px;
+  border-top: 1px solid #f1f3f5;
+}
+
+.goalModalCancel,
+.goalModalSave {
+  flex: 1;
+  height: 40px;
+  border-radius: 8px;
+  font-family: Pretendard, inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    opacity 0.12s;
+}
+
+.goalModalCancel {
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  color: #4e5968;
+}
+.goalModalCancel:hover {
+  background: #f9fafb;
+}
+
+.goalModalSave {
+  border: none;
+  background: #0084fe;
+  color: #fff;
+}
+.goalModalSave:hover {
+  background: #0070d8;
+}
+
 /* ─── 상단 stats 행 ───────────────────────────────────────────── */
 .topRow {
   display: flex;
@@ -764,11 +1230,165 @@
   background: #0073df;
 }
 
+/* ── 수정하기 (제출 완료 상태에서 노출) ── */
+.btnEdit {
+  flex: 1 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 14px 24px;
+  border-radius: 8px;
+  background: #0084fe;
+  color: #fff;
+  border: 0;
+  font-family: Pretendard, inherit;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: normal;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.btnEdit:hover {
+  background: #0073df;
+}
+
+.btnEdit:disabled {
+  background: #b0d6ff;
+  cursor: not-allowed;
+}
+
+/* ── 취소 (수정 중 상태에서 노출) ── */
+.btnCancel {
+  flex: 1 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 14px 24px;
+  border-radius: 8px;
+  background: #8d99a5;
+  color: #fff;
+  border: 0;
+  font-family: Pretendard, inherit;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: normal;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.btnCancel:hover {
+  background: #7a8694;
+}
+
+.btnCancel:disabled {
+  background: #c5cbd2;
+  cursor: not-allowed;
+}
+
+/* ── 저장하기 (수정 중 상태에서 노출) ── */
+.btnSave {
+  flex: 1 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 14px 24px;
+  border-radius: 8px;
+  background: #0084fe;
+  color: #fff;
+  border: 0;
+  font-family: Pretendard, inherit;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: normal;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.btnSave:hover {
+  background: #0073df;
+}
+
+.btnSave:disabled {
+  background: #b0d6ff;
+  cursor: not-allowed;
+}
+
+/* ── 다시 제출 (저장 직후 수정하기 옆에 노출) ── */
+.btnResubmit {
+  flex: 1 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 14px 24px;
+  border-radius: 8px;
+  background: #f04452;
+  color: #fff;
+  border: 0;
+  font-family: Pretendard, inherit;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: normal;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.btnResubmit:hover {
+  background: #d83442;
+}
+
+.btnResubmit:disabled {
+  background: #f6a6ad;
+  cursor: not-allowed;
+}
+
 .btnIcon {
   width: 16px;
   height: 16px;
   aspect-ratio: 1 / 1;
   flex-shrink: 0;
+}
+
+/* ── 제출 완료 후 잠금 모드 — 폼 인터랙션 차단 ── */
+.bodyRowLocked .taskInput,
+.bodyRowLocked .taskTextDisplay,
+.bodyRowLocked .tomorrowInput,
+.bodyRowLocked .journalCategoryInput,
+.bodyRowLocked .journalDetailInput,
+.bodyRowLocked .issueFieldInput {
+  pointer-events: none;
+  user-select: text;
+  cursor: default;
+}
+
+.bodyRowLocked .taskCheckbox,
+.bodyRowLocked .weeklyGoalCheckBtn,
+.bodyRowLocked .taskDragHandle {
+  pointer-events: none;
+  cursor: default;
+}
+
+.bodyRowLocked .addBtn,
+.bodyRowLocked .journalDeleteBtn {
+  display: none;
+}
+
+/* 드래그 가능한 행도 호버 강조 비활성화 */
+.bodyRowLocked .taskItem[draggable="true"],
+.bodyRowLocked .journalRow[draggable="true"] {
+  pointer-events: none;
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  cursor: default;
 }
 
 /* ─── 드래그 앤 드롭 ───────────────────────────────────────── */

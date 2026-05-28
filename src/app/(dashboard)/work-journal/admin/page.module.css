@@ -209,13 +209,35 @@
 }
 
 .badgeSubmitted {
-  background: #dcfce7;
-  color: #16a34a;
+  display: inline-flex;
+  padding: 4px 8px;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  background: #e4ffe8;
+  color: #00bc31;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
 }
 
 .badgeEdited {
-  background: #ddfbe6;
-  color: #16a34a;
+  display: inline-flex;
+  padding: 4px 8px;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  background: #e4ffe8;
+  color: #00bc31;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: normal;
 }
 
 .badgeDraft {

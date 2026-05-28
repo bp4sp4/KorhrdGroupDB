@@ -857,23 +857,21 @@ export default function MyAttendancePage() {
                       className={`${styles.legalBarFill} ${fillCls}`}
                       style={{
                         width: `${pctFill}%`,
-                        minWidth:
-                          isWorking || todayRecord?.clock_out_at ? 80 : 0,
                       }}
-                    >
-                      {(isWorking || todayRecord?.clock_out_at) && (
-                        <video
-                          key={isWorking ? "work" : "finish"}
-                          className={styles.legalBarVideo}
-                          src={isWorking ? "/work.mp4" : "/finish.mp4"}
-                          autoPlay
-                          loop
-                          muted
-                          playsInline
-                        />
-                      )}
-                    </div>
+                    />
                   </div>
+                  {(isWorking || todayRecord?.clock_out_at) && (
+                    <video
+                      key={isWorking ? "work" : "finish"}
+                      className={styles.legalBarVideo}
+                      src={isWorking ? "/work.mp4" : "/finish.mp4"}
+                      style={{ left: `calc(${pctFill}% - 24px)` }}
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                    />
+                  )}
                   {isOver && (
                     <div
                       className={styles.legalBarOver}

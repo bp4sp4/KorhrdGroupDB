@@ -66,6 +66,7 @@ interface Account {
   department_id: string | null
   phone: string | null
   is_division_admin: boolean
+  team_id: string | null
 }
 
 interface AccountForm {
@@ -97,10 +98,11 @@ const ROLE_LABELS: Record<AccountRole, string> = {
 
 // ─── Tab Type ─────────────────────────────────────────────────────────────────
 
-type TabKey = 'departments' | 'positions' | 'expense-categories' | 'approval-templates' | 'accounts' | 'permissions' | 'announcements'
+type TabKey = 'departments' | 'teams' | 'positions' | 'expense-categories' | 'approval-templates' | 'accounts' | 'permissions' | 'announcements'
 
 const TABS: { key: TabKey; label: string }[] = [
   { key: 'departments', label: '사업부' },
+  { key: 'teams', label: '팀' },
   { key: 'positions', label: '직급' },
   { key: 'expense-categories', label: '지출 분류' },
   { key: 'approval-templates', label: '결재선 템플릿' },
@@ -108,6 +110,35 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: 'permissions', label: '권한 관리' },
   { key: 'announcements', label: '공지 관리' },
 ]
+
+interface Team {
+  id: string
+  department_id: string
+  code: string
+  name: string
+  journal_form: string
+  sort_order: number
+  is_active: boolean
+}
+
+interface TeamForm {
+  department_id: string
+  code: string
+  name: string
+  journal_form: string
+}
+
+const JOURNAL_FORM_OPTIONS: { value: string; label: string }[] = [
+  { value: 'default', label: '기본 양식 (오전/오후 + 내일 예정)' },
+  { value: 'academic', label: '학사팀 양식 (+ 이번주 목표, 이슈/요청사항)' },
+]
+
+const emptyTeamForm: TeamForm = {
+  department_id: '',
+  code: '',
+  name: '',
+  journal_form: 'default',
+}
 
 const CATEGORIES = ['출장', '인사', '회계']
 
@@ -165,6 +196,11 @@ export default function AdminPage() {
       {visitedTabs.has('departments') && (
         <div className={activeTab !== 'departments' ? styles.tabHidden : undefined}>
           <DepartmentsTab />
+        </div>
+      )}
+      {visitedTabs.has('teams') && (
+        <div className={activeTab !== 'teams' ? styles.tabHidden : undefined}>
+          <TeamsTab />
         </div>
       )}
       {visitedTabs.has('positions') && (
@@ -777,6 +813,317 @@ interface PositionForm {
 }
 
 const emptyPositionForm: PositionForm = { name: '', sort_order: '' }
+
+// ─── 팀 관리 탭 ────────────────────────────────────────────────────────────────
+function TeamsTab() {
+  const [teams, setTeams] = useState<Team[]>([])
+  const [departments, setDepartments] = useState<Department[]>([])
+  const [loading, setLoading] = useState(false)
+  const [showModal, setShowModal] = useState(false)
+  const [editTarget, setEditTarget] = useState<Team | null>(null)
+  const [form, setForm] = useState<TeamForm>(emptyTeamForm)
+  const [formError, setFormError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  const fetchTeams = useCallback(async () => {
+    setLoading(true)
+    const [tRes, dRes] = await Promise.all([
+      fetch('/api/admin/teams'),
+      fetch('/api/admin/departments'),
+    ])
+    if (tRes.ok) setTeams(await tRes.json())
+    if (dRes.ok) setDepartments(await dRes.json())
+    setLoading(false)
+  }, [])
+
+  useEffect(() => {
+    fetchTeams()
+  }, [fetchTeams])
+
+  const deptMap = Object.fromEntries(departments.map((d) => [d.id, d.name]))
+
+  const openAdd = () => {
+    setEditTarget(null)
+    setForm(emptyTeamForm)
+    setFormError('')
+    setShowModal(true)
+  }
+
+  const openEdit = (item: Team) => {
+    setEditTarget(item)
+    setForm({
+      department_id: item.department_id,
+      code: item.code,
+      name: item.name,
+      journal_form: item.journal_form,
+    })
+    setFormError('')
+    setShowModal(true)
+  }
+
+  const handleSubmit = async () => {
+    if (!form.department_id || !form.code.trim() || !form.name.trim()) {
+      setFormError('부서, 코드, 팀명은 필수입니다.')
+      return
+    }
+    setSubmitting(true)
+    setFormError('')
+    const url = editTarget
+      ? `/api/admin/teams/${editTarget.id}`
+      : '/api/admin/teams'
+    const method = editTarget ? 'PATCH' : 'POST'
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form),
+    })
+    setSubmitting(false)
+    if (res.ok) {
+      setShowModal(false)
+      fetchTeams()
+    } else {
+      const err = await res.json().catch(() => ({}))
+      setFormError(err.error ?? '저장에 실패했습니다.')
+    }
+  }
+
+  // 즉시 변경 — 양식 select
+  const handleChangeForm = async (item: Team, nextForm: string) => {
+    const res = await fetch(`/api/admin/teams/${item.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ journal_form: nextForm }),
+    })
+    if (res.ok) fetchTeams()
+    else {
+      const err = await res.json().catch(() => ({}))
+      alert(err.error ?? '양식 변경에 실패했습니다.')
+    }
+  }
+
+  const handleToggleActive = async (item: Team) => {
+    const res = await fetch(`/api/admin/teams/${item.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_active: !item.is_active }),
+    })
+    if (res.ok) fetchTeams()
+  }
+
+  const handleDelete = async (item: Team) => {
+    if (!window.confirm(`"${item.name}" 팀을 삭제(비활성)하시겠습니까?`)) return
+    const res = await fetch(`/api/admin/teams/${item.id}`, { method: 'DELETE' })
+    if (res.ok) fetchTeams()
+  }
+
+  return (
+    <>
+      <div className={styles.sectionCard}>
+        <div className={styles.sectionHeader}>
+          <h3 className={styles.sectionTitle}>팀 관리 (사업부 하위 sub-team)</h3>
+          <button className={styles.btnPrimary} onClick={openAdd}>
+            <UserPlus size={14} /> 팀 추가
+          </button>
+        </div>
+
+        {loading ? (
+          <div className={styles.emptyState}>불러오는 중...</div>
+        ) : teams.length === 0 ? (
+          <div className={styles.emptyState}>등록된 팀이 없습니다.</div>
+        ) : (
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>부서</th>
+                <th>팀명</th>
+                <th>코드</th>
+                <th>업무일지 양식</th>
+                <th>상태</th>
+                <th>액션</th>
+              </tr>
+            </thead>
+            <tbody>
+              {teams.map((item) => (
+                <tr
+                  key={item.id}
+                  className={!item.is_active ? styles.rowInactive : ''}
+                >
+                  <td>{deptMap[item.department_id] ?? '-'}</td>
+                  <td>{item.name}</td>
+                  <td>{item.code}</td>
+                  <td>
+                    <select
+                      value={item.journal_form}
+                      onChange={(e) => handleChangeForm(item, e.target.value)}
+                      className={styles.formInput}
+                    >
+                      {JOURNAL_FORM_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td>
+                    <span
+                      className={`${styles.statusBadge} ${item.is_active ? styles.statusActive : styles.statusInactive}`}
+                    >
+                      {item.is_active ? '활성' : '비활성'}
+                    </span>
+                  </td>
+                  <td>
+                    <div className={styles.actionGroup}>
+                      <button
+                        className={styles.btnEdit}
+                        onClick={() => openEdit(item)}
+                      >
+                        <Pencil size={12} /> 수정
+                      </button>
+                      {item.is_active ? (
+                        <button
+                          className={styles.btnDelete}
+                          onClick={() => handleToggleActive(item)}
+                        >
+                          <Trash2 size={12} /> 비활성화
+                        </button>
+                      ) : (
+                        <button
+                          className={styles.btnRestore}
+                          onClick={() => handleToggleActive(item)}
+                        >
+                          <RotateCcw size={12} /> 활성화
+                        </button>
+                      )}
+                      <button
+                        className={styles.btnDelete}
+                        onClick={() => handleDelete(item)}
+                      >
+                        <Trash2 size={12} /> 삭제
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {showModal && (
+        <div
+          className={styles.modalOverlay}
+          onClick={(e) =>
+            e.target === e.currentTarget && setShowModal(false)
+          }
+        >
+          <div className={styles.modal}>
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>
+                {editTarget ? '팀 수정' : '팀 추가'}
+              </h3>
+              <button
+                className={styles.modalClose}
+                onClick={() => setShowModal(false)}
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              <div className={styles.formRow}>
+                <label
+                  className={`${styles.formLabel} ${styles.formLabelRequired}`}
+                >
+                  부서
+                </label>
+                <select
+                  className={styles.formInput}
+                  value={form.department_id}
+                  onChange={(e) =>
+                    setForm({ ...form, department_id: e.target.value })
+                  }
+                >
+                  <option value="">선택</option>
+                  {departments.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className={styles.formRow}>
+                <label
+                  className={`${styles.formLabel} ${styles.formLabelRequired}`}
+                >
+                  코드
+                </label>
+                <input
+                  type="text"
+                  className={styles.formInput}
+                  placeholder="예: ACAD"
+                  value={form.code}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      code: e.target.value.toUpperCase(),
+                    })
+                  }
+                />
+              </div>
+              <div className={styles.formRow}>
+                <label
+                  className={`${styles.formLabel} ${styles.formLabelRequired}`}
+                >
+                  팀명
+                </label>
+                <input
+                  type="text"
+                  className={styles.formInput}
+                  placeholder="예: 학사팀"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                />
+              </div>
+              <div className={styles.formRow}>
+                <label className={styles.formLabel}>업무일지 양식</label>
+                <select
+                  className={styles.formInput}
+                  value={form.journal_form}
+                  onChange={(e) =>
+                    setForm({ ...form, journal_form: e.target.value })
+                  }
+                >
+                  {JOURNAL_FORM_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {formError && (
+                <div className={styles.formError}>{formError}</div>
+              )}
+            </div>
+            <div className={styles.modalFooter}>
+              <button
+                className={styles.btnSecondary}
+                onClick={() => setShowModal(false)}
+              >
+                취소
+              </button>
+              <button
+                className={styles.btnPrimary}
+                onClick={handleSubmit}
+                disabled={submitting}
+              >
+                {submitting ? '저장 중...' : '저장'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
 
 function PositionsTab() {
   const [items, setItems] = useState<Position[]>([])
@@ -1587,6 +1934,7 @@ function AccountsTab() {
   const [items, setItems] = useState<Account[]>([])
   const [positions, setPositions] = useState<Position[]>([])
   const [departments, setDepartments] = useState<Department[]>([])
+  const [teams, setTeams] = useState<Team[]>([])
   const [loading, setLoading] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [editTarget, setEditTarget] = useState<Account | null>(null)
@@ -1605,6 +1953,7 @@ function AccountsTab() {
     fetchItems()
     fetch('/api/admin/positions').then(r => r.ok ? r.json() : []).then(setPositions).catch(() => {})
     fetch('/api/admin/departments').then(r => r.ok ? r.json() : []).then(setDepartments).catch(() => {})
+    fetch('/api/admin/teams').then(r => r.ok ? r.json() : []).then(setTeams).catch(() => {})
   }, [fetchItems])
 
   const openAdd = () => {
@@ -1728,6 +2077,22 @@ function AccountsTab() {
   }
 
   const positionMap = Object.fromEntries(positions.map(p => [p.id, p.name]))
+  const teamMap = Object.fromEntries(teams.map(t => [t.id, t.name]))
+
+  // 사용자의 팀 변경 — 사용자의 department_id 와 일치하는 팀만 옵션으로 노출
+  const handleChangeTeam = async (item: Account, nextTeamId: string) => {
+    const value = nextTeamId === '' ? null : nextTeamId
+    const res = await fetch(`/api/admin/accounts/${item.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ team_id: value }),
+    })
+    if (res.ok) fetchItems()
+    else {
+      const err = await res.json().catch(() => ({}))
+      alert(err.error ?? '팀 변경에 실패했습니다.')
+    }
+  }
   const deptMap = Object.fromEntries(departments.map(d => [d.id, d.name]))
 
   return (
@@ -1753,6 +2118,7 @@ function AccountsTab() {
                 <th>휴대폰</th>
                 <th>직급</th>
                 <th>사업부</th>
+                <th>팀</th>
                 <th>역할</th>
                 <th>부서 관리자</th>
                 <th>상태</th>
@@ -1767,6 +2133,37 @@ function AccountsTab() {
                   <td>{item.phone || '-'}</td>
                   <td>{(item.position_id && positionMap[item.position_id]) || '-'}</td>
                   <td>{(item.department_id && deptMap[item.department_id]) || '-'}</td>
+                  <td>
+                    {(() => {
+                      const availableTeams = teams.filter(
+                        (t) =>
+                          t.is_active &&
+                          (!item.department_id ||
+                            t.department_id === item.department_id),
+                      )
+                      if (availableTeams.length === 0) {
+                        return (
+                          <span>
+                            {(item.team_id && teamMap[item.team_id]) || '-'}
+                          </span>
+                        )
+                      }
+                      return (
+                        <select
+                          value={item.team_id ?? ''}
+                          onChange={(e) => handleChangeTeam(item, e.target.value)}
+                          className={styles.formInput}
+                        >
+                          <option value="">미지정</option>
+                          {availableTeams.map((t) => (
+                            <option key={t.id} value={t.id}>
+                              {t.name}
+                            </option>
+                          ))}
+                        </select>
+                      )
+                    })()}
+                  </td>
                   <td>
                     <span className={`${styles.statusBadge} ${styles.roleBadge}`}>
                       {ROLE_LABELS[item.role] ?? item.role}

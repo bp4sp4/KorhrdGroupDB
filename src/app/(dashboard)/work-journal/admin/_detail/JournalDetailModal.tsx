@@ -1,7 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Users, UserPlus, TrendingUp, Wallet } from "lucide-react";
+import {
+  Users,
+  UserPlus,
+  TrendingUp,
+  Wallet,
+  Target,
+  AlertCircle,
+  CheckCircle2,
+  Circle,
+} from "lucide-react";
 import styles from "./JournalDetailModal.module.css";
 import { getCalendarWeekIndex } from "@/lib/dashboard/weekOfMonth";
 
@@ -11,12 +20,14 @@ interface DetailResponse {
     display_name: string;
     position_name: string | null;
     department_name: string | null;
+    team_journal_form?: "default" | "academic";
   };
   journal: {
     morning: unknown;
     afternoon: unknown;
     tomorrow: unknown;
     tasks: unknown;
+    issues?: unknown;
     status: string;
     submitted_at: string | null;
     updated_at: string;
@@ -39,6 +50,9 @@ interface DetailResponse {
     company: { name: string; count: number }[];
     direct: { name: string; count: number }[];
   };
+  weeklyGoal?:
+    | { id: string; date: string; text: string; done: boolean }[]
+    | null;
 }
 
 // morning/afternoon 의 jsonb 행을 { category, detail } 형태로 정규화
@@ -174,7 +188,19 @@ export function JournalDetailModal({
           onClick={onClose}
           aria-label="닫기"
         >
-          ✕
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M18.0072 3.93918C18.5537 3.3906 19.4411 3.38723 19.9906 3.93332C20.5398 4.47992 20.5428 5.36865 19.9964 5.91819L13.9789 11.9636L20.0667 18.0822C20.6129 18.6318 20.6102 19.5206 20.0609 20.0671C19.5113 20.6126 18.6224 20.6103 18.076 20.0613L11.9999 13.9529L5.92368 20.0613C5.37709 20.6099 4.48821 20.6131 3.93882 20.0671C3.38989 19.5207 3.38724 18.6318 3.93296 18.0822L10.0194 11.9636L4.00473 5.91819C3.45878 5.36914 3.4601 4.48031 4.00913 3.93332C4.55871 3.38686 5.4474 3.39003 5.99399 3.93918L11.9999 9.97434L18.0072 3.93918Z"
+              fill="#8995A2"
+            />
+          </svg>
         </button>
 
         {loading && <div className={styles.loading}>불러오는 중...</div>}
@@ -230,20 +256,32 @@ export function JournalDetailModal({
               <TomorrowSection title="내일 예정 업무" items={tomorrow} />
             </div>
 
-            {/* 우측 컬럼 — 상단: 목표 / 하단: 통계 + 유입경로 (가로 분할) */}
+            {/* 우측 컬럼 — 학사팀이면 이번주 목표 + 이슈/조치사항, 그 외 기본(목표/통계/유입경로) */}
             <div className={styles.rightCol}>
-              <GoalCard
-                monthLabel={monthLabel}
-                goalTotal={data.monthlyGoal?.total ?? 0}
-                goalWeeks={data.monthlyGoal?.weeks ?? [0, 0, 0, 0, 0]}
-                achievedTotal={data.monthlyAchieved.total}
-                achievedWeeks={data.monthlyAchieved.weeks}
-                currentWeekIdx={currentWeekIdx}
-              />
-              <div className={styles.rightBottomRow}>
-                <StatList stats={data.stats} />
-                <SourcesCard inquirySources={data.inquirySources} />
-              </div>
+              {data.user.team_journal_form === "academic" ? (
+                <>
+                  <WeeklyGoalCard
+                    goals={data.weeklyGoal ?? []}
+                    dateForWeek={date}
+                  />
+                  <IssuesCard issues={data.journal?.issues} />
+                </>
+              ) : (
+                <>
+                  <GoalCard
+                    monthLabel={monthLabel}
+                    goalTotal={data.monthlyGoal?.total ?? 0}
+                    goalWeeks={data.monthlyGoal?.weeks ?? [0, 0, 0, 0, 0]}
+                    achievedTotal={data.monthlyAchieved.total}
+                    achievedWeeks={data.monthlyAchieved.weeks}
+                    currentWeekIdx={currentWeekIdx}
+                  />
+                  <div className={styles.rightBottomRow}>
+                    <StatList stats={data.stats} />
+                    <SourcesCard inquirySources={data.inquirySources} />
+                  </div>
+                </>
+              )}
             </div>
           </>
         )}
@@ -553,6 +591,154 @@ function SourceSubsection({
           );
         })}
       </div>
+    </div>
+  );
+}
+
+// 학사팀 — 이번주 목표 카드 (읽기 전용 표시)
+function WeeklyGoalCard({
+  goals,
+  dateForWeek,
+}: {
+  goals: { id: string; date: string; text: string; done: boolean }[];
+  dateForWeek: string;
+}) {
+  // dateForWeek 가 속한 주의 월요일~일요일 라벨
+  const [y, m, d] = dateForWeek.split("-").map(Number);
+  const target = new Date(y, m - 1, d);
+  const dow = target.getDay();
+  const offset = dow === 0 ? -6 : 1 - dow;
+  const monday = new Date(target);
+  monday.setDate(target.getDate() + offset);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  const fmt = (dd: Date) =>
+    `${String(dd.getMonth() + 1).padStart(2, "0")}.${String(dd.getDate()).padStart(2, "0")}`;
+  const weekRange = `${fmt(monday)} ~ ${fmt(sunday)}`;
+
+  const total = goals.length;
+  const doneCount = goals.filter((g) => g.done).length;
+  const pct = total > 0 ? Math.round((doneCount / total) * 100) : 0;
+
+  return (
+    <div className={styles.academicCard}>
+      <div className={styles.academicCardHeader}>
+        <span className={styles.academicCardHeaderLeft}>
+          <span className={styles.academicCardHeaderIcon}>
+            <Target size={16} />
+          </span>
+          <span className={styles.academicCardTitle}>이번주 목표</span>
+          <span className={styles.academicCardSub}>{weekRange}</span>
+        </span>
+        {total > 0 && (
+          <span className={styles.academicCardCount}>
+            {doneCount}/{total} 완료
+          </span>
+        )}
+      </div>
+
+      {total > 0 && (
+        <div className={styles.academicProgressBar}>
+          <span
+            className={styles.academicProgressFill}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+      )}
+
+      {goals.length === 0 ? (
+        <div className={styles.academicEmpty}>
+          <Target size={28} className={styles.academicEmptyIcon} />
+          <span>설정된 이번주 목표가 없습니다.</span>
+        </div>
+      ) : (
+        <ul className={styles.weeklyGoalReadList}>
+          {goals.map((g) => (
+            <li
+              key={g.id}
+              className={`${styles.weeklyGoalReadItem} ${g.done ? styles.weeklyGoalReadItemDone : ""}`}
+            >
+              <span className={styles.weeklyGoalReadCheckIcon}>
+                {g.done ? (
+                  <CheckCircle2 size={18} className={styles.iconDone} />
+                ) : (
+                  <Circle size={18} className={styles.iconUndone} />
+                )}
+              </span>
+              <span className={styles.weeklyGoalReadBody}>
+                <span className={styles.weeklyGoalReadText}>{g.text}</span>
+                <span className={styles.weeklyGoalReadDate}>
+                  {(() => {
+                    const v = (g.date ?? "").trim();
+                    if (!v) return "미정";
+                    if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+                    const dd = new Date(`${v}T00:00:00`);
+                    if (Number.isNaN(dd.getTime())) return v;
+                    const mm = String(dd.getMonth() + 1).padStart(2, "0");
+                    const ddd = String(dd.getDate()).padStart(2, "0");
+                    const wk = ["일", "월", "화", "수", "목", "금", "토"][
+                      dd.getDay()
+                    ];
+                    return `${mm}.${ddd} (${wk})`;
+                  })()}
+                </span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+// 학사팀 — 이슈 및 조치사항 카드 (읽기 전용)
+function IssuesCard({ issues }: { issues: unknown }) {
+  // issues 는 JournalRow[] = {id, category, detail}[]
+  const rows = Array.isArray(issues)
+    ? (issues as { category?: unknown; detail?: unknown; id?: unknown }[])
+        .map((r) => ({
+          id: typeof r?.id === "string" ? r.id : String(r?.id ?? ""),
+          category:
+            typeof r?.category === "string" ? r.category.trim() : "",
+          detail: typeof r?.detail === "string" ? r.detail.trim() : "",
+        }))
+        .filter((r) => r.category !== "" || r.detail !== "")
+    : [];
+
+  return (
+    <div className={styles.academicCard}>
+      <div className={styles.academicCardHeader}>
+        <span className={styles.academicCardHeaderLeft}>
+          <span
+            className={`${styles.academicCardHeaderIcon} ${styles.academicCardHeaderIconWarn}`}
+          >
+            <AlertCircle size={16} />
+          </span>
+          <span className={styles.academicCardTitle}>이슈 및 조치사항</span>
+        </span>
+        {rows.length > 0 && (
+          <span className={styles.academicCardCount}>{rows.length}건</span>
+        )}
+      </div>
+      {rows.length === 0 ? (
+        <div className={styles.academicEmpty}>
+          <AlertCircle size={28} className={styles.academicEmptyIcon} />
+          <span>등록된 이슈 및 조치사항이 없습니다.</span>
+        </div>
+      ) : (
+        <ul className={styles.issuesReadList}>
+          {rows.map((r) => (
+            <li key={r.id} className={styles.issuesReadItem}>
+              {r.category && (
+                <span className={styles.issuesReadCategory}>{r.category}</span>
+              )}
+              {r.detail && (
+                <span className={styles.issuesReadDetail}>{r.detail}</span>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
