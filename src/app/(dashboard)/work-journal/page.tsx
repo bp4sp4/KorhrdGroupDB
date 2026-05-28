@@ -580,10 +580,23 @@ export default function WorkJournalPage() {
                   />
                 </svg>
               </div>
-              <span className={styles.statLabel}>전체문의</span>
-              <span className={styles.statValue}>
-                {(stats?.totalInquiries ?? 0).toLocaleString()}건
-              </span>
+              <div className={styles.statTexts}>
+                <div className={styles.statValueRow}>
+                  <span className={styles.statLabel}>전체문의</span>
+                  <span className={styles.statValue}>
+                    {(stats?.totalInquiries ?? 0).toLocaleString()}건
+                  </span>
+                </div>
+                <div className={styles.statSub}>
+                  <span>전일대비</span>
+                  <span>
+                    {(() => {
+                      const n = stats?.delta.inquiries ?? 0;
+                      return `${n > 0 ? "+" : ""}${n}건`;
+                    })()}
+                  </span>
+                </div>
+              </div>
             </div>
 
             <span className={styles.statDivider} aria-hidden="true" />

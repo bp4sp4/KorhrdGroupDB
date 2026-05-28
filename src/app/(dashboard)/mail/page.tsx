@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Inbox,
   Send,
@@ -109,7 +109,13 @@ export default function MailPage() {
   const [list, setList] = useState<MailListItem[]>([]);
   const [listLoading, setListLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  // URL ?id=<messageId> 로 진입 시 해당 메일 자동 선택 (대시보드 메일 리스트 → 상세)
+  const [selectedId, setSelectedId] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return new URLSearchParams(window.location.search).get("id");
+  });
+  // 초기 URL id 가 fetchList useEffect 의 setSelectedId(null) 로 덮어쓰이지 않도록 가드
+  const isFirstMountRef = useRef(true);
   const [detail, setDetail] = useState<MailDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [showCompose, setShowCompose] = useState(false);
@@ -205,8 +211,11 @@ export default function MailPage() {
 
   useEffect(() => {
     fetchList();
-    setSelectedId(null);
-    setDetail(null);
+    if (!isFirstMountRef.current) {
+      setSelectedId(null);
+      setDetail(null);
+    }
+    isFirstMountRef.current = false;
   }, [fetchList]);
 
   // 상세 fetch

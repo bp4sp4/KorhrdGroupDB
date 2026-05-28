@@ -18,6 +18,7 @@ import Link from "next/link";
 import styles from "./page.module.css";
 import { CLOCK_OUT_CONFIRM, getTodayKstDate } from "@/lib/attendance";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { getCalendarWeekIndex } from "@/lib/dashboard/weekOfMonth";
 
 interface AttendanceRec {
   id: number;
@@ -170,24 +171,38 @@ export default function DashboardPage() {
     };
   }, []);
 
-  // 오늘의 문의 유입경로 — mock 데이터 (추후 API 연결)
+  // 오늘의 문의 유입경로 — /api/dashboard/today-inquiry-sources 응답
   // 채널명만 [{name, count}]로 받아오면 색상은 SOURCE_COLORS에서 자동 매핑됨
-  const companySourceData = [
-    { name: "당근", count: 27 },
-    { name: "맘카페", count: 27 },
-    { name: "네이버", count: 27 },
-    { name: "인스타·페이스북", count: 124 },
-    { name: "구글", count: 12 },
-    { name: "카카오", count: 10 },
-    { name: "토스", count: 8 },
-    { name: "기타", count: 5 },
-  ].map((s) => ({ ...s, color: getSourceColor(s.name) }));
+  const [companyRaw, setCompanyRaw] = useState<
+    { name: string; count: number }[]
+  >([]);
+  const [directRaw, setDirectRaw] = useState<{ name: string; count: number }[]>(
+    [],
+  );
 
-  const directSourceData = [
-    { name: "맘카페", count: 27 },
-    { name: "최적블로그", count: 27 },
-    { name: "지인소개", count: 27 },
-  ].map((s) => ({ ...s, color: getSourceColor(s.name) }));
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/dashboard/today-inquiry-sources", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (cancelled || !d) return;
+        if (Array.isArray(d.company)) setCompanyRaw(d.company);
+        if (Array.isArray(d.direct)) setDirectRaw(d.direct);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const companySourceData = companyRaw.map((s) => ({
+    ...s,
+    color: getSourceColor(s.name),
+  }));
+  const directSourceData = directRaw.map((s) => ({
+    ...s,
+    color: getSourceColor(s.name),
+  }));
 
   const companyTotal = companySourceData.reduce((s, x) => s + x.count, 0);
   const directTotal = directSourceData.reduce((s, x) => s + x.count, 0);
@@ -198,13 +213,15 @@ export default function DashboardPage() {
     return () => clearInterval(t);
   }, []);
 
-  // 로그인 사용자 이름 (인사말용)
+  // 로그인 사용자 이름 + id (인사말 + 사용자별 목표 key)
   useEffect(() => {
     let cancelled = false;
     fetch("/api/auth/me", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
-        if (!cancelled && d?.displayName) setUserName(d.displayName);
+        if (cancelled) return;
+        if (d?.displayName) setUserName(d.displayName);
+        if (typeof d?.id === "number") setUserId(d.id);
       })
       .catch(() => {});
     return () => {
@@ -274,6 +291,106 @@ export default function DashboardPage() {
   };
 
   const [showClockOutConfirm, setShowClockOutConfirm] = useState(false);
+
+  // ─── 이번달 목표 (사용자별, app_settings 기반) ────────────────────
+  const monthKey = `${new Date().getFullYear()}-${String(
+    new Date().getMonth() + 1,
+  ).padStart(2, "0")}`;
+  const [userId, setUserId] = useState<number | null>(null);
+  const [monthlyGoal, setMonthlyGoal] = useState<{
+    total: number;
+    weeks: number[];
+  }>({ total: 0, weeks: [0, 0, 0, 0, 0] });
+  const [monthlyAchieved, setMonthlyAchieved] = useState<{
+    total: number;
+    weeks: number[];
+  }>({ total: 0, weeks: [0, 0, 0, 0, 0] });
+  const [goalModalOpen, setGoalModalOpen] = useState(false);
+  const [goalSaving, setGoalSaving] = useState(false);
+
+  const goalKey =
+    userId != null ? `dashboard.monthly_goal.${userId}.${monthKey}` : null;
+
+  // 사용자별 목표 로드 (userId 확인 후)
+  useEffect(() => {
+    if (!goalKey) return;
+    let cancelled = false;
+    fetch(`/api/app-settings?key=${goalKey}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (cancelled) return;
+        const v = data?.value;
+        if (
+          v &&
+          typeof v.total === "number" &&
+          Array.isArray(v.weeks) &&
+          v.weeks.length === 5 &&
+          v.weeks.every((n: unknown) => typeof n === "number")
+        ) {
+          setMonthlyGoal({ total: v.total, weeks: v.weeks });
+        } else {
+          setMonthlyGoal({ total: 0, weeks: [0, 0, 0, 0, 0] });
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [goalKey]);
+
+  // 본인 실 매출 로드 (이번 달 cert/edu/practice 합산, 주차별)
+  useEffect(() => {
+    let cancelled = false;
+    const now = new Date();
+    const params = new URLSearchParams({
+      year: String(now.getFullYear()),
+      month: String(now.getMonth() + 1),
+    });
+    fetch(`/api/dashboard/my-monthly-sales?${params.toString()}`, {
+      cache: "no-store",
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (cancelled || !data) return;
+        const total = typeof data.total === "number" ? data.total : 0;
+        const weeks =
+          Array.isArray(data.weeks) && data.weeks.length === 5
+            ? data.weeks.map((n: unknown) => (typeof n === "number" ? n : 0))
+            : [0, 0, 0, 0, 0];
+        setMonthlyAchieved({ total, weeks });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleSaveGoal = async (next: { total: number; weeks: number[] }) => {
+    if (!goalKey) {
+      alert("사용자 정보를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
+      return;
+    }
+    setGoalSaving(true);
+    try {
+      const res = await fetch("/api/app-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          key: goalKey,
+          value: next,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(err.error ?? "저장 실패");
+        return;
+      }
+      setMonthlyGoal(next);
+      setGoalModalOpen(false);
+    } finally {
+      setGoalSaving(false);
+    }
+  };
 
   const handleClockOut = () => {
     if (submitting) return;
@@ -528,11 +645,15 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        {/* 1행 중: 이번달 목표 현황 — mock 데이터 */}
+        {/* 1행 중: 이번달 목표 현황 — 목표값은 app_settings, 실적값은 mock */}
         <section className={`${styles.card} ${styles.goalCard}`}>
           <div className={styles.goalHead}>
             <h3 className={styles.cardTitle}>이번달 목표 현황</h3>
-            <button type="button" className={styles.goalSettingBtn}>
+            <button
+              type="button"
+              className={styles.goalSettingBtn}
+              onClick={() => setGoalModalOpen(true)}
+            >
               <Target size={14} />
               <span>목표 설정</span>
             </button>
@@ -540,18 +661,24 @@ export default function DashboardPage() {
 
           {(() => {
             const monthLabel = `${new Date().getMonth() + 1}월`;
-            const goalTotal = 1500;
-            const goalAchieved = 1024;
-            const pct = Math.round((goalAchieved / goalTotal) * 100);
-            const circumference = 2 * Math.PI * 44;
-            const dashLen = (pct / 100) * circumference;
-            const weekly = [
-              { week: "1주차", value: 120, target: 200 },
-              { week: "2주차", value: 160, target: 200 },
-              { week: "3주차", value: 106, target: 200, current: true },
-              { week: "4주차", value: 160, target: 200 },
-              { week: "5주차", value: 160, target: 200 },
-            ];
+            const goalTotal = monthlyGoal.total;
+            const goalAchieved = monthlyAchieved.total;
+            const pct = goalTotal > 0
+              ? Math.min(100, Math.round((goalAchieved / goalTotal) * 100))
+              : 0;
+            // 오늘 날짜로 현재 주차 계산 (달력 주차: 월~일)
+            const today = new Date();
+            const currentWeekIdx = getCalendarWeekIndex(
+              today.getFullYear(),
+              today.getMonth() + 1,
+              today.getDate(),
+            );
+            const weekly = monthlyGoal.weeks.map((target, i) => ({
+              week: `${i + 1}주차`,
+              value: monthlyAchieved.weeks[i] ?? 0,
+              target,
+              current: i === currentWeekIdx,
+            }));
             return (
               <div className={styles.goalBody}>
                 {/* 좌측: 도넛 + 매출 (세로 묶음) */}
@@ -615,10 +742,13 @@ export default function DashboardPage() {
                 {/* 우측: 주차별 진행 (라벨+% / bar / 금액) */}
                 <div className={styles.goalWeeksBox}>
                   {weekly.map((w) => {
-                    const wpct = Math.min(
-                      100,
-                      Math.round((w.value / w.target) * 100),
-                    );
+                    const wpct =
+                      w.target > 0
+                        ? Math.min(
+                            100,
+                            Math.round((w.value / w.target) * 100),
+                          )
+                        : 0;
                     return (
                       <div
                         key={w.week}
@@ -684,10 +814,23 @@ export default function DashboardPage() {
               <div className={styles.statIcon}>
                 <Users size={32} />
               </div>
-              <span className={styles.statLabel}>전체문의</span>
-              <span className={styles.statValue}>
-                {(stats?.totalInquiries ?? 0).toLocaleString()}건
-              </span>
+              <div className={styles.statTexts}>
+                <div className={styles.statValueRow}>
+                  <span className={styles.statLabel}>전체문의</span>
+                  <span className={styles.statValue}>
+                    {(stats?.totalInquiries ?? 0).toLocaleString()}건
+                  </span>
+                </div>
+                <div className={styles.statSub}>
+                  <span>전일대비</span>
+                  <span>
+                    {(() => {
+                      const n = stats?.delta.inquiries ?? 0;
+                      return `${n > 0 ? "+" : ""}${n}건`;
+                    })()}
+                  </span>
+                </div>
+              </div>
             </div>
 
             <span className={styles.statDivider} aria-hidden="true" />
@@ -790,6 +933,142 @@ export default function DashboardPage() {
         onConfirm={confirmClockOut}
         onCancel={() => setShowClockOutConfirm(false)}
       />
+      {goalModalOpen && (
+        <GoalSettingModal
+          monthKey={monthKey}
+          initial={monthlyGoal}
+          saving={goalSaving}
+          onClose={() => setGoalModalOpen(false)}
+          onSave={handleSaveGoal}
+        />
+      )}
+    </div>
+  );
+}
+
+// ─── 이번달 목표 설정 모달 ──────────────────────────────────────────
+function GoalSettingModal({
+  monthKey,
+  initial,
+  saving,
+  onClose,
+  onSave,
+}: {
+  monthKey: string;
+  initial: { total: number; weeks: number[] };
+  saving: boolean;
+  onClose: () => void;
+  onSave: (next: { total: number; weeks: number[] }) => void;
+}) {
+  const [total, setTotal] = useState<string>(String(initial.total));
+  const [weeks, setWeeks] = useState<string[]>(
+    initial.weeks.map((n) => String(n)),
+  );
+
+  const parseNum = (v: string) => {
+    const n = parseInt(v.replace(/,/g, ""), 10);
+    return Number.isFinite(n) && n >= 0 ? n : 0;
+  };
+
+  const weeksSum = weeks.reduce((s, v) => s + parseNum(v), 0);
+  const totalNum = parseNum(total);
+  const sumMismatch = weeksSum !== totalNum;
+
+  const handleSubmit = () => {
+    onSave({
+      total: totalNum,
+      weeks: weeks.map((v) => parseNum(v)),
+    });
+  };
+
+  return (
+    <div
+      className={styles.goalModalOverlay}
+      onClick={(e) => {
+        if (e.target === e.currentTarget && !saving) onClose();
+      }}
+    >
+      <div className={styles.goalModalBox}>
+        <div className={styles.goalModalHeader}>
+          <h3 className={styles.goalModalTitle}>이번달 목표 설정</h3>
+          <span className={styles.goalModalSubtitle}>{monthKey}</span>
+        </div>
+
+        <div className={styles.goalModalBody}>
+          <div className={styles.goalModalRow}>
+            <label className={styles.goalModalLabel}>총 목표</label>
+            <div className={styles.goalModalInputWrap}>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={total}
+                onChange={(e) =>
+                  setTotal(e.target.value.replace(/[^0-9,]/g, ""))
+                }
+                placeholder="예) 1500"
+                className={styles.goalModalInput}
+              />
+              <span className={styles.goalModalUnit}>만원</span>
+            </div>
+          </div>
+
+          <div className={styles.goalModalDivider} />
+
+          {weeks.map((w, i) => (
+            <div key={i} className={styles.goalModalRow}>
+              <label className={styles.goalModalLabel}>{i + 1}주차</label>
+              <div className={styles.goalModalInputWrap}>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={w}
+                  onChange={(e) => {
+                    const next = [...weeks];
+                    next[i] = e.target.value.replace(/[^0-9,]/g, "");
+                    setWeeks(next);
+                  }}
+                  placeholder="예) 200"
+                  className={styles.goalModalInput}
+                />
+                <span className={styles.goalModalUnit}>만원</span>
+              </div>
+            </div>
+          ))}
+
+          <div className={styles.goalModalSummary}>
+            <span>주차 합계</span>
+            <span
+              className={
+                sumMismatch
+                  ? styles.goalModalSummaryMismatch
+                  : styles.goalModalSummaryMatch
+              }
+            >
+              {weeksSum.toLocaleString()}만원
+              {sumMismatch && ` (총목표와 ${(weeksSum - totalNum).toLocaleString()}만원 차이)`}
+            </span>
+          </div>
+        </div>
+
+        <div className={styles.goalModalFooter}>
+          <button
+            type="button"
+            className={styles.goalModalCancel}
+            onClick={onClose}
+            disabled={saving}
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            className={styles.goalModalSave}
+            onClick={handleSubmit}
+            disabled={saving}
+          >
+            {saving ? "저장 중..." : "저장"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -905,30 +1184,22 @@ interface CalEvent {
   color?: string;
 }
 
-// mock 이벤트 — 추후 API 연결
-const CALENDAR_EVENTS_MOCK: CalEvent[] = [
-  {
-    id: "e1",
-    date: "2026-05-09",
-    title: "월간 회의",
-    time: "10:00~11:00",
-    color: "#0084FE",
-  },
-  {
-    id: "e2",
-    date: "2026-05-26",
-    title: "한평생 / 오후반차",
-    time: "14:00~19:00",
-    color: "#0084FE",
-  },
-  {
-    id: "e3",
-    date: "2026-05-26",
-    title: "한평생 / 오후반차",
-    time: "14:00~19:00",
-    color: "#0084FE",
-  },
-];
+// 휴가 이벤트 API 응답 (반차의 경우 time 필드는 클라이언트에서 추론)
+interface VacationEventDto {
+  id: string;
+  date: string;
+  title: string;
+  type: string;
+  status: string;
+  applicantName: string;
+  color?: string;
+}
+
+function vacationTimeOf(type: string): string | undefined {
+  if (type === "오전반차") return "09:00~13:00";
+  if (type === "오후반차") return "14:00~18:00";
+  return undefined;
+}
 
 function ymdToDate(ymd: string): Date {
   const [y, m, d] = ymd.split("-").map(Number);
@@ -959,6 +1230,42 @@ function DashboardCalendarCard() {
   const [viewYear, setViewYear] = useState(today.getFullYear());
   const [viewMonth, setViewMonth] = useState(today.getMonth() + 1); // 1~12
   const [selected, setSelected] = useState<Date>(today);
+
+  // 휴가 이벤트 (전자결재 휴가신청서 기반)
+  const [vacationEvents, setVacationEvents] = useState<CalEvent[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    const params = new URLSearchParams({
+      year: String(viewYear),
+      month: String(viewMonth),
+    });
+    fetch(`/api/dashboard/vacation-events?${params}`, { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((rows: unknown) => {
+        if (cancelled) return;
+        if (!Array.isArray(rows)) {
+          setVacationEvents([]);
+          return;
+        }
+        const mapped: CalEvent[] = rows.map((r) => {
+          const v = r as VacationEventDto;
+          return {
+            id: v.id,
+            date: v.date,
+            title: v.title,
+            color: v.color ?? "#0084FE",
+            time: vacationTimeOf(v.type),
+          };
+        });
+        setVacationEvents(mapped);
+      })
+      .catch(() => {
+        if (!cancelled) setVacationEvents([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [viewYear, viewMonth]);
 
   const firstDay = new Date(viewYear, viewMonth - 1, 1);
   const startWeekday = firstDay.getDay(); // 0(일) ~ 6(토)
@@ -1000,17 +1307,24 @@ function DashboardCalendarCard() {
     }
   };
 
-  // 날짜별 이벤트 카운트
-  const eventCountByDate = CALENDAR_EVENTS_MOCK.reduce<Record<string, number>>(
+  // 날짜별 이벤트 카운트 + 대표 색상 (첫 이벤트의 색상)
+  const eventCountByDate = vacationEvents.reduce<Record<string, number>>(
     (acc, e) => {
       acc[e.date] = (acc[e.date] ?? 0) + 1;
       return acc;
     },
     {},
   );
+  const eventColorByDate = vacationEvents.reduce<Record<string, string>>(
+    (acc, e) => {
+      if (!acc[e.date] && e.color) acc[e.date] = e.color;
+      return acc;
+    },
+    {},
+  );
 
   // 선택일 이벤트
-  const selectedEvents = CALENDAR_EVENTS_MOCK.filter(
+  const selectedEvents = vacationEvents.filter(
     (e) => e.date === dateToYmd(selected),
   );
 
@@ -1082,7 +1396,6 @@ function DashboardCalendarCard() {
           const dayOfWeek = date.getDay();
           const isToday = sameYmd(date, today);
           const isSelected = sameYmd(date, selected);
-          const isPast = date < today && !isToday;
           const eventCount = eventCountByDate[ymd] ?? 0;
           return (
             <button
@@ -1098,12 +1411,24 @@ function DashboardCalendarCard() {
                     : dayOfWeek === 6
                       ? styles.calCellSat
                       : ""
-                } ${!inMonth || isPast ? styles.calCellDim : ""}`}
+                } ${!inMonth ? styles.calCellDim : ""}`}
               >
                 {date.getDate()}
               </span>
               {eventCount > 0 && (
-                <span className={styles.calCellDot}>{eventCount}</span>
+                <span
+                  className={styles.calCellDot}
+                  style={
+                    eventColorByDate[ymd]
+                      ? {
+                          background: eventColorByDate[ymd],
+                          color: "#fff",
+                        }
+                      : undefined
+                  }
+                >
+                  {eventCount}
+                </span>
               )}
             </button>
           );
@@ -1208,6 +1533,8 @@ function InboxMoreArrow() {
 
 type InboxTab = "mail" | "approval" | "task";
 
+type ApprovalBadge = "pending" | "approved" | "rejected" | "cancelled";
+
 interface InboxItem {
   id: string;
   title: string;
@@ -1215,6 +1542,8 @@ interface InboxItem {
   date: string;
   unread: boolean;
   urgent?: boolean;
+  // 결재 탭에서 사용 — 결재 상태 뱃지 (대기/승인완료/반려/취소)
+  approvalBadge?: ApprovalBadge;
 }
 
 interface MailListMessage {
@@ -1298,24 +1627,78 @@ function InboxCard() {
     };
   }, []);
 
-  // 결재/업무 요청 — mock (추후 API 연결)
-  const approvalItems: InboxItem[] = [
-    {
-      id: "a1",
-      title: "지출 결의서",
-      sender: "박상훈",
-      date: "05.20",
-      unread: true,
-      urgent: true,
-    },
-    {
-      id: "a2",
-      title: "출장 신청서",
-      sender: "이한선",
-      date: "05.19",
-      unread: true,
-    },
-  ];
+  // 결재 — 내 관련 결재문서 모두 (내가 신청한 것 + 내가 결재할 것)
+  // tab=mine (모든 상태: 진행/완료/취소 등) + tab=pending (내가 결재할 PENDING)
+  // 머지 후 중복 제거, 최신순 정렬, 상위 6건
+  const [approvalItems, setApprovalItems] = useState<InboxItem[]>([]);
+  const [approvalLoading, setApprovalLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    setApprovalLoading(true);
+
+    interface ApprovalRow {
+      id: string;
+      title?: string;
+      document_type?: string;
+      status?: string;
+      created_at?: string;
+      submitted_at?: string;
+      applicant?: { display_name?: string };
+    }
+    const ACTIVE_STATUSES = new Set(["SUBMITTED", "IN_PROGRESS"]);
+
+    Promise.all([
+      fetch("/api/management/approvals?tab=mine", { cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : []))
+        .catch(() => []),
+      fetch("/api/management/approvals?tab=pending", { cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : []))
+        .catch(() => []),
+    ])
+      .then(([mineRaw, pendingRaw]) => {
+        if (cancelled) return;
+        const mine: ApprovalRow[] = Array.isArray(mineRaw) ? mineRaw : [];
+        const pending: ApprovalRow[] = Array.isArray(pendingRaw)
+          ? pendingRaw
+          : [];
+
+        // id 중복 제거 (mine 우선)
+        const byId = new Map<string, ApprovalRow>();
+        for (const r of mine) if (r?.id) byId.set(r.id, r);
+        for (const r of pending) if (r?.id && !byId.has(r.id)) byId.set(r.id, r);
+
+        const merged = Array.from(byId.values()).sort((a, b) => {
+          const ta = new Date(a.submitted_at ?? a.created_at ?? 0).getTime();
+          const tb = new Date(b.submitted_at ?? b.created_at ?? 0).getTime();
+          return tb - ta;
+        });
+
+        const statusToBadge = (s: string | undefined): ApprovalBadge => {
+          if (s === "APPROVED") return "approved";
+          if (s === "REJECTED") return "rejected";
+          if (s === "CANCELLED") return "cancelled";
+          return "pending"; // SUBMITTED, IN_PROGRESS, DRAFT 등
+        };
+
+        const mapped: InboxItem[] = merged.slice(0, 6).map((r) => ({
+          id: r.id,
+          title: r.title?.trim() || r.document_type || "(제목 없음)",
+          sender: r.applicant?.display_name ?? "-",
+          date: formatInboxDate(r.submitted_at ?? r.created_at),
+          // 활성 상태(진행 중/제출됨)면 강조 표시 — 완료/반려/취소는 일반 표시
+          unread: ACTIVE_STATUSES.has(r.status ?? ""),
+          approvalBadge: statusToBadge(r.status),
+        }));
+        setApprovalItems(mapped);
+      })
+      .finally(() => {
+        if (!cancelled) setApprovalLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const taskItems: InboxItem[] = [
     {
       id: "t1",
@@ -1366,30 +1749,65 @@ function InboxCard() {
         return <li className={styles.inboxEmpty}>{mailError}</li>;
       }
     }
+    if (tab === "approval" && approvalLoading) {
+      return <li className={styles.inboxEmpty}>결재 문서 불러오는 중...</li>;
+    }
     if (items.length === 0) {
       return <li className={styles.inboxEmpty}>표시할 항목이 없습니다.</li>;
     }
-    return items.map((it) => (
-      <li key={it.id} className={styles.inboxItem}>
-        <span className={styles.inboxItemIcon}>
-          {it.unread ? <MailSealedIcon /> : <MailOpenedIcon />}
-        </span>
-        <div className={styles.inboxItemBody}>
-          <div className={styles.inboxItemTitleRow}>
-            <span
-              className={`${styles.inboxItemTitle} ${it.unread ? styles.inboxItemTitleUnread : ""}`}
-            >
-              {it.title}
-            </span>
-            {it.urgent && (
-              <span className={styles.inboxItemUrgent}>긴급</span>
-            )}
+    return items.map((it) => {
+      // 메일/결재 탭: 클릭 시 디테일 페이지 ?id= 로 진입
+      // 업무 탭: 현재 mock 데이터 — 추후 디테일 경로 생기면 동일 패턴으로 확장
+      const href =
+        tab === "mail"
+          ? `/mail?id=${encodeURIComponent(it.id)}`
+          : tab === "approval"
+            ? `/approvals?id=${encodeURIComponent(it.id)}`
+            : null;
+      const badgeMeta: Record<ApprovalBadge, { label: string; className: string }> = {
+        pending: { label: "대기", className: styles.inboxItemBadgePending },
+        approved: { label: "승인완료", className: styles.inboxItemBadgeApproved },
+        rejected: { label: "반려", className: styles.inboxItemBadgeRejected },
+        cancelled: { label: "취소", className: styles.inboxItemBadgeCancelled },
+      };
+      const badge = it.approvalBadge ? badgeMeta[it.approvalBadge] : null;
+
+      const inner = (
+        <>
+          <span className={styles.inboxItemIcon}>
+            {it.unread ? <MailSealedIcon /> : <MailOpenedIcon />}
+          </span>
+          <div className={styles.inboxItemBody}>
+            <div className={styles.inboxItemTitleRow}>
+              <span
+                className={`${styles.inboxItemTitle} ${it.unread ? styles.inboxItemTitleUnread : ""}`}
+              >
+                {it.title}
+              </span>
+              {it.urgent && (
+                <span className={styles.inboxItemUrgent}>긴급</span>
+              )}
+              {badge && (
+                <span className={badge.className}>{badge.label}</span>
+              )}
+            </div>
+            <span className={styles.inboxItemSender}>{it.sender}</span>
           </div>
-          <span className={styles.inboxItemSender}>{it.sender}</span>
-        </div>
-        <span className={styles.inboxItemDate}>{it.date}</span>
-      </li>
-    ));
+          <span className={styles.inboxItemDate}>{it.date}</span>
+        </>
+      );
+      return (
+        <li key={it.id} className={styles.inboxItem}>
+          {href ? (
+            <Link href={href} className={styles.inboxItemLink}>
+              {inner}
+            </Link>
+          ) : (
+            inner
+          )}
+        </li>
+      );
+    });
   };
 
   return (
@@ -1443,9 +1861,15 @@ function SourceSection({
     <div className={styles.sourceSection}>
       <div className={styles.sourceSectionHead}>
         <span className={styles.sourceSectionLabel}>{label}</span>
+        <span className={styles.sourceSectionTotal}>
+          {total.toLocaleString()}건
+        </span>
       </div>
       {/* 가로 누적 막대 + 호버 툴팁 */}
       <div className={styles.sourceBar}>
+        {total === 0 && (
+          <div className={styles.sourceBarEmpty}>오늘 0건</div>
+        )}
         {data.map((s) => (
           <div
             key={s.name}

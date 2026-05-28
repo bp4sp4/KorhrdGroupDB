@@ -520,6 +520,9 @@ export default function ApprovalsPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const quickActionHandledRef = useRef(false);
+  // ?id=<approvalId> 진입 시 해당 결재문서를 자동으로 디테일 뷰로 펼침
+  // (대시보드 결재 리스트에서 클릭 → 디테일 자동 열림)
+  const detailFromQueryHandledRef = useRef(false);
 
   // 뷰 상태
   const [currentView, setCurrentView] = useState<ViewType>("home");
@@ -707,6 +710,29 @@ export default function ApprovalsPage() {
     const t = setTimeout(() => startApprovalGuide("approvals-basics"), 400);
     return () => clearTimeout(t);
   }, [startApprovalGuide, templates.length]);
+
+  // ?id=<approvalId> 진입 시 해당 결재문서 디테일을 자동 펼침
+  // (대시보드 InboxCard 결재 탭 → 클릭 → /approvals?id=... → 디테일 자동 진입)
+  useEffect(() => {
+    if (detailFromQueryHandledRef.current) return;
+    const approvalId = searchParams.get("id");
+    if (!approvalId) return;
+    detailFromQueryHandledRef.current = true;
+    (async () => {
+      try {
+        const res = await fetch(
+          `/api/management/approvals/${encodeURIComponent(approvalId)}`,
+        );
+        if (!res.ok) return;
+        const data: Approval = await res.json();
+        setSelectedApproval(data);
+        setActionComment("");
+        setCurrentView("detail");
+      } catch {
+        // 디테일 로드 실패 시 무시 (사용자가 목록에서 다시 클릭하면 됨)
+      }
+    })();
+  }, [searchParams]);
 
   // 쿼리 파라미터로 빠른 신청 진입 (예: ?new=휴가신청서&vacation_type=연차)
   useEffect(() => {

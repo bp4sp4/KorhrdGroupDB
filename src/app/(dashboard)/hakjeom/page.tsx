@@ -74,6 +74,7 @@ import {
   EDUCATION_CUSTOM,
   HOPE_COURSE_CUSTOM,
   SOURCE_MAJORS,
+  SOURCE_MAJOR_LABEL,
   REFERRER_CARD_META,
   DANGGEUN_DEFAULT_OPTIONS,
 } from "./_constants";
@@ -632,26 +633,29 @@ function HakjeomAddModal({
                   className={styles.funnelTagRow}
                   style={{ flexWrap: "wrap" }}
                 >
-                  {SOURCE_MAJORS.map((m) => (
-                    <button
-                      key={m}
-                      type="button"
-                      onClick={() =>
-                        setForm((p) => ({
-                          ...p,
-                          sourceMajor: p.sourceMajor === m ? "" : m,
-                          sourceMinor: "",
-                        }))
-                      }
-                      className={
-                        form.sourceMajor === m
-                          ? styles.tagBtnV2Active
-                          : styles.tagBtnV2
-                      }
-                    >
-                      {form.sourceMajor === m ? `✓ ${m}` : m}
-                    </button>
-                  ))}
+                  {SOURCE_MAJORS.map((m) => {
+                    const label = SOURCE_MAJOR_LABEL[m] ?? m;
+                    return (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() =>
+                          setForm((p) => ({
+                            ...p,
+                            sourceMajor: p.sourceMajor === m ? "" : m,
+                            sourceMinor: "",
+                          }))
+                        }
+                        className={
+                          form.sourceMajor === m
+                            ? styles.tagBtnV2Active
+                            : styles.tagBtnV2
+                        }
+                      >
+                        {form.sourceMajor === m ? `✓ ${label}` : label}
+                      </button>
+                    );
+                  })}
                 </div>
                 {form.sourceMajor === "맘카페" && (
                   <div
@@ -848,10 +852,15 @@ function HakjeomAddModal({
                 )}
                 {form.sourceMajor && (
                   <p className={styles.clickSourcePreview}>
-                    {formatClickSourceDisplay(
-                      form.sourceMajor +
-                        (form.sourceMinor ? `_${form.sourceMinor}` : ""),
-                    )}
+                    {(() => {
+                      const raw = formatClickSourceDisplay(
+                        form.sourceMajor +
+                          (form.sourceMinor ? `_${form.sourceMinor}` : ""),
+                      );
+                      // 내부 value "지인소개" → UI 라벨 "개인마케팅" 으로 치환
+                      const label = SOURCE_MAJOR_LABEL[form.sourceMajor];
+                      return label ? raw.replace(form.sourceMajor, label) : raw;
+                    })()}
                   </p>
                 )}
               </div>
@@ -2131,7 +2140,7 @@ function HakjeomTab({
                               setBulkSourceMinor("");
                             }}
                           >
-                            {m}
+                            {SOURCE_MAJOR_LABEL[m] ?? m}
                           </button>
                         ))}
                       </div>
@@ -2333,7 +2342,7 @@ function HakjeomTab({
                           onClick={handleBulkAssignSource}
                         >
                           {bulkSourceMajor
-                            ? `"${bulkSourceMajor}${bulkSourceMinor ? ` > ${bulkSourceMinor}` : ""}" 배정`
+                            ? `"${SOURCE_MAJOR_LABEL[bulkSourceMajor] ?? bulkSourceMajor}${bulkSourceMinor ? ` > ${bulkSourceMinor}` : ""}" 배정`
                             : "대분류를 선택하세요"}
                         </button>
                       </div>
@@ -2735,7 +2744,11 @@ function HakjeomTab({
                         {(currentPage - 1) * itemsPerPage + index + 1}
                       </td>
                       <td className={styles.tdSecondary}>
-                        {parseSource(item.click_source).major || "-"}
+                        {(() => {
+                          const m = parseSource(item.click_source).major;
+                          if (!m) return "-";
+                          return SOURCE_MAJOR_LABEL[m] ?? m;
+                        })()}
                       </td>
                       <td
                         className={styles.tdSecondary}
@@ -2982,7 +2995,7 @@ function HakjeomTab({
                     setCurrentPage(1);
                   }}
                 >
-                  {m}
+                  {SOURCE_MAJOR_LABEL[m] ?? m}
                 </div>
               ))}
             </>
