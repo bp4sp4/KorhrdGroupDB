@@ -16,24 +16,9 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
 
   const getDefaultPath = (data: { role: string; permissions?: { section: string; scope: string; allowed_tabs?: string[] | null }[] }) => {
+    // mini-admin 은 전용 페이지로, 그 외 모든 사용자는 대시보드를 홈으로 사용
     if (data.role === 'mini-admin') return '/mini-admin'
-    if (data.role === 'admin' || data.role === 'master-admin') return '/hakjeom'
-    const SECTION_PATHS = [
-      { section: 'hakjeom',  path: '/hakjeom' },
-      { section: 'cert',     path: '/cert' },
-      { section: 'practice', path: '/practice' },
-      { section: 'allcare',  path: '/allcare' },
-      { section: 'abroad',   path: '/abroad' },
-      { section: 'revenue-upload', path: '/revenue-upload' },
-      { section: 'revenues', path: '/revenues/nms-sales' },
-      { section: 'approvals', path: '/approvals' },
-      { section: 'reports', path: '/reports' },
-    ]
-    const perms = data.permissions ?? []
-    for (const { section, path } of SECTION_PATHS) {
-      if (perms.some(p => p.section === section && p.scope && p.scope !== 'none')) return path
-    }
-    return '/hakjeom'
+    return '/dashboard'
   }
 
   useEffect(() => {
@@ -48,7 +33,7 @@ export default function LoginPage() {
             return
           }
         } catch { /* ignore */ }
-        router.replace('/hakjeom')
+        router.replace('/dashboard')
       }
     })
   }, [router, supabase.auth])
@@ -75,7 +60,7 @@ export default function LoginPage() {
         return
       }
     } catch { /* ignore */ }
-    router.replace('/hakjeom')
+    router.replace('/dashboard')
   }
 
   const isDisabled = isLoading || !email || !password

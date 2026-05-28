@@ -21,7 +21,6 @@ const SECTION_NAV: NavSection[] = [
     label: "대시보드",
     href: "/dashboard",
     activeOn: ["/dashboard"],
-    badge: "개발중",
   },
   {
     label: "업무일지",
@@ -229,8 +228,8 @@ export default function Header({
         <Menu size={20} />
       </button>
 
-      {/* 로고 */}
-      <Link href="/hakjeom" className={styles.headerLogo}>
+      {/* 로고 — 클릭 시 홈(대시보드)으로 이동 */}
+      <Link href="/dashboard" className={styles.headerLogo}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/logo.png"
