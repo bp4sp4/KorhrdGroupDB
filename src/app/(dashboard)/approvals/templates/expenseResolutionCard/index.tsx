@@ -7,7 +7,7 @@ import { ko } from 'date-fns/locale'
 
 export const EXPENSE_RESOLUTION_CARD_FIELDS: FieldDef[] = [
   { key: 'belong_dept',     label: '소속부서',   type: 'text', required: true },
-  { key: 'bank_account_id', label: '사용 통장',  type: 'text', required: true },
+  { key: 'bank_account_id', label: '사용 통장',  type: 'text', required: false },
   { key: 'card_items',      label: '사용내역',   type: 'text', required: true },
   { key: 'special_note',    label: '특이사항',   type: 'textarea' },
 ]

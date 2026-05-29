@@ -1748,10 +1748,10 @@ function AddCertModal({
     amount: "",
     manager_name: "",
   });
-  // 분류: 'card' = 카드결제 (학점연계 자동), 'postpaid' = 후납
-  const [salesCategory, setSalesCategory] = useState<"card" | "postpaid">(
-    "card",
-  );
+  // 분류: 'card' = 카드결제, 'postpaid' = 후납, 'pending' = 결제대기
+  const [salesCategory, setSalesCategory] = useState<
+    "card" | "postpaid" | "pending"
+  >("card");
   const [selectedCerts, setSelectedCerts] = useState<string[]>([]);
   const [certSearch, setCertSearch] = useState("");
   const [certCategory, setCertCategory] = useState("전체과정");
@@ -1827,7 +1827,7 @@ function AddCertModal({
       if (source) fd.append("source", source);
       if (photoFile) fd.append("photo", photoFile);
       // 학점연계 신청 추가 시: 매출파일에 즉시 노출되도록 paid 처리
-      // 카드결제 = pay_method=card, 후납 = pay_method=postpaid
+      // 카드결제 = card, 후납/결제대기 = postpaid
       if (sourceTab === "hakjeom") {
         fd.append("payment_status", "paid");
         fd.append("pay_method", salesCategory === "card" ? "card" : "postpaid");
@@ -1846,7 +1846,12 @@ function AddCertModal({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             cert_application_id: certAppId,
-            category: salesCategory === "card" ? "학점연계" : "후납",
+            category:
+              salesCategory === "card"
+                ? "학점연계"
+                : salesCategory === "pending"
+                  ? "결제대기"
+                  : "후납",
             manager_name: form.manager_name.trim() || null,
             payment_method:
               salesCategory === "card" ? "card" : "bank_transfer",
@@ -2150,6 +2155,17 @@ function AddCertModal({
                         }
                       >
                         후납
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSalesCategory("pending")}
+                        className={
+                          salesCategory === "pending"
+                            ? styles.tagBtnV2Active
+                            : styles.tagBtnV2
+                        }
+                      >
+                        결제대기
                       </button>
                     </div>
                   </div>

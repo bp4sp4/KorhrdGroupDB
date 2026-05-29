@@ -96,13 +96,20 @@ export async function sendMail(
     port: creds.smtp_port,
     secure: creds.smtp_port === 465,
     auth: { user: creds.email, pass: creds.password },
-    connectionTimeout: 8000,
-    greetingTimeout: 8000,
-    socketTimeout: 12000,
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 45000,
   })
+  // 구조화 필드로 직접 발송 — 첨부파일이 누락 없이 포함됨
   const sendInfo = await transporter.sendMail({
-    envelope: built.envelope,
-    raw: rawMessage,
+    from: creds.email,
+    to: params.to,
+    cc: params.cc,
+    bcc: params.bcc,
+    subject: params.subject,
+    text: params.bodyText,
+    html: params.bodyHtml,
+    attachments: params.attachments,
   })
 
   // 3) IMAP "보낸편지함" 에도 동일 메시지 append (skipSentFolder 면 생략)

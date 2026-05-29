@@ -69,6 +69,32 @@ function monthLabel(month: string): string {
   return month.replace("-", ". ");
 }
 
+// ─── 분기 ───────────────────────────────────────────────────────────────
+function quarterOf(month: string): { year: number; q: number } {
+  const [y, m] = month.split("-").map(Number);
+  return { year: y, q: Math.floor((m - 1) / 3) + 1 };
+}
+function quarterRange(year: number, q: number): { from: string; to: string } {
+  const startM = (q - 1) * 3 + 1; // 1,4,7,10
+  const endM = startM + 2; // 3,6,9,12
+  const lastDay = new Date(year, endM, 0).getDate();
+  return {
+    from: `${year}-${String(startM).padStart(2, "0")}-01`,
+    to: `${year}-${String(endM).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`,
+  };
+}
+function quarterLabel(year: number, q: number): string {
+  return `${year} ${q}분기`;
+}
+function shiftQuarter(
+  year: number,
+  q: number,
+  delta: number,
+): { year: number; q: number } {
+  const idx = year * 4 + (q - 1) + delta;
+  return { year: Math.floor(idx / 4), q: (idx % 4) + 1 };
+}
+
 function monthSubtitle(month: string): string {
   const [y, m] = month.split("-").map(Number);
   const lastDay = new Date(y, m, 0).getDate();
@@ -201,6 +227,10 @@ const hasRecord = (e: Employee) => e.workDays > 0;
 // ─── 메인 ────────────────────────────────────────────────────────────────
 export default function AdminAttendancePage() {
   const [month, setMonth] = useState<string>(thisMonth());
+  const [viewMode, setViewMode] = useState<"month" | "quarter">("month");
+  const [quarter, setQuarter] = useState<{ year: number; q: number }>(() =>
+    quarterOf(thisMonth()),
+  );
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [records, setRecords] = useState<DayRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -211,13 +241,27 @@ export default function AdminAttendancePage() {
   const [editingDate, setEditingDate] = useState<string | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
 
-  // 직원 목록 (월간 요약) 로드
+  // 조회 기간 (월별/분기별 공통)
+  const { from, to } = useMemo(
+    () =>
+      viewMode === "month"
+        ? monthRange(month)
+        : quarterRange(quarter.year, quarter.q),
+    [viewMode, month, quarter],
+  );
+  const periodKey =
+    viewMode === "month" ? month : `${quarter.year}-Q${quarter.q}`;
+
+  // 직원 목록 (기간 요약) 로드
   const fetchEmployees = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/attendance/summary?month=${month}`, {
-        cache: "no-store",
-      });
+      const res = await fetch(
+        `/api/admin/attendance/summary?from=${from}&to=${to}`,
+        {
+          cache: "no-store",
+        },
+      );
       if (!res.ok) return;
       const data = await res.json();
       const list: Employee[] = (data.summaries ?? []).map((s: {
@@ -244,7 +288,7 @@ export default function AdminAttendancePage() {
     } finally {
       setLoading(false);
     }
-  }, [month, selectedId]);
+  }, [from, to, selectedId]);
 
   useEffect(() => {
     fetchEmployees();
@@ -256,7 +300,6 @@ export default function AdminAttendancePage() {
     setRecordsLoading(true);
     setEditingDate(null);
     try {
-      const { from, to } = monthRange(month);
       const params = new URLSearchParams({ from, to, user_id: userId });
       const res = await fetch(`/api/admin/attendance?${params}`, {
         cache: "no-store",
@@ -271,7 +314,7 @@ export default function AdminAttendancePage() {
     } finally {
       setRecordsLoading(false);
     }
-  }, [month]);
+  }, [from, to]);
 
   useEffect(() => {
     fetchRecords(selectedId);
@@ -392,7 +435,7 @@ export default function AdminAttendancePage() {
         e.otMinutes, fmtHM(e.otMinutes), e.lateCount, e.missedCount,
       ]),
     ];
-    downloadCsv(`attendance_summary_${month}.csv`, rows);
+    downloadCsv(`attendance_summary_${periodKey}.csv`, rows);
   };
 
   const handleDownloadPersonal = () => {
@@ -413,7 +456,7 @@ export default function AdminAttendancePage() {
         r.regularLabel ?? "", r.otLabel ?? "", statusKo[r.status],
       ]),
     ];
-    downloadCsv(`attendance_${selected.name}_${month}.csv`, rows);
+    downloadCsv(`attendance_${selected.name}_${periodKey}.csv`, rows);
   };
 
   return (
@@ -424,27 +467,76 @@ export default function AdminAttendancePage() {
           <div>
             <h1>근태관리</h1>
             <div className={styles.ps}>
-              전체 {totals.totalCount}명 · 이번 달 {monthSubtitle(month)}
+              전체 {totals.totalCount}명 ·{" "}
+              {viewMode === "month"
+                ? `이번 달 ${monthSubtitle(month)}`
+                : quarterLabel(quarter.year, quarter.q)}
             </div>
           </div>
           <div className={styles.headActions}>
-            <div className={styles.monthPicker}>
+            {/* 월별/분기별 토글 */}
+            <div className={styles.viewToggle}>
               <button
-                className={styles.monthNav}
-                onClick={() => setMonth(shiftMonth(month, -1))}
+                type="button"
+                className={`${styles.viewToggleBtn} ${viewMode === "month" ? styles.viewToggleActive : ""}`}
+                onClick={() => setViewMode("month")}
               >
-                ‹
+                월별
               </button>
-              <span className={styles.monthV}>{monthLabel(month)}</span>
               <button
-                className={styles.monthNav}
-                onClick={() => setMonth(shiftMonth(month, 1))}
+                type="button"
+                className={`${styles.viewToggleBtn} ${viewMode === "quarter" ? styles.viewToggleActive : ""}`}
+                onClick={() => setViewMode("quarter")}
               >
-                ›
+                분기별
               </button>
             </div>
-            <button className={styles.ghost} onClick={() => setMonth(thisMonth())}>
-              이번 달
+
+            {viewMode === "month" ? (
+              <div className={styles.monthPicker}>
+                <button
+                  className={styles.monthNav}
+                  onClick={() => setMonth(shiftMonth(month, -1))}
+                >
+                  ‹
+                </button>
+                <span className={styles.monthV}>{monthLabel(month)}</span>
+                <button
+                  className={styles.monthNav}
+                  onClick={() => setMonth(shiftMonth(month, 1))}
+                >
+                  ›
+                </button>
+              </div>
+            ) : (
+              <div className={styles.monthPicker}>
+                <button
+                  className={styles.monthNav}
+                  onClick={() => setQuarter((q) => shiftQuarter(q.year, q.q, -1))}
+                >
+                  ‹
+                </button>
+                <span className={styles.monthV}>
+                  {quarterLabel(quarter.year, quarter.q)}
+                </span>
+                <button
+                  className={styles.monthNav}
+                  onClick={() => setQuarter((q) => shiftQuarter(q.year, q.q, 1))}
+                >
+                  ›
+                </button>
+              </div>
+            )}
+
+            <button
+              className={styles.ghost}
+              onClick={() =>
+                viewMode === "month"
+                  ? setMonth(thisMonth())
+                  : setQuarter(quarterOf(thisMonth()))
+              }
+            >
+              {viewMode === "month" ? "이번 달" : "이번 분기"}
             </button>
             <button className={styles.ghost} onClick={handleDownload}>
               <DownloadIcon /> 다운로드

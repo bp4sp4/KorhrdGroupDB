@@ -4,7 +4,7 @@ import type { DocBodyProps, FieldDef, BankAccountLite } from '../types'
 
 export const EXPENSE_RESOLUTION_TRANSFER_FIELDS: FieldDef[] = [
   { key: 'belong_dept',      label: '소속부서',             type: 'text',     required: true },
-  { key: 'bank_account_id',  label: '출금 통장',            type: 'text',     required: true },
+  { key: 'bank_account_id',  label: '출금 통장',            type: 'text',     required: false },
   { key: 'vendor_name',      label: '상호명(거래처명)',      type: 'text',     required: true },
   { key: 'vendor_phone',     label: '거래처 담당 전화번호',   type: 'text' },
   { key: 'detail',           label: '상세내역',             type: 'text',     required: true },

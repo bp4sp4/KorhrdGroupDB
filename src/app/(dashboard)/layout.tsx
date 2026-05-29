@@ -233,9 +233,12 @@ export default function DashboardLayout({
         <Header userName={displayName} userRole={userRole} permissions={permissions} revenueOwnDivisions={revenueOwnDivisions} onMenuToggle={() => setSidebarOpen(v => !v)} />
 
         <div className={styles.dashboardBody}>
-          <Sidebar userRole={userRole} permissions={permissions} revenueOwnDivisions={revenueOwnDivisions} isDivisionAdmin={isDivisionAdmin} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+          {/* 메일 화면은 네이버 메일처럼 좌측 앱 사이드바를 숨기고 전체 폭 사용 */}
+          {!pathname.startsWith('/mail') && (
+            <Sidebar userRole={userRole} permissions={permissions} revenueOwnDivisions={revenueOwnDivisions} isDivisionAdmin={isDivisionAdmin} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+          )}
 
-          {sidebarOpen && (
+          {sidebarOpen && !pathname.startsWith('/mail') && (
             <div className={styles.sidebarOverlay} onClick={() => setSidebarOpen(false)} />
           )}
 
@@ -244,7 +247,8 @@ export default function DashboardLayout({
             style={
               pathname.startsWith('/calendar') ||
               pathname.startsWith('/dashboard') ||
-              pathname.startsWith('/work-journal')
+              pathname.startsWith('/work-journal') ||
+              pathname.startsWith('/mail')
                 ? { padding: 0 }
                 : undefined
             }

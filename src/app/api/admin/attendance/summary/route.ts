@@ -16,23 +16,34 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const today = getTodayKstDate();
-  const monthParam = searchParams.get("month") || today.slice(0, 7); // YYYY-MM
 
-  if (!/^\d{4}-\d{2}$/.test(monthParam)) {
-    return NextResponse.json(
-      { error: "month는 YYYY-MM 형식이어야 합니다." },
-      { status: 400 },
-    );
+  // from/to (YYYY-MM-DD) 범위 우선 — 분기/기간 조회 지원. 없으면 month(YYYY-MM) 폴백
+  const fromParam = searchParams.get("from");
+  const toParam = searchParams.get("to");
+  const dateRe = /^\d{4}-\d{2}-\d{2}$/;
+
+  let from: string;
+  let to: string;
+  let monthParam: string | null = null;
+
+  if (fromParam && toParam && dateRe.test(fromParam) && dateRe.test(toParam)) {
+    from = fromParam;
+    to = toParam;
+  } else {
+    monthParam = searchParams.get("month") || today.slice(0, 7); // YYYY-MM
+    if (!/^\d{4}-\d{2}$/.test(monthParam)) {
+      return NextResponse.json(
+        { error: "month는 YYYY-MM, 또는 from/to는 YYYY-MM-DD 형식이어야 합니다." },
+        { status: 400 },
+      );
+    }
+    const [yStr, mStr] = monthParam.split("-");
+    const y = Number(yStr);
+    const m = Number(mStr);
+    const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
+    from = `${monthParam}-01`;
+    to = `${monthParam}-${String(lastDay).padStart(2, "0")}`;
   }
-
-  // 월 시작/끝 (KST 날짜 string)
-  const [yStr, mStr] = monthParam.split("-");
-  const y = Number(yStr);
-  const m = Number(mStr);
-  // 다음 달 1일 직전을 끝으로
-  const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate(); // m은 1~12, Date.UTC(y, m, 0)는 m-1월의 마지막 일
-  const from = `${monthParam}-01`;
-  const to = `${monthParam}-${String(lastDay).padStart(2, "0")}`;
 
   const { data: records, error } = await supabaseAdmin
     .from("attendance_records")
