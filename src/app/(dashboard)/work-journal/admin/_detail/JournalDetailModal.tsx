@@ -242,14 +242,19 @@ export function JournalDetailModal({
                   </div>
                 </div>
 
-                <JournalSection
-                  title="오전 업무 (10:00~13:00)"
-                  rows={morning}
-                />
-                <JournalSection
-                  title="오후 업무 (14:00~19:00)"
-                  rows={afternoon}
-                />
+                {/* 학사팀(academic)은 오전/오후 업무를 사용하지 않음 → 숨김 */}
+                {data.user.team_journal_form !== "academic" && (
+                  <>
+                    <JournalSection
+                      title="오전 업무 (10:00~13:00)"
+                      rows={morning}
+                    />
+                    <JournalSection
+                      title="오후 업무 (14:00~19:00)"
+                      rows={afternoon}
+                    />
+                  </>
+                )}
               </div>
 
               {/* 내일 예정 업무 — 좌측 컬럼 하단 고정 */}
