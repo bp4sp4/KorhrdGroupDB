@@ -26,7 +26,6 @@ const SECTION_NAV: NavSection[] = [
     label: "업무일지",
     href: "/work-journal",
     activeOn: ["/work-journal"],
-    badge: "개발중",
   },
   {
     label: "교육운영",
