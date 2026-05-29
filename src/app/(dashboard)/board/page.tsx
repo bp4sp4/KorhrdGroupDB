@@ -339,9 +339,7 @@ export default function BoardPage() {
                 <span className={styles.pinBadge}>공지</span>
               </td>
               <td className={styles.td}>
-                {n.category !== "공지" && (
-                  <span className={styles.catTag}>{n.category}</span>
-                )}
+                <span className={styles.catTag}>{n.category}</span>
               </td>
               <td className={`${styles.tdTitle} ${styles.tdTitleBold}`}>
                 <span className={styles.titleWrap}>
