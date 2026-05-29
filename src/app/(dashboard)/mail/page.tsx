@@ -22,6 +22,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import dynamic from "next/dynamic";
+import DOMPurify from "dompurify";
 import { createClient } from "@/lib/supabase/client";
 import styles from "./page.module.css";
 
@@ -123,6 +124,66 @@ function escapeHtml(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
+// 답장/전달용 원문 인용 HTML
+function buildQuotedBody(detail: MailDetail | null): string {
+  if (!detail) return "";
+  const from =
+    detail.from?.emailAddress.name ||
+    detail.from?.emailAddress.address ||
+    "보낸이";
+  const date = fmtFullDate(detail.receivedTime ?? detail.sentTime);
+  const orig =
+    detail.body?.contentType === "HTML"
+      ? DOMPurify.sanitize(detail.body.content ?? "")
+      : `<pre style="white-space:pre-wrap;font-family:inherit;margin:0;">${escapeHtml(detail.body?.content ?? "")}</pre>`;
+  return `<p><br/></p><div style="border-left:3px solid #e5e8eb;padding-left:12px;color:#4e5968;">
+    <div style="font-size:12px;color:#8b95a1;margin-bottom:8px;">${escapeHtml(date)} ${escapeHtml(from)} 님이 작성:</div>
+    ${orig}
+  </div>`;
+}
+
+// ─── 임시저장 / 서명 (localStorage) ──────────────────────────────────────
+const DRAFT_KEY = "mailComposeDraft";
+const SIGNATURE_KEY = "mailSignatureHtml";
+interface DraftData {
+  to: string;
+  cc: string;
+  bcc: string;
+  subject: string;
+  bodyHtml: string;
+}
+function loadDraft(): DraftData | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const r = localStorage.getItem(DRAFT_KEY);
+    return r ? (JSON.parse(r) as DraftData) : null;
+  } catch {
+    return null;
+  }
+}
+function saveDraft(d: DraftData) {
+  try {
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(d));
+  } catch {
+    /* ignore */
+  }
+}
+function clearDraft() {
+  try {
+    localStorage.removeItem(DRAFT_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+function loadSignature(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    return localStorage.getItem(SIGNATURE_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
 // ─── 메인 ──────────────────────────────────────────────────────────────
 interface ConnectionStatus {
   connected: boolean;
@@ -146,6 +207,24 @@ export default function MailPage() {
   const [detail, setDetail] = useState<MailDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [showCompose, setShowCompose] = useState(false);
+  // 작성 초기값 (답장/전달/새 메일)
+  const [composeInit, setComposeInit] = useState<{
+    to: string[];
+    subject: string;
+    bodyHtml: string;
+  }>({ to: [], subject: "", bodyHtml: "" });
+  const openCompose = (init?: {
+    to?: string[];
+    subject?: string;
+    bodyHtml?: string;
+  }) => {
+    setComposeInit({
+      to: init?.to ?? [],
+      subject: init?.subject ?? "",
+      bodyHtml: init?.bodyHtml ?? "",
+    });
+    setShowCompose(true);
+  };
   // 네이버식 리스트 — 행 선택/별표 (로컬 상태, 별표는 표시용)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [starredIds, setStarredIds] = useState<Set<string>>(new Set());
@@ -343,11 +422,6 @@ export default function MailPage() {
     }
   };
 
-  const replyTo = useMemo(() => {
-    if (!detail?.from) return [];
-    return [detail.from.emailAddress.address];
-  }, [detail]);
-
   // 연결 상태 로딩 중
   if (connectionLoading) {
     return (
@@ -412,7 +486,7 @@ export default function MailPage() {
           <button
             type="button"
             className={styles.composeBtn}
-            onClick={() => setShowCompose(true)}
+            onClick={() => openCompose()}
           >
             <Pencil size={14} />
             메일 쓰기
@@ -445,8 +519,9 @@ export default function MailPage() {
 
         {showCompose ? (
           <ComposePane
-            replyTo={replyTo}
-            replySubject={detail?.subject ? `Re: ${detail.subject}` : undefined}
+            initialTo={composeInit.to}
+            initialSubject={composeInit.subject}
+            initialBody={composeInit.bodyHtml}
             onClose={() => setShowCompose(false)}
             onSent={(sentFolderSynced, recipients) => {
               setShowCompose(false);
@@ -705,7 +780,7 @@ export default function MailPage() {
               }}
               onCompose={() => {
                 setSentInfo(null);
-                setShowCompose(true);
+                openCompose();
               }}
             />
           ) : !selectedId ? (
@@ -742,12 +817,30 @@ export default function MailPage() {
                 <button
                   type="button"
                   className={styles.actionBtn}
-                  onClick={() => setShowCompose(true)}
+                  onClick={() =>
+                    openCompose({
+                      to: detail.from?.emailAddress.address
+                        ? [detail.from.emailAddress.address]
+                        : [],
+                      subject: `Re: ${detail.subject ?? ""}`,
+                      bodyHtml: buildQuotedBody(detail),
+                    })
+                  }
                 >
                   <Reply size={13} />
                   답장
                 </button>
-                <button type="button" className={styles.actionBtn}>
+                <button
+                  type="button"
+                  className={styles.actionBtn}
+                  onClick={() =>
+                    openCompose({
+                      to: [],
+                      subject: `Fwd: ${detail.subject ?? ""}`,
+                      bodyHtml: buildQuotedBody(detail),
+                    })
+                  }
+                >
                   <Forward size={13} />
                   전달
                 </button>
@@ -765,9 +858,12 @@ export default function MailPage() {
               <div
                 className={styles.detailBody}
                 dangerouslySetInnerHTML={{
+                  // 받은 메일 HTML 은 신뢰할 수 없으므로 DOMPurify 로 새니타이즈 (XSS 방어)
                   __html:
                     detail.body?.contentType === "HTML"
-                      ? detail.body.content
+                      ? DOMPurify.sanitize(detail.body.content ?? "", {
+                          ADD_ATTR: ["target"],
+                        })
                       : `<pre style="white-space: pre-wrap; font-family: inherit;">${escapeHtml(detail.body?.content ?? "")}</pre>`,
                 }}
               />
@@ -803,22 +899,38 @@ export default function MailPage() {
 
 // ─── 작성 패널 (인라인) ───────────────────────────────────────────────────
 interface ComposePaneProps {
-  replyTo?: string[];
-  replySubject?: string;
+  initialTo?: string[];
+  initialSubject?: string;
+  initialBody?: string;
   onClose: () => void;
   onSent: (sentFolderSynced: boolean, recipients: string[]) => void;
 }
 function ComposePane({
-  replyTo = [],
-  replySubject = "",
+  initialTo = [],
+  initialSubject = "",
+  initialBody = "",
   onClose,
   onSent,
 }: ComposePaneProps) {
-  const [to, setTo] = useState(replyTo.join(", "));
-  const [cc, setCc] = useState("");
-  const [bcc, setBcc] = useState("");
-  const [showBcc, setShowBcc] = useState(false);
-  const [subject, setSubject] = useState(replySubject);
+  // 새 메일(답장/전달 아님)일 때만 임시저장 복원
+  const isNewCompose =
+    initialTo.length === 0 && !initialSubject && !initialBody;
+  const [draftSnapshot] = useState<DraftData | null>(() =>
+    isNewCompose ? loadDraft() : null,
+  );
+  const [signature] = useState<string>(() => loadSignature());
+  // 에디터 초기 본문: 임시저장 복원 > (서명 + 답장/전달 인용)
+  const effectiveInitialBody = draftSnapshot
+    ? draftSnapshot.bodyHtml
+    : `${signature ? `${signature}<p><br/></p>` : ""}${initialBody}`;
+
+  const [to, setTo] = useState(draftSnapshot?.to ?? initialTo.join(", "));
+  const [cc, setCc] = useState(draftSnapshot?.cc ?? "");
+  const [bcc, setBcc] = useState(draftSnapshot?.bcc ?? "");
+  const [showBcc, setShowBcc] = useState(!!draftSnapshot?.bcc);
+  const [subject, setSubject] = useState(
+    draftSnapshot?.subject ?? initialSubject,
+  );
   const [sending, setSending] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [bodyHtml, setBodyHtml] = useState("");
@@ -887,8 +999,79 @@ function ComposePane({
       })();
     }
   };
+  // 임시 첨부 정리 (미발송분)
+  const cleanupPaths = (paths: string[]) => {
+    const valid = paths.filter(Boolean);
+    if (valid.length === 0) return;
+    fetch("/api/mail/attachments/cleanup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ paths: valid }),
+      keepalive: true,
+    }).catch(() => {});
+  };
+
   const removeFile = (idx: number) =>
-    setAttachments((prev) => prev.filter((_, i) => i !== idx));
+    setAttachments((prev) => {
+      const target = prev[idx];
+      if (target?.path) cleanupPaths([target.path]);
+      return prev.filter((_, i) => i !== idx);
+    });
+
+  // 업로드된 임시파일 경로 추적 (언마운트 정리용) + 발송 완료 플래그
+  const uploadedPathsRef = useRef<string[]>([]);
+  const sentRef = useRef(false);
+  useEffect(() => {
+    uploadedPathsRef.current = attachments
+      .filter((a) => a.status === "done" && a.path)
+      .map((a) => a.path as string);
+  }, [attachments]);
+  useEffect(() => {
+    return () => {
+      // 작성 닫기/이동 시 발송 안 한 첨부는 스토리지에서 삭제 (발송 시엔 서버가 정리)
+      if (sentRef.current || uploadedPathsRef.current.length === 0) return;
+      cleanupPaths(uploadedPathsRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // 임시저장 — 새 메일 작성 중 자동 저장(0.6초 디바운스), 내용 없으면 삭제
+  useEffect(() => {
+    if (!isNewCompose || sentRef.current) return;
+    const t = setTimeout(() => {
+      const plain = bodyHtml.replace(/<[^>]*>/g, "").trim();
+      if (to.trim() || cc.trim() || bcc.trim() || subject.trim() || plain) {
+        saveDraft({ to, cc, bcc, subject, bodyHtml });
+      } else {
+        clearDraft();
+      }
+    }, 600);
+    return () => clearTimeout(t);
+  }, [to, cc, bcc, subject, bodyHtml, isNewCompose]);
+
+  // 서명 설정 (다음 새 메일 작성부터 자동 삽입)
+  const editSignature = () => {
+    const current = signature
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<[^>]*>/g, "");
+    const input = window.prompt(
+      "메일 서명을 입력하세요. (새 메일 작성 시 본문에 자동 삽입)",
+      current,
+    );
+    if (input === null) return;
+    const esc = (s: string) =>
+      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const html = input.trim()
+      ? `<div style="color:#8b95a1;font-size:13px;">${esc(input).replace(/\n/g, "<br/>")}</div>`
+      : "";
+    try {
+      if (html) localStorage.setItem(SIGNATURE_KEY, html);
+      else localStorage.removeItem(SIGNATURE_KEY);
+    } catch {
+      /* ignore */
+    }
+    window.alert("서명이 저장되었습니다. 다음 새 메일부터 적용됩니다.");
+  };
 
   // HTML → 평문 (텍스트 폴백)
   const htmlToText = (html: string): string => {
@@ -993,6 +1176,8 @@ function ComposePane({
         setErr(data.error || `발송 실패 (HTTP ${res.status})`);
         return;
       }
+      sentRef.current = true; // 발송 성공 → 서버가 첨부 정리하므로 언마운트 정리 스킵
+      clearDraft(); // 임시저장 비우기
       onSent(Boolean(data.sentFolderSynced), toList);
     } catch (e) {
       setErr((e as Error).message);
@@ -1137,13 +1322,21 @@ function ComposePane({
             </div>
           </div>
 
-          {/* 본문 — TUI Editor */}
+          {/* 본문 에디터 */}
           <div className={styles.editorWrap}>
-            <MailEditor onChange={setBodyHtml} />
+            <MailEditor onChange={setBodyHtml} initialHtml={effectiveInitialBody} />
           </div>
         </div>
 
         <div className={styles.composeFooter}>
+          <button
+            type="button"
+            className={styles.composeBtnGhost}
+            onClick={editSignature}
+          >
+            서명 설정
+          </button>
+          <span className={styles.composeFooterSpacer} />
           <button
             type="button"
             className={styles.composeBtnGhost}

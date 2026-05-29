@@ -897,6 +897,9 @@
   border-top: 1px solid #eef0f3;
   background: #f9fafb;
 }
+.composeFooterSpacer {
+  flex: 1;
+}
 
 .composeBtnGhost {
   padding: 8px 16px;
@@ -1165,5 +1168,60 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* ─── 모바일 반응형 ──────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .layout {
+    grid-template-columns: 1fr;
+    height: auto;
+    min-height: calc(100vh - 60px);
+  }
+  /* 폴더 사이드바 → 상단 가로 스크롤 바 */
+  .folderSide {
+    border-right: 0;
+    border-bottom: 1px solid #e5e8eb;
+    flex-direction: row;
+    align-items: center;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 10px 12px;
+    gap: 6px;
+  }
+  .composeBtn {
+    width: auto;
+    flex-shrink: 0;
+    padding: 0 14px;
+    margin-bottom: 0;
+  }
+  .folderList {
+    flex-direction: row;
+    gap: 4px;
+  }
+  .folderItem {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .composePane {
+    grid-column: auto;
+  }
+  /* 리스트 행 — 좁은 화면 대응 */
+  .rowFrom {
+    width: 96px;
+  }
+  .rowDate {
+    width: 56px;
+  }
+  .listHead {
+    padding: 10px;
+  }
+  /* 작성 폼 라벨 폭 축소 */
+  .composeLabel {
+    width: 48px;
+    font-size: 12px;
+  }
+  .composeRow {
+    padding: 10px 12px;
   }
 }

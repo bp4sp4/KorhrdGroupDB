@@ -49,6 +49,16 @@ const SECTION_NAV: NavSection[] = [
     ],
   },
   {
+    label: "게시판",
+    href: "/board",
+    activeOn: ["/board"],
+  },
+  {
+    label: "메일",
+    href: "/mail",
+    activeOn: ["/mail"],
+  },
+  {
     label: "어드민",
     href: "/admin",
     activeOn: ["/admin"],

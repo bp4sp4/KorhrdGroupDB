@@ -1139,34 +1139,61 @@ function KpiCard() {
 
 // ─── 공지사항 카드 ──────────────────────────────────────────────────
 interface NoticeItem {
-  id: string;
+  id: number;
   title: string;
-  date: string;
+  is_pinned: boolean;
+  created_at: string;
 }
 
-const NOTICE_MOCK: NoticeItem[] = [
-  { id: "n1", title: "시스템 점검 안내", date: "05.18" },
-  { id: "n2", title: "5월 휴무 안내", date: "05.18" },
-  { id: "n3", title: "시스템 점검 안내", date: "05.18" },
-  { id: "n4", title: "시스템 점검 안내", date: "05.18" },
-  { id: "n5", title: "시스템 점검 안내", date: "05.18" },
-];
-
 function NoticeCard() {
+  const [notices, setNotices] = useState<NoticeItem[]>([]);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/board?page=1", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : { items: [] }))
+      .then((data: { items?: NoticeItem[] }) => {
+        if (!alive) return;
+        setNotices((data.items ?? []).slice(0, 5));
+        setLoaded(true);
+      })
+      .catch(() => {
+        if (alive) setLoaded(true);
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const fmtMd = (iso: string) => {
+    const d = new Date(iso);
+    const p = (n: number) => String(n).padStart(2, "0");
+    return `${p(d.getMonth() + 1)}.${p(d.getDate())}`;
+  };
+
   return (
     <section className={`${styles.card} ${styles.noticeCard}`}>
       <div className={styles.cardHead}>
         <h3 className={styles.cardTitle}>공지사항</h3>
       </div>
       <ul className={styles.noticeList}>
-        {NOTICE_MOCK.map((n) => (
+        {loaded && notices.length === 0 && (
+          <li className={styles.noticeItem}>
+            <span className={styles.noticeTitle}>등록된 공지가 없습니다.</span>
+          </li>
+        )}
+        {notices.map((n) => (
           <li key={n.id} className={styles.noticeItem}>
-            <span className={styles.noticeTitle}>{n.title}</span>
-            <span className={styles.noticeDate}>{n.date}</span>
+            <Link href={`/board/${n.id}`} className={styles.noticeTitle}>
+              {n.is_pinned && <span className={styles.noticePin}>공지</span>}
+              {n.title}
+            </Link>
+            <span className={styles.noticeDate}>{fmtMd(n.created_at)}</span>
           </li>
         ))}
       </ul>
-      <Link href="/announcements" className={styles.inboxMoreLink}>
+      <Link href="/board" className={styles.inboxMoreLink}>
         공지사항 바로가기
         <InboxMoreArrow />
       </Link>

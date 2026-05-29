@@ -77,6 +77,7 @@ const ALL_SECTIONS: NavSection[] = [
       "/logs",
       "/assignment",
       "/links",
+      "/board",
       "/me",
     ],
     items: [
@@ -343,12 +344,6 @@ const ALL_SECTIONS: NavSection[] = [
         label: "근태현황",
         href: "/me/attendance",
         icon: <Clock size={16} />,
-      },
-      {
-        id: "mail",
-        label: "메일",
-        href: "/mail",
-        icon: <Mail size={16} />,
       },
       {
         id: "mail-settings",

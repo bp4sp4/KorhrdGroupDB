@@ -2025,6 +2025,7 @@
 
 .noticeTitle {
   flex: 1;
+  min-width: 0;
   color: #1f2937;
   font-family: Pretendard, inherit;
   font-size: 12px;
@@ -2034,6 +2035,22 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-decoration: none;
+}
+a.noticeTitle:hover {
+  color: #3182f6;
+  text-decoration: underline;
+}
+.noticePin {
+  display: inline-block;
+  background: #3182f6;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-right: 5px;
+  vertical-align: middle;
 }
 
 .noticeDate {

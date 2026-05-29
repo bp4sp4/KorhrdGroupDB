@@ -32,8 +32,10 @@ const COLOR_PRESETS = [
 // 가벼운 contentEditable 위지윅 에디터 (외부 라이브러리 없음)
 export default function MailEditor({
   onChange,
+  initialHtml = "",
 }: {
   onChange: (html: string) => void;
+  initialHtml?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const tableWrapRef = useRef<HTMLDivElement>(null);
@@ -45,6 +47,15 @@ export default function MailEditor({
   const selectedImgRef = useRef<HTMLImageElement | null>(null);
   const MAX_R = 8;
   const MAX_C = 10;
+
+  // 초기 내용 주입 (답장/전달 인용, 임시저장 복원, 서명) — 최초 1회
+  useEffect(() => {
+    if (ref.current && initialHtml) {
+      ref.current.innerHTML = initialHtml;
+      onChange(initialHtml);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // 색상 등을 style 속성으로 적용 (font 태그 대신)
   useEffect(() => {
