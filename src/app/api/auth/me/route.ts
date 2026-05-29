@@ -17,7 +17,7 @@ export async function GET() {
     // app_users에서 role 조회 (email로 매칭)
     const { data: appUser } = await supabaseAdmin
       .from('app_users')
-      .select('id, role, display_name, ref_code, department_id, position_id, is_division_admin, team_id')
+      .select('id, role, display_name, ref_code, department_id, position_id, is_division_admin, team_id, hidden_menus')
       .eq('username', user.email)
       .single();
 
@@ -123,6 +123,7 @@ export async function GET() {
       teamName,
       teamJournalForm,
       isDivisionAdmin: !!appUser?.is_division_admin,
+      hiddenMenus: Array.isArray(appUser?.hidden_menus) ? appUser.hidden_menus : [],
       basePermissions,
       overridePermissions,
       permissions,

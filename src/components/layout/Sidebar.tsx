@@ -490,15 +490,25 @@ interface SidebarProps {
   revenueOwnDivisions?: ("nms" | "cert" | "abroad")[];
   // 사용자가 부서 관리자(is_division_admin) 인 경우 work-journal admin 메뉴 노출
   isDivisionAdmin?: boolean;
+  hiddenMenus?: string[];
   isOpen?: boolean;
   onClose?: () => void;
 }
+
+// 사이드바 메뉴 id → 개인별 숨김 키
+const SIDEBAR_HIDE_KEY: Record<string, string> = {
+  calendar: "calendar",
+  "me-attendance": "attendance",
+  board: "board",
+  mail: "mail",
+};
 
 export default function Sidebar({
   userRole,
   permissions = [],
   revenueOwnDivisions = [],
   isDivisionAdmin = false,
+  hiddenMenus = [],
   isOpen,
   onClose,
 }: SidebarProps) {
@@ -753,7 +763,11 @@ export default function Sidebar({
       });
       return { ...item, children: filteredChildren };
     })
-    .filter((item) => !item.children || item.children.length > 0);
+    .filter((item) => {
+      const hideKey = SIDEBAR_HIDE_KEY[item.id];
+      if (hideKey && hiddenMenus.includes(hideKey)) return false;
+      return !item.children || item.children.length > 0;
+    });
 
   // 현재 경로에 맞는 아이템 자동 펼치기
   useEffect(() => {

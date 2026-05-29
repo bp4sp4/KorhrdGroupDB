@@ -21,6 +21,7 @@ export default function DashboardLayout({
   const [permissions, setPermissions] = useState<{ section: string; scope: string; allowed_tabs?: string[] | null }[]>([])
   const [revenueOwnDivisions, setRevenueOwnDivisions] = useState<('nms' | 'cert' | 'abroad')[]>([])
   const [isDivisionAdmin, setIsDivisionAdmin] = useState<boolean>(false)
+  const [hiddenMenus, setHiddenMenus] = useState<string[]>([])
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [hrRecordStatus, setHrRecordStatus] = useState<'unknown' | 'approved' | 'blocked'>('unknown')
   const supabase = createClient()
@@ -31,6 +32,7 @@ export default function DashboardLayout({
     let name = '관리자'
     let divisions: ('nms' | 'cert' | 'abroad')[] = []
     let divisionAdminFlag = false
+    let hidden: string[] = []
     try {
       const res = await fetch('/api/auth/me', { cache: 'no-store' })
       if (res.ok) {
@@ -44,6 +46,7 @@ export default function DashboardLayout({
             ))
           : []
         divisionAdminFlag = !!data.isDivisionAdmin
+        hidden = Array.isArray(data.hiddenMenus) ? data.hiddenMenus : []
       }
     } catch {
       // keep defaults
@@ -53,6 +56,7 @@ export default function DashboardLayout({
     setPermissions(perms)
     setRevenueOwnDivisions(divisions)
     setIsDivisionAdmin(divisionAdminFlag)
+    setHiddenMenus(hidden)
 
     // 인사기록카드 승인 여부 — master-admin은 체크 생략, exempt=true 도 우회
     if (role === 'master-admin') {
@@ -230,12 +234,12 @@ export default function DashboardLayout({
   return (
     <GuideProvider>
       <div className={styles.dashboardWrap}>
-        <Header userName={displayName} userRole={userRole} permissions={permissions} revenueOwnDivisions={revenueOwnDivisions} onMenuToggle={() => setSidebarOpen(v => !v)} />
+        <Header userName={displayName} userRole={userRole} permissions={permissions} revenueOwnDivisions={revenueOwnDivisions} hiddenMenus={hiddenMenus} onMenuToggle={() => setSidebarOpen(v => !v)} />
 
         <div className={styles.dashboardBody}>
           {/* 메일 화면은 네이버 메일처럼 좌측 앱 사이드바를 숨기고 전체 폭 사용 */}
           {!pathname.startsWith('/mail') && (
-            <Sidebar userRole={userRole} permissions={permissions} revenueOwnDivisions={revenueOwnDivisions} isDivisionAdmin={isDivisionAdmin} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+            <Sidebar userRole={userRole} permissions={permissions} revenueOwnDivisions={revenueOwnDivisions} isDivisionAdmin={isDivisionAdmin} hiddenMenus={hiddenMenus} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
           )}
 
           {sidebarOpen && !pathname.startsWith('/mail') && (

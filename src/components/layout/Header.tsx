@@ -133,8 +133,17 @@ interface HeaderProps {
     allowed_tabs?: string[] | null;
   }[];
   revenueOwnDivisions?: ("nms" | "cert" | "abroad")[];
+  hiddenMenus?: string[];
   onMenuToggle?: () => void;
 }
+
+// 헤더 메뉴 href → 개인별 숨김 키
+const HEADER_HIDE_KEY: Record<string, string> = {
+  "/dashboard": "dashboard",
+  "/work-journal": "work-journal",
+  "/board": "board",
+  "/mail": "mail",
+};
 
 function hasPermission(
   permissions: { section: string; scope: string }[],
@@ -169,6 +178,7 @@ export default function Header({
   userRole,
   permissions = [],
   revenueOwnDivisions = [],
+  hiddenMenus = [],
   onMenuToggle,
 }: HeaderProps) {
   const router = useRouter();
@@ -222,6 +232,8 @@ export default function Header({
   const showAdmin = isAdminRole;
 
   const visibleSectionNav = SECTION_NAV.filter((sec) => {
+    const hideKey = HEADER_HIDE_KEY[sec.href];
+    if (hideKey && hiddenMenus.includes(hideKey)) return false;
     if (sec.href === "/admin") return showAdmin;
     if (sec.href === "/hakjeom") return showEducation;
     return true;
