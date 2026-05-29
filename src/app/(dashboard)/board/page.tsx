@@ -329,14 +329,14 @@ export default function BoardPage() {
           </tr>
         </thead>
         <tbody>
-          {pinnedRows.map((n) => (
+          {pinnedRows.map((n, i) => (
             <tr
               key={n.id}
               className={`${styles.tr} ${styles.trPin}`}
               onClick={() => router.push(`/board/${n.id}`)}
             >
-              <td className={styles.td}>
-                <span className={styles.pinBadge}>공지</span>
+              <td className={styles.tdMuted}>
+                {(page - 1) * pageSize + i + 1}
               </td>
               <td className={styles.td}>
                 <span className={styles.catTag}>{n.category}</span>
@@ -357,13 +357,15 @@ export default function BoardPage() {
               <td className={styles.tdMuted}>{fmtViews(n.view_count)}</td>
             </tr>
           ))}
-          {normalRows.map((n) => (
+          {normalRows.map((n, i) => (
             <tr
               key={n.id}
               className={styles.tr}
               onClick={() => router.push(`/board/${n.id}`)}
             >
-              <td className={styles.tdMuted}>{n.id}</td>
+              <td className={styles.tdMuted}>
+                {(page - 1) * pageSize + pinnedRows.length + i + 1}
+              </td>
               <td className={styles.td}>
                 <span className={styles.catTag}>{n.category}</span>
               </td>
