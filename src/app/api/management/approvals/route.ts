@@ -1,7 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { genDocNumber } from '@/lib/management/utils'
 import { requireManagementAccess } from '@/lib/auth/managementAccess'
+import { sendApprovalEmail } from '@/lib/approvals/notifyEmail'
+
+export const runtime = 'nodejs'
+export const maxDuration = 60
 
 export async function GET(request: NextRequest) {
   const access = await requireManagementAccess('approvals', { emptyBody: [] })
@@ -82,7 +86,7 @@ export async function POST(request: NextRequest) {
   const user = access.user
   const appUser = await supabaseAdmin
     .from('app_users')
-    .select('id')
+    .select('id, display_name')
     .eq('username', user.email)
     .single()
   const userId = appUser.data?.id ?? user.id
@@ -134,14 +138,42 @@ export async function POST(request: NextRequest) {
       .update({ status: 'IN_PROGRESS' })
       .eq('id', approval.id)
 
+    const applicantName = (appUser.data as { display_name?: string } | null)?.display_name ?? ''
+    const link = `/approvals?id=${approval.id}`
+
     // 알림 생성 - 첫 번째 결재자에게
     await createNotification(
       approver_ids[0],
       'APPROVAL_SUBMITTED',
       '결재 요청',
-      `${(appUser.data as { display_name?: string } | null)?.display_name ?? ''}님이 [${document_type}]를 상신했습니다.`,
-      `/approvals?id=${approval.id}`
+      `${applicantName}님이 [${document_type}]를 상신했습니다.`,
+      link
     )
+
+    // 메일 알림 (다음 스마트워크) — 작성자 본인 + 첫 결재자 + 참조자
+    // 응답을 막지 않도록 after() 로 응답 전송 후 실행 (제출 즉시 완료)
+    after(async () => {
+      await Promise.all([
+        sendApprovalEmail({
+          toAppUserIds: [userId],
+          subject: `[전자결재] 상신 완료 - ${title}`,
+          bodyText: `${applicantName}님, [${document_type}] "${title}" 문서를 상신했습니다.`,
+          link,
+        }),
+        sendApprovalEmail({
+          toAppUserIds: [approver_ids[0]],
+          subject: `[전자결재] 결재 요청 - ${title}`,
+          bodyText: `${applicantName}님이 [${document_type}] "${title}" 결재를 요청했습니다. 결재를 진행해주세요.`,
+          link,
+        }),
+        sendApprovalEmail({
+          toAppUserIds: (reference_ids ?? []) as (number | string)[],
+          subject: `[전자결재] 참조 - ${title}`,
+          bodyText: `${applicantName}님이 [${document_type}] "${title}" 문서를 상신했습니다. (참조)`,
+          link,
+        }),
+      ])
+    })
   }
 
   return NextResponse.json(approval, { status: 201 })

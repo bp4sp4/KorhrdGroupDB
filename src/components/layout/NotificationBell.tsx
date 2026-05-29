@@ -66,6 +66,7 @@ interface Notification {
   created_at: string;
   actor_id?: number | null;
   target_date?: string | null;
+  user_id?: string | null;
 }
 
 type TabKey = "all" | "task" | "announcements";
@@ -201,6 +202,26 @@ function isRestrictedHiddenNotification(n: {
   return false;
 }
 
+// OS(브라우저) 알림 표시 — 권한 허용 시에만. 클릭하면 해당 링크로 이동.
+function showOsNotification(title: string, body: string, link?: string | null) {
+  try {
+    if (typeof window === "undefined" || !("Notification" in window)) return;
+    if (Notification.permission !== "granted") return;
+    const notif = new Notification(title, {
+      body,
+      icon: "/noti.png",
+      tag: link ?? title,
+    });
+    notif.onclick = () => {
+      window.focus();
+      if (link) window.location.href = link;
+      notif.close();
+    };
+  } catch {
+    /* ignore */
+  }
+}
+
 export default function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<TabKey>("all");
@@ -234,6 +255,8 @@ export default function NotificationBell() {
   // 본인 작성 알림 억제용 자기 ID (ref + state — state는 useEffect 트리거용)
   const myIdRef = useRef<number | null>(null);
   const [myId, setMyId] = useState<number | null>(null);
+  // 본인 auth UUID — notifications.user_id 와 매칭해 "내 알림"만 실시간 팝업
+  const myAuthUidRef = useRef<string | null>(null);
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -317,6 +340,22 @@ export default function NotificationBell() {
       .catch(() => {});
   }, []);
 
+  // 본인 auth UUID 확보 (notifications.user_id 와 매칭용)
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      myAuthUidRef.current = data.user?.id ?? null;
+    });
+  }, []);
+
+  // OS(브라우저) 알림 권한 요청 (1회)
+  useEffect(() => {
+    if (typeof window === "undefined" || !("Notification" in window)) return;
+    if (Notification.permission === "default") {
+      Notification.requestPermission().catch(() => {});
+    }
+  }, []);
+
   // 로그인/마운트 시 미확인 + 오늘 적용 task_board 알림이 있으면 팝업으로 1회 노출
   useEffect(() => {
     if (myId === null) return;
@@ -364,6 +403,10 @@ export default function NotificationBell() {
         (payload) => {
           fetchNotifications();
           const n = payload.new as Notification;
+          // 내게 지정된 알림(user_id 일치)이면 OS(브라우저) 알림도 표시
+          if (n?.user_id && n.user_id === myAuthUidRef.current) {
+            showOsNotification(n.title || "새 알림", n.message || "", n.link);
+          }
           // 업무 알림이면 공지처럼 팝업 (target_date가 오늘 + 본인 X + 미확인)
           if (n?.type === "task_board" && n.id !== lastTaskIdRef.current) {
             const isMine =
@@ -377,10 +420,13 @@ export default function NotificationBell() {
               setTaskPopup(n);
             }
           }
-          // 결재 도착 알림(APPROVAL_SUBMITTED) — 본인에게 결재선이 지정된 경우 즉시 팝업
+          // 결재 도착 알림(APPROVAL_SUBMITTED) — 본인에게 결재선이 지정된 경우만 즉시 팝업
+          // (Realtime INSERT 는 모든 구독자에게 broadcast 되므로 user_id 로 "내 알림"인지 확인)
           if (
             n?.type === "APPROVAL_SUBMITTED" &&
-            n.id !== lastApprovalIdRef.current
+            n.id !== lastApprovalIdRef.current &&
+            myAuthUidRef.current != null &&
+            n.user_id === myAuthUidRef.current
           ) {
             const alreadySeen = getSeenApprovalIds().includes(n.id);
             if (!alreadySeen) {
@@ -935,7 +981,17 @@ export default function NotificationBell() {
     <div className={styles.wrap}>
       <button
         className={`${styles.bellBtn} ${visibleUnreadCount + unseenCount > 0 ? styles.bellBtnActive : ""}`}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          // 사용자 클릭(제스처) 시점에 브라우저 알림 권한 요청 — 자동 요청은 브라우저가 차단함
+          if (
+            typeof window !== "undefined" &&
+            "Notification" in window &&
+            Notification.permission === "default"
+          ) {
+            Notification.requestPermission().catch(() => {});
+          }
+          setOpen((v) => !v);
+        }}
         title="알림"
       >
         <Bell size={18} />

@@ -229,9 +229,7 @@ export async function GET(request: NextRequest) {
 
   if (from) orphanQuery = orphanQuery.gte('payment_date', from)
   if (to) orphanQuery = orphanQuery.lte('payment_date', to)
-  if (!canViewAll && appUser.display_name) {
-    orphanQuery = orphanQuery.eq('manager_name', appUser.display_name)
-  }
+  // own 권한이어도 담당자 미지정 행은 보여야 하므로 manager 필터는 아래 5단계에서 JS로 통합 처리
   const { data: orphanRows } = await orphanQuery
   const orphanItems: MergedItem[] = (orphanRows ?? []).map((r) => ({
     cert_application_id: null,
@@ -255,13 +253,20 @@ export async function GET(request: NextRequest) {
     created_at: (r.created_at as string) ?? new Date().toISOString(),
   }))
 
-  // 5) own 권한 — 본인 담당만 필터 (학점연계 행은 manager_name이 있어야 매칭됨)
-  let visible = canViewAll
-    ? [...items, ...orphanItems]
-    : [
-        ...items.filter((it) => it.manager_name === appUser.display_name),
-        ...orphanItems,
-      ]
+  // 5) own 권한 — 본인 담당 + 담당자 미지정(null/빈값) 행을 노출
+  //    담당자가 없는 행을 숨기면 사원이 결제건을 못 봐서 매출을 중복 등록하는 문제가 있어,
+  //    담당자 없는 행은 모두에게 보이도록 한다 (누락 방지).
+  let visible: MergedItem[]
+  if (canViewAll) {
+    visible = [...items, ...orphanItems]
+  } else {
+    const mineOrUnassigned = (it: MergedItem) =>
+      !it.manager_name || it.manager_name === appUser.display_name
+    visible = [
+      ...items.filter(mineOrUnassigned),
+      ...orphanItems.filter(mineOrUnassigned),
+    ]
+  }
 
   // 6) 결제일 필터 (학점연계 행은 paid_at 기준, 후납은 payment_date 기준 — 위에서 적용됨)
   if (from || to) {

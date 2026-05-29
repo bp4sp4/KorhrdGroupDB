@@ -2,13 +2,21 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { DragEvent as ReactDragEvent } from "react";
-import { ChevronDown, ChevronRight, ChevronUp, Plus } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
+  HelpCircle,
+  Plus,
+} from "lucide-react";
 import styles from "./page.module.css";
 import {
   JOURNAL_FORM_TYPES,
   normalizeJournalForm,
   type JournalFormType,
 } from "@/lib/work-journal/formTypes";
+import CategorySelect from "./_components/CategorySelect";
+import { useGuide } from "@/components/guide/GuideProvider";
 
 type Task = { id: string; text: string; done: boolean };
 type JournalRow = { id: string; category: string; detail: string };
@@ -17,6 +25,18 @@ type Tomorrow = { id: string; text: string };
 type WeeklyGoal = { id: string; date: string; text: string; done: boolean };
 
 const DOW = ["일", "월", "화", "수", "목", "금", "토"];
+
+// 사업본부(default 양식) 업무 분류 select 옵션
+const BIZ_CATEGORY_OPTIONS = [
+  "학습상담",
+  "학습설계",
+  "학습관리",
+  "가망관리",
+  "학습민원대응",
+  "미팅/면담",
+  "교육",
+  "기타",
+] as const;
 
 // 주어진 날짜가 속한 주의 월요일을 YYYY-MM-DD 로 반환 (KST 로컬, 월~일 기준)
 function weekMondayOf(isoDate: string): string {
@@ -167,6 +187,7 @@ export default function WorkJournalPage() {
     JOURNAL_FORM_TYPES.DEFAULT,
   );
   const isAcademic = journalForm === JOURNAL_FORM_TYPES.ACADEMIC;
+  const { startById } = useGuide();
   // 본인 user_id — 주 단위 weekly_goal key 구성에 사용
   const [userId, setUserId] = useState<number | null>(null);
   const [weeklyGoal, setWeeklyGoal] = useState<WeeklyGoal[]>([]);
@@ -786,7 +807,7 @@ export default function WorkJournalPage() {
         {/* ── 상단 행 (학사팀은 stats 자리에 이번주 목표 바 표시) ─── */}
         <div className={styles.topRow}>
           {/* 날짜 카드 */}
-          <div className={styles.dateCard}>
+          <div className={styles.dateCard} data-guide="wj-date">
             <label className={styles.dateSelectWrap}>
               <span className={styles.dateSelectText}>
                 {formatPretty(date)}
@@ -1118,7 +1139,7 @@ export default function WorkJournalPage() {
           className={`${styles.bodyRow} ${isLocked ? styles.bodyRowLocked : ""}`}
         >
           {/* 좌: 오늘의 업무 */}
-          <section className={styles.col}>
+          <section className={styles.col} data-guide="wj-today-tasks">
             <h3 className={styles.colTitle}>오늘의 업무</h3>
             <div className={styles.taskList}>
               {tasks.map((t, idx) => {
@@ -1200,9 +1221,25 @@ export default function WorkJournalPage() {
           </section>
 
           {/* 중: 업무 일지 */}
-          <section className={`${styles.col} ${styles.colJournal}`}>
-            <h3 className={styles.colTitle}>업무 일지</h3>
+          <section
+            className={`${styles.col} ${styles.colJournal}`}
+            data-guide="wj-journal"
+          >
+            <div className={styles.colTitleRow}>
+              <h3 className={styles.colTitle}>업무 일지</h3>
+              <button
+                type="button"
+                className={styles.guideBtn}
+                onClick={() => startById("work-journal-basics")}
+                data-guide="wj-guide-btn"
+              >
+                <HelpCircle size={14} /> 가이드
+              </button>
+            </div>
             <div className={styles.journalScroll}>
+              {/* 오전·오후 — 학사팀은 숨김 (이슈 및 요청사항만 사용) */}
+              {!isAcademic && (
+                <>
               {/* 오전 */}
               <div
                 className={`${styles.sectionDropZone} ${dropTarget?.section === "morning" ? styles.sectionDropZoneActive : ""}`}
@@ -1241,7 +1278,7 @@ export default function WorkJournalPage() {
                           onDragStart={(e) => {
                             // input 안에서 시작된 드래그는 텍스트 편집 우선 → 차단
                             const target = e.target as HTMLElement;
-                            if (target.closest("textarea, input")) {
+                            if (target.closest("textarea, input, [data-no-drag]")) {
                               e.preventDefault();
                               return;
                             }
@@ -1260,26 +1297,42 @@ export default function WorkJournalPage() {
                           onDrop={handleSectionDrop("morning")}
                         >
                           <div className={styles.journalRowMain}>
-                            <div className={styles.journalCategoryBox}>
-                              <input
-                                type="text"
-                                className={styles.journalCategoryInput}
-                                placeholder="업무 분류를 작성해주세요."
-                                value={row.category}
-                                onChange={(e) =>
-                                  updateRow("morning", row.id, {
-                                    category: e.target.value,
-                                  })
-                                }
-                                onDragOver={(e) => e.preventDefault()}
-                                onDrop={(e) => e.preventDefault()}
-                              />
+                            <div
+                              className={styles.journalCategoryBox}
+                              data-guide={i === 0 ? "wj-category" : undefined}
+                            >
+                              {isAcademic ? (
+                                <input
+                                  type="text"
+                                  className={styles.journalCategoryInput}
+                                  placeholder="업무 분류를 작성해주세요."
+                                  value={row.category}
+                                  onChange={(e) =>
+                                    updateRow("morning", row.id, {
+                                      category: e.target.value,
+                                    })
+                                  }
+                                  onDragOver={(e) => e.preventDefault()}
+                                  onDrop={(e) => e.preventDefault()}
+                                />
+                              ) : (
+                                <CategorySelect
+                                  value={row.category}
+                                  options={BIZ_CATEGORY_OPTIONS}
+                                  onChange={(v) =>
+                                    updateRow("morning", row.id, {
+                                      category: v,
+                                    })
+                                  }
+                                />
+                              )}
                             </div>
                             <input
                               type="text"
                               className={styles.journalDetailInput}
                               placeholder="세부 업무 내용을 작성해주세요."
                               value={row.detail}
+                              data-guide={i === 0 ? "wj-detail" : undefined}
                               onChange={(e) =>
                                 updateRow("morning", row.id, {
                                   detail: e.target.value,
@@ -1346,7 +1399,7 @@ export default function WorkJournalPage() {
                           draggable
                           onDragStart={(e) => {
                             const target = e.target as HTMLElement;
-                            if (target.closest("textarea, input")) {
+                            if (target.closest("textarea, input, [data-no-drag]")) {
                               e.preventDefault();
                               return;
                             }
@@ -1366,17 +1419,29 @@ export default function WorkJournalPage() {
                         >
                           <div className={styles.journalRowMain}>
                             <div className={styles.journalCategoryBox}>
-                              <input
-                                type="text"
-                                className={styles.journalCategoryInput}
-                                placeholder="업무 분류를 작성해주세요."
-                                value={row.category}
-                                onChange={(e) =>
-                                  updateRow("afternoon", row.id, {
-                                    category: e.target.value,
-                                  })
-                                }
-                              />
+                              {isAcademic ? (
+                                <input
+                                  type="text"
+                                  className={styles.journalCategoryInput}
+                                  placeholder="업무 분류를 작성해주세요."
+                                  value={row.category}
+                                  onChange={(e) =>
+                                    updateRow("afternoon", row.id, {
+                                      category: e.target.value,
+                                    })
+                                  }
+                                />
+                              ) : (
+                                <CategorySelect
+                                  value={row.category}
+                                  options={BIZ_CATEGORY_OPTIONS}
+                                  onChange={(v) =>
+                                    updateRow("afternoon", row.id, {
+                                      category: v,
+                                    })
+                                  }
+                                />
+                              )}
                             </div>
                             <input
                               type="text"
@@ -1408,6 +1473,8 @@ export default function WorkJournalPage() {
                   </>
                 )}
               </div>
+                </>
+              )}
 
               {/* 이슈 및 요청사항 — 학사팀 전용 */}
               {isAcademic && (
@@ -1478,7 +1545,7 @@ export default function WorkJournalPage() {
 
           {/* 우: 내일 예정 업무 (박스 + 푸터 wrapper) */}
           <div className={styles.colRight}>
-            <section className={styles.col}>
+            <section className={styles.col} data-guide="wj-tomorrow">
               <h3 className={styles.colTitle}>내일 예정 업무</h3>
               <div className={styles.tomorrowList}>
                 {tomorrow.map((t, idx) => (
@@ -1504,7 +1571,7 @@ export default function WorkJournalPage() {
                  2) submitted + 잠금 + 저장후 아님    → [수정하기]
                  3) submitted + 편집중                → [취소] [저장하기]
                  4) draft/null                        → [임시저장] [제출하기] */}
-            <div className={styles.footer}>
+            <div className={styles.footer} data-guide="wj-footer">
               {status === "submitted" && !isEditing ? (
                 <>
                 <button

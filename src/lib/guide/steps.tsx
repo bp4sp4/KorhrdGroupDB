@@ -41,6 +41,8 @@ export interface GuideStep {
   compact?: boolean;
   /** 진입 후 N ms 뒤 자동으로 다음 단계로 (시뮬레이션용) */
   autoAdvanceMs?: number;
+  /** 툴팁 세로 위치 미세 조정 (px). 음수면 위로 이동 */
+  offsetY?: number;
 }
 
 export interface GuideDef {
@@ -61,6 +63,150 @@ export interface GuideDef {
 }
 
 export const GUIDES: GuideDef[] = [
+  // ─── 업무일지 작성법 ──────────────────────────────────────────────────────
+  {
+    id: "work-journal-basics",
+    label: "업무일지 작성법",
+    matchPath: "/work-journal",
+    steps: [
+      {
+        title: "업무일지 가이드 (최초 1회)",
+        content: (
+          <>
+            하루 업무를{" "}
+            <B>오늘의 업무 → 업무 일지 → 내일 예정 업무</B> 순서로 정리하고{" "}
+            <S>제출</S>하는 흐름을 안내해드릴게요.
+            {"\n\n"}
+            <W>※ 작성 중인 내용은 변경되지 않아요. 화면만 안내합니다.</W>
+          </>
+        ),
+      },
+      {
+        target: '[data-guide="wj-date"]',
+        title: "날짜 선택",
+        content: (
+          <>
+            상단 <B>날짜 박스</B>를 누르면 달력이 떠요. 다른 날짜의 일지도
+            조회·작성할 수 있어요.
+            {"\n"}아래 <C>오늘 연락 예정</C>은 그날 연락해야 할 건수예요.
+          </>
+        ),
+        placement: "bottom",
+      },
+      {
+        target: '[data-guide="wj-today-tasks"]',
+        title: "오늘의 업무",
+        content: (
+          <>
+            오늘 할 일을 <B>체크리스트</B>로 관리해요.
+            {"\n"}• 완료하면 <S>체크</S>
+            {"\n"}• 핸들을 잡고 <B>드래그</B>해 순서 변경
+            {"\n"}
+            <C>전날 &apos;내일 예정 업무&apos;가 자동으로 여기에 이월</C>돼요.
+          </>
+        ),
+        placement: "right",
+      },
+      {
+        target: '[data-guide="wj-journal"]',
+        title: "업무 일지 (오전/오후)",
+        content: (
+          <>
+            실제 처리한 업무를 <B>오전(10~13시)·오후(14~19시)</B>로 나눠 적어요.
+            {"\n"}한 줄이 <B>하나의 업무</B>예요. 아래에서 한 줄을 자세히
+            볼게요.
+          </>
+        ),
+        placement: "left",
+      },
+      {
+        target: '[data-guide="wj-category"]',
+        title: "① 업무 분류 선택",
+        content: (
+          <>
+            왼쪽 칸은 <B>업무 분류</B>예요. 클릭하면 목록이 떠요.
+            {"\n"}
+            <C>학습상담 · 학습설계 · 학습관리 · 가망관리 · 학습민원대응 ·
+            미팅/면담 · 교육 · 기타</C>{" "}
+            중에서 골라요.
+          </>
+        ),
+        placement: "bottom",
+      },
+      {
+        target: '[data-guide="wj-detail"]',
+        title: "② 세부 내용 입력",
+        content: (
+          <>
+            오른쪽 칸에는 <B>무엇을 했는지 구체적으로</B> 적어요.
+            {"\n"}예) <C>홍길동 학습상담 — 사회복지사 과정 안내</C>
+            {"\n\n"}한 줄을 다 쓰면 <B>+ 추가</B>로 다음 업무를 이어 적고, 행을{" "}
+            <B>드래그</B>해 순서도 바꿀 수 있어요.
+          </>
+        ),
+        placement: "bottom",
+      },
+      {
+        target: '[data-guide="wj-tomorrow"]',
+        title: "내일 예정 업무",
+        content: (
+          <>
+            내일 할 일을 미리 적어두면,{" "}
+            <S>다음 근무일 &apos;오늘의 업무&apos;로 자동 이월</S>돼요.
+          </>
+        ),
+        placement: "left",
+      },
+      {
+        target: '[data-guide="wj-footer"]',
+        title: "⚠️ 반드시 [제출하기]까지!",
+        content: (
+          <>
+            <W>
+              <B>작성만 하면 끝이 아니에요. 꼭 [제출하기]를 눌러주세요!</B>
+            </W>
+            {"\n\n"}• <B>임시저장</B> — 작성 중 저장 (<W>미제출 상태</W>)
+            {"\n"}• <S>제출하기</S> — <B>정식 제출</B> (관리자 보고 · 일지 잠금)
+            {"\n\n"}
+            <W>※ 제출해야 &apos;내일 예정 업무&apos;도 다음 날로 이월돼요.</W>
+          </>
+        ),
+        placement: "left",
+        offsetY: -160,
+      },
+      {
+        target: '[data-guide="wj-footer"]',
+        title: "제출 후 수정 → 다시 제출",
+        content: (
+          <>
+            제출한 뒤에도 고칠 수 있어요.
+            {"\n\n"}1) <C>[수정하기]</C>를 누르면 다시 편집 가능
+            {"\n"}2) 내용을 고친 뒤에는 <W>
+              <B>꼭 [다시 제출]을 눌러야</B>
+            </W>{" "}
+            반영돼요!
+            {"\n\n"}
+            <W>
+              수정만 하고 [다시 제출]을 안 하면 변경 내용이 보고되지 않아요.
+            </W>
+          </>
+        ),
+        placement: "left",
+        offsetY: -160,
+      },
+      {
+        title: "끝났어요!",
+        content: (
+          <>
+            매일 작성 후 <S>꼭 [제출하기]</S>, 수정했다면 <S>[다시 제출]</S>까지
+            잊지 마세요!
+            {"\n\n"}
+            언제든 <C>업무 일지 옆의 [가이드] 버튼</C>으로 다시 볼 수 있어요.
+          </>
+        ),
+      },
+    ],
+  },
   {
     id: "hakjeom-basics",
     label: "문의 DB 사용법",

@@ -64,6 +64,8 @@ export interface SendMailParams {
   bodyHtml?: string
   bodyText?: string
   attachments?: { filename: string; content: Buffer; contentType?: string }[]
+  /** true 면 IMAP "보낸편지함" 동기화를 생략 (자동 알림 메일 등) */
+  skipSentFolder?: boolean
 }
 
 export async function sendMail(
@@ -88,21 +90,28 @@ export async function sendMail(
   const rawMessage = built.message as Buffer
 
   // 2) SMTP 로 실제 발송
+  //    - 연결/응답 타임아웃을 명시해 SMTP 서버가 느리거나 막혀있어도 무한 대기하지 않도록 보호
   const transporter = nodemailer.createTransport({
     host: creds.smtp_host,
     port: creds.smtp_port,
     secure: creds.smtp_port === 465,
     auth: { user: creds.email, pass: creds.password },
+    connectionTimeout: 8000,
+    greetingTimeout: 8000,
+    socketTimeout: 12000,
   })
   const sendInfo = await transporter.sendMail({
     envelope: built.envelope,
     raw: rawMessage,
   })
 
-  // 3) IMAP "보낸편지함" 에도 동일 메시지 append
+  // 3) IMAP "보낸편지함" 에도 동일 메시지 append (skipSentFolder 면 생략)
   //    - 사용자 응답이 너무 늦어지지 않도록 8초 타임아웃 으로 보호
   //    - 실패/타임아웃 시에도 발송 자체는 성공으로 처리 (sentFolderSynced=false)
   let sentFolderSynced = false
+  if (params.skipSentFolder) {
+    return { messageId: sendInfo.messageId, sentFolderSynced }
+  }
   try {
     await Promise.race([
       (async () => {

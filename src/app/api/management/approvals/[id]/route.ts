@@ -1,9 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { requireAuth } from '@/lib/auth/requireAuth'
 import { genDocNumber } from '@/lib/management/utils'
 import { writeAuditLog } from '@/lib/management/auditLog'
 import { applyVacationDeduction } from '@/lib/leave/applyVacationDeduction'
+import { sendApprovalEmail } from '@/lib/approvals/notifyEmail'
+
+export const runtime = 'nodejs'
+export const maxDuration = 60
 
 type ApprovalContent = Record<string, unknown>
 type ExpenseInsert = {
@@ -273,13 +277,41 @@ export async function PATCH(
       submitted_at: new Date().toISOString(),
     }).eq('id', id)
 
+    const applicantName = (appUser.data as { display_name?: string } | null)?.display_name ?? ''
+    const docTitle = title ?? approval.title
+    const link = `/approvals?id=${id}`
+
     await notifyUser(
       approver_ids[0],
       'APPROVAL_SUBMITTED',
       '결재 요청',
-      `${(appUser.data as { display_name?: string } | null)?.display_name ?? ''}님이 [${approval.document_type}]를 상신했습니다.`,
-      `/approvals?id=${id}`
+      `${applicantName}님이 [${approval.document_type}]를 상신했습니다.`,
+      link
     )
+
+    // 메일 알림 (다음 스마트워크) — 작성자 본인 + 첫 결재자 + 참조자 (응답 후 실행)
+    after(async () => {
+      await Promise.all([
+        sendApprovalEmail({
+          toAppUserIds: [approval.applicant_id],
+          subject: `[전자결재] 상신 완료 - ${docTitle}`,
+          bodyText: `${applicantName}님, [${approval.document_type}] "${docTitle}" 문서를 상신했습니다.`,
+          link,
+        }),
+        sendApprovalEmail({
+          toAppUserIds: [approver_ids[0]],
+          subject: `[전자결재] 결재 요청 - ${docTitle}`,
+          bodyText: `${applicantName}님이 [${approval.document_type}] "${docTitle}" 결재를 요청했습니다. 결재를 진행해주세요.`,
+          link,
+        }),
+        sendApprovalEmail({
+          toAppUserIds: (approval.reference_ids ?? []) as (number | string)[],
+          subject: `[전자결재] 참조 - ${docTitle}`,
+          bodyText: `${applicantName}님이 [${approval.document_type}] "${docTitle}" 문서를 상신했습니다. (참조)`,
+          link,
+        }),
+      ])
+    })
   }
 
   const { data } = await supabaseAdmin.from('approvals').select('*').eq('id', id).single()
@@ -410,6 +442,16 @@ export async function POST(
       `/approvals?id=${id}`
     )
 
+    // 메일 알림 — 작성자 본인 (반려 결과, 응답 후 실행)
+    after(() =>
+      sendApprovalEmail({
+        toAppUserIds: [approval.applicant_id],
+        subject: `[전자결재] 반려 - ${approval.title}`,
+        bodyText: `[${approval.document_type}] "${approval.title}" 문서가 반려되었습니다.\n사유: ${comment ?? '없음'}`,
+        link: `/approvals?id=${id}`,
+      }),
+    )
+
     // 감사 로그 기록
     await writeAuditLog({
       userId,
@@ -440,6 +482,16 @@ export async function POST(
       '결재 요청',
       `[${approval.document_type}] 결재를 요청합니다. (${approval.current_step + 1}단계)`,
       `/approvals?id=${id}`
+    )
+
+    // 메일 알림 — 다음 결재자 (응답 후 실행)
+    after(() =>
+      sendApprovalEmail({
+        toAppUserIds: [nextStep.approver_id],
+        subject: `[전자결재] 결재 요청 - ${approval.title}`,
+        bodyText: `[${approval.document_type}] "${approval.title}" 결재를 요청합니다. (${approval.current_step + 1}단계) 결재를 진행해주세요.`,
+        link: `/approvals?id=${id}`,
+      }),
     )
 
     // 신청자에게 중간 승인 알림
@@ -502,6 +554,16 @@ export async function POST(
       '결재 승인',
       `[${approval.document_type}]가 최종 승인되었습니다.`,
       `/approvals?id=${id}`
+    )
+
+    // 메일 알림 — 작성자 본인 (최종 승인 결과, 응답 후 실행)
+    after(() =>
+      sendApprovalEmail({
+        toAppUserIds: [approval.applicant_id],
+        subject: `[전자결재] 최종 승인 완료 - ${approval.title}`,
+        bodyText: `[${approval.document_type}] "${approval.title}" 문서가 최종 승인되었습니다.`,
+        link: `/approvals?id=${id}`,
+      }),
     )
 
     // 감사 로그 기록

@@ -214,6 +214,8 @@ export default function GuideTour({ steps, open, onClose }: Props) {
       top = rect.top + rect.height / 2 - 80;
       left = rect.left + rect.width + TOOLTIP_GAP;
     }
+    // 단계별 세로 미세 조정
+    top += current.offsetY ?? 0;
     // 화면 밖 보정
     left = Math.max(16, Math.min(vw - TOOLTIP_WIDTH - 16, left));
     top = Math.max(16, Math.min(vh - 200, top));

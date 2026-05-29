@@ -14,7 +14,7 @@
   color: #191f28;
   -webkit-font-smoothing: antialiased;
   letter-spacing: -0.01em;
-  background: #f3f4f6;
+
   height: 772px;
   padding: 20px;
   display: flex;
@@ -755,6 +755,36 @@
   font-weight: 600;
   line-height: normal;
   margin: 0;
+}
+
+/* 업무 일지 컬럼 헤더 — 제목 + 가이드 버튼 */
+.colTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  align-self: stretch;
+  width: 100%;
+}
+
+.guideBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  color: #4e5968;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: normal;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.guideBtn:hover {
+  background: #f5f7fa;
 }
 
 /* ─── 오늘의 업무 (체크박스 리스트) ─────────────────────────────── */
