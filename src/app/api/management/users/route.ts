@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server'
+import { requireAuth } from '@/lib/auth/requireAuth'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 
 export async function GET() {
+  const { errorResponse } = await requireAuth()
+  if (errorResponse) return errorResponse
+
   const { data, error } = await supabaseAdmin
     .from('app_users')
     .select('id, display_name, role, department_id')

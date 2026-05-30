@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server'
+import { requireAuth } from '@/lib/auth/requireAuth'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
+  const { errorResponse } = await requireAuth()
+  if (errorResponse) return errorResponse
+
   const { data, error } = await supabaseAdmin
     .from('approval_templates')
     .select('*')

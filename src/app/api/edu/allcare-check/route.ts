@@ -1,7 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/auth/requireAuth';
 
 export async function GET(req: NextRequest) {
+  const { errorResponse } = await requireAuth();
+  if (errorResponse) return errorResponse;
+
   const { searchParams } = new URL(req.url);
   const name = searchParams.get('name')?.trim();
   const phone = searchParams.get('phone')?.trim();
@@ -19,9 +23,9 @@ export async function GET(req: NextRequest) {
 
   const supabase = createClient(url, key);
 
-  // 전화번호 포맷 정규화 (하이픈 제거)
-  const phoneRaw = phone.replace(/-/g, '');
-  const phoneFormatted = phone.includes('-') ? phone : phone.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+  // 전화번호 포맷 정규화 — 숫자만 추출 (PostgREST 필터 인젝션 방지)
+  const phoneRaw = phone.replace(/[^0-9]/g, '');
+  const phoneFormatted = phoneRaw.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
 
   // 이름 + 전화번호로 users 조회
   const { data: user } = await supabase
