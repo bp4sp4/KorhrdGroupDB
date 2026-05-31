@@ -191,10 +191,18 @@
   line-height: 1.7;
   color: #191f28;
   outline: none;
+  /* 입력 영역은 위에서부터, 서명(data-mail-signature)은 맨 아래에 고정 */
+  display: flex;
+  flex-direction: column;
 }
 .editor:empty::before {
   content: attr(data-placeholder);
   color: #b0b8c1;
+}
+/* 서명 블록을 본문 맨 아래로 밀어 붙임 (위 입력 영역이 남은 공간을 차지)
+   - !important: 과거 저장된 서명 HTML 의 인라인 margin-top 을 덮어쓰기 위함 */
+.editor > [data-mail-signature] {
+  margin-top: auto !important;
 }
 .editor a {
   color: #2f6df0;

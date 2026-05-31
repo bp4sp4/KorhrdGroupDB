@@ -6,6 +6,7 @@ import styles from "./page.module.css";
 
 interface CredentialsInfo {
   email: string;
+  sender_name?: string | null;
   imap_host: string;
   imap_port: number;
   smtp_host: string;
@@ -26,6 +27,7 @@ export default function MailSettingsPage() {
 
   // 폼 상태
   const [email, setEmail] = useState("");
+  const [senderName, setSenderName] = useState("");
   const [password, setPassword] = useState("");
   const [imapHost, setImapHost] = useState("imap.daum.net");
   const [imapPort, setImapPort] = useState(993);
@@ -42,6 +44,7 @@ export default function MailSettingsPage() {
         const c = data.credentials as CredentialsInfo;
         setCurrent(c);
         setEmail(c.email);
+        setSenderName(c.sender_name ?? "");
         setImapHost(c.imap_host);
         setImapPort(c.imap_port);
         setSmtpHost(c.smtp_host);
@@ -70,6 +73,7 @@ export default function MailSettingsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email,
+          sender_name: senderName,
           password,
           imap_host: imapHost,
           imap_port: imapPort,
@@ -108,6 +112,7 @@ export default function MailSettingsPage() {
       }
       setCurrent(null);
       setEmail("");
+      setSenderName("");
       setPassword("");
       setSuccess("자격증명이 삭제되었습니다.");
     } finally {
@@ -175,6 +180,12 @@ export default function MailSettingsPage() {
                   <span className={styles.kv_k}>이메일</span>
                   <span className={styles.kv_v}>{current.email}</span>
                 </div>
+                {current.sender_name && (
+                  <div>
+                    <span className={styles.kv_k}>발신자 이름</span>
+                    <span className={styles.kv_v}>{current.sender_name}</span>
+                  </div>
+                )}
                 <div>
                   <span className={styles.kv_k}>IMAP</span>
                   <span className={styles.kv_v}>
@@ -208,6 +219,22 @@ export default function MailSettingsPage() {
               placeholder="name@korhrdcorp.co.kr"
               autoComplete="email"
             />
+          </div>
+
+          <div className={styles.field}>
+            <label className={styles.label}>발신자 이름</label>
+            <input
+              type="text"
+              className={styles.input}
+              value={senderName}
+              onChange={(e) => setSenderName(e.target.value)}
+              placeholder="예: 한평생그룹"
+            />
+            <p className={styles.help}>
+              💡 받는 사람 메일함에 표시될 이름이에요. 입력하면
+              &quot;{senderName || "한평생그룹"}&quot; &lt;{email || "name@korhrdcorp.co.kr"}&gt; 형태로 보입니다.
+              비워두면 이메일 주소만 표시됩니다.
+            </p>
           </div>
 
           <div className={styles.field}>

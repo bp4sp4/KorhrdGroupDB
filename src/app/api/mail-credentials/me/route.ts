@@ -12,7 +12,7 @@ export async function GET() {
   const { data, error } = await supabaseAdmin
     .from('mail_credentials')
     .select(
-      'email, imap_host, imap_port, smtp_host, smtp_port, use_tls, provider, created_at, updated_at',
+      'email, sender_name, imap_host, imap_port, smtp_host, smtp_port, use_tls, provider, created_at, updated_at',
     )
     .eq('user_id', appUser.id)
     .maybeSingle()
@@ -46,6 +46,12 @@ export async function PUT(req: NextRequest) {
       { status: 400 },
     )
   }
+
+  // 발신자 이름(선택) — 받는 사람 메일함에 표시할 이름. 빈 값이면 null 저장
+  const senderNameRaw = String(
+    (body as Record<string, unknown>).sender_name ?? '',
+  ).trim()
+  const sender_name = senderNameRaw.length > 0 ? senderNameRaw : null
 
   const imap_host = String(
     (body as Record<string, unknown>).imap_host ?? 'imap.daum.net',
@@ -93,6 +99,7 @@ export async function PUT(req: NextRequest) {
   const payload = {
     user_id: appUser.id,
     email,
+    sender_name,
     password_encrypted,
     imap_host,
     imap_port,
@@ -105,7 +112,7 @@ export async function PUT(req: NextRequest) {
   const { data, error } = await supabaseAdmin
     .from('mail_credentials')
     .upsert(payload, { onConflict: 'user_id' })
-    .select('email, imap_host, imap_port, smtp_host, smtp_port, use_tls, provider, updated_at')
+    .select('email, sender_name, imap_host, imap_port, smtp_host, smtp_port, use_tls, provider, updated_at')
     .single()
 
   if (error) {

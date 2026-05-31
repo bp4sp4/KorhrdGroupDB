@@ -20,6 +20,8 @@ export interface MailCredentials {
   smtp_host: string
   smtp_port: number
   use_tls: boolean
+  /** From 헤더에 표시할 발신자 이름(예: 한평생그룹). 없으면 이메일 주소만 표시 */
+  sender_name?: string | null
 }
 
 export class MailCredentialsNotFoundError extends Error {
@@ -37,7 +39,7 @@ export async function getUserMailCredentials(
   const { data, error } = await supabaseAdmin
     .from('mail_credentials')
     .select(
-      'email, password_encrypted, imap_host, imap_port, smtp_host, smtp_port, use_tls',
+      'email, password_encrypted, imap_host, imap_port, smtp_host, smtp_port, use_tls, sender_name',
     )
     .eq('user_id', appUserId)
     .maybeSingle()
@@ -51,6 +53,7 @@ export async function getUserMailCredentials(
     smtp_host: data.smtp_host as string,
     smtp_port: data.smtp_port as number,
     use_tls: data.use_tls as boolean,
+    sender_name: (data.sender_name as string | null) ?? null,
   }
 }
 
@@ -72,13 +75,18 @@ export async function sendMail(
   creds: MailCredentials,
   params: SendMailParams,
 ): Promise<{ messageId: string; sentFolderSynced: boolean }> {
+  // From 헤더: 발신자 이름이 있으면 "이름" <주소>, 없으면 주소만
+  const fromAddress = creds.sender_name
+    ? { name: creds.sender_name, address: creds.email }
+    : creds.email
+
   // 1) raw RFC822 메시지를 먼저 빌드 (SMTP 전송 + IMAP append 양쪽에 재사용)
   const composer = nodemailer.createTransport({
     streamTransport: true,
     buffer: true,
   })
   const built = await composer.sendMail({
-    from: creds.email,
+    from: fromAddress,
     to: params.to.join(', '),
     cc: params.cc?.join(', '),
     bcc: params.bcc?.join(', '),
@@ -102,7 +110,7 @@ export async function sendMail(
   })
   // 구조화 필드로 직접 발송 — 첨부파일이 누락 없이 포함됨
   const sendInfo = await transporter.sendMail({
-    from: creds.email,
+    from: fromAddress,
     to: params.to,
     cc: params.cc,
     bcc: params.bcc,

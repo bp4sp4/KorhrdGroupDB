@@ -142,43 +142,108 @@ function buildQuotedBody(detail: MailDetail | null): string {
   </div>`;
 }
 
-// ─── 임시저장 / 서명 (localStorage) ──────────────────────────────────────
-const DRAFT_KEY = "mailComposeDraft";
-const SIGNATURE_KEY = "mailSignatureHtml";
-interface DraftData {
-  to: string;
-  cc: string;
-  bcc: string;
-  subject: string;
-  bodyHtml: string;
+// ─── 서명 (고정 로고 + 이름/부서/연락처/주소) ───────────────────────────────
+// 로고는 고정 — public 에 배치된 회사 로고를 사용 (이미지 업로드 불가)
+const SIGNATURE_LOGO_SRC = "/mail-signature-logo.png";
+const SIGNATURE_LOGO_WIDTH = 132;
+
+interface SignatureData {
+  name: string;
+  dept: string;
+  phone: string;
+  email: string;
+  address: string;
 }
-function loadDraft(): DraftData | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const r = localStorage.getItem(DRAFT_KEY);
-    return r ? (JSON.parse(r) as DraftData) : null;
-  } catch {
-    return null;
+const EMPTY_SIGNATURE: SignatureData = {
+  name: "",
+  dept: "",
+  phone: "",
+  email: "",
+  address: "",
+};
+
+// 구조화 입력 + 고정 로고(base64) → 이메일용 서명 HTML (인라인 스타일 — 메일 클라이언트 호환)
+function buildSignatureHtml(s: SignatureData, logoDataUrl: string): string {
+  const esc = (x: string) =>
+    x.trim().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const lines: string[] = [];
+  // 순서: 이름 → 부서 → (T. 번호  E. 이메일) → 회사주소 → 로고(맨 아래)
+  if (s.name.trim()) {
+    lines.push(
+      `<div data-sig-name style="font-weight:700;color:#191f28;font-size:15px;">${esc(
+        s.name,
+      )}</div>`,
+    );
   }
-}
-function saveDraft(d: DraftData) {
-  try {
-    localStorage.setItem(DRAFT_KEY, JSON.stringify(d));
-  } catch {
-    /* ignore */
+  if (s.dept.trim()) {
+    lines.push(
+      `<div data-sig-dept style="color:#4e5968;font-size:13px;">${esc(
+        s.dept,
+      )}</div>`,
+    );
   }
-}
-function clearDraft() {
-  try {
-    localStorage.removeItem(DRAFT_KEY);
-  } catch {
-    /* ignore */
+  const contact: string[] = [];
+  if (s.phone.trim())
+    contact.push(`T. <span data-sig-phone>${esc(s.phone)}</span>`);
+  if (s.email.trim())
+    contact.push(
+      `E. <a data-sig-email href="mailto:${esc(s.email)}" style="color:#3182f6;text-decoration:none;">${esc(
+        s.email,
+      )}</a>`,
+    );
+  if (contact.length > 0) {
+    lines.push(
+      `<div style="color:#4e5968;font-size:13px;">${contact.join(
+        " &nbsp;&nbsp; ",
+      )}</div>`,
+    );
   }
+  if (s.address.trim()) {
+    lines.push(
+      `<div data-sig-address style="color:#8b95a1;font-size:13px;">${esc(
+        s.address,
+      )}</div>`,
+    );
+  }
+  if (logoDataUrl) {
+    lines.push(
+      `<img data-sig-logo src="${logoDataUrl}" alt="한평생그룹" style="width:${SIGNATURE_LOGO_WIDTH}px;height:auto;display:block;margin-top:12px;" />`,
+    );
+  }
+  if (lines.length === 0) return "";
+  return `<div data-mail-signature="1" style="line-height:1.6;">${lines.join(
+    "",
+  )}</div>`;
 }
-function loadSignature(): string {
-  if (typeof window === "undefined") return "";
+
+// 저장된 서명 HTML → 구조화 입력 (재편집용). 포맷은 buildSignatureHtml 이 생성한 것을 가정
+function parseSignatureHtml(html: string | null): SignatureData {
+  if (!html || typeof document === "undefined") return { ...EMPTY_SIGNATURE };
+  const div = document.createElement("div");
+  div.innerHTML = html;
+  const text = (sel: string) =>
+    div.querySelector(sel)?.textContent?.trim() ?? "";
+  return {
+    name: text("[data-sig-name]"),
+    dept: text("[data-sig-dept]"),
+    phone: text("[data-sig-phone]"),
+    email: text("[data-sig-email]"),
+    address: text("[data-sig-address]"),
+  };
+}
+
+// 고정 로고(public 자산)를 base64 data URL 로 변환 — 메일 본문에 임베드해 항상 표시
+async function fetchLogoDataUrl(): Promise<string> {
   try {
-    return localStorage.getItem(SIGNATURE_KEY) ?? "";
+    const res = await fetch(SIGNATURE_LOGO_SRC, { cache: "force-cache" });
+    if (!res.ok) return "";
+    const blob = await res.blob();
+    return await new Promise<string>((resolve) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result ?? ""));
+      r.onerror = () => resolve("");
+      r.readAsDataURL(blob);
+    });
   } catch {
     return "";
   }
@@ -239,6 +304,24 @@ export default function MailPage() {
   const [connection, setConnection] = useState<ConnectionStatus | null>(null);
   const [connectionLoading, setConnectionLoading] = useState(true);
   const [connectionMessage, setConnectionMessage] = useState<string | null>(null);
+
+  // ── 서명 (DB 저장, 새 메일에 자동 삽입) ──
+  const [signatureHtml, setSignatureHtml] = useState<string | null>(null);
+  const [signatureModalOpen, setSignatureModalOpen] = useState(false);
+
+  // mount 시 서명 조회
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/mail-credentials/signature", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!cancelled && d) setSignatureHtml(d.signatureHtml ?? null);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // mount 시 자격증명 상태 조회
   useEffect(() => {
@@ -522,6 +605,8 @@ export default function MailPage() {
             initialTo={composeInit.to}
             initialSubject={composeInit.subject}
             initialBody={composeInit.bodyHtml}
+            signature={signatureHtml ?? ""}
+            onEditSignature={() => setSignatureModalOpen(true)}
             onClose={() => setShowCompose(false)}
             onSent={(sentFolderSynced, recipients) => {
               setShowCompose(false);
@@ -893,6 +978,17 @@ export default function MailPage() {
           </>
         )}
       </div>
+
+      {signatureModalOpen && (
+        <SignatureModal
+          initialHtml={signatureHtml}
+          onClose={() => setSignatureModalOpen(false)}
+          onSaved={(html) => {
+            setSignatureHtml(html);
+            setSignatureModalOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -902,6 +998,10 @@ interface ComposePaneProps {
   initialTo?: string[];
   initialSubject?: string;
   initialBody?: string;
+  /** DB에 저장된 서명 HTML (새 메일 작성 시 자동 삽입) */
+  signature?: string;
+  /** 서명 설정 모달 열기 */
+  onEditSignature: () => void;
   onClose: () => void;
   onSent: (sentFolderSynced: boolean, recipients: string[]) => void;
 }
@@ -909,28 +1009,21 @@ function ComposePane({
   initialTo = [],
   initialSubject = "",
   initialBody = "",
+  signature = "",
+  onEditSignature,
   onClose,
   onSent,
 }: ComposePaneProps) {
-  // 새 메일(답장/전달 아님)일 때만 임시저장 복원
-  const isNewCompose =
-    initialTo.length === 0 && !initialSubject && !initialBody;
-  const [draftSnapshot] = useState<DraftData | null>(() =>
-    isNewCompose ? loadDraft() : null,
-  );
-  const [signature] = useState<string>(() => loadSignature());
-  // 에디터 초기 본문: 임시저장 복원 > (서명 + 답장/전달 인용)
-  const effectiveInitialBody = draftSnapshot
-    ? draftSnapshot.bodyHtml
-    : `${signature ? `${signature}<p><br/></p>` : ""}${initialBody}`;
+  // 에디터 초기 본문: (입력영역/인용 + 서명은 항상 하단). 매번 새 작성으로 시작 — 임시저장 복원 없음
+  const effectiveInitialBody = `${
+    initialBody || "<p><br/></p><p><br/></p>"
+  }${signature ? `<p><br/></p>${signature}` : ""}`;
 
-  const [to, setTo] = useState(draftSnapshot?.to ?? initialTo.join(", "));
-  const [cc, setCc] = useState(draftSnapshot?.cc ?? "");
-  const [bcc, setBcc] = useState(draftSnapshot?.bcc ?? "");
-  const [showBcc, setShowBcc] = useState(!!draftSnapshot?.bcc);
-  const [subject, setSubject] = useState(
-    draftSnapshot?.subject ?? initialSubject,
-  );
+  const [to, setTo] = useState(initialTo.join(", "));
+  const [cc, setCc] = useState("");
+  const [bcc, setBcc] = useState("");
+  const [showBcc, setShowBcc] = useState(false);
+  const [subject, setSubject] = useState(initialSubject);
   const [sending, setSending] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [bodyHtml, setBodyHtml] = useState("");
@@ -1034,44 +1127,6 @@ function ComposePane({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // 임시저장 — 새 메일 작성 중 자동 저장(0.6초 디바운스), 내용 없으면 삭제
-  useEffect(() => {
-    if (!isNewCompose || sentRef.current) return;
-    const t = setTimeout(() => {
-      const plain = bodyHtml.replace(/<[^>]*>/g, "").trim();
-      if (to.trim() || cc.trim() || bcc.trim() || subject.trim() || plain) {
-        saveDraft({ to, cc, bcc, subject, bodyHtml });
-      } else {
-        clearDraft();
-      }
-    }, 600);
-    return () => clearTimeout(t);
-  }, [to, cc, bcc, subject, bodyHtml, isNewCompose]);
-
-  // 서명 설정 (다음 새 메일 작성부터 자동 삽입)
-  const editSignature = () => {
-    const current = signature
-      .replace(/<br\s*\/?>/gi, "\n")
-      .replace(/<[^>]*>/g, "");
-    const input = window.prompt(
-      "메일 서명을 입력하세요. (새 메일 작성 시 본문에 자동 삽입)",
-      current,
-    );
-    if (input === null) return;
-    const esc = (s: string) =>
-      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    const html = input.trim()
-      ? `<div style="color:#8b95a1;font-size:13px;">${esc(input).replace(/\n/g, "<br/>")}</div>`
-      : "";
-    try {
-      if (html) localStorage.setItem(SIGNATURE_KEY, html);
-      else localStorage.removeItem(SIGNATURE_KEY);
-    } catch {
-      /* ignore */
-    }
-    window.alert("서명이 저장되었습니다. 다음 새 메일부터 적용됩니다.");
-  };
 
   // HTML → 평문 (텍스트 폴백)
   const htmlToText = (html: string): string => {
@@ -1177,7 +1232,6 @@ function ComposePane({
         return;
       }
       sentRef.current = true; // 발송 성공 → 서버가 첨부 정리하므로 언마운트 정리 스킵
-      clearDraft(); // 임시저장 비우기
       onSent(Boolean(data.sentFolderSynced), toList);
     } catch (e) {
       setErr((e as Error).message);
@@ -1332,7 +1386,7 @@ function ComposePane({
           <button
             type="button"
             className={styles.composeBtnGhost}
-            onClick={editSignature}
+            onClick={onEditSignature}
           >
             서명 설정
           </button>
@@ -1405,6 +1459,160 @@ function SentSuccessView({
         >
           메일 쓰기
         </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── 서명 설정 모달 (고정 로고 + 이름/부서/연락처/주소) ──────────────────────
+interface SignatureModalProps {
+  initialHtml: string | null;
+  onClose: () => void;
+  onSaved: (html: string | null) => void;
+}
+function SignatureModal({ initialHtml, onClose, onSaved }: SignatureModalProps) {
+  const [data, setData] = useState<SignatureData>(() =>
+    parseSignatureHtml(initialHtml),
+  );
+  const [logoDataUrl, setLogoDataUrl] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  // 고정 로고를 base64 로 로드 (미리보기 + 저장에 사용)
+  useEffect(() => {
+    let cancelled = false;
+    fetchLogoDataUrl().then((url) => {
+      if (!cancelled) setLogoDataUrl(url);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const set = <K extends keyof SignatureData>(
+    key: K,
+    value: SignatureData[K],
+  ) => setData((prev) => ({ ...prev, [key]: value }));
+
+  const previewHtml = useMemo(() => {
+    const html = buildSignatureHtml(data, logoDataUrl);
+    return html ? DOMPurify.sanitize(html) : "";
+  }, [data, logoDataUrl]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    setErr(null);
+    try {
+      const html = buildSignatureHtml(data, logoDataUrl);
+      const res = await fetch("/api/mail-credentials/signature", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ signatureHtml: html || null }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setErr(json?.error ?? "저장에 실패했습니다.");
+        return;
+      }
+      onSaved(html || null);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const fields: {
+    key: keyof SignatureData;
+    label: string;
+    placeholder: string;
+    type?: string;
+  }[] = [
+    { key: "name", label: "이름", placeholder: "예: 박상훈" },
+    { key: "dept", label: "부서", placeholder: "예: 경영지원팀" },
+    { key: "phone", label: "번호", placeholder: "예: 010-1234-5678" },
+    {
+      key: "email",
+      label: "이메일",
+      placeholder: "예: name@korhrdcorp.co.kr",
+      type: "email",
+    },
+    { key: "address", label: "회사주소", placeholder: "예: 서울시 ○○구 ○○로 123" },
+  ];
+
+  return (
+    <div className={styles.modalOverlay} onClick={onClose}>
+      <div className={styles.sigModal} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.sigModalHead}>
+          <h3 className={styles.sigModalTitle}>서명 설정</h3>
+          <button
+            type="button"
+            className={styles.sigCloseBtn}
+            onClick={onClose}
+            aria-label="닫기"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className={styles.sigModalBody}>
+          <p className={styles.sigHint}>
+            새 메일을 작성할 때 본문 맨 위에 자동으로 들어갑니다. 로고는
+            한평생그룹 로고로 고정됩니다.
+          </p>
+
+          {fields.map((f) => (
+            <div key={f.key} className={styles.sigField}>
+              <label className={styles.sigLabel}>{f.label}</label>
+              <input
+                type={f.type ?? "text"}
+                className={styles.sigInput}
+                value={data[f.key]}
+                onChange={(e) => set(f.key, e.target.value)}
+                placeholder={f.placeholder}
+              />
+            </div>
+          ))}
+
+          <div className={styles.sigField}>
+            <label className={styles.sigLabel}>미리보기</label>
+            {previewHtml ? (
+              <div
+                className={styles.sigPreview}
+                dangerouslySetInnerHTML={{ __html: previewHtml }}
+              />
+            ) : (
+              <div className={styles.sigPreviewEmpty}>
+                내용을 입력하면 미리보기가 표시됩니다.
+              </div>
+            )}
+            {!logoDataUrl && (
+              <p className={styles.sigHint}>
+                ⚠️ 로고 파일이 아직 없습니다. <code>public/mail-signature-logo.png</code>{" "}
+                에 로고를 저장하면 자동으로 표시됩니다.
+              </p>
+            )}
+          </div>
+
+          {err && <div className={styles.sigError}>{err}</div>}
+        </div>
+
+        <div className={styles.sigModalFooter}>
+          <button
+            type="button"
+            className={styles.composeBtnGhost}
+            onClick={onClose}
+            disabled={saving}
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            className={styles.composeBtnPrimary}
+            onClick={handleSave}
+            disabled={saving}
+          >
+            {saving ? "저장 중..." : "저장"}
+          </button>
+        </div>
       </div>
     </div>
   );

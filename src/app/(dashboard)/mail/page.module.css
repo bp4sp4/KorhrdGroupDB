@@ -32,6 +32,7 @@
   flex-direction: column;
   gap: 8px;
   overflow-y: auto;
+  width: 190px;
 }
 
 .composeBtn {
@@ -1103,7 +1104,7 @@
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: #dcfce7;
+  background: #e8f1ff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1111,7 +1112,7 @@
 }
 
 .sentIcon {
-  color: #16a34a;
+  color: #3182f6;
 }
 
 .sentTitle {
@@ -1224,4 +1225,121 @@
   .composeRow {
     padding: 10px 12px;
   }
+}
+
+/* ─── 서명 설정 모달 ─────────────────────────────────────────────────────── */
+.sigModal {
+  background: #fff;
+  border-radius: 16px;
+  width: 520px;
+  max-width: 92vw;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+.sigModalHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #eef0f3;
+}
+.sigModalTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #191f28;
+}
+.sigCloseBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #8b95a1;
+  cursor: pointer;
+}
+.sigCloseBtn:hover {
+  background: #f2f4f6;
+  color: #4e5968;
+}
+.sigModalBody {
+  padding: 18px 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.sigHint {
+  margin: 0;
+  font-size: 13px;
+  color: #8b95a1;
+}
+.sigField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sigLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: #4e5968;
+}
+.sigInput,
+.sigTextarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e5e8eb;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #191f28;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+.sigTextarea {
+  resize: vertical;
+  line-height: 1.5;
+}
+.sigInput:focus,
+.sigTextarea:focus {
+  outline: none;
+  border-color: #3182f6;
+}
+.sigPreview {
+  padding: 14px;
+  border: 1px solid #eef0f3;
+  border-radius: 8px;
+  background: #fbfcfd;
+  min-height: 40px;
+}
+.sigPreview img {
+  max-width: 100%;
+}
+.sigPreviewEmpty {
+  padding: 14px;
+  border: 1px dashed #e5e8eb;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #b0b8c1;
+}
+.sigError {
+  padding: 10px 14px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #dc2626;
+  font-size: 13px;
+}
+.sigModalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 20px;
+  border-top: 1px solid #eef0f3;
+  background: #f9fafb;
 }
