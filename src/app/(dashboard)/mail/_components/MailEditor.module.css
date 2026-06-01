@@ -191,7 +191,7 @@
   line-height: 1.7;
   color: #191f28;
   outline: none;
-  /* 입력 영역은 위에서부터, 서명(data-mail-signature)은 맨 아래에 고정 */
+  border: 1px solid #e6e6ea;
   display: flex;
   flex-direction: column;
 }

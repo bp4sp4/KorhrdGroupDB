@@ -157,6 +157,83 @@ export async function sendMail(
   return { messageId: sendInfo.messageId, sentFolderSynced }
 }
 
+// ─── 임시보관함 저장 (IMAP DRAFTS append) ─────────────────────────────
+export interface SaveDraftParams {
+  to?: string[]
+  cc?: string[]
+  bcc?: string[]
+  subject: string
+  bodyHtml?: string
+  bodyText?: string
+  attachments?: { filename: string; content: Buffer; contentType?: string }[]
+  /** 이전에 저장한 임시보관 메일 UID — 있으면 교체(삭제 후 재저장)해 중복 누적 방지 */
+  replaceUid?: number
+}
+
+/**
+ * 작성 중인 메일을 IMAP "임시보관함(Drafts)" 에 저장.
+ * - SMTP 발송 없이 RFC822 메시지를 빌드해 DRAFTS 폴더에 append
+ * - replaceUid 가 있으면 기존 임시저장본을 먼저 삭제(교체)
+ * - APPENDUID(UIDPLUS) 미지원 서버면 uid=null 반환 (교체 불가, 누적 가능)
+ */
+export async function saveDraft(
+  creds: MailCredentials,
+  params: SaveDraftParams,
+): Promise<{ uid: number | null }> {
+  const fromAddress = creds.sender_name
+    ? { name: creds.sender_name, address: creds.email }
+    : creds.email
+
+  // 1) raw RFC822 메시지 빌드 (발송 안 함)
+  const composer = nodemailer.createTransport({
+    streamTransport: true,
+    buffer: true,
+  })
+  const built = await composer.sendMail({
+    from: fromAddress,
+    to: params.to?.length ? params.to.join(', ') : undefined,
+    cc: params.cc?.length ? params.cc.join(', ') : undefined,
+    bcc: params.bcc?.length ? params.bcc.join(', ') : undefined,
+    subject: params.subject,
+    text: params.bodyText,
+    html: params.bodyHtml,
+    attachments: params.attachments,
+  })
+  const rawMessage = built.message as Buffer
+
+  // 2) IMAP DRAFTS 에 append (+ 이전본 교체)
+  const client = new ImapFlow({
+    host: creds.imap_host,
+    port: creds.imap_port,
+    secure: creds.use_tls,
+    auth: { user: creds.email, pass: creds.password },
+    logger: false,
+  })
+  await client.connect()
+  try {
+    const draftsFolder = await resolveFolderPath(client, 'DRAFTS')
+    // 이전 임시저장본 삭제 (교체)
+    if (params.replaceUid) {
+      const lock = await client.getMailboxLock(draftsFolder)
+      try {
+        await client.messageDelete(String(params.replaceUid), { uid: true })
+      } catch {
+        // 이미 없거나 삭제 불가 — 무시
+      } finally {
+        lock.release()
+      }
+    }
+    const res = await client.append(draftsFolder, rawMessage, ['\\Draft'])
+    const uid =
+      res && typeof res === 'object' && 'uid' in res && typeof res.uid === 'number'
+        ? res.uid
+        : null
+    return { uid }
+  } finally {
+    await client.logout().catch(() => {})
+  }
+}
+
 // ─── IMAP (수신/조회) ────────────────────────────────────────────────
 
 export interface MailListItem {

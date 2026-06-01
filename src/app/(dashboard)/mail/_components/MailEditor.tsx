@@ -33,9 +33,12 @@ const COLOR_PRESETS = [
 export default function MailEditor({
   onChange,
   initialHtml = "",
+  signatureHtml,
 }: {
   onChange: (html: string) => void;
   initialHtml?: string;
+  /** 서명 HTML — 변경되면 본문 하단 서명 블록을 라이브로 교체/삽입 */
+  signatureHtml?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const tableWrapRef = useRef<HTMLDivElement>(null);
@@ -48,7 +51,7 @@ export default function MailEditor({
   const MAX_R = 8;
   const MAX_C = 10;
 
-  // 초기 내용 주입 (답장/전달 인용, 임시저장 복원, 서명) — 최초 1회
+  // 초기 내용 주입 (답장/전달 인용, 서명) — 최초 1회
   useEffect(() => {
     if (ref.current && initialHtml) {
       ref.current.innerHTML = initialHtml;
@@ -56,6 +59,29 @@ export default function MailEditor({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // 서명 라이브 반영 — 서명 설정에서 저장하면 본문 하단 서명 블록을 즉시 교체/삽입/제거
+  // 최초 마운트 시점의 서명은 initialHtml 에 이미 포함되므로, 그 값을 기준으로 변경분만 반영
+  const lastSigRef = useRef<string | undefined>(signatureHtml);
+  useEffect(() => {
+    if (signatureHtml === lastSigRef.current) return; // 마운트 시점 값과 동일 → 스킵
+    lastSigRef.current = signatureHtml;
+    const root = ref.current;
+    if (!root) return;
+    const existing = root.querySelector('[data-mail-signature="1"]');
+    const next = (signatureHtml ?? "").trim();
+    if (next) {
+      if (existing) {
+        existing.outerHTML = next; // 기존 서명 교체
+      } else {
+        root.insertAdjacentHTML("beforeend", `<p><br/></p>${next}`); // 없으면 하단에 추가
+      }
+    } else if (existing) {
+      existing.remove(); // 서명 비우면 제거
+    }
+    onChange(root.innerHTML);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signatureHtml]);
 
   // 색상 등을 style 속성으로 적용 (font 태그 대신)
   useEffect(() => {

@@ -303,7 +303,9 @@ export default function MailPage() {
   // ── 메일 자격증명 연결 상태 ──
   const [connection, setConnection] = useState<ConnectionStatus | null>(null);
   const [connectionLoading, setConnectionLoading] = useState(true);
-  const [connectionMessage, setConnectionMessage] = useState<string | null>(null);
+  const [connectionMessage, setConnectionMessage] = useState<string | null>(
+    null,
+  );
 
   // ── 서명 (DB 저장, 새 메일에 자동 삽입) ──
   const [signatureHtml, setSignatureHtml] = useState<string | null>(null);
@@ -422,9 +424,7 @@ export default function MailPage() {
         ),
       );
       setList((prev) =>
-        prev.map((m) =>
-          selectedIds.has(m.messageId) ? { ...m, isRead } : m,
-        ),
+        prev.map((m) => (selectedIds.has(m.messageId) ? { ...m, isRead } : m)),
       );
       setSelectedIds(new Set());
     },
@@ -615,366 +615,414 @@ export default function MailPage() {
               setDetail(null);
               if (folder === "SENT") fetchList();
             }}
+            onSavedDraft={() => {
+              // 임시저장 → 작성 닫고 임시보관함으로 이동
+              setShowCompose(false);
+              setSelectedId(null);
+              setDetail(null);
+              if (folder === "DRAFTS") fetchList();
+              else setFolder("DRAFTS");
+            }}
           />
         ) : (
           <>
-        {!showDetailPane && (
-          <>
-        {/* 메일 목록 — 상세를 열면 숨기고 본문이 이 자리에 표시 */}
-        <section className={styles.listCol}>
-          <div className={styles.listHead}>
-            <input
-              className={styles.searchInput}
-              placeholder="메일 검색 (제목/보낸이/내용)"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </div>
+            {!showDetailPane && (
+              <>
+                {/* 메일 목록 — 상세를 열면 숨기고 본문이 이 자리에 표시 */}
+                <section className={styles.listCol}>
+                  <div className={styles.listHead}>
+                    <input
+                      className={styles.searchInput}
+                      placeholder="메일 검색 (제목/보낸이/내용)"
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                    />
+                  </div>
 
-          {/* 네이버식 툴바 — 전체선택 / 개수 / 새로고침 */}
-          <div className={styles.listToolbar}>
-            <input
-              type="checkbox"
-              className={styles.rowCheck}
-              checked={
-                pageItems.length > 0 &&
-                pageItems.every((m) => selectedIds.has(m.messageId))
-              }
-              onChange={(e) =>
-                setSelectedIds(
-                  e.target.checked
-                    ? new Set(pageItems.map((m) => m.messageId))
-                    : new Set(),
-                )
-              }
-              aria-label="현재 페이지 전체 선택"
-            />
-            <button
-              type="button"
-              className={styles.toolbarBtn}
-              disabled={selectedIds.size === 0}
-              onClick={() => bulkSetRead(true)}
-            >
-              읽음
-            </button>
-            <button
-              type="button"
-              className={styles.toolbarBtn}
-              disabled={selectedIds.size === 0}
-              onClick={() => bulkSetRead(false)}
-            >
-              안읽음
-            </button>
-            <button
-              type="button"
-              className={styles.toolbarBtn}
-              disabled={selectedIds.size === 0}
-              onClick={bulkDelete}
-            >
-              삭제
-            </button>
-            <span className={styles.toolbarDivider} aria-hidden="true" />
-            <span className={styles.toolbarCount}>
-              {selectedIds.size > 0
-                ? `${selectedIds.size}개 선택`
-                : `전체 ${list.length} · 안읽음 ${list.filter((m) => m.isRead === false).length}`}
-            </span>
-            <button
-              type="button"
-              className={styles.refreshBtn}
-              onClick={() => fetchList()}
-              title="새로고침"
-            >
-              <RefreshCcw size={14} />
-            </button>
-          </div>
-
-          {error && (
-            <div className={styles.errorBox}>
-              <AlertCircle size={14} style={{ marginRight: 6 }} />
-              {error}
-            </div>
-          )}
-
-          <div className={styles.listBody}>
-            {listLoading ? (
-              <div className={styles.listEmpty}>불러오는 중...</div>
-            ) : list.length === 0 ? (
-              <div className={styles.listEmpty}>메일이 없습니다.</div>
-            ) : (
-              pageItems.map((m) => {
-                const active = selectedId === m.messageId;
-                const unread = m.isRead === false;
-                const date = m.receivedTime ?? m.sentTime ?? "";
-                const isOutbox = folder === "SENT" || folder === "DRAFTS";
-                let displayName: string;
-                if (isOutbox) {
-                  const recipients = m.to ?? [];
-                  if (recipients.length === 0) {
-                    displayName = "(받는 사람 없음)";
-                  } else {
-                    const first =
-                      recipients[0].emailAddress.name ||
-                      recipients[0].emailAddress.address;
-                    displayName =
-                      recipients.length > 1
-                        ? `${first} 외 ${recipients.length - 1}명`
-                        : first;
-                  }
-                  displayName = `받는 사람: ${displayName}`;
-                } else {
-                  displayName =
-                    m.from?.emailAddress.name ||
-                    m.from?.emailAddress.address ||
-                    "(보낸이 없음)";
-                }
-                const checked = selectedIds.has(m.messageId);
-                const star = starredIds.has(m.messageId);
-                return (
-                  <div
-                    key={m.messageId}
-                    className={`${styles.mailRow} ${active ? styles.mailRowActive : ""} ${unread ? styles.mailRowUnread : ""}`}
-                    onClick={() => setSelectedId(m.messageId)}
-                  >
+                  {/* 네이버식 툴바 — 전체선택 / 개수 / 새로고침 */}
+                  <div className={styles.listToolbar}>
                     <input
                       type="checkbox"
                       className={styles.rowCheck}
-                      checked={checked}
-                      onClick={(e) => e.stopPropagation()}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        setSelectedIds((prev) => {
-                          const next = new Set(prev);
-                          if (e.target.checked) next.add(m.messageId);
-                          else next.delete(m.messageId);
-                          return next;
-                        });
-                      }}
+                      checked={
+                        pageItems.length > 0 &&
+                        pageItems.every((m) => selectedIds.has(m.messageId))
+                      }
+                      onChange={(e) =>
+                        setSelectedIds(
+                          e.target.checked
+                            ? new Set(pageItems.map((m) => m.messageId))
+                            : new Set(),
+                        )
+                      }
+                      aria-label="현재 페이지 전체 선택"
                     />
                     <button
                       type="button"
-                      className={`${styles.rowStar} ${star ? styles.rowStarOn : ""}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setStarredIds((prev) => {
-                          const next = new Set(prev);
-                          if (next.has(m.messageId)) next.delete(m.messageId);
-                          else next.add(m.messageId);
-                          return next;
-                        });
-                      }}
-                      aria-label="별표"
+                      className={styles.toolbarBtn}
+                      disabled={selectedIds.size === 0}
+                      onClick={() => bulkSetRead(true)}
                     >
-                      <Star size={15} fill={star ? "#ffc107" : "none"} />
+                      읽음
                     </button>
-                    <span className={styles.rowReadIcon}>
-                      {unread ? <Mail size={15} /> : <MailOpen size={15} />}
+                    <button
+                      type="button"
+                      className={styles.toolbarBtn}
+                      disabled={selectedIds.size === 0}
+                      onClick={() => bulkSetRead(false)}
+                    >
+                      안읽음
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.toolbarBtn}
+                      disabled={selectedIds.size === 0}
+                      onClick={bulkDelete}
+                    >
+                      삭제
+                    </button>
+                    <span
+                      className={styles.toolbarDivider}
+                      aria-hidden="true"
+                    />
+                    <span className={styles.toolbarCount}>
+                      {selectedIds.size > 0
+                        ? `${selectedIds.size}개 선택`
+                        : `전체 ${list.length} · 안읽음 ${list.filter((m) => m.isRead === false).length}`}
                     </span>
-                    <span className={styles.rowFrom}>{displayName}</span>
-                    <span className={styles.rowSubject}>
-                      {m.hasAttachment && (
-                        <Paperclip size={12} className={styles.attachIcon} />
-                      )}
-                      {m.subject || "(제목 없음)"}
-                    </span>
-                    <span className={styles.rowDate}>{fmtDate(date)}</span>
+                    <button
+                      type="button"
+                      className={styles.refreshBtn}
+                      onClick={() => fetchList()}
+                      title="새로고침"
+                    >
+                      <RefreshCcw size={14} />
+                    </button>
                   </div>
-                );
-              })
-            )}
-          </div>
 
-          {totalPages > 1 && (
-            <div className={styles.pager}>
-              <button
-                type="button"
-                className={styles.pagerBtn}
-                disabled={currentPage === 1}
-                onClick={() => setPage(1)}
-                aria-label="처음"
-              >
-                «
-              </button>
-              <button
-                type="button"
-                className={styles.pagerBtn}
-                disabled={currentPage === 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                aria-label="이전"
-              >
-                ‹
-              </button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  className={`${styles.pagerNum} ${p === currentPage ? styles.pagerNumActive : ""}`}
-                  onClick={() => setPage(p)}
-                >
-                  {p}
-                </button>
-              ))}
-              <button
-                type="button"
-                className={styles.pagerBtn}
-                disabled={currentPage === totalPages}
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                aria-label="다음"
-              >
-                ›
-              </button>
-              <button
-                type="button"
-                className={styles.pagerBtn}
-                disabled={currentPage === totalPages}
-                onClick={() => setPage(totalPages)}
-                aria-label="마지막"
-              >
-                »
-              </button>
-            </div>
-          )}
-        </section>
-          </>
-        )}
-
-        {/* 메일 상세 — 목록 대신 전체 영역에 표시 */}
-        {showDetailPane && (
-        <section className={styles.detailCol}>
-          <div className={styles.detailTopBar}>
-            <button
-              type="button"
-              className={styles.backBtn}
-              onClick={() => {
-                setSelectedId(null);
-                setDetail(null);
-                setSentInfo(null);
-              }}
-            >
-              <ChevronLeft size={18} />
-              <span>{FOLDERS.find((f) => f.key === folder)?.label ?? "목록"}</span>
-            </button>
-          </div>
-          {sentInfo ? (
-            <SentSuccessView
-              recipients={sentInfo.recipients}
-              sentFolderSynced={sentInfo.sentFolderSynced}
-              onGoList={() => {
-                setSentInfo(null);
-                setFolder("SENT");
-              }}
-              onCompose={() => {
-                setSentInfo(null);
-                openCompose();
-              }}
-            />
-          ) : !selectedId ? (
-            <div className={styles.detailEmpty}>
-              <Inbox size={32} />
-              <div>메일을 선택해 주세요</div>
-            </div>
-          ) : detailLoading ? (
-            <div className={styles.detailEmpty}>불러오는 중...</div>
-          ) : detail ? (
-            <>
-              <div className={styles.detailHead}>
-                <h2 className={styles.detailSubject}>
-                  {detail.subject || "(제목 없음)"}
-                </h2>
-                <div className={styles.detailMeta}>
-                  <div className={styles.detailFromBlock}>
-                    <span className={styles.detailFromName}>
-                      {detail.from?.emailAddress.name ||
-                        detail.from?.emailAddress.address ||
-                        "-"}
-                    </span>
-                    <span className={styles.detailFromAddr}>
-                      {detail.from?.emailAddress.address}
-                    </span>
-                  </div>
-                  <span className={styles.detailDate}>
-                    {fmtFullDate(detail.receivedTime ?? detail.sentTime)}
-                  </span>
-                </div>
-              </div>
-
-              <div className={styles.detailActions}>
-                <button
-                  type="button"
-                  className={styles.actionBtn}
-                  onClick={() =>
-                    openCompose({
-                      to: detail.from?.emailAddress.address
-                        ? [detail.from.emailAddress.address]
-                        : [],
-                      subject: `Re: ${detail.subject ?? ""}`,
-                      bodyHtml: buildQuotedBody(detail),
-                    })
-                  }
-                >
-                  <Reply size={13} />
-                  답장
-                </button>
-                <button
-                  type="button"
-                  className={styles.actionBtn}
-                  onClick={() =>
-                    openCompose({
-                      to: [],
-                      subject: `Fwd: ${detail.subject ?? ""}`,
-                      bodyHtml: buildQuotedBody(detail),
-                    })
-                  }
-                >
-                  <Forward size={13} />
-                  전달
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
-                  onClick={handleDelete}
-                  style={{ marginLeft: "auto" }}
-                >
-                  <Trash2 size={13} />
-                  삭제
-                </button>
-              </div>
-
-              <div
-                className={styles.detailBody}
-                dangerouslySetInnerHTML={{
-                  // 받은 메일 HTML 은 신뢰할 수 없으므로 DOMPurify 로 새니타이즈 (XSS 방어)
-                  __html:
-                    detail.body?.contentType === "HTML"
-                      ? DOMPurify.sanitize(detail.body.content ?? "", {
-                          ADD_ATTR: ["target"],
-                        })
-                      : `<pre style="white-space: pre-wrap; font-family: inherit;">${escapeHtml(detail.body?.content ?? "")}</pre>`,
-                }}
-              />
-
-              {detail.attachments && detail.attachments.length > 0 && (
-                <div className={styles.detailAttachments}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: "#4e5968" }}>
-                    첨부파일 {detail.attachments.length}개
-                  </div>
-                  {detail.attachments.map((a) => (
-                    <div key={a.attachmentId} className={styles.attachItem}>
-                      <Paperclip size={13} />
-                      <span>{a.fileName}</span>
-                      <span style={{ marginLeft: "auto", color: "#8b95a1", fontSize: 11 }}>
-                        {formatBytes(a.size)}
-                      </span>
+                  {error && (
+                    <div className={styles.errorBox}>
+                      <AlertCircle size={14} style={{ marginRight: 6 }} />
+                      {error}
                     </div>
-                  ))}
+                  )}
+
+                  <div className={styles.listBody}>
+                    {listLoading ? (
+                      <div className={styles.listEmpty}>불러오는 중...</div>
+                    ) : list.length === 0 ? (
+                      <div className={styles.listEmpty}>메일이 없습니다.</div>
+                    ) : (
+                      pageItems.map((m) => {
+                        const active = selectedId === m.messageId;
+                        const unread = m.isRead === false;
+                        const date = m.receivedTime ?? m.sentTime ?? "";
+                        const isOutbox =
+                          folder === "SENT" || folder === "DRAFTS";
+                        let displayName: string;
+                        if (isOutbox) {
+                          const recipients = m.to ?? [];
+                          if (recipients.length === 0) {
+                            displayName = "(받는 사람 없음)";
+                          } else {
+                            const first =
+                              recipients[0].emailAddress.name ||
+                              recipients[0].emailAddress.address;
+                            displayName =
+                              recipients.length > 1
+                                ? `${first} 외 ${recipients.length - 1}명`
+                                : first;
+                          }
+                          displayName = `받는 사람: ${displayName}`;
+                        } else {
+                          displayName =
+                            m.from?.emailAddress.name ||
+                            m.from?.emailAddress.address ||
+                            "(보낸이 없음)";
+                        }
+                        const checked = selectedIds.has(m.messageId);
+                        const star = starredIds.has(m.messageId);
+                        return (
+                          <div
+                            key={m.messageId}
+                            className={`${styles.mailRow} ${active ? styles.mailRowActive : ""} ${unread ? styles.mailRowUnread : ""}`}
+                            onClick={() => setSelectedId(m.messageId)}
+                          >
+                            <input
+                              type="checkbox"
+                              className={styles.rowCheck}
+                              checked={checked}
+                              onClick={(e) => e.stopPropagation()}
+                              onChange={(e) => {
+                                e.stopPropagation();
+                                setSelectedIds((prev) => {
+                                  const next = new Set(prev);
+                                  if (e.target.checked) next.add(m.messageId);
+                                  else next.delete(m.messageId);
+                                  return next;
+                                });
+                              }}
+                            />
+                            <button
+                              type="button"
+                              className={`${styles.rowStar} ${star ? styles.rowStarOn : ""}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setStarredIds((prev) => {
+                                  const next = new Set(prev);
+                                  if (next.has(m.messageId))
+                                    next.delete(m.messageId);
+                                  else next.add(m.messageId);
+                                  return next;
+                                });
+                              }}
+                              aria-label="별표"
+                            >
+                              <Star
+                                size={15}
+                                fill={star ? "#ffc107" : "none"}
+                              />
+                            </button>
+                            <span className={styles.rowReadIcon}>
+                              {unread ? (
+                                <Mail size={15} />
+                              ) : (
+                                <MailOpen size={15} />
+                              )}
+                            </span>
+                            <span className={styles.rowFrom}>
+                              {displayName}
+                            </span>
+                            <span className={styles.rowSubject}>
+                              {m.hasAttachment && (
+                                <Paperclip
+                                  size={12}
+                                  className={styles.attachIcon}
+                                />
+                              )}
+                              {m.subject || "(제목 없음)"}
+                            </span>
+                            <span className={styles.rowDate}>
+                              {fmtDate(date)}
+                            </span>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+
+                  {totalPages > 1 && (
+                    <div className={styles.pager}>
+                      <button
+                        type="button"
+                        className={styles.pagerBtn}
+                        disabled={currentPage === 1}
+                        onClick={() => setPage(1)}
+                        aria-label="처음"
+                      >
+                        «
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.pagerBtn}
+                        disabled={currentPage === 1}
+                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                        aria-label="이전"
+                      >
+                        ‹
+                      </button>
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                        (p) => (
+                          <button
+                            key={p}
+                            type="button"
+                            className={`${styles.pagerNum} ${p === currentPage ? styles.pagerNumActive : ""}`}
+                            onClick={() => setPage(p)}
+                          >
+                            {p}
+                          </button>
+                        ),
+                      )}
+                      <button
+                        type="button"
+                        className={styles.pagerBtn}
+                        disabled={currentPage === totalPages}
+                        onClick={() =>
+                          setPage((p) => Math.min(totalPages, p + 1))
+                        }
+                        aria-label="다음"
+                      >
+                        ›
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.pagerBtn}
+                        disabled={currentPage === totalPages}
+                        onClick={() => setPage(totalPages)}
+                        aria-label="마지막"
+                      >
+                        »
+                      </button>
+                    </div>
+                  )}
+                </section>
+              </>
+            )}
+
+            {/* 메일 상세 — 목록 대신 전체 영역에 표시 */}
+            {showDetailPane && (
+              <section className={styles.detailCol}>
+                <div className={styles.detailTopBar}>
+                  <button
+                    type="button"
+                    className={styles.backBtn}
+                    onClick={() => {
+                      setSelectedId(null);
+                      setDetail(null);
+                      setSentInfo(null);
+                    }}
+                  >
+                    <ChevronLeft size={18} />
+                    <span>
+                      {FOLDERS.find((f) => f.key === folder)?.label ?? "목록"}
+                    </span>
+                  </button>
                 </div>
-              )}
-            </>
-          ) : (
-            <div className={styles.detailEmpty}>불러올 수 없습니다.</div>
-          )}
-        </section>
-        )}
+                {sentInfo ? (
+                  <SentSuccessView
+                    recipients={sentInfo.recipients}
+                    sentFolderSynced={sentInfo.sentFolderSynced}
+                    onGoList={() => {
+                      setSentInfo(null);
+                      setFolder("SENT");
+                    }}
+                    onCompose={() => {
+                      setSentInfo(null);
+                      openCompose();
+                    }}
+                  />
+                ) : !selectedId ? (
+                  <div className={styles.detailEmpty}>
+                    <Inbox size={32} />
+                    <div>메일을 선택해 주세요</div>
+                  </div>
+                ) : detailLoading ? (
+                  <div className={styles.detailEmpty}>불러오는 중...</div>
+                ) : detail ? (
+                  <>
+                    <div className={styles.detailHead}>
+                      <h2 className={styles.detailSubject}>
+                        {detail.subject || "(제목 없음)"}
+                      </h2>
+                      <div className={styles.detailMeta}>
+                        <div className={styles.detailFromBlock}>
+                          <span className={styles.detailFromName}>
+                            {detail.from?.emailAddress.name ||
+                              detail.from?.emailAddress.address ||
+                              "-"}
+                          </span>
+                          <span className={styles.detailFromAddr}>
+                            {detail.from?.emailAddress.address}
+                          </span>
+                        </div>
+                        <span className={styles.detailDate}>
+                          {fmtFullDate(detail.receivedTime ?? detail.sentTime)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className={styles.detailActions}>
+                      <button
+                        type="button"
+                        className={styles.actionBtn}
+                        onClick={() =>
+                          openCompose({
+                            to: detail.from?.emailAddress.address
+                              ? [detail.from.emailAddress.address]
+                              : [],
+                            subject: `Re: ${detail.subject ?? ""}`,
+                            bodyHtml: buildQuotedBody(detail),
+                          })
+                        }
+                      >
+                        <Reply size={13} />
+                        답장
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.actionBtn}
+                        onClick={() =>
+                          openCompose({
+                            to: [],
+                            subject: `Fwd: ${detail.subject ?? ""}`,
+                            bodyHtml: buildQuotedBody(detail),
+                          })
+                        }
+                      >
+                        <Forward size={13} />
+                        전달
+                      </button>
+                      <button
+                        type="button"
+                        className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
+                        onClick={handleDelete}
+                        style={{ marginLeft: "auto" }}
+                      >
+                        <Trash2 size={13} />
+                        삭제
+                      </button>
+                    </div>
+
+                    <div
+                      className={styles.detailBody}
+                      dangerouslySetInnerHTML={{
+                        // 받은 메일 HTML 은 신뢰할 수 없으므로 DOMPurify 로 새니타이즈 (XSS 방어)
+                        __html:
+                          detail.body?.contentType === "HTML"
+                            ? DOMPurify.sanitize(detail.body.content ?? "", {
+                                ADD_ATTR: ["target"],
+                              })
+                            : `<pre style="white-space: pre-wrap; font-family: inherit;">${escapeHtml(detail.body?.content ?? "")}</pre>`,
+                      }}
+                    />
+
+                    {detail.attachments && detail.attachments.length > 0 && (
+                      <div className={styles.detailAttachments}>
+                        <div
+                          style={{
+                            fontSize: 12,
+                            fontWeight: 700,
+                            color: "#4e5968",
+                          }}
+                        >
+                          첨부파일 {detail.attachments.length}개
+                        </div>
+                        {detail.attachments.map((a) => (
+                          <div
+                            key={a.attachmentId}
+                            className={styles.attachItem}
+                          >
+                            <Paperclip size={13} />
+                            <span>{a.fileName}</span>
+                            <span
+                              style={{
+                                marginLeft: "auto",
+                                color: "#8b95a1",
+                                fontSize: 11,
+                              }}
+                            >
+                              {formatBytes(a.size)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className={styles.detailEmpty}>불러올 수 없습니다.</div>
+                )}
+              </section>
+            )}
           </>
         )}
       </div>
@@ -998,12 +1046,14 @@ interface ComposePaneProps {
   initialTo?: string[];
   initialSubject?: string;
   initialBody?: string;
-  /** DB에 저장된 서명 HTML (새 메일 작성 시 자동 삽입) */
+  /** DB에 저장된 서명 HTML (새 메일 작성 시 자동 삽입 + 변경 시 라이브 반영) */
   signature?: string;
   /** 서명 설정 모달 열기 */
   onEditSignature: () => void;
   onClose: () => void;
   onSent: (sentFolderSynced: boolean, recipients: string[]) => void;
+  /** 임시저장 성공 시 — 임시보관함으로 이동 */
+  onSavedDraft: () => void;
 }
 function ComposePane({
   initialTo = [],
@@ -1013,8 +1063,9 @@ function ComposePane({
   onEditSignature,
   onClose,
   onSent,
+  onSavedDraft,
 }: ComposePaneProps) {
-  // 에디터 초기 본문: (입력영역/인용 + 서명은 항상 하단). 매번 새 작성으로 시작 — 임시저장 복원 없음
+  // 에디터 초기 본문 — 입력영역/인용 + 서명(있으면 하단). 매번 새 작성으로 시작
   const effectiveInitialBody = `${
     initialBody || "<p><br/></p><p><br/></p>"
   }${signature ? `<p><br/></p>${signature}` : ""}`;
@@ -1031,10 +1082,42 @@ function ComposePane({
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [dragOver, setDragOver] = useState(false);
   const MAX_FILE_BYTES = 25 * 1024 * 1024;
+  // 임시저장/미리보기 상태
+  const [savingDraft, setSavingDraft] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  // 나가기 확인 모달 (마지막 저장 이후 수정사항이 있을 때만)
+  const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
+  // 마지막 저장 이후 사용자가 수정했는지 추적 — 닫기 시 경고 표시 여부 결정
+  const dirtyRef = useRef(false);
+  // 본문 에디터의 최초 onChange(초기 HTML 주입)는 수정으로 보지 않기 위한 플래그
+  const bodyInitedRef = useRef(false);
+  const markDirty = () => {
+    dirtyRef.current = true;
+  };
+
+  // 본문 변경 핸들러 — 최초 1회(초기 HTML 주입)는 무시, 이후는 사용자 수정으로 간주
+  const handleBodyChange = (html: string) => {
+    setBodyHtml(html);
+    if (!bodyInitedRef.current) {
+      bodyInitedRef.current = true;
+      return;
+    }
+    markDirty();
+  };
+
+  // 닫기 요청 — 저장 이후 수정사항이 있으면 확인 모달, 없으면 즉시 닫기
+  const handleCloseRequest = () => {
+    if (dirtyRef.current) {
+      setLeaveConfirmOpen(true);
+      return;
+    }
+    onClose();
+  };
 
   // 파일 선택 → 서명 URL 받아 Storage 에 직접 업로드
   const addFiles = (fl: FileList | null) => {
     if (!fl) return;
+    markDirty();
     const list = Array.from(fl);
     const supabase = createClient();
     for (const file of list) {
@@ -1072,7 +1155,8 @@ function ComposePane({
             body: JSON.stringify({ filename: file.name }),
           });
           const sign = await signRes.json();
-          if (!signRes.ok || !sign.ok) throw new Error(sign.error ?? "sign fail");
+          if (!signRes.ok || !sign.ok)
+            throw new Error(sign.error ?? "sign fail");
           const up = await supabase.storage
             .from(sign.bucket)
             .uploadToSignedUrl(sign.path, sign.token, file, {
@@ -1108,12 +1192,15 @@ function ComposePane({
     setAttachments((prev) => {
       const target = prev[idx];
       if (target?.path) cleanupPaths([target.path]);
+      markDirty();
       return prev.filter((_, i) => i !== idx);
     });
 
   // 업로드된 임시파일 경로 추적 (언마운트 정리용) + 발송 완료 플래그
   const uploadedPathsRef = useRef<string[]>([]);
   const sentRef = useRef(false);
+  // 임시보관함에 저장한 메일 UID — 재저장 시 교체(중복 누적 방지)
+  const draftUidRef = useRef<number | null>(null);
   useEffect(() => {
     uploadedPathsRef.current = attachments
       .filter((a) => a.status === "done" && a.path)
@@ -1121,11 +1208,11 @@ function ComposePane({
   }, [attachments]);
   useEffect(() => {
     return () => {
-      // 작성 닫기/이동 시 발송 안 한 첨부는 스토리지에서 삭제 (발송 시엔 서버가 정리)
+      // 작성 닫기/이동 시 발송 안 한 첨부는 스토리지에서 삭제
+      // (임시저장 시 첨부는 IMAP 메일에 임베드되므로 스토리지 임시본은 정리해도 됨)
       if (sentRef.current || uploadedPathsRef.current.length === 0) return;
       cleanupPaths(uploadedPathsRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // HTML → 평문 (텍스트 폴백)
@@ -1150,10 +1237,72 @@ function ComposePane({
       const base = "border:1px solid #c8ccd0;padding:6px 10px;min-width:110px;";
       c.setAttribute(
         "style",
-        c.tagName === "TH" ? base + "background:#f2f4f6;font-weight:700;" : base,
+        c.tagName === "TH"
+          ? base + "background:#f2f4f6;font-weight:700;"
+          : base,
       );
     });
     return doc.body.innerHTML;
+  };
+
+  // 주소 문자열 → 배열 (쉼표/세미콜론/공백 구분)
+  const parseAddrs = (s: string) =>
+    s
+      .split(/[,;\s]+/)
+      .map((x) => x.trim())
+      .filter(Boolean);
+
+  // 임시저장 — IMAP 임시보관함(Drafts)에 저장 후 임시보관함으로 이동
+  const handleSaveDraft = async () => {
+    setErr(null);
+    if (attachments.some((a) => a.status === "uploading")) {
+      setErr("첨부파일 업로드가 끝날 때까지 기다려주세요.");
+      return;
+    }
+    if (attachments.some((a) => a.status === "error")) {
+      setErr("업로드 실패한 첨부파일이 있습니다. 제거 후 다시 시도해주세요.");
+      return;
+    }
+    const attachmentPayload = attachments
+      .filter((a) => a.status === "done" && a.path)
+      .map((a) => ({
+        path: a.path as string,
+        filename: a.filename,
+        contentType: a.contentType,
+      }));
+
+    setSavingDraft(true);
+    try {
+      const res = await fetch("/api/mail/drafts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: parseAddrs(to),
+          cc: parseAddrs(cc),
+          bcc: parseAddrs(bcc),
+          subject: subject.trim(),
+          bodyText: htmlToText(bodyHtml),
+          bodyHtml: styleEmailHtml(bodyHtml),
+          attachments: attachmentPayload,
+          replaceUid: draftUidRef.current ?? undefined,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) {
+        setErr(data.error ?? "임시저장에 실패했습니다.");
+        return;
+      }
+      draftUidRef.current =
+        typeof data.uid === "number" ? data.uid : draftUidRef.current;
+      // 임시저장된 첨부는 IMAP 메일에 임베드됨 → 스토리지 임시본 정리 스킵 위해 발송 플래그 대용으로 처리하지 않고
+      // 언마운트 정리에 맡김(닫힐 때 정리). 저장 완료 → 수정사항 초기화 후 임시보관함으로 이동
+      dirtyRef.current = false;
+      onSavedDraft();
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setSavingDraft(false);
+    }
   };
 
   const handleSend = async () => {
@@ -1170,11 +1319,6 @@ function ComposePane({
       setErr("제목을 입력해주세요");
       return;
     }
-    const parseAddrs = (s: string) =>
-      s
-        .split(/[,;\s]+/)
-        .map((x) => x.trim())
-        .filter(Boolean);
     const ccList = parseAddrs(cc);
     const bccList = parseAddrs(bcc);
 
@@ -1242,173 +1386,380 @@ function ComposePane({
 
   return (
     <section className={styles.composePane}>
-        <div className={styles.composeHead}>
-          <h3 className={styles.composeTitle}>새 메일 작성</h3>
+      <div className={styles.composeHead}>
+        <div className={styles.composeActionBar}>
+          <button
+            type="button"
+            className={styles.toolbarSendBtn}
+            onClick={handleSend}
+            disabled={sending}
+          >
+            {sending ? "전송 중…" : "보내기"}
+          </button>
+          <button
+            type="button"
+            className={styles.composeActionBtn}
+            onClick={() => setPreviewOpen(true)}
+            disabled={sending}
+          >
+            미리보기
+          </button>
+          <button
+            type="button"
+            className={styles.composeActionBtn}
+            onClick={handleSaveDraft}
+            disabled={sending || savingDraft}
+          >
+            {savingDraft ? "저장 중…" : "임시저장"}
+          </button>
+          <button
+            type="button"
+            className={styles.composeActionBtn}
+            onClick={onEditSignature}
+          >
+            서명설정
+          </button>
+        </div>
+        <div className={styles.composeHeadRight}>
           <button
             type="button"
             className={styles.composeCloseBtn}
-            onClick={onClose}
+            onClick={handleCloseRequest}
             aria-label="닫기"
           >
             <X size={16} />
           </button>
         </div>
+      </div>
 
-        {err && (
-          <div className={styles.errorBox}>
-            <AlertCircle size={14} style={{ marginRight: 6 }} />
-            {err}
+      {err && (
+        <div className={styles.errorBox}>
+          <AlertCircle size={14} style={{ marginRight: 6 }} />
+          {err}
+        </div>
+      )}
+
+      <div className={styles.composeBody}>
+        <div className={styles.composeRow}>
+          <span className={styles.composeLabel}>받는 사람</span>
+          <input
+            className={styles.composeInput}
+            value={to}
+            onChange={(e) => {
+              setTo(e.target.value);
+              markDirty();
+            }}
+            placeholder="example@email.com, ..."
+          />
+        </div>
+        {/* 참조 — 항상 표시, 우측 화살표로 숨은참조 토글 */}
+        <div className={styles.composeRow}>
+          <span className={styles.composeLabel}>참조</span>
+          <input
+            className={styles.composeInput}
+            value={cc}
+            onChange={(e) => {
+              setCc(e.target.value);
+              markDirty();
+            }}
+            placeholder="참조 (쉼표로 구분)"
+          />
+          <button
+            type="button"
+            className={styles.refArrowBtn}
+            onClick={() => setShowBcc((v) => !v)}
+            aria-expanded={showBcc}
+            aria-label="숨은참조"
+            title="숨은참조"
+          >
+            {showBcc ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </button>
+        </div>
+        {showBcc && (
+          <div className={styles.composeRow}>
+            <span className={styles.composeLabel}>숨은참조</span>
+            <input
+              className={styles.composeInput}
+              value={bcc}
+              onChange={(e) => {
+                setBcc(e.target.value);
+                markDirty();
+              }}
+              placeholder="숨은참조 (쉼표로 구분)"
+              autoFocus
+            />
           </div>
         )}
-
-        <div className={styles.composeBody}>
-          <div className={styles.composeRow}>
-            <span className={styles.composeLabel}>받는 사람</span>
-            <input
-              className={styles.composeInput}
-              value={to}
-              onChange={(e) => setTo(e.target.value)}
-              placeholder="example@email.com, ..."
-            />
-          </div>
-          {/* 참조 — 항상 표시, 우측 화살표로 숨은참조 토글 */}
-          <div className={styles.composeRow}>
-            <span className={styles.composeLabel}>참조</span>
-            <input
-              className={styles.composeInput}
-              value={cc}
-              onChange={(e) => setCc(e.target.value)}
-              placeholder="참조 (쉼표로 구분)"
-            />
-            <button
-              type="button"
-              className={styles.refArrowBtn}
-              onClick={() => setShowBcc((v) => !v)}
-              aria-expanded={showBcc}
-              aria-label="숨은참조"
-              title="숨은참조"
-            >
-              {showBcc ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            </button>
-          </div>
-          {showBcc && (
-            <div className={styles.composeRow}>
-              <span className={styles.composeLabel}>숨은참조</span>
-              <input
-                className={styles.composeInput}
-                value={bcc}
-                onChange={(e) => setBcc(e.target.value)}
-                placeholder="숨은참조 (쉼표로 구분)"
-                autoFocus
-              />
+        <div className={styles.composeRow}>
+          <span className={styles.composeLabel}>제목</span>
+          <input
+            className={styles.composeInput}
+            value={subject}
+            onChange={(e) => {
+              setSubject(e.target.value);
+              markDirty();
+            }}
+            placeholder="제목을 입력하세요"
+          />
+        </div>
+        {/* 첨부파일 */}
+        <div className={styles.composeRow}>
+          <span className={styles.composeLabel}>첨부파일</span>
+          <div
+            className={`${styles.attachArea} ${dragOver ? styles.attachAreaDrag : ""}`}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragOver(true);
+            }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragOver(false);
+              addFiles(e.dataTransfer.files);
+            }}
+          >
+            <div className={styles.attachTop}>
+              <label className={styles.attachAddBtn}>
+                <Paperclip size={13} /> 파일 첨부
+                <input
+                  type="file"
+                  multiple
+                  hidden
+                  onChange={(e) => {
+                    addFiles(e.target.files);
+                    e.target.value = "";
+                  }}
+                />
+              </label>
+              <span className={styles.attachHint}>
+                여기로 끌어다 놓기 · 여러 개 가능 · 최대 25MB/파일
+              </span>
             </div>
-          )}
-          <div className={styles.composeRow}>
-            <span className={styles.composeLabel}>제목</span>
-            <input
-              className={styles.composeInput}
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              placeholder="제목을 입력하세요"
-            />
-          </div>
-          {/* 첨부파일 */}
-          <div className={styles.composeRow}>
-            <span className={styles.composeLabel}>첨부파일</span>
-            <div
-              className={`${styles.attachArea} ${dragOver ? styles.attachAreaDrag : ""}`}
-              onDragOver={(e) => {
-                e.preventDefault();
-                setDragOver(true);
-              }}
-              onDragLeave={() => setDragOver(false)}
-              onDrop={(e) => {
-                e.preventDefault();
-                setDragOver(false);
-                addFiles(e.dataTransfer.files);
-              }}
-            >
-              <div className={styles.attachTop}>
-                <label className={styles.attachAddBtn}>
-                  <Paperclip size={13} /> 파일 첨부
-                  <input
-                    type="file"
-                    multiple
-                    hidden
-                    onChange={(e) => {
-                      addFiles(e.target.files);
-                      e.target.value = "";
-                    }}
-                  />
-                </label>
-                <span className={styles.attachHint}>
-                  여기로 끌어다 놓기 · 여러 개 가능 · 최대 25MB/파일
-                </span>
-              </div>
-              {attachments.length > 0 && (
-                <div className={styles.attachChips}>
-                  {attachments.map((a, i) => (
-                    <span
-                      key={a.id + i}
-                      className={`${styles.attachChip} ${a.status === "error" ? styles.attachChipError : ""}`}
-                    >
-                      <Paperclip size={11} />
-                      <span className={styles.attachChipName}>{a.filename}</span>
-                      <span className={styles.attachChipSize}>
-                        {a.status === "uploading"
-                          ? "업로드 중…"
-                          : a.status === "error"
-                            ? "실패"
-                            : formatBytes(a.size)}
-                      </span>
-                      <button
-                        type="button"
-                        className={styles.attachChipX}
-                        onClick={() => removeFile(i)}
-                        aria-label="첨부 제거"
-                      >
-                        <X size={12} />
-                      </button>
+            {attachments.length > 0 && (
+              <div className={styles.attachChips}>
+                {attachments.map((a, i) => (
+                  <span
+                    key={a.id + i}
+                    className={`${styles.attachChip} ${a.status === "error" ? styles.attachChipError : ""}`}
+                  >
+                    <Paperclip size={11} />
+                    <span className={styles.attachChipName}>{a.filename}</span>
+                    <span className={styles.attachChipSize}>
+                      {a.status === "uploading"
+                        ? "업로드 중…"
+                        : a.status === "error"
+                          ? "실패"
+                          : formatBytes(a.size)}
                     </span>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* 본문 에디터 */}
-          <div className={styles.editorWrap}>
-            <MailEditor onChange={setBodyHtml} initialHtml={effectiveInitialBody} />
+                    <button
+                      type="button"
+                      className={styles.attachChipX}
+                      onClick={() => removeFile(i)}
+                      aria-label="첨부 제거"
+                    >
+                      <X size={12} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
-        <div className={styles.composeFooter}>
-          <button
-            type="button"
-            className={styles.composeBtnGhost}
-            onClick={onEditSignature}
+        {/* 본문 에디터 — 서명은 변경 시 라이브로 반영 (signatureHtml) */}
+        <div className={styles.editorWrap}>
+          <MailEditor
+            onChange={handleBodyChange}
+            initialHtml={effectiveInitialBody}
+            signatureHtml={signature}
+          />
+        </div>
+      </div>
+
+      {previewOpen && (
+        <ComposePreviewModal
+          to={to}
+          cc={cc}
+          bcc={bcc}
+          subject={subject}
+          bodyHtml={styleEmailHtml(bodyHtml)}
+          attachments={attachments}
+          onClose={() => setPreviewOpen(false)}
+        />
+      )}
+
+      {/* 나가기 확인 — 마지막 저장 이후 수정사항이 있을 때 */}
+      {leaveConfirmOpen && (
+        <div
+          className={styles.modalOverlay}
+          onClick={() => setLeaveConfirmOpen(false)}
+        >
+          <div
+            className={styles.leaveConfirm}
+            onClick={(e) => e.stopPropagation()}
           >
-            서명 설정
-          </button>
-          <span className={styles.composeFooterSpacer} />
+            <button
+              type="button"
+              className={styles.leaveConfirmClose}
+              onClick={() => setLeaveConfirmOpen(false)}
+              aria-label="닫기"
+            >
+              <X size={18} />
+            </button>
+            <div className={styles.leaveConfirmIcon}>
+              <AlertCircle size={26} />
+            </div>
+            <p className={styles.leaveConfirmText}>
+              이 페이지를 벗어나면 마지막 저장 후 수정된 내용은 저장되지
+              않습니다.
+            </p>
+            <div className={styles.leaveConfirmBtns}>
+              <button
+                type="button"
+                className={styles.leaveConfirmCancel}
+                onClick={() => setLeaveConfirmOpen(false)}
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                className={styles.leaveConfirmOk}
+                onClick={() => {
+                  setLeaveConfirmOpen(false);
+                  onClose();
+                }}
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+// ─── 작성 미리보기 모달 ─────────────────────────────────────────────────
+interface ComposePreviewModalProps {
+  to: string;
+  cc: string;
+  bcc: string;
+  subject: string;
+  bodyHtml: string;
+  attachments: Attachment[];
+  onClose: () => void;
+}
+function ComposePreviewModal({
+  to,
+  cc,
+  bcc,
+  subject,
+  bodyHtml,
+  attachments,
+  onClose,
+}: ComposePreviewModalProps) {
+  const safeBody = useMemo(
+    () =>
+      DOMPurify.sanitize(
+        bodyHtml || "<p style='color:#8b95a1'>본문이 비어있습니다.</p>",
+        {
+          ADD_ATTR: ["target"],
+        },
+      ),
+    [bodyHtml],
+  );
+  const parseList = (s: string) =>
+    s
+      .split(/[,;\s]+/)
+      .map((x) => x.trim())
+      .filter(Boolean);
+  const toList = parseList(to);
+  const ccList = parseList(cc);
+  const bccList = parseList(bcc);
+  const doneAttachments = attachments.filter((a) => a.status === "done");
+
+  return (
+    <div className={styles.modalOverlay} onClick={onClose}>
+      <div className={styles.previewModal} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.sigModalHead}>
+          <h3 className={styles.sigModalTitle}>메일 미리보기</h3>
           <button
             type="button"
-            className={styles.composeBtnGhost}
+            className={styles.sigCloseBtn}
             onClick={onClose}
-            disabled={sending}
+            aria-label="닫기"
           >
-            취소
+            <X size={18} />
           </button>
+        </div>
+        <div className={styles.previewBody}>
+          <div className={styles.previewMeta}>
+            <div className={styles.previewMetaRow}>
+              <span className={styles.previewMetaLabel}>제목</span>
+              <span className={styles.previewMetaValue}>
+                {subject || <em className={styles.previewDim}>(제목 없음)</em>}
+              </span>
+            </div>
+            <div className={styles.previewMetaRow}>
+              <span className={styles.previewMetaLabel}>받는 사람</span>
+              <span className={styles.previewMetaValue}>
+                {toList.length > 0 ? (
+                  toList.join(", ")
+                ) : (
+                  <em className={styles.previewDim}>(받는 사람 없음)</em>
+                )}
+              </span>
+            </div>
+            {ccList.length > 0 && (
+              <div className={styles.previewMetaRow}>
+                <span className={styles.previewMetaLabel}>참조</span>
+                <span className={styles.previewMetaValue}>
+                  {ccList.join(", ")}
+                </span>
+              </div>
+            )}
+            {bccList.length > 0 && (
+              <div className={styles.previewMetaRow}>
+                <span className={styles.previewMetaLabel}>숨은참조</span>
+                <span className={styles.previewMetaValue}>
+                  {bccList.join(", ")}
+                </span>
+              </div>
+            )}
+            {doneAttachments.length > 0 && (
+              <div className={styles.previewMetaRow}>
+                <span className={styles.previewMetaLabel}>첨부</span>
+                <span className={styles.previewMetaValue}>
+                  {doneAttachments.map((a, i) => (
+                    <span key={a.id} className={styles.previewAttachItem}>
+                      <Paperclip size={11} />
+                      {a.filename}
+                      <span className={styles.previewDim}>
+                        ({formatBytes(a.size)})
+                      </span>
+                      {i < doneAttachments.length - 1 ? " " : ""}
+                    </span>
+                  ))}
+                </span>
+              </div>
+            )}
+          </div>
+          <div
+            className={styles.previewContent}
+            dangerouslySetInnerHTML={{ __html: safeBody }}
+          />
+        </div>
+        <div className={styles.sigModalFooter}>
           <button
             type="button"
             className={styles.composeBtnPrimary}
-            onClick={handleSend}
-            disabled={sending}
+            onClick={onClose}
           >
-            {sending ? "전송 중..." : "보내기"}
+            확인
           </button>
         </div>
-    </section>
+      </div>
+    </div>
   );
 }
 
@@ -1445,18 +1796,10 @@ function SentSuccessView({
         </p>
       )}
       <div className={styles.sentActions}>
-        <button
-          type="button"
-          className={styles.sentBtn}
-          onClick={onGoList}
-        >
+        <button type="button" className={styles.sentBtn} onClick={onGoList}>
           메일 목록
         </button>
-        <button
-          type="button"
-          className={styles.sentBtn}
-          onClick={onCompose}
-        >
+        <button type="button" className={styles.sentBtn} onClick={onCompose}>
           메일 쓰기
         </button>
       </div>
@@ -1470,7 +1813,11 @@ interface SignatureModalProps {
   onClose: () => void;
   onSaved: (html: string | null) => void;
 }
-function SignatureModal({ initialHtml, onClose, onSaved }: SignatureModalProps) {
+function SignatureModal({
+  initialHtml,
+  onClose,
+  onSaved,
+}: SignatureModalProps) {
   const [data, setData] = useState<SignatureData>(() =>
     parseSignatureHtml(initialHtml),
   );
@@ -1535,7 +1882,11 @@ function SignatureModal({ initialHtml, onClose, onSaved }: SignatureModalProps) 
       placeholder: "예: name@korhrdcorp.co.kr",
       type: "email",
     },
-    { key: "address", label: "회사주소", placeholder: "예: 서울시 ○○구 ○○로 123" },
+    {
+      key: "address",
+      label: "회사주소",
+      placeholder: "예: 서울시 ○○구 ○○로 123",
+    },
   ];
 
   return (
@@ -1586,8 +1937,9 @@ function SignatureModal({ initialHtml, onClose, onSaved }: SignatureModalProps) 
             )}
             {!logoDataUrl && (
               <p className={styles.sigHint}>
-                ⚠️ 로고 파일이 아직 없습니다. <code>public/mail-signature-logo.png</code>{" "}
-                에 로고를 저장하면 자동으로 표시됩니다.
+                ⚠️ 로고 파일이 아직 없습니다.{" "}
+                <code>public/mail-signature-logo.png</code> 에 로고를 저장하면
+                자동으로 표시됩니다.
               </p>
             )}
           </div>
