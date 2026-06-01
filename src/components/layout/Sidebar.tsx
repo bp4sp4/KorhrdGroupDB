@@ -499,6 +499,8 @@ interface SidebarProps {
 const SIDEBAR_HIDE_KEY: Record<string, string> = {
   calendar: "calendar",
   "me-attendance": "attendance",
+  "me-hr-record": "hr-record",
+  "mail-settings": "mail-settings",
   board: "board",
   mail: "mail",
 };
