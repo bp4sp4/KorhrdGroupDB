@@ -370,11 +370,14 @@ export default function EduSalesPage() {
       education_center_name: string | null;
     }>,
   ) => {
-    // 권한 안전장치: 어드민이 아닌 사용자는 현재 월에서만 편집 가능
-    if (!canEdit) {
-      alert(
-        `${activeMonth} 데이터는 수정할 수 없습니다. (현재 월(${currentMonthLabel})만 수정 가능)`,
-      );
+    // 권한 안전장치 — 행 단위 편집 가능 여부 확인
+    if (!isRowEditable(row)) {
+      const s = row.refund_status;
+      const reason =
+        s === "환불" || s === "정산"
+          ? `${s} 처리된 매출은 수정할 수 없습니다.`
+          : `${s} 매출은 결제월이 현재 월일 때만 수정할 수 있습니다.`;
+      alert(reason);
       return;
     }
     // 낙관적 업데이트
@@ -648,10 +651,28 @@ export default function EduSalesPage() {
   const activeYear = now.getFullYear();
   // 월 탭(예: "5월") 활성화 여부 — true면 그 월에서 cohort/payment_date 변경 금지
   const isMonthTab = /^\d+월$/.test(activeMonth);
-  // 현재 월 라벨 ("5월" 등) — 일반 사용자는 이 탭에서만 편집 가능, 어드민은 모두 가능
+  // 현재 월 라벨 ("5월" 등)
   const currentMonthLabel = `${kstNow().getMonth() + 1}월`;
-  // 편집 가능 여부 — 어드민이거나 활성 탭이 현재 월일 때만 true
-  const canEdit = isAdmin || activeMonth === currentMonthLabel;
+  // 페이지 단위 안내문용 — 어드민 아니고 현재 월 탭이 아닐 때만 안내 표시
+  const showReadonlyNotice = !isAdmin && activeMonth !== currentMonthLabel;
+  // 행 단위 편집 가능 여부 — 환불 상태에 따라 분기
+  // · 정상, 보류: 항상 편집 가능 (지난 월 포함)
+  // · 당월 환불: 결제월이 현재 월인 행만 편집 가능
+  // · 환불, 정산: 편집 불가
+  // · 어드민: 항상 편집 가능
+  const isRowEditable = (r: SalesRow): boolean => {
+    if (isAdmin) return true;
+    const s = r.refund_status;
+    if (s === "환불" || s === "정산") return false;
+    if (s === "당월 환불") {
+      const rowMonth =
+        paymentDateToMonthLabel(r.payment_date) ??
+        cohortToMonthLabel(r.cohort);
+      return rowMonth === currentMonthLabel;
+    }
+    // 정상, 보류
+    return true;
+  };
   // 활성 월의 1일/말일 (payment_date 캘린더 제한용)
   const activeMonthRange = useMemo(() => {
     if (!isMonthTab) return null;
@@ -779,10 +800,11 @@ export default function EduSalesPage() {
       </div>
 
       {/* 권한 안내 — 어드민이 아니고 현재 월 탭이 아닐 때 표시 */}
-      {!canEdit && (
+      {showReadonlyNotice && (
         <div className={styles.readonly_notice}>
-          🔒 {activeMonth} 데이터는 보기 전용입니다. 현재 월({currentMonthLabel})만 수정 가능하며,
-          지난 월 또는 전체 탭은 관리자만 수정할 수 있습니다.
+          🔒 환불·정산 처리된 매출은 수정할 수 없습니다. 정상·보류 매출은 언제든
+          수정 가능하며, 당월 환불은 결제월이 현재 월({currentMonthLabel})일 때만
+          수정할 수 있습니다.
         </div>
       )}
 
@@ -1110,7 +1132,7 @@ export default function EduSalesPage() {
                             education_center_name: v || null,
                           })
                         }
-                        disabled={!canEdit}
+                        disabled={!isRowEditable(r)}
                       />
                     </div>
                   </td>
@@ -1134,7 +1156,7 @@ export default function EduSalesPage() {
                       }}
                       placeholder="개강반"
                       triggerClassName={styles.inline_date_trigger}
-                      disabled={!canEdit}
+                      disabled={!isRowEditable(r)}
                     />
                   </td>
                   {/* 학생명 — 읽기전용 */}
@@ -1150,7 +1172,7 @@ export default function EduSalesPage() {
                         updateRow(r, { student_username: v.trim() || null })
                       }
                       width={90}
-                      disabled={!canEdit}
+                      disabled={!isRowEditable(r)}
                     />
                   </td>
                   <td className={`${styles.td} ${styles.td_center}`}>{formatPhone(r.phone)}</td>
@@ -1161,7 +1183,7 @@ export default function EduSalesPage() {
                       onSave={(v) => updateRow(r, { unit_price: v })}
                       align="center"
                       width={70}
-                      disabled={!canEdit}
+                      disabled={!isRowEditable(r)}
                     />
                   </td>
                   {/* 매출 — 인라인 숫자 (환불완료 시 취소선) */}
@@ -1177,7 +1199,7 @@ export default function EduSalesPage() {
                       onSave={(v) => updateRow(r, { total_amount: v })}
                       align="center"
                       width={90}
-                      disabled={!canEdit}
+                      disabled={!isRowEditable(r)}
                     />
                   </td>
                   {/* 결제방법 — 커스텀 select */}
@@ -1197,7 +1219,7 @@ export default function EduSalesPage() {
                             payment_method: (v || null) as PaymentMethod | null,
                           })
                         }
-                        disabled={!canEdit}
+                        disabled={!isRowEditable(r)}
                       />
                     </div>
                   </td>
@@ -1228,7 +1250,7 @@ export default function EduSalesPage() {
                         triggerClassName={styles.inline_date_trigger}
                         minDate={activeMonthRange?.first}
                         maxDate={activeMonthRange?.last}
-                        disabled={!canEdit}
+                        disabled={!isRowEditable(r)}
                       />
                     </div>
                   </td>
@@ -1240,7 +1262,7 @@ export default function EduSalesPage() {
                         onSave={(v) => updateRow(r, { subject_count: v })}
                         align="center"
                         width={48}
-                        disabled={!canEdit}
+                        disabled={!isRowEditable(r)}
                       />
                     </div>
                   </td>
@@ -1253,8 +1275,8 @@ export default function EduSalesPage() {
                       type="button"
                       className={styles.notes_btn}
                       onClick={() => openNotes(r)}
-                      title={canEdit ? (r.notes ?? "클릭해 입력") : (r.notes ?? "수정 불가")}
-                      disabled={!canEdit && !r.notes}
+                      title={isRowEditable(r) ? (r.notes ?? "클릭해 입력") : (r.notes ?? "수정 불가")}
+                      disabled={!isRowEditable(r) && !r.notes}
                     >
                       {r.notes ? (
                         r.notes.length > 18 ? (
@@ -1275,7 +1297,7 @@ export default function EduSalesPage() {
                         updateRow(r, { process_number: v.trim() || null })
                       }
                       width={130}
-                      disabled={!canEdit}
+                      disabled={!isRowEditable(r)}
                     />
                   </td>
                   {canViewAll && (
@@ -1289,7 +1311,7 @@ export default function EduSalesPage() {
                           }
                           placeholder="발급일"
                           triggerClassName={styles.inline_date_trigger}
-                          disabled={!canEdit}
+                          disabled={!isRowEditable(r)}
                         />
                       </td>
                       {/* 발행 완료 — 체크박스 */}
@@ -1298,7 +1320,7 @@ export default function EduSalesPage() {
                           type="checkbox"
                           className={styles.inline_check}
                           checked={r.is_published}
-                          disabled={!canEdit}
+                          disabled={!isRowEditable(r)}
                           onChange={(e) =>
                             updateRow(r, { is_published: e.target.checked })
                           }
@@ -1323,7 +1345,7 @@ export default function EduSalesPage() {
                                 refund_status: v as RefundStatus,
                               })
                             }
-                            disabled={!canEdit}
+                            disabled={!isRowEditable(r)}
                           />
                           {r.refund_status === "환불" && (
                             <DateInput
@@ -1333,14 +1355,14 @@ export default function EduSalesPage() {
                               }
                               placeholder="환불일"
                               triggerClassName={styles.refund_date_trigger}
-                              disabled={!canEdit}
+                              disabled={!isRowEditable(r)}
                             />
                           )}
                         </div>
                       </td>
                       {/* 관리 — 삭제만 */}
                       <td className={`${styles.td} ${styles.td_center} ${styles.td_actions}`}>
-                        {r.sale_id && canEdit ? (
+                        {r.sale_id && isRowEditable(r) ? (
                           <button
                             className={styles.action_del_btn}
                             onClick={() =>

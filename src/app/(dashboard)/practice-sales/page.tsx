@@ -273,10 +273,13 @@ export default function PracticeSalesPage() {
       manager_name: string | null;
     }>,
   ) => {
-    if (!canEdit) {
-      alert(
-        `${activeMonth} 데이터는 수정할 수 없습니다. (현재 월(${currentMonthLabel})만 수정 가능)`,
-      );
+    if (!isRowEditable(row)) {
+      const s = row.refund_status;
+      const reason =
+        s === "환불" || s === "정산"
+          ? `${s} 처리된 매출은 수정할 수 없습니다.`
+          : `${s} 매출은 결제월이 현재 월일 때만 수정할 수 있습니다.`;
+      alert(reason);
       return;
     }
     setRows((prev) =>
@@ -510,7 +513,26 @@ export default function PracticeSalesPage() {
   const activeYear = now.getFullYear();
   const isMonthTab = /^\d+월$/.test(activeMonth);
   const currentMonthLabel = `${kstNow().getMonth() + 1}월`;
-  const canEdit = isAdmin || activeMonth === currentMonthLabel;
+  const showReadonlyNotice = !isAdmin && activeMonth !== currentMonthLabel;
+  // 행 단위 편집 가능 여부 — 환불 상태에 따라 분기
+  // · 정상, 보류: 항상 편집 가능
+  // · 당월 환불: 결제월(또는 cohort 월)이 현재 월일 때만
+  // · 환불, 정산: 편집 불가
+  // · 어드민: 항상 가능
+  const isRowEditable = (r: SalesRow): boolean => {
+    if (isAdmin) return true;
+    const s = r.refund_status;
+    if (s === "환불" || s === "정산") return false;
+    if (s === "당월 환불") {
+      const payMonth =
+        r.payment_date && r.payment_date.length >= 7
+          ? `${Number(r.payment_date.split("-")[1])}월`
+          : null;
+      const rowMonth = payMonth ?? cohortToMonthLabel(r.cohort);
+      return rowMonth === currentMonthLabel;
+    }
+    return true;
+  };
   const activeMonthRange = useMemo(() => {
     if (!isMonthTab) return null;
     const first = new Date(activeYear, activeMonthNum - 1, 1);
@@ -630,10 +652,11 @@ export default function PracticeSalesPage() {
         )}
       </div>
 
-      {!canEdit && (
+      {showReadonlyNotice && (
         <div className={styles.readonly_notice}>
-          🔒 {activeMonth} 데이터는 보기 전용입니다. 현재 월(
-          {currentMonthLabel})만 수정 가능합니다.
+          🔒 환불·정산 처리된 매출은 수정할 수 없습니다. 정상·보류 매출은
+          언제든 수정 가능하며, 당월 환불은 결제월이 현재 월(
+          {currentMonthLabel})일 때만 수정할 수 있습니다.
         </div>
       )}
 
@@ -794,7 +817,7 @@ export default function PracticeSalesPage() {
         >
           초기화
         </button>
-        {canEdit && (
+        {(isAdmin || activeMonth === currentMonthLabel) && (
           <button
             type="button"
             className={styles.add_btn}
@@ -972,7 +995,7 @@ export default function PracticeSalesPage() {
                         onChange={(v) =>
                           updateRow(r, { category: v as Category })
                         }
-                        disabled={!canEdit}
+                        disabled={!isRowEditable(r)}
                       />
                     </td>
                     {/* 학생명 */}
@@ -998,7 +1021,7 @@ export default function PracticeSalesPage() {
                         onSave={(v) => updateRow(r, { total_amount: v })}
                         align="center"
                         width={90}
-                        disabled={!canEdit}
+                        disabled={!isRowEditable(r)}
                       />
                     </td>
                     {/* 결제방법 */}
@@ -1022,7 +1045,7 @@ export default function PracticeSalesPage() {
                               payment_method: (v || null) as PaymentMethod | null,
                             })
                           }
-                          disabled={!canEdit}
+                          disabled={!isRowEditable(r)}
                         />
                       </div>
                     </td>
@@ -1056,7 +1079,7 @@ export default function PracticeSalesPage() {
                           triggerClassName={styles.inline_date_trigger}
                           minDate={activeMonthRange?.first}
                           maxDate={activeMonthRange?.last}
-                          disabled={!canEdit}
+                          disabled={!isRowEditable(r)}
                         />
                       </div>
                     </td>
@@ -1071,7 +1094,7 @@ export default function PracticeSalesPage() {
                           })
                         }
                         width={80}
-                        disabled={!canEdit}
+                        disabled={!isRowEditable(r)}
                       />
                     </td>
                     {/* (현)처리번호 */}
@@ -1082,7 +1105,7 @@ export default function PracticeSalesPage() {
                           updateRow(r, { process_number: v.trim() || null })
                         }
                         width={130}
-                        disabled={!canEdit}
+                        disabled={!isRowEditable(r)}
                       />
                     </td>
                     {canViewAll && (
@@ -1096,7 +1119,7 @@ export default function PracticeSalesPage() {
                             }
                             placeholder="발급일"
                             triggerClassName={styles.inline_date_trigger}
-                            disabled={!canEdit}
+                            disabled={!isRowEditable(r)}
                           />
                         </td>
                         {/* 발행 완료 */}
@@ -1105,7 +1128,7 @@ export default function PracticeSalesPage() {
                             type="checkbox"
                             className={styles.inline_check}
                             checked={r.is_published}
-                            disabled={!canEdit}
+                            disabled={!isRowEditable(r)}
                             onChange={(e) =>
                               updateRow(r, { is_published: e.target.checked })
                             }
@@ -1130,7 +1153,7 @@ export default function PracticeSalesPage() {
                                   refund_status: v as RefundStatus,
                                 })
                               }
-                              disabled={!canEdit}
+                              disabled={!isRowEditable(r)}
                             />
                             {r.refund_status === "환불" && (
                               <DateInput
@@ -1140,7 +1163,7 @@ export default function PracticeSalesPage() {
                                 }
                                 placeholder="환불일"
                                 triggerClassName={styles.refund_date_trigger}
-                                disabled={!canEdit}
+                                disabled={!isRowEditable(r)}
                               />
                             )}
                           </div>
@@ -1149,7 +1172,7 @@ export default function PracticeSalesPage() {
                         <td
                           className={`${styles.td} ${styles.td_center} ${styles.td_actions}`}
                         >
-                          {canEdit ? (
+                          {isRowEditable(r) ? (
                             <button
                               className={styles.action_del_btn}
                               onClick={() => handleDeleteRow(r)}
