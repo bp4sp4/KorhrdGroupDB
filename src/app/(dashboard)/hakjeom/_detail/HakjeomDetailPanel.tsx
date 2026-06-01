@@ -1459,20 +1459,20 @@ export function HakjeomDetailPanel({
                           )}
                           {(meta.type === "img" || meta.type === "person") &&
                             meta.hasChevron && (
-                            <svg
-                              className={styles.referrerChevron}
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="10"
-                              height="10"
-                              viewBox="0 0 10 10"
-                              fill="none"
-                            >
-                              <path
-                                d="M8.97371 2.79035C8.8565 2.67318 8.69756 2.60736 8.53183 2.60736C8.3661 2.60736 8.20716 2.67318 8.08996 2.79035L4.99621 5.8841L1.90246 2.79035C1.78458 2.6765 1.6267 2.61351 1.46283 2.61493C1.29896 2.61635 1.1422 2.68209 1.02632 2.79797C0.910439 2.91385 0.844709 3.0706 0.843285 3.23448C0.841861 3.39835 0.904858 3.55623 1.01871 3.6741L4.55433 7.20973C4.67154 7.3269 4.83048 7.39272 4.99621 7.39272C5.16193 7.39272 5.32088 7.3269 5.43808 7.20973L8.97371 3.6741C9.09088 3.5569 9.1567 3.39796 9.1567 3.23223C9.1567 3.0665 9.09088 2.90756 8.97371 2.79035Z"
-                                fill="#8D99A5"
-                              />
-                            </svg>
-                          )}
+                              <svg
+                                className={styles.referrerChevron}
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="10"
+                                height="10"
+                                viewBox="0 0 10 10"
+                                fill="none"
+                              >
+                                <path
+                                  d="M8.97371 2.79035C8.8565 2.67318 8.69756 2.60736 8.53183 2.60736C8.3661 2.60736 8.20716 2.67318 8.08996 2.79035L4.99621 5.8841L1.90246 2.79035C1.78458 2.6765 1.6267 2.61351 1.46283 2.61493C1.29896 2.61635 1.1422 2.68209 1.02632 2.79797C0.910439 2.91385 0.844709 3.0706 0.843285 3.23448C0.841861 3.39835 0.904858 3.55623 1.01871 3.6741L4.55433 7.20973C4.67154 7.3269 4.83048 7.39272 4.99621 7.39272C5.16193 7.39272 5.32088 7.3269 5.43808 7.20973L8.97371 3.6741C9.09088 3.5569 9.1567 3.39796 9.1567 3.23223C9.1567 3.0665 9.09088 2.90756 8.97371 2.79035Z"
+                                  fill="#8D99A5"
+                                />
+                              </svg>
+                            )}
                         </button>
                         {isActive &&
                           m === "맘카페" &&
@@ -1893,16 +1893,13 @@ export function HakjeomDetailPanel({
                               <div className={styles.danggeunPopupBox}>
                                 {PERSONAL_MARKETING_DEFAULT_OPTIONS.map(
                                   (opt) => {
-                                    const isOptActive =
-                                      editSourceMinor === opt;
+                                    const isOptActive = editSourceMinor === opt;
                                     return (
                                       <button
                                         key={opt}
                                         type="button"
                                         className={styles.danggeunRadioRow}
-                                        onClick={() =>
-                                          handleMinorSelect(opt)
-                                        }
+                                        onClick={() => handleMinorSelect(opt)}
                                       >
                                         <span
                                           className={`${styles.danggeunRadioCircle} ${isOptActive ? styles.danggeunRadioCircleActive : ""}`}
@@ -1916,9 +1913,7 @@ export function HakjeomDetailPanel({
                                           )}
                                         </span>
                                         <span
-                                          className={
-                                            styles.danggeunRadioLabel
-                                          }
+                                          className={styles.danggeunRadioLabel}
                                         >
                                           {opt}
                                         </span>
@@ -1927,8 +1922,7 @@ export function HakjeomDetailPanel({
                                   },
                                 )}
                                 {customPersonalMarketing.map((name) => {
-                                  const isOptActive =
-                                    editSourceMinor === name;
+                                  const isOptActive = editSourceMinor === name;
                                   return (
                                     <div
                                       key={name}
@@ -1939,9 +1933,7 @@ export function HakjeomDetailPanel({
                                       <button
                                         type="button"
                                         className={styles.danggeunRadioRow}
-                                        onClick={() =>
-                                          handleMinorSelect(name)
-                                        }
+                                        onClick={() => handleMinorSelect(name)}
                                       >
                                         <span
                                           className={`${styles.danggeunRadioCircle} ${isOptActive ? styles.danggeunRadioCircleActive : ""}`}
@@ -1955,9 +1947,7 @@ export function HakjeomDetailPanel({
                                           )}
                                         </span>
                                         <span
-                                          className={
-                                            styles.danggeunRadioLabel
-                                          }
+                                          className={styles.danggeunRadioLabel}
                                         >
                                           {name}
                                         </span>
@@ -2044,9 +2034,7 @@ export function HakjeomDetailPanel({
                                         fill="#0084FE"
                                       />
                                     </svg>
-                                    <span
-                                      className={styles.danggeunAddBtnText}
-                                    >
+                                    <span className={styles.danggeunAddBtnText}>
                                       직접 추가
                                     </span>
                                   </button>
@@ -2302,9 +2290,11 @@ export function HakjeomDetailPanel({
             {/*   개인마케팅 컨텍스트에선 minor 로만 판단하여, 지인소개에서 다른 sub-option */}
             {/*   으로 전환했을 때 referral 상태 카드가 잔류하지 않도록 한다.              */}
             {/*   그 외(레거시 데이터 등)는 status 값 기준으로 카드형 노출.                */}
-            {(editSourceMajor === PERSONAL_MARKETING_KEY
-              ? editSourceMinor === "지인소개"
-              : isReferralStatus(editStatus)) ? (
+            {(
+              editSourceMajor === PERSONAL_MARKETING_KEY
+                ? editSourceMinor === "지인소개"
+                : isReferralStatus(editStatus)
+            ) ? (
               <div className={styles.referralStatusRow}>
                 <span className={styles.referralStatusLabel}>상태</span>
                 <div className={styles.referralStatusGrid}>
@@ -2312,7 +2302,7 @@ export function HakjeomDetailPanel({
                     [
                       {
                         status: "지인대기" as ConsultationStatus,
-                        label: "시점미정",
+                        label: "지인대기",
                         icon: (
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -2340,7 +2330,7 @@ export function HakjeomDetailPanel({
                       },
                       {
                         status: "지인등록" as ConsultationStatus,
-                        label: "자진등록",
+                        label: "지인등록",
                         icon: (
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -2364,7 +2354,7 @@ export function HakjeomDetailPanel({
                       },
                       {
                         status: "지인취소" as ConsultationStatus,
-                        label: "미관심",
+                        label: "지인취소",
                         icon: (
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
