@@ -661,11 +661,13 @@
   padding: 8px 18px;
   border-radius: 8px;
   border: 1px solid #3182f6;
+  background: #fff;
   color: #3182f6;
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
   font-family: inherit;
+  outline: none;
 }
 .toolbarSendBtn:hover {
   background: #3182f6;
@@ -681,15 +683,20 @@
   padding: 8px 16px;
   border-radius: 8px;
   background: #fff;
-
+  /* 평소에도 1px 투명 border 로 자리를 잡아 hover/focus 시 레이아웃이 밀리지 않게 함 */
+  border: 1px solid transparent;
   font-size: 14px;
   font-weight: 600;
   color: #4e5968;
   cursor: pointer;
   font-family: inherit;
+  outline: none;
 }
 .composeActionBtn:hover {
-  border: 1px solid #e6e6ea;
+  border-color: #e6e6ea;
+}
+.composeActionBtn:focus-visible {
+  border-color: #b0b8c1;
 }
 .composeActionBtn:disabled {
   color: #b0b8c1;
@@ -728,11 +735,11 @@
   gap: 12px;
 }
 
-/* 참조 행 우측 — 숨은참조 토글 화살표 */
+/* 참조 라벨 옆 — 숨은참조 토글 화살표 */
 .refArrowBtn {
   flex-shrink: 0;
-  width: 28px;
-  height: 28px;
+  width: 22px;
+  height: 22px;
   border: 0;
   background: transparent;
   border-radius: 6px;
@@ -741,10 +748,23 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  padding: 0;
 }
 .refArrowBtn:hover {
   background: #f2f4f6;
   color: #4e5968;
+}
+
+/* 라벨 + 토글 화살표 묶음 (참조 행 전용) */
+.composeLabelWithToggle {
+  width: 60px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #4e5968;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
 }
 
 .composeLabel {
@@ -1287,6 +1307,10 @@
   }
   /* 작성 폼 라벨 폭 축소 */
   .composeLabel {
+    width: 48px;
+    font-size: 12px;
+  }
+  .composeLabelWithToggle {
     width: 48px;
     font-size: 12px;
   }

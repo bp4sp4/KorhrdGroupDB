@@ -1474,9 +1474,21 @@ function ComposePane({
             contacts={contacts}
           />
         </div>
-        {/* 참조 — 항상 표시, 우측 화살표로 숨은참조 토글 */}
+        {/* 참조 — 항상 표시, "참조" 라벨 옆 화살표로 숨은참조 토글 */}
         <div className={styles.composeRow}>
-          <span className={styles.composeLabel}>참조</span>
+          <span className={styles.composeLabelWithToggle}>
+            <span>참조</span>
+            <button
+              type="button"
+              className={styles.refArrowBtn}
+              onClick={() => setShowBcc((v) => !v)}
+              aria-expanded={showBcc}
+              aria-label="숨은참조"
+              title="숨은참조"
+            >
+              {showBcc ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+            </button>
+          </span>
           <RecipientInput
             value={cc}
             onChange={(v) => {
@@ -1485,18 +1497,6 @@ function ComposePane({
             }}
             placeholder="참조 (쉼표로 구분)"
             contacts={contacts}
-            rightAdornment={
-              <button
-                type="button"
-                className={styles.refArrowBtn}
-                onClick={() => setShowBcc((v) => !v)}
-                aria-expanded={showBcc}
-                aria-label="숨은참조"
-                title="숨은참조"
-              >
-                {showBcc ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-              </button>
-            }
           />
         </div>
         {showBcc && (
@@ -1689,6 +1689,9 @@ function RecipientInput({
   const wrapRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
+  // autoFocus 로 인한 최초 focus 이벤트는 드롭다운 자동 열기를 스킵
+  //  (예: 숨은참조 토글로 필드를 펼쳤을 때 드롭다운이 자동으로 열리는 것 방지)
+  const skipNextFocusOpenRef = useRef(autoFocus);
 
   // 외부 클릭 시 닫기
   useEffect(() => {
@@ -1745,7 +1748,9 @@ function RecipientInput({
       ? `${trimmedPrefix}, ${c.email}, `
       : `${c.email}, `;
     onChange(next);
-    // 포커스 유지 + 캐럿 마지막
+    // 선택 후 드롭다운 닫고, 이어서 input 으로 자동 포커스되더라도 다시 열리지 않게 보호
+    setOpen(false);
+    skipNextFocusOpenRef.current = true;
     requestAnimationFrame(() => {
       const el = inputRef.current;
       if (el) {
@@ -1791,7 +1796,14 @@ function RecipientInput({
           onChange(e.target.value);
           if (!open) setOpen(true);
         }}
-        onFocus={() => setOpen(true)}
+        onFocus={() => {
+          // autoFocus 로 인한 최초 focus 는 자동 열기 스킵 (이후 클릭/포커스는 정상 동작)
+          if (skipNextFocusOpenRef.current) {
+            skipNextFocusOpenRef.current = false;
+            return;
+          }
+          setOpen(true);
+        }}
         onKeyDown={handleKeyDown}
       />
       {rightAdornment}
