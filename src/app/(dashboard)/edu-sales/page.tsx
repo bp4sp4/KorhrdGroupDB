@@ -594,11 +594,14 @@ export default function EduSalesPage() {
     return Array.from(set).sort();
   }, [rows]);
 
-  // 월별 탭당 건수 — cohort에서 월 추출해 "X월" 단위로 집계
+  // 월별 탭당 건수 — 표시 로직과 동일 기준(결제일 우선, 비어있으면 cohort fallback)
+  // 이렇게 해야 뱃지 숫자와 실제 보이는 행 수가 일치함
   const monthTabCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     rows.forEach((r) => {
-      const label = cohortToMonthLabel(r.cohort);
+      const label =
+        paymentDateToMonthLabel(r.payment_date) ??
+        cohortToMonthLabel(r.cohort);
       if (label) counts[label] = (counts[label] ?? 0) + 1;
     });
     return counts;
