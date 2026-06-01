@@ -23,11 +23,43 @@ const DIVISION_TABLE: Record<Division, string | null> = {
   abroad: null, // applications 테이블엔 click_source가 없어 채널별 분석 불가
 }
 
+// 채널명 정규화
+// · 메타 광고(Facebook/Instagram)는 한 행으로 합쳐서 보이도록 'meta' 로 통합
+// · 학점은행제 상세DB의 "개인마케팅" 카드는 내부 DB값이 "지인소개" 라
+//   click_source 가 '지인소개_<소재>' 로 저장됨 → 채널 통계에선 UI 라벨에 맞춰 '개인마케팅' 으로 통합
+// · '주부' 채널은 광고 성과 분석 대상이 아니므로 '기타' 로 묶음
+// (광고비도 같은 표기로 통합되어 매칭됨)
+const META_ALIASES = new Set<string>([
+  'meta',
+  '메타',
+  'facebook',
+  '페이스북',
+  'instagram',
+  '인스타',
+  '인스타그램',
+  '인스타·페이스북',
+  '페이스북·인스타',
+  '인스타/페이스북',
+  '페이스북/인스타',
+  '인스타,페이스북',
+  '페이스북,인스타',
+])
+const PERSONAL_MARKETING_ALIASES = new Set<string>(['지인소개', '개인마케팅'])
+const ETC_ALIASES = new Set<string>(['주부'])
+function normalizeChannel(raw: string): string {
+  const k = raw.trim().toLowerCase()
+  if (META_ALIASES.has(k)) return 'meta'
+  if (PERSONAL_MARKETING_ALIASES.has(k)) return '개인마케팅'
+  if (ETC_ALIASES.has(k)) return '기타'
+  return raw
+}
+
 function extractChannel(clickSource: string | null): string {
   if (!clickSource) return '미입력'
   const normalized = clickSource.replace(/^바로폼_/i, '').replace(/^baroform_/i, '')
   const parts = normalized.split('_')
-  return parts[0] || '미입력'
+  const raw = parts[0] || '미입력'
+  return normalizeChannel(raw)
 }
 
 function getMonthRange(yearMonth: string): { start: string; end: string } {
@@ -84,6 +116,7 @@ export async function GET(request: NextRequest) {
       supabaseAdmin
         .from(tableName)
         .select('click_source, status')
+        .is('deleted_at', null)
         .gte('created_at', currStart)
         .lt('created_at', currEnd),
       supabaseAdmin
@@ -94,6 +127,7 @@ export async function GET(request: NextRequest) {
         ? supabaseAdmin
             .from(tableName)
             .select('click_source, status')
+            .is('deleted_at', null)
             .gte('created_at', prevStart)
             .lt('created_at', prevEnd)
         : Promise.resolve({ data: [] as ConsultationRow[], error: null }),
@@ -115,12 +149,13 @@ export async function GET(request: NextRequest) {
     const currMap = aggregateByChannel((currResult.data ?? []) as ConsultationRow[])
     const prevMap = aggregateByChannel((prevResult.data ?? []) as ConsultationRow[])
 
-    // division별 광고비만 필터
+    // division별 광고비만 필터 — 채널명도 통합 정규화(메타 계열 → 'meta')해서 합산
     const adCostMap = new Map<string, number>()
     for (const row of adCostResult.data ?? []) {
       const rowDivision = (row as { division?: string }).division ?? 'nms'
       if (row.year_month === yearMonth && rowDivision === division) {
-        adCostMap.set(row.channel, Number(row.ad_cost))
+        const key = normalizeChannel(row.channel)
+        adCostMap.set(key, (adCostMap.get(key) ?? 0) + Number(row.ad_cost))
       }
     }
 

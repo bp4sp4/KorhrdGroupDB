@@ -79,11 +79,31 @@ function publicUrl(path: string | null): string | null {
   return data?.publicUrl ?? null
 }
 
+// 채널명 정규화 (channel-stats 라우트와 동일 규칙)
+// · 메타 광고(Facebook/Instagram) 통합 → 'meta'
+// · '지인소개' 채널 → '개인마케팅' (학점은행제 상세DB의 UI 라벨에 맞춤)
+// · '주부' 채널 → '기타'
+const META_ALIASES = new Set<string>([
+  'meta', '메타', 'facebook', '페이스북', 'instagram', '인스타', '인스타그램',
+  '인스타·페이스북', '페이스북·인스타', '인스타/페이스북', '페이스북/인스타',
+  '인스타,페이스북', '페이스북,인스타',
+])
+const PERSONAL_MARKETING_ALIASES = new Set<string>(['지인소개', '개인마케팅'])
+const ETC_ALIASES = new Set<string>(['주부'])
+function normalizeChannel(raw: string): string {
+  const k = raw.trim().toLowerCase()
+  if (META_ALIASES.has(k)) return 'meta'
+  if (PERSONAL_MARKETING_ALIASES.has(k)) return '개인마케팅'
+  if (ETC_ALIASES.has(k)) return '기타'
+  return raw
+}
+
 function extractChannel(clickSource: string | null): string {
   if (!clickSource) return '미입력'
   const normalized = clickSource.replace(/^바로폼_/i, '').replace(/^baroform_/i, '')
   const parts = normalized.split('_')
-  return parts[0] || '미입력'
+  const raw = parts[0] || '미입력'
+  return normalizeChannel(raw)
 }
 
 function formatDate(d: Date): string {
@@ -166,11 +186,13 @@ export async function GET(request: NextRequest) {
       supabaseAdmin
         .from(tableName)
         .select('click_source, status, created_at')
+        .is('deleted_at', null)
         .gte('created_at', start.toISOString())
         .lte('created_at', end.toISOString()),
       supabaseAdmin
         .from(tableName)
         .select('click_source, status, created_at')
+        .is('deleted_at', null)
         .gte('created_at', prevStart.toISOString())
         .lte('created_at', prevEnd.toISOString()),
       supabaseAdmin
@@ -249,13 +271,13 @@ export async function GET(request: NextRequest) {
       if (r.status === '등록완료') slice.registrations += 1
       channelMap.set(ch, slice)
     }
-    // 채널 광고비 매핑 (범위 내 해당 division의 광고비 합)
+    // 채널 광고비 매핑 (범위 내 해당 division의 광고비 합) — 채널명도 통합 정규화
     for (const row of adCostRes.data ?? []) {
       const rowDivision = (row as { division?: string }).division ?? 'nms'
       if (rowDivision !== division) continue
       const ym = row.year_month as string
       if (!monthsInRange.has(ym)) continue
-      const slice = channelMap.get(row.channel)
+      const slice = channelMap.get(normalizeChannel(row.channel))
       if (slice) slice.adCost += Number(row.ad_cost)
     }
     const channels = Array.from(channelMap.values()).sort((a, b) => b.inquiries - a.inquiries)

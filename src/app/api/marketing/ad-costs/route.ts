@@ -13,6 +13,22 @@ function isValidYearMonth(value: string): boolean {
   return /^\d{4}-\d{2}$/.test(value)
 }
 
+// 채널명 정규화 (channel-stats 라우트와 동일 규칙)
+const META_ALIASES = new Set<string>([
+  'meta', '메타', 'facebook', '페이스북', 'instagram', '인스타', '인스타그램',
+  '인스타·페이스북', '페이스북·인스타', '인스타/페이스북', '페이스북/인스타',
+  '인스타,페이스북', '페이스북,인스타',
+])
+const PERSONAL_MARKETING_ALIASES = new Set<string>(['지인소개', '개인마케팅'])
+const ETC_ALIASES = new Set<string>(['주부'])
+function normalizeChannel(raw: string): string {
+  const k = raw.trim().toLowerCase()
+  if (META_ALIASES.has(k)) return 'meta'
+  if (PERSONAL_MARKETING_ALIASES.has(k)) return '개인마케팅'
+  if (ETC_ALIASES.has(k)) return '기타'
+  return raw.trim()
+}
+
 export async function PUT(request: NextRequest) {
   try {
     const { errorResponse } = await requireAuth()
@@ -36,7 +52,7 @@ export async function PUT(request: NextRequest) {
       .from('marketing_ad_costs')
       .upsert(
         {
-          channel: channel.trim(),
+          channel: normalizeChannel(channel),
           year_month,
           ad_cost,
           division,
