@@ -1,0 +1,141 @@
+.wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 24px 80px;
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.title {
+  margin: 0 0 6px;
+  font-size: 24px;
+  font-weight: 800;
+  color: #191f28;
+}
+.sub {
+  margin: 0;
+  font-size: 14px;
+  color: #8b95a1;
+}
+
+.btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 18px;
+  border-radius: 8px;
+  background: #3182f6;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+.btnPrimary:hover {
+  background: #1b64da;
+}
+
+.error {
+  padding: 12px 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #dc2626;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.tableWrap {
+  background: #fff;
+  border: 1px solid #eef0f3;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.table thead {
+  background: #f9fafb;
+}
+.table th,
+.table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #eef0f3;
+}
+.table th {
+  font-weight: 700;
+  color: #4e5968;
+  font-size: 12px;
+}
+.table tbody tr:hover {
+  background: #fafbfc;
+}
+.strong {
+  font-weight: 700;
+  color: #191f28;
+}
+.empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: #8b95a1;
+}
+
+.statusChip {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.statusDraft {
+  background: #f2f4f6;
+  color: #4e5968;
+}
+.statusPending {
+  background: #fff7ed;
+  color: #c2410c;
+}
+.statusSigned {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.actions {
+  display: flex;
+  gap: 6px;
+}
+.actionBtn {
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid #3182f6;
+  background: #fff;
+  color: #3182f6;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.actionBtn:hover {
+  background: #e8f3ff;
+}
+.actionDelBtn {
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid #fecaca;
+  background: #fff;
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.actionDelBtn:hover {
+  background: #fef2f2;
+}

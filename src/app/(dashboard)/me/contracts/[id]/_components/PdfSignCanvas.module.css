@@ -1,0 +1,117 @@
+.pagesArea {
+  padding-bottom: 110px; /* 하단 액션바에 가리지 않도록 */
+}
+
+.statusBox {
+  text-align: center;
+  padding: 60px 24px;
+  color: #8b95a1;
+  font-size: 14px;
+}
+.errorBox {
+  padding: 16px;
+  background: #fef2f2;
+  color: #dc2626;
+  border-radius: 8px;
+  margin: 12px 24px;
+  font-size: 13px;
+}
+
+/* ─── 하단 고정 액션 바 (도구 + 제출) ────────────────────────────────────── */
+.actionBar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 20px;
+  background: #fff;
+  border-top: 1px solid #e5e8eb;
+  box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.06);
+  /* iOS 홈인디케이터 영역 회피 */
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+
+.toolGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.toolBtn {
+  padding: 8px 14px;
+  border: 1px solid #e5e8eb;
+  background: #fff;
+  color: #4e5968;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.toolBtn:hover {
+  background: #f6f8fa;
+}
+.toolBtnActive {
+  border-color: #3182f6;
+  background: #e8f3ff;
+  color: #3182f6;
+}
+
+.divider {
+  width: 1px;
+  height: 22px;
+  background: #e5e8eb;
+}
+
+.colorBtn {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid #e5e8eb;
+  cursor: pointer;
+  padding: 0;
+}
+.colorBtnActive {
+  border: 2px solid #3182f6;
+  box-shadow: 0 0 0 2px rgba(49, 130, 246, 0.15);
+}
+
+.submitBtn {
+  padding: 11px 26px;
+  border: 0;
+  background: #3182f6;
+  color: #fff;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  flex-shrink: 0;
+}
+.submitBtn:hover {
+  background: #1b64da;
+}
+.submitBtn:disabled {
+  background: #b0b8c1;
+  cursor: not-allowed;
+}
+
+/* 좁은 화면(패드 세로 등)에서 줄바꿈 */
+@media (max-width: 720px) {
+  .actionBar {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 10px 12px;
+  }
+  .submitBtn {
+    width: 100%;
+  }
+}

@@ -1,0 +1,100 @@
+.wrap {
+  background: #f9fafb;
+  min-height: calc(100vh - 60px);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 24px;
+  background: #fff;
+  border-bottom: 1px solid #eef0f3;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+.crumbs {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.backBtn {
+  border: 0;
+  background: transparent;
+  font-size: 13px;
+  color: #4e5968;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+.backBtn:hover {
+  background: #f2f4f6;
+}
+.typeBadge {
+  display: inline-block;
+  padding: 3px 10px;
+  background: #f2f4f6;
+  color: #4e5968;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 10px;
+}
+.title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  color: #191f28;
+}
+
+.submitBtn {
+  padding: 10px 22px;
+  border-radius: 8px;
+  border: 0;
+  background: #3182f6;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+.submitBtn:hover {
+  background: #1b64da;
+}
+.submitBtn:disabled {
+  background: #b0b8c1;
+  cursor: not-allowed;
+}
+
+.loading {
+  padding: 80px 24px;
+  text-align: center;
+  color: #8b95a1;
+}
+.error {
+  padding: 12px 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #dc2626;
+  font-size: 13px;
+  margin: 12px 24px;
+}
+.signedBanner {
+  padding: 14px 18px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 8px;
+  color: #047857;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 12px 24px;
+}
+.signedNote {
+  text-align: center;
+  padding: 60px 24px;
+  color: #8b95a1;
+  font-size: 14px;
+}

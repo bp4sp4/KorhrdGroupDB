@@ -334,6 +334,12 @@ const ALL_SECTIONS: NavSection[] = [
         icon: <FileText size={16} />,
       },
       {
+        id: "me-contracts",
+        label: "내 근로계약서",
+        href: "/me/contracts",
+        icon: <FileText size={16} />,
+      },
+      {
         id: "me-leave",
         label: "휴가현황",
         href: "/me/leave",
@@ -429,6 +435,12 @@ const ALL_SECTIONS: NavSection[] = [
         id: "admin-leave-balances",
         label: "휴가 잔여 관리",
         href: "/admin/leave-balances",
+        icon: <FileText size={16} />,
+      },
+      {
+        id: "admin-contracts",
+        label: "근로계약서 관리",
+        href: "/admin/contracts",
         icon: <FileText size={16} />,
       },
     ],

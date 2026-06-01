@@ -1,0 +1,139 @@
+.wrap {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 32px 24px 80px;
+}
+.head {
+  margin-bottom: 24px;
+}
+.title {
+  margin: 0 0 8px;
+  font-size: 24px;
+  font-weight: 800;
+  color: #191f28;
+}
+.sub {
+  margin: 0;
+  font-size: 14px;
+  color: #8b95a1;
+  line-height: 1.5;
+}
+
+.error {
+  padding: 12px 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #dc2626;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+.empty {
+  text-align: center;
+  padding: 80px 20px;
+  color: #8b95a1;
+  font-size: 14px;
+  background: #fff;
+  border: 1px dashed #e5e8eb;
+  border-radius: 12px;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: #fff;
+  border: 1px solid #eef0f3;
+  border-radius: 12px;
+  padding: 18px 22px;
+}
+.itemLeft {
+  flex: 1;
+  min-width: 0;
+}
+.itemTop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.typeBadge {
+  display: inline-block;
+  padding: 3px 10px;
+  background: #f2f4f6;
+  color: #4e5968;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 10px;
+}
+.statusChip {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.statusDraft {
+  background: #f2f4f6;
+  color: #4e5968;
+}
+.statusPending {
+  background: #fff7ed;
+  color: #c2410c;
+}
+.statusSigned {
+  background: #ecfdf5;
+  color: #047857;
+}
+.itemName {
+  font-size: 16px;
+  font-weight: 700;
+  color: #191f28;
+  margin-bottom: 4px;
+}
+.itemMeta {
+  font-size: 12px;
+  color: #8b95a1;
+}
+
+.itemRight {
+  flex-shrink: 0;
+}
+.btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 18px;
+  border-radius: 8px;
+  background: #3182f6;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.btnPrimary:hover {
+  background: #1b64da;
+}
+.btnGhost {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: 1px solid #e5e8eb;
+  background: #fff;
+  color: #4e5968;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.btnGhost:hover {
+  background: #f6f8fa;
+}
