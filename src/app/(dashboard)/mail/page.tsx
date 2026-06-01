@@ -59,6 +59,13 @@ interface MailDetail extends MailListItem {
   }[];
 }
 
+// 작성 화면 주소록 항목 (사내 사용자)
+interface MailContact {
+  id: number;
+  name: string;
+  email: string;
+}
+
 // 작성 첨부 (Storage 직접 업로드)
 interface Attachment {
   id: string;
@@ -1085,6 +1092,21 @@ function ComposePane({
   // 임시저장/미리보기 상태
   const [savingDraft, setSavingDraft] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  // 주소록(사내 사용자) — 받는사람/참조/숨은참조 자동완성용
+  const [contacts, setContacts] = useState<MailContact[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/mail/contacts", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (cancelled) return;
+        if (Array.isArray(d?.contacts)) setContacts(d.contacts);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   // 나가기 확인 모달 (마지막 저장 이후 수정사항이 있을 때만)
   const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
   // 마지막 저장 이후 사용자가 수정했는지 추적 — 닫기 시 경고 표시 여부 결정
@@ -1442,50 +1464,52 @@ function ComposePane({
       <div className={styles.composeBody}>
         <div className={styles.composeRow}>
           <span className={styles.composeLabel}>받는 사람</span>
-          <input
-            className={styles.composeInput}
+          <RecipientInput
             value={to}
-            onChange={(e) => {
-              setTo(e.target.value);
+            onChange={(v) => {
+              setTo(v);
               markDirty();
             }}
-            placeholder="example@email.com, ..."
+            placeholder="이름·이메일 검색 또는 직접 입력"
+            contacts={contacts}
           />
         </div>
         {/* 참조 — 항상 표시, 우측 화살표로 숨은참조 토글 */}
         <div className={styles.composeRow}>
           <span className={styles.composeLabel}>참조</span>
-          <input
-            className={styles.composeInput}
+          <RecipientInput
             value={cc}
-            onChange={(e) => {
-              setCc(e.target.value);
+            onChange={(v) => {
+              setCc(v);
               markDirty();
             }}
             placeholder="참조 (쉼표로 구분)"
+            contacts={contacts}
+            rightAdornment={
+              <button
+                type="button"
+                className={styles.refArrowBtn}
+                onClick={() => setShowBcc((v) => !v)}
+                aria-expanded={showBcc}
+                aria-label="숨은참조"
+                title="숨은참조"
+              >
+                {showBcc ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              </button>
+            }
           />
-          <button
-            type="button"
-            className={styles.refArrowBtn}
-            onClick={() => setShowBcc((v) => !v)}
-            aria-expanded={showBcc}
-            aria-label="숨은참조"
-            title="숨은참조"
-          >
-            {showBcc ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-          </button>
         </div>
         {showBcc && (
           <div className={styles.composeRow}>
             <span className={styles.composeLabel}>숨은참조</span>
-            <input
-              className={styles.composeInput}
+            <RecipientInput
               value={bcc}
-              onChange={(e) => {
-                setBcc(e.target.value);
+              onChange={(v) => {
+                setBcc(v);
                 markDirty();
               }}
               placeholder="숨은참조 (쉼표로 구분)"
+              contacts={contacts}
               autoFocus
             />
           </div>
@@ -1636,6 +1660,165 @@ function ComposePane({
         </div>
       )}
     </section>
+  );
+}
+
+// ─── 받는사람/참조/숨은참조 자동완성 입력 ─────────────────────────────────
+// - focus 시 드롭다운(전체 주소록) 노출
+// - 타이핑 시 마지막 토큰(쉼표/세미콜론/공백 뒤 부분)으로 필터링
+// - 항목 클릭 시 현재 토큰을 해당 이메일로 치환하고 ", " 로 마감 → 이어서 입력 가능
+// - 외부 클릭 / ESC / Enter 로 닫기
+interface RecipientInputProps {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  contacts: MailContact[];
+  rightAdornment?: React.ReactNode;
+  autoFocus?: boolean;
+}
+function RecipientInput({
+  value,
+  onChange,
+  placeholder,
+  contacts,
+  rightAdornment,
+  autoFocus,
+}: RecipientInputProps) {
+  const [open, setOpen] = useState(false);
+  const [activeIdx, setActiveIdx] = useState(0);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
+
+  // 외부 클릭 시 닫기
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  // 현재 입력 중인 마지막 토큰 (쉼표/세미콜론/공백 뒤 부분)
+  const lastTokenStart = (() => {
+    let i = value.length - 1;
+    while (i >= 0 && !/[,;\s]/.test(value[i])) i--;
+    return i + 1;
+  })();
+  const lastToken = value.slice(lastTokenStart).trim();
+  const prefix = value.slice(0, lastTokenStart);
+
+  // 이미 입력된 이메일 토큰 — 드롭다운에서 제외
+  const enteredEmails = new Set(
+    value
+      .split(/[,;\s]+/)
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean),
+  );
+  // 마지막 토큰은 "입력 중"이므로 입력 완료 목록에서 제외
+  enteredEmails.delete(lastToken.toLowerCase());
+
+  const filtered = useMemo(() => {
+    const q = lastToken.toLowerCase();
+    const list = contacts.filter(
+      (c) => !enteredEmails.has(c.email.toLowerCase()),
+    );
+    if (!q) return list;
+    return list.filter(
+      (c) =>
+        c.email.toLowerCase().includes(q) || c.name.toLowerCase().includes(q),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastToken, contacts, value]);
+
+  useEffect(() => {
+    setActiveIdx(0);
+  }, [lastToken, open]);
+
+  const pick = (c: MailContact) => {
+    // 마지막 토큰을 해당 이메일로 치환, 이어서 입력할 수 있게 ", " 마감
+    const trimmedPrefix = prefix.replace(/[,;\s]+$/, "");
+    const next = trimmedPrefix
+      ? `${trimmedPrefix}, ${c.email}, `
+      : `${c.email}, `;
+    onChange(next);
+    // 포커스 유지 + 캐럿 마지막
+    requestAnimationFrame(() => {
+      const el = inputRef.current;
+      if (el) {
+        el.focus();
+        el.setSelectionRange(next.length, next.length);
+      }
+    });
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!open) {
+      if (e.key === "ArrowDown") {
+        setOpen(true);
+        e.preventDefault();
+      }
+      return;
+    }
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIdx((i) => Math.min(filtered.length - 1, i + 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIdx((i) => Math.max(0, i - 1));
+    } else if (e.key === "Enter") {
+      if (filtered[activeIdx]) {
+        e.preventDefault();
+        pick(filtered[activeIdx]);
+      }
+    } else if (e.key === "Escape") {
+      setOpen(false);
+    }
+  };
+
+  return (
+    <div ref={wrapRef} className={styles.recipientWrap}>
+      <input
+        ref={inputRef}
+        className={styles.composeInput}
+        value={value}
+        placeholder={placeholder}
+        autoFocus={autoFocus}
+        onChange={(e) => {
+          onChange(e.target.value);
+          if (!open) setOpen(true);
+        }}
+        onFocus={() => setOpen(true)}
+        onKeyDown={handleKeyDown}
+      />
+      {rightAdornment}
+      {open && filtered.length > 0 && (
+        <ul ref={listRef} className={styles.recipientDropdown} role="listbox">
+          {filtered.map((c, idx) => (
+            <li
+              key={c.id}
+              role="option"
+              aria-selected={idx === activeIdx}
+              className={`${styles.recipientItem} ${
+                idx === activeIdx ? styles.recipientItemActive : ""
+              }`}
+              onMouseEnter={() => setActiveIdx(idx)}
+              onMouseDown={(e) => {
+                // input blur 전에 클릭 처리 (mousedown 으로 잡아야 함)
+                e.preventDefault();
+                pick(c);
+              }}
+            >
+              <span className={styles.recipientItemName}>{c.name}</span>
+              <span className={styles.recipientItemEmail}>{c.email}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 
