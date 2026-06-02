@@ -5249,11 +5249,28 @@ function ym(d: Date): string {
 function ymd(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
+// 인스타·페이스북 = 메타 (동일 광고 플랫폼) → "메타"로 통합
+const META_CHANNEL_ALIASES = new Set([
+  "메타",
+  "meta",
+  "인스타",
+  "인스타그램",
+  "페이스북",
+  "페북",
+  "인스타·페이스북",
+  "인스타/페이스북",
+  "페이스북·인스타",
+  "인스타,페이스북",
+]);
+
 function getMajorSrc(source: string | null): string {
   if (!source) return "바로폼";
   const s = source.startsWith("바로폼_") ? source.slice(4) : source;
   const i = s.indexOf("_");
-  return i === -1 ? s : s.slice(0, i);
+  const major = i === -1 ? s : s.slice(0, i);
+  // 메타 계열 채널 통합
+  if (META_CHANNEL_ALIASES.has(major.trim())) return "메타";
+  return major;
 }
 
 // 공통 Tooltip
