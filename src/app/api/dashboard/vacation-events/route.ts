@@ -3,8 +3,8 @@ import { requireAuth } from '@/lib/auth/requireAuth'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 
 // GET /api/dashboard/vacation-events?year=YYYY&month=MM
-// 결재완료(또는 진행중) 휴가신청서를 해당 월에 겹치는 범위로 조회하여
-// 일자별 이벤트로 expand 해 반환.
+// 결재 완료(APPROVED)된 휴가신청서만 해당 월에 겹치는 범위로 조회하여
+// 일자별 이벤트로 expand 해 반환. (결재 진행중 건은 제외)
 //
 // 응답: Array<{ id, date(YYYY-MM-DD), title, type, status, applicantName, color }>
 
@@ -82,7 +82,8 @@ export async function GET(request: NextRequest) {
   const lastDay = new Date(year, month, 0).getDate()
   const monthEnd = `${year}-${pad(month)}-${pad(lastDay)}`
 
-  // 휴가신청서 + 활성 상태 (CANCELLED / REJECTED 제외)
+  // 휴가신청서 + 결재 완료(APPROVED) 건만 표시.
+  // (SUBMITTED / IN_PROGRESS 등 결재 진행중 건은 승인 전이므로 캘린더에 노출하지 않음)
   // document_type 의 정확한 표기가 환경마다 다를 수 있어 like 검색
   const { data, error } = await supabaseAdmin
     .from('approvals')
@@ -90,7 +91,7 @@ export async function GET(request: NextRequest) {
       `id, status, content, applicant:app_users!approvals_applicant_id_fkey(id, display_name)`,
     )
     .like('document_type', '%휴가신청%')
-    .in('status', ['APPROVED', 'IN_PROGRESS', 'SUBMITTED'])
+    .eq('status', 'APPROVED')
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
