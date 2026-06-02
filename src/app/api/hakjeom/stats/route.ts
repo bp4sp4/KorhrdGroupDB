@@ -20,12 +20,16 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const type = (searchParams.get('type') ?? 'hakjeom') as StatsType;
 
-    const SELECT_FIELDS = 'id, status, click_source, hope_course, counsel_check, manager, created_at, counsel_completed_at, registered_at, last_counsel_level';
+    // 공통 필드. 학점은행제는 reaction_point(반응포인트)까지 포함하지만,
+    // private_cert 테이블에는 reaction_point 컬럼이 없어 분리한다.
+    const BASE_FIELDS = 'id, status, click_source, hope_course, counsel_check, manager, created_at, counsel_completed_at, registered_at, last_counsel_level, education, reason';
+    const HAKJEOM_FIELDS = `${BASE_FIELDS}, reaction_point`;
+    const CERT_FIELDS = BASE_FIELDS;
 
     if (type === 'hakjeom') {
       const { data, error } = await supabaseAdmin
         .from('hakjeom_consultations')
-        .select(SELECT_FIELDS)
+        .select(HAKJEOM_FIELDS)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -39,7 +43,7 @@ export async function GET(request: NextRequest) {
     if (type === 'private_cert') {
       const { data, error } = await supabaseAdmin
         .from('private_cert_consultations')
-        .select(SELECT_FIELDS)
+        .select(CERT_FIELDS)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -54,11 +58,11 @@ export async function GET(request: NextRequest) {
     const [hakjeomResult, certResult] = await Promise.all([
       supabaseAdmin
         .from('hakjeom_consultations')
-        .select(SELECT_FIELDS)
+        .select(HAKJEOM_FIELDS)
         .order('created_at', { ascending: false }),
       supabaseAdmin
         .from('private_cert_consultations')
-        .select(SELECT_FIELDS)
+        .select(CERT_FIELDS)
         .order('created_at', { ascending: false }),
     ]);
 

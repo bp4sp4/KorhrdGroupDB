@@ -41,6 +41,8 @@ import EduStudentsTab from "./education-center/EduStudentsTab";
 import HakjeomCustomSelect from "../admin/customers/CustomSelect";
 import { DEMO_LIST as HAKJEOM_DEMO_LIST } from "@/lib/guide/hakjeomDemo";
 import PerformerLeaderboard from "@/components/stats/PerformerLeaderboard";
+import ComboExplorer from "./_components/ComboExplorer";
+import ManagerMatcher from "./_components/ManagerMatcher";
 import { Search, HelpCircle } from "lucide-react";
 import { useGuide } from "@/components/guide/GuideProvider";
 import type {
@@ -5141,6 +5143,9 @@ interface StatItem {
   counsel_completed_at: string | null;
   registered_at: string | null;
   last_counsel_level: string | null;
+  education?: string | null;
+  reason?: string | null;
+  reaction_point?: string | null;
 }
 
 type StatsSource = "hakjeom";
@@ -5152,6 +5157,8 @@ type StatsSubTab =
   | "status"
   | "long-prospect"
   | "source"
+  | "combo"
+  | "assign"
   | "time"
   | "mamcafe";
 
@@ -5208,6 +5215,8 @@ const STATS_SUB_TABS: { id: StatsSubTab; label: string }[] = [
   { id: "status", label: "상태 분석" },
   { id: "long-prospect", label: "장기가망" },
   { id: "source", label: "유입 경로" },
+  { id: "combo", label: "조합 분석" },
+  { id: "assign", label: "담당자 배정 추천" },
   { id: "time", label: "시간 패턴" },
   { id: "mamcafe", label: "맘카페" },
 ];
@@ -7308,6 +7317,30 @@ function StatsTab() {
                   </div>
                 </StatsPanel>
               </div>
+            </div>
+          )}
+
+          {/* ════ 조합 분석 ════ */}
+          {subTab === "combo" && (
+            <div>
+              <StatsPanel
+                title="유입경로 × 학력 × 취득사유 × 반응포인트 조합 분석"
+                sub="축을 골라 조합별 등록률을 비교하고 잘 등록되는 타겟을 찾습니다"
+              >
+                <ComboExplorer data={data} />
+              </StatsPanel>
+            </div>
+          )}
+
+          {/* ════ 담당자 배정 추천 ════ */}
+          {subTab === "assign" && (
+            <div>
+              <StatsPanel
+                title="리드 유형별 담당자 배정 추천"
+                sub="유형을 고르면 과거 등록률이 가장 높은 담당자를 추천합니다"
+              >
+                <ManagerMatcher data={data} />
+              </StatsPanel>
             </div>
           )}
 

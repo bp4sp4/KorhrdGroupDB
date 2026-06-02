@@ -1,0 +1,365 @@
+/* ─── 조합 탐색기 ─────────────────────────────────────────────────────────── */
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 20px 32px;
+  padding: 16px 18px;
+  background: #f8fafc;
+  border: 1px solid #eef2f6;
+  border-radius: 12px;
+  margin-bottom: 14px;
+}
+
+.controlBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.controlLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: #475569;
+}
+
+.controlHint {
+  font-weight: 500;
+  color: #94a3b8;
+}
+
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.axisChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 14px;
+  border: 1px solid #d8dee6;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+}
+
+.axisChip:hover:not(:disabled) {
+  border-color: #94a3b8;
+}
+
+.axisChipOn {
+  background: #191f28;
+  border-color: #191f28;
+  color: #fff;
+}
+
+.axisChip:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.axisChipNote {
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0.7;
+}
+
+.slider {
+  width: 200px;
+  height: 20px;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+}
+.slider::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: #cbd5e1;
+  border: 1px solid #94a3b8;
+}
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  margin-top: -7px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #2563eb;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+.slider::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: #cbd5e1;
+  border: 1px solid #94a3b8;
+}
+.slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #2563eb;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.checkRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+}
+
+.checkRow input {
+  accent-color: #2563eb;
+  cursor: pointer;
+}
+
+/* 기준 안내 */
+.baselineBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #64748b;
+  margin-bottom: 16px;
+}
+
+.baselineValue {
+  color: #2563eb;
+  font-size: 15px;
+}
+
+.baselineDivider {
+  color: #cbd5e1;
+}
+
+.warnText {
+  color: #d97706;
+  font-weight: 600;
+}
+
+/* 추천 카드 */
+.recoSection {
+  margin-bottom: 20px;
+}
+
+.recoTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #191f28;
+  margin-bottom: 10px;
+}
+
+.recoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.recoCard {
+  padding: 16px;
+  border: 1px solid #d1fae5;
+  background: linear-gradient(135deg, #f0fdf4, #ffffff);
+  border-radius: 14px;
+}
+
+.recoCombo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.recoTag {
+  padding: 3px 9px;
+  background: #dcfce7;
+  color: #15803d;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.recoRate {
+  font-size: 28px;
+  font-weight: 800;
+  color: #16a34a;
+  line-height: 1.1;
+}
+
+.recoMeta {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+.recoMsg {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed #bbf7d0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #15803d;
+}
+
+/* 테이블 */
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table thead tr {
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.thRank,
+.thLeft,
+.thCenter {
+  padding: 10px 12px;
+  font-weight: 700;
+  color: #475569;
+  white-space: nowrap;
+}
+
+.thRank {
+  text-align: center;
+  width: 44px;
+}
+
+.thLeft {
+  text-align: left;
+}
+
+.thCenter {
+  text-align: center;
+}
+
+.table tbody tr {
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.table tbody tr:hover {
+  background: #fafbfc;
+}
+
+.tdRank {
+  text-align: center;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.tdValue {
+  padding: 10px 12px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.tdCenter {
+  padding: 10px 12px;
+  text-align: center;
+  color: #475569;
+}
+
+.tdRate {
+  padding: 10px 12px;
+  min-width: 160px;
+}
+
+.rateWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rateBarTrack {
+  flex: 1;
+  height: 8px;
+  background: #eef2f6;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.rateBarFill {
+  height: 100%;
+  background: linear-gradient(90deg, #60a5fa, #2563eb);
+  border-radius: 999px;
+}
+
+.rateNum {
+  font-weight: 700;
+  color: #1d4ed8;
+  min-width: 46px;
+  text-align: right;
+}
+
+.tdConf {
+  padding: 10px 12px;
+  text-align: center;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+/* 평가 배지 */
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.badge_good {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.badge_ok {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.badge_bad {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.badge_neutral {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.footnote {
+  margin-top: 12px;
+  font-size: 12px;
+  color: #94a3b8;
+  text-align: right;
+}
+
+.empty {
+  padding: 48px 20px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 14px;
+}
