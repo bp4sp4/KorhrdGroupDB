@@ -179,15 +179,20 @@ export async function GET(request: NextRequest) {
   if (displayName) {
     const monthStart = `${yy}-${String(mm).padStart(2, '0')}-01`
     const monthEnd = `${yy}-${String(mm + 1).padStart(2, '0')}-01`
-    const [inqAll, regAll, monthSalesRes, base, prev] = await Promise.all([
+    // 문의/등록도 당월 기준 (매월 1일에 자동 초기화)
+    const [inqMonth, regMonth, monthSalesRes, base, prev] = await Promise.all([
       supabaseAdmin
         .from('hakjeom_consultations')
         .select('id', { count: 'exact', head: true })
-        .eq('manager', displayName),
+        .eq('manager', displayName)
+        .gte('created_at', `${monthStart}T00:00:00+09:00`)
+        .lt('created_at', `${monthEnd}T00:00:00+09:00`),
       supabaseAdmin
         .from('edu_students')
         .select('id', { count: 'exact', head: true })
-        .eq('manager_name', displayName),
+        .eq('manager_name', displayName)
+        .gte('registered_at', `${monthStart}T00:00:00+09:00`)
+        .lt('registered_at', `${monthEnd}T00:00:00+09:00`),
       supabaseAdmin
         .from('edu_sales')
         .select('total_amount')
@@ -197,8 +202,8 @@ export async function GET(request: NextRequest) {
       collectDay(baseDay, displayName),
       collectDay(prevDay, displayName),
     ])
-    const totalInquiries = inqAll.count ?? 0
-    const registrations = regAll.count ?? 0
+    const totalInquiries = inqMonth.count ?? 0
+    const registrations = regMonth.count ?? 0
     const registrationRate =
       totalInquiries > 0 ? (registrations / totalInquiries) * 100 : 0
     const salesThisMonth = (monthSalesRes.data ?? []).reduce(
@@ -322,17 +327,22 @@ export async function GET(request: NextRequest) {
   const toManwon = (won: number) => Math.round(won / 10000)
 
   // 4) 오늘 유입경로 (해당 일자 KST)
+  //    "오늘"의 기준은 문의 등록일이 아니라 **이 담당자가 오늘 배정받은** 시점.
+  //    hakjeom_consultations.manager_assigned_at 컬럼(트리거 자동 채움) 으로 판정.
   const company: Record<string, number> = {}
   const direct: Record<string, number> = {}
   if (displayName) {
     const { startIso, endIso } = todayKstRange(baseDay)
     void KST_OFFSET_MS // tree-shake guard
+
     const { data: rows } = await supabaseAdmin
       .from('hakjeom_consultations')
       .select('click_source')
       .eq('manager', displayName)
-      .gte('created_at', startIso)
-      .lte('created_at', endIso)
+      .gte('manager_assigned_at', startIso)
+      .lte('manager_assigned_at', endIso)
+      .is('deleted_at', null)
+
     for (const r of rows ?? []) {
       const { major, minor } = parseSource(r.click_source as string | null)
       if (major === PERSONAL_MARKETING_KEY) {

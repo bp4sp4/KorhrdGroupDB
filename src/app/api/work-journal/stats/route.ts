@@ -54,7 +54,7 @@ async function collectDay(date: Date, managerName: string) {
 }
 
 // GET /api/work-journal/stats — 로그인 사용자(담당자) 기준 stats
-// - 메인 수치: 누적(문의/등록/등록률) + 이번 달(매출)
+// - 메인 수치: 당월(문의/등록/등록률/매출) — 매월 1일에 자동 초기화
 // - delta: 오늘 vs 직전 영업일(주말 제외, 월=금) 비교
 export async function GET() {
   const { appUser, errorResponse } = await requireAuthFull()
@@ -97,16 +97,25 @@ export async function GET() {
   todayEnd.setDate(todayEnd.getDate() + 1)
   const todayEndISO = `${iso(todayEnd)}T00:00:00+09:00`
 
-  const [inqAll, regAll, salesMonth, baseStat, prevStat, todayContactsRes] =
+  // 당월 범위 ISO (KST)
+  const monthStartISO = `${iso(monthStart)}T00:00:00+09:00`
+  const monthEndISO = `${iso(monthEnd)}T00:00:00+09:00`
+
+  // 문의/등록도 당월 기준 (매월 1일에 자동 초기화)
+  const [inqMonth, regMonth, salesMonth, baseStat, prevStat, todayContactsRes] =
     await Promise.all([
       supabaseAdmin
         .from('hakjeom_consultations')
         .select('id', { count: 'exact', head: true })
-        .eq('manager', managerName),
+        .eq('manager', managerName)
+        .gte('created_at', monthStartISO)
+        .lt('created_at', monthEndISO),
       supabaseAdmin
         .from('edu_students')
         .select('id', { count: 'exact', head: true })
-        .eq('manager_name', managerName),
+        .eq('manager_name', managerName)
+        .gte('registered_at', monthStartISO)
+        .lt('registered_at', monthEndISO),
       supabaseAdmin
         .from('edu_sales')
         .select('total_amount')
@@ -124,8 +133,8 @@ export async function GET() {
         .lt('contact_scheduled_at', todayEndISO),
     ])
 
-  const totalInquiries = inqAll.count ?? 0
-  const registrations = regAll.count ?? 0
+  const totalInquiries = inqMonth.count ?? 0
+  const registrations = regMonth.count ?? 0
   const registrationRate =
     totalInquiries > 0 ? (registrations / totalInquiries) * 100 : 0
   const salesThisMonth = (salesMonth.data ?? []).reduce(

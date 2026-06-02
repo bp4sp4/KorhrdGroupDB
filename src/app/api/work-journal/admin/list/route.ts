@@ -82,20 +82,27 @@ async function collectDay(date: Date, managerName: string) {
   return { inquiries, registrations, rate, sales: salesSum }
 }
 
-// 누적 stats (전체 기간)
-async function collectCumulative(managerName: string) {
-  const [inqAll, regAll] = await Promise.all([
+// 당월 stats (매월 1일에 자동 초기화)
+async function collectMonth(managerName: string, year: number, month: number) {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const monthStart = `${year}-${pad(month)}-01`
+  const monthEnd = `${year}-${pad(month + 1)}-01`
+  const [inqMonth, regMonth] = await Promise.all([
     supabaseAdmin
       .from('hakjeom_consultations')
       .select('id', { count: 'exact', head: true })
-      .eq('manager', managerName),
+      .eq('manager', managerName)
+      .gte('created_at', `${monthStart}T00:00:00+09:00`)
+      .lt('created_at', `${monthEnd}T00:00:00+09:00`),
     supabaseAdmin
       .from('edu_students')
       .select('id', { count: 'exact', head: true })
-      .eq('manager_name', managerName),
+      .eq('manager_name', managerName)
+      .gte('registered_at', `${monthStart}T00:00:00+09:00`)
+      .lt('registered_at', `${monthEnd}T00:00:00+09:00`),
   ])
-  const totalInquiries = inqAll.count ?? 0
-  const registrations = regAll.count ?? 0
+  const totalInquiries = inqMonth.count ?? 0
+  const registrations = regMonth.count ?? 0
   const registrationRate =
     totalInquiries > 0 ? (registrations / totalInquiries) * 100 : 0
   return { totalInquiries, registrations, registrationRate }
@@ -231,8 +238,8 @@ export async function GET(request: NextRequest) {
           journal_updated_after_submit: editedAfterSubmit,
         }
       }
-      const [cum, monthSales] = await Promise.all([
-        collectCumulative(name),
+      const [monthStats, monthSales] = await Promise.all([
+        collectMonth(name, baseDay.getFullYear(), baseDay.getMonth() + 1),
         collectMonthSales(name, baseDay.getFullYear(), baseDay.getMonth() + 1),
       ])
       return {
@@ -240,9 +247,9 @@ export async function GET(request: NextRequest) {
         display_name: u.display_name ?? '',
         position_name: positionMap.get(u.position_id ?? '') ?? null,
         department_name: departmentMap.get(u.department_id ?? '') ?? null,
-        total_inquiries: cum.totalInquiries,
-        registrations: cum.registrations,
-        registration_rate: Math.round(cum.registrationRate * 10) / 10,
+        total_inquiries: monthStats.totalInquiries,
+        registrations: monthStats.registrations,
+        registration_rate: Math.round(monthStats.registrationRate * 10) / 10,
         sales: monthSales,
         journal_status: journalStatus,
         journal_updated_after_submit: editedAfterSubmit,

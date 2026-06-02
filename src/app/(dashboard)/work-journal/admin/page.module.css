@@ -95,15 +95,22 @@
 }
 
 .dateWrap {
-  width: 180px;
+  width: 232px;
 }
 
 .dateTrigger {
-  border: 1px solid #e5e8eb !important;
+  display: flex !important;
+  width: 232px;
+  padding: 12px 14px !important;
+  justify-content: space-between;
+  align-items: center;
   border-radius: 8px;
+  border: 1px solid #e6e7eb !important;
+  background: #fff;
   font-size: 13px;
   font-weight: 500;
   color: #4e5968;
+  box-sizing: border-box;
 }
 
 .errorBox {
