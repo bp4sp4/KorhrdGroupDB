@@ -28,7 +28,9 @@
   width: fit-content;
   transition: color 0.15s;
 }
-.back_btn:hover { color: #333d4b; }
+.back_btn:hover {
+  color: #333d4b;
+}
 
 /* ── 헤더 카드 ── */
 .header_card {
@@ -39,11 +41,20 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  border: 1px solid #e5e8eb;
 }
 
-.header_left { display: flex; flex-direction: column; gap: 8px; }
+.header_left {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
 
-.name_row { display: flex; align-items: center; gap: 10px; }
+.name_row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 
 .student_name {
   font-size: 22px;
@@ -60,10 +71,22 @@
   font-size: 12px;
   font-weight: 600;
 }
-.badge_enrolled  { background: #EFF6FF; color: #3182F6; }
-.badge_completed { background: #ECFDF5; color: #059669; }
-.badge_practice  { background: #FFF7ED; color: #EA580C; }
-.badge_refund    { background: #FEF2F2; color: #DC2626; }
+.badge_enrolled {
+  background: #eff6ff;
+  color: #3182f6;
+}
+.badge_completed {
+  background: #ecfdf5;
+  color: #059669;
+}
+.badge_practice {
+  background: #fff7ed;
+  color: #ea580c;
+}
+.badge_refund {
+  background: #fef2f2;
+  color: #dc2626;
+}
 
 .meta_row {
   display: flex;
@@ -74,7 +97,8 @@
   flex-wrap: wrap;
 }
 .meta_dot {
-  width: 3px; height: 3px;
+  width: 3px;
+  height: 3px;
   border-radius: 50%;
   background: #d1d5db;
   flex-shrink: 0;
@@ -87,19 +111,33 @@
   flex-shrink: 0;
 }
 .plan_btn {
-  background: #3182F6; color: #fff;
-  border: none; border-radius: 10px;
-  padding: 9px 18px; font-size: 13px; font-weight: 600;
-  cursor: pointer; transition: background 0.15s;
+  background: #3182f6;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 9px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
 }
-.plan_btn:hover { background: #1d6de0; }
+.plan_btn:hover {
+  background: #1d6de0;
+}
 .edit_btn {
-  background: #f2f4f6; color: #333d4b;
-  border: none; border-radius: 10px;
-  padding: 9px 18px; font-size: 13px; font-weight: 600;
-  cursor: pointer; transition: background 0.15s;
+  background: #f2f4f6;
+  color: #333d4b;
+  border: none;
+  border-radius: 10px;
+  padding: 9px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
 }
-.edit_btn:hover { background: #e5e8eb; }
+.edit_btn:hover {
+  background: #e5e8eb;
+}
 
 /* ── 정보 그리드 ── */
 .info_grid {
@@ -108,12 +146,15 @@
   gap: 16px;
 }
 @media (max-width: 640px) {
-  .info_grid { grid-template-columns: 1fr; }
+  .info_grid {
+    grid-template-columns: 1fr;
+  }
 }
 .info_card {
   background: #fff;
   border-radius: 16px;
   padding: 24px;
+  border: 1px solid #e5e8eb;
 }
 .card_title {
   font-size: 11px;
@@ -123,15 +164,29 @@
   text-transform: uppercase;
   margin-bottom: 16px;
 }
-.info_list { display: flex; flex-direction: column; gap: 12px; }
-.info_row  { display: flex; align-items: flex-start; gap: 12px; }
+.info_list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.info_row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
 .info_label {
-  font-size: 13px; color: #8b95a1;
-  width: 72px; flex-shrink: 0; padding-top: 1px;
+  font-size: 13px;
+  color: #8b95a1;
+  width: 72px;
+  flex-shrink: 0;
+  padding-top: 1px;
 }
 .info_value {
-  font-size: 14px; color: #191f28;
-  font-weight: 500; flex: 1; word-break: break-all;
+  font-size: 14px;
+  color: #191f28;
+  font-weight: 500;
+  flex: 1;
+  word-break: break-all;
 }
 
 /* ── 탭 섹션 ── */
@@ -143,7 +198,7 @@
 
 .tab_header {
   display: flex;
-  border-bottom: 1px solid #F2F4F6;
+  border-bottom: 1px solid #f2f4f6;
   padding: 0 4px;
 }
 .tab_btn {
@@ -161,27 +216,30 @@
   margin-bottom: -1px;
   transition: color 0.15s;
 }
-.tab_btn:hover { color: #191f28; }
+.tab_btn:hover {
+  color: #191f28;
+}
 .tab_btn_active {
-  color: #3182F6;
+  color: #3182f6;
   font-weight: 700;
-  border-bottom-color: #3182F6;
+  border-bottom-color: #3182f6;
 }
 .tab_count {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 18px; height: 18px;
+  min-width: 18px;
+  height: 18px;
   padding: 0 5px;
   border-radius: 9px;
-  background: #EEF5FF;
-  color: #3182F6;
+  background: #eef5ff;
+  color: #3182f6;
   font-size: 11px;
   font-weight: 700;
 }
 
 .tab_body {
-  padding: 20px;
+  padding: 20px 0px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -197,12 +255,14 @@
 
 /* ── 메모 ── */
 .memo_input_wrap {
-  border: 1.5px solid #E5E8EB;
+  border: 1.5px solid #e5e8eb;
   border-radius: 12px;
   overflow: hidden;
   transition: border-color 0.15s;
 }
-.memo_input_wrap:focus-within { border-color: #3182F6; }
+.memo_input_wrap:focus-within {
+  border-color: #3182f6;
+}
 
 .memo_textarea {
   width: 100%;
@@ -216,19 +276,21 @@
   line-height: 1.6;
   box-sizing: border-box;
 }
-.memo_textarea::placeholder { color: #8b95a1; }
+.memo_textarea::placeholder {
+  color: #8b95a1;
+}
 
 .memo_input_footer {
   display: flex;
   justify-content: flex-end;
   padding: 8px 12px;
-  border-top: 1px solid #F2F4F6;
-  background: #FAFBFC;
+  border-top: 1px solid #f2f4f6;
+  background: #fafbfc;
 }
 .memo_submit_btn {
   height: 32px;
   padding: 0 16px;
-  background: #3182F6;
+  background: #3182f6;
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -237,13 +299,22 @@
   cursor: pointer;
   transition: background 0.15s;
 }
-.memo_submit_btn:hover:not(:disabled) { background: #1d6de0; }
-.memo_submit_btn:disabled { opacity: 0.4; cursor: default; }
+.memo_submit_btn:hover:not(:disabled) {
+  background: #1d6de0;
+}
+.memo_submit_btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
 
-.memo_list { display: flex; flex-direction: column; gap: 8px; }
+.memo_list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
 
 .memo_card {
-  border: 1px solid #F2F4F6;
+  border: 1px solid #f2f4f6;
   border-radius: 12px;
   padding: 14px 16px;
   display: flex;
@@ -251,7 +322,9 @@
   gap: 10px;
   transition: border-color 0.15s;
 }
-.memo_card:hover { border-color: #D9E2EC; }
+.memo_card:hover {
+  border-color: #d9e2ec;
+}
 
 .memo_content {
   font-size: 14px;
@@ -264,14 +337,21 @@
   align-items: center;
   justify-content: space-between;
 }
-.memo_meta { font-size: 12px; color: #8b95a1; }
+.memo_meta {
+  font-size: 12px;
+  color: #8b95a1;
+}
 
-.memo_edit_actions { display: flex; align-items: center; gap: 6px; }
+.memo_edit_actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
 
 .memo_edit_textarea {
   width: 100%;
   padding: 10px 12px;
-  border: 1.5px solid #3182F6;
+  border: 1.5px solid #3182f6;
   border-radius: 8px;
   font-size: 14px;
   color: #191f28;
@@ -285,20 +365,23 @@
 .edit_icon_btn {
   height: 26px;
   padding: 0 10px;
-  border: 1px solid #E5E8EB;
+  border: 1px solid #e5e8eb;
   border-radius: 6px;
   background: #fff;
   font-size: 12px;
-  color: #4E5968;
+  color: #4e5968;
   cursor: pointer;
   transition: all 0.15s;
 }
-.edit_icon_btn:hover { border-color: #3182F6; color: #3182F6; }
+.edit_icon_btn:hover {
+  border-color: #3182f6;
+  color: #3182f6;
+}
 
 .cancel_btn {
   height: 26px;
   padding: 0 10px;
-  border: 1px solid #E5E8EB;
+  border: 1px solid #e5e8eb;
   border-radius: 6px;
   background: #fff;
   font-size: 12px;
@@ -306,13 +389,16 @@
   cursor: pointer;
   transition: all 0.15s;
 }
-.cancel_btn:hover { border-color: #8B95A1; color: #191f28; }
+.cancel_btn:hover {
+  border-color: #8b95a1;
+  color: #191f28;
+}
 
 /* ── 공통 삭제 버튼 ── */
 .delete_btn {
   height: 26px;
   padding: 0 10px;
-  border: 1px solid #E5E8EB;
+  border: 1px solid #e5e8eb;
   border-radius: 6px;
   background: #fff;
   font-size: 12px;
@@ -320,5 +406,7 @@
   cursor: pointer;
   transition: all 0.15s;
 }
-.delete_btn:hover { border-color: #EF4444; color: #EF4444; }
-
+.delete_btn:hover {
+  border-color: #ef4444;
+  color: #ef4444;
+}
