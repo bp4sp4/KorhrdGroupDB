@@ -125,6 +125,7 @@ function TypeIcon({ type }: { type: string }) {
     APPROVAL_REJECTED: <XCircle size={20} />,
     APPROVAL_SUBMITTED: <FileText size={20} />,
     task_board: <LayoutGrid size={20} />,
+    BOARD_NOTICE: <Megaphone size={20} />,
   };
   return (
     <div className={styles.typeIcon}>
@@ -161,6 +162,22 @@ function setSeenTaskIds(ids: number[]) {
     // 최근 200건만 보존
     const capped = ids.slice(-200);
     localStorage.setItem("seenTaskNotifIds", JSON.stringify(capped));
+  } catch {
+    /* ignore */
+  }
+}
+
+// 게시판 공지(BOARD_NOTICE)용 seen IDs (broadcast 알림이라 is_read 대신 localStorage 로 1회 팝업 관리)
+function getSeenNoticeIds(): number[] {
+  try {
+    return JSON.parse(localStorage.getItem("seenNoticeNotifIds") ?? "[]");
+  } catch {
+    return [];
+  }
+}
+function setSeenNoticeIds(ids: number[]) {
+  try {
+    localStorage.setItem("seenNoticeNotifIds", JSON.stringify(ids.slice(-200)));
   } catch {
     /* ignore */
   }
@@ -252,6 +269,9 @@ export default function NotificationBell() {
   // 결재 도착 알림 팝업
   const [approvalPopup, setApprovalPopup] = useState<Notification | null>(null);
   const lastApprovalIdRef = useRef<number | null>(null);
+  // 게시판 공지(BOARD_NOTICE) 팝업
+  const [noticePopup, setNoticePopup] = useState<Notification | null>(null);
+  const lastNoticeIdRef = useRef<number | null>(null);
   // 본인 작성 알림 억제용 자기 ID (ref + state — state는 useEffect 트리거용)
   const myIdRef = useRef<number | null>(null);
   const [myId, setMyId] = useState<number | null>(null);
@@ -391,6 +411,26 @@ export default function NotificationBell() {
     }
   }, [notifications, approvalPopup]);
 
+  // 로그인/마운트 시 미확인 게시판 공지(BOARD_NOTICE) 가 있으면 팝업으로 1회 노출
+  // (broadcast 라 is_read 대신 localStorage seen + 본인 작성 제외 + 최근 24시간 이내만)
+  useEffect(() => {
+    if (myId === null) return;
+    if (noticePopup) return;
+    const seen = getSeenNoticeIds();
+    const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
+    const candidate = notifications.find(
+      (n) =>
+        n.type === "BOARD_NOTICE" &&
+        !seen.includes(n.id) &&
+        (n.actor_id == null || Number(n.actor_id) !== myId) &&
+        new Date(n.created_at).getTime() >= dayAgo,
+    );
+    if (candidate && lastNoticeIdRef.current !== candidate.id) {
+      lastNoticeIdRef.current = candidate.id;
+      setNoticePopup(candidate);
+    }
+  }, [notifications, myId, noticePopup]);
+
   useEffect(() => {
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 15000);
@@ -432,6 +472,18 @@ export default function NotificationBell() {
             if (!alreadySeen) {
               lastApprovalIdRef.current = n.id;
               setApprovalPopup(n);
+            }
+          }
+          // 게시판 공지(BOARD_NOTICE) — 본인 작성 아니고 미확인이면 즉시 팝업
+          if (n?.type === "BOARD_NOTICE" && n.id !== lastNoticeIdRef.current) {
+            const isMine =
+              myIdRef.current !== null &&
+              n.actor_id != null &&
+              Number(n.actor_id) === myIdRef.current;
+            const alreadySeen = getSeenNoticeIds().includes(n.id);
+            if (!isMine && !alreadySeen) {
+              lastNoticeIdRef.current = n.id;
+              setNoticePopup(n);
             }
           }
         },
@@ -919,6 +971,52 @@ export default function NotificationBell() {
     </div>
   ) : null;
 
+  // 게시판 공지 도착 팝업
+  const dismissNoticePopup = (openLink: boolean) => {
+    if (noticePopup) {
+      const seen = getSeenNoticeIds();
+      setSeenNoticeIds(Array.from(new Set([...seen, noticePopup.id])));
+    }
+    const link = noticePopup?.link ?? null;
+    setNoticePopup(null);
+    if (openLink && link) window.location.href = link;
+  };
+
+  const noticePopupEl = noticePopup ? (
+    <div
+      className={styles.newPopupOverlay}
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) dismissNoticePopup(false);
+      }}
+    >
+      <div className={styles.newPopup} role="dialog" aria-modal="true">
+        <div className={styles.typeIcon} style={{ marginBottom: 8 }}>
+          <Megaphone size={28} />
+        </div>
+        <div className={styles.newPopupTitle}>
+          {noticePopup.title || "새 공지사항"}
+        </div>
+        <div className={styles.newPopupDesc} style={{ whiteSpace: "pre-wrap" }}>
+          {noticePopup.message}
+        </div>
+        <div className={styles.newPopupActions}>
+          <button
+            className={styles.newPopupBtnGhost}
+            onClick={() => dismissNoticePopup(false)}
+          >
+            확인
+          </button>
+          <button
+            className={styles.newPopupBtnPrimary}
+            onClick={() => dismissNoticePopup(true)}
+          >
+            보러가기
+          </button>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
   // 새 공지 팝업
   const hasEdited = pendingNewIds.some((id) => editedIds.includes(id));
   const allEdited =
@@ -1016,6 +1114,9 @@ export default function NotificationBell() {
       {typeof document !== "undefined" &&
         approvalPopupEl &&
         createPortal(approvalPopupEl, document.body)}
+      {typeof document !== "undefined" &&
+        noticePopupEl &&
+        createPortal(noticePopupEl, document.body)}
     </div>
   );
 }

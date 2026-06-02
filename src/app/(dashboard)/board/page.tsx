@@ -185,7 +185,7 @@ export default function BoardPage() {
               onClick={() => router.push(`/board/${n.id}`)}
             >
               <td className={styles.tdMuted}>
-                {(page - 1) * pageSize + i + 1}
+                {total - ((page - 1) * pageSize + i)}
               </td>
               <td className={styles.td}>
                 <span className={styles.catTag}>{n.category}</span>
@@ -213,7 +213,7 @@ export default function BoardPage() {
               onClick={() => router.push(`/board/${n.id}`)}
             >
               <td className={styles.tdMuted}>
-                {(page - 1) * pageSize + pinnedRows.length + i + 1}
+                {total - ((page - 1) * pageSize + pinnedRows.length + i)}
               </td>
               <td className={styles.td}>
                 <span className={styles.catTag}>{n.category}</span>

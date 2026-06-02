@@ -155,5 +155,28 @@ export async function POST(req: NextRequest) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  // 공지(category="공지") 작성 시 전체 사용자에게 알림 broadcast (user_id=null).
+  // 실패해도 게시글 작성 자체는 성공 처리 (fire-and-forget).
+  if (category === "공지") {
+    const authorName = appUser.display_name ?? "관리자";
+    const preview = title.length > 40 ? `${title.slice(0, 40)}…` : title;
+    supabaseAdmin
+      .from("notifications")
+      .insert({
+        user_id: null,
+        type: "BOARD_NOTICE",
+        title: "새 공지사항",
+        message: `${authorName}님이 '${preview}' 공지를 등록했습니다.`,
+        link: `/board/${data.id}`,
+        actor_id: appUser.id,
+        is_read: false,
+      })
+      .then(
+        () => {},
+        () => {},
+      );
+  }
+
   return NextResponse.json({ ok: true, id: data.id });
 }
