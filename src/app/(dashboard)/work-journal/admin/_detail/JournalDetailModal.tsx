@@ -137,29 +137,27 @@ export function JournalDetailModal({
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    setError(null);
-    fetch(
-      `/api/work-journal/admin/detail?user_id=${userId}&date=${encodeURIComponent(date)}`,
-      { cache: "no-store" },
-    )
-      .then(async (r) => {
-        if (!r.ok) {
-          const d = await r.json().catch(() => ({}));
+    void (async () => {
+      try {
+        const res = await fetch(
+          `/api/work-journal/admin/detail?user_id=${userId}&date=${encodeURIComponent(date)}`,
+          { cache: "no-store" },
+        );
+        if (!res.ok) {
+          const d = await res.json().catch(() => ({}));
           throw new Error(d.error ?? "디테일을 불러오지 못했습니다.");
         }
-        return r.json();
-      })
-      .then((d) => {
+        const d = await res.json();
         if (cancelled) return;
         setData(d);
-      })
-      .catch((e: Error) => {
-        if (!cancelled) setError(e.message);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+        setError(null);
+        setLoading(false);
+      } catch (e) {
+        if (cancelled) return;
+        setError((e as Error).message);
+        setLoading(false);
+      }
+    })();
     return () => {
       cancelled = true;
     };
@@ -242,19 +240,16 @@ export function JournalDetailModal({
                   </div>
                 </div>
 
-                {/* 학사팀(academic)은 오전/오후 업무를 사용하지 않음 → 숨김 */}
-                {data.user.team_journal_form !== "academic" && (
-                  <>
-                    <JournalSection
-                      title="오전 업무 (10:00~13:00)"
-                      rows={morning}
-                    />
-                    <JournalSection
-                      title="오후 업무 (14:00~19:00)"
-                      rows={afternoon}
-                    />
-                  </>
-                )}
+                {/* 모든 팀(학사팀 포함) 오전/오후 업무 노출
+                    학사팀도 작성 페이지에서 오전/오후 입력하도록 변경됨 */}
+                <JournalSection
+                  title="오전 업무 (10:00~13:00)"
+                  rows={morning}
+                />
+                <JournalSection
+                  title="오후 업무 (14:00~19:00)"
+                  rows={afternoon}
+                />
               </div>
 
               {/* 내일 예정 업무 — 좌측 컬럼 하단 고정 */}
