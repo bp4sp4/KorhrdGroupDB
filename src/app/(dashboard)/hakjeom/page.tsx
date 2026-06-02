@@ -5263,13 +5263,19 @@ const META_CHANNEL_ALIASES = new Set([
   "인스타,페이스북",
 ]);
 
+// 기타로 묶을 채널 (주부 등)
+const ETC_CHANNEL_ALIASES = new Set(["주부"]);
+
 function getMajorSrc(source: string | null): string {
   if (!source) return "바로폼";
   const s = source.startsWith("바로폼_") ? source.slice(4) : source;
   const i = s.indexOf("_");
   const major = i === -1 ? s : s.slice(0, i);
+  const trimmed = major.trim();
   // 메타 계열 채널 통합
-  if (META_CHANNEL_ALIASES.has(major.trim())) return "메타";
+  if (META_CHANNEL_ALIASES.has(trimmed)) return "메타";
+  // 주부 등 → 기타
+  if (ETC_CHANNEL_ALIASES.has(trimmed)) return "기타";
   return major;
 }
 
