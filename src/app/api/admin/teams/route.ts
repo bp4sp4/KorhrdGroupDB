@@ -3,7 +3,7 @@ import { requireAdmin } from '@/lib/auth/requireAuth'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 
 // 허용된 journal_form 값 화이트리스트 — DB 에 임의 문자열이 들어오지 않도록 검증
-const ALLOWED_JOURNAL_FORMS = new Set(['default', 'academic'])
+const ALLOWED_JOURNAL_FORMS = new Set(['default', 'academic', 'practicum'])
 
 export async function GET() {
   const { errorResponse } = await requireAdmin()

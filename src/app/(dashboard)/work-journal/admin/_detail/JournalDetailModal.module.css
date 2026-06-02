@@ -1021,3 +1021,77 @@
   line-height: normal;
   font-variant-numeric: tabular-nums;
 }
+
+/* ─── 실습팀 — 일일 연계 수치 카드 ──────────────────────────────────────────── */
+.practicumDailyCard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 0;
+}
+.practicumDailyRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+}
+.practicumDailyRowTotal {
+  background: #f8fafc;
+  border-color: #d8dee6;
+}
+.practicumDailyLabel {
+  font-size: 14px;
+  font-weight: 700;
+  color: #333d4b;
+}
+.practicumDailyVal {
+  font-size: 16px;
+  font-weight: 700;
+  color: #191f28;
+  font-variant-numeric: tabular-nums;
+}
+.practicumDailyTotal {
+  font-size: 20px;
+  font-weight: 800;
+  color: #2563eb;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── 실습팀 — 이번주 연계 합계 테이블 ──────────────────────────────────────── */
+.practicumWeekTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.practicumWeekTable th {
+  padding: 8px 6px;
+  text-align: center;
+  font-weight: 700;
+  color: #8b95a1;
+  border-bottom: 1px solid #eef2f6;
+}
+.practicumWeekTable td {
+  padding: 9px 6px;
+  text-align: center;
+  color: #333d4b;
+  border-bottom: 1px solid #f1f3f5;
+}
+.practicumWeekRowLabel {
+  text-align: left !important;
+  font-weight: 600;
+  color: #8b95a1;
+}
+.practicumWeekSum {
+  font-weight: 800;
+  color: #191f28;
+  background: #f8fafc;
+}
+.practicumWeekTotalRow td {
+  font-weight: 800;
+  color: #2563eb;
+}

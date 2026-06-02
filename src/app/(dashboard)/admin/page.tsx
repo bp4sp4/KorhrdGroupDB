@@ -131,6 +131,7 @@ interface TeamForm {
 const JOURNAL_FORM_OPTIONS: { value: string; label: string }[] = [
   { value: 'default', label: '기본 양식 (오전/오후 + 내일 예정)' },
   { value: 'academic', label: '학사팀 양식 (+ 이번주 목표, 이슈/요청사항)' },
+  { value: 'practicum', label: '실습팀 양식 (연계 수치 + 주간 합계)' },
 ]
 
 const emptyTeamForm: TeamForm = {

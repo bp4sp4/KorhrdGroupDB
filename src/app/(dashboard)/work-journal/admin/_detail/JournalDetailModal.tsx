@@ -20,7 +20,7 @@ interface DetailResponse {
     display_name: string;
     position_name: string | null;
     department_name: string | null;
-    team_journal_form?: "default" | "academic";
+    team_journal_form?: "default" | "academic" | "practicum";
   };
   journal: {
     morning: unknown;
@@ -28,9 +28,20 @@ interface DetailResponse {
     tomorrow: unknown;
     tasks: unknown;
     issues?: unknown;
+    practicum?: unknown;
     status: string;
     submitted_at: string | null;
     updated_at: string;
+  } | null;
+  practicumWeek?: {
+    days: {
+      date: string;
+      dow: string;
+      institution: number;
+      eduCenter: number;
+      total: number;
+    }[];
+    totals: { institution: number; eduCenter: number; total: number };
   } | null;
   stats: {
     totalInquiries: number;
@@ -240,8 +251,7 @@ export function JournalDetailModal({
                   </div>
                 </div>
 
-                {/* 모든 팀(학사팀 포함) 오전/오후 업무 노출
-                    학사팀도 작성 페이지에서 오전/오후 입력하도록 변경됨 */}
+                {/* 모든 팀(학사팀·실습팀 포함) 오전/오후 업무 노출 */}
                 <JournalSection
                   title="오전 업무 (10:00~13:00)"
                   rows={morning}
@@ -258,7 +268,12 @@ export function JournalDetailModal({
 
             {/* 우측 컬럼 — 학사팀이면 이번주 목표 + 이슈/조치사항, 그 외 기본(목표/통계/유입경로) */}
             <div className={styles.rightCol}>
-              {data.user.team_journal_form === "academic" ? (
+              {data.user.team_journal_form === "practicum" ? (
+                <>
+                  <PracticumDailyCard journal={data.journal?.practicum} />
+                  <PracticumWeekCard week={data.practicumWeek ?? null} />
+                </>
+              ) : data.user.team_journal_form === "academic" ? (
                 <>
                   <WeeklyGoalCard
                     goals={data.weeklyGoal ?? []}
@@ -739,6 +754,101 @@ function IssuesCard({ issues }: { issues: unknown }) {
           ))}
         </ul>
       )}
+    </div>
+  );
+}
+
+// 실습팀 — 일일 연계 수치 카드 (읽기 전용)
+function PracticumDailyCard({ journal }: { journal: unknown }) {
+  const o = (journal && typeof journal === "object" ? journal : {}) as Record<
+    string,
+    unknown
+  >;
+  const num = (v: unknown) => {
+    const n = Math.floor(Number(v));
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  };
+  const institution = num(o.institution);
+  const eduCenter = num(o.eduCenter);
+  const total = institution + eduCenter;
+  return (
+    <div className={styles.academicCard}>
+      <div className={styles.academicCardHeader}>
+        <span className={styles.academicCardHeaderLeft}>
+          <span className={styles.academicCardTitle}>오늘 연계</span>
+        </span>
+        <span className={styles.academicCardCount}>{total}건</span>
+      </div>
+      <div className={styles.practicumDailyCard}>
+        <div className={styles.practicumDailyRow}>
+          <span className={styles.practicumDailyLabel}>실습기관 연계</span>
+          <span className={styles.practicumDailyVal}>{institution}건</span>
+        </div>
+        <div className={styles.practicumDailyRow}>
+          <span className={styles.practicumDailyLabel}>실습교육원 연계</span>
+          <span className={styles.practicumDailyVal}>{eduCenter}건</span>
+        </div>
+        <div
+          className={`${styles.practicumDailyRow} ${styles.practicumDailyRowTotal}`}
+        >
+          <span className={styles.practicumDailyLabel}>일일 연계횟수</span>
+          <span className={styles.practicumDailyTotal}>{total}건</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// 실습팀 — 이번주(월~금) 연계 합계 카드 (읽기 전용)
+function PracticumWeekCard({
+  week,
+}: {
+  week: DetailResponse["practicumWeek"];
+}) {
+  const days = week?.days ?? [];
+  const totals = week?.totals ?? { institution: 0, eduCenter: 0, total: 0 };
+  return (
+    <div className={styles.academicCard}>
+      <div className={styles.academicCardHeader}>
+        <span className={styles.academicCardHeaderLeft}>
+          <span className={styles.academicCardTitle}>이번주 연계 합계</span>
+        </span>
+        <span className={styles.academicCardCount}>총 {totals.total}건</span>
+      </div>
+      <table className={styles.practicumWeekTable}>
+        <thead>
+          <tr>
+            <th></th>
+            {days.map((d) => (
+              <th key={d.date}>{d.dow}</th>
+            ))}
+            <th>합계</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td className={styles.practicumWeekRowLabel}>기관</td>
+            {days.map((d) => (
+              <td key={d.date}>{d.institution}</td>
+            ))}
+            <td className={styles.practicumWeekSum}>{totals.institution}</td>
+          </tr>
+          <tr>
+            <td className={styles.practicumWeekRowLabel}>교육원</td>
+            {days.map((d) => (
+              <td key={d.date}>{d.eduCenter}</td>
+            ))}
+            <td className={styles.practicumWeekSum}>{totals.eduCenter}</td>
+          </tr>
+          <tr className={styles.practicumWeekTotalRow}>
+            <td className={styles.practicumWeekRowLabel}>합계</td>
+            {days.map((d) => (
+              <td key={d.date}>{d.total}</td>
+            ))}
+            <td className={styles.practicumWeekSum}>{totals.total}</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   );
 }

@@ -228,17 +228,44 @@ export default function EduStudentsTab({ isActive }: Props) {
   const [filterManager, setFilterManager] = useState('');
   const [filterCourse, setFilterCourse] = useState('');
 
-  const [startDate, setStartDate] = useState(() => {
+  // 선택한 등록기간을 sessionStorage 에 보존 → 상세 진입 후 뒤로 와도 유지
+  const DATE_RANGE_KEY = 'eduStudents.dateRange';
+  const defaultStart = () => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
-  });
-  const [endDate, setEndDate] = useState(() => {
+  };
+  const defaultEnd = () => {
     const now = new Date();
     const last = new Date(now.getFullYear(), now.getMonth() + 1, 0);
     return `${last.getFullYear()}-${String(last.getMonth() + 1).padStart(2, '0')}-${String(last.getDate()).padStart(2, '0')}`;
-  });
+  };
+  const savedRange = (): { start: string; end: string } | null => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const raw = window.sessionStorage.getItem(DATE_RANGE_KEY);
+      if (!raw) return null;
+      const o = JSON.parse(raw) as { start?: unknown; end?: unknown };
+      return {
+        start: typeof o.start === 'string' ? o.start : '',
+        end: typeof o.end === 'string' ? o.end : '',
+      };
+    } catch {
+      return null;
+    }
+  };
+  const [startDate, setStartDate] = useState(() => savedRange()?.start ?? defaultStart());
+  const [endDate, setEndDate] = useState(() => savedRange()?.end ?? defaultEnd());
   const [dateRangeOpen, setDateRangeOpen] = useState(false);
   const dateRangeRef = useRef<HTMLDivElement>(null);
+
+  // 등록기간 변경 시 sessionStorage 동기화
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.sessionStorage.setItem(
+      DATE_RANGE_KEY,
+      JSON.stringify({ start: startDate, end: endDate }),
+    );
+  }, [startDate, endDate]);
 
   useEffect(() => {
     if (!dateRangeOpen) return;
@@ -252,7 +279,9 @@ export default function EduStudentsTab({ isActive }: Props) {
   }, [dateRangeOpen]);
 
   function ymd(d: Date) {
-    return d.toISOString().slice(0, 10);
+    // 로컬(KST) 기준으로 YYYY-MM-DD 생성.
+    // toISOString() 은 UTC 변환이라 KST 자정이 전날로 밀리는 버그가 있어 사용하지 않는다.
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   }
 
   const dateRangeValue: DateRange | undefined = (startDate || endDate)

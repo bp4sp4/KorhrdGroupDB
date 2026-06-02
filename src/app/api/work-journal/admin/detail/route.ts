@@ -127,7 +127,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: '사용자를 찾을 수 없습니다.' }, { status: 404 })
   }
 
-  let teamJournalForm: 'default' | 'academic' = 'default'
+  let teamJournalForm: 'default' | 'academic' | 'practicum' = 'default'
   if (targetUser.team_id) {
     const { data: team } = await supabaseAdmin
       .from('teams')
@@ -135,6 +135,7 @@ export async function GET(request: NextRequest) {
       .eq('id', targetUser.team_id)
       .maybeSingle()
     if (team?.journal_form === 'academic') teamJournalForm = 'academic'
+    else if (team?.journal_form === 'practicum') teamJournalForm = 'practicum'
   }
 
   const [positionRes, departmentRes] = await Promise.all([
@@ -163,7 +164,7 @@ export async function GET(request: NextRequest) {
   // 1) 일지 본문
   const { data: journal } = await supabaseAdmin
     .from('work_journals')
-    .select('morning, afternoon, tomorrow, tasks, issues, status, submitted_at, updated_at')
+    .select('morning, afternoon, tomorrow, tasks, issues, practicum, status, submitted_at, updated_at')
     .eq('user_id', userId)
     .eq('date', dateStr)
     .maybeSingle()
@@ -401,6 +402,64 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  // 실습팀이면 그 주(월~금) 연계 수치 합계도 함께 반환
+  let practicumWeek:
+    | {
+        days: { date: string; dow: string; institution: number; eduCenter: number; total: number }[]
+        totals: { institution: number; eduCenter: number; total: number }
+      }
+    | null = null
+  if (teamJournalForm === 'practicum') {
+    const DOW_KO = ['일', '월', '화', '수', '목', '금', '토']
+    const num = (v: unknown) => {
+      const n = Math.floor(Number(v))
+      return Number.isFinite(n) && n > 0 ? n : 0
+    }
+    const d = new Date(`${dateStr}T00:00:00`)
+    const dow = d.getDay()
+    const offset = dow === 0 ? -6 : 1 - dow
+    const monday = new Date(d)
+    monday.setDate(d.getDate() + offset)
+    const fmt = (x: Date) =>
+      `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`
+    const weekDates: string[] = []
+    for (let i = 0; i < 5; i++) {
+      const x = new Date(monday)
+      x.setDate(monday.getDate() + i)
+      weekDates.push(fmt(x))
+    }
+    const { data: weekRows } = await supabaseAdmin
+      .from('work_journals')
+      .select('date, practicum')
+      .eq('user_id', userId)
+      .gte('date', weekDates[0])
+      .lte('date', weekDates[4])
+    const byDate: Record<string, { institution: number; eduCenter: number }> = {}
+    for (const row of weekRows ?? []) {
+      const p = row.practicum as Record<string, unknown> | null
+      byDate[row.date] = { institution: num(p?.institution), eduCenter: num(p?.eduCenter) }
+    }
+    const days = weekDates.map((dt) => {
+      const p = byDate[dt] ?? { institution: 0, eduCenter: 0 }
+      return {
+        date: dt,
+        dow: DOW_KO[new Date(`${dt}T00:00:00`).getDay()],
+        institution: p.institution,
+        eduCenter: p.eduCenter,
+        total: p.institution + p.eduCenter,
+      }
+    })
+    const totals = days.reduce(
+      (acc, x) => ({
+        institution: acc.institution + x.institution,
+        eduCenter: acc.eduCenter + x.eduCenter,
+        total: acc.total + x.total,
+      }),
+      { institution: 0, eduCenter: 0, total: 0 },
+    )
+    practicumWeek = { days, totals }
+  }
+
   return NextResponse.json({
     user: {
       id: targetUser.id,
@@ -409,6 +468,7 @@ export async function GET(request: NextRequest) {
       department_name: departmentRes.data?.name ?? null,
       team_journal_form: teamJournalForm,
     },
+    practicumWeek,
     journal: journal ?? null,
     stats,
     monthlyGoal,

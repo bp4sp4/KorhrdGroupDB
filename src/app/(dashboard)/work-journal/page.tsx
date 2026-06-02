@@ -187,7 +187,20 @@ export default function WorkJournalPage() {
     JOURNAL_FORM_TYPES.DEFAULT,
   );
   const isAcademic = journalForm === JOURNAL_FORM_TYPES.ACADEMIC;
+  const isPracticum = journalForm === JOURNAL_FORM_TYPES.PRACTICUM;
   const { startById } = useGuide();
+
+  // 실습팀 — 일일 연계 수치 + 주간(월~금) 합계
+  const [practicum, setPracticum] = useState<{
+    institution: number;
+    eduCenter: number;
+  }>({ institution: 0, eduCenter: 0 });
+  const [practicumWeek, setPracticumWeek] = useState<{
+    days: { date: string; dow: string; total: number }[];
+    totals: { institution: number; eduCenter: number; total: number };
+  } | null>(null);
+  const [practicumRefresh, setPracticumRefresh] = useState(0);
+  const practicumDailyTotal = practicum.institution + practicum.eduCenter;
   // 본인 user_id — 주 단위 weekly_goal key 구성에 사용
   const [userId, setUserId] = useState<number | null>(null);
   const [weeklyGoal, setWeeklyGoal] = useState<WeeklyGoal[]>([]);
@@ -409,6 +422,14 @@ export default function WorkJournalPage() {
           setTomorrow(Array.isArray(j.tomorrow) ? j.tomorrow : []);
           // weeklyGoal 은 별도 app_settings 로 fetch (주 단위 key) — 여기선 처리하지 않음
           setIssues(Array.isArray(j.issues) ? (j.issues as JournalRow[]) : []);
+          // 실습팀 — 연계 수치 로드
+          {
+            const p = (j.practicum ?? {}) as Record<string, unknown>;
+            setPracticum({
+              institution: Math.max(0, Math.floor(Number(p.institution) || 0)),
+              eduCenter: Math.max(0, Math.floor(Number(p.eduCenter) || 0)),
+            });
+          }
           setStatus(j.status ?? "draft");
         } else {
           // 새 일지 — 이월 데이터로 시작
@@ -418,6 +439,7 @@ export default function WorkJournalPage() {
           setTomorrow([]);
           // weeklyGoal 은 별도 fetch
           setIssues([]);
+          setPracticum({ institution: 0, eduCenter: 0 });
           setStatus(null);
         }
       } finally {
@@ -429,6 +451,22 @@ export default function WorkJournalPage() {
       cancelled = true;
     };
   }, [date]);
+
+  // 실습팀 — 그 주(월~금) 연계 수치 합계 fetch (저장 시 practicumRefresh 증가로 재조회)
+  useEffect(() => {
+    if (!isPracticum) return;
+    let cancelled = false;
+    fetch(`/api/work-journal/practicum?date=${date}`, { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (cancelled || !d) return;
+        setPracticumWeek(d);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [isPracticum, date, practicumRefresh]);
 
   // ── 핸들러 ──────────────────────────────────────────────
   const toggleTask = (id: string) =>
@@ -522,6 +560,8 @@ export default function WorkJournalPage() {
           tomorrow: cleanedTomorrow,
           // 학사팀이면 issues 함께 저장. weekly_goal 은 주 단위 별도 저장(app_settings)
           ...(isAcademic ? { issues: cleanedIssues } : {}),
+          // 실습팀이면 연계 수치 함께 저장
+          ...(isPracticum ? { practicum } : {}),
           status: nextStatus,
         }),
       });
@@ -531,6 +571,8 @@ export default function WorkJournalPage() {
         return;
       }
       setStatus(data?.journal?.status ?? nextStatus);
+      // 실습팀 — 주간 합계 재조회
+      if (isPracticum) setPracticumRefresh((n) => n + 1);
       alert(nextStatus === "submitted" ? "제출 완료" : "임시저장 완료");
     } finally {
       setSaving(false);
@@ -972,8 +1014,34 @@ export default function WorkJournalPage() {
             </div>
           )}
 
-          {/* 4 stat 합쳐진 하나의 카드 (mock 데이터) — 학사팀은 stats 숨김 */}
-          {!isAcademic && (
+          {/* 실습팀 — 이번주(월~금) 연계 합계 바 (stats 자리) */}
+          {isPracticum && (
+            <div className={styles.practicumWeekBar}>
+              <div className={styles.practicumWeekHead}>
+                <span className={styles.practicumWeekTitle}>이번주 연계</span>
+                <span className={styles.practicumWeekTotal}>
+                  총 {practicumWeek?.totals.total ?? 0}건
+                </span>
+              </div>
+              <div className={styles.practicumWeekDays}>
+                {(practicumWeek?.days ?? []).map((d) => {
+                  const isToday = d.date === date;
+                  return (
+                    <div
+                      key={d.date}
+                      className={`${styles.practicumDay} ${isToday ? styles.practicumDayToday : ""}`}
+                    >
+                      <span className={styles.practicumDayDow}>{d.dow}</span>
+                      <span className={styles.practicumDayVal}>{d.total}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* 4 stat 합쳐진 하나의 카드 (mock 데이터) — 학사팀/실습팀은 stats 숨김 */}
+          {!isAcademic && !isPracticum && (
           <div className={styles.statGroup}>
             <div className={styles.statCard}>
               <div className={styles.statIcon}>
@@ -1199,7 +1267,8 @@ export default function WorkJournalPage() {
         <div
           className={`${styles.bodyRow} ${isLocked ? styles.bodyRowLocked : ""}`}
         >
-          {/* 좌: 오늘의 업무 */}
+          {/* 좌: 오늘의 업무 (실습팀이면 내일 예정 업무와 위/아래 반반) */}
+          <div className={styles.colStack}>
           <section className={styles.col} data-guide="wj-today-tasks">
             <h3 className={styles.colTitle}>오늘의 업무</h3>
             <div className={styles.taskList}>
@@ -1280,6 +1349,31 @@ export default function WorkJournalPage() {
               })}
             </div>
           </section>
+
+          {/* 실습팀 — 내일 예정 업무 (오늘의 업무 아래 반반) */}
+          {isPracticum && (
+            <section className={styles.col} data-guide="wj-tomorrow">
+              <h3 className={styles.colTitle}>내일 예정 업무</h3>
+              <div className={styles.tomorrowList}>
+                {tomorrow.map((t, idx) => (
+                  <div key={t.id} className={styles.tomorrowItem}>
+                    <span className={styles.tomorrowNum}>{idx + 1}.</span>
+                    <AutoSizeTextarea
+                      value={t.text}
+                      placeholder="내일 할 일을 입력하세요"
+                      className={styles.tomorrowInput}
+                      onChange={(v) => updateTomorrow(t.id, v)}
+                    />
+                    <DeleteButton
+                      onClick={() => removeTomorrow(t.id)}
+                      disabled={t.text.trim() === ""}
+                    />
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+          </div>
 
           {/* 중: 업무 일지 */}
           <section
@@ -1535,8 +1629,83 @@ export default function WorkJournalPage() {
             </div>
           </section>
 
-          {/* 우: 내일 예정 업무 (박스 + 푸터 wrapper) */}
+          {/* 우: (실습팀) 실습 연계 입력 + 내일 예정 업무 + 푸터 wrapper */}
           <div className={styles.colRight}>
+            {isPracticum && (
+              <section className={styles.col}>
+                <h3 className={styles.colTitle}>실습 연계 입력</h3>
+                <div className={styles.practicumForm}>
+                  <div className={styles.practicumField}>
+                    <label className={styles.practicumLabel}>
+                      실습기관 연계
+                    </label>
+                    <div className={styles.practicumInputWrap}>
+                      <input
+                        type="number"
+                        min={0}
+                        inputMode="numeric"
+                        className={styles.practicumInput}
+                        value={practicum.institution}
+                        disabled={isLocked}
+                        onChange={(e) =>
+                          setPracticum((p) => ({
+                            ...p,
+                            institution: Math.max(
+                              0,
+                              Math.floor(Number(e.target.value) || 0),
+                            ),
+                          }))
+                        }
+                      />
+                      <span className={styles.practicumUnit}>건</span>
+                    </div>
+                  </div>
+
+                  <div className={styles.practicumField}>
+                    <label className={styles.practicumLabel}>
+                      실습교육원 연계
+                    </label>
+                    <div className={styles.practicumInputWrap}>
+                      <input
+                        type="number"
+                        min={0}
+                        inputMode="numeric"
+                        className={styles.practicumInput}
+                        value={practicum.eduCenter}
+                        disabled={isLocked}
+                        onChange={(e) =>
+                          setPracticum((p) => ({
+                            ...p,
+                            eduCenter: Math.max(
+                              0,
+                              Math.floor(Number(e.target.value) || 0),
+                            ),
+                          }))
+                        }
+                      />
+                      <span className={styles.practicumUnit}>건</span>
+                    </div>
+                  </div>
+
+                  <div
+                    className={`${styles.practicumField} ${styles.practicumFieldTotal}`}
+                  >
+                    <label className={styles.practicumLabel}>
+                      일일 연계횟수
+                    </label>
+                    <div className={styles.practicumInputWrap}>
+                      <span className={styles.practicumTotalValue}>
+                        {practicumDailyTotal}
+                      </span>
+                      <span className={styles.practicumUnit}>건</span>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {/* 내일 예정 업무 — 비실습팀만 (실습팀은 좌측으로 이동) */}
+            {!isPracticum && (
             <section className={styles.col} data-guide="wj-tomorrow">
               <h3 className={styles.colTitle}>내일 예정 업무</h3>
               <div className={styles.tomorrowList}>
@@ -1557,6 +1726,7 @@ export default function WorkJournalPage() {
                 ))}
               </div>
             </section>
+            )}
 
             {/* 박스 바깥 푸터 — 상태별 분기
                  1) submitted + 잠금 + 저장후         → [수정하기] [다시 제출]

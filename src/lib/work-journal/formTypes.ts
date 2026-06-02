@@ -8,6 +8,7 @@
 export const JOURNAL_FORM_TYPES = {
   DEFAULT: "default",
   ACADEMIC: "academic",
+  PRACTICUM: "practicum",
 } as const;
 
 export type JournalFormType =
@@ -16,5 +17,7 @@ export type JournalFormType =
 // 미인식 양식이 DB 에 들어와도 안전하게 처리.
 export function normalizeJournalForm(value: unknown): JournalFormType {
   if (value === JOURNAL_FORM_TYPES.ACADEMIC) return JOURNAL_FORM_TYPES.ACADEMIC;
+  if (value === JOURNAL_FORM_TYPES.PRACTICUM)
+    return JOURNAL_FORM_TYPES.PRACTICUM;
   return JOURNAL_FORM_TYPES.DEFAULT;
 }

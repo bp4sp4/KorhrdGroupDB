@@ -1597,3 +1597,147 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ─── 실습팀 — 이번주 연계 합계 바 (stats 자리) ─────────────────────────────── */
+.practicumWeekBar {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  gap: 12px;
+  flex: 1 1 0;
+  align-self: stretch;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  min-width: 0;
+}
+.practicumWeekHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.practicumWeekTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #191f28;
+}
+.practicumWeekTotal {
+  font-size: 15px;
+  font-weight: 800;
+  color: #2563eb;
+}
+.practicumWeekDays {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+.practicumDay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 0;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #eef2f6;
+}
+.practicumDayToday {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+}
+.practicumDayDow {
+  font-size: 12px;
+  font-weight: 600;
+  color: #8b95a1;
+}
+.practicumDayVal {
+  font-size: 18px;
+  font-weight: 800;
+  color: #191f28;
+}
+
+/* ─── 좌측 스택 — 오늘의 업무 / 내일 예정 업무 세로 반반 ───────────────────── */
+.colStack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-self: stretch;
+  min-height: 0;
+}
+.colStack > .col {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* ─── 실습팀 — 일일 연계 입력 폼 ──────────────────────────────────────────── */
+.practicumForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-self: stretch;
+  width: 100%;
+}
+.practicumField {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+}
+.practicumFieldTotal {
+  background: #f8fafc;
+  border-color: #d8dee6;
+}
+.practicumLabel {
+  font-size: 14px;
+  font-weight: 700;
+  color: #333d4b;
+  white-space: nowrap;
+}
+.practicumInputWrap {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 6px;
+}
+.practicumInput {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 12px;
+  border: 1px solid #d8dee6;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #191f28;
+  text-align: right;
+}
+.practicumInput:focus {
+  outline: none;
+  border-color: #2563eb;
+}
+.practicumInput:disabled {
+  background: #f1f3f5;
+  color: #8b95a1;
+}
+.practicumUnit {
+  font-size: 13px;
+  font-weight: 600;
+  color: #8b95a1;
+}
+.practicumTotalValue {
+  min-width: 90px;
+  text-align: right;
+  font-size: 22px;
+  font-weight: 800;
+  color: #2563eb;
+}
+.practicumHint {
+  margin: 4px 2px 0;
+  font-size: 12px;
+  color: #8b95a1;
+  line-height: 1.5;
+}

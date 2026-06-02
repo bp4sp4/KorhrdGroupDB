@@ -54,6 +54,17 @@ function sanitizeTomorrow(input: unknown): Tomorrow[] {
     .filter((t): t is Tomorrow => t !== null)
 }
 
+// 실습팀 전용 — 연계 수치 { institution, eduCenter }
+type Practicum = { institution: number; eduCenter: number }
+function sanitizePracticum(input: unknown): Practicum {
+  const o = (input && typeof input === 'object' ? input : {}) as Record<string, unknown>
+  const num = (v: unknown) => {
+    const n = Math.floor(Number(v))
+    return Number.isFinite(n) && n > 0 ? n : 0
+  }
+  return { institution: num(o.institution), eduCenter: num(o.eduCenter) }
+}
+
 // 학사팀 전용 — 이번주 목표
 function sanitizeWeeklyGoal(input: unknown): WeeklyGoal[] {
   if (!Array.isArray(input)) return []
@@ -86,7 +97,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await supabaseAdmin
     .from('work_journals')
-    .select('id, date, tasks, morning, afternoon, tomorrow, weekly_goal, issues, status, submitted_at, updated_at')
+    .select('id, date, tasks, morning, afternoon, tomorrow, weekly_goal, issues, practicum, status, submitted_at, updated_at')
     .eq('user_id', appUser.id)
     .eq('date', date)
     .maybeSingle()
@@ -181,6 +192,11 @@ export async function PUT(request: NextRequest) {
     issues:
       'issues' in (body as Record<string, unknown>)
         ? sanitizeRows((body as Record<string, unknown>).issues)
+        : null,
+    // 실습팀 전용 — 일반/학사 양식에서는 undefined 이므로 null 로 저장
+    practicum:
+      'practicum' in (body as Record<string, unknown>)
+        ? sanitizePracticum((body as Record<string, unknown>).practicum)
         : null,
     status,
     submitted_at: resolvedSubmittedAt,

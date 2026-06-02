@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/auth/requireAuth'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 
-const ALLOWED_JOURNAL_FORMS = new Set(['default', 'academic'])
+const ALLOWED_JOURNAL_FORMS = new Set(['default', 'academic', 'practicum'])
 
 interface RouteParams {
   params: Promise<{ id: string }>
