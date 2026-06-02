@@ -650,7 +650,6 @@ export default function EduSalesPage() {
   }, [activeMonth]);
   const activeYear = now.getFullYear();
   // 월 탭(예: "5월") 활성화 여부 — true면 그 월에서 cohort/payment_date 변경 금지
-  const isMonthTab = /^\d+월$/.test(activeMonth);
   // 현재 월 라벨 ("5월" 등)
   const currentMonthLabel = `${kstNow().getMonth() + 1}월`;
   // 페이지 단위 안내문용 — 어드민 아니고 현재 월 탭이 아닐 때만 안내 표시
@@ -673,13 +672,6 @@ export default function EduSalesPage() {
     // 정상, 보류
     return true;
   };
-  // 활성 월의 1일/말일 (payment_date 캘린더 제한용)
-  const activeMonthRange = useMemo(() => {
-    if (!isMonthTab) return null;
-    const first = new Date(activeYear, activeMonthNum - 1, 1);
-    const last = new Date(activeYear, activeMonthNum, 0); // 다음 달 0일 = 이번 달 말일
-    return { first, last };
-  }, [isMonthTab, activeYear, activeMonthNum]);
   const refundCountFiltered = useMemo(
     () => filteredRows.filter((r) => r.refund_status === "환불").length,
     [filteredRows],
@@ -1223,33 +1215,16 @@ export default function EduSalesPage() {
                       />
                     </div>
                   </td>
-                  {/* 결제일 — 월 탭에서는 그 월 범위 내만 선택 가능 */}
+                  {/* 결제일 — 어떤 월로든 자유롭게 선택 가능 (입력 후 해당 월 탭으로 자동 이동) */}
                   <td className={`${styles.td} ${styles.td_center}`}>
                     <div className={!r.payment_date ? styles.cell_empty_hint : undefined}>
                       <DateInput
                         value={r.payment_date ?? ""}
                         onChange={(v) => {
-                          if (!v) {
-                            updateRow(r, { payment_date: null });
-                            return;
-                          }
-                          // 월 탭에서는 해당 월 외 날짜는 무시 (안전장치)
-                          if (isMonthTab) {
-                            const parts = v.split("-");
-                            const m = Number(parts[1]);
-                            if (m !== activeMonthNum) {
-                              alert(
-                                `결제일은 ${activeMonth} 범위에서만 선택할 수 있습니다.`,
-                              );
-                              return;
-                            }
-                          }
-                          updateRow(r, { payment_date: v });
+                          updateRow(r, { payment_date: v || null });
                         }}
                         placeholder="결제일"
                         triggerClassName={styles.inline_date_trigger}
-                        minDate={activeMonthRange?.first}
-                        maxDate={activeMonthRange?.last}
                         disabled={!isRowEditable(r)}
                       />
                     </div>

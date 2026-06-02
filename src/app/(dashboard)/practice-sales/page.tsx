@@ -511,7 +511,6 @@ export default function PracticeSalesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeMonth]);
   const activeYear = now.getFullYear();
-  const isMonthTab = /^\d+월$/.test(activeMonth);
   const currentMonthLabel = `${kstNow().getMonth() + 1}월`;
   const showReadonlyNotice = !isAdmin && activeMonth !== currentMonthLabel;
   // 행 단위 편집 가능 여부 — 환불 상태에 따라 분기
@@ -533,12 +532,6 @@ export default function PracticeSalesPage() {
     }
     return true;
   };
-  const activeMonthRange = useMemo(() => {
-    if (!isMonthTab) return null;
-    const first = new Date(activeYear, activeMonthNum - 1, 1);
-    const last = new Date(activeYear, activeMonthNum, 0);
-    return { first, last };
-  }, [isMonthTab, activeYear, activeMonthNum]);
   const refundCountFiltered = useMemo(
     () => filteredRows.filter((r) => r.refund_status === "환불").length,
     [filteredRows],
@@ -1063,22 +1056,10 @@ export default function PracticeSalesPage() {
                               updateRow(r, { payment_date: null });
                               return;
                             }
-                            if (isMonthTab) {
-                              const parts = v.split("-");
-                              const m = Number(parts[1]);
-                              if (m !== activeMonthNum) {
-                                alert(
-                                  `결제일은 ${activeMonth} 범위에서만 선택할 수 있습니다.`,
-                                );
-                                return;
-                              }
-                            }
                             updateRow(r, { payment_date: v, cohort: v });
                           }}
                           placeholder="결제일"
                           triggerClassName={styles.inline_date_trigger}
-                          minDate={activeMonthRange?.first}
-                          maxDate={activeMonthRange?.last}
                           disabled={!isRowEditable(r)}
                         />
                       </div>
