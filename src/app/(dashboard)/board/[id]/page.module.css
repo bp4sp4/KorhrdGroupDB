@@ -33,7 +33,6 @@
 
 .detail {
   padding: 8px 40px 50px;
-  
 }
 
 .detailHead {
@@ -280,7 +279,7 @@
 /* 댓글 */
 .commentSection {
   margin-top: 14px;
-  border-top: 8px solid #f2f4f6;
+  border-top: 2px solid #f2f4f6;
   padding-top: 24px;
 }
 .commentTitle {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Search,
@@ -8,9 +8,7 @@ import {
   ChevronRight,
   Paperclip,
   MessageSquare,
-  X,
 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
 import styles from "./page.module.css";
 
 const CATEGORIES = ["공지", "일반", "인사", "행사"] as const;
@@ -30,16 +28,6 @@ interface PostRow {
   attachment_count: number;
 }
 
-interface DraftAttachment {
-  name: string;
-  path: string;
-  size: number;
-  type: string;
-  status: "uploading" | "done" | "error";
-}
-
-const MAX_SIZE = 25 * 1024 * 1024;
-
 function fmtDate(iso: string) {
   const d = new Date(iso);
   const p = (n: number) => String(n).padStart(2, "0");
@@ -47,11 +35,6 @@ function fmtDate(iso: string) {
 }
 function fmtViews(v: number) {
   return v.toLocaleString("ko-KR");
-}
-function fmtSize(n: number) {
-  if (n >= 1024 * 1024) return `${(n / 1024 / 1024).toFixed(1)}MB`;
-  if (n >= 1024) return `${Math.round(n / 1024)}KB`;
-  return `${n}B`;
 }
 
 function pageWindow(current: number, total: number, span = 5): number[] {
@@ -65,7 +48,6 @@ function pageWindow(current: number, total: number, span = 5): number[] {
 
 export default function BoardPage() {
   const router = useRouter();
-  const supabase = createClient();
 
   const [items, setItems] = useState<PostRow[]>([]);
   const [total, setTotal] = useState(0);
@@ -77,23 +59,7 @@ export default function BoardPage() {
   const [draftQ, setDraftQ] = useState("");
   const [draftField, setDraftField] =
     useState<(typeof SEARCH_FIELDS)[number]>("제목");
-  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  // 글쓰기 모달
-  const [writeOpen, setWriteOpen] = useState(false);
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [cat, setCat] = useState<(typeof CATEGORIES)[number]>("일반");
-  const [department, setDepartment] = useState("");
-  const [departments, setDepartments] = useState<{ id: string; name: string }[]>(
-    [],
-  );
-  const [pinned, setPinned] = useState(false);
-  const [atts, setAtts] = useState<DraftAttachment[]>([]);
-  const [submitting, setSubmitting] = useState(false);
-  const [dragOver, setDragOver] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -110,7 +76,6 @@ export default function BoardPage() {
         setItems(data.items ?? []);
         setTotal(data.total ?? 0);
         setPageSize(data.pageSize ?? 10);
-        setIsAdmin(!!data.me?.is_admin);
       }
     } finally {
       setLoading(false);
@@ -120,23 +85,6 @@ export default function BoardPage() {
   useEffect(() => {
     void load();
   }, [load]);
-
-  // 부서 목록은 글쓰기 모달 최초 오픈 시 1회 로드
-  useEffect(() => {
-    if (!writeOpen || departments.length > 0) return;
-    void (async () => {
-      try {
-        const res = await fetch("/api/board/options");
-        const data = await res.json();
-        if (res.ok) {
-          setDepartments(data.departments ?? []);
-          if (data.myDepartment) setDepartment(data.myDepartment);
-        }
-      } catch {
-        /* ignore */
-      }
-    })();
-  }, [writeOpen, departments.length]);
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const pinnedRows = items.filter((p) => p.is_pinned);
@@ -150,105 +98,6 @@ export default function BoardPage() {
   const selectCategory = (c: (typeof FILTERS)[number]) => {
     setCategory(c);
     setPage(1);
-  };
-
-  const uploadFiles = useCallback(
-    (files: FileList | File[]) => {
-      const list = Array.from(files);
-      for (const file of list) {
-        if (file.size > MAX_SIZE) {
-          alert(`${file.name} 은(는) 25MB 를 초과합니다.`);
-          continue;
-        }
-        const idx = atts.length;
-        setAtts((prev) => [
-          ...prev,
-          {
-            name: file.name,
-            path: "",
-            size: file.size,
-            type: file.type,
-            status: "uploading",
-          },
-        ]);
-        void (async () => {
-          try {
-            const signRes = await fetch("/api/board/attachments/sign", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ filename: file.name }),
-            });
-            const sign = await signRes.json();
-            if (!signRes.ok || !sign.ok) throw new Error(sign.error ?? "sign");
-            const up = await supabase.storage
-              .from(sign.bucket)
-              .uploadToSignedUrl(sign.path, sign.token, file, {
-                contentType: file.type || "application/octet-stream",
-              });
-            if (up.error) throw up.error;
-            setAtts((prev) =>
-              prev.map((a, i) =>
-                i === idx && a.status === "uploading"
-                  ? { ...a, path: sign.path, status: "done" }
-                  : a,
-              ),
-            );
-          } catch {
-            setAtts((prev) =>
-              prev.map((a, i) => (i === idx ? { ...a, status: "error" } : a)),
-            );
-          }
-        })();
-      }
-    },
-    [atts.length, supabase],
-  );
-
-  const removeAtt = (i: number) =>
-    setAtts((prev) => prev.filter((_, idx) => idx !== i));
-
-  const resetWrite = () => {
-    setTitle("");
-    setContent("");
-    setCat("일반");
-    setPinned(false);
-    setAtts([]);
-  };
-
-  const submit = async () => {
-    if (!title.trim()) return alert("제목을 입력하세요.");
-    if (!content.trim()) return alert("내용을 입력하세요.");
-    if (atts.some((a) => a.status === "uploading"))
-      return alert("첨부파일 업로드가 끝날 때까지 기다려주세요.");
-    setSubmitting(true);
-    try {
-      const res = await fetch("/api/board", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: title.trim(),
-          content,
-          category: cat,
-          department: department || null,
-          is_pinned: pinned,
-          attachments: atts
-            .filter((a) => a.status === "done")
-            .map((a) => ({
-              name: a.name,
-              path: a.path,
-              size: a.size,
-              type: a.type,
-            })),
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) return alert(data.error ?? "등록 실패");
-      setWriteOpen(false);
-      resetWrite();
-      router.push(`/board/${data.id}`);
-    } finally {
-      setSubmitting(false);
-    }
   };
 
   return (
@@ -434,169 +283,13 @@ export default function BoardPage() {
         </div>
         <button
           className={styles.writeBtn}
-          onClick={() => setWriteOpen(true)}
+          onClick={() => router.push("/board/new")}
           type="button"
         >
           ＋ 글쓰기
         </button>
       </div>
 
-      {writeOpen && (
-        <div
-          className={styles.overlay}
-          onMouseDown={() => !submitting && setWriteOpen(false)}
-        >
-          <div className={styles.modal} onMouseDown={(e) => e.stopPropagation()}>
-            <div className={styles.modalHead}>
-              <h3 className={styles.modalTitle}>새 공지 작성</h3>
-              <button
-                className={styles.modalClose}
-                onClick={() => setWriteOpen(false)}
-                type="button"
-                aria-label="닫기"
-              >
-                <X size={18} />
-              </button>
-            </div>
-            <div className={styles.modalBody}>
-              <div className={styles.row2}>
-                <label className={styles.fieldCol}>
-                  <span className={styles.fieldLabel}>분류</span>
-                  <select
-                    className={styles.fieldInput}
-                    value={cat}
-                    onChange={(e) =>
-                      setCat(e.target.value as (typeof CATEGORIES)[number])
-                    }
-                  >
-                    {CATEGORIES.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className={styles.fieldCol}>
-                  <span className={styles.fieldLabel}>작성자 / 부서</span>
-                  <select
-                    className={styles.fieldInput}
-                    value={department}
-                    onChange={(e) => setDepartment(e.target.value)}
-                  >
-                    <option value="">부서 선택</option>
-                    {departments.map((d) => (
-                      <option key={d.id} value={d.name}>
-                        {d.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-              <label className={styles.fieldCol}>
-                <span className={styles.fieldLabel}>제목</span>
-                <input
-                  className={styles.fieldInput}
-                  placeholder="공지 제목을 입력하세요"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  maxLength={200}
-                />
-              </label>
-              <label className={styles.fieldCol}>
-                <span className={styles.fieldLabel}>내용</span>
-                <textarea
-                  className={styles.fieldTextarea}
-                  placeholder="공지 내용을 입력하세요"
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                />
-              </label>
-
-              {isAdmin && (
-                <label className={styles.pinCheck}>
-                  <input
-                    type="checkbox"
-                    checked={pinned}
-                    onChange={(e) => setPinned(e.target.checked)}
-                  />
-                  <span>상단에 고정 (공지)</span>
-                </label>
-              )}
-
-              <div
-                className={`${styles.dropZone} ${dragOver ? styles.dropOver : ""}`}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setDragOver(true);
-                }}
-                onDragLeave={() => setDragOver(false)}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  setDragOver(false);
-                  if (e.dataTransfer.files?.length)
-                    uploadFiles(e.dataTransfer.files);
-                }}
-                onClick={() => fileRef.current?.click()}
-              >
-                <Paperclip size={15} />
-                파일을 끌어다 놓거나 클릭해 첨부 (최대 25MB)
-                <input
-                  ref={fileRef}
-                  type="file"
-                  multiple
-                  hidden
-                  onChange={(e) => {
-                    if (e.target.files?.length) uploadFiles(e.target.files);
-                    e.target.value = "";
-                  }}
-                />
-              </div>
-              {atts.length > 0 && (
-                <ul className={styles.attList}>
-                  {atts.map((a, i) => (
-                    <li key={i} className={styles.attItem}>
-                      <Paperclip size={13} />
-                      <span className={styles.attName}>{a.name}</span>
-                      <span className={styles.attSize}>{fmtSize(a.size)}</span>
-                      {a.status === "uploading" && (
-                        <span className={styles.attStatus}>업로드중…</span>
-                      )}
-                      {a.status === "error" && (
-                        <span className={styles.attError}>실패</span>
-                      )}
-                      <button
-                        type="button"
-                        className={styles.attRemove}
-                        onClick={() => removeAtt(i)}
-                      >
-                        <X size={13} />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-            <div className={styles.modalFoot}>
-              <button
-                className={styles.btnGhost}
-                onClick={() => setWriteOpen(false)}
-                type="button"
-                disabled={submitting}
-              >
-                취소
-              </button>
-              <button
-                className={styles.btnPrimary}
-                onClick={submit}
-                type="button"
-                disabled={submitting}
-              >
-                {submitting ? "등록 중…" : "등록"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

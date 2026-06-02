@@ -3,7 +3,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Paperclip, Download, Send, Trash2 } from "lucide-react";
+import DOMPurify from "dompurify";
 import styles from "./page.module.css";
+
+// 게시글 본문 HTML 검사 — 빈 에디터 결과 ("<p><br/></p>" 등) 인지 판정
+function isHtml(content: string): boolean {
+  return /<[a-z][\s\S]*>/i.test(content);
+}
 
 const CATEGORIES = ["공지", "일반", "인사", "행사"] as const;
 
@@ -314,13 +320,25 @@ export default function BoardDetailPage() {
               <span>조회 {fmtViews(post.view_count)}</span>
             </div>
 
-            <div className={styles.detailBody}>
-              {(post.content || "(내용 없음)").split("\n\n").map((para, i) => (
-                <p key={i} className={styles.para}>
-                  {para}
-                </p>
-              ))}
-            </div>
+            {/* 게시글 본문 — HTML(에디터 결과) 이면 sanitize 후 렌더, plain text 면 단락 분리 */}
+            {post.content && isHtml(post.content) ? (
+              <div
+                className={styles.detailBody}
+                dangerouslySetInnerHTML={{
+                  __html: DOMPurify.sanitize(post.content, {
+                    ADD_ATTR: ["target"],
+                  }),
+                }}
+              />
+            ) : (
+              <div className={styles.detailBody}>
+                {(post.content || "(내용 없음)").split("\n\n").map((para, i) => (
+                  <p key={i} className={styles.para}>
+                    {para}
+                  </p>
+                ))}
+              </div>
+            )}
 
             {post.attachments.length > 0 && (
               <div className={styles.attachments}>
