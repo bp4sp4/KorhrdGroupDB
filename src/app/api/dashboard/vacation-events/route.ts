@@ -49,19 +49,22 @@ function parseDateSafe(v: unknown): string | null {
 
 function* enumerateDates(start: string, end: string): Generator<string> {
   // start ~ end (inclusive), YYYY-MM-DD
-  const s = new Date(`${start}T00:00:00+09:00`)
-  const e = new Date(`${end}T00:00:00+09:00`)
+  // CRITICAL: Vercel/Node 런타임 timezone 이 UTC 이므로
+  //   getFullYear()/getMonth()/getDate() (로컬 시간대 기반) 사용 시 +09:00 오프셋이 적용되어
+  //   하루 빨리 표시되는 버그 발생. 정오 UTC 로 Date 를 만들고 getUTC* 로 일관 처리.
+  const s = new Date(`${start}T12:00:00Z`)
+  const e = new Date(`${end}T12:00:00Z`)
   if (isNaN(s.getTime()) || isNaN(e.getTime()) || s > e) {
     yield start
     return
   }
   const cur = new Date(s)
   while (cur <= e) {
-    const y = cur.getFullYear()
-    const m = String(cur.getMonth() + 1).padStart(2, '0')
-    const d = String(cur.getDate()).padStart(2, '0')
+    const y = cur.getUTCFullYear()
+    const m = String(cur.getUTCMonth() + 1).padStart(2, '0')
+    const d = String(cur.getUTCDate()).padStart(2, '0')
     yield `${y}-${m}-${d}`
-    cur.setDate(cur.getDate() + 1)
+    cur.setUTCDate(cur.getUTCDate() + 1)
   }
 }
 
