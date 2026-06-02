@@ -53,6 +53,8 @@ export interface EduStudentFormData {
   education_center_name: string;
   all_care: boolean;
   notes: string;
+  // 매출파일의 결제일(payment_date) 자동 채움용 — 신규 추가 시점에만 사용
+  payment_date: string;
 }
 
 export interface EduMonthlyEnrollment {

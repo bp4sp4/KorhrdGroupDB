@@ -407,17 +407,28 @@ export default function EduStudentsTab({ isActive }: Props) {
       if (error) { alert(`등록 실패: ${error.message}`); return; }
       logEduActivity({ action: '학생 추가', target_type: 'student', target_name: data.name, detail: `과정ID: ${data.course_id}, 담당자: ${data.manager_name}` });
 
-      // ─── 매출파일(edu_sales)에 행 자동 생성 — 현재 KST 월을 cohort로 ───
+      // ─── 매출파일(edu_sales)에 행 자동 생성 ───
+      //  - cohort: 결제일이 있으면 결제월, 없으면 현재 KST 월
+      //  - payment_date: 모달에서 입력한 결제일 (매출파일이 결제일 기준으로 정렬되도록)
       if (inserted?.id) {
         const kst = new Date(
           new Date().toLocaleString('en-US', { timeZone: 'Asia/Seoul' }),
         );
-        const cohort = `${kst.getMonth() + 1}월`;
+        const payMonthFromInput = data.payment_date && data.payment_date.length >= 7
+          ? Number(data.payment_date.split('-')[1])
+          : null;
+        const cohort = payMonthFromInput
+          ? `${payMonthFromInput}월`
+          : `${kst.getMonth() + 1}월`;
         try {
           await fetch('/api/edu-sales', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ student_id: inserted.id, cohort }),
+            body: JSON.stringify({
+              student_id: inserted.id,
+              cohort,
+              payment_date: data.payment_date || null,
+            }),
           });
         } catch {
           // 매출파일 row 생성 실패해도 학생 등록은 성공한 상태이므로 silent

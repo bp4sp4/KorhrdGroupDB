@@ -48,6 +48,15 @@ interface Props {
   onSubmit: (data: EduStudentFormData) => Promise<void>;
 }
 
+// KST 오늘 (YYYY-MM-DD)
+function todayKstYmd(): string {
+  const d = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`;
+}
+
 const EMPTY_FORM: EduStudentFormData = {
   name: '',
   phone: '',
@@ -64,6 +73,7 @@ const EMPTY_FORM: EduStudentFormData = {
   education_center_name: '',
   all_care: false,
   notes: '',
+  payment_date: '', // 신규 추가 시 default 는 modal 마운트에서 오늘로 채움
 };
 
 export default function StudentModal({ student, courses, centers, managers = [], onClose, onSubmit }: Props) {
@@ -316,9 +326,11 @@ export default function StudentModal({ student, courses, centers, managers = [],
         education_center_name: student.education_center_name ?? '',
         all_care: student.all_care,
         notes: student.notes ?? '',
+        payment_date: '', // 수정 모드에선 결제일을 매출파일에서 직접 관리
       });
     } else {
-      setForm(EMPTY_FORM);
+      // 신규 추가 — 결제일 default 는 오늘 (관리자가 다른 날짜로 바꿀 수 있음)
+      setForm({ ...EMPTY_FORM, payment_date: todayKstYmd() });
     }
   }, [student]);
 
@@ -709,6 +721,32 @@ export default function StudentModal({ student, courses, centers, managers = [],
                   className={styles.form_input_wrap}
                 />
               </div>
+
+              {/* 결제일 — 신규 추가 시에만 표시. 매출파일에 자동 채워져 결제월 탭으로 정렬 */}
+              {!student && (
+                <div className={styles.form_field}>
+                  <label className={styles.form_label}>
+                    결제일
+                    <span
+                      style={{
+                        marginLeft: 6,
+                        fontSize: 11,
+                        fontWeight: 500,
+                        color: '#8b95a1',
+                      }}
+                    >
+                      (매출파일 결제월 분류 기준)
+                    </span>
+                  </label>
+                  <DateInput
+                    value={form.payment_date}
+                    onChange={(v) => set('payment_date', v)}
+                    placeholder="연도. 월. 일."
+                    triggerClassName={styles.form_input}
+                    className={styles.form_input_wrap}
+                  />
+                </div>
+              )}
 
               {/* 올케어 가입여부 */}
               <div className={styles.form_field}>
