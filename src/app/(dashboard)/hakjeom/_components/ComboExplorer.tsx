@@ -218,7 +218,7 @@ export default function ComboExplorer({ data }: { data: ComboRecord[] }) {
                 </div>
                 <div className={styles.recoRate}>{r.rate.toFixed(1)}%</div>
                 <div className={styles.recoMeta}>
-                  등록 {r.registered}/{r.total} · 평균比{" "}
+                  등록 {r.registered}/{r.total} · 평균 대비{" "}
                   <b>{r.lift.toFixed(1)}배</b>
                 </div>
                 <div className={styles.recoMsg}>
@@ -248,7 +248,7 @@ export default function ComboExplorer({ data }: { data: ComboRecord[] }) {
                 ))}
                 <th className={styles.thCenter}>등록률</th>
                 <th className={styles.thCenter}>등록/전체</th>
-                <th className={styles.thCenter}>평균比</th>
+                <th className={styles.thCenter}>평균 대비</th>
                 <th className={styles.thCenter}>평가</th>
                 <th className={styles.thCenter}>신뢰도</th>
               </tr>
