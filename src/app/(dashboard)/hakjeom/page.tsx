@@ -1915,6 +1915,9 @@ function HakjeomTab({
             `${kstYear}-${String(quarterEndMonth + 1).padStart(2, "0")}-${String(quarterEndLastDay).padStart(2, "0")}T23:59:59+09:00`,
           );
 
+          // 메인 수치 = 2분기 등록률 (분모가 크고 안정적), 보조 = 이번 달
+          //   → PerformerLeaderboard 의 month=primary, quarter=secondary 라
+          //     실제 값/라벨을 swap 해서 전달
           const mStats = mgrs
             .map((name) => {
               const rows = all.filter((c) => c.manager === name);
@@ -1928,16 +1931,16 @@ function HakjeomTab({
               });
               return {
                 name,
-                month: rate(monthlyRows),
-                quarter: rate(quarterlyRows),
+                month: rate(quarterlyRows), // 메인 표시값 = 분기 등록률
+                quarter: rate(monthlyRows), // 보조 표시값 = 월 등록률
               };
             })
             .sort((a, b) => b.month - a.month);
           setManagerStatsNode(
             <PerformerLeaderboard
               performers={mStats}
-              primaryLabel={`${kstMonth + 1}월`}
-              secondaryLabel={`${quarter}분기`}
+              primaryLabel={`${quarter}분기`}
+              secondaryLabel={`${kstMonth + 1}월`}
             />,
           );
         },
