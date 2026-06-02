@@ -431,7 +431,8 @@
   border-radius: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  /* 전체 영역을 하나의 스크롤로 — siblings 가 본문 끝에서 자연스럽게 노출되도록 */
+  overflow-y: auto;
 }
 
 /* 상세 상단 — 뒤로가기 바 */
@@ -441,6 +442,11 @@
   padding: 12px 18px;
   border-bottom: 1px solid #eef0f3;
   flex-shrink: 0;
+  /* 스크롤 시 상단 뒤로가기 바는 고정 */
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 10;
 }
 .backBtn {
   display: inline-flex;
@@ -458,6 +464,68 @@
 }
 .backBtn:hover {
   background: #f2f4f6;
+}
+
+/* 본문 하단 — 이전/다음 메일 행 (네이버 메일 스타일) */
+.detailSiblings {
+  margin-top: 32px;
+  border-top: 1px solid #eef0f3;
+  display: flex;
+  flex-direction: column;
+}
+.siblingRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border: 0;
+  border-bottom: 1px solid #f2f4f6;
+  background: transparent;
+  font-family: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  color: #191f28;
+  transition: background 0.12s;
+}
+.siblingRow:last-child {
+  border-bottom: 0;
+}
+.siblingRow:hover {
+  background: #f9fafb;
+}
+.siblingArrow {
+  color: #8b95a1;
+  flex-shrink: 0;
+}
+.siblingFrom {
+  font-weight: 700;
+  color: #191f28;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+  flex-shrink: 0;
+}
+.siblingFolderTag {
+  color: #8b95a1;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+.siblingSubject {
+  flex: 1;
+  min-width: 0;
+  color: #333d4b;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.siblingDate {
+  color: #8b95a1;
+  font-size: 12px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .detailEmpty {
@@ -549,8 +617,7 @@
 }
 
 .detailBody {
-  flex: 1;
-  overflow-y: auto;
+  /* detailCol 이 스크롤 컨테이너 — 본문은 자연스러운 흐름 */
   padding: 24px;
   font-size: 14px;
   line-height: 1.6;

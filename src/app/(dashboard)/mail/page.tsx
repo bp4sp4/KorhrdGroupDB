@@ -1024,6 +1024,80 @@ export default function MailPage() {
                         ))}
                       </div>
                     )}
+
+                    {/* 본문 하단 — 이전 / 다음 메일 행 (네이버 메일 스타일) */}
+                    {selectedId && (() => {
+                      const idx = list.findIndex(
+                        (m) => m.messageId === selectedId,
+                      );
+                      const prev = idx > 0 ? list[idx - 1] : null;
+                      const next = idx >= 0 && idx < list.length - 1
+                        ? list[idx + 1]
+                        : null;
+                      if (!prev && !next) return null;
+                      return (
+                        <div className={styles.detailSiblings}>
+                          {prev && (
+                            <button
+                              type="button"
+                              className={styles.siblingRow}
+                              onClick={() => setSelectedId(prev.messageId)}
+                            >
+                              <ChevronUp
+                                size={14}
+                                className={styles.siblingArrow}
+                              />
+                              <span className={styles.siblingFrom}>
+                                {prev.from?.emailAddress.name ||
+                                  prev.from?.emailAddress.address ||
+                                  "-"}
+                              </span>
+                              <span className={styles.siblingFolderTag}>
+                                [
+                                {FOLDERS.find((f) => f.key === folder)?.label ??
+                                  "받은편지함"}
+                                ]
+                              </span>
+                              <span className={styles.siblingSubject}>
+                                {prev.subject || "(제목 없음)"}
+                              </span>
+                              <span className={styles.siblingDate}>
+                                {fmtDate(prev.receivedTime ?? prev.sentTime)}
+                              </span>
+                            </button>
+                          )}
+                          {next && (
+                            <button
+                              type="button"
+                              className={styles.siblingRow}
+                              onClick={() => setSelectedId(next.messageId)}
+                            >
+                              <ChevronDown
+                                size={14}
+                                className={styles.siblingArrow}
+                              />
+                              <span className={styles.siblingFrom}>
+                                {next.from?.emailAddress.name ||
+                                  next.from?.emailAddress.address ||
+                                  "-"}
+                              </span>
+                              <span className={styles.siblingFolderTag}>
+                                [
+                                {FOLDERS.find((f) => f.key === folder)?.label ??
+                                  "받은편지함"}
+                                ]
+                              </span>
+                              <span className={styles.siblingSubject}>
+                                {next.subject || "(제목 없음)"}
+                              </span>
+                              <span className={styles.siblingDate}>
+                                {fmtDate(next.receivedTime ?? next.sentTime)}
+                              </span>
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </>
                 ) : (
                   <div className={styles.detailEmpty}>불러올 수 없습니다.</div>

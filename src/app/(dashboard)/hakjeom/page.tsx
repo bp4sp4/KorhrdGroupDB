@@ -5590,6 +5590,69 @@ function StatsTab() {
       .sort((a, b) => b.total - a.total);
   })();
 
+  // ── 담당자 × 유입경로 매트릭스 (등록률 + 건수)
+  //    매니저 행 × 채널 열로 cross-tab — 등록 패턴 파악용
+  const managerChannelMatrix: {
+    managers: string[]; // 행 (등록률 평균 데스크탑 순)
+    channels: string[]; // 열 (전체 건수 많은 순)
+    cells: Record<string, Record<string, { total: number; registered: number; rate: number }>>;
+  } = (() => {
+    // 미배정 / 지인소개 제외 (실적 평가 대상 아님)
+    const PERSONAL_MARKETING_KEY = "지인소개";
+    const validRows = data.filter((c) => {
+      const mgr = (c.manager ?? "").trim();
+      if (!mgr) return false;
+      const ch = getMajorSrc(c.click_source);
+      if (ch === PERSONAL_MARKETING_KEY) return false;
+      return true;
+    });
+
+    const cellAcc: Record<
+      string,
+      Record<string, { total: number; registered: number }>
+    > = {};
+    const mgrTotals: Record<string, number> = {};
+    const chTotals: Record<string, number> = {};
+
+    validRows.forEach((c) => {
+      const mgr = (c.manager ?? "").trim();
+      const ch = getMajorSrc(c.click_source);
+      if (!cellAcc[mgr]) cellAcc[mgr] = {};
+      if (!cellAcc[mgr][ch]) cellAcc[mgr][ch] = { total: 0, registered: 0 };
+      cellAcc[mgr][ch].total += 1;
+      if (c.status === "등록완료") cellAcc[mgr][ch].registered += 1;
+      mgrTotals[mgr] = (mgrTotals[mgr] ?? 0) + 1;
+      chTotals[ch] = (chTotals[ch] ?? 0) + 1;
+    });
+
+    const managers = Object.keys(mgrTotals).sort(
+      (a, b) => mgrTotals[b] - mgrTotals[a],
+    );
+    const channels = Object.keys(chTotals).sort(
+      (a, b) => chTotals[b] - chTotals[a],
+    );
+
+    const cells: Record<
+      string,
+      Record<string, { total: number; registered: number; rate: number }>
+    > = {};
+    managers.forEach((mgr) => {
+      cells[mgr] = {};
+      channels.forEach((ch) => {
+        const v = cellAcc[mgr]?.[ch];
+        if (v) {
+          cells[mgr][ch] = {
+            total: v.total,
+            registered: v.registered,
+            rate:
+              v.total > 0 ? Math.round((v.registered / v.total) * 100) : 0,
+          };
+        }
+      });
+    });
+    return { managers, channels, cells };
+  })();
+
   // ── 등록 전환 추적 (상담완료 → 등록완료/지인등록까지 소요시간 + 등급별)
   const COUNSEL_LEVELS: ConsultationStatus[] = [
     "상담완료-높음",
@@ -6635,6 +6698,206 @@ function StatsTab() {
                         ))}
                       </tbody>
                     </table>
+                  </div>
+                )}
+              </StatsPanel>
+
+              {/* ── 담당자 × 유입경로 매트릭스 — 등록 패턴 파악 */}
+              <StatsPanel
+                title="담당자 × 유입경로 등록률 매트릭스"
+                sub="각 담당자가 어떤 유입경로에서 얼마나 등록 전환했는지 (지인소개 제외)"
+              >
+                {managerChannelMatrix.managers.length === 0 ||
+                managerChannelMatrix.channels.length === 0 ? (
+                  <div
+                    style={{
+                      padding: 40,
+                      textAlign: "center",
+                      color: "#94a3b8",
+                    }}
+                  >
+                    데이터 없음
+                  </div>
+                ) : (
+                  <div style={{ overflowX: "auto" }}>
+                    <table
+                      style={{
+                        width: "100%",
+                        borderCollapse: "collapse",
+                        fontSize: 13,
+                      }}
+                    >
+                      <thead>
+                        <tr
+                          style={{
+                            background: "#f8fafc",
+                            borderBottom: "1px solid #e2e8f0",
+                          }}
+                        >
+                          <th
+                            style={{
+                              padding: "10px 12px",
+                              textAlign: "left",
+                              fontWeight: 700,
+                              color: "#475569",
+                              position: "sticky",
+                              left: 0,
+                              background: "#f8fafc",
+                              zIndex: 1,
+                            }}
+                          >
+                            담당자
+                          </th>
+                          {managerChannelMatrix.channels.map((ch) => (
+                            <th
+                              key={ch}
+                              style={{
+                                padding: "10px 12px",
+                                textAlign: "center",
+                                fontWeight: 700,
+                                color: "#475569",
+                                minWidth: 90,
+                              }}
+                            >
+                              {ch === "meta" ? "메타" : ch}
+                            </th>
+                          ))}
+                          <th
+                            style={{
+                              padding: "10px 12px",
+                              textAlign: "center",
+                              fontWeight: 700,
+                              color: "#475569",
+                              minWidth: 90,
+                              background: "#eef2ff",
+                            }}
+                          >
+                            전체
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {managerChannelMatrix.managers.map((mgr) => {
+                          const row = managerChannelMatrix.cells[mgr];
+                          // 행 전체 총합 / 등록 / 등록률
+                          const rowTotal = managerChannelMatrix.channels.reduce(
+                            (s, ch) => s + (row[ch]?.total ?? 0),
+                            0,
+                          );
+                          const rowReg = managerChannelMatrix.channels.reduce(
+                            (s, ch) => s + (row[ch]?.registered ?? 0),
+                            0,
+                          );
+                          const rowRate =
+                            rowTotal > 0
+                              ? Math.round((rowReg / rowTotal) * 100)
+                              : 0;
+                          return (
+                            <tr
+                              key={mgr}
+                              style={{ borderBottom: "1px solid #f1f5f9" }}
+                            >
+                              <td
+                                style={{
+                                  padding: "10px 12px",
+                                  fontWeight: 700,
+                                  color: "#1e293b",
+                                  position: "sticky",
+                                  left: 0,
+                                  background: "#fff",
+                                  zIndex: 1,
+                                }}
+                              >
+                                {mgr}
+                              </td>
+                              {managerChannelMatrix.channels.map((ch) => {
+                                const cell = row[ch];
+                                if (!cell || cell.total === 0) {
+                                  return (
+                                    <td
+                                      key={ch}
+                                      style={{
+                                        padding: "10px 12px",
+                                        textAlign: "center",
+                                        color: "#cbd5e1",
+                                      }}
+                                    >
+                                      —
+                                    </td>
+                                  );
+                                }
+                                // 등록률 따라 셀 배경색 강도 (히트맵)
+                                const intensity = Math.min(cell.rate / 30, 1); // 30% 만점
+                                const bg = `rgba(37, 99, 235, ${0.05 + intensity * 0.18})`;
+                                return (
+                                  <td
+                                    key={ch}
+                                    style={{
+                                      padding: "10px 12px",
+                                      textAlign: "center",
+                                      background: bg,
+                                    }}
+                                  >
+                                    <div
+                                      style={{
+                                        fontWeight: 700,
+                                        color:
+                                          cell.rate >= 15
+                                            ? "#1d4ed8"
+                                            : "#475569",
+                                        fontSize: 14,
+                                      }}
+                                    >
+                                      {cell.rate}%
+                                    </div>
+                                    <div
+                                      style={{
+                                        fontSize: 11,
+                                        color: "#94a3b8",
+                                        marginTop: 2,
+                                      }}
+                                    >
+                                      {cell.registered}/{cell.total}
+                                    </div>
+                                  </td>
+                                );
+                              })}
+                              <td
+                                style={{
+                                  padding: "10px 12px",
+                                  textAlign: "center",
+                                  background: "#eef2ff",
+                                  fontWeight: 700,
+                                  color: "#1e293b",
+                                }}
+                              >
+                                <div style={{ fontSize: 14 }}>{rowRate}%</div>
+                                <div
+                                  style={{
+                                    fontSize: 11,
+                                    color: "#64748b",
+                                    fontWeight: 500,
+                                    marginTop: 2,
+                                  }}
+                                >
+                                  {rowReg}/{rowTotal}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                    <div
+                      style={{
+                        marginTop: 10,
+                        fontSize: 12,
+                        color: "#94a3b8",
+                        textAlign: "right",
+                      }}
+                    >
+                      셀 색이 진할수록 등록률 높음 · 표기 = 등록률 % (등록/전체)
+                    </div>
                   </div>
                 )}
               </StatsPanel>
