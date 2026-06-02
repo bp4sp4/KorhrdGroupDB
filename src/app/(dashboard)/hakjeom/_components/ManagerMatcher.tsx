@@ -120,8 +120,11 @@ export default function ManagerMatcher({ data }: { data: SegmentRecord[] }) {
     ? activeProfile.map(([, v]) => v).join(" · ")
     : "전체 리드";
 
-  const setAxis = (axis: AxisKey, val: string) =>
-    setProfile((p) => ({ ...p, [axis]: val }));
+  const hasFilter = activeProfile.length > 0;
+  // 칩 클릭: 같은 값을 다시 누르면 '전체'로 해제, 아니면 해당 값 선택
+  const pickAxis = (axis: AxisKey, val: string) =>
+    setProfile((p) => ({ ...p, [axis]: p[axis] === val ? ALL : val }));
+  const reset = () => setProfile({});
 
   const maxRate = Math.max(...rows.map((r) => r.rate), 1);
 
@@ -129,39 +132,57 @@ export default function ManagerMatcher({ data }: { data: SegmentRecord[] }) {
     <div>
       {/* 유형 선택 */}
       <div className={styles.selectorBar}>
-        <div className={styles.selectorLabel}>리드 유형 선택</div>
-        <div className={styles.selectorRow}>
-          {AXES.map((a) => (
-            <div key={a.key} className={styles.selectField}>
-              <label className={styles.selectFieldLabel}>{a.label}</label>
-              <select
-                className={styles.select}
-                value={profile[a.key] ?? ALL}
-                onChange={(e) => setAxis(a.key, e.target.value)}
-              >
-                <option value={ALL}>전체</option>
-                {axisOptions[a.key].map((v) => (
-                  <option key={v} value={v}>
+        <div className={styles.selectorHead}>
+          <div className={styles.selectorLabel}>리드 유형 선택</div>
+          <button
+            type="button"
+            className={styles.resetBtn}
+            onClick={reset}
+            disabled={!hasFilter}
+          >
+            ↺ 리셋
+          </button>
+        </div>
+
+        {AXES.map((a) => {
+          const cur = profile[a.key] ?? ALL;
+          return (
+            <div key={a.key} className={styles.axisGroup}>
+              <div className={styles.axisName}>{a.label}</div>
+              <div className={styles.chipRow}>
+                <button
+                  type="button"
+                  className={`${styles.chip} ${cur === ALL ? styles.chipOn : ""}`}
+                  onClick={() => setProfile((p) => ({ ...p, [a.key]: ALL }))}
+                >
+                  전체
+                </button>
+                {axisOptions[a.key].slice(0, 8).map((v) => (
+                  <button
+                    key={v}
+                    type="button"
+                    className={`${styles.chip} ${cur === v ? styles.chipOn : ""}`}
+                    onClick={() => pickAxis(a.key, v)}
+                  >
                     {v}
-                  </option>
+                  </button>
                 ))}
-              </select>
+              </div>
             </div>
-          ))}
-          <div className={styles.selectField}>
-            <label className={styles.selectFieldLabel}>
-              담당자 최소 표본 {minSample}건
-            </label>
-            <input
-              type="range"
-              min={5}
-              max={60}
-              step={5}
-              value={minSample}
-              onChange={(e) => setMinSample(Number(e.target.value))}
-              className={styles.slider}
-            />
-          </div>
+          );
+        })}
+
+        <div className={styles.axisGroup}>
+          <div className={styles.axisName}>담당자 최소 표본 {minSample}건</div>
+          <input
+            type="range"
+            min={5}
+            max={60}
+            step={5}
+            value={minSample}
+            onChange={(e) => setMinSample(Number(e.target.value))}
+            className={styles.slider}
+          />
         </div>
       </div>
 

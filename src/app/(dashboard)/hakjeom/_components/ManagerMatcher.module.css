@@ -8,47 +8,94 @@
   margin-bottom: 14px;
 }
 
+.selectorHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
 .selectorLabel {
   font-size: 12px;
   font-weight: 700;
   color: #475569;
-  margin-bottom: 10px;
 }
 
-.selectorRow {
+.resetBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  border: 1px solid #d8dee6;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.resetBtn:hover:not(:disabled) {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.resetBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.axisGroup {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.axisGroup + .axisGroup {
+  border-top: 1px solid #eef2f6;
+}
+
+.axisName {
+  flex: 0 0 88px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  padding-top: 7px;
+}
+
+.chipRow {
   display: flex;
   flex-wrap: wrap;
-  gap: 14px 18px;
-  align-items: flex-end;
-}
-
-.selectField {
-  display: flex;
-  flex-direction: column;
   gap: 6px;
 }
 
-.selectFieldLabel {
-  font-size: 12px;
-  font-weight: 600;
-  color: #64748b;
-}
-
-.select {
-  min-width: 130px;
-  padding: 8px 12px;
+.chip {
+  padding: 6px 13px;
   border: 1px solid #d8dee6;
-  border-radius: 8px;
+  border-radius: 999px;
   background: #fff;
   font-size: 13px;
   font-weight: 600;
-  color: #1e293b;
+  color: #64748b;
   cursor: pointer;
+  transition:
+    background 0.12s,
+    border-color 0.12s,
+    color 0.12s;
 }
 
-.select:focus {
-  outline: none;
+.chip:hover {
+  border-color: #94a3b8;
+}
+
+.chipOn {
+  background: #2563eb;
   border-color: #2563eb;
+  color: #fff;
 }
 
 .slider {
