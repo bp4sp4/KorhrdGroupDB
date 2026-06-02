@@ -321,6 +321,7 @@ export default function AdminAttendancePage() {
   }, [selectedId, fetchRecords]);
 
   // Supabase Realtime — 변경 시 요약 + 상세 동시 새로고침
+  // + 안전장치로 30초마다 가벼운 폴링 (Realtime 연결 실패 시 대비)
   useEffect(() => {
     const supabase = createClient();
     const channel = supabase
@@ -334,10 +335,23 @@ export default function AdminAttendancePage() {
         },
       )
       .subscribe((status, err) => {
-        if (err) console.log("[admin attendance] subscribe error:", err);
+        if (err) {
+          console.log("[admin attendance] subscribe error:", err);
+        }
+        if (status === "SUBSCRIBED") {
+          console.log("[admin attendance] Realtime 구독 시작");
+        } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+          console.log("[admin attendance] Realtime 연결 실패:", status);
+        }
       });
+    // 폴링 fallback (Realtime 끊겨도 30초 안에 갱신)
+    const pollTimer = setInterval(() => {
+      fetchEmployees();
+      if (selectedId) fetchRecords(selectedId);
+    }, 30000);
     return () => {
       supabase.removeChannel(channel);
+      clearInterval(pollTimer);
     };
   }, [fetchEmployees, fetchRecords, selectedId]);
 
