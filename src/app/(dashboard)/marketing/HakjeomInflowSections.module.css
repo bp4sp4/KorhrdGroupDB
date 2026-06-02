@@ -1,0 +1,64 @@
+/* 학점은행제 대시보드 — 유입경로/시간패턴/맘카페 섹션 */
+.wrap {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+/* 시간 패턴(2번째)은 가로로 넓게 한 줄 차지 */
+.wrap > .card:nth-child(2) {
+  grid-column: 1 / -1;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #eef1f4;
+  border-radius: 14px;
+  padding: 18px 20px;
+}
+
+.cardHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.cardTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: #191f28;
+}
+
+.cardSub {
+  font-size: 12px;
+  font-weight: 600;
+  color: #8b95a1;
+}
+
+.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 160px;
+  color: #b0b8c1;
+  font-size: 13px;
+}
+
+.loading {
+  margin-top: 16px;
+  padding: 32px;
+  text-align: center;
+  color: #8b95a1;
+  font-size: 13px;
+}
+
+@media (max-width: 900px) {
+  .wrap {
+    grid-template-columns: 1fr;
+  }
+  .wrap > .card:nth-child(2) {
+    grid-column: auto;
+  }
+}

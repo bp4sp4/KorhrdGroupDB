@@ -9,6 +9,7 @@ import {
   XAxis, YAxis, Tooltip, CartesianGrid,
 } from 'recharts'
 import type { DashboardResponse } from '@/app/api/marketing/dashboard-stats/route'
+import HakjeomInflowSections from './HakjeomInflowSections'
 import styles from './DashboardTab.module.css'
 
 interface DashboardTabProps {
@@ -126,6 +127,9 @@ export default function DashboardTab({ division = 'nms', divisionLabel }: Dashbo
     if (!data) return []
     return data.daily.map((p) => ({ date: p.date, label: shortDateLabel(p.date), value: p.inquiries }))
   }, [data])
+
+  // 학점은행제 유입/시간/맘카페 섹션에 넘길 선택 기간
+  const range = useMemo(() => buildRange(preset), [preset])
 
   return (
     <div className={styles.wrap}>
@@ -337,6 +341,11 @@ export default function DashboardTab({ division = 'nms', divisionLabel }: Dashbo
 
       {!error && !data && !loading && (
         <div className={styles.chart_empty}>{divisionLabel ?? ''} 데이터를 불러오는 중...</div>
+      )}
+
+      {/* 학점은행제 전용 — 상담 유입 경로 / 시간 패턴 / 맘카페 */}
+      {division === 'nms' && !error && (
+        <HakjeomInflowSections start={range.start} end={range.end} />
       )}
     </div>
   )
