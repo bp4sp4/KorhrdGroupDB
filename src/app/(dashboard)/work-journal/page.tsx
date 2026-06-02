@@ -911,6 +911,67 @@ export default function WorkJournalPage() {
             </div>
           )}
 
+          {/* 학사팀 — 이슈 및 요청사항 (이번주 목표 바 옆 절반) */}
+          {isAcademic && (
+            <div className={styles.issuesBar}>
+              <div className={styles.weeklyGoalLeft}>
+                <span className={styles.weeklyGoalTitle}>이슈 및 요청사항</span>
+                <button
+                  type="button"
+                  className={styles.weeklyGoalSettingBtn}
+                  onClick={() => addRow("issues")}
+                  title="이슈 추가"
+                >
+                  <Plus size={14} />
+                  <span>추가</span>
+                </button>
+              </div>
+              <div className={styles.issuesBarList}>
+                {issues.length === 0 ? (
+                  <span className={styles.weeklyGoalEmpty}>
+                    이슈가 없습니다. &quot;추가&quot; 버튼으로 입력하세요.
+                  </span>
+                ) : (
+                  issues.map((row) => (
+                    <div key={row.id} className={styles.issueRow}>
+                      <div className={styles.issueRowMain}>
+                        <div className={styles.issueField}>
+                          <input
+                            type="text"
+                            className={styles.issueFieldInput}
+                            placeholder="이슈 내용을 작성해주세요."
+                            value={row.category}
+                            onChange={(e) =>
+                              updateRow("issues", row.id, {
+                                category: e.target.value,
+                              })
+                            }
+                          />
+                        </div>
+                        <div className={`${styles.issueField} ${styles.issueFieldBorderless}`}>
+                          <input
+                            type="text"
+                            className={styles.issueFieldInput}
+                            placeholder="조치·요청 사항을 작성해주세요."
+                            value={row.detail}
+                            onChange={(e) =>
+                              updateRow("issues", row.id, {
+                                detail: e.target.value,
+                              })
+                            }
+                          />
+                        </div>
+                      </div>
+                      <DeleteButton
+                        onClick={() => removeRow("issues", row.id)}
+                      />
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
           {/* 4 stat 합쳐진 하나의 카드 (mock 데이터) — 학사팀은 stats 숨김 */}
           {!isAcademic && (
           <div className={styles.statGroup}>
@@ -1237,9 +1298,7 @@ export default function WorkJournalPage() {
               </button>
             </div>
             <div className={styles.journalScroll}>
-              {/* 오전·오후 — 학사팀은 숨김 (이슈 및 요청사항만 사용) */}
-              {!isAcademic && (
-                <>
+              {/* 오전 / 오후 — 모든 팀 (학사팀도 표시, 이슈 및 요청사항은 상단으로 이동) */}
               {/* 오전 */}
               <div
                 className={`${styles.sectionDropZone} ${dropTarget?.section === "morning" ? styles.sectionDropZoneActive : ""}`}
@@ -1473,73 +1532,6 @@ export default function WorkJournalPage() {
                   </>
                 )}
               </div>
-                </>
-              )}
-
-              {/* 이슈 및 요청사항 — 학사팀 전용 */}
-              {isAcademic && (
-                <div className={styles.sectionDropZone}>
-                  <div
-                    className={styles.sectionTitle}
-                    onClick={() => setIssuesOpen((v) => !v)}
-                  >
-                    <span>이슈 및 요청사항</span>
-                    <span className={styles.sectionTitleArrow}>
-                      {issuesOpen ? (
-                        <ChevronUp size={14} />
-                      ) : (
-                        <ChevronDown size={14} />
-                      )}
-                    </span>
-                  </div>
-                  {issuesOpen && (
-                    <>
-                      {issues.map((row) => (
-                        <div key={row.id} className={styles.issueRow}>
-                          <div className={styles.issueRowMain}>
-                            <div className={styles.issueField}>
-                              <input
-                                type="text"
-                                className={styles.issueFieldInput}
-                                placeholder="이슈 내용을 작성해주세요."
-                                value={row.category}
-                                onChange={(e) =>
-                                  updateRow("issues", row.id, {
-                                    category: e.target.value,
-                                  })
-                                }
-                              />
-                            </div>
-                            <div className={`${styles.issueField} ${styles.issueFieldBorderless}`}>
-                              <input
-                                type="text"
-                                className={styles.issueFieldInput}
-                                placeholder="조치·요청 사항을 작성해주세요."
-                                value={row.detail}
-                                onChange={(e) =>
-                                  updateRow("issues", row.id, {
-                                    detail: e.target.value,
-                                  })
-                                }
-                              />
-                            </div>
-                          </div>
-                          <DeleteButton
-                            onClick={() => removeRow("issues", row.id)}
-                          />
-                        </div>
-                      ))}
-                      <button
-                        type="button"
-                        className={styles.addBtn}
-                        onClick={() => addRow("issues")}
-                      >
-                        <Plus size={12} /> 추가
-                      </button>
-                    </>
-                  )}
-                </div>
-              )}
             </div>
           </section>
 

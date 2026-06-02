@@ -95,17 +95,44 @@
 }
 
 /* ─── 학사팀 — 이번주 목표 바 (topRow 안, dateCard 옆) ───────── */
+/* 학사팀일 때는 우측을 weeklyGoalBar + issuesBar 두 칸으로 나눠 사용 */
 .weeklyGoalBar {
   display: flex;
   padding: 16px;
   align-items: flex-start;
   gap: 16px;
-  flex: 1 0 0;
+  flex: 1 1 0;
   align-self: stretch;
   border-radius: 8px;
   border: 1px solid #e6e7eb;
   background: #fff;
   min-width: 0;
+}
+
+/* ─── 학사팀 — 이슈 및 요청사항 바 (이번주 목표 바 옆 절반) ───── */
+.issuesBar {
+  display: flex;
+  padding: 16px;
+  align-items: flex-start;
+  gap: 16px;
+  flex: 1 1 0;
+  align-self: stretch;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  min-width: 0;
+}
+
+/* 이슈 리스트 (우측) — 카드처럼 세로로 쌓이게 */
+.issuesBarList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1 1 0;
+  align-self: stretch;
+  min-width: 0;
+  max-height: 140px;
+  overflow-y: auto;
 }
 
 /* 좌측 — 제목 + 목표 설정 버튼 */
