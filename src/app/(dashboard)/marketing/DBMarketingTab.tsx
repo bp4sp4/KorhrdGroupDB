@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef, KeyboardEvent, useMemo } from 'react'
 import * as XLSX from 'xlsx'
 import type { ChannelStatItem } from '@/app/api/marketing/channel-stats/route'
+import ValidDBTab from './ValidDBTab'
 import styles from './DBMarketingTab.module.css'
 
 // ─── 커스텀 Select ────────────────────────────────────────────────────────────
@@ -447,6 +448,17 @@ export default function DBMarketingTab({ division = 'nms', divisionLabel }: DBMa
       <p className={styles.hint}>
         * 광고비 셀을 클릭하면 수기 입력할 수 있습니다. Enter 또는 포커스 이탈 시 저장됩니다.
       </p>
+
+      {/* 유효DB — 채널별 성과와 같은 월 기준으로 바로 아래에 표시 */}
+      <div className={styles.valid_section}>
+        <div className={styles.valid_header}>
+          <h2 className={styles.valid_title}>유효DB</h2>
+          <p className={styles.valid_desc}>
+            수신거부·잘못된 번호 제외, 이름+전화 중복은 1건만 집계
+          </p>
+        </div>
+        <ValidDBTab division={division} divisionLabel={divisionLabel} controlledMonth={selectedMonth} />
+      </div>
     </div>
   )
 }

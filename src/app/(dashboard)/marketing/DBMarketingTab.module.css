@@ -402,3 +402,30 @@
   margin: 0;
   padding: 0 4px;
 }
+
+/* ─── 유효DB 섹션 (채널별 성과 아래) ─────────────────────────── */
+.valid_section {
+  margin-top: 16px;
+  padding-top: 24px;
+  border-top: 1px solid #e5e8eb;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.valid_header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 4px;
+}
+.valid_title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #191f28;
+  margin: 0;
+}
+.valid_desc {
+  font-size: 12px;
+  color: #8b95a1;
+  margin: 0;
+}
