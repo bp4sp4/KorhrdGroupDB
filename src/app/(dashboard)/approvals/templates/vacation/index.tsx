@@ -140,7 +140,7 @@ export function VacationBody({ content, onChange }: DocBodyProps) {
               </strong>
             </div>
           )}
-          {deduction === 0 && vacationType && (
+          {vacationType && vacationType !== '연차' && !isHalfDay && (
             <div className={styles.balance_hint}>
               {vacationType}은(는) 휴가 일수가 차감되지 않습니다.
             </div>
