@@ -7,6 +7,11 @@ import {
   kstDateAt,
   WORK_START_HOUR,
 } from "@/lib/attendance";
+import {
+  expandLeaveCredit,
+  isVacationDocType,
+  leaveCreditsFromTransaction,
+} from "@/lib/leave/workCredit";
 
 // GET /api/admin/attendance/summary?month=YYYY-MM
 // 해당 월의 직원별 출퇴근 월간 요약 반환
@@ -121,6 +126,90 @@ export async function GET(request: NextRequest) {
     if (isInvalidRecord(r.date, r.clock_out_at, today)) {
       agg.invalid_count += 1;
     }
+  }
+
+  // ── 승인된 휴가를 근무로 인정 (출근일수 + 정규근무시간) ────────────────
+  // 연차/경조/예비군/병가 = 종일(1일·8h), 반차 = 0.5일·4h. 주말 제외.
+  // 같은 날짜에 실제 출퇴근 기록이 있으면(반차 후 오후출근 등) 중복 방지로 skip.
+  const recordedDays = new Set(
+    (records ?? []).map((r) => `${r.user_id}|${r.date}`),
+  );
+
+  const ensureAgg = (userId: number) => {
+    let agg = aggMap.get(userId);
+    if (!agg) {
+      agg = {
+        user_id: userId,
+        days_worked: 0,
+        total_work_minutes: 0,
+        total_overtime_minutes: 0,
+        late_count: 0,
+        invalid_count: 0,
+      };
+      aggMap.set(userId, agg);
+    }
+    return agg;
+  };
+
+  // 휴가 시작일이 to 이전이고 종료일이 from 이후인(겹치는) 승인 휴가신청서
+  const { data: leaves } = await supabaseAdmin
+    .from("approvals")
+    .select("applicant_id, document_type, content")
+    .eq("status", "APPROVED")
+    .ilike("document_type", "%휴가%")
+    .lte("content->>vacation_start", to)
+    .gte("content->>vacation_end", from);
+
+  // user별 휴가 인정 처리된 날짜 (중복 방지)
+  const creditedByUser = new Map<number, Set<string>>();
+  const creditLeaveDay = (userId: number, cr: { date: string; days: number; minutes: number }) => {
+    if (cr.date < from || cr.date > to) return;
+    if (recordedDays.has(`${userId}|${cr.date}`)) return;
+    let cset = creditedByUser.get(userId);
+    if (!cset) {
+      cset = new Set();
+      creditedByUser.set(userId, cset);
+    }
+    if (cset.has(cr.date)) return;
+    cset.add(cr.date);
+    const agg = ensureAgg(userId);
+    agg.days_worked += cr.days;
+    agg.total_work_minutes += cr.minutes;
+  };
+
+  for (const lv of leaves ?? []) {
+    if (!isVacationDocType(lv.document_type)) continue;
+    const applicantId = Number(lv.applicant_id);
+    if (!Number.isFinite(applicantId)) continue;
+    const c = (lv.content ?? {}) as {
+      vacation_type?: string | null;
+      vacation_start?: string | null;
+      vacation_end?: string | null;
+    };
+    const credits = expandLeaveCredit(
+      c.vacation_type,
+      c.vacation_start,
+      c.vacation_end,
+    );
+    for (const cr of credits) creditLeaveDay(applicantId, cr);
+  }
+
+  // 결재 없이 leave_transactions 에만 있는 차감(관리자 수동 차감 등)도 인정 — reason 파싱
+  const createdLb = new Date(`${from}T00:00:00Z`);
+  createdLb.setUTCDate(createdLb.getUTCDate() - 90);
+  const { data: leaveTxs } = await supabaseAdmin
+    .from("leave_transactions")
+    .select("user_id, delta, reason, created_at")
+    .is("approval_id", null)
+    .lte("delta", 0)
+    .gte("created_at", createdLb.toISOString())
+    .limit(5000);
+
+  for (const tx of leaveTxs ?? []) {
+    const uid = Number(tx.user_id);
+    if (!Number.isFinite(uid)) continue;
+    const credits = leaveCreditsFromTransaction(tx.reason, tx.created_at);
+    for (const cr of credits) creditLeaveDay(uid, cr);
   }
 
   const summaries = (users ?? []).map((u) => {

@@ -11,6 +11,7 @@ interface UsageEntry {
   type_short: string;
   type_full: string;
   delta: number;
+  reason: string;
   created_at: string;
 }
 
@@ -176,6 +177,7 @@ export default function MyLeavePage() {
       days: u.delta > 0 ? u.delta : 0,
       dateStart: u.date,
       dateEnd: u.end || u.date,
+      reason: u.reason ?? "",
     }));
   }, [balance?.usage_list]);
 
@@ -499,6 +501,7 @@ interface PastItem {
   days: number;
   dateStart: string;
   dateEnd: string;
+  reason: string;
 }
 
 const PREVIEW_LIMIT = 5;
@@ -537,6 +540,9 @@ function TimelineList({ rows }: { rows: PastItem[] }) {
                 >
                   {weekday}요일
                 </span>
+                {r.reason && (
+                  <span className={styles.timelineReason}>{r.reason}</span>
+                )}
               </span>
               <span className={styles.timelineRight}>
                 {r.days > 0 ? `${r.days}일` : "-"}
@@ -623,6 +629,7 @@ function PastTimelineModal({
                 <tr>
                   <th>날짜</th>
                   <th>휴가 종류</th>
+                  <th>사유</th>
                   <th>일수</th>
                 </tr>
               </thead>
@@ -640,6 +647,7 @@ function PastTimelineModal({
                         <span className={styles.modalWeekday}>({weekday})</span>
                       </td>
                       <td>{r.type}</td>
+                      <td className={styles.modalReason}>{r.reason || "-"}</td>
                       <td>{r.days > 0 ? `${r.days}일` : "-"}</td>
                     </tr>
                   );

@@ -3,41 +3,6 @@ import { requireAuthFull } from '@/lib/auth/requireAuth'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { getAnnualGrant, parseJoinDate, birthdayBonus } from '@/lib/leave/seniority'
 
-// 생일 보너스 정책 도입일 (seniority.ts 와 동기화)
-const BIRTHDAY_BONUS_CUTOFF = new Date(2026, 4, 19)
-
-interface VirtualTx {
-  id: string
-  delta: number
-  reason: string
-  approval_id: string | null
-  created_at: string
-}
-
-function buildBirthdayBonusVirtualRows(
-  joined: Date | null,
-  birth: Date | null,
-  asOf: Date,
-): VirtualTx[] {
-  if (!joined || !birth) return []
-  const rows: VirtualTx[] = []
-  for (let year = joined.getFullYear(); year <= asOf.getFullYear(); year++) {
-    const bd = new Date(year, birth.getMonth(), birth.getDate())
-    if (bd < joined) continue
-    if (bd > asOf) continue
-    if (bd < BIRTHDAY_BONUS_CUTOFF) continue
-    const iso = `${bd.getFullYear()}-${String(bd.getMonth() + 1).padStart(2, '0')}-${String(bd.getDate()).padStart(2, '0')}`
-    rows.push({
-      id: `birthday-${year}`,
-      delta: 0.5,
-      reason: `${year}년 생일 자동 적립 (+0.5일)`,
-      approval_id: null,
-      created_at: `${iso}T00:00:00+09:00`,
-    })
-  }
-  return rows
-}
-
 // transactions.reason 에서 "{type} 사용 (YYYY-MM-DD~YYYY-MM-DD)" 파싱
 function parseUsageReason(
   reason: string,
@@ -85,6 +50,7 @@ export async function GET() {
     type_short: string
     type_full: string
     delta: number
+    reason: string
     created_at: string
   }
   const usageList: UsageEntry[] = []
@@ -95,9 +61,11 @@ export async function GET() {
     } else if (d < 0) {
       used += Math.abs(d)
     }
-    // 사용 이력(d <= 0)에서 reason 파싱 → 사용일자 목록
+    // 사용 이력(d <= 0)에서 reason 파싱 → 사용일자 목록 (사유 포함)
     if (d <= 0) {
-      const { date, end, type_full } = parseUsageReason((t.reason as string) ?? '')
+      const reasonStr = (t.reason as string) ?? ''
+      const createdAt = (t.created_at as string) ?? ''
+      const { date, end, type_full } = parseUsageReason(reasonStr)
       if (date && type_full) {
         usageList.push({
           date,
@@ -105,7 +73,20 @@ export async function GET() {
           type_short: shortenType(type_full),
           type_full,
           delta: Math.abs(d),
-          created_at: (t.created_at as string) ?? '',
+          reason: reasonStr,
+          created_at: createdAt,
+        })
+      } else if (d < 0) {
+        // 파싱되지 않는 수동 차감 (관리자 직접 조정 등) — 처리일 기준 + 사유 원문
+        const dateOnly = createdAt.slice(0, 10)
+        usageList.push({
+          date: dateOnly,
+          end: dateOnly,
+          type_short: '휴가 사용',
+          type_full: '휴가 사용',
+          delta: Math.abs(d),
+          reason: reasonStr,
+          created_at: createdAt,
         })
       }
     }
@@ -125,11 +106,5 @@ export async function GET() {
     joined_at: (hr?.joined_at as string | null) ?? null,
     birth_date: (hr?.birth_date as string | null) ?? null,
     usage_list: usageList,
-    transactions: [
-      ...(transactions ?? []).slice(0, 20),
-      ...buildBirthdayBonusVirtualRows(joinedDate, birthDate, today),
-    ].sort((a, b) =>
-      String(b.created_at ?? '').localeCompare(String(a.created_at ?? '')),
-    ),
   })
 }

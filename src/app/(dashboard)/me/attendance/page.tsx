@@ -27,6 +27,19 @@ interface AttendanceRec {
   is_invalid: boolean;
 }
 
+interface LeaveDay {
+  date: string;
+  leave_type: string;
+  minutes: number;
+}
+
+interface LeaveUsage {
+  start: string;
+  end: string;
+  type: string;
+  days: number;
+}
+
 type RangeKey = "week" | "month" | "year";
 
 // ─── 유틸 ────────────────────────────────────────────────────────────────
@@ -87,6 +100,16 @@ function ymd(d: Date): string {
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const da = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${da}`;
+}
+
+// 휴가 기간 표기 — 시작=종료면 단일, 아니면 범위
+function fmtLeaveRange(start: string, end: string): string {
+  const fmt = (s: string) => {
+    const [, m, d] = s.split("-").map(Number);
+    return `${m}월 ${d}일`;
+  };
+  if (!end || end === start) return fmt(start);
+  return `${fmt(start)} ~ ${fmt(end)}`;
 }
 
 // 이번 달 전체 일 (YYYY-MM-DD[])
@@ -259,6 +282,8 @@ export default function MyAttendancePage() {
 
   const [range, setRange] = useState<RangeKey>("week");
   const [records, setRecords] = useState<AttendanceRec[]>([]);
+  const [leaves, setLeaves] = useState<LeaveDay[]>([]);
+  const [leaveUsages, setLeaveUsages] = useState<LeaveUsage[]>([]);
   const [userName, setUserName] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -300,6 +325,8 @@ export default function MyAttendancePage() {
       if (attRes.ok) {
         const data = await attRes.json();
         setRecords(data.records ?? []);
+        setLeaves(data.leaves ?? []);
+        setLeaveUsages(data.leave_usages ?? []);
         if (range === "week") {
           const rs = (data.records ?? []) as AttendanceRec[];
           setWeekStat({
@@ -358,6 +385,17 @@ export default function MyAttendancePage() {
     [records, today],
   );
 
+  // 휴가 인정(날짜별) 맵 + 범위 내 휴가 인정 총 분
+  const leaveMap = useMemo(() => {
+    const m = new Map<string, { type: string; minutes: number }>();
+    for (const l of leaves) m.set(l.date, { type: l.leave_type, minutes: l.minutes });
+    return m;
+  }, [leaves]);
+  const leaveMinutes = useMemo(
+    () => leaves.reduce((s, l) => s + (l.minutes ?? 0), 0),
+    [leaves],
+  );
+
   const handleCheckIn = async () => {
     if (submitting) return;
     setSubmitting(true);
@@ -406,7 +444,9 @@ export default function MyAttendancePage() {
   const remainingText = remainingUntilOff();
 
   // ─── 통계 (range 적용) ──────────────────────────────────────────────
-  const totalWork = records.reduce((s, r) => s + (r.work_minutes ?? 0), 0);
+  // 근무시간: 실제 근무 + 휴가 근무 인정분
+  const totalWork =
+    records.reduce((s, r) => s + (r.work_minutes ?? 0), 0) + leaveMinutes;
   const totalOt = records.reduce((s, r) => s + (r.overtime_minutes ?? 0), 0);
   const avgIn = avgClockInString(records);
   const late = lateCount(records);
@@ -445,6 +485,20 @@ export default function MyAttendancePage() {
     const isToday = date === today;
 
     if (!rec) {
+      // 실제 기록이 없는 날 — 휴가 인정이 있으면 휴가 막대로 표시
+      const lv = leaveMap.get(date);
+      if (lv) {
+        const workPct = Math.min(100, Math.round((lv.minutes / dailyMax) * 100));
+        return {
+          label,
+          hoursLabel: lv.type.startsWith("반차") ? "반차" : lv.type,
+          workPct,
+          otPct: 0,
+          breakPct: 0,
+          state: isToday ? "today" : "normal",
+          tooltip: `${lv.type} · ${shortHM(lv.minutes)} 인정`,
+        };
+      }
       if (isWeekend || isFuture) {
         return {
           label,
@@ -524,7 +578,11 @@ export default function MyAttendancePage() {
     const monthLabels = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"];
     bars = months.map((ym, i) => {
       const monthRecs = records.filter((r) => r.date.startsWith(ym));
-      const w = monthRecs.reduce((s, r) => s + (r.work_minutes ?? 0), 0);
+      const monthLeaveMin = leaves
+        .filter((l) => l.date.startsWith(ym))
+        .reduce((s, l) => s + (l.minutes ?? 0), 0);
+      const w =
+        monthRecs.reduce((s, r) => s + (r.work_minutes ?? 0), 0) + monthLeaveMin;
       const ot = monthRecs.reduce((s, r) => s + (r.overtime_minutes ?? 0), 0);
       const totalMin = w + ot;
       // 월간 최대 = 30일 × 480 = 14400분
@@ -533,7 +591,7 @@ export default function MyAttendancePage() {
       const otPct = totalMin > 0 ? Math.round((ot / maxMin) * 100) : 0;
       const isCurrent = ym === today.slice(0, 7);
       const isFuture = ym > today.slice(0, 7);
-      if (monthRecs.length === 0) {
+      if (monthRecs.length === 0 && monthLeaveMin === 0) {
         return {
           label: monthLabels[i],
           hoursLabel: isFuture ? "예정" : "-",
@@ -1033,6 +1091,31 @@ export default function MyAttendancePage() {
               )}
             </div>
           </section>
+
+          {/* 휴가 사용 내역 — 해당 기간에 사용한 휴가 (근무 인정) */}
+          {leaveUsages.length > 0 && (
+            <section className={styles.week}>
+              <div className={styles.panelHead}>
+                <div>
+                  <div className={styles.panelT}>휴가 사용 내역</div>
+                  <div className={styles.panelS}>
+                    {rangeRangeLabel(range)} · {leaveUsages.length}건 · 근무 인정 반영
+                  </div>
+                </div>
+              </div>
+              <div className={styles.leaveList}>
+                {leaveUsages.map((u, i) => (
+                  <div key={i} className={styles.leaveItem}>
+                    <span className={styles.leaveDate}>
+                      {fmtLeaveRange(u.start, u.end)}
+                    </span>
+                    <span className={styles.leaveType}>{u.type}</span>
+                    <span className={styles.leaveDays}>{u.days}일 인정</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
 
           {loading && (
             <div style={{ textAlign: "center", color: "#6b7684", padding: 20 }}>

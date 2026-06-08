@@ -532,9 +532,19 @@
   background: #f2f4f6;
   color: #4e5968;
 }
+.chipLeave {
+  background: #e8f3ff;
+  color: #3182f6;
+}
 .chipEditing {
   background: #f1ecff;
   color: #6d28d9;
+}
+
+/* 휴가 인정 행 — 옅은 파랑 배경으로 구분, 클릭(편집) 불가 */
+.dayRowLeave {
+  background: #f7fbff;
+  cursor: default;
 }
 
 .pager {

@@ -493,6 +493,22 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* ─── 지난 휴가 — 사유 표시 ──────────────────────────────── */
+.timelineReason {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: #8b95a1;
+  line-height: 1.4;
+  word-break: break-all;
+}
+.modalReason {
+  color: #6b7684;
+  font-size: 12px;
+  max-width: 280px;
+  word-break: break-all;
+}
+
 /* ─── Monthly Pattern ──────────────────────────────────── */
 .monthlyBars {
   display: flex;

@@ -264,7 +264,6 @@
 }
 
 .punch {
-  background: #f6f8fa;
   border: 1px solid #eef0f3;
   border-radius: 18px;
   padding: 16px 18px;
@@ -321,7 +320,7 @@
   gap: 10px;
   padding: 14px 18px;
   border-radius: 14px;
-  background: #f6f8fa;
+
   border: 1px solid #eef0f3;
   color: #4e5968;
 }
@@ -354,7 +353,6 @@
 }
 
 .stat {
-  background: #f6f8fa;
   border-radius: 18px;
   padding: 18px 20px;
   display: flex;
@@ -667,6 +665,42 @@
   color: #6b7684;
   font-weight: 500;
   margin-top: 3px;
+}
+
+/* ─── 휴가 사용 내역 ─────────────────────────────────────── */
+.leaveList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.leaveItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid #eef0f3;
+  border-radius: 12px;
+  background: #f9fbff;
+}
+.leaveDate {
+  font-size: 13px;
+  font-weight: 600;
+  color: #191f28;
+  min-width: 150px;
+}
+.leaveType {
+  font-size: 12px;
+  font-weight: 600;
+  color: #3182f6;
+  background: #e8f3ff;
+  padding: 2px 10px;
+  border-radius: 6px;
+}
+.leaveDays {
+  margin-left: auto;
+  font-size: 12px;
+  color: #6b7684;
+  font-variant-numeric: tabular-nums;
 }
 
 .more {

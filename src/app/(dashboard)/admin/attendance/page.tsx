@@ -17,7 +17,7 @@ interface Employee {
   missedCount: number;
 }
 
-type DayStatus = "normal" | "late" | "ot" | "miss" | "halfday" | "off";
+type DayStatus = "normal" | "late" | "ot" | "miss" | "halfday" | "off" | "leave";
 
 interface DayRecord {
   recordId: number; // DB id
@@ -33,6 +33,7 @@ interface DayRecord {
   regularLabel?: string;
   otLabel?: string;
   status: DayStatus;
+  leaveType?: string; // 휴가 행일 때 휴가 종류 (연차/반차 등)
 }
 
 // ─── 유틸 ────────────────────────────────────────────────────────────────
@@ -159,23 +160,41 @@ interface ApiDayRow {
   id: number;
   user_id: number;
   date: string;
-  clock_in_at: string;
+  clock_in_at: string | null;
   clock_out_at: string | null;
-  recognized_clock_in: string;
+  recognized_clock_in: string | null;
   recognized_clock_out: string | null;
   work_minutes: number;
   overtime_minutes: number;
   is_invalid: boolean;
+  is_leave?: boolean;
+  leave_type?: string | null;
   edited_by_admin: boolean;
   admin_note: string | null;
 }
 
 function toDayRecord(r: ApiDayRow): DayRecord {
   const { name: weekday, isWeekend } = weekdayLabel(r.date);
+
+  // 휴가(연차/반차 등) 인정 행 — 출퇴근 시각 없이 정규 인정시간만 표시
+  if (r.is_leave) {
+    return {
+      recordId: r.id,
+      employeeId: String(r.user_id),
+      date: r.date,
+      dayLabel: dayLabel(r.date),
+      weekday,
+      isWeekend,
+      regularLabel: fmtHM(r.work_minutes),
+      status: "leave",
+      leaveType: r.leave_type ?? "휴가",
+    };
+  }
+
   let status: DayStatus = "normal";
   if (r.is_invalid) status = "miss";
   else if (r.overtime_minutes > 0) status = "ot";
-  else if (isLate(r.clock_in_at)) status = "late";
+  else if (r.clock_in_at && isLate(r.clock_in_at)) status = "late";
   else if (r.work_minutes > 0 && r.work_minutes < 300) status = "halfday";
 
   return {
@@ -461,6 +480,7 @@ export default function AdminAttendancePage() {
       miss: "퇴근 미체크",
       halfday: "조퇴/반차",
       off: "휴무",
+      leave: "휴가",
     };
     const rows: (string | number)[][] = [
       ["날짜", "요일", "출근", "퇴근", "인정 출근", "인정 퇴근", "정규", "야근", "상태"],
@@ -905,6 +925,7 @@ const STATUS_LABEL: Record<DayStatus, { label: string; cls: string }> = {
   miss: { label: "미체크", cls: "chipMiss" },
   halfday: { label: "조퇴/반차", cls: "chipMutedBg" },
   off: { label: "휴무", cls: "chipMutedBg" },
+  leave: { label: "휴가", cls: "chipLeave" },
 };
 
 function DayRow({
@@ -913,10 +934,11 @@ function DayRow({
   record: DayRecord; editing: boolean; onClick: () => void;
 }) {
   const s = STATUS_LABEL[record.status];
+  const isLeave = record.status === "leave";
   return (
     <div
-      className={`${styles.dayRow} ${editing ? styles.dayRowEditing : ""} ${record.isWeekend ? styles.dayRowWeekend : ""}`}
-      onClick={onClick}
+      className={`${styles.dayRow} ${editing ? styles.dayRowEditing : ""} ${record.isWeekend ? styles.dayRowWeekend : ""} ${isLeave ? styles.dayRowLeave : ""}`}
+      onClick={isLeave ? undefined : onClick}
     >
       <div className="date">
         <div className="d">{record.dayLabel}</div>
@@ -937,7 +959,7 @@ function DayRow({
           <span className={`${styles.chip} ${styles.chipEditing}`}>수정중</span>
         ) : (
           <span className={`${styles.chip} ${styles[s.cls as keyof typeof styles] as string}`}>
-            {s.label}
+            {isLeave ? (record.leaveType ?? s.label) : s.label}
           </span>
         )}
       </div>
