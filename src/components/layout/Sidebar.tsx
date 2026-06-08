@@ -597,16 +597,17 @@ export default function Sidebar({
     if (userRole === "mini-admin") return;
 
     const fetchCount = () => {
-      fetch("/api/trash")
-        .then((r) => (r.ok ? r.json() : []))
-        .then((data: unknown[]) =>
-          setTrashCount(Array.isArray(data) ? data.length : 0),
+      // 개수만 요청 (전체 데이터 X) — Fast Data Transfer 절감
+      fetch("/api/trash?countOnly=1")
+        .then((r) => (r.ok ? r.json() : { count: 0 }))
+        .then((data: { count?: number }) =>
+          setTrashCount(typeof data?.count === "number" ? data.count : 0),
         )
         .catch(() => {});
     };
 
+    // 초기 1회 조회 후에는 Realtime 변경 이벤트로만 갱신 (5초 폴링 제거)
     fetchCount();
-    const interval = setInterval(fetchCount, 5000);
 
     const supabase = createClient();
     const tables = [
@@ -627,7 +628,6 @@ export default function Sidebar({
     channelRef.current = channel;
 
     return () => {
-      clearInterval(interval);
       if (channelRef.current) supabase.removeChannel(channelRef.current);
     };
   }, [userRole]);

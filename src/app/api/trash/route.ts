@@ -17,10 +17,33 @@ const TABLES = Object.keys(SOURCE_LABEL);
 
 // ─── GET: 휴지통 목록 전체 조회 ──────────────────────────────────────────────
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const { user: _user, errorResponse } = await requireAuth()
     if (errorResponse) return errorResponse
+
+    // 사이드바 배지용 — 전체 데이터 대신 개수만 반환 (Fast Data Transfer 절감)
+    const countOnly =
+      new URL(request.url).searchParams.get('countOnly') === '1'
+    if (countOnly) {
+      let total = 0
+      for (const table of TABLES) {
+        const { count } = await supabaseAdmin
+          .from(
+            table as
+              | 'hakjeom_consultations'
+              | 'private_cert_consultations'
+              | 'certificate_applications'
+              | 'agency_agreements'
+              | 'cert_students',
+          )
+          .select('id', { count: 'exact', head: true })
+          .not('deleted_at', 'is', null)
+        total += count ?? 0
+      }
+      return NextResponse.json({ count: total })
+    }
+
     const results: {
       id: string | number;
       source_table: string;

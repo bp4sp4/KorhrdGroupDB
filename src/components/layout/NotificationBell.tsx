@@ -433,7 +433,9 @@ export default function NotificationBell() {
 
   useEffect(() => {
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 15000);
+    // 새 알림은 Realtime(INSERT)으로 즉시 반영됨. 폴링은 읽음/삭제 동기화용 백업이라
+    // 간격을 60초로 늘려 Fast Data Transfer 절감 (기존 15초)
+    const interval = setInterval(fetchNotifications, 60000);
     const supabase = createClient();
     const channel = supabase
       .channel("notifications-realtime")
