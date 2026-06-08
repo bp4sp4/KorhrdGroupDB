@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { DragEvent as ReactDragEvent } from "react";
+import type { DragEvent as ReactDragEvent, ReactNode } from "react";
+import { useRouter } from "next/navigation";
+import Calendar, {
+  type CalendarEvent,
+} from "@/app/(dashboard)/calendar/Calendar";
+import { HakjeomDetailPanel } from "@/app/(dashboard)/hakjeom/_detail/HakjeomDetailPanel";
+import type { HakjeomConsultation } from "@/app/(dashboard)/hakjeom/_types";
 import {
   ChevronDown,
   ChevronRight,
@@ -37,6 +43,273 @@ const BIZ_CATEGORY_OPTIONS = [
   "교육",
   "기타",
 ] as const;
+
+// ── 업무 센터(default) 상단 통계 카드 아이콘 ──────────────────
+const WcIconStar = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <path fillRule="evenodd" clipRule="evenodd" d="M10.9202 2.86868C11.0303 2.67984 11.1879 2.52316 11.3774 2.41426C11.5669 2.30536 11.7817 2.24805 12.0002 2.24805C12.2188 2.24805 12.4335 2.30536 12.623 2.41426C12.8125 2.52316 12.9702 2.67984 13.0802 2.86868L15.8752 7.66668L21.3032 8.84268C21.5167 8.88908 21.7144 8.99063 21.8764 9.13721C22.0384 9.2838 22.1592 9.47029 22.2267 9.67811C22.2942 9.88592 22.306 10.1078 22.261 10.3216C22.216 10.5354 22.1157 10.7337 21.9702 10.8967L18.2702 15.0377L18.8302 20.5627C18.8523 20.7802 18.817 20.9998 18.7277 21.1994C18.6384 21.399 18.4983 21.5717 18.3214 21.7002C18.1444 21.8288 17.9369 21.9086 17.7195 21.9319C17.502 21.9551 17.2823 21.9209 17.0822 21.8327L12.0002 19.5927L6.91823 21.8327C6.71815 21.9209 6.49842 21.9551 6.28098 21.9319C6.06355 21.9086 5.85601 21.8288 5.6791 21.7002C5.50219 21.5717 5.36209 21.399 5.2728 21.1994C5.1835 20.9998 5.14814 20.7802 5.17023 20.5627L5.73023 15.0377L2.03023 10.8977C1.88446 10.7347 1.78398 10.5363 1.73884 10.3224C1.6937 10.1085 1.70547 9.88641 1.77297 9.67844C1.84048 9.47046 1.96135 9.28383 2.12354 9.13718C2.28572 8.99053 2.48353 8.88898 2.69723 8.84268L8.12523 7.66668L10.9202 2.86868ZM12.0002 4.98768L9.68723 8.95968C9.59977 9.1096 9.48205 9.23967 9.34156 9.34159C9.20107 9.44352 9.04089 9.51506 8.87123 9.55168L4.37923 10.5247L7.44123 13.9517C7.67523 14.2137 7.78823 14.5617 7.75323 14.9107L7.29023 19.4837L11.4962 17.6297C11.655 17.5597 11.8267 17.5236 12.0002 17.5236C12.1738 17.5236 12.3454 17.5597 12.5042 17.6297L16.7102 19.4837L16.2472 14.9107C16.2296 14.738 16.2482 14.5635 16.3018 14.3984C16.3553 14.2333 16.4426 14.0812 16.5582 13.9517L19.6212 10.5247L15.1292 9.55168C14.9596 9.51506 14.7994 9.44352 14.6589 9.34159C14.5184 9.23967 14.4007 9.1096 14.3132 8.95968L12.0002 4.98768Z" fill="#8D99A5"/>
+  </svg>
+);
+const WcIconReg = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <g clipPath="url(#wc_clip_reg)">
+      <path fillRule="evenodd" clipRule="evenodd" d="M8.25146 3.94922C9.26311 3.94922 10.2514 4.25297 11.0884 4.82129C11.9253 5.38966 12.5727 6.19632 12.9458 7.13672C13.3188 8.07708 13.4008 9.10816 13.1811 10.0957C12.9615 11.0832 12.4498 11.9822 11.7134 12.6758L11.5024 12.874L11.7632 13.001C13.0577 13.6314 14.1588 14.596 14.9565 15.7949C15.7542 16.9937 16.2179 18.3837 16.2993 19.8213C16.3062 19.9425 16.2895 20.064 16.2495 20.1787C16.2095 20.2934 16.1477 20.3996 16.0669 20.4902C15.9862 20.5808 15.888 20.6542 15.7788 20.707C15.6695 20.7598 15.5504 20.7908 15.4292 20.7978C15.3079 20.8048 15.1855 20.788 15.0708 20.748C14.9562 20.708 14.8509 20.6452 14.7602 20.5644C14.6696 20.4836 14.5953 20.3858 14.5425 20.2764C14.4897 20.167 14.4586 20.048 14.4517 19.9267C14.3654 18.3402 13.675 16.8471 12.522 15.7539C11.3686 14.6605 9.83974 14.0501 8.25048 14.0488C6.66131 14.0501 5.13328 14.6606 3.97997 15.7539C2.82684 16.8471 2.13553 18.3402 2.04931 19.9267C2.04243 20.0479 2.01213 20.167 1.95946 20.2764C1.90668 20.3858 1.83234 20.4845 1.74169 20.5654C1.65119 20.6461 1.5456 20.708 1.43114 20.748C1.31654 20.7881 1.19492 20.8056 1.07372 20.7988C0.952459 20.7919 0.833519 20.7607 0.724112 20.708C0.614663 20.6552 0.515967 20.5819 0.435049 20.4912C0.354161 20.4006 0.292489 20.2944 0.252432 20.1797C0.212391 20.065 0.194769 19.9435 0.201651 19.8223C0.282853 18.3844 0.746739 16.994 1.54442 15.7949C2.34207 14.596 3.44506 13.6315 4.73974 13.001L5.00048 12.874L4.78954 12.6758C4.05307 11.9822 3.54145 11.0832 3.32177 10.0957C3.10213 9.10818 3.18408 8.07707 3.55712 7.13672C3.93022 6.19632 4.57758 5.38966 5.41454 4.82129C6.25148 4.25294 7.23979 3.94923 8.25146 3.94922ZM8.25536 5.79883C7.82934 5.78919 7.4057 5.86518 7.00927 6.02148C6.61274 6.17788 6.25062 6.41202 5.94579 6.70996C5.64111 7.00784 5.39924 7.36412 5.23388 7.75683C5.0686 8.14947 4.98306 8.57106 4.9829 8.99707C4.98279 9.42319 5.06778 9.84545 5.2329 10.2383C5.39806 10.6311 5.6403 10.9871 5.94482 11.2852C6.24949 11.5832 6.61088 11.818 7.00732 11.9746C7.40367 12.1312 7.82736 12.2066 8.25341 12.1973C9.08944 12.1788 9.88536 11.834 10.4702 11.2363C11.0551 10.6385 11.3831 9.83532 11.3833 8.99902C11.3835 8.16273 11.0557 7.35978 10.4712 6.76172C9.88664 6.16366 9.09142 5.81774 8.25536 5.79883Z" fill="#8D99A5"/>
+      <path d="M18.8755 0.199219C19.1207 0.199219 19.3563 0.296351 19.5298 0.469726C19.7032 0.643198 19.8013 0.878698 19.8013 1.12402V3.19922H21.8755C22.1207 3.19922 22.3563 3.29635 22.5298 3.46972C22.7032 3.6432 22.8013 3.8787 22.8013 4.12402C22.8013 4.36935 22.7032 4.60485 22.5298 4.77832C22.3563 4.95169 22.1207 5.04883 21.8755 5.04883H19.8013V7.12402C19.8013 7.36935 19.7032 7.60485 19.5298 7.77832C19.3563 7.95169 19.1207 8.04882 18.8755 8.04882C18.6304 8.04874 18.3955 7.95151 18.2222 7.77832C18.0487 7.60485 17.9507 7.36935 17.9507 7.12402V5.04883H15.8755C15.6304 5.04874 15.3955 4.95151 15.2222 4.77832C15.0487 4.60485 14.9507 4.36935 14.9507 4.12402C14.9507 3.8787 15.0487 3.6432 15.2222 3.46972C15.3955 3.29654 15.6304 3.1993 15.8755 3.19922H17.9507V1.12402C17.9507 0.878698 18.0487 0.643198 18.2222 0.469726C18.3955 0.296536 18.6304 0.1993 18.8755 0.199219Z" fill="#8D99A5"/>
+    </g>
+    <defs><clipPath id="wc_clip_reg"><rect width="24" height="24" fill="white"/></clipPath></defs>
+  </svg>
+);
+const WcIconNew = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <path d="M14.0062 9.94665C13.2538 10.699 12.2333 11.1217 11.1693 11.1217C10.1052 11.1217 9.08473 10.699 8.33233 9.94665C7.57992 9.19424 7.15723 8.17376 7.15723 7.1097C7.15723 6.04564 7.57992 5.02516 8.33233 4.27276C9.08473 3.52035 10.1052 3.09766 11.1693 3.09766C12.2333 3.09766 13.2538 3.52035 14.0062 4.27276C14.7586 5.02516 15.1813 6.04564 15.1813 7.1097C15.1813 8.17376 14.7586 9.19424 14.0062 9.94665Z" stroke="#8D99A5" strokeWidth="1.875" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M4.14844 19.1447V18.1417C4.14819 16.9571 4.44767 15.7917 5.01899 14.754C5.5903 13.7163 6.41489 12.84 7.41598 12.2067C8.41707 11.5734 9.56212 11.2037 10.7445 11.132C11.9269 11.0603 13.1083 11.2889 14.1785 11.7966M15.8185 15.5489L16.8606 13.3393C16.8888 13.2761 16.9347 13.2224 16.9927 13.1848C17.0507 13.1472 17.1184 13.1271 17.1876 13.1271C17.2567 13.1271 17.3244 13.1472 17.3825 13.1848C17.4405 13.2224 17.4864 13.2761 17.5146 13.3393L18.5577 15.5489L20.8877 15.906C21.1866 15.9511 21.3049 16.3362 21.0883 16.5569L19.4032 18.2751L19.8004 20.7034C19.8516 21.0153 19.5396 21.253 19.2718 21.1056L17.1876 19.9591L15.1033 21.1056C14.8355 21.253 14.5236 21.0153 14.5747 20.7044L14.9719 18.2751L13.2869 16.5569C13.0702 16.3362 13.1886 15.9511 13.4875 15.905L15.8185 15.5489Z" stroke="#8D99A5" strokeWidth="1.875" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+const WcIconHope = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <g clipPath="url(#wc_clip_hope)">
+      <path d="M16.5004 6.14908C17.3428 6.14971 18.1672 6.39479 18.873 6.85464C19.5787 7.31453 20.1357 7.9696 20.4765 8.7399C20.8173 9.51027 20.9273 10.3634 20.7929 11.195C20.6584 12.0265 20.2853 12.8012 19.7192 13.425L19.5859 13.5719L19.7636 13.6603C20.6588 14.1038 21.4545 14.7253 22.1015 15.4865C22.7484 16.2477 23.2334 17.1331 23.5268 18.088L23.5273 18.089C23.5787 18.2528 23.5859 18.4274 23.5483 18.5949C23.5105 18.7624 23.4292 18.9172 23.3124 19.0431C23.1957 19.169 23.0474 19.2615 22.8832 19.3117C22.719 19.3619 22.5441 19.3679 22.3769 19.3288C22.2097 19.2901 22.0554 19.2077 21.9301 19.0905C21.8048 18.9732 21.7126 18.8246 21.663 18.6603L21.6625 18.6593C21.3856 17.7652 20.8815 16.9578 20.1996 16.3166C19.5178 15.6753 18.6813 15.2217 17.7719 15.0002C17.559 14.9488 17.3692 14.8271 17.2338 14.6549C17.0985 14.4828 17.025 14.2699 17.0253 14.0509V13.5226C17.0253 13.3412 17.0758 13.1632 17.1713 13.0089C17.2668 12.8547 17.4039 12.7299 17.5663 12.6491C18.0511 12.4087 18.4406 12.0112 18.6713 11.5216C18.9019 11.032 18.9602 10.4787 18.8368 9.95181C18.7134 9.42479 18.4153 8.95463 17.9911 8.61832C17.567 8.28208 17.0416 8.09884 16.5004 8.09878C16.2418 8.09878 15.9938 7.99599 15.8109 7.81314C15.6282 7.6303 15.5253 7.38222 15.5253 7.12369C15.5254 6.86523 15.6282 6.61699 15.8109 6.43423C15.9938 6.25155 16.2419 6.14908 16.5004 6.14908Z" fill="#8D99A5"/>
+      <path fillRule="evenodd" clipRule="evenodd" d="M7.8085 3.16763C8.65047 3.09443 9.49753 3.23132 10.2733 3.56656C11.0493 3.90189 11.7301 4.42502 12.2538 5.08853C12.7775 5.75203 13.1279 6.53576 13.2738 7.36831C13.4196 8.20079 13.3561 9.05663 13.0893 9.85855C12.8223 10.6606 12.3602 11.3839 11.7445 11.963L11.5858 12.1125L11.7816 12.2072C12.955 12.7768 13.974 13.6211 14.7519 14.6681C15.5296 15.715 16.0433 16.9342 16.2499 18.2218C16.27 18.3483 16.2651 18.4777 16.2353 18.6022C16.2054 18.7267 16.1513 18.8443 16.0761 18.9479C16.0009 19.0514 15.9059 19.1393 15.7968 19.2062C15.6876 19.2731 15.5658 19.318 15.4394 19.338C15.313 19.3581 15.1839 19.3527 15.0595 19.3229C14.935 19.293 14.8174 19.239 14.7138 19.1637C14.6102 19.0885 14.5219 18.9936 14.455 18.8844C14.3881 18.7753 14.3437 18.6539 14.3236 18.5275C14.093 17.0829 13.3546 15.767 12.2416 14.8175C11.1286 13.8681 9.71335 13.3464 8.2504 13.3463C6.78747 13.3463 5.37223 13.8682 4.25918 14.8175C3.14619 15.767 2.40783 17.0824 2.17715 18.527C2.15702 18.6535 2.11228 18.7753 2.04532 18.8844C1.97832 18.9935 1.89016 19.0885 1.78653 19.1637C1.68291 19.2389 1.56529 19.2926 1.44082 19.3224C1.31625 19.3522 1.18694 19.3572 1.06045 19.3371C0.933986 19.3169 0.812659 19.2722 0.703517 19.2052C0.594371 19.1382 0.499417 19.0501 0.42422 18.9464C0.349064 18.8428 0.294828 18.7253 0.26504 18.6007C0.235287 18.4762 0.230258 18.3468 0.250392 18.2204C0.456277 16.9328 0.970098 15.7137 1.74795 14.6671C2.52586 13.6206 3.54502 12.777 4.71866 12.2086L4.91495 12.1139L4.75625 11.9645C4.24926 11.4876 3.8449 10.912 3.56875 10.2731C3.29264 9.63411 3.15018 8.94478 3.1503 8.24869C3.15025 7.40348 3.36043 6.57122 3.76162 5.8273C4.16287 5.0834 4.74283 4.45073 5.44913 3.98648C6.15548 3.52223 6.96642 3.24089 7.8085 3.16763ZM8.25381 5.09878C7.83441 5.0893 7.41703 5.16364 7.02676 5.31753C6.63655 5.47144 6.28087 5.70211 5.98086 5.99527C5.68086 6.28849 5.44203 6.63893 5.2792 7.02554C5.11641 7.41216 5.03276 7.82772 5.03262 8.24722C5.03252 8.66671 5.11616 9.0822 5.27872 9.4689C5.44132 9.85562 5.67956 10.2063 5.9794 10.4997C6.27931 10.7931 6.63506 11.0237 7.0253 11.1779C7.41553 11.332 7.83288 11.4064 8.25235 11.3971C9.07528 11.3788 9.85834 11.0392 10.434 10.4508C11.0096 9.86241 11.3322 9.07184 11.3324 8.24869C11.3325 7.4256 11.0103 6.63517 10.435 6.04654C9.85959 5.4579 9.07674 5.11744 8.25381 5.09878Z" fill="#8D99A5"/>
+    </g>
+    <defs><clipPath id="wc_clip_hope"><rect width="24" height="24" fill="white"/></clipPath></defs>
+  </svg>
+);
+const WcIconRank = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <path fillRule="evenodd" clipRule="evenodd" d="M18.7496 1.58594C18.9826 1.58594 19.2059 1.67857 19.3707 1.84333C19.5354 2.0081 19.6281 2.23141 19.6281 2.46443V3.83594H21.7496C22.1815 3.83594 22.5955 4.00764 22.9009 4.31306C23.2064 4.61847 23.3781 5.0325 23.3781 5.46443V6.96443C23.3781 7.99309 22.9696 8.97966 22.2422 9.70703C21.5148 10.4344 20.5282 10.8429 19.4996 10.8429H19.2238C18.2935 13.6156 15.8415 15.6928 12.8781 16.0389V20.6574H15.4282C15.6612 20.6574 15.8845 20.75 16.0492 20.9148C16.214 21.0795 16.3066 21.3028 16.3066 21.5359C16.3066 21.7689 16.214 21.9922 16.0492 22.1569C15.8845 22.3217 15.6612 22.4143 15.4282 22.4143H8.57101C8.338 22.4143 8.11468 22.3217 7.94992 22.1569C7.78515 21.9922 7.69252 21.7689 7.69252 21.5359C7.69252 21.3028 7.78515 21.0795 7.94992 20.9148C8.11468 20.75 8.338 20.6574 8.57101 20.6574H11.1211V16.0419C9.67804 15.8736 8.31179 15.2986 7.18359 14.3807C6.0498 13.4583 5.20612 12.23 4.74944 10.8429H4.49958C3.9903 10.8429 3.486 10.7427 3.01549 10.5479C2.54492 10.3529 2.11713 10.0672 1.75698 9.70703C1.0296 8.97966 0.621094 7.99309 0.621094 6.96443V5.46443C0.621094 5.0325 0.792798 4.61847 1.09821 4.31306C1.40363 4.00764 1.81766 3.83594 2.24958 3.83594H4.37109V2.46443C4.37109 2.23141 4.46372 2.0081 4.62849 1.84333C4.79325 1.67857 5.01657 1.58594 5.24958 1.58594H18.7496ZM6.12807 8.46442C6.12807 10.0216 6.74669 11.5151 7.8478 12.6162C8.9487 13.7171 10.4418 14.3353 11.9987 14.3355C15.2089 14.3116 17.8711 11.6396 17.8711 8.37988V3.34291H6.12807V8.46442ZM2.37807 6.96443C2.37807 7.52706 2.60174 8.06658 2.99958 8.46442C3.37289 8.83774 3.87093 9.05774 4.39579 9.08343C4.37946 8.8771 4.37109 8.67078 4.37109 8.46442V5.59291H2.37807V6.96443ZM19.6281 8.3803C19.6277 8.61511 19.6157 8.84966 19.5942 9.08343C20.1224 9.05987 20.6241 8.83992 20.9996 8.46442C21.3974 8.06658 21.6211 7.52706 21.6211 6.96443V5.59291H19.6281V8.3803Z" fill="#8D99A5"/>
+  </svg>
+);
+
+// 업무 센터(default) 상단 통계 카드 — 현재는 목업 데이터
+type WcStat = {
+  title: string;
+  value: string;
+  sub?: string;
+  icon: ReactNode;
+  progress: number | null; // null이면 막대 대신 footer 텍스트
+  footer?: string;
+};
+const WC_STATS: WcStat[] = [
+  { title: "이번달 매출 달성률", value: "60", sub: "%", icon: <WcIconStar />, progress: 60 },
+  { title: "이번달 등록률", value: "34.2", sub: "%(6건)", icon: <WcIconReg />, progress: 34.2 },
+  { title: "오늘 신규 상담 완료", value: "2", sub: "/10건", icon: <WcIconNew />, progress: 20 },
+  { title: "오늘 가망관리", value: "3", sub: "/5건", icon: <WcIconHope />, progress: 60 },
+  { title: "현재 실적 순위", value: "3", sub: "위", icon: <WcIconRank />, progress: null, footer: "2위까지 1,000,000원!" },
+];
+
+const WcIconCalendar = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="13" viewBox="0 0 12 13" fill="none">
+    <path fillRule="evenodd" clipRule="evenodd" d="M8.15039 0C8.50915 0.000264098 8.80078 0.291568 8.80078 0.650391V1H10.6504C10.9994 1 11.3342 1.13902 11.5811 1.38574C11.828 1.63267 11.9668 1.96818 11.9668 2.31738V10.9834C11.9668 11.3325 11.8279 11.6672 11.5811 11.9141C11.3341 12.161 10.9996 12.2998 10.6504 12.2998H1.31738C0.968182 12.2998 0.632666 12.161 0.385742 11.9141C0.139099 11.6672 1.26168e-07 11.3324 0 10.9834V2.31738C0 1.96818 0.13882 1.63266 0.385742 1.38574C0.632665 1.13882 0.968181 1 1.31738 1H3.16699V0.650391C3.16699 0.291406 3.4584 0 3.81738 0C4.17614 0.000264098 4.46777 0.291568 4.46777 0.650391V1H7.50098V0.650391C7.50098 0.291514 7.79155 0.000175843 8.15039 0ZM1.30078 10.9834C1.30078 10.9878 1.30262 10.992 1.30566 10.9951C1.30877 10.9981 1.31304 11 1.31738 11H10.6504C10.6548 11 10.659 10.9982 10.6621 10.9951C10.6652 10.992 10.667 10.9878 10.667 10.9834V5.63379H1.30078V10.9834ZM1.30566 2.30566C1.30254 2.30879 1.30078 2.31296 1.30078 2.31738V4.33301H10.667V2.31738C10.667 2.31304 10.6651 2.30877 10.6621 2.30566C10.659 2.30254 10.6548 2.30078 10.6504 2.30078H8.80078V2.65039C8.80078 3.00921 8.50915 3.30052 8.15039 3.30078C7.79155 3.30061 7.50098 3.00927 7.50098 2.65039V2.30078H4.46777V2.65039C4.46777 3.00921 4.17614 3.30052 3.81738 3.30078C3.4584 3.30078 3.16699 3.00938 3.16699 2.65039V2.30078H1.31738C1.31296 2.30078 1.30879 2.30254 1.30566 2.30566Z" fill="#8D99A5"/>
+  </svg>
+);
+
+const WcIconArrow = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <path d="M1.4033 7.10361H12.3215L8.27595 3.25072C7.90793 2.90023 7.90793 2.33211 8.27595 1.98162C8.64397 1.63113 9.2405 1.63113 9.60851 1.98162L15.2627 7.36655L15.3271 7.43491C15.629 7.78742 15.6077 8.30707 15.2627 8.63565L9.60851 14.0206C9.2405 14.3711 8.64397 14.3711 8.27595 14.0206C7.90793 13.6701 7.90793 13.102 8.27595 12.7515L12.3215 8.89859L1.4033 8.89859C0.882849 8.89859 0.460937 8.49677 0.460938 8.0011C0.460938 7.50543 0.882849 7.10361 1.4033 7.10361Z" fill="white"/>
+  </svg>
+);
+
+// ── 업무 센터(default) — 상담 목록 (현재는 목업 데이터) ──────────────
+const WC_CONSULT_STATUS_COLORS: Record<string, { bg: string; color: string }> = {
+  상담대기: { bg: "#EBF3FE", color: "#3182F6" },
+  상담중: { bg: "#FFF8E6", color: "#D97706" },
+  "부재중/추후통화": { bg: "#F3F4F6", color: "#6B7684" },
+  장기가망: { bg: "#F4F0FF", color: "#7C3AED" },
+  보류: { bg: "#F3F4F6", color: "#6B7684" },
+  등록대기: { bg: "#FEF3C7", color: "#B45309" },
+  등록완료: { bg: "#DCFCE7", color: "#16A34A" },
+  "상담완료-높음": { bg: "#DCFCE7", color: "#16A34A" },
+  "상담완료-중간": { bg: "#DCFCE7", color: "#16A34A" },
+  "상담완료-낮음": { bg: "#DCFCE7", color: "#16A34A" },
+  수신거부: { bg: "#FEE2E2", color: "#DC2626" },
+  지인등록: { bg: "#DCFCE7", color: "#16A34A" },
+};
+
+// 배지에 짧게 표시
+function consultStatusShort(s: string): string {
+  if (!s) return "-";
+  if (s.startsWith("부재중")) return "부재중";
+  if (s.startsWith("상담완료")) return "상담완료";
+  return s;
+}
+
+type HakItem = HakjeomConsultation & { latest_memo?: string | null };
+
+function ConsultationList({ userName }: { userName: string }) {
+  const [tab, setTab] = useState<"today" | "hope" | "all">("today");
+  const [query, setQuery] = useState("");
+  const [items, setItems] = useState<HakItem[]>([]);
+  const [detailItem, setDetailItem] = useState<HakItem | null>(null);
+
+  // 본인 담당(manager) 문의 전체 조회
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/hakjeom", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((list) => {
+        if (cancelled) return;
+        const arr = (
+          Array.isArray(list) ? list : (list?.data ?? list?.items ?? [])
+        ) as HakItem[];
+        const mine = arr.filter((i) => !userName || i.manager === userName);
+        setItems(mine);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [userName]);
+
+  // 상세 모달 저장 → 목록/모달 동기화
+  const handleDetailUpdate = async (
+    id: number,
+    fields: Partial<HakjeomConsultation>,
+  ) => {
+    try {
+      await fetch("/api/hakjeom", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, ...fields }),
+      });
+    } catch {
+      // 무시 — UI는 낙관적 갱신
+    }
+    setItems((prev) =>
+      prev.map((i) => (i.id === id ? { ...i, ...fields } : i)),
+    );
+    setDetailItem((prev) =>
+      prev && prev.id === id ? { ...prev, ...fields } : prev,
+    );
+  };
+
+  const todayIso = useMemo(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }, []);
+
+  // 탭1 오늘 연락 예정 = 신규 배정(상담대기) / 탭2 오늘 가망관리 = 연락예정일이 오늘 / 탭3 전체
+  const todayList = useMemo(
+    () => items.filter((i) => (i.status ?? "") === "상담대기"),
+    [items],
+  );
+  const hopeList = useMemo(
+    () =>
+      items.filter((i) => i.contact_scheduled_at?.slice(0, 10) === todayIso),
+    [items, todayIso],
+  );
+
+  const base = tab === "today" ? todayList : tab === "hope" ? hopeList : items;
+  const rows = base.filter(
+    (i) => !query.trim() || (i.name ?? "").includes(query.trim()),
+  );
+
+  const tabs = [
+    { key: "today" as const, label: "오늘 연락 예정", count: todayList.length },
+    { key: "hope" as const, label: "오늘 가망관리", count: hopeList.length },
+    { key: "all" as const, label: "전체", count: items.length },
+  ];
+
+  return (
+    <>
+    <div className={styles.wcConsult}>
+      <div className={styles.wcConsultInner}>
+        {/* 헤더 — 제목 + 검색 (space-between) */}
+        <div className={styles.wcConsultHead}>
+          <span className={styles.wcConsultTitle}>상담 목록</span>
+          <input
+            className={styles.wcConsultSearch}
+            placeholder="이름 검색"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
+
+        {/* 탭 */}
+        <div className={styles.wcConsultTabs}>
+          {tabs.map((t) => (
+            <button
+              key={t.key}
+              type="button"
+              className={`${styles.wcConsultTab} ${tab === t.key ? styles.wcConsultTabOn : ""}`}
+              onClick={() => setTab(t.key)}
+            >
+              {t.label} ({t.count})
+            </button>
+          ))}
+        </div>
+
+        {/* 리스트 */}
+        <div className={styles.wcConsultList}>
+          {rows.length === 0 && (
+            <div className={styles.wcConsultEmpty}>표시할 상담이 없습니다.</div>
+          )}
+          {rows.map((r) => {
+            const status = r.status ?? "";
+            const c = WC_CONSULT_STATUS_COLORS[status] ?? {
+              bg: "#F3F4F6",
+              color: "#6B7684",
+            };
+            const course = r.hope_course || r.education || "";
+            const memo = r.latest_memo || r.memo || r.reason || "";
+            const dateStr = r.created_at
+              ? `${r.created_at.slice(0, 10).replace(/-/g, ". ")}. 등록`
+              : "";
+            const sched = r.contact_scheduled_at?.slice(0, 10);
+            const actionDate = sched ? sched.replace(/-/g, ".") : null;
+            return (
+              <div
+                key={r.id}
+                className={styles.wcConsultRow}
+                onClick={() => setDetailItem(r)}
+              >
+                <span
+                  className={styles.wcConsultBadge}
+                  style={{ background: c.bg, color: c.color }}
+                >
+                  {consultStatusShort(status)}
+                </span>
+                <div className={styles.wcConsultWho}>
+                  <span className={styles.wcConsultName}>{r.name}</span>
+                  <span className={styles.wcConsultCourse}>{course}</span>
+                </div>
+                <span className={styles.wcConsultMemo}>{memo}</span>
+                <span className={styles.wcConsultDate}>{dateStr}</span>
+                <div className={styles.wcConsultActionWrap}>
+                  {actionDate ? (
+                    <span
+                      className={`${styles.wcConsultAction} ${styles.wcConsultActionDate}`}
+                    >
+                      {actionDate}
+                    </span>
+                  ) : (
+                    <span className={styles.wcConsultAction}>
+                      신규(연락예정)
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+
+      {detailItem && (
+        <HakjeomDetailPanel
+          item={detailItem}
+          onClose={() => setDetailItem(null)}
+          onUpdate={handleDetailUpdate}
+          customCafes={[]}
+          customDanggeun={[]}
+          onAddCafe={async () => {}}
+          onDeleteCafe={async () => {}}
+          onAddDanggeun={async () => {}}
+          onDeleteDanggeun={async () => {}}
+        />
+      )}
+    </>
+  );
+}
 
 // 주어진 날짜가 속한 주의 월요일을 YYYY-MM-DD 로 반환 (KST 로컬, 월~일 기준)
 function weekMondayOf(isoDate: string): string {
@@ -188,6 +461,8 @@ export default function WorkJournalPage() {
   );
   const isAcademic = journalForm === JOURNAL_FORM_TYPES.ACADEMIC;
   const isPracticum = journalForm === JOURNAL_FORM_TYPES.PRACTICUM;
+  // 미지정(default) 양식 — 새 "업무 센터" 디자인 대상
+  const isDefault = !isAcademic && !isPracticum;
   const { startById } = useGuide();
 
   // 실습팀 — 일일 연계 수치 + 주간(월~금) 합계
@@ -203,6 +478,14 @@ export default function WorkJournalPage() {
   const practicumDailyTotal = practicum.institution + practicum.eduCenter;
   // 본인 user_id — 주 단위 weekly_goal key 구성에 사용
   const [userId, setUserId] = useState<number | null>(null);
+  const [userName, setUserName] = useState<string>("");
+  // 업무 센터(default) — 업무일지 작성 드로어 열림 상태
+  const [journalDrawerOpen, setJournalDrawerOpen] = useState(false);
+  const router = useRouter();
+  // 업무 센터(default) — 캘린더 팝업 + 본인 연락예정 일정
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [calEvents, setCalEvents] = useState<CalendarEvent[]>([]);
+  const calToday = useMemo(() => new Date(), []);
   const [weeklyGoal, setWeeklyGoal] = useState<WeeklyGoal[]>([]);
   const [issues, setIssues] = useState<JournalRow[]>([]);
   const [issuesOpen, setIssuesOpen] = useState(true);
@@ -272,12 +555,54 @@ export default function WorkJournalPage() {
         if (cancelled) return;
         setJournalForm(normalizeJournalForm(d?.teamJournalForm));
         if (typeof d?.id === "number") setUserId(d.id);
+        if (typeof d?.displayName === "string") setUserName(d.displayName);
       })
       .catch(() => {});
     return () => {
       cancelled = true;
     };
   }, []);
+
+  // 캘린더 팝업용 — 본인 연락예정 일정 조회 (manager == 본인)
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/hakjeom?has_scheduled=1", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((list) => {
+        if (cancelled) return;
+        const items = (
+          Array.isArray(list) ? list : (list?.data ?? list?.items ?? [])
+        ) as Array<{
+          id: number;
+          name: string;
+          manager: string | null;
+          status: string | null;
+          contact_scheduled_at: string | null;
+        }>;
+        const mine = items.filter(
+          (i) =>
+            i.contact_scheduled_at && (!userName || i.manager === userName),
+        );
+        setCalEvents(
+          mine.map((i) => {
+            const meta: string[] = [];
+            if (i.manager) meta.push(`담당 ${i.manager}`);
+            if (i.status) meta.push(i.status);
+            return {
+              id: `contact-${i.id}`,
+              date: (i.contact_scheduled_at ?? "").slice(0, 10),
+              title: i.name,
+              where: meta.join(" · "),
+              category: "work" as const,
+            };
+          }),
+        );
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [userName]);
 
   // 학사팀 — 이번주 목표 fetch (주 단위 key, 월요일 바뀌면 자동 새 키 = 자동 초기화)
   useEffect(() => {
@@ -536,8 +861,12 @@ export default function WorkJournalPage() {
     }
   }, [tomorrow]);
 
-  // ── 임시저장 / 제출 (DB) ────────────────────────────────
-  const persist = async (nextStatus: "draft" | "submitted") => {
+  // ── 임시저장(자동) / 제출 (DB) ─────────────────────────
+  // silent: 자동 저장 시 alert/완료 메시지 생략
+  const persist = async (
+    nextStatus: "draft" | "submitted",
+    opts?: { silent?: boolean },
+  ) => {
     if (saving) return;
     setSaving(true);
     try {
@@ -567,23 +896,46 @@ export default function WorkJournalPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        alert(data?.error ?? "저장에 실패했습니다.");
+        if (!opts?.silent) alert(data?.error ?? "저장에 실패했습니다.");
         return;
       }
       setStatus(data?.journal?.status ?? nextStatus);
       // 실습팀 — 주간 합계 재조회
       if (isPracticum) setPracticumRefresh((n) => n + 1);
-      alert(nextStatus === "submitted" ? "제출 완료" : "임시저장 완료");
+      if (!opts?.silent) {
+        alert(nextStatus === "submitted" ? "제출 완료" : "임시저장 완료");
+      }
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDraft = () => persist("draft");
   const handleSubmit = () => {
     if (!confirm("업무일지를 제출하시겠습니까?")) return;
     persist("submitted");
   };
+
+  // 자동 저장 — 입력 변경 시 1.5초 debounce 후 draft 저장
+  // (로딩 중 / 제출 완료 잠금 상태에서는 저장 안 함)
+  useEffect(() => {
+    if (loading) return;
+    if (status === "submitted" && !isEditing) return;
+    const t = setTimeout(() => {
+      persist("draft", { silent: true });
+    }, 1500);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    tasks,
+    morning,
+    afternoon,
+    tomorrow,
+    issues,
+    practicum,
+    status,
+    isEditing,
+    loading,
+  ]);
 
   // 수정하기 — 잠금 해제 + 현재 상태 스냅샷 (취소 시 복원용)
   const handleEdit = () => {
@@ -842,37 +1194,75 @@ export default function WorkJournalPage() {
   // ── 카운트 ──────────────────────────────────────────────
   const doneCount = tasks.filter((t) => t.done).length;
   const totalCount = tasks.length;
+  // 업무 센터 — 선택 날짜의 요일 (이번주 연락 예정 활성 표시용)
+  const todayDow = DOW[new Date(`${date}T00:00:00`).getDay()];
+  // 이번주(선택일 포함) 월~금 연락예정 건수 (본인 calEvents 기준)
+  const weekContacts = useMemo(() => {
+    const base = new Date(`${date}T00:00:00`);
+    const dow = base.getDay(); // 0(일)~6(토)
+    const monday = new Date(base);
+    monday.setDate(base.getDate() - ((dow + 6) % 7)); // 해당 주 월요일
+    const labels = ["월", "화", "수", "목", "금"];
+    return labels.map((label, i) => {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      const ymd = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      return {
+        dow: label,
+        count: calEvents.filter((e) => e.date === ymd).length,
+      };
+    });
+  }, [date, calEvents]);
 
   return (
     <div className={styles.app}>
       <div className={styles.container}>
         {/* ── 상단 행 (학사팀은 stats 자리에 이번주 목표 바 표시) ─── */}
         <div className={styles.topRow}>
-          {/* 날짜 카드 */}
-          <div className={styles.dateCard} data-guide="wj-date">
-            <label className={styles.dateSelectWrap}>
-              <span className={styles.dateSelectText}>
-                {formatPretty(date)}
-              </span>
-              <ChevronDown className={styles.dateSelectIcon} size={16} />
-              <input
-                type="date"
-                className={styles.dateInputOverlay}
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-              />
-            </label>
-
-            <div className={styles.dateRow}>
-              <span className={styles.dateLabel}>오늘 연락 예정</span>
-              <div className={styles.dateRowRight}>
-                <span className={styles.dateValue}>
-                  {(stats?.todayScheduledContacts ?? 0).toLocaleString()}건
+          {isDefault ? (
+            /* 업무 센터 — 인사 카드 (날짜 클릭 시 변경 가능) */
+            <div className={styles.wcGreetingCard} data-guide="wj-date">
+              <div className={styles.wcGreetingText}>
+                <span className={styles.wcGreetingName}>{userName || "OOO"}</span>
+                <span className={styles.wcGreetingMsg}>님, 오늘도 화이팅!</span>
+              </div>
+              <label className={styles.wcDateBox}>
+                <span className={styles.wcDateText}>{formatPretty(date)}</span>
+                <input
+                  type="date"
+                  className={styles.dateInputOverlay}
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                />
+              </label>
+            </div>
+          ) : (
+            /* 날짜 카드 (학사팀/실습팀) */
+            <div className={styles.dateCard} data-guide="wj-date">
+              <label className={styles.dateSelectWrap}>
+                <span className={styles.dateSelectText}>
+                  {formatPretty(date)}
                 </span>
-                <ChevronRight className={styles.dateRowIcon} size={16} />
+                <ChevronDown className={styles.dateSelectIcon} size={16} />
+                <input
+                  type="date"
+                  className={styles.dateInputOverlay}
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                />
+              </label>
+
+              <div className={styles.dateRow}>
+                <span className={styles.dateLabel}>오늘 연락 예정</span>
+                <div className={styles.dateRowRight}>
+                  <span className={styles.dateValue}>
+                    {(stats?.todayScheduledContacts ?? 0).toLocaleString()}건
+                  </span>
+                  <ChevronRight className={styles.dateRowIcon} size={16} />
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* 학사팀 — 이번주 목표 바 (stats 자리) */}
           {isAcademic && (
@@ -1040,8 +1430,41 @@ export default function WorkJournalPage() {
             </div>
           )}
 
-          {/* 4 stat 합쳐진 하나의 카드 (mock 데이터) — 학사팀/실습팀은 stats 숨김 */}
-          {!isAcademic && !isPracticum && (
+          {/* 업무 센터 — 통계 영역 (default 전용) */}
+          {isDefault && (
+            <div className={styles.wcStatArea}>
+              {WC_STATS.map((s) => (
+                <div key={s.title} className={styles.wcStatCard}>
+                  <div className={styles.wcStatTop}>
+                    <div className={styles.wcStatInfo}>
+                      <span className={styles.wcStatTitle}>{s.title}</span>
+                      <div className={styles.wcStatValueRow}>
+                        <span className={styles.wcStatValue}>{s.value}</span>
+                        {s.sub && (
+                          <span className={styles.wcStatSub}>{s.sub}</span>
+                        )}
+                      </div>
+                    </div>
+                    <span className={styles.wcStatIcon}>{s.icon}</span>
+                  </div>
+                  {s.progress === null ? (
+                    <div className={styles.wcStatRankFooter}>{s.footer}</div>
+                  ) : (
+                    <div className={styles.wcStatBarWrap}>
+                      <div className={styles.wcStatBarTrack}>
+                        <div
+                          className={styles.wcStatBarFill}
+                          style={{ width: `${Math.min(100, s.progress)}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+          {/* (구) 4 stat 카드 — 새 디자인 전환 중 임시 비활성 */}
+          {false && (
           <div className={styles.statGroup}>
             <div className={styles.statCard}>
               <div className={styles.statIcon}>
@@ -1269,6 +1692,42 @@ export default function WorkJournalPage() {
         >
           {/* 좌: 오늘의 업무 (실습팀이면 내일 예정 업무와 위/아래 반반) */}
           <div className={styles.colStack}>
+          {/* 업무 센터(default) — 이번주 연락 예정 카드 */}
+          {isDefault && (
+            <div className={styles.wcWeekCard}>
+              <div className={styles.wcWeekSection}>
+                <span className={styles.wcWeekTitle}>이번주 연락 예정</span>
+                <div className={styles.wcWeekDays}>
+                  {weekContacts.map((d) => {
+                    const active = d.dow === todayDow;
+                    return (
+                      <div
+                        key={d.dow}
+                        className={`${styles.wcWeekDay} ${active ? styles.wcWeekDayActive : ""}`}
+                      >
+                        <div className={styles.wcWeekDayInner}>
+                          <span className={styles.wcWeekDow}>{d.dow}</span>
+                          <span
+                            className={`${styles.wcWeekCount} ${active ? styles.wcWeekCountActive : ""}`}
+                          >
+                            {d.count}건
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <button
+                  type="button"
+                  className={styles.wcWeekCalBtn}
+                  onClick={() => setCalendarOpen(true)}
+                >
+                  <span className={styles.wcWeekCalBtnText}>달력으로 보기</span>
+                  <WcIconCalendar />
+                </button>
+              </div>
+            </div>
+          )}
           <section className={styles.col} data-guide="wj-today-tasks">
             <h3 className={styles.colTitle}>오늘의 업무</h3>
             <div className={styles.taskList}>
@@ -1348,6 +1807,17 @@ export default function WorkJournalPage() {
                 );
               })}
             </div>
+            {/* 업무 센터(default) — 업무일지 열기 버튼 */}
+            {isDefault && (
+              <button
+                type="button"
+                className={styles.wcOpenJournalBtn}
+                onClick={() => setJournalDrawerOpen(true)}
+              >
+                <span className={styles.wcOpenJournalText}>업무일지 열기</span>
+                <WcIconArrow />
+              </button>
+            )}
           </section>
 
           {/* 실습팀 — 내일 예정 업무 (오늘의 업무 아래 반반) */}
@@ -1374,6 +1844,38 @@ export default function WorkJournalPage() {
             </section>
           )}
           </div>
+
+          {/* 업무 센터(default) — 가운데 상담 목록 */}
+          {isDefault && <ConsultationList userName={userName} />}
+
+          {/* 업무 센터(default) — 업무일지 드로어 오버레이 */}
+          {isDefault && journalDrawerOpen && (
+            <div
+              className={styles.wjOverlay}
+              onClick={() => setJournalDrawerOpen(false)}
+            />
+          )}
+          {/* 업무일지 편집 — default는 우측 드로어, 그 외는 인라인(display:contents) */}
+          <div
+            className={
+              isDefault
+                ? `${styles.wjDrawer} ${journalDrawerOpen ? styles.wjDrawerOpen : ""}`
+                : styles.wjContents
+            }
+          >
+            {isDefault && (
+              <div className={styles.wjDrawerHeader}>
+                <span className={styles.wjDrawerTitle}>업무 일지</span>
+                <button
+                  type="button"
+                  className={styles.wjDrawerClose}
+                  onClick={() => setJournalDrawerOpen(false)}
+                  aria-label="닫기"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
 
           {/* 중: 업무 일지 */}
           <section
@@ -1480,19 +1982,13 @@ export default function WorkJournalPage() {
                                 />
                               )}
                             </div>
-                            <input
-                              type="text"
+                            <AutoSizeTextarea
                               className={styles.journalDetailInput}
                               placeholder="세부 업무 내용을 작성해주세요."
                               value={row.detail}
-                              data-guide={i === 0 ? "wj-detail" : undefined}
-                              onChange={(e) =>
-                                updateRow("morning", row.id, {
-                                  detail: e.target.value,
-                                })
+                              onChange={(v) =>
+                                updateRow("morning", row.id, { detail: v })
                               }
-                              onDragOver={(e) => e.preventDefault()}
-                              onDrop={(e) => e.preventDefault()}
                             />
                           </div>
                           <DeleteButton
@@ -1596,18 +2092,13 @@ export default function WorkJournalPage() {
                                 />
                               )}
                             </div>
-                            <input
-                              type="text"
+                            <AutoSizeTextarea
                               className={styles.journalDetailInput}
                               placeholder="세부 업무 내용을 작성해주세요."
                               value={row.detail}
-                              onChange={(e) =>
-                                updateRow("afternoon", row.id, {
-                                  detail: e.target.value,
-                                })
+                              onChange={(v) =>
+                                updateRow("afternoon", row.id, { detail: v })
                               }
-                              onDragOver={(e) => e.preventDefault()}
-                              onDrop={(e) => e.preventDefault()}
                             />
                           </div>
                           <DeleteButton
@@ -1704,6 +2195,13 @@ export default function WorkJournalPage() {
               </section>
             )}
 
+            {/* 업무 센터(default) — 내일예정 파란 접기 헤더 */}
+            {isDefault && (
+              <div className={styles.wjTomorrowFold}>
+                <span className={styles.wjTomorrowFoldText}>내일예정업무</span>
+                <ChevronDown className={styles.wjTomorrowFoldArrow} size={12} />
+              </div>
+            )}
             {/* 내일 예정 업무 — 비실습팀만 (실습팀은 좌측으로 이동) */}
             {!isPracticum && (
             <section className={styles.col} data-guide="wj-tomorrow">
@@ -1822,28 +2320,6 @@ export default function WorkJournalPage() {
                 <>
                   <button
                     type="button"
-                    className={styles.btnDraft}
-                    onClick={handleDraft}
-                    disabled={saving || loading}
-                  >
-                    <svg
-                      className={styles.btnIcon}
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 16 16"
-                      fill="none"
-                      aria-hidden="true"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        clipRule="evenodd"
-                        d="M14.3702 3.40738C14.5577 3.59491 14.663 3.84921 14.663 4.11438C14.663 4.37954 14.5577 4.63385 14.3702 4.82138L6.87487 12.3167C6.77582 12.4158 6.65822 12.4944 6.52879 12.548C6.39936 12.6016 6.26063 12.6292 6.12054 12.6292C5.98044 12.6292 5.84171 12.6016 5.71228 12.548C5.58285 12.4944 5.46526 12.4158 5.3662 12.3167L1.6422 8.59338C1.54669 8.50113 1.47051 8.39079 1.4181 8.26878C1.36569 8.14678 1.33811 8.01556 1.33695 7.88278C1.3358 7.75 1.3611 7.61832 1.41138 7.49542C1.46166 7.37253 1.53591 7.26088 1.62981 7.16698C1.7237 7.07309 1.83535 6.99884 1.95825 6.94856C2.08114 6.89828 2.21282 6.87297 2.3456 6.87413C2.47838 6.87528 2.6096 6.90287 2.73161 6.95528C2.85361 7.00769 2.96396 7.08387 3.0562 7.17938L6.1202 10.2434L12.9555 3.40738C13.0484 3.31445 13.1587 3.24073 13.28 3.19044C13.4014 3.14014 13.5315 3.11426 13.6629 3.11426C13.7942 3.11426 13.9243 3.14014 14.0457 3.19044C14.1671 3.24073 14.2773 3.31445 14.3702 3.40738Z"
-                        fill="#565656"
-                      />
-                    </svg>
-                    임시저장
-                  </button>
-                  <button
-                    type="button"
                     className={styles.btnSubmit}
                     onClick={handleSubmit}
                     disabled={saving || loading}
@@ -1866,8 +2342,41 @@ export default function WorkJournalPage() {
               )}
             </div>
           </div>
+          </div>
         </div>
       </div>
+
+      {/* 업무 센터(default) — 캘린더 팝업 (본인 연락예정 일정) */}
+      {calendarOpen && (
+        <div
+          className={styles.calModalOverlay}
+          onClick={() => setCalendarOpen(false)}
+        >
+          <div
+            className={styles.calModal}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              className={styles.calModalClose}
+              onClick={() => setCalendarOpen(false)}
+              aria-label="닫기"
+            >
+              ✕
+            </button>
+            <Calendar
+              events={calEvents}
+              today={calToday}
+              hideAddEvent
+              hideSideNav
+              onSelectEvent={(id) => {
+                const m = /^contact-(\d+)$/.exec(id);
+                if (m) router.push(`/hakjeom?id=${m[1]}`);
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* 학사팀 — 이번주 목표 설정 모달 */}
       {goalModalOpen && (

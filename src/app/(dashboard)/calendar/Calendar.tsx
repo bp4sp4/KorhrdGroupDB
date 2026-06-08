@@ -35,6 +35,8 @@ export interface CalendarProps {
   initialMonth?: Date; // any date inside the month to render
   onAddEvent?: (date: string) => void;
   onSelectEvent?: (id: string) => void;
+  hideAddEvent?: boolean; // "이 날에 일정 추가하기" 버튼 숨김
+  hideSideNav?: boolean; // 좌측 사이드(미니 달력/내 캘린더/구독) 숨김
 }
 
 /* =========================================================================
@@ -217,6 +219,8 @@ export default function Calendar({
   initialMonth,
   onAddEvent,
   onSelectEvent,
+  hideAddEvent,
+  hideSideNav,
 }: CalendarProps) {
   const [cursor, setCursor] = useState<Date>(initialMonth ?? today);
   const [selected, setSelected] = useState<Date>(today);
@@ -255,17 +259,19 @@ export default function Calendar({
     <>
       <CalendarStyles />
       <div className="app">
-        <div className="page">
-          <SideNav
-            cursor={cursor}
-            onPrev={goPrev}
-            onNext={goNext}
-            today={today}
-            selected={selected}
-            onPickDate={setSelected}
-            eventsByDate={eventsByDate}
-            onAdd={() => onAddEvent?.(selectedKey)}
-          />
+        <div className={`page${hideSideNav ? " no-side" : ""}`}>
+          {!hideSideNav && (
+            <SideNav
+              cursor={cursor}
+              onPrev={goPrev}
+              onNext={goNext}
+              today={today}
+              selected={selected}
+              onPickDate={setSelected}
+              eventsByDate={eventsByDate}
+              onAdd={() => onAddEvent?.(selectedKey)}
+            />
+          )}
 
           <MonthView
             cursor={cursor}
@@ -286,6 +292,7 @@ export default function Calendar({
             upcoming={upcoming}
             onAdd={() => onAddEvent?.(selectedKey)}
             onSelectEvent={onSelectEvent}
+            hideAdd={hideAddEvent}
           />
         </div>
       </div>
@@ -551,6 +558,7 @@ interface RightPanelProps {
   upcoming: CalendarEvent[];
   onAdd: () => void;
   onSelectEvent?: (id: string) => void;
+  hideAdd?: boolean;
 }
 
 // where 값에서 상태 큰 그룹 추출 (검색·필터용)
@@ -585,6 +593,7 @@ function RightPanel({
   upcoming,
   onAdd,
   onSelectEvent,
+  hideAdd,
 }: RightPanelProps) {
   const isToday = isSameDay(selected, today);
   const dow = WEEK_KO[selected.getDay()];
@@ -825,10 +834,12 @@ function RightPanel({
             <div className="empty">필터 결과가 없어요.</div>
           )}
 
-          <button className="add-item" onClick={onAdd}>
-            <span className="pl">+</span>
-            <span>이 날에 일정 추가하기</span>
-          </button>
+          {!hideAdd && (
+            <button className="add-item" onClick={onAdd}>
+              <span className="pl">+</span>
+              <span>이 날에 일정 추가하기</span>
+            </button>
+          )}
         </div>
       </section>
 

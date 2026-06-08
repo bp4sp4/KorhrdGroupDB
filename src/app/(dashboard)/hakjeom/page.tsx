@@ -1134,9 +1134,11 @@ function AgencyAddModal({
 function HakjeomTab({
   isActive,
   highlightId,
+  openId,
 }: {
   isActive: boolean;
   highlightId?: number;
+  openId?: number;
 }) {
   const [items, setItems] = useState<HakjeomConsultation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1374,6 +1376,13 @@ function HakjeomTab({
       setTimeout(() => el.classList.remove(styles.highlightRow), 2500);
     }, 150);
   }, [items, highlightId]);
+
+  // 다른 화면(업무센터 상담목록)에서 ?open=ID 로 진입 시 상세 모달 자동 열기
+  useEffect(() => {
+    if (!openId || items.length === 0) return;
+    const item = items.find((i) => i.id === openId);
+    if (item) setSelectedItem(item);
+  }, [items, openId]);
 
   const fetchData = useCallback(async (background = false) => {
     if (!background) setLoading(true);
@@ -8195,6 +8204,9 @@ export default function HakjeomPage() {
   const urlHighlight = searchParams.get("highlight")
     ? Number(searchParams.get("highlight"))
     : undefined;
+  const urlOpen = searchParams.get("open")
+    ? Number(searchParams.get("open"))
+    : undefined;
 
   const [allowedHakjeomTabs, setAllowedHakjeomTabs] = useState<string[] | null>(
     null,
@@ -8284,6 +8296,7 @@ export default function HakjeomPage() {
           <HakjeomTab
             isActive={activeTab === "hakjeom"}
             highlightId={urlTab === "hakjeom" ? urlHighlight : undefined}
+            openId={urlOpen}
           />
         )}
       </div>

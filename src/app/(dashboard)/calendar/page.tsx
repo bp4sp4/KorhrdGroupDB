@@ -28,6 +28,17 @@ export default function CalendarPage() {
   );
   const [me, setMe] = useState<MeInfo>({ displayName: null, role: null });
   const [viewMode, setViewMode] = useState<ViewMode>("all");
+  // ?only=mine (업무센터 "달력으로 보기") — 본인 일정만, 토글 숨김
+  const [onlyMine, setOnlyMine] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const p = new URLSearchParams(window.location.search);
+    if (p.get("only") === "mine") {
+      setOnlyMine(true);
+      setViewMode("mine");
+    }
+  }, []);
 
   // 사용자 정보 + 연락예정 항목 병렬 fetch
   useEffect(() => {
@@ -74,7 +85,8 @@ export default function CalendarPage() {
   }, [scheduledItems, me.displayName]);
 
   // 토글은 본인 일정 + 다른 사람 일정 둘 다 있을 때만 의미가 있음
-  const showToggle = myCount > 0 && hasOthersData;
+  // (only=mine 모드에서는 항상 본인 일정만 보여주고 토글 숨김)
+  const showToggle = !onlyMine && myCount > 0 && hasOthersData;
 
   // viewMode 에 따라 필터된 항목
   const filteredItems = useMemo(() => {
