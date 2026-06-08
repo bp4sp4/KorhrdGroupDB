@@ -518,8 +518,8 @@ const SIDEBAR_HIDE_KEY: Record<string, string> = {
 };
 
 // 임시 숨김 메뉴 (잠깐 가려두기) — 복구하려면 배열을 비우면 됨.
-// 민간자격증 사업부 / 유학 사업부 (마케팅개발본부는 학점은행제 때문에 노출 유지)
-const TEMP_HIDDEN_MENU_IDS = new Set<string>(["cert", "abroad"]);
+// 유학 사업부 (마케팅개발본부는 학점은행제 때문에 노출 유지)
+const TEMP_HIDDEN_MENU_IDS = new Set<string>(["abroad"]);
 
 // 임시 숨김 하위 메뉴 — 마케팅개발본부 안의 민간자격증·유학 섹션 (학점은행제·맘카페만 남김)
 const TEMP_HIDDEN_CHILD_IDS = new Set<string>([
