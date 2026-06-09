@@ -8,11 +8,17 @@ import Calendar, {
 } from "@/app/(dashboard)/calendar/Calendar";
 import { HakjeomDetailPanel } from "@/app/(dashboard)/hakjeom/_detail/HakjeomDetailPanel";
 import type { HakjeomConsultation } from "@/app/(dashboard)/hakjeom/_types";
+import { DateInput } from "@/components/ui/Calendar/DateInput";
+import {
+  DateRangeCalendar,
+  type DateRange,
+} from "@/components/DateRangeCalendar";
 import {
   ChevronDown,
   ChevronRight,
   ChevronUp,
   HelpCircle,
+  Inbox,
   Plus,
 } from "lucide-react";
 import styles from "./page.module.css";
@@ -80,7 +86,7 @@ const WcIconRank = () => (
   </svg>
 );
 
-// 업무 센터(default) 상단 통계 카드 — 현재는 목업 데이터
+// 업무 센터(default) 상단 통계 카드
 type WcStat = {
   title: string;
   value: string;
@@ -89,13 +95,6 @@ type WcStat = {
   progress: number | null; // null이면 막대 대신 footer 텍스트
   footer?: string;
 };
-const WC_STATS: WcStat[] = [
-  { title: "이번달 매출 달성률", value: "60", sub: "%", icon: <WcIconStar />, progress: 60 },
-  { title: "이번달 등록률", value: "34.2", sub: "%(6건)", icon: <WcIconReg />, progress: 34.2 },
-  { title: "오늘 신규 상담 완료", value: "2", sub: "/10건", icon: <WcIconNew />, progress: 20 },
-  { title: "오늘 가망관리", value: "3", sub: "/5건", icon: <WcIconHope />, progress: 60 },
-  { title: "현재 실적 순위", value: "3", sub: "위", icon: <WcIconRank />, progress: null, footer: "2위까지 1,000,000원!" },
-];
 
 const WcIconCalendar = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="12" height="13" viewBox="0 0 12 13" fill="none">
@@ -135,11 +134,58 @@ function consultStatusShort(s: string): string {
 
 type HakItem = HakjeomConsultation & { latest_memo?: string | null };
 
-function ConsultationList({ userName }: { userName: string }) {
+function ConsultationList({
+  userName,
+  refreshKey,
+}: {
+  userName: string;
+  refreshKey: number;
+}) {
   const [tab, setTab] = useState<"today" | "hope" | "all">("today");
   const [query, setQuery] = useState("");
   const [items, setItems] = useState<HakItem[]>([]);
   const [detailItem, setDetailItem] = useState<HakItem | null>(null);
+
+  // ── 등록일(created_at) 기간 범위 필터 ──────────────────────
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [dateRangeOpen, setDateRangeOpen] = useState(false);
+  const dateRangeRef = useRef<HTMLDivElement>(null);
+
+  // 외부 클릭 시 팝오버 닫기
+  useEffect(() => {
+    if (!dateRangeOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (
+        dateRangeRef.current &&
+        !dateRangeRef.current.contains(e.target as Node)
+      ) {
+        setDateRangeOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [dateRangeOpen]);
+
+  const ymd = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  };
+  const dateRangeValue: DateRange | undefined =
+    startDate || endDate
+      ? {
+          from: startDate ? new Date(startDate + "T00:00:00") : undefined,
+          to: endDate ? new Date(endDate + "T00:00:00") : undefined,
+        }
+      : undefined;
+  const dateRangeLabel = (() => {
+    if (startDate && endDate) return `${startDate} ~ ${endDate}`;
+    if (startDate) return `${startDate} ~`;
+    if (endDate) return `~ ${endDate}`;
+    return "기간 선택";
+  })();
 
   // 본인 담당(manager) 문의 전체 조회
   useEffect(() => {
@@ -158,7 +204,7 @@ function ConsultationList({ userName }: { userName: string }) {
     return () => {
       cancelled = true;
     };
-  }, [userName]);
+  }, [userName, refreshKey]);
 
   // 상세 모달 저장 → 목록/모달 동기화
   const handleDetailUpdate = async (
@@ -188,17 +234,32 @@ function ConsultationList({ userName }: { userName: string }) {
   }, []);
 
   // 탭1 오늘 연락 예정 = 신규 배정(상담대기) / 탭2 오늘 가망관리 = 연락예정일이 오늘 / 탭3 전체
+  // 등록일(created_at) 기간 범위 적용 — 탭/카운트 모두 이 결과 기준
+  const rangedItems = useMemo(() => {
+    if (!startDate && !endDate) return items;
+    return items.filter((i) => {
+      const created = i.created_at?.slice(0, 10);
+      if (!created) return false;
+      if (startDate && created < startDate) return false;
+      if (endDate && created > endDate) return false;
+      return true;
+    });
+  }, [items, startDate, endDate]);
+
   const todayList = useMemo(
-    () => items.filter((i) => (i.status ?? "") === "상담대기"),
-    [items],
+    () => rangedItems.filter((i) => (i.status ?? "") === "상담대기"),
+    [rangedItems],
   );
   const hopeList = useMemo(
     () =>
-      items.filter((i) => i.contact_scheduled_at?.slice(0, 10) === todayIso),
-    [items, todayIso],
+      rangedItems.filter(
+        (i) => i.contact_scheduled_at?.slice(0, 10) === todayIso,
+      ),
+    [rangedItems, todayIso],
   );
 
-  const base = tab === "today" ? todayList : tab === "hope" ? hopeList : items;
+  const base =
+    tab === "today" ? todayList : tab === "hope" ? hopeList : rangedItems;
   const rows = base.filter(
     (i) => !query.trim() || (i.name ?? "").includes(query.trim()),
   );
@@ -206,22 +267,51 @@ function ConsultationList({ userName }: { userName: string }) {
   const tabs = [
     { key: "today" as const, label: "오늘 연락 예정", count: todayList.length },
     { key: "hope" as const, label: "오늘 가망관리", count: hopeList.length },
-    { key: "all" as const, label: "전체", count: items.length },
+    { key: "all" as const, label: "전체", count: rangedItems.length },
   ];
 
   return (
     <>
     <div className={styles.wcConsult}>
       <div className={styles.wcConsultInner}>
-        {/* 헤더 — 제목 + 검색 (space-between) */}
+        {/* 헤더 — 제목 + 기간 필터 + 검색 (space-between) */}
         <div className={styles.wcConsultHead}>
           <span className={styles.wcConsultTitle}>상담 목록</span>
-          <input
-            className={styles.wcConsultSearch}
-            placeholder="이름 검색"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
+          <div className={styles.wcConsultHeadRight}>
+            <div ref={dateRangeRef} className={styles.wcDateRangeWrap}>
+              <button
+                type="button"
+                className={`${styles.wcDateRangeBtn} ${startDate || endDate ? styles.wcDateRangeBtnActive : ""}`}
+                onClick={() => setDateRangeOpen((v) => !v)}
+                title="등록일 기간으로 필터"
+              >
+                {dateRangeLabel}
+              </button>
+              {dateRangeOpen && (
+                <div className={styles.wcDateRangePopover}>
+                  <DateRangeCalendar
+                    variant="month"
+                    value={dateRangeValue}
+                    onChange={(r) => {
+                      setStartDate(r?.from ? ymd(r.from) : "");
+                      setEndDate(r?.to ? ymd(r.to) : "");
+                    }}
+                    onConfirm={() => setDateRangeOpen(false)}
+                    onReset={() => {
+                      setStartDate("");
+                      setEndDate("");
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+            <input
+              className={styles.wcConsultSearch}
+              placeholder="이름 검색"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
         </div>
 
         {/* 탭 */}
@@ -240,9 +330,36 @@ function ConsultationList({ userName }: { userName: string }) {
 
         {/* 리스트 */}
         <div className={styles.wcConsultList}>
-          {rows.length === 0 && (
-            <div className={styles.wcConsultEmpty}>표시할 상담이 없습니다.</div>
-          )}
+          {rows.length === 0 &&
+            (() => {
+              let title: string;
+              let desc: string;
+              if (query.trim()) {
+                title = `'${query.trim()}' 검색 결과가 없어요`;
+                desc = "다른 이름으로 다시 검색해 보세요.";
+              } else if (startDate || endDate) {
+                title = "선택한 기간에 상담이 없어요";
+                desc = "기간을 바꾸거나 초기화해 보세요.";
+              } else if (tab === "today") {
+                title = "오늘 연락할 상담이 없어요";
+                desc = "신규로 배정된 상담이 들어오면 여기에 표시돼요.";
+              } else if (tab === "hope") {
+                title = "오늘 가망 관리할 상담이 없어요";
+                desc = "연락 예정일이 오늘인 상담이 여기에 모여요.";
+              } else {
+                title = "아직 담당 상담이 없어요";
+                desc = "상담이 배정되면 이 목록에 표시됩니다.";
+              }
+              return (
+                <div className={styles.wcConsultEmpty}>
+                  <div className={styles.wcConsultEmptyIcon}>
+                    <Inbox size={26} strokeWidth={1.5} />
+                  </div>
+                  <p className={styles.wcConsultEmptyTitle}>{title}</p>
+                  <p className={styles.wcConsultEmptyDesc}>{desc}</p>
+                </div>
+              );
+            })()}
           {rows.map((r) => {
             const status = r.status ?? "";
             const c = WC_CONSULT_STATUS_COLORS[status] ?? {
@@ -254,8 +371,6 @@ function ConsultationList({ userName }: { userName: string }) {
             const dateStr = r.created_at
               ? `${r.created_at.slice(0, 10).replace(/-/g, ". ")}. 등록`
               : "";
-            const sched = r.contact_scheduled_at?.slice(0, 10);
-            const actionDate = sched ? sched.replace(/-/g, ".") : null;
             return (
               <div
                 key={r.id}
@@ -274,18 +389,24 @@ function ConsultationList({ userName }: { userName: string }) {
                 </div>
                 <span className={styles.wcConsultMemo}>{memo}</span>
                 <span className={styles.wcConsultDate}>{dateStr}</span>
-                <div className={styles.wcConsultActionWrap}>
-                  {actionDate ? (
-                    <span
-                      className={`${styles.wcConsultAction} ${styles.wcConsultActionDate}`}
-                    >
-                      {actionDate}
-                    </span>
-                  ) : (
-                    <span className={styles.wcConsultAction}>
-                      신규(연락예정)
-                    </span>
-                  )}
+                <div
+                  className={styles.wcConsultActionWrap}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <DateInput
+                    value={
+                      r.contact_scheduled_at
+                        ? r.contact_scheduled_at.slice(0, 10)
+                        : ""
+                    }
+                    onChange={(d) =>
+                      handleDetailUpdate(r.id, {
+                        contact_scheduled_at: d ? d + "T00:00:00.000Z" : null,
+                      })
+                    }
+                    variant="button"
+                    align="right"
+                  />
                 </div>
               </div>
             );
@@ -486,6 +607,22 @@ export default function WorkJournalPage() {
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [calEvents, setCalEvents] = useState<CalendarEvent[]>([]);
   const calToday = useMemo(() => new Date(), []);
+  // 화면 포커스/탭 복귀 시 통계·목록 갱신용 (realtime 대신 — 평소 요청 0)
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    if (!isDefault) return;
+    const bump = () => setRefreshKey((k) => k + 1);
+    const onVis = () => {
+      if (document.visibilityState === "visible") bump();
+    };
+    window.addEventListener("focus", bump);
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      window.removeEventListener("focus", bump);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [isDefault]);
   const [weeklyGoal, setWeeklyGoal] = useState<WeeklyGoal[]>([]);
   const [issues, setIssues] = useState<JournalRow[]>([]);
   const [issuesOpen, setIssuesOpen] = useState(true);
@@ -602,7 +739,7 @@ export default function WorkJournalPage() {
     return () => {
       cancelled = true;
     };
-  }, [userName]);
+  }, [userName, refreshKey]);
 
   // 학사팀 — 이번주 목표 fetch (주 단위 key, 월요일 바뀌면 자동 새 키 = 자동 초기화)
   useEffect(() => {
@@ -681,6 +818,11 @@ export default function WorkJournalPage() {
     registrationRate: number;
     salesThisMonth: number;
     todayScheduledContacts: number;
+    todayCompletedNew: number;
+    pendingNew: number;
+    todayScheduledDone: number;
+    rank: number;
+    totalManagers: number;
     delta: {
       inquiries: number;
       registrations: number;
@@ -688,6 +830,9 @@ export default function WorkJournalPage() {
       sales: number;
     };
   } | null>(null);
+  // 업무 센터(default) 통계 — 개인 월 매출 목표 / 이번달 매출(만원)
+  const [monthlyGoal, setMonthlyGoal] = useState(0);
+  const [monthlySales, setMonthlySales] = useState(0);
 
   // stats (본인 담당자 기준 누적/이번달)
   useEffect(() => {
@@ -702,6 +847,11 @@ export default function WorkJournalPage() {
           registrationRate: Number(d.registrationRate ?? 0),
           salesThisMonth: Number(d.salesThisMonth ?? 0),
           todayScheduledContacts: Number(d.todayScheduledContacts ?? 0),
+          todayCompletedNew: Number(d.todayCompletedNew ?? 0),
+          pendingNew: Number(d.pendingNew ?? 0),
+          todayScheduledDone: Number(d.todayScheduledDone ?? 0),
+          rank: Number(d.rank ?? 0),
+          totalManagers: Number(d.totalManagers ?? 0),
           delta: {
             inquiries: Number(d?.delta?.inquiries ?? 0),
             registrations: Number(d?.delta?.registrations ?? 0),
@@ -714,7 +864,35 @@ export default function WorkJournalPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [refreshKey]);
+
+  // 개인 월 매출 목표 + 이번달 매출
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+    const now = new Date();
+    const y = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, "0");
+    const monthKey = `${y}-${mm}`;
+    fetch(`/api/app-settings?key=dashboard.monthly_goal.${userId}.${monthKey}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (cancelled) return;
+        const v = d?.value ?? d;
+        if (v && typeof v.total === "number") setMonthlyGoal(v.total);
+      })
+      .catch(() => {});
+    fetch(`/api/dashboard/my-monthly-sales?year=${y}&month=${mm}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (cancelled) return;
+        if (d && typeof d.total === "number") setMonthlySales(d.total);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, refreshKey]);
 
   // 날짜 변경 시 해당 일자 일지 로드
   useEffect(() => {
@@ -809,6 +987,19 @@ export default function WorkJournalPage() {
 
   const removeTask = (id: string) =>
     setTasks((prev) => prev.filter((t) => t.id !== id));
+
+  // 편집 종료(blur) 시: 텍스트가 비어 있으면 그 줄을 삭제한다.
+  // 단, 맨 아래 입력용 빈 슬롯(마지막 항목)은 유지 (effect 가 항상 1개 보장).
+  const handleTaskBlur = (id: string) => {
+    setEditingTaskId(null);
+    setTasks((prev) => {
+      const idx = prev.findIndex((t) => t.id === id);
+      if (idx === -1) return prev;
+      if (prev[idx].text.trim() !== "") return prev; // 내용 있으면 유지
+      if (idx === prev.length - 1) return prev; // 마지막 입력 슬롯은 유지
+      return prev.filter((t) => t.id !== id); // 비워진 줄 삭제
+    });
+  };
 
   const pickRowSetter = (section: "morning" | "afternoon" | "issues") => {
     if (section === "morning") return setMorning;
@@ -1196,6 +1387,65 @@ export default function WorkJournalPage() {
   const totalCount = tasks.length;
   // 업무 센터 — 선택 날짜의 요일 (이번주 연락 예정 활성 표시용)
   const todayDow = DOW[new Date(`${date}T00:00:00`).getDay()];
+
+  // 업무 센터(default) 상단 통계 카드 — 실데이터 기반
+  const wcStats: WcStat[] = useMemo(() => {
+    const achieve =
+      monthlyGoal > 0 ? Math.round((monthlySales / monthlyGoal) * 100) : 0;
+    const regRate = stats?.registrationRate ?? 0;
+    const completedNew = stats?.todayCompletedNew ?? 0;
+    const newDenom = completedNew + (stats?.pendingNew ?? 0);
+    const scheduled = stats?.todayScheduledContacts ?? 0;
+    const scheduledDone = stats?.todayScheduledDone ?? 0;
+    const rank = stats?.rank ?? 0;
+    const totalMgr = stats?.totalManagers ?? 0;
+    return [
+      {
+        title: "이번달 매출 달성률",
+        value: `${achieve}`,
+        sub: "%",
+        icon: <WcIconStar />,
+        progress: achieve,
+      },
+      {
+        title: "이번달 등록률",
+        value: regRate.toFixed(1),
+        sub: `%(${stats?.registrations ?? 0}건)`,
+        icon: <WcIconReg />,
+        progress: regRate,
+      },
+      {
+        title: "오늘 신규 상담 완료",
+        value: `${completedNew}`,
+        sub: `/${newDenom}건`,
+        icon: <WcIconNew />,
+        progress: newDenom > 0 ? (completedNew / newDenom) * 100 : 0,
+      },
+      {
+        title: "오늘 가망관리",
+        value: `${scheduledDone}`,
+        sub: `/${scheduled}건`,
+        icon: <WcIconHope />,
+        progress: scheduled > 0 ? (scheduledDone / scheduled) * 100 : 0,
+      },
+      {
+        title: "현재 실적 순위",
+        value: rank > 0 ? `${rank}` : "-",
+        sub: "위",
+        icon: <WcIconRank />,
+        progress: null,
+        footer:
+          rank > 1
+            ? `${rank - 1}위까지 추월 가능`
+            : rank === 1
+              ? "1위 유지 중!"
+              : totalMgr > 0
+                ? `전체 ${totalMgr}명`
+                : "",
+      },
+    ];
+  }, [monthlyGoal, monthlySales, stats]);
+
   // 이번주(선택일 포함) 월~금 연락예정 건수 (본인 calEvents 기준)
   const weekContacts = useMemo(() => {
     const base = new Date(`${date}T00:00:00`);
@@ -1433,7 +1683,7 @@ export default function WorkJournalPage() {
           {/* 업무 센터 — 통계 영역 (default 전용) */}
           {isDefault && (
             <div className={styles.wcStatArea}>
-              {WC_STATS.map((s) => (
+              {wcStats.map((s) => (
                 <div key={s.title} className={styles.wcStatCard}>
                   <div className={styles.wcStatTop}>
                     <div className={styles.wcStatInfo}>
@@ -1759,7 +2009,7 @@ export default function WorkJournalPage() {
                         className={`${styles.taskInput} ${t.done ? styles.taskTextDone : ""}`}
                         onChange={(v) => updateTaskText(t.id, v)}
                         autoFocus={isEditing}
-                        onBlur={() => setEditingTaskId(null)}
+                        onBlur={() => handleTaskBlur(t.id)}
                       />
                     ) : (
                       <div
@@ -1846,7 +2096,9 @@ export default function WorkJournalPage() {
           </div>
 
           {/* 업무 센터(default) — 가운데 상담 목록 */}
-          {isDefault && <ConsultationList userName={userName} />}
+          {isDefault && (
+            <ConsultationList userName={userName} refreshKey={refreshKey} />
+          )}
 
           {/* 업무 센터(default) — 업무일지 드로어 오버레이 */}
           {isDefault && journalDrawerOpen && (

@@ -1,9 +1,8 @@
 'use client'
 
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Trash2, RotateCcw, AlertTriangle } from 'lucide-react'
 import styles from '../hakjeom/page.module.css'
-import { createClient } from '@/lib/supabase/client'
 
 interface TrashItem {
   id: string | number
@@ -40,7 +39,6 @@ export default function TrashPage() {
   const [restoring, setRestoring] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [emptyingAll, setEmptyingAll] = useState(false)
-  const channelRef = useRef<ReturnType<ReturnType<typeof createClient>['channel']> | null>(null)
 
   const fetchTrash = useCallback(async () => {
     setLoading(true)
@@ -57,26 +55,10 @@ export default function TrashPage() {
     }
   }, [])
 
+  // 최초 1회만 로드 — Realtime 구독 제거(잦은 변경 테이블로 인한 깜빡임 방지).
+  // 복원/삭제 등 동작 후에는 각 핸들러에서 fetchTrash()로 갱신한다.
   useEffect(() => {
     fetchTrash()
-
-    const supabase = createClient()
-    const tables = ['hakjeom_consultations', 'private_cert_consultations', 'certificate_applications', 'agency_agreements', 'cert_students']
-
-    const channel = supabase.channel('trash-realtime')
-    tables.forEach(table => {
-      channel.on('postgres_changes', { event: '*', schema: 'public', table }, () => {
-        fetchTrash()
-      })
-    })
-    channel.subscribe()
-    channelRef.current = channel
-
-    return () => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current)
-      }
-    }
   }, [fetchTrash])
 
   // 필터링된 목록

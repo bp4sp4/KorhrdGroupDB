@@ -15,11 +15,11 @@
   -webkit-font-smoothing: antialiased;
   letter-spacing: -0.01em;
 
-  height: 772px;
+  min-height: calc(100vh - var(--toss-nav-height, 56px));
   padding: 20px;
   display: flex;
   justify-content: center;
-  align-items: flex-start;
+  align-items: stretch;
 }
 
 .container {
@@ -27,6 +27,8 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  /* .app 높이만큼 늘어난 뒤, 내부 .bodyRow(flex:1)가 남은 세로 공간을 채우도록 */
+  min-height: 0;
 }
 
 /* ─── 학사팀 — 이슈 및 요청사항 행 ─────────────────────────── */
@@ -1265,6 +1267,11 @@
   background: #fff;
   overflow: hidden;
 }
+/* 좌측 컬럼 안 오늘의 업무 — 남은 높이 채우고 내부 리스트만 스크롤 */
+.colStack .col {
+  flex: 1 1 0;
+  min-height: 0;
+}
 
 .colTitle {
   color: #000;
@@ -1315,6 +1322,7 @@
   flex: 1;
 
   min-height: 0;
+  overflow-y: auto;
 }
 
 .taskItem {
@@ -2228,7 +2236,8 @@
 /* ── 업무 센터 — 상담 목록 (가운데) ──────────────────────── */
 .wcConsult {
   display: flex;
-  height: 620px;
+  height: 100%;
+  min-height: 0;
   padding: 20px;
   justify-content: space-between;
   align-items: flex-start;
@@ -2256,7 +2265,12 @@
 }
 .wcConsultTitle {
   color: #000;
-  font-family: Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
   font-size: 16px;
   font-weight: 600;
   line-height: normal;
@@ -2268,10 +2282,66 @@
   border: 1px solid #e6e7eb;
   background: #fff;
   color: #1f2937;
-  font-family: Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
   font-size: 12px;
   font-weight: 500;
   outline: none;
+}
+
+/* ── 상담 목록 — 등록일 기간 범위 필터 ───────────────────── */
+.wcConsultHeadRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wcDateRangeWrap {
+  position: relative;
+  display: inline-block;
+}
+
+.wcDateRangeBtn {
+  padding: 8px 12px;
+  min-width: 150px;
+  text-align: left;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  color: #6b7684;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
+}
+
+.wcDateRangeBtn:hover {
+  border-color: #c4c9d0;
+}
+
+.wcDateRangeBtnActive {
+  border-color: #3182f6;
+  color: #1f2937;
+}
+
+.wcDateRangePopover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 40;
 }
 .wcConsultSearch::placeholder {
   color: #8d99a5;
@@ -2294,7 +2364,12 @@
   border: 1px solid #e6e7eb;
   background: #fff;
   color: #0084fe;
-  font-family: Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
   font-size: 12px;
   font-weight: 600;
   line-height: normal;
@@ -2309,7 +2384,8 @@
 .wcConsultList {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: flex-start;
   gap: 8px;
   align-self: stretch;
   flex: 1 0 0;
@@ -2331,12 +2407,52 @@
   background: #f9fbff;
 }
 .wcConsultEmpty {
-  padding: 40px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 48px 16px;
   align-self: stretch;
   text-align: center;
+}
+
+.wcConsultEmptyIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 8px;
+  border-radius: 50%;
+  background: #f2f4f6;
+  color: #adb5bd;
+}
+
+.wcConsultEmptyTitle {
+  color: #4e5968;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.wcConsultEmptyDesc {
   color: #8d99a5;
-  font-family: Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  font-size: 13px;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.4;
 }
 .wcConsultBadge {
   display: flex;
@@ -2347,7 +2463,12 @@
   gap: 6px;
   flex-shrink: 0;
   border-radius: 999px;
-  font-family: Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
   font-size: 12px;
   font-weight: 500;
   line-height: normal;
@@ -2365,14 +2486,24 @@
 }
 .wcConsultName {
   color: #1f2937;
-  font-family: Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
   font-size: 14px;
   font-weight: 700;
   line-height: normal;
 }
 .wcConsultCourse {
   color: #8d99a5;
-  font-family: Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
   font-size: 12px;
   font-weight: 500;
   line-height: normal;
@@ -2381,7 +2512,12 @@
   flex: 1 0 0;
   min-width: 0;
   color: #1f2937;
-  font-family: Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
   font-size: 12px;
   font-weight: 500;
   line-height: normal;
@@ -2393,7 +2529,12 @@
   flex-shrink: 0;
   color: #1f2937;
   text-align: right;
-  font-family: Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
   font-size: 12px;
   font-weight: 500;
   line-height: normal;
@@ -2418,7 +2559,12 @@
   border: 1px solid #0084fe;
   background: #fff;
   color: #0084fe;
-  font-family: Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
   font-size: 12px;
   font-weight: 500;
   line-height: normal;

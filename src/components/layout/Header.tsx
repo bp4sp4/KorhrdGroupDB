@@ -23,29 +23,9 @@ const SECTION_NAV: NavSection[] = [
     activeOn: ["/dashboard"],
   },
   {
-    label: "업무일지",
+    label: "워크스페이스",
     href: "/work-journal",
     activeOn: ["/work-journal"],
-  },
-  {
-    label: "교육운영",
-    href: "/hakjeom",
-    activeOn: [
-      "/hakjeom",
-      "/edu-sales",
-      "/cert",
-      "/practice",
-      "/allcare",
-      "/duplicate",
-      "/trash",
-      "/ref-manage",
-      "/logs",
-      "/links",
-      "/revenues",
-      "/revenue-upload",
-      "/approvals",
-      "/reports",
-    ],
   },
   {
     label: "게시판",
@@ -67,7 +47,8 @@ const SECTION_NAV: NavSection[] = [
 // 탭 없는 단일 페이지 레이블
 const PATH_LABELS: Record<string, string> = {
   "/dashboard": "대시보드",
-  "/work-journal": "업무일지",
+  "/work-journal": "워크스페이스",
+  "/work-journal/admin": "직원 업무일지 현황",
   "/duplicate": "중복 조회",
   "/trash": "삭제목록",
   "/ref-manage": "어드민 관리",
