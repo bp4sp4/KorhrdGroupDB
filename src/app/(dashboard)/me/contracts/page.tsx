@@ -46,10 +46,16 @@ export default function MyContractsPage() {
   return (
     <div className={styles.wrap}>
       <div className={styles.head}>
-        <h1 className={styles.title}>내 근로계약서</h1>
+        <div className={styles.headRow}>
+          <h1 className={styles.title}>내 근로계약서</h1>
+          <Link href="/me/contracts/write" className={styles.writeBtn}>
+            + 직접 작성하기
+          </Link>
+        </div>
         <p className={styles.sub}>
           관리자가 작성을 요청한 계약서 목록입니다. &quot;서명 대기&quot;인
-          계약서를 눌러 작성·서명하세요.
+          계약서를 눌러 작성·서명하세요. 표준 근로계약서를 직접 작성하려면
+          &quot;직접 작성하기&quot;를 누르세요.
         </p>
       </div>
 

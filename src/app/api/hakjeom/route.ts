@@ -104,6 +104,7 @@ export async function GET(request: NextRequest) {
 
     const isFullAccess = appUser.role === 'master-admin' || appUser.role === 'admin'
     let managerFilter: string | null = null
+    let noAccess = false
     if (!isFullAccess) {
       const { data: perm, error: permError } = await supabaseAdmin
         .from('user_permissions')
@@ -114,7 +115,7 @@ export async function GET(request: NextRequest) {
       if (permError) {
         // 테이블 미생성 등 오류 시 전체 열람 허용
       } else if (!perm || perm.scope === 'none') {
-        return NextResponse.json([])
+        noAccess = true
       } else if (perm.scope === 'own') {
         managerFilter = appUser.display_name ?? ''
       }
@@ -125,6 +126,76 @@ export async function GET(request: NextRequest) {
     const contact = searchParams.get('contact');
     const status = searchParams.get('status');
     const hasScheduled = searchParams.get('has_scheduled');
+    const pageParam = searchParams.get('page');
+
+    // memo(개수/최신) 병합 — 주어진 행들에만
+    const attachMemosByIds = async (
+      items: Record<string, unknown>[],
+    ): Promise<Record<string, unknown>[]> => {
+      const ids = items.map((it) => String(it.id));
+      let memoData: { record_id: string; content: string; created_at: string }[] = [];
+      if (ids.length > 0) {
+        const { data } = await supabaseAdmin
+          .from('memo_logs')
+          .select('record_id, content, created_at')
+          .eq('table_name', TABLE)
+          .in('record_id', ids)
+          .order('created_at', { ascending: false });
+        memoData = data ?? [];
+      }
+      const countMap: Record<string, number> = {};
+      const latestMemoMap: Record<string, string> = {};
+      const latestMemoAtMap: Record<string, string> = {};
+      for (const m of memoData) {
+        countMap[m.record_id] = (countMap[m.record_id] || 0) + 1;
+        if (!latestMemoMap[m.record_id]) {
+          latestMemoMap[m.record_id] = m.content;
+          latestMemoAtMap[m.record_id] = m.created_at;
+        }
+      }
+      return items.map((item) => ({
+        ...item,
+        memo_count: countMap[String(item.id)] || 0,
+        latest_memo: latestMemoMap[String(item.id)] ?? null,
+        latest_memo_at: latestMemoAtMap[String(item.id)] ?? null,
+      }));
+    };
+
+    // ===== 페이지네이션 모드 — page 파라미터가 있을 때만 (신규, 하위호환) =====
+    if (pageParam) {
+      if (noAccess) return NextResponse.json({ rows: [], total: 0 });
+      const page = Math.max(1, parseInt(pageParam, 10) || 1);
+      const pageSize = Math.min(
+        200,
+        Math.max(1, parseInt(searchParams.get('pageSize') || '100', 10) || 100),
+      );
+      const fromIdx = (page - 1) * pageSize;
+
+      let pq = supabaseAdmin
+        .from(TABLE)
+        .select('*', { count: 'exact' })
+        .is('deleted_at', null);
+      if (managerFilter !== null) pq = pq.eq('manager', managerFilter);
+      if (name) pq = pq.ilike('name', `%${name}%`);
+      if (contact) pq = pq.ilike('contact', `%${contact}%`);
+      if (status && status !== 'all') pq = pq.eq('status', status);
+      if (hasScheduled === '1') pq = pq.not('contact_scheduled_at', 'is', null);
+
+      const { data, error, count } = await pq
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: false })
+        .range(fromIdx, fromIdx + pageSize - 1);
+
+      if (error) {
+        console.error('[hakjeom GET paged] Supabase error:', error);
+        return NextResponse.json({ error: 'Failed to fetch hakjeom consultations' }, { status: 500 });
+      }
+      const rows = await attachMemosByIds((data ?? []) as Record<string, unknown>[]);
+      return NextResponse.json({ rows, total: count ?? 0 });
+    }
+
+    // ===== 기존(레거시) 모드 — page 없으면 지금과 100% 동일 =====
+    if (noAccess) return NextResponse.json([]);
 
     let query = supabaseAdmin
       .from(TABLE)

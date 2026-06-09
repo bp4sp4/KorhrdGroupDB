@@ -6,6 +6,30 @@
 .head {
   margin-bottom: 24px;
 }
+
+.headRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.writeBtn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 16px;
+  border-radius: 8px;
+  background: #3182f6;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.writeBtn:hover {
+  background: #2272eb;
+}
 .title {
   margin: 0 0 8px;
   font-size: 24px;

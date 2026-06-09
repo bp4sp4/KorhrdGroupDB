@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-06-09T03:46:02.274Z",
+  "lastUpdated": "2026-06-09T07:21:04.114Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -175,7 +175,9 @@
     "valid-db",
     "my-list",
     "archive",
-    "announcements"
+    "announcements",
+    "write",
+    "contracts"
   ],
   "primaryFeature": "supabase",
   "features": {
@@ -227,9 +229,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:20:57.368Z",
-        "lastUpdated": "2026-06-09T03:37:09.360Z"
+        "lastUpdated": "2026-06-09T03:54:31.008Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/KorhrdGroupDB/src/components/layout/Header.tsx"
+      "lastFile": "/Users/korhrd/Documents/GitHub/KorhrdGroupDB/src/components/layout/Sidebar.tsx"
     },
     "hakjeom": {
       "phase": "do",
@@ -240,9 +242,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:30:16.038Z",
-        "lastUpdated": "2026-06-09T03:45:36.520Z"
+        "lastUpdated": "2026-06-09T07:21:04.114Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/KorhrdGroupDB/src/app/(dashboard)/hakjeom/page.tsx"
+      "lastFile": "/Users/korhrd/Documents/GitHub/KorhrdGroupDB/src/app/api/hakjeom/route.ts"
     },
     "practice": {
       "phase": "do",
@@ -2099,7 +2101,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-05-22T06:42:58.992Z",
-        "lastUpdated": "2026-06-09T03:46:02.274Z"
+        "lastUpdated": "2026-06-09T06:55:11.136Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/KorhrdGroupDB/src/app/(dashboard)/work-journal/page.tsx"
     },
@@ -2440,6 +2442,32 @@
         "lastUpdated": "2026-06-09T03:03:13.619Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/KorhrdGroupDB/src/app/api/admin/announcements/route.ts"
+    },
+    "write": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-06-09T04:01:01.074Z",
+        "lastUpdated": "2026-06-09T05:04:29.935Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/KorhrdGroupDB/src/app/(dashboard)/me/contracts/write/page.tsx"
+    },
+    "contracts": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-06-09T04:53:24.726Z",
+        "lastUpdated": "2026-06-09T04:53:24.726Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/KorhrdGroupDB/src/app/(dashboard)/me/contracts/page.tsx"
     }
   },
   "pipeline": {
@@ -2450,7 +2478,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-06-09T03:46:02.274Z"
+    "lastActivity": "2026-06-09T07:21:04.114Z"
   },
   "history": [
     {
@@ -33506,6 +33534,96 @@
     {
       "timestamp": "2026-06-09T03:46:02.274Z",
       "feature": "work-journal",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-09T03:54:31.008Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-09T04:01:01.075Z",
+      "feature": "write",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-09T04:02:21.003Z",
+      "feature": "write",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-09T04:53:24.726Z",
+      "feature": "contracts",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-09T05:04:29.935Z",
+      "feature": "write",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-09T06:28:14.134Z",
+      "feature": "work-journal",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-09T06:28:24.439Z",
+      "feature": "work-journal",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-09T06:39:20.317Z",
+      "feature": "work-journal",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-09T06:48:31.814Z",
+      "feature": "work-journal",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-09T06:49:46.738Z",
+      "feature": "work-journal",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-09T06:50:08.712Z",
+      "feature": "work-journal",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-09T06:54:30.088Z",
+      "feature": "work-journal",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-09T06:54:56.947Z",
+      "feature": "work-journal",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-09T06:55:11.136Z",
+      "feature": "work-journal",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-09T07:21:04.114Z",
+      "feature": "hakjeom",
       "phase": "do",
       "action": "updated"
     }

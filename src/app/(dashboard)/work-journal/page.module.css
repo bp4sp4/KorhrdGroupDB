@@ -1734,6 +1734,17 @@
   flex-shrink: 0;
 }
 
+/* 학사·실습팀 — 내일 예정 카드 안 하단 버튼 영역 (카드 맨 아래로) */
+.tomorrowFooter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: auto;
+  padding-top: 12px;
+  flex-shrink: 0;
+}
+
 .btnDraft {
   flex: 1 0 0;
   display: flex;

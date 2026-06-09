@@ -408,12 +408,6 @@ const ALL_SECTIONS: NavSection[] = [
         icon: <Clock size={16} />,
       },
       {
-        id: "admin-customers",
-        label: "전체고객관리",
-        href: "/admin/customers",
-        icon: <Users size={16} />,
-      },
-      {
         id: "admin-hr-records",
         label: "인사기록카드 승인",
         href: "/admin/hr-records",

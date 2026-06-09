@@ -1290,14 +1290,14 @@ export default function WorkJournalPage() {
     persist("submitted");
   };
 
-  // 자동 저장 — 입력 변경 시 1.5초 debounce 후 draft 저장
+  // 자동 저장 — 입력 변경 후 0.6초 debounce 후 draft 저장
   // (로딩 중 / 제출 완료 잠금 상태에서는 저장 안 함)
   useEffect(() => {
     if (loading) return;
     if (status === "submitted" && !isEditing) return;
     const t = setTimeout(() => {
       persist("draft", { silent: true });
-    }, 1500);
+    }, 600);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -1311,6 +1311,13 @@ export default function WorkJournalPage() {
     isEditing,
     loading,
   ]);
+
+  // 입력칸에서 포커스가 벗어나면(blur) 즉시 저장 — 0.6초 기다리지 않고 바로 반영
+  const handleFieldBlur = () => {
+    if (loading || saving) return;
+    if (status === "submitted" && !isEditing) return;
+    persist("draft", { silent: true });
+  };
 
   // 수정하기 — 잠금 해제 + 현재 상태 스냅샷 (취소 시 복원용)
   const handleEdit = () => {
@@ -1650,6 +1657,62 @@ export default function WorkJournalPage() {
       };
     });
   }, [date, calEvents]);
+
+  // 상태별 푸터 버튼 (default=우측 드로어 / 학사·실습=내일 예정 카드 안)
+  const footerButtons =
+    status === "submitted" && !isEditing ? (
+      <>
+        <button
+          type="button"
+          className={styles.btnEdit}
+          onClick={handleEdit}
+          disabled={saving || loading}
+        >
+          <svg className={styles.btnIcon} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M13.9997 13.3338C14.3679 13.3338 14.6663 13.6323 14.6663 14.0005C14.6663 14.3686 14.3678 14.6672 13.9997 14.6672H1.99967C1.63154 14.6672 1.3331 14.3686 1.33301 14.0005C1.33301 13.6323 1.63148 13.3338 1.99967 13.3338H13.9997Z" fill="white" />
+            <path fillRule="evenodd" clipRule="evenodd" d="M10.9124 1.48357C11.1743 1.27 11.5603 1.28506 11.8044 1.52914L14.471 4.19581C14.7313 4.45616 14.7314 4.87819 14.471 5.13852L7.80436 11.8052C7.67935 11.9302 7.50978 12.0005 7.33301 12.0005H4.66634C4.2982 12.0005 3.99976 11.7019 3.99967 11.3338V8.66716C3.99967 8.49039 4.07001 8.32082 4.19499 8.19581L10.8617 1.52914L10.9124 1.48357ZM5.33301 8.9432V10.6672H7.05697L11.057 6.66716L9.33301 4.9432L5.33301 8.9432ZM10.2757 4.00049L11.9997 5.72445L13.057 4.66716L11.333 2.9432L10.2757 4.00049Z" fill="white" />
+          </svg>
+          수정하기
+        </button>
+        {hasEdits && (
+          <button
+            type="button"
+            className={styles.btnResubmit}
+            onClick={handleResubmit}
+            disabled={saving || loading}
+          >
+            다시 제출
+            <svg className={styles.btnIcon} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M1.4033 7.10263H12.3215L8.27595 3.24975C7.90793 2.89925 7.90793 2.33113 8.27595 1.98064C8.64397 1.63015 9.2405 1.63015 9.60851 1.98064L15.2627 7.36557L15.3271 7.43393C15.629 7.78644 15.6077 8.30609 15.2627 8.63467L9.60851 14.0196C9.2405 14.3701 8.64397 14.3701 8.27595 14.0196C7.90793 13.6691 7.90793 13.101 8.27595 12.7505L12.3215 8.89761L1.4033 8.89761C0.882849 8.89761 0.460937 8.49579 0.460938 8.00012C0.460938 7.50445 0.882849 7.10263 1.4033 7.10263Z" fill="white" />
+            </svg>
+          </button>
+        )}
+      </>
+    ) : status === "submitted" && isEditing ? (
+      <>
+        <button type="button" className={styles.btnCancel} onClick={handleCancel} disabled={saving}>
+          취소
+        </button>
+        <button type="button" className={styles.btnSave} onClick={handleSave} disabled={saving}>
+          <svg className={styles.btnIcon} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path fillRule="evenodd" clipRule="evenodd" d="M14.3692 3.40738C14.5567 3.59491 14.662 3.84921 14.662 4.11438C14.662 4.37954 14.5567 4.63385 14.3692 4.82138L6.87389 12.3167C6.77484 12.4158 6.65724 12.4944 6.52781 12.548C6.39838 12.6016 6.25966 12.6292 6.11956 12.6292C5.97946 12.6292 5.84074 12.6016 5.71131 12.548C5.58188 12.4944 5.46428 12.4158 5.36523 12.3167L1.64123 8.59338C1.54572 8.50113 1.46953 8.39079 1.41712 8.26878C1.36472 8.14678 1.33713 8.01556 1.33598 7.88278C1.33482 7.75 1.36012 7.61832 1.4104 7.49542C1.46069 7.37253 1.53494 7.26088 1.62883 7.16698C1.72272 7.07309 1.83438 6.99884 1.95727 6.94856C2.08017 6.89828 2.21185 6.87297 2.34463 6.87413C2.47741 6.87528 2.60863 6.90287 2.73063 6.95528C2.85263 7.00769 2.96298 7.08387 3.05523 7.17938L6.11923 10.2434L12.9546 3.40738C13.0474 3.31445 13.1577 3.24073 13.2791 3.19044C13.4004 3.14014 13.5305 3.11426 13.6619 3.11426C13.7933 3.11426 13.9234 3.14014 14.0447 3.19044C14.1661 3.24073 14.2764 3.31445 14.3692 3.40738Z" fill="white" />
+          </svg>
+          저장하기
+        </button>
+      </>
+    ) : (
+      <button
+        type="button"
+        className={styles.btnSubmit}
+        onClick={handleSubmit}
+        disabled={saving || loading}
+      >
+        <svg className={styles.btnIcon} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <path d="M1.4033 7.10263H12.3215L8.27595 3.24975C7.90793 2.89925 7.90793 2.33113 8.27595 1.98064C8.64397 1.63015 9.2405 1.63015 9.60851 1.98064L15.2627 7.36557L15.3271 7.43393C15.629 7.78644 15.6077 8.30609 15.2627 8.63467L9.60851 14.0196C9.2405 14.3701 8.64397 14.3701 8.27595 14.0196C7.90793 13.6691 7.90793 13.101 8.27595 12.7505L12.3215 8.89761L1.4033 8.89761C0.882849 8.89761 0.460937 8.49579 0.460938 8.00012C0.460938 7.50445 0.882849 7.10263 1.4033 7.10263Z" fill="white" />
+        </svg>
+        제출하기
+      </button>
+    );
 
   return (
     <div className={styles.app}>
@@ -2131,6 +2194,7 @@ export default function WorkJournalPage() {
         {/* ── 3컬럼 본문 — 제출 완료 후 잠금 ───────────────────── */}
         <div
           className={`${styles.bodyRow} ${isLocked ? styles.bodyRowLocked : ""}`}
+          onBlur={handleFieldBlur}
         >
           {/* 좌: 오늘의 업무 (실습팀이면 내일 예정 업무와 위/아래 반반) */}
           <div className={styles.colStack}>
@@ -2266,8 +2330,8 @@ export default function WorkJournalPage() {
               )}
             </section>
 
-            {/* 실습팀 — 내일 예정 업무 (오늘의 업무 아래 반반) */}
-            {isPracticum && (
+            {/* 실습팀·학사팀 — 내일 예정 업무 (오늘의 업무 아래 반반) + 카드 안 푸터 버튼 */}
+            {(isPracticum || isAcademic) && (
               <section className={styles.col} data-guide="wj-tomorrow">
                 <h3 className={styles.colTitle}>내일 예정 업무</h3>
                 <div className={styles.tomorrowList}>
@@ -2286,6 +2350,9 @@ export default function WorkJournalPage() {
                       />
                     </div>
                   ))}
+                </div>
+                <div className={styles.tomorrowFooter} data-guide="wj-footer">
+                  {footerButtons}
                 </div>
               </section>
             )}
@@ -2663,8 +2730,8 @@ export default function WorkJournalPage() {
                   />
                 </div>
               )}
-              {/* 내일 예정 업무 — 비실습팀만 (실습팀은 좌측으로 이동) */}
-              {!isPracticum && (
+              {/* 내일 예정 업무 — 업무센터(default)만 우측 표시 (학사·실습팀은 좌측으로 이동) */}
+              {isDefault && (
                 <section className={styles.col} data-guide="wj-tomorrow">
                   <h3 className={styles.colTitle}>내일 예정 업무</h3>
                   <div className={styles.tomorrowList}>
@@ -2687,121 +2754,12 @@ export default function WorkJournalPage() {
                 </section>
               )}
 
-              {/* 박스 바깥 푸터 — 상태별 분기
-                 1) submitted + 잠금 + 저장후         → [수정하기] [다시 제출]
-                 2) submitted + 잠금 + 저장후 아님    → [수정하기]
-                 3) submitted + 편집중                → [취소] [저장하기]
-                 4) draft/null                        → [임시저장] [제출하기] */}
-              <div className={styles.footer} data-guide="wj-footer">
-                {status === "submitted" && !isEditing ? (
-                  <>
-                    <button
-                      type="button"
-                      className={styles.btnEdit}
-                      onClick={handleEdit}
-                      disabled={saving || loading}
-                    >
-                      <svg
-                        className={styles.btnIcon}
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 16 16"
-                        fill="none"
-                        aria-hidden="true"
-                      >
-                        <path
-                          d="M13.9997 13.3338C14.3679 13.3338 14.6663 13.6323 14.6663 14.0005C14.6663 14.3686 14.3678 14.6672 13.9997 14.6672H1.99967C1.63154 14.6672 1.3331 14.3686 1.33301 14.0005C1.33301 13.6323 1.63148 13.3338 1.99967 13.3338H13.9997Z"
-                          fill="white"
-                        />
-                        <path
-                          fillRule="evenodd"
-                          clipRule="evenodd"
-                          d="M10.9124 1.48357C11.1743 1.27 11.5603 1.28506 11.8044 1.52914L14.471 4.19581C14.7313 4.45616 14.7314 4.87819 14.471 5.13852L7.80436 11.8052C7.67935 11.9302 7.50978 12.0005 7.33301 12.0005H4.66634C4.2982 12.0005 3.99976 11.7019 3.99967 11.3338V8.66716C3.99967 8.49039 4.07001 8.32082 4.19499 8.19581L10.8617 1.52914L10.9124 1.48357ZM5.33301 8.9432V10.6672H7.05697L11.057 6.66716L9.33301 4.9432L5.33301 8.9432ZM10.2757 4.00049L11.9997 5.72445L13.057 4.66716L11.333 2.9432L10.2757 4.00049Z"
-                          fill="white"
-                        />
-                      </svg>
-                      수정하기
-                    </button>
-                    {hasEdits && (
-                      <button
-                        type="button"
-                        className={styles.btnResubmit}
-                        onClick={handleResubmit}
-                        disabled={saving || loading}
-                      >
-                        다시 제출
-                        <svg
-                          className={styles.btnIcon}
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 16 16"
-                          fill="none"
-                          aria-hidden="true"
-                        >
-                          <path
-                            d="M1.4033 7.10263H12.3215L8.27595 3.24975C7.90793 2.89925 7.90793 2.33113 8.27595 1.98064C8.64397 1.63015 9.2405 1.63015 9.60851 1.98064L15.2627 7.36557L15.3271 7.43393C15.629 7.78644 15.6077 8.30609 15.2627 8.63467L9.60851 14.0196C9.2405 14.3701 8.64397 14.3701 8.27595 14.0196C7.90793 13.6691 7.90793 13.101 8.27595 12.7505L12.3215 8.89761L1.4033 8.89761C0.882849 8.89761 0.460937 8.49579 0.460938 8.00012C0.460938 7.50445 0.882849 7.10263 1.4033 7.10263Z"
-                            fill="white"
-                          />
-                        </svg>
-                      </button>
-                    )}
-                  </>
-                ) : status === "submitted" && isEditing ? (
-                  <>
-                    <button
-                      type="button"
-                      className={styles.btnCancel}
-                      onClick={handleCancel}
-                      disabled={saving}
-                    >
-                      취소
-                    </button>
-                    <button
-                      type="button"
-                      className={styles.btnSave}
-                      onClick={handleSave}
-                      disabled={saving}
-                    >
-                      <svg
-                        className={styles.btnIcon}
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 16 16"
-                        fill="none"
-                        aria-hidden="true"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          clipRule="evenodd"
-                          d="M14.3692 3.40738C14.5567 3.59491 14.662 3.84921 14.662 4.11438C14.662 4.37954 14.5567 4.63385 14.3692 4.82138L6.87389 12.3167C6.77484 12.4158 6.65724 12.4944 6.52781 12.548C6.39838 12.6016 6.25966 12.6292 6.11956 12.6292C5.97946 12.6292 5.84074 12.6016 5.71131 12.548C5.58188 12.4944 5.46428 12.4158 5.36523 12.3167L1.64123 8.59338C1.54572 8.50113 1.46953 8.39079 1.41712 8.26878C1.36472 8.14678 1.33713 8.01556 1.33598 7.88278C1.33482 7.75 1.36012 7.61832 1.4104 7.49542C1.46069 7.37253 1.53494 7.26088 1.62883 7.16698C1.72272 7.07309 1.83438 6.99884 1.95727 6.94856C2.08017 6.89828 2.21185 6.87297 2.34463 6.87413C2.47741 6.87528 2.60863 6.90287 2.73063 6.95528C2.85263 7.00769 2.96298 7.08387 3.05523 7.17938L6.11923 10.2434L12.9546 3.40738C13.0474 3.31445 13.1577 3.24073 13.2791 3.19044C13.4004 3.14014 13.5305 3.11426 13.6619 3.11426C13.7933 3.11426 13.9234 3.14014 14.0447 3.19044C14.1661 3.24073 14.2764 3.31445 14.3692 3.40738Z"
-                          fill="white"
-                        />
-                      </svg>
-                      저장하기
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      type="button"
-                      className={styles.btnSubmit}
-                      onClick={handleSubmit}
-                      disabled={saving || loading}
-                    >
-                      <svg
-                        className={styles.btnIcon}
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 16 16"
-                        fill="none"
-                        aria-hidden="true"
-                      >
-                        <path
-                          d="M1.4033 7.10263H12.3215L8.27595 3.24975C7.90793 2.89925 7.90793 2.33113 8.27595 1.98064C8.64397 1.63015 9.2405 1.63015 9.60851 1.98064L15.2627 7.36557L15.3271 7.43393C15.629 7.78644 15.6077 8.30609 15.2627 8.63467L9.60851 14.0196C9.2405 14.3701 8.64397 14.3701 8.27595 14.0196C7.90793 13.6691 7.90793 13.101 8.27595 12.7505L12.3215 8.89761L1.4033 8.89761C0.882849 8.89761 0.460937 8.49579 0.460938 8.00012C0.460938 7.50445 0.882849 7.10263 1.4033 7.10263Z"
-                          fill="white"
-                        />
-                      </svg>
-                      제출하기
-                    </button>
-                  </>
-                )}
-              </div>
+              {/* 푸터 — default(업무센터)만 우측에 노출. 학사·실습팀은 좌측 '내일 예정' 카드 안으로 이동 */}
+              {isDefault && (
+                <div className={styles.footer} data-guide="wj-footer">
+                  {footerButtons}
+                </div>
+              )}
             </div>
           </div>
         </div>
