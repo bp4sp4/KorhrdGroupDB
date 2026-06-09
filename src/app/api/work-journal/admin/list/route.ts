@@ -108,18 +108,74 @@ async function collectMonth(managerName: string, year: number, month: number) {
   return { totalInquiries, registrations, registrationRate }
 }
 
-// 이번 달 매출
+// 이번 달 실매출 — 상세(JournalDetailModal)와 동일 로직
+//  - cert/edu/practice 3개 매출원 합산
+//  - total_amount 가 비어있으면(0/null) 각 신청서의 금액으로 fallback
+//    (edu_sales→edu_students.cost, cert_sales→certificate_applications.amount,
+//     practice_sales→practice_applications.payment_amount)
 async function collectMonthSales(managerName: string, year: number, month: number) {
   const pad = (n: number) => String(n).padStart(2, '0')
   const monthStart = `${year}-${pad(month)}-01`
-  const monthEnd = `${year}-${pad(month + 1)}-01`
-  const { data } = await supabaseAdmin
-    .from('edu_sales')
-    .select('total_amount')
-    .eq('manager_name', managerName)
-    .gte('payment_date', monthStart)
-    .lt('payment_date', monthEnd)
-  return (data ?? []).reduce((s, r) => s + Number(r.total_amount ?? 0), 0)
+  const lastDay = new Date(year, month, 0).getDate()
+  const monthEnd = `${year}-${pad(month)}-${pad(lastDay)}`
+
+  const pickNumber = (base: unknown, field: string): number => {
+    const row = Array.isArray(base) ? base[0] : base
+    const v = (row as Record<string, unknown> | null | undefined)?.[field]
+    return typeof v === 'number' ? v : Number(v) || 0
+  }
+  const sumRows = (
+    rows: { total_amount: number | null; [k: string]: unknown }[] | null,
+    fk: string,
+    ff: string,
+  ): number => {
+    let total = 0
+    for (const r of rows ?? []) {
+      const overlay = Number(r.total_amount) || 0
+      const amt = overlay > 0 ? overlay : pickNumber(r[fk], ff)
+      if (amt > 0) total += amt
+    }
+    return total
+  }
+
+  const [certRes, eduRes, pracRes] = await Promise.allSettled([
+    supabaseAdmin
+      .from('cert_sales')
+      .select('total_amount, certificate_applications(amount)')
+      .eq('manager_name', managerName)
+      .gte('payment_date', monthStart)
+      .lte('payment_date', monthEnd)
+      .eq('is_hidden', false),
+    supabaseAdmin
+      .from('edu_sales')
+      .select('total_amount, edu_students(cost)')
+      .eq('manager_name', managerName)
+      .gte('payment_date', monthStart)
+      .lte('payment_date', monthEnd),
+    supabaseAdmin
+      .from('practice_sales')
+      .select('total_amount, practice_applications(payment_amount)')
+      .eq('manager_name', managerName)
+      .gte('payment_date', monthStart)
+      .lte('payment_date', monthEnd),
+  ])
+
+  let total = 0
+  if (certRes.status === 'fulfilled' && !certRes.value.error)
+    total += sumRows(
+      certRes.value.data as never,
+      'certificate_applications',
+      'amount',
+    )
+  if (eduRes.status === 'fulfilled' && !eduRes.value.error)
+    total += sumRows(eduRes.value.data as never, 'edu_students', 'cost')
+  if (pracRes.status === 'fulfilled' && !pracRes.value.error)
+    total += sumRows(
+      pracRes.value.data as never,
+      'practice_applications',
+      'payment_amount',
+    )
+  return total
 }
 
 export async function GET(request: NextRequest) {

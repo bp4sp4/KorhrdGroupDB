@@ -76,7 +76,8 @@ export async function GET(request: NextRequest) {
   if (managerName && rangeFrom && rangeTo) {
     const startTs = `${rangeFrom}T00:00:00+09:00`
     const endTs = `${addDaysIso(rangeTo, 1)}T00:00:00+09:00`
-    const [inqRes, regRes, salesRes] = await Promise.all([
+    const salesEnd = addDaysIso(rangeTo, 1)
+    const [inqRes, regRes, certRes, eduRes, pracRes] = await Promise.all([
       supabaseAdmin
         .from('hakjeom_consultations')
         .select('created_at')
@@ -89,12 +90,26 @@ export async function GET(request: NextRequest) {
         .eq('manager_name', managerName)
         .gte('registered_at', startTs)
         .lt('registered_at', endTs),
+      // 매출 — cert/edu/practice 3개 원천, total_amount 비면 신청서 금액 fallback
       supabaseAdmin
-        .from('edu_sales')
-        .select('payment_date,total_amount')
+        .from('cert_sales')
+        .select('payment_date, total_amount, certificate_applications(amount)')
         .eq('manager_name', managerName)
         .gte('payment_date', rangeFrom)
-        .lt('payment_date', addDaysIso(rangeTo, 1)),
+        .lt('payment_date', salesEnd)
+        .eq('is_hidden', false),
+      supabaseAdmin
+        .from('edu_sales')
+        .select('payment_date, total_amount, edu_students(cost)')
+        .eq('manager_name', managerName)
+        .gte('payment_date', rangeFrom)
+        .lt('payment_date', salesEnd),
+      supabaseAdmin
+        .from('practice_sales')
+        .select('payment_date, total_amount, practice_applications(payment_amount)')
+        .eq('manager_name', managerName)
+        .gte('payment_date', rangeFrom)
+        .lt('payment_date', salesEnd),
     ])
 
     for (const r of inqRes.data ?? []) {
@@ -105,11 +120,28 @@ export async function GET(request: NextRequest) {
       const d = bucketDate((r as { registered_at: unknown }).registered_at)
       if (d) ensure(d).reg++
     }
-    for (const r of salesRes.data ?? []) {
-      const row = r as { payment_date: unknown; total_amount: unknown }
-      const d = bucketDate(row.payment_date)
-      if (d) ensure(d).sales += Number(row.total_amount ?? 0)
+
+    const pickNum = (base: unknown, field: string): number => {
+      const row = Array.isArray(base) ? base[0] : base
+      const v = (row as Record<string, unknown> | null | undefined)?.[field]
+      return typeof v === 'number' ? v : Number(v) || 0
     }
+    const bucketSales = (
+      rows: { payment_date: unknown; total_amount: unknown; [k: string]: unknown }[] | null,
+      fk: string,
+      ff: string,
+    ) => {
+      for (const row of rows ?? []) {
+        const d = bucketDate(row.payment_date)
+        if (!d) continue
+        const overlay = Number(row.total_amount) || 0
+        const amt = overlay > 0 ? overlay : pickNum(row[fk], ff)
+        if (amt > 0) ensure(d).sales += amt
+      }
+    }
+    bucketSales(certRes.data as never, 'certificate_applications', 'amount')
+    bucketSales(eduRes.data as never, 'edu_students', 'cost')
+    bucketSales(pracRes.data as never, 'practice_applications', 'payment_amount')
   }
 
   const rows = (data ?? []).map((j) => {

@@ -1490,14 +1490,23 @@ function HakjeomTab({
     [serverMode, currentPage, fetchPage, fetchAll],
   );
 
+  // 첫 로드만 스켈레톤, 이후(검색/필터/페이지 이동)는 백그라운드(스켈레톤 없음)
+  const firstLoadDone = useRef(false);
+
   // 서버 페이지 모드: 모드/페이지 변경 시 해당 페이지 로드
   useEffect(() => {
-    if (serverMode) fetchPage(currentPage);
+    if (!serverMode) return;
+    void fetchPage(currentPage, firstLoadDone.current).then(() => {
+      firstLoadDone.current = true;
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [serverMode, currentPage]);
   // 필터/딥링크 모드: 진입 시 전체 1회 로드 (필터 변경은 클라이언트가 처리)
   useEffect(() => {
-    if (!serverMode) fetchAll();
+    if (serverMode) return;
+    void fetchAll(firstLoadDone.current).then(() => {
+      firstLoadDone.current = true;
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [serverMode]);
   // 탭 재진입 시 백그라운드 새로고침

@@ -146,13 +146,8 @@ export default function WorkJournalAdminPage() {
         />
         <KpiCard
           icon={<Wallet size={28} />}
-          label="매출"
+          label="이번달 매출"
           value={`${Math.round((header?.sales ?? 0) / 10000).toLocaleString()}만원`}
-          delta={
-            header
-              ? `${header.delta.sales > 0 ? "+" : ""}${Math.round(header.delta.sales / 10000).toLocaleString()}만원`
-              : undefined
-          }
         />
       </section>
 

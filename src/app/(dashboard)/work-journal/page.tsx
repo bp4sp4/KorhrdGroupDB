@@ -10,6 +10,7 @@ import { HakjeomDetailPanel } from "@/app/(dashboard)/hakjeom/_detail/HakjeomDet
 import { HakjeomAddModal } from "@/app/(dashboard)/hakjeom/page";
 import type { HakjeomConsultation } from "@/app/(dashboard)/hakjeom/_types";
 import { DateInput } from "@/components/ui/Calendar/DateInput";
+import { createClient } from "@/lib/supabase/client";
 import {
   DateRangeCalendar,
   type DateRange,
@@ -363,6 +364,50 @@ function ConsultationList({
     };
   }, [userName, refreshKey, reloadTick]);
 
+  // 실시간 — 배정/변경 시 재조회 없이 payload로 목록 즉시 갱신 (바로 반영)
+  useEffect(() => {
+    if (!userName) return;
+    const supabase = createClient();
+    const ch = supabase
+      .channel("consult-list-rt")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "hakjeom_consultations" },
+        (payload) => {
+          const ev = payload.eventType;
+          const newRow = payload.new as (Partial<HakItem> & {
+            id?: number;
+            manager?: string | null;
+            deleted_at?: string | null;
+          });
+          const oldRow = payload.old as { id?: number };
+          if (ev === "DELETE") {
+            if (oldRow?.id != null)
+              setItems((prev) => prev.filter((i) => i.id !== oldRow.id));
+            return;
+          }
+          if (newRow?.id == null) return;
+          // 본인 담당 + 미삭제면 추가/갱신, 아니면(재배정/삭제) 목록에서 제거
+          if (newRow.manager === userName && !newRow.deleted_at) {
+            setItems((prev) => {
+              const exists = prev.some((i) => i.id === newRow.id);
+              return exists
+                ? prev.map((i) =>
+                    i.id === newRow.id ? { ...i, ...(newRow as HakItem) } : i,
+                  )
+                : [newRow as HakItem, ...prev];
+            });
+          } else {
+            setItems((prev) => prev.filter((i) => i.id !== newRow.id));
+          }
+        },
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(ch);
+    };
+  }, [userName]);
+
   // 상세 모달 저장 → 목록/모달 동기화
   const handleDetailUpdate = async (
     id: number,
@@ -526,7 +571,7 @@ function ConsultationList({
                   </div>
                 );
               })()}
-            {rows.map((r) => {
+            {rows.map((r, idx) => {
               const status = r.status ?? "";
               const c = WC_CONSULT_STATUS_COLORS[status] ?? {
                 bg: "#F3F4F6",
@@ -539,8 +584,10 @@ function ConsultationList({
                 : "";
               return (
                 <div
-                  key={r.id}
+                  // 탭 전환 시 key가 바뀌어 등장 애니메이션이 다시 재생됨
+                  key={`${tab}-${r.id}`}
                   className={styles.wcConsultRow}
+                  style={{ animationDelay: `${Math.min(idx, 12) * 35}ms` }}
                   onClick={() => setDetailItem(r)}
                 >
                   <span
@@ -804,6 +851,33 @@ export default function WorkJournalPage() {
     return () => {
       window.removeEventListener("focus", bump);
       document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [isDefault]);
+
+  // 실시간 반영(Realtime): 담당자 배정/상담완료/등록 등 변경 시 stats·상담목록 자동 갱신
+  // - hakjeom_consultations: 배정(담당자 변경)·상담완료/가망(상태)·신규
+  // - edu_students: 등록 (등록률/등록건수)
+  // - 매출/순위는 위 이벤트로 bump될 때 stats 재조회에서 함께 최신화 (edu_sales는 서버전용)
+  useEffect(() => {
+    if (!isDefault) return;
+    const supabase = createClient();
+    // 즉시 반영 — 변경 이벤트 받는 즉시 stats·상담목록 재조회
+    const bumpNow = () => setRefreshKey((k) => k + 1);
+    const channel = supabase
+      .channel("workspace-stats-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "hakjeom_consultations" },
+        bumpNow,
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "edu_students" },
+        bumpNow,
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
     };
   }, [isDefault]);
   const [weeklyGoal, setWeeklyGoal] = useState<WeeklyGoal[]>([]);

@@ -169,19 +169,37 @@ export async function GET(request: NextRequest) {
     .eq('date', dateStr)
     .maybeSingle()
 
-  // 2) stats — 누적 + 이번달 매출 + 전일대비 (display_name 없으면 빈값)
+  // 2) stats — 누적 + 이번달 매출 + 전일대비 + 해당일 신규완료/가망 (display_name 없으면 빈값)
   let stats = {
     totalInquiries: 0,
     registrations: 0,
     registrationRate: 0,
     salesThisMonth: 0,
+    completedNew: 0,
+    pendingNew: 0,
+    scheduledContacts: 0,
+    scheduledDone: 0,
     delta: { inquiries: 0, registrations: 0, rate: 0, sales: 0 },
   }
   if (displayName) {
     const monthStart = `${yy}-${String(mm).padStart(2, '0')}-01`
     const monthEnd = `${yy}-${String(mm + 1).padStart(2, '0')}-01`
+    const dayStartISO = `${iso(baseDay)}T00:00:00+09:00`
+    const dayNext = new Date(baseDay)
+    dayNext.setDate(dayNext.getDate() + 1)
+    const dayEndISO = `${iso(dayNext)}T00:00:00+09:00`
     // 문의/등록도 당월 기준 (매월 1일에 자동 초기화)
-    const [inqMonth, regMonth, monthSalesRes, base, prev] = await Promise.all([
+    const [
+      inqMonth,
+      regMonth,
+      monthSalesRes,
+      base,
+      prev,
+      completedRes,
+      pendingRes,
+      schedRes,
+      schedDoneRes,
+    ] = await Promise.all([
       supabaseAdmin
         .from('hakjeom_consultations')
         .select('id', { count: 'exact', head: true })
@@ -202,6 +220,36 @@ export async function GET(request: NextRequest) {
         .lt('payment_date', monthEnd),
       collectDay(baseDay, displayName),
       collectDay(prevDay, displayName),
+      // 해당일 신규 상담완료 (counsel_completed_at)
+      supabaseAdmin
+        .from('hakjeom_consultations')
+        .select('id', { count: 'exact', head: true })
+        .eq('manager', displayName)
+        .gte('counsel_completed_at', dayStartISO)
+        .lt('counsel_completed_at', dayEndISO),
+      // 신규 배정(상담대기) — 분모 (현재 스냅샷)
+      supabaseAdmin
+        .from('hakjeom_consultations')
+        .select('id', { count: 'exact', head: true })
+        .eq('manager', displayName)
+        .eq('status', '상담대기')
+        .is('deleted_at', null),
+      // 해당일 연락 예정 (contact_scheduled_at)
+      supabaseAdmin
+        .from('hakjeom_consultations')
+        .select('id', { count: 'exact', head: true })
+        .eq('manager', displayName)
+        .gte('contact_scheduled_at', dayStartISO)
+        .lt('contact_scheduled_at', dayEndISO),
+      // 해당일 연락 예정 중 상담완료 (가망관리 처리분)
+      supabaseAdmin
+        .from('hakjeom_consultations')
+        .select('id', { count: 'exact', head: true })
+        .eq('manager', displayName)
+        .gte('contact_scheduled_at', dayStartISO)
+        .lt('contact_scheduled_at', dayEndISO)
+        .gte('counsel_completed_at', dayStartISO)
+        .lt('counsel_completed_at', dayEndISO),
     ])
     const totalInquiries = inqMonth.count ?? 0
     const registrations = regMonth.count ?? 0
@@ -216,6 +264,10 @@ export async function GET(request: NextRequest) {
       registrations,
       registrationRate: Math.round(registrationRate * 10) / 10,
       salesThisMonth,
+      completedNew: completedRes.count ?? 0,
+      pendingNew: pendingRes.count ?? 0,
+      scheduledContacts: schedRes.count ?? 0,
+      scheduledDone: schedDoneRes.count ?? 0,
       delta: {
         inquiries: base.inquiries - prev.inquiries,
         registrations: base.registrations - prev.registrations,

@@ -693,6 +693,8 @@
   height: 10px;
   border-radius: 999px;
   background: #0084fe;
+  /* 값이 바뀔 때 막대가 부드럽게 차오르도록 */
+  transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .wcStatRankFooter {
   align-self: stretch;
@@ -2437,7 +2439,29 @@
   border-radius: 6px;
   border: 1px solid #e6e7eb;
   cursor: pointer;
-  transition: background 0.12s;
+  transition:
+    background 0.12s,
+    transform 0.12s,
+    box-shadow 0.12s;
+  /* 토스풍 등장: 아래에서 떠오르며 페이드 인 (행별 stagger는 inline animationDelay) */
+  animation: wcRowIn 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.wcConsultRow:hover {
+  background: #f9fafb;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+@keyframes wcRowIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 .wcConsultRow:hover {
   background: #f9fbff;

@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-06-09T07:47:04.681Z",
+  "lastUpdated": "2026-06-09T09:42:26.241Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -242,7 +242,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:30:16.038Z",
-        "lastUpdated": "2026-06-09T07:47:04.681Z"
+        "lastUpdated": "2026-06-09T08:49:25.237Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/KorhrdGroupDB/src/app/(dashboard)/hakjeom/page.tsx"
     },
@@ -346,9 +346,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T06:09:16.436Z",
-        "lastUpdated": "2026-06-09T03:06:56.773Z"
+        "lastUpdated": "2026-06-09T09:18:27.673Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/KorhrdGroupDB/src/app/(dashboard)/admin/AnnouncementsTab.tsx"
+      "lastFile": "/Users/korhrd/Documents/GitHub/KorhrdGroupDB/src/app/(dashboard)/work-journal/admin/page.tsx"
     },
     "bulk": {
       "phase": "do",
@@ -1958,9 +1958,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-05-20T03:11:12.208Z",
-        "lastUpdated": "2026-05-29T04:22:34.028Z"
+        "lastUpdated": "2026-06-09T09:10:58.154Z"
       },
-      "lastFile": "C:\\Users\\bp4sp\\Downloads\\WebsPortfolio-master\\KorhrdGroupDB\\src\\app\\(dashboard)\\work-journal\\admin\\_detail\\JournalDetailModal.tsx"
+      "lastFile": "/Users/korhrd/Documents/GitHub/KorhrdGroupDB/src/app/(dashboard)/work-journal/admin/_detail/JournalDetailModal.tsx"
     },
     "calendar": {
       "phase": "do",
@@ -2049,9 +2049,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-05-22T03:54:44.269Z",
-        "lastUpdated": "2026-05-28T05:24:05.973Z"
+        "lastUpdated": "2026-06-09T09:20:27.534Z"
       },
-      "lastFile": "C:\\Users\\bp4sp\\Downloads\\WebsPortfolio-master\\KorhrdGroupDB\\src\\app\\api\\work-journal\\admin\\list\\route.ts"
+      "lastFile": "/Users/korhrd/Documents/GitHub/KorhrdGroupDB/src/app/api/work-journal/admin/list/route.ts"
     },
     "send": {
       "phase": "do",
@@ -2101,7 +2101,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-05-22T06:42:58.992Z",
-        "lastUpdated": "2026-06-09T06:55:11.136Z"
+        "lastUpdated": "2026-06-09T09:42:26.240Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/KorhrdGroupDB/src/app/(dashboard)/work-journal/page.tsx"
     },
@@ -2270,7 +2270,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-05-28T05:25:13.284Z",
-        "lastUpdated": "2026-06-09T02:24:38.318Z"
+        "lastUpdated": "2026-06-09T09:09:22.686Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/KorhrdGroupDB/src/app/api/work-journal/admin/detail/route.ts"
     },
@@ -2413,7 +2413,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-06-09T01:59:58.913Z",
-        "lastUpdated": "2026-06-09T02:21:53.325Z"
+        "lastUpdated": "2026-06-09T09:22:33.801Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/KorhrdGroupDB/src/app/api/work-journal/my-list/route.ts"
     },
@@ -2478,7 +2478,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-06-09T07:47:04.681Z"
+    "lastActivity": "2026-06-09T09:42:26.241Z"
   },
   "history": [
     {
@@ -33702,6 +33702,90 @@
     {
       "timestamp": "2026-06-09T07:47:04.681Z",
       "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-09T08:49:25.237Z",
+      "feature": "hakjeom",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-09T09:05:43.265Z",
+      "feature": "work-journal",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-09T09:05:58.108Z",
+      "feature": "work-journal",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-09T09:09:22.686Z",
+      "feature": "detail",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-09T09:09:58.404Z",
+      "feature": "_detail",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-09T09:10:12.883Z",
+      "feature": "_detail",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-09T09:10:58.154Z",
+      "feature": "_detail",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-09T09:18:27.673Z",
+      "feature": "admin",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-09T09:20:27.534Z",
+      "feature": "list",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-09T09:22:33.801Z",
+      "feature": "my-list",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-09T09:24:09.328Z",
+      "feature": "work-journal",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-09T09:26:03.007Z",
+      "feature": "work-journal",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-09T09:28:44.298Z",
+      "feature": "work-journal",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-09T09:42:26.240Z",
+      "feature": "work-journal",
       "phase": "do",
       "action": "updated"
     }

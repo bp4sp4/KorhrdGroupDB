@@ -48,6 +48,10 @@ interface DetailResponse {
     registrations: number;
     registrationRate: number;
     salesThisMonth: number;
+    completedNew?: number;
+    pendingNew?: number;
+    scheduledContacts?: number;
+    scheduledDone?: number;
     delta: {
       inquiries: number;
       registrations: number;
@@ -291,10 +295,7 @@ export function JournalDetailModal({
                     achievedWeeks={data.monthlyAchieved.weeks}
                     currentWeekIdx={currentWeekIdx}
                   />
-                  <div className={styles.rightBottomRow}>
-                    <StatList stats={data.stats} />
-                    <SourcesCard inquirySources={data.inquirySources} />
-                  </div>
+                  <MiniStatCards stats={data.stats} />
                 </>
               )}
             </div>
@@ -515,6 +516,59 @@ function StatItem({
         </div>
         {sub && <span className={styles.statSub}>{sub}</span>}
       </div>
+    </div>
+  );
+}
+
+// 워크스페이스 스타일 3카드 (이번달 등록률 / 오늘 신규 상담 완료 / 오늘 가망관리)
+function MiniStatCards({ stats }: { stats: DetailResponse["stats"] }) {
+  const completed = stats.completedNew ?? 0;
+  const newDenom = completed + (stats.pendingNew ?? 0);
+  const scheduled = stats.scheduledContacts ?? 0;
+  const scheduledDone = stats.scheduledDone ?? 0;
+  const cards = [
+    {
+      icon: <UserPlus size={22} />,
+      label: "이번달 등록률",
+      value: `${stats.registrationRate.toFixed(1)}%`,
+      sub: `(${stats.registrations}건)`,
+      pct: Math.min(100, stats.registrationRate),
+    },
+    {
+      icon: <CheckCircle2 size={22} />,
+      label: "오늘 신규 상담 완료",
+      value: `${completed}`,
+      sub: `/${newDenom}건`,
+      pct: newDenom > 0 ? (completed / newDenom) * 100 : 0,
+    },
+    {
+      icon: <Users size={22} />,
+      label: "오늘 가망관리",
+      value: `${scheduledDone}`,
+      sub: `/${scheduled}건`,
+      pct: scheduled > 0 ? (scheduledDone / scheduled) * 100 : 0,
+    },
+  ];
+  return (
+    <div className={styles.miniStatRow}>
+      {cards.map((c) => (
+        <div key={c.label} className={styles.miniStatCard}>
+          <div className={styles.miniStatTop}>
+            <span className={styles.miniStatLabel}>{c.label}</span>
+            <span className={styles.miniStatIcon}>{c.icon}</span>
+          </div>
+          <div className={styles.miniStatValueRow}>
+            <span className={styles.miniStatValue}>{c.value}</span>
+            <span className={styles.miniStatSub}>{c.sub}</span>
+          </div>
+          <div className={styles.miniStatBar}>
+            <span
+              className={styles.miniStatFill}
+              style={{ width: `${c.pct}%` }}
+            />
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

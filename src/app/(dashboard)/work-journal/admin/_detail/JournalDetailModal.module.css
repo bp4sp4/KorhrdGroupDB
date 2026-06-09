@@ -293,6 +293,74 @@
   align-self: stretch;
 }
 
+/* 워크스페이스 스타일 미니 스탯 3카드 */
+.miniStatRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  align-self: stretch;
+}
+
+.miniStatCard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  border-radius: 10px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+}
+
+.miniStatTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.miniStatLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7684;
+}
+
+.miniStatIcon {
+  display: flex;
+  color: #adb5bd;
+}
+
+.miniStatValueRow {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.miniStatValue {
+  font-size: 20px;
+  font-weight: 800;
+  color: #191f28;
+}
+
+.miniStatSub {
+  font-size: 13px;
+  font-weight: 600;
+  color: #8d99a5;
+}
+
+.miniStatBar {
+  height: 6px;
+  border-radius: 999px;
+  background: #eef1f4;
+  overflow: hidden;
+}
+
+.miniStatFill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: #3182f6;
+}
+
 /* ── 목표 카드 — 디자인 스펙: 593×364, padding 20, space-between ── */
 .goalCard {
   display: flex;
