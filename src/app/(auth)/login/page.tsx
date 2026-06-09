@@ -38,6 +38,15 @@ export default function LoginPage() {
     })
   }, [router, supabase.auth])
 
+  // 매일 자동 로그아웃으로 만료된 경우 안내
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('expired') === '1') {
+      setError('보안을 위해 자동 로그아웃되었습니다. 다시 로그인해 주세요.')
+    }
+  }, [])
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError('')
