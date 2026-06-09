@@ -1156,6 +1156,10 @@ function HakjeomTab({
   openId?: number;
 }) {
   const [items, setItems] = useState<HakjeomConsultation[]>([]);
+  const [serverTotal, setServerTotal] = useState(0);
+  // 필터 옵션용 facets (전체 기준 담당자/유입경로) — 서버 페이지 모드에서 옵션 완전성 유지
+  const [facetManagers, setFacetManagers] = useState<string[]>([]);
+  const [facetSources, setFacetSources] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isOwnScope, setIsOwnScope] = useState(false);
@@ -1335,6 +1339,18 @@ function HakjeomTab({
   const [customCafes, setCustomCafes] = useState<string[]>([]);
   const [customDanggeun, setCustomDanggeun] = useState<string[]>([]);
 
+  // 필터 옵션용 facets 로드 (1회) — 담당자/유입경로 전체 목록 (서버 페이지 모드 옵션 완전성)
+  useEffect(() => {
+    fetch("/api/hakjeom?facets=1")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!d) return;
+        setFacetManagers(Array.isArray(d.managers) ? d.managers : []);
+        setFacetSources(Array.isArray(d.sources) ? d.sources : []);
+      })
+      .catch(() => {});
+  }, []);
+
   useEffect(() => {
     fetch("/api/hakjeom/custom-sources")
       .then((r) => r.json())
@@ -1399,14 +1415,59 @@ function HakjeomTab({
     if (item) setSelectedItem(item);
   }, [items, openId]);
 
-  const fetchData = useCallback(async (background = false) => {
+  // 필터/검색이 하나도 없고 특정 항목 딥링크도 아니면 → 서버 페이지 모드(가벼움)
+  // 필터가 켜지거나 딥링크면 → 전체 로드(기존 동작, 정확성 보장)
+  const hasFilter = Boolean(
+    searchText ||
+      statusFilter.length > 0 ||
+      managerFilter.length > 0 ||
+      majorCategoryFilter.length > 0 ||
+      minorCategoryFilter.length > 0 ||
+      reasonFilter.length > 0 ||
+      counselCheckFilter.length > 0 ||
+      startDate ||
+      endDate,
+  );
+  const serverMode = !hasFilter && !openId;
+
+  // 서버 페이지 모드: 현재 페이지 50개만 로드
+  const fetchPage = useCallback(
+    async (page: number, background = false) => {
+      if (!background) setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(
+          `/api/hakjeom?page=${page}&pageSize=${itemsPerPage}`,
+        );
+        if (!res.ok) throw new Error("데이터를 불러오지 못했습니다.");
+        const data = await res.json();
+        const rows: HakjeomConsultation[] = Array.isArray(data.rows)
+          ? data.rows
+          : [];
+        setServerTotal(typeof data.total === "number" ? data.total : 0);
+        if (guideDemoActiveRef.current && page === 1) {
+          const demos = HAKJEOM_DEMO_LIST as unknown as HakjeomConsultation[];
+          setItems([...demos, ...rows]);
+        } else {
+          setItems(rows);
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "알 수 없는 오류");
+      } finally {
+        if (!background) setLoading(false);
+      }
+    },
+    [],
+  );
+
+  // 전체 로드 (필터/검색/딥링크 시) — 기존 동작
+  const fetchAll = useCallback(async (background = false) => {
     if (!background) setLoading(true);
     setError(null);
     try {
       const res = await fetch("/api/hakjeom");
       if (!res.ok) throw new Error("데이터를 불러오지 못했습니다.");
       const data: HakjeomConsultation[] = await res.json();
-      // 가이드 활성 상태면 demo 학생을 항상 prepend
       if (guideDemoActiveRef.current) {
         const demos = HAKJEOM_DEMO_LIST as unknown as HakjeomConsultation[];
         setItems([...demos, ...data]);
@@ -1420,12 +1481,32 @@ function HakjeomTab({
     }
   }, []);
 
+  // 변경 후 새로고침 — 현재 모드(서버페이지/전체)에 맞게 다시 로드
+  const fetchData = useCallback(
+    (background = false) =>
+      serverMode
+        ? fetchPage(currentPage, background === true)
+        : fetchAll(background === true),
+    [serverMode, currentPage, fetchPage, fetchAll],
+  );
+
+  // 서버 페이지 모드: 모드/페이지 변경 시 해당 페이지 로드
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (serverMode) fetchPage(currentPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serverMode, currentPage]);
+  // 필터/딥링크 모드: 진입 시 전체 1회 로드 (필터 변경은 클라이언트가 처리)
   useEffect(() => {
-    if (isActive) fetchData(true);
-  }, [isActive, fetchData]);
+    if (!serverMode) fetchAll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serverMode]);
+  // 탭 재진입 시 백그라운드 새로고침
+  useEffect(() => {
+    if (!isActive) return;
+    if (serverMode) fetchPage(currentPage, true);
+    else fetchAll(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isActive]);
   useEffect(() => {
     if (!openFilterColumn) return;
     const handleMouseDown = (e: MouseEvent) => {
@@ -1659,26 +1740,30 @@ function HakjeomTab({
   );
 
   // 필터링
-  const uniqueManagers = Array.from(
-    new Set(items.map((c) => c.manager).filter(Boolean)),
+  // 필터 옵션 출처 — 서버 페이지 모드면 facets(전체 기준), 아니면 로드된 items 기준
+  const sourceList: string[] = serverMode
+    ? facetSources
+    : (items.map((c) => c.click_source).filter(Boolean) as string[]);
+  const uniqueManagers = (
+    serverMode
+      ? facetManagers
+      : Array.from(new Set(items.map((c) => c.manager).filter(Boolean)))
   ) as string[];
   const uniqueMajorCategories = Array.from(
-    new Set(
-      items.map((c) => parseSource(c.click_source).major).filter(Boolean),
-    ),
+    new Set(sourceList.map((s) => parseSource(s).major).filter(Boolean)),
   ).sort();
-  const needsCheckCount = items.filter(
-    (c) => parseSource(c.click_source).needsCheck,
-  ).length;
+  const needsCheckCount = serverMode
+    ? sourceList.filter((s) => parseSource(s).needsCheck).length
+    : items.filter((c) => parseSource(c.click_source).needsCheck).length;
   const uniqueMinorCategories = Array.from(
     new Set(
-      items
+      sourceList
         .filter(
-          (c) =>
+          (s) =>
             majorCategoryFilter.length === 0 ||
-            majorCategoryFilter.includes(parseSource(c.click_source).major),
+            majorCategoryFilter.includes(parseSource(s).major),
         )
-        .map((c) => parseSource(c.click_source))
+        .map((s) => parseSource(s))
         .filter((p) => Boolean(p.minor) && !p.needsCheck)
         .map((p) => p.minor),
     ),
@@ -1744,11 +1829,15 @@ function HakjeomTab({
 
   const sortedFiltered = filtered;
 
-  const totalPages = Math.ceil(sortedFiltered.length / itemsPerPage);
-  const paginated = sortedFiltered.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
-  );
+  // 서버 페이지 모드면 items 자체가 이미 현재 페이지(서버가 잘라줌) → 총개수는 serverTotal 사용
+  const totalCount = serverMode ? serverTotal : sortedFiltered.length;
+  const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
+  const paginated = serverMode
+    ? sortedFiltered
+    : sortedFiltered.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage,
+      );
 
   const toggleSelect = (id: number) =>
     setSelectedIds((prev) =>
@@ -1825,6 +1914,19 @@ function HakjeomTab({
 
   const handleDownloadAll = async () => {
     const filename = `학점은행제_전체_${new Date().toLocaleDateString("ko-KR").replace(/\. /g, "-").replace(".", "")}.xlsx`;
+    // 서버 페이지 모드면 화면엔 현재 페이지만 있으므로, 내보내기용 전체를 따로 받아온다
+    let exportItems = filtered;
+    if (serverMode) {
+      try {
+        const allRes = await fetch("/api/hakjeom");
+        if (allRes.ok) {
+          const all = await allRes.json();
+          if (Array.isArray(all)) exportItems = all;
+        }
+      } catch {
+        /* 실패 시 현재 페이지라도 내보냄 */
+      }
+    }
     try {
       const memoRes = await fetch("/api/memo-logs?table=hakjeom_consultations");
       const allMemos: {
@@ -1857,7 +1959,7 @@ function HakjeomTab({
         {
           name: "학점은행제",
           headers: HAKJEOM_HEADERS,
-          rows: filtered.map((item, i) => hakjeomToRowWithMemo(item, i)),
+          rows: exportItems.map((item, i) => hakjeomToRowWithMemo(item, i)),
         },
       ]);
     } catch {
@@ -1865,7 +1967,7 @@ function HakjeomTab({
         {
           name: "학점은행제",
           headers: HAKJEOM_HEADERS,
-          rows: filtered.map((item, i) => hakjeomToRow(item, i)),
+          rows: exportItems.map((item, i) => hakjeomToRow(item, i)),
         },
       ]);
     }
@@ -2449,7 +2551,7 @@ function HakjeomTab({
             <span className={styles.actionBarCount}>
               총{" "}
               <strong className={styles.actionBarCountBold}>
-                {filtered.length}
+                {totalCount}
               </strong>
               건
             </span>

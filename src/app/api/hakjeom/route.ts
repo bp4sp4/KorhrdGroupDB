@@ -128,6 +128,28 @@ export async function GET(request: NextRequest) {
     const hasScheduled = searchParams.get('has_scheduled');
     const pageParam = searchParams.get('page');
 
+    // ===== facets — 필터 옵션용 distinct(담당자/유입경로)만 경량 조회 =====
+    // 서버 페이지 모드에서도 필터 드롭다운 옵션을 "전체 기준"으로 유지하기 위함
+    if (searchParams.get('facets')) {
+      if (noAccess) return NextResponse.json({ managers: [], sources: [] });
+      let fq = supabaseAdmin
+        .from(TABLE)
+        .select('manager, click_source')
+        .is('deleted_at', null);
+      if (managerFilter !== null) fq = fq.eq('manager', managerFilter);
+      const { data, error } = await fq.limit(50000);
+      if (error) {
+        return NextResponse.json({ managers: [], sources: [] });
+      }
+      const managers = Array.from(
+        new Set((data ?? []).map((r) => r.manager).filter(Boolean)),
+      );
+      const sources = Array.from(
+        new Set((data ?? []).map((r) => r.click_source).filter(Boolean)),
+      );
+      return NextResponse.json({ managers, sources });
+    }
+
     // memo(개수/최신) 병합 — 주어진 행들에만
     const attachMemosByIds = async (
       items: Record<string, unknown>[],
