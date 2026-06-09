@@ -34,6 +34,7 @@ export async function POST(request: NextRequest) {
   const body = (await request.json()) as {
     date?: string
     title?: string
+    body?: string
     items?: string[]
     attachments?: AnnouncementAttachment[]
   }
@@ -42,6 +43,7 @@ export async function POST(request: NextRequest) {
   if (!title) {
     return NextResponse.json({ error: '제목을 입력해주세요.' }, { status: 400 })
   }
+  const bodyText = typeof body.body === 'string' ? body.body.trim() : ''
 
   const today = new Date()
   const y = today.getFullYear()
@@ -57,6 +59,7 @@ export async function POST(request: NextRequest) {
   const insertPayload: Record<string, unknown> = {
     date,
     title,
+    body: bodyText,
     items,
     attachments,
   }

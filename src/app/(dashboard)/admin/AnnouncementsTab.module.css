@@ -168,6 +168,34 @@
   transition: border-color 0.15s;
 }
 
+.textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #191f28;
+  background: #fff;
+  outline: none;
+  resize: vertical;
+  min-height: 96px;
+  line-height: 1.6;
+  font-family: inherit;
+  transition: border-color 0.15s;
+}
+
+.textarea:focus {
+  border-color: #3182f6;
+}
+
+.listItemText {
+  margin: 0 0 6px;
+  font-size: 13px;
+  color: #333d4b;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
 .input:focus {
   border-color: #4263eb;
 }

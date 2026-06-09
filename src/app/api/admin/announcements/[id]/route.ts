@@ -26,6 +26,7 @@ export async function PATCH(
   const body = (await request.json()) as {
     date?: string
     title?: string
+    body?: string
     items?: string[]
     attachments?: AnnouncementAttachment[]
   }
@@ -33,6 +34,7 @@ export async function PATCH(
   const update: Record<string, unknown> = {}
   if (typeof body.date === 'string' && body.date) update.date = body.date
   if (typeof body.title === 'string') update.title = body.title.trim()
+  if (typeof body.body === 'string') update.body = body.body.trim()
   if (Array.isArray(body.items)) {
     update.items = body.items.map((s) => String(s).trim()).filter(Boolean)
   }

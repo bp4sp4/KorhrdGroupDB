@@ -457,6 +457,14 @@
   line-height: 1.4;
 }
 
+.announcementBodyText {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: #4e5968;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
 .announcementBody {
   margin: 0;
   padding: 0;

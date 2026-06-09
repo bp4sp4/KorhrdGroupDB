@@ -34,6 +34,7 @@ interface Announcement {
   id: number;
   date: string;
   title: string;
+  body?: string | null;
   items: string[];
   attachments?: AnnouncementAttachment[] | null;
 }
@@ -795,11 +796,18 @@ export default function NotificationBell() {
                               <p className={styles.announcementTitle}>
                                 {a.title}
                               </p>
-                              <ul className={styles.announcementBody}>
-                                {a.items.map((item, i) => (
-                                  <li key={i}>{item}</li>
-                                ))}
-                              </ul>
+                              {a.body && (
+                                <p className={styles.announcementBodyText}>
+                                  {a.body}
+                                </p>
+                              )}
+                              {a.items.length > 0 && (
+                                <ul className={styles.announcementBody}>
+                                  {a.items.map((item, i) => (
+                                    <li key={i}>{item}</li>
+                                  ))}
+                                </ul>
+                              )}
                               {a.attachments && a.attachments.length > 0 && (
                                 <div className={styles.attachmentList}>
                                   {a.attachments.map((att, i) => (

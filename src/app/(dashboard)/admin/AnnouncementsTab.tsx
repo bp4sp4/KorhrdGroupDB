@@ -15,6 +15,7 @@ interface Announcement {
   id: number
   date: string
   title: string
+  body?: string | null
   items: string[]
   attachments?: AnnouncementAttachment[] | null
   created_at?: string
@@ -63,6 +64,7 @@ export default function AnnouncementsTab() {
   const [editingId, setEditingId] = useState<number | null>(null)
   const [formDate, setFormDate] = useState<string>(todayStr())
   const [formTitle, setFormTitle] = useState<string>('')
+  const [formBody, setFormBody] = useState<string>('')
   const [formItems, setFormItems] = useState<string[]>([''])
   const [formAtts, setFormAtts] = useState<AnnouncementAttachment[]>([])
   const [uploading, setUploading] = useState(false)
@@ -130,6 +132,7 @@ export default function AnnouncementsTab() {
     setEditingId(null)
     setFormDate(todayStr())
     setFormTitle('')
+    setFormBody('')
     setFormItems([''])
     setFormAtts([])
   }
@@ -138,6 +141,7 @@ export default function AnnouncementsTab() {
     setEditingId(a.id)
     setFormDate(a.date)
     setFormTitle(a.title)
+    setFormBody(a.body ?? '')
     setFormItems(a.items.length > 0 ? [...a.items] : [''])
     setFormAtts(a.attachments ?? [])
   }
@@ -204,6 +208,7 @@ export default function AnnouncementsTab() {
         body: JSON.stringify({
           date: formDate,
           title,
+          body: formBody.trim(),
           items,
           attachments: formAtts,
         }),
@@ -315,7 +320,18 @@ export default function AnnouncementsTab() {
         </div>
 
         <div className={styles.formRow}>
-          <label className={styles.label}>내용 (불릿)</label>
+          <label className={styles.label}>본문</label>
+          <textarea
+            value={formBody}
+            onChange={(e) => setFormBody(e.target.value)}
+            placeholder="공지 본문을 입력하세요. (줄바꿈 가능)"
+            className={styles.textarea}
+            rows={5}
+          />
+        </div>
+
+        <div className={styles.formRow}>
+          <label className={styles.label}>내용 (불릿, 선택)</label>
           <div className={styles.itemList}>
             {formItems.map((v, i) => (
               <div key={i} className={styles.itemRow}>
@@ -415,6 +431,7 @@ export default function AnnouncementsTab() {
       <div className={styles.rightColumn}>
         {/* 실시간 미리보기 — 폼에 뭔가 입력되어 있을 때만 노출 */}
         {(formTitle.trim() ||
+          formBody.trim() ||
           formItems.some((v) => v.trim()) ||
           formAtts.length > 0) && (
           <section className={styles.previewCard}>
@@ -439,6 +456,9 @@ export default function AnnouncementsTab() {
                   )}
                 </span>
               </div>
+              {formBody.trim() && (
+                <p className={styles.listItemText}>{formBody}</p>
+              )}
               {formItems.some((v) => v.trim()) && (
                 <ul className={styles.listItemBody}>
                   {formItems
@@ -510,6 +530,9 @@ export default function AnnouncementsTab() {
                     </button>
                   </div>
                 </div>
+                {a.body && (
+                  <p className={styles.listItemText}>{a.body}</p>
+                )}
                 {a.items.length > 0 && (
                   <ul className={styles.listItemBody}>
                     {a.items.map((it, i) => (
