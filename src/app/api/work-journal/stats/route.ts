@@ -91,6 +91,19 @@ export async function GET() {
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
   const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1)
 
+  // 실적 순위(담당자 실적) — 분기 등록완료율 기준 (KST)
+  const kstNowR = new Date(
+    now.toLocaleString('en-US', { timeZone: 'Asia/Seoul' }),
+  )
+  const qYear = kstNowR.getFullYear()
+  const qMonth = kstNowR.getMonth()
+  const quarter = Math.floor(qMonth / 3) + 1
+  const qStartMonth = (quarter - 1) * 3
+  const qEndMonth = qStartMonth + 2
+  const qEndLastDay = new Date(qYear, qEndMonth + 1, 0).getDate()
+  const quarterStartISO = `${qYear}-${String(qStartMonth + 1).padStart(2, '0')}-01T00:00:00+09:00`
+  const quarterEndISO = `${qYear}-${String(qEndMonth + 1).padStart(2, '0')}-${String(qEndLastDay).padStart(2, '0')}T23:59:59+09:00`
+
   // 오늘(KST) 연락 예정 범위: 오늘 00:00 ~ 내일 00:00 KST
   const todayStartISO = `${iso(today)}T00:00:00+09:00`
   const todayEnd = new Date(today)
@@ -102,36 +115,78 @@ export async function GET() {
   const monthEndISO = `${iso(monthEnd)}T00:00:00+09:00`
 
   // 문의/등록도 당월 기준 (매월 1일에 자동 초기화)
-  const [inqMonth, regMonth, salesMonth, baseStat, prevStat, todayContactsRes] =
-    await Promise.all([
-      supabaseAdmin
-        .from('hakjeom_consultations')
-        .select('id', { count: 'exact', head: true })
-        .eq('manager', managerName)
-        .gte('created_at', monthStartISO)
-        .lt('created_at', monthEndISO),
-      supabaseAdmin
-        .from('edu_students')
-        .select('id', { count: 'exact', head: true })
-        .eq('manager_name', managerName)
-        .gte('registered_at', monthStartISO)
-        .lt('registered_at', monthEndISO),
-      supabaseAdmin
-        .from('edu_sales')
-        .select('total_amount')
-        .eq('manager_name', managerName)
-        .gte('payment_date', iso(monthStart))
-        .lt('payment_date', iso(monthEnd)),
-      collectDay(baseDay, managerName),
-      collectDay(prevDay, managerName),
-      // 오늘 본인 담당 연락 예정 (학점은행제 - hakjeom_consultations)
-      supabaseAdmin
-        .from('hakjeom_consultations')
-        .select('id', { count: 'exact', head: true })
-        .eq('manager', managerName)
-        .gte('contact_scheduled_at', todayStartISO)
-        .lt('contact_scheduled_at', todayEndISO),
-    ])
+  const [
+    inqMonth,
+    regMonth,
+    salesMonth,
+    baseStat,
+    prevStat,
+    todayContactsRes,
+    todayCompletedRes,
+    pendingNewRes,
+    todayScheduledDoneRes,
+    allSalesRes,
+  ] = await Promise.all([
+    supabaseAdmin
+      .from('hakjeom_consultations')
+      .select('id', { count: 'exact', head: true })
+      .eq('manager', managerName)
+      .gte('created_at', monthStartISO)
+      .lt('created_at', monthEndISO),
+    supabaseAdmin
+      .from('edu_students')
+      .select('id', { count: 'exact', head: true })
+      .eq('manager_name', managerName)
+      .gte('registered_at', monthStartISO)
+      .lt('registered_at', monthEndISO),
+    supabaseAdmin
+      .from('edu_sales')
+      .select('total_amount')
+      .eq('manager_name', managerName)
+      .gte('payment_date', iso(monthStart))
+      .lt('payment_date', iso(monthEnd)),
+    collectDay(baseDay, managerName),
+    collectDay(prevDay, managerName),
+    // 오늘 본인 담당 연락 예정 (학점은행제 - hakjeom_consultations)
+    supabaseAdmin
+      .from('hakjeom_consultations')
+      .select('id', { count: 'exact', head: true })
+      .eq('manager', managerName)
+      .gte('contact_scheduled_at', todayStartISO)
+      .lt('contact_scheduled_at', todayEndISO),
+    // 오늘 신규 상담완료 (counsel_completed_at 오늘)
+    supabaseAdmin
+      .from('hakjeom_consultations')
+      .select('id', { count: 'exact', head: true })
+      .eq('manager', managerName)
+      .gte('counsel_completed_at', todayStartISO)
+      .lt('counsel_completed_at', todayEndISO),
+    // 신규 배정(상담대기) — 분모
+    supabaseAdmin
+      .from('hakjeom_consultations')
+      .select('id', { count: 'exact', head: true })
+      .eq('manager', managerName)
+      .eq('status', '상담대기')
+      .is('deleted_at', null),
+    // 오늘 연락예정 중 오늘 상담완료 (가망관리 처리분)
+    supabaseAdmin
+      .from('hakjeom_consultations')
+      .select('id', { count: 'exact', head: true })
+      .eq('manager', managerName)
+      .gte('contact_scheduled_at', todayStartISO)
+      .lt('contact_scheduled_at', todayEndISO)
+      .gte('counsel_completed_at', todayStartISO)
+      .lt('counsel_completed_at', todayEndISO),
+    // 실적 순위 — 분기 전체 담당자 등록완료율 (담당자 실적 기준, 지인소개 제외)
+    supabaseAdmin
+      .from('hakjeom_consultations')
+      .select('manager, status, click_source')
+      .is('deleted_at', null)
+      .not('manager', 'is', null)
+      .neq('manager', '')
+      .gte('created_at', quarterStartISO)
+      .lte('created_at', quarterEndISO),
+  ])
 
   const totalInquiries = inqMonth.count ?? 0
   const registrations = regMonth.count ?? 0
@@ -142,6 +197,24 @@ export async function GET() {
     0,
   )
 
+  // 실적 순위 — 분기 등록완료율 내림차순 (담당자 실적과 동일)
+  const byMgr: Record<string, { t: number; reg: number }> = {}
+  for (const r of allSalesRes.data ?? []) {
+    const cs = (r as { click_source?: string | null }).click_source ?? ''
+    const stripped = cs.startsWith('바로폼_') ? cs.slice(4) : cs
+    if (stripped.split('_')[0] === '지인소개') continue
+    const m = (r as { manager?: string | null }).manager
+    if (!m) continue
+    byMgr[m] ??= { t: 0, reg: 0 }
+    byMgr[m].t += 1
+    if ((r as { status?: string | null }).status === '등록완료') byMgr[m].reg += 1
+  }
+  const ranked = Object.entries(byMgr)
+    .map(([m, v]) => ({ m, rate: v.t > 0 ? (v.reg / v.t) * 100 : 0 }))
+    .sort((a, b) => b.rate - a.rate)
+  const rank = ranked.findIndex((x) => x.m === managerName) + 1
+  const totalManagers = ranked.length
+
   return NextResponse.json({
     managerName,
     totalInquiries,
@@ -149,6 +222,11 @@ export async function GET() {
     registrationRate: Math.round(registrationRate * 10) / 10,
     salesThisMonth,
     todayScheduledContacts: todayContactsRes.count ?? 0,
+    todayCompletedNew: todayCompletedRes.count ?? 0,
+    pendingNew: pendingNewRes.count ?? 0,
+    todayScheduledDone: todayScheduledDoneRes.count ?? 0,
+    rank,
+    totalManagers,
     delta: {
       // 오늘 - 직전 영업일
       inquiries: baseStat.inquiries - prevStat.inquiries,

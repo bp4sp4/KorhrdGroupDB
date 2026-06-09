@@ -239,23 +239,6 @@ function parseSignatureHtml(html: string | null): SignatureData {
   };
 }
 
-// 고정 로고(public 자산)를 base64 data URL 로 변환 — 메일 본문에 임베드해 항상 표시
-async function fetchLogoDataUrl(): Promise<string> {
-  try {
-    const res = await fetch(SIGNATURE_LOGO_SRC, { cache: "force-cache" });
-    if (!res.ok) return "";
-    const blob = await res.blob();
-    return await new Promise<string>((resolve) => {
-      const r = new FileReader();
-      r.onload = () => resolve(String(r.result ?? ""));
-      r.onerror = () => resolve("");
-      r.readAsDataURL(blob);
-    });
-  } catch {
-    return "";
-  }
-}
-
 // ─── 메인 ──────────────────────────────────────────────────────────────
 interface ConnectionStatus {
   connected: boolean;
@@ -2094,15 +2077,10 @@ function SignatureModal({
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  // 고정 로고를 base64 로 로드 (미리보기 + 저장에 사용)
+  // 고정 로고를 절대 URL 로 사용 (base64 임베드 시 용량 초과 — 네이버 5,000byte 제한)
   useEffect(() => {
-    let cancelled = false;
-    fetchLogoDataUrl().then((url) => {
-      if (!cancelled) setLogoDataUrl(url);
-    });
-    return () => {
-      cancelled = true;
-    };
+    if (typeof window === "undefined") return;
+    setLogoDataUrl(`${window.location.origin}${SIGNATURE_LOGO_SRC}`);
   }, []);
 
   const set = <K extends keyof SignatureData>(
