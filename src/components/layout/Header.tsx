@@ -14,6 +14,15 @@ interface NavSection {
   href: string;
   activeOn: string[];
   badge?: string;
+  // true 면 activeOn 경로와 "정확히 일치"할 때만 활성 (하위 경로 제외)
+  exact?: boolean;
+}
+
+// 섹션이 현재 경로에 해당하는지 (exact 면 정확히 일치, 아니면 startsWith)
+function sectionMatches(sec: NavSection, pathname: string): boolean {
+  return sec.activeOn.some((p) =>
+    sec.exact ? pathname === p : pathname.startsWith(p),
+  );
 }
 
 const SECTION_NAV: NavSection[] = [
@@ -26,6 +35,8 @@ const SECTION_NAV: NavSection[] = [
     label: "워크스페이스",
     href: "/work-journal",
     activeOn: ["/work-journal"],
+    // /work-journal/admin, /work-journal/archive 에서는 활성화되지 않도록 정확히 일치만
+    exact: true,
   },
   {
     label: "게시판",
@@ -48,7 +59,6 @@ const SECTION_NAV: NavSection[] = [
 const PATH_LABELS: Record<string, string> = {
   "/dashboard": "대시보드",
   "/work-journal": "워크스페이스",
-  "/work-journal/admin": "직원 업무일지 현황",
   "/duplicate": "중복 조회",
   "/trash": "삭제목록",
   "/ref-manage": "어드민 관리",
@@ -168,7 +178,7 @@ export default function Header({
 
   // 현재 경로 + 탭 기반으로 레이블 결정
   const getDynamicLabel = (sec: NavSection): string => {
-    if (!sec.activeOn.some((p) => pathname.startsWith(p))) return sec.label;
+    if (!sectionMatches(sec, pathname)) return sec.label;
 
     // 탭 없는 단일 페이지
     const flatLabel = PATH_LABELS[pathname];
@@ -244,7 +254,7 @@ export default function Header({
       {!isMiniAdmin && (
         <nav className={styles.headerNav}>
           {visibleSectionNav.map((sec) => {
-            const isActive = sec.activeOn.some((p) => pathname.startsWith(p));
+            const isActive = sectionMatches(sec, pathname);
             return (
               <Link
                 key={sec.label}

@@ -142,6 +142,8 @@ interface HakjeomAddModalProps {
   onClose: () => void;
   onSaved: () => void;
   uniqueManagers?: string[];
+  // 지정 시 담당자를 이 값으로 고정 (워크스페이스에서 본인으로 자동 할당)
+  fixedManager?: string;
   customCafes: string[];
   customDanggeun: string[];
   onAddCafe: (name: string) => Promise<void>;
@@ -150,10 +152,11 @@ interface HakjeomAddModalProps {
   onDeleteDanggeun: (name: string) => Promise<void>;
 }
 
-function HakjeomAddModal({
+export function HakjeomAddModal({
   onClose,
   onSaved,
   uniqueManagers = [],
+  fixedManager,
   customCafes,
   customDanggeun,
   onAddCafe,
@@ -173,7 +176,7 @@ function HakjeomAddModal({
     sourceMajor: "",
     sourceMinor: "",
     subject_cost: "",
-    manager: "",
+    manager: fixedManager ?? "",
     residence: "",
     memo: "",
     current_situation: "",
@@ -255,6 +258,8 @@ function HakjeomAddModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
+          // fixedManager 가 지정된 경우(워크스페이스 등) 담당자를 항상 본인으로 강제
+          manager: fixedManager || form.manager,
           hope_course: form.hope_course.join(", "),
           reason: form.reason.join(", "),
           counsel_check: [
@@ -574,6 +579,14 @@ function HakjeomAddModal({
               <p className={styles.funnelSubQuestion}>모두 선택사항이에요</p>
               <div className={styles.funnelFieldGroup}>
                 <label className={styles.funnelLabel}>담당자</label>
+                {fixedManager ? (
+                  <input
+                    value={fixedManager}
+                    readOnly
+                    className={styles.funnelInput}
+                  />
+                ) : (
+                <>
                 {uniqueManagers.length > 0 && (
                   <div
                     className={styles.funnelTagRow}
@@ -625,6 +638,8 @@ function HakjeomAddModal({
                     className={styles.funnelInput}
                     autoFocus={showManagerInput}
                   />
+                )}
+                </>
                 )}
               </div>
               <div className={styles.funnelFieldGroup}>

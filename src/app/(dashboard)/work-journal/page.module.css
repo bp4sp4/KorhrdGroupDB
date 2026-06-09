@@ -2293,6 +2293,31 @@
   outline: none;
 }
 
+.wcConsultAddBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  background: #3182f6;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.wcConsultAddBtn:hover {
+  background: #2272eb;
+}
+
+.wcConsultAddBtn:disabled {
+  background: #c4c9d0;
+  cursor: not-allowed;
+}
+
 /* ── 상담 목록 — 등록일 기간 범위 필터 ───────────────────── */
 .wcConsultHeadRight {
   display: flex;
