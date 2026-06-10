@@ -135,11 +135,19 @@ function SignaturePad({
   );
 }
 
-// 서명 표시 (값 있으면 이미지, 없으면 (서명))
+// 서명 표시 — 원본 양식과 동일한 "밑줄＿＿＿(서명)" 형태, 서명하면 밑줄 위에 이미지가 올라간다
 function Sign({ src }: { src: string | null }) {
-  if (!src) return <span className={styles.signPlaceholder}>(서명)</span>;
-  // eslint-disable-next-line @next/next/no-img-element
-  return <img src={src} alt="서명" className={styles.signInline} />;
+  return (
+    <span className={styles.signSlot}>
+      <span className={styles.signLine}>
+        {src && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={src} alt="서명" className={styles.signInline} />
+        )}
+      </span>
+      (서명)
+    </span>
+  );
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -201,6 +209,28 @@ export default function WriteContractPage() {
   const c = ymdParts(form.contractDate);
   const s = ymdParts(form.startDate);
 
+  // 입력칸 포커스 → 미리보기에서 해당 위치 하이라이트 + 자동 스크롤
+  const [focusedField, setFocusedField] = useState<string | null>(null);
+  useEffect(() => {
+    if (!focusedField) return;
+    const el = document.querySelector(
+      `#contract-doc [data-field="${focusedField}"]`,
+    );
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [focusedField]);
+  const focusProps = (name: string) => ({
+    onFocus: () => setFocusedField(name),
+    onBlur: () => setFocusedField(null),
+  });
+  const spot = (name: string, node: React.ReactNode) => (
+    <span
+      data-field={name}
+      className={focusedField === name ? styles.fieldHl : styles.fieldSpot}
+    >
+      {node}
+    </span>
+  );
+
   return (
     <div className={styles.page}>
       {/* 좌측 입력 */}
@@ -208,40 +238,40 @@ export default function WriteContractPage() {
         <div className={styles.formScroll}>
           <Section title="근로자 정보">
             <Field label="성명">
-              <input className={styles.input} value={form.employeeName} onChange={(e) => up("employeeName", e.target.value)} />
+              <input className={styles.input} value={form.employeeName} onChange={(e) => up("employeeName", e.target.value)} {...focusProps("employeeName")} />
             </Field>
             <Field label="주소">
-              <input className={styles.input} value={form.employeeAddr} onChange={(e) => up("employeeAddr", e.target.value)} placeholder="근로자 주소" />
+              <input className={styles.input} value={form.employeeAddr} onChange={(e) => up("employeeAddr", e.target.value)} {...focusProps("employeeAddr")} placeholder="근로자 주소" />
             </Field>
             <Field label="주민번호">
-              <input className={styles.input} value={form.employeeRRN} onChange={(e) => up("employeeRRN", e.target.value)} placeholder="예) 900101-1******" />
+              <input className={styles.input} value={form.employeeRRN} onChange={(e) => up("employeeRRN", e.target.value)} {...focusProps("employeeRRN")} placeholder="예) 900101-1******" />
             </Field>
             <Field label="연락처">
-              <input className={styles.input} value={form.employeePhone} onChange={(e) => up("employeePhone", e.target.value)} placeholder="휴대폰 번호" />
+              <input className={styles.input} value={form.employeePhone} onChange={(e) => up("employeePhone", e.target.value)} {...focusProps("employeePhone")} placeholder="휴대폰 번호" />
             </Field>
           </Section>
 
           <Section title="계약 / 업무">
             <Field label="계약 시작일">
-              <input type="date" className={styles.input} value={form.startDate} onChange={(e) => up("startDate", e.target.value)} />
+              <input type="date" className={styles.input} value={form.startDate} onChange={(e) => up("startDate", e.target.value)} {...focusProps("startDate")} />
             </Field>
             <Field label="담당업무">
-              <input className={styles.input} value={form.jobDesc} onChange={(e) => up("jobDesc", e.target.value)} placeholder="예) 상담 및 영업" />
+              <input className={styles.input} value={form.jobDesc} onChange={(e) => up("jobDesc", e.target.value)} {...focusProps("jobDesc")} placeholder="예) 상담 및 영업" />
             </Field>
             <Field label="계약 체결일">
-              <input type="date" className={styles.input} value={form.contractDate} onChange={(e) => up("contractDate", e.target.value)} />
+              <input type="date" className={styles.input} value={form.contractDate} onChange={(e) => up("contractDate", e.target.value)} {...focusProps("contractDate")} />
             </Field>
           </Section>
 
           <Section title="임금 (월 기준)">
             <Field label="기본급">
-              <input className={styles.input} inputMode="numeric" value={form.baseMonthly} onChange={(e) => up("baseMonthly", e.target.value.replace(/[^0-9]/g, ""))} placeholder="예) 3960000" />
+              <input className={styles.input} inputMode="numeric" value={form.baseMonthly} onChange={(e) => up("baseMonthly", e.target.value.replace(/[^0-9]/g, ""))} {...focusProps("baseMonthly")} placeholder="예) 3960000" />
             </Field>
             <Field label="식대">
-              <input className={styles.input} inputMode="numeric" value={form.mealMonthly} onChange={(e) => up("mealMonthly", e.target.value.replace(/[^0-9]/g, ""))} />
+              <input className={styles.input} inputMode="numeric" value={form.mealMonthly} onChange={(e) => up("mealMonthly", e.target.value.replace(/[^0-9]/g, ""))} {...focusProps("mealMonthly")} />
             </Field>
             <Field label="직책수당">
-              <input className={styles.input} inputMode="numeric" value={form.positionMonthly} onChange={(e) => up("positionMonthly", e.target.value.replace(/[^0-9]/g, ""))} />
+              <input className={styles.input} inputMode="numeric" value={form.positionMonthly} onChange={(e) => up("positionMonthly", e.target.value.replace(/[^0-9]/g, ""))} {...focusProps("positionMonthly")} />
             </Field>
             <div className={styles.calcRow}>
               <span>월 합계 <b>{won(totalMonthly)}원</b></span>
@@ -273,15 +303,15 @@ export default function WriteContractPage() {
           <h1 className={styles.docTitle}>근 로 계 약 서</h1>
           <p className={styles.intro}>
             사용자인 {COMPANY.name} (이하 “갑”이라 함)와 근로자{" "}
-            <u className={styles.fill}>{form.employeeName || " ".repeat(8)}</u>{" "}
+            {spot("employeeName", <u className={styles.fill}>{form.employeeName || " ".repeat(8)}</u>)}{" "}
             (이하 “을”이라 함)는 아래 근로 조건을 성실히 이행할 것을 약정하고 근로
             계약을 체결한다.
           </p>
 
           <Article n={1} title="계약기간">
-            계약 시작일은 <u className={styles.fill}>{s.y}</u>년{" "}
+            계약 시작일은 {spot("startDate", <><u className={styles.fill}>{s.y}</u>년{" "}
             <u className={styles.fill}>{s.m || "  "}</u>월{" "}
-            <u className={styles.fill}>{s.d || "  "}</u>일이며, 근로계약
+            <u className={styles.fill}>{s.d || "  "}</u>일</>)}이며, 근로계약
             기간의 정함이 없는 것으로 한다.
           </Article>
 
@@ -292,7 +322,7 @@ export default function WriteContractPage() {
           </Article>
 
           <Article n={3} title="담당업무 및 업무 장소">
-            <p>1) 직원의 담당업무는 <u className={styles.fill}>{form.jobDesc || " ".repeat(12)}</u> 이며, 업무장소는 “갑”의 소재지 근무를 원칙으로 한다.</p>
+            <p>1) 직원의 담당업무는 {spot("jobDesc", <u className={styles.fill}>{form.jobDesc || " ".repeat(12)}</u>)} 이며, 업무장소는 “갑”의 소재지 근무를 원칙으로 한다.</p>
             <p className={styles.indent}>소재지 : {COMPANY.addr}</p>
             <p>2) 전항은 회사의 업무상 필요에 의해 직종, 보직, 근무지를 변경할 수 있다. 동의 <Sign src={signature} /></p>
           </Article>
@@ -316,9 +346,9 @@ export default function WriteContractPage() {
               <tbody>
                 <tr>
                   <td>월</td>
-                  <td>{won(base)}</td>
-                  <td>{won(meal)}</td>
-                  <td>{won(position)}</td>
+                  <td>{spot("baseMonthly", won(base))}</td>
+                  <td>{spot("mealMonthly", won(meal))}</td>
+                  <td>{spot("positionMonthly", won(position))}</td>
                   <td>{won(totalMonthly)}</td>
                 </tr>
               </tbody>
@@ -407,7 +437,7 @@ export default function WriteContractPage() {
           <p>근로자 교부 확인 : <Sign src={signature} /></p>
 
           <p className={styles.docDate}>
-            {c.y}년 {c.m || "  "}월 {c.d || "  "}일
+            {spot("contractDate", <>{c.y}년 {c.m || "  "}월 {c.d || "  "}일</>)}
           </p>
 
           <div className={styles.signGrid}>
@@ -423,9 +453,9 @@ export default function WriteContractPage() {
             <div className={styles.party}>
               <div className={styles.partyTag}>(을)</div>
               <div className={styles.partyRows}>
-                <div>주소 : {form.employeeAddr}</div>
-                <div>주민번호 : {form.employeeRRN}</div>
-                <div>연락처 : {form.employeePhone}</div>
+                <div>주소 : {spot("employeeAddr", form.employeeAddr)}</div>
+                <div>주민번호 : {spot("employeeRRN", form.employeeRRN)}</div>
+                <div>연락처 : {spot("employeePhone", form.employeePhone)}</div>
                 <div className={styles.partySign}>
                   성명 : {form.employeeName} <Sign src={signature} />
                 </div>
