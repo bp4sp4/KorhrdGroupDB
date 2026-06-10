@@ -559,6 +559,51 @@
   align-self: stretch;
 }
 
+/* ── 영업이익률 상태 배너 (좋음 20%↑ / 중간 15~20% / 경고 15%↓) ── */
+.rateBanner {
+  display: flex;
+  padding: 20px;
+  align-items: center;
+  gap: 6px;
+  align-self: stretch;
+  border-radius: 10px;
+}
+
+.rateBannerGood {
+  background: #ccffce;
+}
+
+.rateBannerMid {
+  background: #fffccc;
+}
+
+.rateBannerWarn {
+  background: #ffe2e2;
+}
+
+.rateBannerIcon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  aspect-ratio: 1/1;
+  border-radius: 50%;
+  box-shadow: 0 0 4px 0 rgba(0, 0, 0, 0.1);
+}
+
+.rateBannerText {
+  color: #1f2937;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 100%;
+}
+
 .summaryRow {
   display: flex;
   justify-content: space-between;
@@ -902,6 +947,53 @@
   border: 1px solid #e6e7eb;
   background: #fff;
   animation: cardIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
+}
+
+.chartHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  align-self: stretch;
+}
+
+/* ── 차트 지표 토글 (영업이익 / 영업이익률) ── */
+.chartToggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chartToggleBtn {
+  display: flex;
+  padding: 8px 10px;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  color: #6b7684;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  cursor: pointer;
+}
+
+.chartToggleBtn:hover:not(.chartToggleBtnActive) {
+  background: #f9fafb;
+}
+
+.chartToggleBtnActive {
+  border: 1px solid #0084fe;
+  background: #eef5ff;
+  color: #0084fe;
 }
 
 .chartTitle {

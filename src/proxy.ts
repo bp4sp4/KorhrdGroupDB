@@ -61,7 +61,11 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith('/_next/') ||
     pathname === '/favicon.ico' ||
     pathname === '/logo.png' ||
-    pathname === '/og-image.png'
+    pathname === '/og-image.png' ||
+    // 손익 이익률 배너 아이콘 — next/image 옵티마이저가 내부 요청으로 가져가므로 공개 필요
+    pathname === '/face_01.png' ||
+    pathname === '/face_02.png' ||
+    pathname === '/face_03.png'
 
   if (isPublic) return response
 
