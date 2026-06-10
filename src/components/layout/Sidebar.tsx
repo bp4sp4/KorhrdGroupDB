@@ -44,7 +44,8 @@ const SIDEBAR_HIDE_KEY: Record<string, string> = {
 
 // 임시 숨김 메뉴 (잠깐 가려두기) — 복구하려면 배열을 비우면 됨.
 // 유학 사업부 (마케팅개발본부는 학점은행제 때문에 노출 유지)
-const TEMP_HIDDEN_MENU_IDS = new Set<string>(["abroad"]);
+// 인사고과표 — 오픈 전까지 숨김 (/appraisal 직접 접근은 가능)
+const TEMP_HIDDEN_MENU_IDS = new Set<string>(["abroad", "appraisal"]);
 
 // 임시 숨김 하위 메뉴 — 마케팅개발본부 안의 민간자격증·유학 섹션 (학점은행제·맘카페만 남김)
 const TEMP_HIDDEN_CHILD_IDS = new Set<string>([

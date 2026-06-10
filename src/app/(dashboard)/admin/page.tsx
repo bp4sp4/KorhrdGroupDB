@@ -15,6 +15,7 @@ interface Department {
   name: string
   is_active: boolean
   sort_order: number
+  head_user_id: number | null
 }
 
 interface Position {
@@ -120,6 +121,7 @@ interface Team {
   journal_form: string
   sort_order: number
   is_active: boolean
+  leader_user_id: number | null
 }
 
 interface TeamForm {
@@ -197,12 +199,12 @@ export default function AdminPage() {
 
       {visitedTabs.has('departments') && (
         <div className={activeTab !== 'departments' ? styles.tabHidden : undefined}>
-          <DepartmentsTab />
+          <DepartmentsTab isActive={activeTab === 'departments'} />
         </div>
       )}
       {visitedTabs.has('teams') && (
         <div className={activeTab !== 'teams' ? styles.tabHidden : undefined}>
-          <TeamsTab />
+          <TeamsTab isActive={activeTab === 'teams'} />
         </div>
       )}
       {visitedTabs.has('positions') && (
@@ -276,9 +278,10 @@ const emptyBankAccountForm: BankAccountForm = {
   memo: '',
 }
 
-function DepartmentsTab() {
+function DepartmentsTab({ isActive = true }: { isActive?: boolean }) {
   const [items, setItems] = useState<Department[]>([])
   const [banks, setBanks] = useState<BankAccount[]>([])
+  const [members, setMembers] = useState<{ id: number; display_name: string | null; is_active: boolean; department_id: string | null }[]>([])
   const [loading, setLoading] = useState(false)
 
   // 사업부 모달
@@ -309,16 +312,29 @@ function DepartmentsTab() {
 
   const fetchItems = useCallback(async () => {
     setLoading(true)
-    const [deptRes, bankRes] = await Promise.all([
+    const [deptRes, bankRes, accRes] = await Promise.all([
       fetch('/api/admin/departments'),
       fetch('/api/admin/bank-accounts'),
+      fetch('/api/admin/accounts'),
     ])
     if (deptRes.ok) setItems(await deptRes.json())
     if (bankRes.ok) setBanks(await bankRes.json())
+    if (accRes.ok) {
+      const accounts = (await accRes.json()) as {
+        id: number
+        display_name: string | null
+        is_active: boolean
+        department_id: string | null
+      }[]
+      setMembers(accounts.filter((a) => a.is_active))
+    }
     setLoading(false)
   }, [])
 
-  useEffect(() => { fetchItems() }, [fetchItems])
+  // 탭 진입 시마다 갱신 — 계정 관리에서 바꾼 부서 소속이 본부장 선택지에 반영되도록
+  useEffect(() => {
+    if (isActive) fetchItems()
+  }, [isActive, fetchItems])
 
   // 사업부별 통장 묶기
   const banksByDept: Record<string, BankAccount[]> = banks.reduce((acc, b) => {
@@ -374,6 +390,22 @@ function DepartmentsTab() {
       body: JSON.stringify({ is_active: !item.is_active }),
     })
     if (res.ok) fetchItems()
+  }
+
+  // 본부장 지정 (인사고과 팀역량평가·팀장 평가 작성자)
+  const handleChangeHead = async (item: Department, nextHead: string) => {
+    const res = await fetch(`/api/admin/departments/${item.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        head_user_id: nextHead ? Number(nextHead) : null,
+      }),
+    })
+    if (res.ok) fetchItems()
+    else {
+      const err = await res.json().catch(() => ({}))
+      alert(err.error ?? '본부장 변경에 실패했습니다.')
+    }
   }
 
   // ── 통장 CRUD ──
@@ -521,6 +553,7 @@ function DepartmentsTab() {
               <tr>
                 <th>코드</th>
                 <th>사업부명</th>
+                <th>본부장</th>
                 <th>통장</th>
                 <th>상태</th>
                 <th>액션</th>
@@ -533,6 +566,32 @@ function DepartmentsTab() {
                   <tr key={item.id} className={!item.is_active ? styles.rowInactive : ''}>
                     <td className={styles.cellTop}><code>{item.code}</code></td>
                     <td className={styles.cellTop}>{item.name}</td>
+                    <td className={styles.cellTop}>
+                      {/* 본부장은 이 사업부 소속 직원 중에서만 선택 */}
+                      <select
+                        value={item.head_user_id ?? ''}
+                        onChange={(e) => handleChangeHead(item, e.target.value)}
+                        className={styles.formInput}
+                      >
+                        <option value="">미지정</option>
+                        {members
+                          .filter((m) => m.department_id === item.id)
+                          .map((m) => (
+                            <option key={m.id} value={m.id}>
+                              {m.display_name ?? `사용자 ${m.id}`}
+                            </option>
+                          ))}
+                        {item.head_user_id != null &&
+                          !members.some(
+                            (m) => m.id === item.head_user_id && m.department_id === item.id,
+                          ) && (
+                            <option value={item.head_user_id}>
+                              {members.find((m) => m.id === item.head_user_id)?.display_name ??
+                                `사용자 ${item.head_user_id}`} (부서 미소속)
+                            </option>
+                          )}
+                      </select>
+                    </td>
                     <td className={styles.cellTop}>
                       {deptBanks.length === 0 ? (
                         <span className={styles.bankCellEmpty}>등록된 통장 없음</span>
@@ -817,9 +876,10 @@ interface PositionForm {
 const emptyPositionForm: PositionForm = { name: '', sort_order: '' }
 
 // ─── 팀 관리 탭 ────────────────────────────────────────────────────────────────
-function TeamsTab() {
+function TeamsTab({ isActive = true }: { isActive?: boolean }) {
   const [teams, setTeams] = useState<Team[]>([])
   const [departments, setDepartments] = useState<Department[]>([])
+  const [members, setMembers] = useState<{ id: number; display_name: string | null; is_active: boolean; team_id: string | null }[]>([])
   const [loading, setLoading] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [editTarget, setEditTarget] = useState<Team | null>(null)
@@ -829,20 +889,29 @@ function TeamsTab() {
 
   const fetchTeams = useCallback(async () => {
     setLoading(true)
-    const [tRes, dRes] = await Promise.all([
+    const [tRes, dRes, aRes] = await Promise.all([
       fetch('/api/admin/teams'),
       fetch('/api/admin/departments'),
+      fetch('/api/admin/accounts'),
     ])
     if (tRes.ok) setTeams(await tRes.json())
     if (dRes.ok) setDepartments(await dRes.json())
+    if (aRes.ok) {
+      const accounts = (await aRes.json()) as { id: number; display_name: string | null; is_active: boolean; team_id: string | null }[]
+      setMembers(accounts.filter((a) => a.is_active))
+    }
     setLoading(false)
   }, [])
 
+  // 탭 진입 시마다 갱신 — 계정 관리에서 바꾼 팀 소속이 팀장 선택지에 반영되도록
   useEffect(() => {
-    fetchTeams()
-  }, [fetchTeams])
+    if (isActive) fetchTeams()
+  }, [isActive, fetchTeams])
 
   const deptMap = Object.fromEntries(departments.map((d) => [d.id, d.name]))
+  const memberMap = Object.fromEntries(
+    members.map((m) => [m.id, m.display_name ?? `사용자 ${m.id}`]),
+  )
 
   const openAdd = () => {
     setEditTarget(null)
@@ -886,6 +955,22 @@ function TeamsTab() {
     } else {
       const err = await res.json().catch(() => ({}))
       setFormError(err.error ?? '저장에 실패했습니다.')
+    }
+  }
+
+  // 즉시 변경 — 팀장 select (인사고과 개인역량평가 작성자)
+  const handleChangeLeader = async (item: Team, nextLeader: string) => {
+    const res = await fetch(`/api/admin/teams/${item.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        leader_user_id: nextLeader ? Number(nextLeader) : null,
+      }),
+    })
+    if (res.ok) fetchTeams()
+    else {
+      const err = await res.json().catch(() => ({}))
+      alert(err.error ?? '팀장 변경에 실패했습니다.')
     }
   }
 
@@ -939,6 +1024,7 @@ function TeamsTab() {
                 <th>부서</th>
                 <th>팀명</th>
                 <th>코드</th>
+                <th>팀장</th>
                 <th>업무일지 양식</th>
                 <th>상태</th>
                 <th>액션</th>
@@ -953,6 +1039,31 @@ function TeamsTab() {
                   <td>{deptMap[item.department_id] ?? '-'}</td>
                   <td>{item.name}</td>
                   <td>{item.code}</td>
+                  <td>
+                    {/* 팀장은 계정 관리에서 이 팀 소속으로 지정된 직원 중에서만 선택 */}
+                    <select
+                      value={item.leader_user_id ?? ''}
+                      onChange={(e) => handleChangeLeader(item, e.target.value)}
+                      className={styles.formInput}
+                    >
+                      <option value="">미지정</option>
+                      {members
+                        .filter((m) => m.team_id === item.id)
+                        .map((m) => (
+                          <option key={m.id} value={m.id}>
+                            {memberMap[m.id]}
+                          </option>
+                        ))}
+                      {item.leader_user_id != null &&
+                        !members.some(
+                          (m) => m.id === item.leader_user_id && m.team_id === item.id,
+                        ) && (
+                          <option value={item.leader_user_id}>
+                            {memberMap[item.leader_user_id] ?? `사용자 ${item.leader_user_id}`} (팀 미소속)
+                          </option>
+                        )}
+                    </select>
+                  </td>
                   <td>
                     <select
                       value={item.journal_form}

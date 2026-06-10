@@ -12,16 +12,21 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
   const { id } = await params
   const body = await request.json()
-  const { name, code, is_active } = body as {
+  const { name, code, is_active, head_user_id } = body as {
     name?: string
     code?: string
     is_active?: boolean
+    head_user_id?: number | null
   }
 
   const updates: Record<string, unknown> = {}
   if (name !== undefined) updates.name = name
   if (code !== undefined) updates.code = code.toUpperCase()
   if (is_active !== undefined) updates.is_active = is_active
+  if (head_user_id !== undefined) {
+    updates.head_user_id =
+      typeof head_user_id === 'number' ? head_user_id : null
+  }
 
   const { data, error } = await supabaseAdmin
     .from('departments')

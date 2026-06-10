@@ -11,7 +11,7 @@ export async function GET() {
 
   const { data, error } = await supabaseAdmin
     .from('teams')
-    .select('id, department_id, code, name, journal_form, sort_order, is_active, created_at')
+    .select('id, department_id, code, name, journal_form, sort_order, is_active, leader_user_id, created_at')
     .order('sort_order')
     .order('name')
 
@@ -24,12 +24,13 @@ export async function POST(request: Request) {
   if (errorResponse) return errorResponse
 
   const body = await request.json()
-  const { department_id, code, name, journal_form, sort_order } = body as {
+  const { department_id, code, name, journal_form, sort_order, leader_user_id } = body as {
     department_id: string
     code: string
     name: string
     journal_form?: string
     sort_order?: number
+    leader_user_id?: number | null
   }
 
   if (!department_id || !code || !name) {
@@ -55,6 +56,7 @@ export async function POST(request: Request) {
       name,
       journal_form: form,
       sort_order: sort_order ?? 0,
+      leader_user_id: typeof leader_user_id === 'number' ? leader_user_id : null,
     })
     .select()
     .single()

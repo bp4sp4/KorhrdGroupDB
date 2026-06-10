@@ -82,6 +82,7 @@ export const ALL_SECTIONS: NavSection[] = [
       "/links",
       "/board",
       "/me",
+      "/appraisal",
     ],
     items: [
       {
@@ -376,6 +377,13 @@ export const ALL_SECTIONS: NavSection[] = [
         href: "/me/contracts",
         icon: <FileText size={16} />,
         fixedNote: "전직원 공통",
+      },
+      {
+        id: "appraisal",
+        label: "인사고과표",
+        href: "/appraisal",
+        icon: <ClipboardList size={16} />,
+        fixedNote: "팀장·본부장 평가 · 경영실장 관리",
       },
       {
         id: "mail-settings",

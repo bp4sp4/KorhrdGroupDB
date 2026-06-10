@@ -1,0 +1,699 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── 툴바 ─────────────────────────────────────────── */
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.toolbarLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pageTitle {
+  font-size: 20px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.formSelect {
+  padding: 7px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 13px;
+  background: #fff;
+  outline: none;
+  max-width: 280px;
+}
+
+.editorBadge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #1b64da;
+  background: #e8f3ff;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.toolbarRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btnGhost,
+.btnPrimary,
+.btnDanger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.15s;
+}
+
+.btnGhost {
+  background: #fff;
+  border-color: #e5e7eb;
+  color: #374151;
+}
+
+.btnGhost:hover {
+  background: #f9fafb;
+}
+
+.btnPrimary {
+  background: #3182f6;
+  color: #fff;
+}
+
+.btnPrimary:hover {
+  background: #1b64da;
+}
+
+.btnPrimary:disabled,
+.btnGhost:disabled,
+.btnDanger:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.btnDanger {
+  background: #fff;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+.btnDanger:hover {
+  background: #fef2f2;
+}
+
+.empty {
+  padding: 60px 0;
+  text-align: center;
+  color: #8b95a1;
+  font-size: 14px;
+}
+
+/* ── 탭 ───────────────────────────────────────────── */
+.tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.tabBtn {
+  padding: 9px 16px;
+  border: none;
+  background: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: #6b7684;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.tabBtn:hover {
+  color: #374151;
+}
+
+.tabBtnActive {
+  color: #3182f6;
+  border-bottom-color: #3182f6;
+}
+
+/* ── 평가 대상 목록 ──────────────────────────────── */
+.targetWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 760px;
+}
+
+.targetSection {
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  padding: 18px 20px;
+}
+
+.targetSectionTitle {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.targetHint {
+  font-size: 12px;
+  font-weight: 500;
+  color: #8b95a1;
+}
+
+.targetList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.targetRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 4px;
+  border-top: 1px solid #f2f4f6;
+}
+
+.targetRow:first-child {
+  border-top: none;
+}
+
+.targetName {
+  font-size: 14px;
+  font-weight: 600;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.leaderTag {
+  font-size: 10px;
+  font-weight: 700;
+  color: #6d28d9;
+  background: #f3e8ff;
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+
+.targetTeam {
+  font-size: 12px;
+  color: #8b95a1;
+  min-width: 90px;
+}
+
+.badgeNone,
+.badgeDraft,
+.badgeDone {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.badgeNone {
+  color: #6b7684;
+  background: #f2f4f6;
+}
+
+.badgeDraft {
+  color: #b45309;
+  background: #fef3c7;
+}
+
+.badgeDone {
+  color: #15803d;
+  background: #dcfce7;
+}
+
+/* ── 평가 작성 화면 ──────────────────────────────── */
+.writeHeader {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.writeTitle {
+  flex: 1;
+  font-size: 17px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.writeSheetName {
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7684;
+}
+
+.writeActions {
+  display: flex;
+  gap: 8px;
+}
+
+.lockedBadge {
+  font-size: 12px;
+  font-weight: 600;
+  color: #15803d;
+  background: #dcfce7;
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+.scoreCellClickable {
+  cursor: pointer;
+}
+
+.scoreCellClickable:hover {
+  background: #e8f3ff;
+}
+
+.scoreCellMarked {
+  background: #3182f6 !important;
+  color: #fff;
+  font-weight: 700;
+  text-align: center;
+}
+
+.totalCell {
+  text-align: center;
+  font-weight: 800;
+}
+
+/* ── 평가 현황 ───────────────────────────────────── */
+.overviewStack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.overviewTitle {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 10px 0 4px;
+}
+
+.overviewHint {
+  font-size: 12px;
+  color: #8b95a1;
+  margin: 0 0 10px;
+}
+
+.gradeBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.gradeS {
+  background: #ede9fe;
+  color: #6d28d9;
+}
+
+.gradeA {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.gradeB {
+  background: #e8f3ff;
+  color: #1b64da;
+}
+
+.gradeC {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.gradeD {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.overviewWrap {
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  padding: 8px 16px 16px;
+  overflow-x: auto;
+}
+
+.overviewTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.overviewTable th,
+.overviewTable td {
+  padding: 10px 8px;
+  border-bottom: 1px solid #f2f4f6;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.overviewTable th {
+  color: #6b7684;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.overviewTotal {
+  font-weight: 700;
+}
+
+.overviewActions {
+  display: flex;
+  gap: 6px;
+}
+
+.overviewActions .btnGhost,
+.overviewActions .btnDanger {
+  padding: 5px 9px;
+  font-size: 12px;
+}
+
+/* ── 문서 ─────────────────────────────────────────── */
+.docWrap {
+  display: flex;
+  justify-content: center;
+}
+
+.doc {
+  width: 100%;
+  max-width: 980px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  padding: 44px 48px 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.docTitle {
+  text-align: center;
+  font-size: 24px;
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: 2px;
+}
+
+/* ── 평가서 전환 (팀역량 / 개인역량) ─────────────── */
+.sheetSwitch {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.sheetSwitchBtn {
+  padding: 8px 18px;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7684;
+  cursor: pointer;
+}
+
+.sheetSwitchBtn:hover:not(.sheetSwitchBtnActive) {
+  background: #f9fafb;
+}
+
+.sheetSwitchBtn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.sheetSwitchBtnActive {
+  background: #3182f6;
+  border-color: #3182f6;
+  color: #fff;
+}
+
+/* ── 평가서 1장 ───────────────────────────────────── */
+.sheetBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sheetActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.sheet {
+  display: flex;
+  flex-direction: column;
+}
+
+.sheet table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13px;
+  color: #1f2937;
+}
+
+.sheet th,
+.sheet td {
+  border: 1px solid #9aa3af;
+  padding: 7px 10px;
+  vertical-align: middle;
+}
+
+.sheet thead th {
+  background: #eef1f5;
+  font-weight: 700;
+  text-align: center;
+}
+
+.metaTable + .mainTable,
+.mainTable + .footTable,
+.footTable + .metaTable {
+  margin-top: -1px; /* 표 사이 이중 테두리 제거 */
+}
+
+.metaLabel {
+  background: #eef1f5;
+  font-weight: 700;
+  width: 110px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.sheetName {
+  font-weight: 800;
+  font-size: 15px;
+}
+
+/* ── 평가 항목 표 ─────────────────────────────────── */
+.colNo {
+  width: 44px;
+  text-align: center;
+  font-weight: 700;
+}
+
+.colCategory {
+  width: 86px;
+  text-align: center;
+}
+
+.colEvaluator {
+  width: 104px;
+  text-align: center;
+}
+
+.colEvalType {
+  width: 76px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.colScore {
+  width: 34px;
+  text-align: center;
+}
+
+.scoreCell {
+  background: #fff;
+}
+
+.indicatorCell {
+  text-align: left;
+}
+
+.indicatorInner {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.indicatorInner > :first-child {
+  flex: 1;
+}
+
+.subtotalRow td:first-child,
+.totalRow td:first-child {
+  background: #eef1f5;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 6px;
+}
+
+.totalRow td {
+  background: #f7f8fa;
+}
+
+/* ── 측정 정보 표 ─────────────────────────────────── */
+.footTable td {
+  text-align: center;
+}
+
+/* ── 텍스트 / 입력 ───────────────────────────────── */
+.text {
+  white-space: pre-wrap;
+  word-break: keep-all;
+}
+
+.textCenter {
+  text-align: center;
+  display: block;
+}
+
+.cellInput,
+.cellTextarea {
+  width: 100%;
+  border: 1px dashed #b9c2cc;
+  border-radius: 5px;
+  padding: 4px 6px;
+  font-size: 13px;
+  font-family: inherit;
+  color: inherit;
+  outline: none;
+  background: #fbfdff;
+  resize: vertical;
+}
+
+.cellInput:focus,
+.cellTextarea:focus {
+  border-color: #3182f6;
+}
+
+/* ── 편집 보조 버튼 ──────────────────────────────── */
+.miniBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 1px solid #d6dbe1;
+  border-radius: 4px;
+  background: #fff;
+  color: #6b7684;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.miniBtn:hover {
+  background: #f2f4f6;
+  color: #dc2626;
+}
+
+.addBlockRow {
+  text-align: center;
+  background: #fbfdff;
+}
+
+.addBlockBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px dashed #3182f6;
+  border-radius: 6px;
+  background: #fff;
+  color: #3182f6;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  cursor: pointer;
+}
+
+.addBlockBtn:hover {
+  background: #e8f3ff;
+}
+
+/* ── 인쇄 ─────────────────────────────────────────── */
+@media print {
+  :global(html),
+  :global(body) {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  :global(body *) {
+    visibility: hidden;
+  }
+
+  :global(main) {
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  .page {
+    display: block;
+  }
+
+  .toolbar {
+    display: none;
+  }
+
+  .docWrap {
+    display: block;
+  }
+
+  .doc,
+  .doc * {
+    visibility: visible;
+  }
+
+  .doc {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    max-width: none;
+    box-shadow: none;
+    border-radius: 0;
+    padding: 0;
+  }
+
+  .sheetActions {
+    display: none;
+  }
+
+  .sheet {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .sheetBlock + .sheetBlock {
+    page-break-before: always;
+  }
+}

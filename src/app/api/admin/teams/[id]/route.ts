@@ -14,7 +14,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
   const { id } = await params
   const body = await request.json()
-  const { name, code, journal_form, sort_order, is_active, department_id } =
+  const { name, code, journal_form, sort_order, is_active, department_id, leader_user_id } =
     body as {
       name?: string
       code?: string
@@ -22,6 +22,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       sort_order?: number
       is_active?: boolean
       department_id?: string
+      leader_user_id?: number | null
     }
 
   if (journal_form !== undefined && !ALLOWED_JOURNAL_FORMS.has(journal_form)) {
@@ -38,6 +39,10 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   if (sort_order !== undefined) updates.sort_order = sort_order
   if (is_active !== undefined) updates.is_active = is_active
   if (department_id !== undefined) updates.department_id = department_id
+  if (leader_user_id !== undefined) {
+    updates.leader_user_id =
+      typeof leader_user_id === 'number' ? leader_user_id : null
+  }
 
   if (Object.keys(updates).length === 0) {
     return NextResponse.json(

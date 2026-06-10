@@ -91,6 +91,29 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     console.error('[admin/accounts PATCH]', error)
     return NextResponse.json({ error: '계정 수정 중 오류가 발생했습니다.' }, { status: 500 })
   }
+
+  // 팀 이동/해제 시 — 떠난 팀에 남아있는 팀장 지정 자동 해제 (인사고과 평가 권한 꼬임 방지)
+  if (updates.team_id !== undefined) {
+    let clearLeader = supabaseAdmin
+      .from('teams')
+      .update({ leader_user_id: null })
+      .eq('leader_user_id', Number(id))
+    if (updates.team_id) clearLeader = clearLeader.neq('id', updates.team_id)
+    const { error: leaderErr } = await clearLeader
+    if (leaderErr) console.error('[admin/accounts PATCH] clear leader:', leaderErr)
+  }
+
+  // 부서 이동 시 — 떠난 사업부에 남아있는 본부장 지정 자동 해제
+  if (updates.department_id !== undefined) {
+    let clearHead = supabaseAdmin
+      .from('departments')
+      .update({ head_user_id: null })
+      .eq('head_user_id', Number(id))
+    if (updates.department_id) clearHead = clearHead.neq('id', updates.department_id)
+    const { error: headErr } = await clearHead
+    if (headErr) console.error('[admin/accounts PATCH] clear head:', headErr)
+  }
+
   return NextResponse.json(data)
 }
 
@@ -136,10 +159,38 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     )
   }
 
+  // 전자결재 기록이 연결된 계정은 기록 보존을 위해 삭제 불가 → 비활성화 안내
+  const [{ count: approvalCnt }, { count: stepCnt }] = await Promise.all([
+    supabaseAdmin
+      .from('approvals')
+      .select('id', { count: 'exact', head: true })
+      .eq('applicant_id', id),
+    supabaseAdmin
+      .from('approval_steps')
+      .select('id', { count: 'exact', head: true })
+      .eq('approver_id', id),
+  ])
+  const linkedCount = (approvalCnt ?? 0) + (stepCnt ?? 0)
+  if (linkedCount > 0) {
+    return NextResponse.json(
+      {
+        error: `이 계정이 작성·결재한 전자결재 기록 ${linkedCount}건이 있어 삭제할 수 없습니다. 기록 보존을 위해 '비활성화'를 사용해 주세요.`,
+      },
+      { status: 409 }
+    )
+  }
+
   // 2. app_users 삭제 (FK ON DELETE SET NULL이라 auth.users 삭제 전에 안전)
   const { error: dbErr } = await supabaseAdmin.from('app_users').delete().eq('id', id)
   if (dbErr) {
     console.error('[admin/accounts DELETE] app_users:', dbErr)
+    // FK 제약(다른 기록이 이 계정을 참조) — 일반 오류와 구분해 안내
+    if (dbErr.code === '23503') {
+      return NextResponse.json(
+        { error: '이 계정을 참조하는 기록이 남아있어 삭제할 수 없습니다. 비활성화를 사용해 주세요.' },
+        { status: 409 }
+      )
+    }
     return NextResponse.json({ error: '계정 삭제 중 오류가 발생했습니다.' }, { status: 500 })
   }
 
