@@ -492,17 +492,23 @@ function ConsultationList({
     });
   }, [items, startDate, endDate]);
 
-  // 오늘 상담완료된 건은 오늘 하루 동안 "오늘 신규 문의" 탭에 유지
+  // 오늘 "등록된 신규 문의"가 오늘 상담완료된 경우에만 당일 동안 탭에 유지
+  // (과거 등록 건은 완료 즉시 전체 탭으로만 — 연락예정일 수정 등 단순 갱신으로 떠오르는 것 방지)
+  const kstDate = (iso: string) => {
+    const d = new Date(
+      new Date(iso).toLocaleString("en-US", { timeZone: "Asia/Seoul" }),
+    );
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  };
   const isCompletedToday = (i: HakItem) => {
     const st = i.status ?? "";
     if (!st.startsWith("상담완료")) return false;
+    // 오늘 등록된 문의만 대상
+    if (!i.created_at || kstDate(i.created_at) !== todayIso) return false;
+    // 완료 시각 기준 (메모 작성으로 완료시각이 비워진 경우 수정시각으로 대체)
     const stamp = i.counsel_completed_at ?? i.updated_at;
     if (!stamp) return false;
-    const d = new Date(
-      new Date(stamp).toLocaleString("en-US", { timeZone: "Asia/Seoul" }),
-    );
-    const kst = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    return kst === todayIso;
+    return kstDate(stamp) === todayIso;
   };
   const todayList = useMemo(
     () =>
