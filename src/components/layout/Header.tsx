@@ -68,6 +68,7 @@ const PATH_LABELS: Record<string, string> = {
   "/approvals": "전자결재",
   "/revenue-upload": "매출 데이터 관리",
   "/reports": "손익 리포트",
+  "/profit": "영업 손익관리",
   "/edu-sales": "매출파일",
 };
 

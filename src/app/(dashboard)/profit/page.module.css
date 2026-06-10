@@ -1,0 +1,949 @@
+/* ── 손익관리 페이지 ── */
+
+.page {
+  display: flex;
+  width: 100%;
+
+  height: 100%;
+  padding: 20px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  background: #fff;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1 0 0;
+  align-self: stretch;
+}
+
+/* ── 헤더 (사업부 / 월 선택) ── */
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  align-self: stretch;
+}
+
+.selectWrap {
+  position: relative;
+}
+
+.selectBtn {
+  display: flex;
+  width: 150px;
+  padding: 10px 14px;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.12s;
+}
+
+.selectBtn:hover {
+  border-color: #c9cdd2;
+}
+
+.selectText,
+.selectTextBold {
+  color: #1f2937;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  line-height: normal;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.selectTextBold {
+  font-weight: 500;
+}
+
+.selectText {
+  font-weight: 400;
+}
+
+.selectChevron {
+  flex-shrink: 0;
+  color: #8d99a5;
+}
+
+.selectMenu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 20;
+  display: flex;
+  width: 150px;
+  max-height: 280px;
+  overflow-y: auto;
+  flex-direction: column;
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.selectItem {
+  display: flex;
+  padding: 8px 10px;
+  align-items: center;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #1f2937;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  text-align: left;
+  cursor: pointer;
+}
+
+.selectItem:hover {
+  background: #f4f6f8;
+}
+
+.selectItemOn {
+  color: #3182f6;
+  font-weight: 600;
+  background: #ebf3fe;
+}
+
+/* ── 등장 애니메이션 (토스풍: 아래에서 떠오르며 페이드 인) ── */
+
+@keyframes cardIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── KPI 띠 (영업이익 / 영업이익률 / 목표 매출 달성률) ── */
+
+.kpiBand {
+  display: flex;
+  align-items: center;
+  align-self: stretch;
+  border-radius: 10px;
+  border: 1px solid #e6e7eb;
+  background: #f6faff;
+  animation: cardIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.kpiCard {
+  display: flex;
+  height: 138px;
+  padding: 24px 32px;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex: 1 0 0;
+  border-radius: 8px;
+}
+
+.kpiDivider {
+  flex-shrink: 0;
+}
+
+.kpiTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  align-self: stretch;
+}
+
+.kpiInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.kpiLabel {
+  color: #7a8086;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 100%;
+}
+
+.kpiValueRow {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 1px;
+}
+
+.kpiValue,
+.kpiValueBlue {
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  font-size: 32px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 100%;
+}
+
+.kpiValue {
+  color: #1f2937;
+}
+
+.kpiValueBlue {
+  color: #0084fe;
+}
+
+.kpiUnit {
+  color: #1f2937;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 130%;
+}
+
+.kpiCompare {
+  align-self: flex-end;
+  color: #7a8086;
+  text-align: right;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 100%;
+}
+
+.kpiCompareValue {
+  color: #0084fe;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 100%;
+}
+
+/* 목표 매출 달성률 — 하단: 목표까지 금액 + 프로그레스바 */
+
+.kpiTargetBottom {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  align-self: stretch;
+}
+
+/* 달성률 카드 하단 — 전월대비(좌) + 목표까지(우) */
+.kpiTargetMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  align-self: stretch;
+}
+
+.kpiTargetMeta .kpiCompare {
+  align-self: auto;
+}
+
+.kpiProgressTrack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: stretch;
+  height: 10px;
+  border-radius: 999px;
+  background: #e9ecee;
+  overflow: hidden;
+}
+
+.kpiProgressFill {
+  height: 10px;
+  border-radius: 999px;
+  background: #0084fe;
+  /* 마운트 시 0% → 목표치로 차오르는 애니메이션 (width는 JS에서 제어) */
+  transition: width 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.15s;
+}
+
+/* ── 본문 레이아웃: 좌측 컬럼 + 우측 영역 ── */
+
+.bodyRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1 0 0;
+  align-self: stretch;
+}
+
+.leftCol {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  align-self: stretch;
+}
+
+/* ── 목표매출 카드 ── */
+
+.goalCard {
+  display: flex;
+  width: 273px;
+  height: 155px;
+  padding: 20px;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-radius: 10px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  animation: cardIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) 0.08s both;
+  /* 목표 설정 팝오버가 아래 카드에 가려지지 않도록 형제 카드보다 위로 */
+  position: relative;
+  z-index: 5;
+}
+
+.goalHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  align-self: stretch;
+}
+
+.goalTitle {
+  color: #1f2937;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 100%;
+}
+
+.goalSetBtn {
+  display: flex;
+  padding: 8px 10px;
+  justify-content: center;
+  align-items: center;
+  gap: 2px;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  color: #8d99a5;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  cursor: pointer;
+  transition:
+    border-color 0.12s,
+    background 0.12s;
+}
+
+.goalSetBtn:hover {
+  border-color: #c9cdd2;
+  background: #f9fafb;
+}
+
+.goalEditWrap {
+  position: relative;
+}
+
+.goalPopover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 30;
+  display: flex;
+  width: 220px;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+}
+
+.goalPopoverTitle {
+  color: #1f2937;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.goalPopoverInputWrap {
+  display: flex;
+  padding: 10px;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+}
+
+.goalPopoverInputWrap:focus-within {
+  border-color: #3182f6;
+}
+
+.goalPopoverInput {
+  width: 100%;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  text-align: right;
+  color: #1f2937;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.goalPopoverSave {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 9px 0;
+  border: none;
+  border-radius: 8px;
+  background: #3182f6;
+  color: #fff;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.goalPopoverSave:hover {
+  background: #1b64da;
+}
+
+.goalValueRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  align-self: stretch;
+  border-radius: 8px;
+}
+
+.goalValue {
+  color: #1f2937;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  font-size: 28px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 100%;
+}
+
+.goalUnit {
+  color: #1f2937;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 130%;
+}
+
+/* ── 이번달 손익 요약 카드 ── */
+
+.summaryCard {
+  display: flex;
+  width: 273px;
+  padding: 20px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 30px;
+  flex: 1 0 0;
+  border-radius: 10px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  animation: cardIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) 0.16s both;
+}
+
+.summaryTitle {
+  color: #1f2937;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 100%;
+}
+
+.summaryBody {
+  display: flex;
+  padding: 10px 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 18px;
+  flex: 1 0 0;
+  align-self: stretch;
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  align-self: stretch;
+  border-radius: 8px;
+}
+
+.summaryLabel {
+  color: #7a8086;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 100%;
+}
+
+.summaryValueRow {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 1px;
+}
+
+.summaryValue,
+.summaryValueGreen,
+.summaryValueRed,
+.summaryValueBlue {
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 100%;
+}
+
+.summaryValue {
+  color: #1f2937;
+}
+
+.summaryValueGreen {
+  color: #00ce56;
+}
+
+.summaryValueRed {
+  color: #ff4a4a;
+}
+
+.summaryValueBlue {
+  color: #0084fe;
+}
+
+.summaryUnit {
+  color: #1f2937;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 130%;
+}
+
+.summaryDivider {
+  height: 1px;
+  align-self: stretch;
+  background: #c9ccce;
+}
+
+/* ── 최근 업데이트 바 ── */
+
+.updateBar {
+  display: flex;
+  width: 273px;
+  padding: 20px;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 10px;
+  background: #f4f4f7;
+  animation: cardIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) 0.24s both;
+}
+
+.updateLabel,
+.updateTime {
+  color: #1f2937;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 100%;
+}
+
+.updateRight {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.updateRefreshBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.updateRefreshBtn:hover svg path {
+  fill: #4e5968;
+}
+
+/* ── 우측 영역 ── */
+
+.rightCol {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1 0 0;
+  align-self: stretch;
+  min-width: 0;
+}
+
+/* ── 지출 계산 카드 ── */
+
+.expenseCard {
+  display: flex;
+  height: 155px;
+  padding: 20px;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  align-self: stretch;
+  border-radius: 10px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  animation: cardIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both;
+}
+
+.expenseTitle {
+  color: #1f2937;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 100%;
+}
+
+.expenseRow {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  align-self: stretch;
+}
+
+.expenseOp {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #7a8086;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.expenseItem {
+  display: flex;
+  padding: 12px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 8px;
+  flex: 1 0 0;
+  min-width: 0;
+  border-radius: 6px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+}
+
+.expenseLabel {
+  color: #1f2937;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+}
+
+.expenseInputWrap {
+  display: flex;
+  padding: 10px;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+  align-self: stretch;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+}
+
+.expenseInputWrap:focus-within {
+  border-color: #3182f6;
+}
+
+.expenseInput {
+  width: 100%;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  text-align: right;
+  color: #1f2937;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+}
+
+.expenseWon {
+  flex-shrink: 0;
+  color: #1f2937;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+}
+
+.expenseTotal {
+  display: flex;
+  padding: 10px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  flex: 1 0 0;
+  min-width: 0;
+  align-self: stretch;
+  border-radius: 6px;
+  border: 1px solid #ffb7b7;
+  background: #fff1f1;
+}
+
+.expenseTotalLabel {
+  color: #37211f;
+  text-align: center;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+}
+
+.expenseTotalValueRow {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  align-self: stretch;
+}
+
+.expenseTotalValue {
+  color: #37211f;
+  text-align: center;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: normal;
+}
+
+/* ── 최근 6개월 영업이익 추이 카드 ── */
+
+.chartCard {
+  display: flex;
+  padding: 20px;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex: 1 0 0;
+  align-self: stretch;
+  min-height: 0;
+  border-radius: 10px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  animation: cardIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
+}
+
+.chartTitle {
+  color: #1f2937;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 100%;
+}
+
+.chartBody {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  align-self: stretch;
+  flex: 1 0 0;
+  min-height: 0;
+}
+
+.chartUnit {
+  color: #8d99a5;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* 차트가 카드 가로폭을 꽉 채우도록 */
+.chartPlot {
+  width: 100%;
+  align-self: stretch;
+  flex: 1 0 0;
+  min-width: 0;
+}

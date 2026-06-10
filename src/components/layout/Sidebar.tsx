@@ -447,6 +447,12 @@ const ADMIN_TOOLS_ITEMS: NavItem[] = [
     icon: <FileText size={16} />,
     groupLabel: "관리 도구",
   },
+  {
+    id: "profit",
+    label: "영업 손익관리",
+    href: "/profit",
+    icon: <TrendingUp size={16} />,
+  },
 ];
 
 // 개인 도구 — 모든 사용자(미니어드민 제외)에게 노출. API가 본인 데이터만 반환하므로 각자 자기 것만 본다.
@@ -840,7 +846,10 @@ export default function Sidebar({
       <nav className={styles.sidebarNav}>
         {showAdminTools && (
           <ul className={`${styles.sidebarList} ${styles.sidebarAdminTools}`}>
-            {ADMIN_TOOLS_ITEMS.map((item) => {
+            {ADMIN_TOOLS_ITEMS.filter(
+              // 영업 손익관리는 admin/master-admin 전용 (부서관리자 제외)
+              (item) => item.id !== "profit" || isFullAccess,
+            ).map((item) => {
               const isActive = pathname.startsWith(item.href.split("?")[0]);
               return (
                 <li key={item.id}>
