@@ -188,4 +188,9 @@ export async function fetchTransactions(params: {
   return fetchTransactionsDirect({ ...params, clientIp: ip })
 }
 
-export const SHINHAN_TEST_ACCOUNT = process.env.SHINHAN_TEST_ACCOUNT ?? '140015029000'
+// 신한 API 자격증명에 등록된 자사 계좌 목록 — 쉼표 구분 환경변수 (예: "111,222,333")
+// 계좌번호는 코드/저장소에 두지 않는다.
+export const SHINHAN_REGISTERED_ACCOUNTS: string[] = (process.env.SHINHAN_ACCOUNTS ?? '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean)

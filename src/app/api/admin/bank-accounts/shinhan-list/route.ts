@@ -1,14 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/auth/requireAuth'
 import { supabaseAdmin } from '@/lib/supabase/admin'
-
-// 신한 API 자격증명에 등록된 자사 계좌 목록 (현재 하드코딩)
-const SHINHAN_REGISTERED_ACCOUNTS: { accountNumber: string; bankCode: string }[] = [
-  { accountNumber: '100038221017', bankCode: '088' },
-  { accountNumber: '140014910339', bankCode: '088' },
-  { accountNumber: '140015029000', bankCode: '088' },
-  { accountNumber: '140015307601', bankCode: '088' },
-]
+import { SHINHAN_REGISTERED_ACCOUNTS } from '@/lib/shinhan'
 
 // GET: 신한 등록 계좌 목록 + 사업부 연결 상태
 export async function GET() {
@@ -43,12 +36,12 @@ export async function GET() {
     })
   })
 
-  const accounts = SHINHAN_REGISTERED_ACCOUNTS.map((a) => {
-    const registered = byAccount.get(a.accountNumber) ?? null
+  const accounts = SHINHAN_REGISTERED_ACCOUNTS.map((accountNumber) => {
+    const registered = byAccount.get(accountNumber) ?? null
     return {
       bank_name: '신한',
-      bank_code: a.bankCode,
-      account_number: a.accountNumber,
+      bank_code: '088',
+      account_number: accountNumber,
       registered: registered
         ? {
             id: registered.id,

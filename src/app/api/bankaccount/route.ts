@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireManagementAccess } from '@/lib/auth/managementAccess'
-import { fetchTransactions, SHINHAN_TEST_ACCOUNT } from '@/lib/shinhan'
+import { fetchTransactions, SHINHAN_REGISTERED_ACCOUNTS } from '@/lib/shinhan'
 
 function getClientIp(request: NextRequest): string {
   const xff = request.headers.get('x-forwarded-for')
@@ -17,17 +17,11 @@ export async function GET(request: NextRequest) {
   const action = searchParams.get('action')
 
   if (action === 'list') {
-    const accounts = [
-      { accountNumber: '100038221017', accountName: '' },
-      { accountNumber: '140014910339', accountName: '' },
-      { accountNumber: '140015029000', accountName: '' },
-      { accountNumber: '140015307601', accountName: '' },
-    ]
     return NextResponse.json({
-      data: accounts.map(({ accountNumber, accountName }) => ({
+      data: SHINHAN_REGISTERED_ACCOUNTS.map((accountNumber) => ({
         bankCode: '088',
         accountNumber,
-        accountName,
+        accountName: '',
         accountType: '입출금',
         state: 1,
         closeRequestYN: false,

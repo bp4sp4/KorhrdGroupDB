@@ -1,15 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireManagementAccess } from '@/lib/auth/managementAccess'
-import { fetchTransactions } from '@/lib/shinhan'
+import { fetchTransactions, SHINHAN_REGISTERED_ACCOUNTS } from '@/lib/shinhan'
 import { matchFixedCost } from '@/lib/fixed-cost-matcher'
-
-// 신한 회사 계좌 목록 (bankaccount/route.ts와 동일)
-const SHINHAN_ACCOUNTS = [
-  '100038221017',
-  '140014910339',
-  '140015029000',
-  '140015307601',
-]
 
 // GET /api/management/reports/fixed-costs?year=YYYY&month=MM
 // 신한 거래내역 (전체 계좌) → 고정비 매칭 결과 반환
@@ -27,7 +19,7 @@ export async function GET(request: NextRequest) {
   const startDate = `${year}${pad(month)}01`
   const endDate = `${year}${pad(month)}${pad(lastDay)}`
 
-  const targetAccounts = accountFilter ? [accountFilter] : SHINHAN_ACCOUNTS
+  const targetAccounts = accountFilter ? [accountFilter] : SHINHAN_REGISTERED_ACCOUNTS
 
   type MatchedItem = {
     date: string
