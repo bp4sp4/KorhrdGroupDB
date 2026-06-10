@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Plus, X, Trash2, Pencil, RotateCcw, UserPlus } from 'lucide-react'
 import styles from './page.module.css'
 import AnnouncementsTab from './AnnouncementsTab'
+import { buildPermissionLayout } from '@/components/layout/navConfig'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -2342,9 +2343,13 @@ interface PermissionSection {
   label: string
   description: string
   allowOwn: boolean
-  group: '교육운영' | '시스템' | '경영관리'
+  group: '교육운영' | '시스템' | '경영관리' | '관리도구' | '내메뉴'
   hideFromUserOverride?: boolean
 }
+
+// 권한관리 화면 구조 — 사이드바 메뉴 정의(navConfig)에서 자동 생성
+// 사이드바에 permissionKey 가진 메뉴를 추가하면 여기에도 자동으로 나타난다
+const PERMISSION_LAYOUT = buildPermissionLayout()
 
 const PERMISSION_SECTIONS: PermissionSection[] = [
   { key: 'hakjeom',    label: '학점은행제 사업부', description: '상담 목록 조회·수정',     allowOwn: true,  group: '교육운영' },
@@ -2371,7 +2376,16 @@ const PERMISSION_SECTIONS: PermissionSection[] = [
   { key: 'revenue-upload', label: '매출 데이터 관리', description: '매출 데이터 업로드·관리 (담당: 본인 사업부만)', allowOwn: true,  group: '경영관리' },
   { key: 'reports',      label: '손익 리포트',        description: '손익 리포트 열람',              allowOwn: false, group: '경영관리' },
   { key: 'bankaccount', label: '계좌조회',           description: '팝빌 계좌 거래내역 조회 (이사 이상)', allowOwn: false, group: '경영관리' },
+  { key: 'wj-admin',    label: '직원 업무일지 현황',  description: '직원 업무일지 열람 — 관리자/부서관리자에게만 적용 (기본 허용)', allowOwn: false, group: '관리도구' },
+  { key: 'profit',      label: '영업 손익관리',       description: '사업부 손익 대시보드 — 관리자는 항상 접근, 그 외는 허용 시에만', allowOwn: false, group: '관리도구' },
+  { key: 'wj-archive',  label: '업무일지 모음',       description: '본인 업무일지 아카이브 (기본 허용)', allowOwn: false, group: '내메뉴' },
+  { key: 'me-attendance', label: '근태현황',          description: '본인 근태현황 페이지 (기본 허용)', allowOwn: false, group: '내메뉴' },
 ]
+
+// 섹션 키 → 메타(설명/담당건만 허용 여부) 빠른 조회
+const SECTION_META: Record<string, PermissionSection> = Object.fromEntries(
+  PERMISSION_SECTIONS.map(section => [section.key, section]),
+)
 
 // 탭 제한을 지원하는 섹션과 해당 탭 목록
 // value 는 Sidebar 의 NavSubItem.id 와 일치해야 함
@@ -2534,44 +2548,6 @@ function PermissionsTab() {
     }
   }
 
-  const handleBasePermissionChange = async (positionId: string, section: string, scope: ScopeKey) => {
-    const prev = users
-    setUsers(cur => cur.map(user => {
-      if (user.position_id !== positionId) return user
-      const nextBasePermissions = (user.base_permissions ?? []).map(permission =>
-        permission.section === section ? { ...permission, scope } : permission
-      )
-      const overridden = Boolean(user.overrides?.some(permission => permission.section === section))
-      const nextPermissions = overridden
-        ? user.permissions
-        : user.permissions.map(permission =>
-            permission.section === section ? { ...permission, scope } : permission
-          )
-
-      return {
-        ...user,
-        base_permissions: nextBasePermissions,
-        permissions: nextPermissions,
-      }
-    }))
-
-    const key = `position-${positionId}-${section}`
-    setSaving(key)
-    try {
-      const res = await fetch('/api/admin/position-permissions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ position_id: positionId, section, scope }),
-      })
-      if (!res.ok) setUsers(prev)
-      else window.dispatchEvent(new Event('permissions-updated'))
-    } catch {
-      setUsers(prev)
-    } finally {
-      setSaving(null)
-    }
-  }
-
   if (loading) {
     return (
       <div className={styles.permLoadingWrap}>
@@ -2614,12 +2590,6 @@ function PermissionsTab() {
     }
   }
 
-  const PERM_GROUPS: { key: '교육운영' | '시스템' | '경영관리' }[] = [
-    { key: '경영관리' },
-    { key: '교육운영' },
-    { key: '시스템' },
-  ]
-
   const positionNames = positions
     .filter(position => position.is_active)
     .sort((a, b) => a.sort_order - b.sort_order)
@@ -2643,15 +2613,14 @@ function PermissionsTab() {
     : groupedPositions[0]?.name ?? null
 
   const activeGroup = groupedPositions.find(group => group.name === activePositionName) ?? null
-  const basePermissionSource = activeGroup?.users[0]?.base_permissions ?? []
 
   return (
     <div className={styles.permWrap}>
       <div className={styles.permIntroCard}>
         <div>
-          <h3 className={styles.permIntroTitle}>직급별 권한 기준</h3>
+          <h3 className={styles.permIntroTitle}>사용자별 권한 관리</h3>
           <p className={styles.permIntroText}>
-            권한은 직급 기본값을 기준으로 보고, 필요한 사람만 상세에서 개별 예외를 주는 방식으로 관리합니다.
+            사용자별 개별 예외로 권한을 관리합니다. &apos;접근 불가&apos;로 설정하면 메뉴 숨김은 물론 링크 직접 접근도 차단됩니다.
           </p>
         </div>
       </div>
@@ -2671,9 +2640,6 @@ function PermissionsTab() {
                 <span className={styles.positionCardCount}>{group.users.length}명</span>
               </div>
               <p className={styles.positionCardText}>
-                기본 권한 {group.users[0]?.base_permissions?.filter(permission => permission.scope !== 'none').length ?? 0}개
-              </p>
-              <p className={styles.positionCardText}>
                 개별 예외 {overrideCount}건
               </p>
             </button>
@@ -2685,61 +2651,15 @@ function PermissionsTab() {
         <div className={styles.permDetailCard}>
           <div className={styles.permDetailHeader}>
             <div>
-              <h3 className={styles.permDetailTitle}>{activeGroup.name} 권한 상세</h3>
+              <h3 className={styles.permDetailTitle}>{activeGroup.name} 사용자별 개별 예외</h3>
               <p className={styles.permDetailText}>
-                이 직급의 기본권한과 사용자별 개별 예외를 한 화면에서 관리합니다.
+                기본값과 다르게 적용할 사람만 수정하면 됩니다.
               </p>
             </div>
             <span className={styles.permDetailMeta}>대상 사용자 {activeGroup.users.length}명</span>
           </div>
 
-          {PERM_GROUPS.map(group => {
-            const groupSections = PERMISSION_SECTIONS.filter(section => section.group === group.key)
-            return (
-              <div key={group.key} className={styles.positionSection}>
-                <div className={styles.positionSectionHeader}>
-                  <span className={styles.positionSectionTitle}>{group.key}</span>
-                </div>
-                <div className={styles.positionPermissionList}>
-                  {groupSections.map(section => {
-                    const baseScope = (basePermissionSource.find(permission => permission.section === section.key)?.scope ?? 'none') as ScopeKey
-                    const isSavingBase = activeGroup.positionId ? saving === `position-${activeGroup.positionId}-${section.key}` : false
-                    return (
-                      <div key={section.key} className={styles.positionPermissionRow}>
-                        <div className={styles.positionPermissionLabelWrap}>
-                          <span className={styles.positionPermissionLabel}>{section.label}</span>
-                          <span className={styles.positionPermissionHint}>{section.description}</span>
-                        </div>
-                        {activeGroup.positionId ? (
-                          <select
-                            className={styles.permScopeSelect}
-                            data-scope={baseScope}
-                            value={baseScope}
-                            disabled={isSavingBase}
-                            onChange={(e) => handleBasePermissionChange(activeGroup.positionId as string, section.key, e.target.value as ScopeKey)}
-                          >
-                            <option value="none">접근 불가</option>
-                            <option value="all">전체 열람</option>
-                            {section.allowOwn && <option value="own">담당 건만</option>}
-                          </select>
-                        ) : (
-                          <span className={`${styles.positionPermissionBadge} ${styles[`scopeBadge${baseScope === 'all' ? 'All' : baseScope === 'own' ? 'Own' : 'None'}`]}`}>
-                            기본값 {SCOPE_OPTIONS[baseScope].label}
-                          </span>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            )
-          })}
-
           <div className={styles.userOverrideSection}>
-            <div className={styles.positionSectionHeader}>
-              <span className={styles.positionSectionTitle}>사용자별 개별 예외</span>
-              <span className={styles.positionSectionHint}>기본값과 다르게 보여야 하는 사람만 수정하면 됩니다.</span>
-            </div>
             <div className={styles.userOverrideList}>
               {activeGroup.users.map(user => {
                 const roleInfo = ROLE_DISPLAY[user.role] ?? { label: user.role, cls: 'roleStaff' }
@@ -2756,56 +2676,69 @@ function PermissionsTab() {
                       </div>
                     </div>
 
-                    {PERM_GROUPS.map(group => {
-                      const groupSections = PERMISSION_SECTIONS.filter(
-                        section => section.group === group.key && !section.hideFromUserOverride
-                      )
-                      if (groupSections.length === 0) return null
-                      return (
-                        <div key={`${user.id}-${group.key}`} className={styles.permCardGroup}>
-                          <div className={styles.permCardGroupLabel}>{group.key}</div>
-                          {groupSections.map(sec => {
-                            const currentScope = getScope(user, sec.key)
-                            const baseScope = getBaseScope(user, sec.key)
-                            const overridden = hasOverride(user, sec.key)
-                            const isSaving = saving === `${user.id}-${sec.key}` || saving === `${user.id}-${sec.key}-reset`
+                    {PERMISSION_LAYOUT.map(group => (
+                      <div key={`${user.id}-${group.group}`} className={styles.permCardGroup}>
+                        <div className={styles.permCardGroupLabel}>{group.group}</div>
+                        {group.entries.map(entry => {
+                          const rowLabel = entry.parentLabel
+                            ? `${entry.parentLabel} · ${entry.label}`
+                            : entry.label
+                          // 고정 항목 — 권한 select 없이 배지로만 표시
+                          if (!entry.sectionKey) {
                             return (
-                              <div key={`${user.id}-${sec.key}`} className={styles.permCardRow}>
+                              <div key={`${user.id}-fixed-${rowLabel}`} className={styles.permCardRow}>
                                 <div className={styles.permCardRowLabelWrap}>
-                                  <span className={styles.permCardRowLabel}>{sec.label}</span>
-                                  <span className={styles.permCardRowHint}>
-                                    기본값 {SCOPE_OPTIONS[baseScope].label}{overridden ? ' · 개별예외 적용중' : ''}
-                                  </span>
+                                  <span className={styles.permCardRowLabel}>{rowLabel}</span>
+                                  <span className={styles.permCardRowHint}>권한 설정 대상 아님</span>
                                 </div>
-                                <div className={styles.permCardRowActions}>
-                                  <select
-                                    className={styles.permScopeSelect}
-                                    data-scope={currentScope}
-                                    value={currentScope}
-                                    disabled={isSaving}
-                                    onChange={(e) => handleChange(user.id, sec.key, e.target.value as ScopeKey)}
-                                  >
-                                    <option value="none">접근 불가</option>
-                                    <option value="all">전체 열람</option>
-                                    {sec.allowOwn && <option value="own">담당 건만</option>}
-                                  </select>
-                                  {overridden && (
-                                    <button
-                                      type="button"
-                                      className={styles.btnSecondary}
-                                      onClick={() => handleResetOverride(user.id, sec.key)}
-                                      disabled={isSaving}
-                                    >
-                                      기본값 복원
-                                    </button>
-                                  )}
-                                </div>
+                                <span className={`${styles.positionPermissionBadge} ${styles.scopeBadgeNone}`}>
+                                  {entry.fixedNote}
+                                </span>
                               </div>
                             )
-                          })}
-                        </div>
-                      )
-                    })}
+                          }
+                          const secKey = entry.sectionKey
+                          const meta = SECTION_META[secKey]
+                          const currentScope = getScope(user, secKey)
+                          const baseScope = getBaseScope(user, secKey)
+                          const overridden = hasOverride(user, secKey)
+                          const isSaving = saving === `${user.id}-${secKey}` || saving === `${user.id}-${secKey}-reset`
+                          return (
+                            <div key={`${user.id}-${secKey}`} className={styles.permCardRow}>
+                              <div className={styles.permCardRowLabelWrap}>
+                                <span className={styles.permCardRowLabel}>{rowLabel}</span>
+                                <span className={styles.permCardRowHint}>
+                                  기본값 {SCOPE_OPTIONS[baseScope].label}{overridden ? ' · 개별예외 적용중' : ''}
+                                </span>
+                              </div>
+                              <div className={styles.permCardRowActions}>
+                                <select
+                                  className={styles.permScopeSelect}
+                                  data-scope={currentScope}
+                                  value={currentScope}
+                                  disabled={isSaving}
+                                  onChange={(e) => handleChange(user.id, secKey, e.target.value as ScopeKey)}
+                                >
+                                  <option value="none">접근 불가</option>
+                                  <option value="all">전체 열람</option>
+                                  {(meta?.allowOwn ?? false) && <option value="own">담당 건만</option>}
+                                </select>
+                                {overridden && (
+                                  <button
+                                    type="button"
+                                    className={styles.btnSecondary}
+                                    onClick={() => handleResetOverride(user.id, secKey)}
+                                    disabled={isSaving}
+                                  >
+                                    기본값 복원
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    ))}
 
                     {TAB_RESTRICTION_SECTIONS.map(({ sectionKey, label, tabs }) => {
                       const perm = user.permissions.find(permission => permission.section === sectionKey)

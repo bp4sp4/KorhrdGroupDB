@@ -8905,13 +8905,20 @@ export default function CertPage() {
       setSourceTab(urlTab);
     } else if (allowed && allowed.length > 0) {
       setSourceTab(allowed[0] as SourceTab);
+    } else if (allowed && allowed.length === 0) {
+      // 허용 탭이 하나도 없으면 워크스페이스로 튕김
+      router.replace("/work-journal");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tabsLoaded, allowedCertTabs, urlTab]);
 
   const handleTabChange = (tab: SourceTab) => {
     setSourceTab(tab);
     router.replace(`/cert?tab=${tab}`, { scroll: false });
   };
+
+  // 권한 확인 전에는 탭 콘텐츠 미노출 (제한 탭이 잠깐 보이는 것 방지)
+  if (!tabsLoaded) return null;
 
   return (
     <div>

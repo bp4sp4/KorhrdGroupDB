@@ -459,6 +459,51 @@ export default function AllcarePage() {
     if (urlTab && valid.includes(urlTab)) setActiveTab(urlTab)
   }, [urlTab])
 
+  // 탭 제한(allowed_tabs) — 올케어 탭은 hakjeom 섹션 권한의 allcare-tab-* 키로 관리됨
+  const [allowedAllcareTabs, setAllowedAllcareTabs] = useState<string[] | null>(null)
+  const [tabsPermLoaded, setTabsPermLoaded] = useState(false)
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => {
+        if (data) {
+          const isFullAccess = data.role === 'admin' || data.role === 'master-admin'
+          if (!isFullAccess) {
+            const perm = data.permissions?.find(
+              (p: { section: string; allowed_tabs?: string[] | null }) => p.section === 'hakjeom',
+            )
+            const raw: string[] | null = perm?.allowed_tabs ?? null
+            // allcare-tab-* 만 추출 (null = 전체 허용)
+            const normalized = raw
+              ? raw
+                  .filter(v => v.startsWith('allcare-tab-'))
+                  .map(v => v.slice('allcare-tab-'.length))
+              : null
+            setAllowedAllcareTabs(normalized)
+          }
+        }
+        setTabsPermLoaded(true)
+      })
+      .catch(() => setTabsPermLoaded(true))
+  }, [])
+
+  // 권한 로딩 후 클램프 — 제한 탭에 URL로 직접 진입 시 허용 탭으로 강제 이동
+  useEffect(() => {
+    if (!tabsPermLoaded || !allowedAllcareTabs) return
+    const valid: Tab[] = ['users', 'payments', 'stats']
+    // 권한 관리 대상이 아닌 탭(custom 등)은 자동 허용
+    if (!valid.includes(activeTab)) return
+    if (allowedAllcareTabs.includes(activeTab)) return
+    const fallback = allowedAllcareTabs.find(t => valid.includes(t as Tab)) as Tab | undefined
+    if (fallback) {
+      setActiveTab(fallback)
+      router.replace(`/allcare?tab=${fallback}`, { scroll: false })
+    } else {
+      router.replace('/work-journal')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabsPermLoaded, allowedAllcareTabs, activeTab])
+
   // 회원
   const [users, setUsers] = useState<UserData[]>([])
   const [userTotal, setUserTotal] = useState(0)
@@ -805,6 +850,9 @@ export default function AllcarePage() {
   }
 
   // ─── 렌더링 ───────────────────────────────────────────────────────────────
+  // 권한 확인 전에는 탭 콘텐츠 미노출 (제한 탭이 잠깐 보이는 것 방지)
+  if (!tabsPermLoaded) return null
+
   return (
     <div className={styles.container}>
 

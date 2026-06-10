@@ -102,6 +102,46 @@ export default function AbroadPage() {
   useEffect(() => {
     if (urlTab && TAB_ITEMS.some(t => t.id === urlTab)) setTab(urlTab)
   }, [urlTab])
+
+  // 탭 제한(allowed_tabs) — 권한 로딩 후 허용 탭으로 클램프, 로딩 전 콘텐츠 미노출
+  const [allowedAbroadTabs, setAllowedAbroadTabs] = useState<string[] | null>(null)
+  const [tabsPermLoaded, setTabsPermLoaded] = useState(false)
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => {
+        if (data) {
+          const isFullAccess = data.role === 'admin' || data.role === 'master-admin'
+          if (!isFullAccess) {
+            const perm = data.permissions?.find(
+              (p: { section: string; allowed_tabs?: string[] | null }) => p.section === 'abroad',
+            )
+            const raw: string[] | null = perm?.allowed_tabs ?? null
+            const normalized = raw
+              ? raw.map(v => (v.startsWith('abroad-tab-') ? v.slice('abroad-tab-'.length) : v))
+              : null
+            setAllowedAbroadTabs(normalized)
+          }
+        }
+        setTabsPermLoaded(true)
+      })
+      .catch(() => setTabsPermLoaded(true))
+  }, [])
+
+  // 권한 로딩 후 클램프 — 제한 탭에 URL로 직접 진입 시 허용 탭으로 강제 이동
+  useEffect(() => {
+    if (!tabsPermLoaded || !allowedAbroadTabs) return
+    if (allowedAbroadTabs.includes(tab)) return
+    const fallback = allowedAbroadTabs.find(t => TAB_ITEMS.some(item => item.id === t))
+    if (fallback) {
+      setTab(fallback)
+      router.replace(`/abroad?tab=${fallback}`, { scroll: false })
+    } else {
+      router.replace('/work-journal')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabsPermLoaded, allowedAbroadTabs, tab])
+
   const [loading, setLoading] = useState(true)
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const [approvingId, setApprovingId] = useState<string | null>(null)
@@ -297,7 +337,8 @@ export default function AbroadPage() {
     )
   }
 
-  if (loading) {
+  // 권한 확인 전에는 탭 콘텐츠 미노출 (제한 탭이 잠깐 보이는 것 방지)
+  if (!tabsPermLoaded || loading) {
     return <div className={styles.loadingWrap}>불러오는 중...</div>
   }
 

@@ -3,506 +3,19 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import {
-  GraduationCap,
-  Users,
-  UserCog,
-  Trash2,
-  ClipboardList,
-  Copy,
-  TrendingUp,
-  FileCheck,
-  BarChart2,
-  Settings,
-  UserCheck,
-  Plane,
-  Link2,
-  ChevronRight,
-  Upload,
-  Landmark,
-  Megaphone,
-  LayoutGrid,
-  FileText,
-  CalendarDays,
-  Clock,
-  Mail,
-} from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import styles from "./layout.module.css";
 import { createClient } from "@/lib/supabase/client";
+import {
+  ALL_SECTIONS,
+  ADMIN_TOOLS_ITEMS,
+  MINI_ADMIN_ITEMS,
+  PERSONAL_TOOLS_ITEMS,
+  SECTION_ITEM_MAP,
+  type NavItem,
+  type NavSubItem,
+} from "./navConfig";
 
-interface NavSubItem {
-  id: string;
-  label: string;
-  href: string;
-  sectionLabel?: string;
-}
-
-interface NavItem {
-  id: string;
-  label: string;
-  href: string;
-  icon: React.ReactNode;
-  activeOn?: string[];
-  exactMatch?: boolean;
-  groupLabel?: string;
-  children?: NavSubItem[];
-  badge?: string;
-}
-
-interface NavSection {
-  sectionKey: string;
-  activeOn: string[];
-  items: NavItem[];
-}
-
-const ALL_SECTIONS: NavSection[] = [
-  {
-    sectionKey: "교육운영",
-    activeOn: [
-      "/hakjeom",
-      "/cert",
-      "/practice",
-      "/allcare",
-      "/abroad",
-      "/revenues",
-      "/revenue-upload",
-      "/approvals",
-      "/reports",
-      "/bankaccount",
-      "/marketing",
-      "/task-board",
-      "/duplicate",
-      "/trash",
-      "/ref-manage",
-      "/logs",
-      "/assignment",
-      "/links",
-      "/board",
-      "/me",
-    ],
-    items: [
-      {
-        id: "education",
-        label: "학점은행제 사업부",
-        href: "/hakjeom",
-        icon: <GraduationCap size={16} />,
-        groupLabel: "사업부서",
-        activeOn: ["/hakjeom", "/allcare"],
-        children: [
-          {
-            id: "hakjeom-tab-hakjeom",
-            label: "문의DB",
-            href: "/hakjeom?tab=hakjeom",
-          },
-          {
-            id: "hakjeom-tab-edu-students",
-            label: "등록학생관리",
-            href: "/hakjeom?tab=edu-students",
-          },
-          { id: "edu-sales-page", label: "매출파일", href: "/edu-sales" },
-          {
-            id: "hakjeom-tab-agency",
-            label: "기관협약",
-            href: "/hakjeom?tab=agency",
-          },
-          {
-            id: "hakjeom-tab-bulk",
-            label: "일괄등록",
-            href: "/hakjeom?tab=bulk",
-          },
-          {
-            id: "hakjeom-tab-counsel_done",
-            label: "연락예정",
-            href: "/hakjeom?tab=counsel_done",
-          },
-          {
-            id: "hakjeom-tab-stats",
-            label: "통계",
-            href: "/hakjeom?tab=stats",
-          },
-          {
-            id: "allcare-tab-users",
-            label: "올케어 회원목록",
-            href: "/allcare?tab=users",
-          },
-          {
-            id: "allcare-tab-payments",
-            label: "올케어 결제내역",
-            href: "/allcare?tab=payments",
-          },
-          {
-            id: "allcare-tab-stats",
-            label: "올케어 통계",
-            href: "/allcare?tab=stats",
-          },
-        ],
-      },
-      {
-        id: "cert",
-        label: "민간자격증 사업부",
-        href: "/cert",
-        icon: <GraduationCap size={16} />,
-        children: [
-          {
-            id: "cert-tab-hakjeom",
-            label: "학점연계 신청",
-            href: "/cert?tab=hakjeom",
-          },
-          { id: "cert-tab-edu", label: "교육원", href: "/cert?tab=edu" },
-          {
-            id: "cert-tab-private-cert",
-            label: "민간자격증",
-            href: "/cert?tab=private-cert",
-          },
-          { id: "cert-sales-page", label: "매출파일", href: "/cert-sales" },
-          {
-            id: "cert-tab-student-mgmt",
-            label: "학생관리",
-            href: "/cert?tab=student-mgmt",
-          },
-          {
-            id: "cert-tab-student-contact",
-            label: "연락예정",
-            href: "/cert?tab=student-contact",
-          },
-          {
-            id: "cert-tab-student-bulk",
-            label: "일괄등록",
-            href: "/cert?tab=student-bulk",
-          },
-          {
-            id: "cert-tab-counsel-template",
-            label: "상담 템플릿",
-            href: "/cert?tab=counsel-template",
-          },
-          { id: "cert-tab-stats", label: "통계", href: "/cert?tab=stats" },
-        ],
-      },
-      {
-        id: "practice",
-        label: "실습 사업부",
-        href: "/practice-sales",
-        icon: <GraduationCap size={16} />,
-        children: [
-          {
-            id: "practice-sales-page",
-            label: "매출파일",
-            href: "/practice-sales",
-          },
-        ],
-      },
-      {
-        id: "abroad",
-        label: "유학 사업부",
-        href: "/abroad",
-        icon: <Plane size={16} />,
-        children: [
-          {
-            id: "abroad-tab-users",
-            label: "회원 목록",
-            href: "/abroad?tab=users",
-          },
-          {
-            id: "abroad-tab-consult",
-            label: "간편상담",
-            href: "/abroad?tab=consult",
-          },
-          {
-            id: "abroad-tab-applications",
-            label: "신청서 목록",
-            href: "/abroad?tab=applications",
-          },
-          {
-            id: "abroad-tab-payments",
-            label: "결제 목록",
-            href: "/abroad?tab=payments",
-          },
-        ],
-      },
-      {
-        id: "management",
-        label: "경영지원본부",
-        href: "/revenues/nms-sales",
-        icon: <TrendingUp size={16} />,
-        groupLabel: "지원부서",
-        activeOn: [
-          "/revenues",
-          "/revenue-upload",
-          "/bankaccount",
-          "/approvals",
-          "/reports",
-        ],
-        children: [
-          {
-            id: "management-nms-sales",
-            label: "팀별 매출 관리",
-            href: "/revenues/nms-sales",
-          },
-          {
-            id: "management-revenue-upload",
-            label: "매출 데이터 관리",
-            href: "/revenue-upload",
-          },
-          {
-            id: "management-bankaccount",
-            label: "계좌조회",
-            href: "/bankaccount",
-          },
-          { id: "management-approvals", label: "전자결재", href: "/approvals" },
-          { id: "management-reports", label: "손익 리포트", href: "/reports" },
-        ],
-      },
-      {
-        id: "marketing",
-        label: "마케팅개발본부",
-        href: "/marketing",
-        icon: <Megaphone size={16} />,
-        children: [
-          {
-            id: "marketing-nms-channel",
-            label: "채널별 성과",
-            href: "/marketing?tab=nms-channel",
-            sectionLabel: "학점은행제",
-          },
-          {
-            id: "marketing-nms-creative",
-            label: "소재별 성과",
-            href: "/marketing?tab=nms-creative",
-          },
-          {
-            id: "marketing-nms-dashboard",
-            label: "대시보드",
-            href: "/marketing?tab=nms-dashboard",
-          },
-          {
-            id: "marketing-cert-channel",
-            label: "채널별 성과",
-            href: "/marketing?tab=cert-channel",
-            sectionLabel: "민간자격증",
-          },
-          {
-            id: "marketing-cert-creative",
-            label: "소재별 성과",
-            href: "/marketing?tab=cert-creative",
-          },
-          {
-            id: "marketing-cert-dashboard",
-            label: "대시보드",
-            href: "/marketing?tab=cert-dashboard",
-          },
-          {
-            id: "marketing-abroad-channel",
-            label: "채널별 성과",
-            href: "/marketing?tab=abroad-channel",
-            sectionLabel: "유학",
-          },
-          {
-            id: "marketing-abroad-creative",
-            label: "소재별 성과",
-            href: "/marketing?tab=abroad-creative",
-          },
-          {
-            id: "marketing-abroad-dashboard",
-            label: "대시보드",
-            href: "/marketing?tab=abroad-dashboard",
-          },
-          {
-            id: "marketing-mom-cafe",
-            label: "맘카페 관리",
-            href: "/marketing?tab=mom-cafe",
-            sectionLabel: "맘카페",
-          },
-        ],
-      },
-      {
-        id: "task-board",
-        label: "통합 업무보드",
-        href: "/task-board",
-        icon: <LayoutGrid size={16} />,
-        groupLabel: "시스템",
-      },
-      {
-        id: "calendar",
-        label: "개인 캘린더",
-        href: "/calendar",
-        icon: <CalendarDays size={16} />,
-      },
-      {
-        id: "me-hr-record",
-        label: "인사기록카드",
-        href: "/me/hr-record",
-        icon: <FileText size={16} />,
-      },
-      {
-        id: "me-contracts",
-        label: "내 근로계약서",
-        href: "/me/contracts",
-        icon: <FileText size={16} />,
-      },
-      {
-        id: "mail-settings",
-        label: "메일 설정",
-        href: "/me/mail-settings",
-        icon: <Mail size={16} />,
-      },
-      {
-        id: "duplicate",
-        label: "중복 조회",
-        href: "/duplicate",
-        icon: <Copy size={16} />,
-      },
-      {
-        id: "trash",
-        label: "삭제목록",
-        href: "/trash",
-        icon: <Trash2 size={16} />,
-      },
-      {
-        id: "ref-manage",
-        label: "어드민 관리",
-        href: "/ref-manage",
-        icon: <UserCog size={16} />,
-      },
-      {
-        id: "logs",
-        label: "로그 관리",
-        href: "/logs",
-        icon: <ClipboardList size={16} />,
-      },
-      {
-        id: "assignment",
-        label: "배정 현황",
-        href: "/assignment",
-        icon: <UserCheck size={16} />,
-      },
-      {
-        id: "links",
-        label: "링크모음",
-        href: "/links",
-        icon: <Link2 size={16} />,
-      },
-    ],
-  },
-  {
-    sectionKey: "어드민",
-    activeOn: ["/admin"],
-    items: [
-      {
-        id: "admin-settings",
-        label: "시스템 설정",
-        href: "/admin",
-        icon: <Settings size={16} />,
-        groupLabel: "관리자",
-        exactMatch: true,
-      },
-      {
-        id: "admin-approval-forms",
-        label: "결재 양식 관리",
-        href: "/admin/approval-forms",
-        icon: <FileCheck size={16} />,
-      },
-      {
-        id: "admin-attendance",
-        label: "근태현황",
-        href: "/admin/attendance",
-        icon: <Clock size={16} />,
-      },
-      {
-        id: "admin-hr-records",
-        label: "인사기록카드 승인",
-        href: "/admin/hr-records",
-        icon: <FileText size={16} />,
-      },
-      {
-        id: "admin-leave-balances",
-        label: "휴가 잔여 관리",
-        href: "/admin/leave-balances",
-        icon: <FileText size={16} />,
-      },
-      {
-        id: "admin-contracts",
-        label: "근로계약서 관리",
-        href: "/admin/contracts",
-        icon: <FileText size={16} />,
-      },
-    ],
-  },
-];
-
-const MINI_ADMIN_ITEMS: NavItem[] = [
-  {
-    id: "mini-admin",
-    label: "결제확인",
-    href: "/paymentstatus",
-    icon: <Users size={16} />,
-  },
-];
-
-// 관리자 전용 도구 — master-admin / admin / division_admin 에게 모든 섹션에서 영구 노출
-const ADMIN_TOOLS_ITEMS: NavItem[] = [
-  {
-    id: "wj-admin",
-    label: "직원 업무일지 현황",
-    href: "/work-journal/admin",
-    icon: <FileText size={16} />,
-    groupLabel: "관리 도구",
-  },
-  {
-    id: "profit",
-    label: "영업 손익관리",
-    href: "/profit",
-    icon: <TrendingUp size={16} />,
-  },
-];
-
-// 개인 도구 — 모든 사용자(미니어드민 제외)에게 노출. API가 본인 데이터만 반환하므로 각자 자기 것만 본다.
-const PERSONAL_TOOLS_ITEMS: NavItem[] = [
-  {
-    id: "wj-archive",
-    label: "업무일지 모음",
-    href: "/work-journal/archive",
-    icon: <CalendarDays size={16} />,
-    groupLabel: "내 메뉴",
-  },
-  {
-    id: "me-leave",
-    label: "휴가현황",
-    href: "/me/leave",
-    icon: <FileText size={16} />,
-  },
-  {
-    id: "me-attendance",
-    label: "근태현황",
-    href: "/me/attendance",
-    icon: <Clock size={16} />,
-  },
-];
-
-const SECTION_ITEM_MAP: Record<string, string> = {
-  hakjeom: "education",
-  "edu-sales": "education",
-  cert: "cert",
-  "cert-sales": "cert",
-  practice: "practice",
-  "practice-sales": "practice",
-  abroad: "abroad",
-  allcare: "education",
-  revenues: "management",
-  "revenue-upload": "management",
-  bankaccount: "management",
-  approvals: "management",
-  reports: "management",
-  marketing: "marketing",
-  duplicate: "duplicate",
-  trash: "trash",
-  logs: "logs",
-  "ref-manage": "ref-manage",
-  assignment: "assignment",
-  links: "links",
-  "task-board": "task-board",
-  "me-leave": "me-leave",
-  calendar: "calendar",
-};
 
 interface SidebarProps {
   userRole?: string | null;
@@ -839,6 +352,20 @@ export default function Sidebar({
   const showAdminTools =
     isFullAccess || (!!isDivisionAdmin && userRole !== "mini-admin");
 
+  // permissionKey 가진 항목의 권한 scope 조회 (관리도구/내메뉴 노출 제어)
+  const permScopeOf = (key: string) =>
+    permissions.find((p) => p.section === key)?.scope ?? "none";
+  const visibleAdminTools = ADMIN_TOOLS_ITEMS.filter((item) => {
+    if (!item.permissionKey) return true;
+    if (isFullAccess) return true;
+    return permScopeOf(item.permissionKey) !== "none";
+  });
+  const visiblePersonalTools = PERSONAL_TOOLS_ITEMS.filter((item) => {
+    if (!item.permissionKey) return true;
+    if (isFullAccess) return true;
+    return permScopeOf(item.permissionKey) !== "none";
+  });
+
   return (
     <aside
       className={`${styles.sidebar}${isOpen ? ` ${styles.sidebarOpen}` : ""}`}
@@ -846,10 +373,7 @@ export default function Sidebar({
       <nav className={styles.sidebarNav}>
         {showAdminTools && (
           <ul className={`${styles.sidebarList} ${styles.sidebarAdminTools}`}>
-            {ADMIN_TOOLS_ITEMS.filter(
-              // 영업 손익관리는 admin/master-admin 전용 (부서관리자 제외)
-              (item) => item.id !== "profit" || isFullAccess,
-            ).map((item) => {
+            {visibleAdminTools.map((item) => {
               const isActive = pathname.startsWith(item.href.split("?")[0]);
               return (
                 <li key={item.id}>
@@ -873,7 +397,7 @@ export default function Sidebar({
         )}
         {userRole !== "mini-admin" && (
           <ul className={`${styles.sidebarList} ${styles.sidebarAdminTools}`}>
-            {PERSONAL_TOOLS_ITEMS.map((item) => {
+            {visiblePersonalTools.map((item) => {
               const isActive = pathname.startsWith(item.href.split("?")[0]);
               return (
                 <li key={item.id}>

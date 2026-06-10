@@ -170,7 +170,13 @@ export default function DashboardLayout({
       { path: '/reports',      section: 'reports' },
       { path: '/bankaccount',  section: 'bankaccount' },
       { path: '/marketing',    section: 'marketing' },
+      { path: '/work-journal/archive', section: 'wj-archive' },
+      { path: '/me/attendance', section: 'me-attendance' },
+      { path: '/me/leave',      section: 'me-leave' },
     ]
+
+    const scopeOf = (section: string) =>
+      permissions.find(p => p.section === section)?.scope ?? 'none'
 
     const isAdminRole = userRole === 'admin' || userRole === 'master-admin'
 
@@ -193,20 +199,24 @@ export default function DashboardLayout({
       return
     }
 
-    // 영업 손익관리 — admin/master-admin 전용
-    if (pathname.startsWith('/profit') && !isAdminRole) {
+    // 영업 손익관리 — 관리자는 항상, 그 외는 profit 권한이 명시적으로 부여된 경우만
+    if (
+      pathname.startsWith('/profit') &&
+      !isAdminRole &&
+      scopeOf('profit') === 'none'
+    ) {
       router.replace('/work-journal')
       return
     }
 
-    // 직원 업무일지 현황 — 관리자/부서관리자 전용
-    if (
-      pathname.startsWith('/work-journal/admin') &&
-      !isAdminRole &&
-      !isDivisionAdmin
-    ) {
-      router.replace('/work-journal')
-      return
+    // 직원 업무일지 현황 — (관리자 또는 부서관리자) + wj-admin 권한이 차단되지 않은 경우
+    if (pathname.startsWith('/work-journal/admin')) {
+      const roleOk = isAdminRole || isDivisionAdmin
+      const permOk = isAdminRole || scopeOf('wj-admin') !== 'none'
+      if (!roleOk || !permOk) {
+        router.replace('/work-journal')
+        return
+      }
     }
 
     // 인사기록카드 승인 가드 — master-admin 제외

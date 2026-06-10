@@ -2,13 +2,22 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAuthFull } from '@/lib/auth/requireAuth'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 
-// 영업 손익관리 — 관리자(master-admin/admin) 전용
-// 부서관리자(is_division_admin)는 타 사업부 손익까지 보이므로 제외
+// 영업 손익관리 — 관리자(master-admin/admin)는 항상 허용,
+// 그 외에는 권한관리에서 profit 권한이 명시적으로 부여된 경우만 허용
 async function requireProfitAccess() {
   const result = await requireAuthFull()
   if (result.errorResponse) return result
-  const { role } = result.appUser
-  const allowed = role === 'master-admin' || role === 'admin'
+  const { role, id } = result.appUser
+  let allowed = role === 'master-admin' || role === 'admin'
+  if (!allowed) {
+    const { data } = await supabaseAdmin
+      .from('user_permissions')
+      .select('scope')
+      .eq('user_id', id)
+      .eq('section', 'profit')
+      .maybeSingle()
+    allowed = !!data?.scope && data.scope !== 'none'
+  }
   if (!allowed) {
     return {
       user: null,

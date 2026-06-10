@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin, requireMasterAdmin } from '@/lib/auth/requireAuth'
 import { supabaseAdmin } from '@/lib/supabase/admin'
-import { completePermissions, getBasePermissions, mergePermissions, normalizePermissionRecords } from '@/lib/auth/permissions'
+import { ALL_PERMISSION_SECTIONS, completePermissions, getBasePermissions, mergePermissions, normalizePermissionRecords } from '@/lib/auth/permissions'
 
 // GET: 전체 계정 + 각 계정의 권한 목록 조회
 export async function GET() {
@@ -93,6 +93,15 @@ export async function POST(request: NextRequest) {
 
   if (!user_id || !section) {
     return NextResponse.json({ error: '필수 항목이 누락되었습니다.' }, { status: 400 })
+  }
+
+  // 섹션 검증 — DB CHECK 제약 대신 코드 카탈로그가 단일 기준
+  // (새 섹션은 lib/auth/permissions.ts 의 ALL_PERMISSION_SECTIONS 에만 추가하면 됨)
+  if (!ALL_PERMISSION_SECTIONS.includes(section as (typeof ALL_PERMISSION_SECTIONS)[number])) {
+    return NextResponse.json({ error: `알 수 없는 권한 섹션: ${section}` }, { status: 400 })
+  }
+  if (scope !== undefined && scope !== null && !['none', 'all', 'own'].includes(scope)) {
+    return NextResponse.json({ error: `잘못된 scope 값: ${scope}` }, { status: 400 })
   }
 
   // allowed_tabs만 업데이트 (scope 변경 없이)

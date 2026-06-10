@@ -160,7 +160,7 @@ export default function ProfitPage() {
   const [division, setDivision] = useState(DIVISIONS[0])
   const [month, setMonth] = useState(monthOptions[0])
 
-  // 접근 가드 — master-admin/admin 전용 (부서관리자 포함 그 외는 URL 직접 접근 차단)
+  // 접근 가드 — 관리자는 항상, 그 외는 profit 권한이 부여된 경우만 (URL 직접 접근 차단)
   const [accessChecked, setAccessChecked] = useState(false)
   useEffect(() => {
     let cancelled = false
@@ -168,8 +168,17 @@ export default function ProfitPage() {
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (cancelled) return
+        const profitScope = Array.isArray(data?.permissions)
+          ? (data.permissions.find(
+              (p: { section?: string; scope?: string }) =>
+                p.section === 'profit',
+            )?.scope ?? 'none')
+          : 'none'
         const allowed =
-          data && (data.role === 'admin' || data.role === 'master-admin')
+          data &&
+          (data.role === 'admin' ||
+            data.role === 'master-admin' ||
+            profitScope !== 'none')
         if (!allowed) {
           router.replace('/work-journal')
           return

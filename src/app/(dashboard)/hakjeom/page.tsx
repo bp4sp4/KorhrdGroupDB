@@ -8337,6 +8337,8 @@ export default function HakjeomPage() {
   const [allowedHakjeomTabs, setAllowedHakjeomTabs] = useState<string[] | null>(
     null,
   );
+  // 권한 로딩 완료 플래그 — 로딩 전에는 탭 콘텐츠를 렌더하지 않는다 (제한 탭 노출 방지)
+  const [tabsPermLoaded, setTabsPermLoaded] = useState(false);
   useEffect(() => {
     fetch("/api/auth/me")
       .then((r) => (r.ok ? r.json() : null))
@@ -8361,7 +8363,9 @@ export default function HakjeomPage() {
             setAllowedHakjeomTabs(normalized);
           }
         }
-      });
+        setTabsPermLoaded(true);
+      })
+      .catch(() => setTabsPermLoaded(true));
   }, []);
 
   // 권한 시스템에 등록된 탭 키 — 이 목록에 없는 새 탭은 자동 허용
@@ -8413,6 +8417,28 @@ export default function HakjeomPage() {
       setMountedTabs((prev) => new Set([...prev, urlTab]));
     }
   }, [urlTab, allowedHakjeomTabs, activeTab]);
+
+  // 권한 로딩 후 클램프 — URL로 제한 탭에 직접 진입한 경우 허용 탭으로 강제 이동
+  useEffect(() => {
+    if (!tabsPermLoaded || !allowedHakjeomTabs) return;
+    if (!MANAGED_HAKJEOM_TAB_KEYS.has(activeTab)) return;
+    if (allowedHakjeomTabs.includes(activeTab)) return;
+    const fallback = allowedHakjeomTabs.find((t) =>
+      TAB_CONFIG.some((c) => c.key === t),
+    ) as TabKey | undefined;
+    if (fallback) {
+      setActiveTab(fallback);
+      setMountedTabs((prev) => new Set([...prev, fallback]));
+      router.replace(`/hakjeom?tab=${fallback}`, { scroll: false });
+    } else {
+      // 허용 탭이 하나도 없으면 워크스페이스로 튕김
+      router.replace("/work-journal");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabsPermLoaded, allowedHakjeomTabs, activeTab]);
+
+  // 권한 확인 전에는 탭 콘텐츠 미노출 (제한 탭이 잠깐 보이는 것 방지)
+  if (!tabsPermLoaded) return null;
 
   return (
     <div>

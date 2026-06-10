@@ -25,6 +25,10 @@ export type PermissionSection =
   | 'task-board'
   | 'me-leave'
   | 'calendar'
+  | 'wj-admin'
+  | 'wj-archive'
+  | 'me-attendance'
+  | 'profit'
 
 export interface PermissionRecord {
   section: PermissionSection
@@ -63,11 +67,26 @@ export const ALL_PERMISSION_SECTIONS: PermissionSection[] = [
   'task-board',
   'me-leave',
   'calendar',
+  'wj-admin',
+  'wj-archive',
+  'me-attendance',
+  'profit',
+]
+
+// 기본 허용 섹션 — 권한 레코드가 없으면 'all' 로 간주 (명시적으로 none 줄 때만 차단)
+// wj-admin 은 역할(관리자/부서관리자) 게이트가 별도로 있어 기본 all 이어도 일반 직원에겐 안 열린다
+const DEFAULT_ALLOW_SECTIONS: PermissionSection[] = [
+  'wj-admin',
+  'wj-archive',
+  'me-attendance',
 ]
 
 // 직책별 기본 권한 (position_permissions 테이블이 비어있을 때 fallback)
 // links / marketing / task-board / me-leave / calendar 은 모든 직책 공통 (전사 도구로 누구나 접근)
-const COMMON_SECTIONS: PermissionSection[] = ['links', 'marketing', 'task-board', 'me-leave', 'calendar']
+const COMMON_SECTIONS: PermissionSection[] = [
+  'links', 'marketing', 'task-board', 'me-leave', 'calendar',
+  'wj-admin', 'wj-archive', 'me-attendance',
+]
 
 const MANAGEMENT_ACCESS_BY_POSITION: Record<string, PermissionSection[]> = {
   사원: [...COMMON_SECTIONS],
@@ -100,7 +119,11 @@ export function completePermissions(records: PermissionRecord[]): PermissionReco
   const recordMap = new Map(records.map(record => [record.section, record]))
   return ALL_PERMISSION_SECTIONS.map(section => {
     const existing = recordMap.get(section)
-    return existing ?? { section, scope: 'none' }
+    if (existing) return existing
+    return {
+      section,
+      scope: DEFAULT_ALLOW_SECTIONS.includes(section) ? 'all' : 'none',
+    }
   })
 }
 
