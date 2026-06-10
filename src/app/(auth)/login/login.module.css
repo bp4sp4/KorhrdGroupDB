@@ -44,9 +44,13 @@
 }
 
 .inputWrap {
+  position: relative;
   background: var(--toss-bg);
   border-radius: 12px;
-  padding: 14px 16px;
+  height: 60px;
+  display: flex;
+  align-items: stretch;
+  padding: 0 16px;
   border: 1.5px solid transparent;
   transition: border-color 150ms ease, background 150ms ease;
 }
@@ -57,13 +61,42 @@
 }
 
 .input {
+  flex: 1;
   width: 100%;
+  min-width: 0;
   border: none;
   outline: none;
   background: transparent;
   font-size: 15px;
   color: var(--toss-text-primary);
   font-family: inherit;
+  line-height: 1.2;
+  /* 커서/텍스트를 아래쪽으로 — 떠오른 라벨과 간격 확보 */
+  padding: 24px 0 8px;
+}
+
+/* 토스풍 floating label — 포커스/입력 시 위로 슉 */
+.floatLabel {
+  position: absolute;
+  left: 17px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 15px;
+  color: #8b95a1;
+  pointer-events: none;
+  transition:
+    top 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+    font-size 0.18s ease,
+    color 0.18s ease;
+}
+
+.inputWrap:focus-within .floatLabel,
+.inputWrap:has(.input:not(:placeholder-shown)) .floatLabel {
+  top: 11px;
+  transform: translateY(0);
+  font-size: 12px;
+  color: #6b7684;
 }
 
 .errorBox {
@@ -113,8 +146,10 @@
 }
 
 .inputRow {
+  flex: 1;
+  width: 100%;
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: 8px;
 }
 
@@ -122,6 +157,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  align-self: center;
   width: 28px;
   height: 28px;
   background: transparent;

@@ -86,20 +86,21 @@ export default function LoginPage() {
           <div className={styles.inputWrap}>
             <input
               type="email"
-              placeholder="이메일"
+              placeholder=" "
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
               autoComplete="email"
               className={styles.input}
             />
+            <span className={styles.floatLabel}>이메일</span>
           </div>
 
           <div className={styles.inputWrap}>
             <div className={styles.inputRow}>
               <input
                 type={showPassword ? 'text' : 'password'}
-                placeholder="비밀번호"
+                placeholder=" "
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -116,6 +117,7 @@ export default function LoginPage() {
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
+            <span className={styles.floatLabel}>비밀번호</span>
           </div>
 
           {error && (
