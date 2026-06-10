@@ -169,15 +169,43 @@ export default function DashboardLayout({
       { path: '/revenue-upload', section: 'revenue-upload' },
       { path: '/reports',      section: 'reports' },
       { path: '/bankaccount',  section: 'bankaccount' },
+      { path: '/marketing',    section: 'marketing' },
     ]
+
+    const isAdminRole = userRole === 'admin' || userRole === 'master-admin'
 
     if (userRole === 'mini-admin' && !pathname.startsWith('/mini-admin') && !pathname.startsWith('/paymentstatus')) {
       router.replace('/paymentstatus')
       return
     }
 
+    // 결제확인/미니어드민 — mini-admin 전용 (API도 mini-admin만 허용)
+    if (
+      (pathname.startsWith('/paymentstatus') || pathname.startsWith('/mini-admin')) &&
+      userRole !== 'mini-admin'
+    ) {
+      router.replace('/work-journal')
+      return
+    }
+
     if (pathname.startsWith('/admin') && userRole !== 'master-admin') {
       router.replace('/hakjeom')
+      return
+    }
+
+    // 영업 손익관리 — admin/master-admin 전용
+    if (pathname.startsWith('/profit') && !isAdminRole) {
+      router.replace('/work-journal')
+      return
+    }
+
+    // 직원 업무일지 현황 — 관리자/부서관리자 전용
+    if (
+      pathname.startsWith('/work-journal/admin') &&
+      !isAdminRole &&
+      !isDivisionAdmin
+    ) {
+      router.replace('/work-journal')
       return
     }
 
@@ -196,20 +224,20 @@ export default function DashboardLayout({
       return
     }
 
-    const isAdminRole = userRole === 'admin' || userRole === 'master-admin'
     if (!isAdminRole) {
       const getFirstAllowedPath = () => {
         for (const { section, path } of SECTION_PATHS) {
           if (permissions.some(p => p.section === section && p.scope && p.scope !== 'none')) return path
         }
-        return null
+        // 허용된 섹션이 하나도 없으면 워크스페이스로 (직접 URL 접근 차단)
+        return '/work-journal'
       }
       for (const { path, section } of PERM_PATHS) {
         if (pathname.startsWith(path)) {
           const perm = permissions.find(p => p.section === section)
           if (!perm || perm.scope === 'none' || !perm.scope) {
             const fallback = getFirstAllowedPath()
-            if (fallback && fallback !== pathname) {
+            if (fallback !== pathname) {
               router.replace(fallback)
               return
             }
@@ -221,7 +249,7 @@ export default function DashboardLayout({
 
     // 리다이렉트 없이 여기까지 오면 권한 OK → 콘텐츠 표시
     setIsChecking(false)
-  }, [pathname, userRole, permissions, hrRecordStatus, router])
+  }, [pathname, userRole, permissions, hrRecordStatus, isDivisionAdmin, router])
 
   if (isChecking) {
     return (

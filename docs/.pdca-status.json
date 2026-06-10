@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-06-10T01:24:01.017Z",
+  "lastUpdated": "2026-06-10T03:40:06.034Z",
   "activeFeatures": [
     "supabase",
     "login",
@@ -177,7 +177,10 @@
     "archive",
     "announcements",
     "write",
-    "contracts"
+    "contracts",
+    "shinhan-list",
+    "fixed-costs",
+    "profit"
   ],
   "primaryFeature": "supabase",
   "features": {
@@ -216,9 +219,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:20:48.298Z",
-        "lastUpdated": "2026-05-29T09:29:51.978Z"
+        "lastUpdated": "2026-06-10T03:32:54.164Z"
       },
-      "lastFile": "C:\\Users\\bp4sp\\Downloads\\WebsPortfolio-master\\KorhrdGroupDB\\src\\app\\(dashboard)\\layout.tsx"
+      "lastFile": "/Users/korhrd/Documents/GitHub/KorhrdGroupDB/src/app/(dashboard)/layout.tsx"
     },
     "layout": {
       "phase": "do",
@@ -229,7 +232,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-16T05:20:57.368Z",
-        "lastUpdated": "2026-06-09T03:54:31.008Z"
+        "lastUpdated": "2026-06-10T03:30:11.086Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/KorhrdGroupDB/src/components/layout/Sidebar.tsx"
     },
@@ -1555,9 +1558,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-04-20T06:45:24.089Z",
-        "lastUpdated": "2026-04-29T01:26:57.497Z"
+        "lastUpdated": "2026-06-10T01:54:31.877Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/hakjeom-bank-web/src/app/(dashboard)/bankaccount/page.tsx"
+      "lastFile": "/Users/korhrd/Documents/GitHub/KorhrdGroupDB/src/app/api/bankaccount/route.ts"
     },
     "education-center": {
       "phase": "do",
@@ -1971,9 +1974,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-05-20T06:02:21.810Z",
-        "lastUpdated": "2026-06-08T08:23:19.138Z"
+        "lastUpdated": "2026-06-10T03:40:06.034Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/KorhrdGroupDB/src/app/(dashboard)/calendar/Calendar.tsx"
+      "lastFile": "/Users/korhrd/Documents/GitHub/KorhrdGroupDB/src/app/(dashboard)/calendar/page.tsx"
     },
     "guide": {
       "phase": "do",
@@ -2101,7 +2104,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-05-22T06:42:58.992Z",
-        "lastUpdated": "2026-06-10T01:24:01.017Z"
+        "lastUpdated": "2026-06-10T03:39:34.822Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/KorhrdGroupDB/src/app/(dashboard)/work-journal/page.tsx"
     },
@@ -2153,9 +2156,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-05-26T02:10:38.190Z",
-        "lastUpdated": "2026-06-09T01:16:29.551Z"
+        "lastUpdated": "2026-06-10T01:54:22.464Z"
       },
-      "lastFile": "/Users/korhrd/Documents/GitHub/KorhrdGroupDB/src/proxy.ts"
+      "lastFile": "/Users/korhrd/Documents/GitHub/KorhrdGroupDB/src/lib/shinhan.ts"
     },
     "crypto": {
       "phase": "do",
@@ -2468,6 +2471,45 @@
         "lastUpdated": "2026-06-09T04:53:24.726Z"
       },
       "lastFile": "/Users/korhrd/Documents/GitHub/KorhrdGroupDB/src/app/(dashboard)/me/contracts/page.tsx"
+    },
+    "shinhan-list": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-06-10T01:54:35.650Z",
+        "lastUpdated": "2026-06-10T01:54:38.493Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/KorhrdGroupDB/src/app/api/admin/bank-accounts/shinhan-list/route.ts"
+    },
+    "fixed-costs": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-06-10T01:54:41.414Z",
+        "lastUpdated": "2026-06-10T01:54:46.800Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/KorhrdGroupDB/src/app/api/management/reports/fixed-costs/route.ts"
+    },
+    "profit": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-06-10T02:02:18.348Z",
+        "lastUpdated": "2026-06-10T03:29:57.958Z"
+      },
+      "lastFile": "/Users/korhrd/Documents/GitHub/KorhrdGroupDB/src/app/(dashboard)/profit/page.tsx"
     }
   },
   "pipeline": {
@@ -2478,7 +2520,7 @@
   "session": {
     "startedAt": "2026-03-16T02:07:15.664Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-06-10T01:24:01.017Z"
+    "lastActivity": "2026-06-10T03:40:06.034Z"
   },
   "history": [
     {
@@ -33804,6 +33846,456 @@
     {
       "timestamp": "2026-06-10T01:24:01.017Z",
       "feature": "work-journal",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T01:54:22.464Z",
+      "feature": "KorhrdGroupDB",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T01:54:28.594Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T01:54:31.877Z",
+      "feature": "bankaccount",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T01:54:35.650Z",
+      "feature": "shinhan-list",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T01:54:38.493Z",
+      "feature": "shinhan-list",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T01:54:41.414Z",
+      "feature": "fixed-costs",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T01:54:46.800Z",
+      "feature": "fixed-costs",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T02:02:18.348Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T02:02:33.933Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T02:02:35.837Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T02:02:38.150Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T02:02:39.331Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T02:06:08.156Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T02:06:10.011Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T02:06:12.053Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T02:06:14.254Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T02:06:15.317Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T02:11:20.560Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T02:11:41.248Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T02:19:24.546Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T02:19:26.355Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T02:19:31.124Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T02:25:00.468Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T02:25:04.659Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T02:25:11.974Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T02:28:26.252Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T02:28:28.643Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T02:28:40.324Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T02:29:46.853Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T02:33:18.746Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T02:33:23.721Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T02:33:27.696Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T02:44:52.655Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T02:45:14.582Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T02:53:00.120Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T02:53:01.987Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T02:53:03.859Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T02:54:14.164Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T02:54:21.702Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T02:59:42.102Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T03:00:33.521Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T03:01:05.800Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T03:01:42.452Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T03:01:44.324Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T03:03:35.294Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T03:08:24.385Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T03:10:28.949Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T03:10:30.815Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T03:10:33.707Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T03:10:41.314Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T03:12:05.864Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T03:12:24.325Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T03:12:26.785Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T03:16:50.305Z",
+      "feature": "work-journal",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T03:16:55.440Z",
+      "feature": "work-journal",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T03:16:59.299Z",
+      "feature": "work-journal",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T03:17:06.129Z",
+      "feature": "work-journal",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T03:17:11.369Z",
+      "feature": "work-journal",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T03:23:37.886Z",
+      "feature": "work-journal",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T03:23:40.675Z",
+      "feature": "work-journal",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T03:23:43.999Z",
+      "feature": "work-journal",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T03:24:51.035Z",
+      "feature": "work-journal",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T03:25:06.110Z",
+      "feature": "work-journal",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T03:25:13.218Z",
+      "feature": "work-journal",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T03:27:02.539Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T03:27:07.420Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T03:27:14.969Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T03:29:53.750Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T03:29:57.958Z",
+      "feature": "profit",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T03:30:11.086Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T03:32:46.816Z",
+      "feature": "(dashboard)",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T03:32:52.908Z",
+      "feature": "(dashboard)",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T03:32:54.164Z",
+      "feature": "(dashboard)",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T03:39:34.822Z",
+      "feature": "work-journal",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-06-10T03:40:06.034Z",
+      "feature": "calendar",
       "phase": "do",
       "action": "updated"
     }
