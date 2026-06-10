@@ -2544,7 +2544,35 @@
   flex-shrink: 0;
   min-width: 0;
 }
+.wcConsultNameLine {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+}
+.wcConsultEdu {
+  flex-shrink: 1;
+  min-width: 0;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #f2f4f6;
+  color: #6b7684;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .wcConsultName {
+  flex-shrink: 0;
   color: #1f2937;
   font-family:
     Pretendard,

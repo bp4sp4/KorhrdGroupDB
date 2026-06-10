@@ -577,7 +577,8 @@ function ConsultationList({
                 bg: "#F3F4F6",
                 color: "#6B7684",
               };
-              const course = r.hope_course || r.education || "";
+              const course = r.hope_course || "";
+              const education = r.education || "";
               const memo = r.latest_memo || r.memo || r.reason || "";
               const dateStr = r.created_at
                 ? `${r.created_at.slice(0, 10).replace(/-/g, ". ")}. 등록`
@@ -597,7 +598,14 @@ function ConsultationList({
                     {consultStatusShort(status)}
                   </span>
                   <div className={styles.wcConsultWho}>
-                    <span className={styles.wcConsultName}>{r.name}</span>
+                    <div className={styles.wcConsultNameLine}>
+                      <span className={styles.wcConsultName}>{r.name}</span>
+                      {education && (
+                        <span className={styles.wcConsultEdu} title={education}>
+                          {education}
+                        </span>
+                      )}
+                    </div>
                     <span className={styles.wcConsultCourse}>{course}</span>
                   </div>
                   <span className={styles.wcConsultMemo}>{memo}</span>
