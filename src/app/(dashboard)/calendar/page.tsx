@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import Calendar, { type CalendarEvent } from "./Calendar";
 import styles from "./page.module.css";
 
@@ -22,7 +21,6 @@ interface MeInfo {
 type ViewMode = "mine" | "all";
 
 export default function CalendarPage() {
-  const router = useRouter();
   const [scheduledItems, setScheduledItems] = useState<ContactScheduledItem[]>(
     [],
   );
@@ -147,14 +145,8 @@ export default function CalendarPage() {
           )}
         </div>
       )}
-      <Calendar
-        events={events}
-        today={new Date()}
-        onSelectEvent={(id) => {
-          const m = id.match(/^contact-(\d+)$/);
-          if (m) router.push(`/hakjeom?id=${m[1]}`);
-        }}
-      />
+      {/* 일정 클릭 시 문의DB 이동 금지 — onSelectEvent 미전달 (클릭해도 이동 없음) */}
+      <Calendar events={events} today={new Date()} />
     </>
   );
 }

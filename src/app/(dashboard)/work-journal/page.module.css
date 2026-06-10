@@ -2596,6 +2596,91 @@
   font-weight: 500;
   line-height: normal;
 }
+.wcConsultPhone {
+  color: #8d99a5;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: normal;
+}
+/* 검색어 하이라이트 (형광펜) */
+.wcHl {
+  background: #fff3a3;
+  color: inherit;
+  padding: 0 1px;
+  border-radius: 3px;
+}
+/* 유입경로 원본이 검색어와 일치할 때 칩 강조 */
+.wcConsultSourceHl {
+  background: #fff3a3 !important;
+  color: #4e5968;
+}
+/* 유입경로 대분류 칩 */
+.wcConsultSource {
+  flex-shrink: 0;
+  width: 88px;
+  padding: 3px 0;
+  text-align: center;
+  border-radius: 6px;
+  background: #f2f4f6;
+  color: #4e5968;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: normal;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* 중앙 영역: 취득사유 태그 + 메모 */
+.wcConsultMid {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 0 0;
+  min-width: 0;
+}
+.wcConsultTags {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  max-width: 50%;
+  overflow: hidden;
+}
+.wcConsultTag {
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: #ebf3fe;
+  color: #3182f6;
+  font-family:
+    Pretendard,
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: normal;
+  white-space: nowrap;
+}
+.wcConsultMemoEmpty {
+  color: #c4c9cf;
+}
 .wcConsultMemo {
   flex: 1 0 0;
   min-width: 0;
@@ -2682,7 +2767,8 @@
   background: #fff;
   border-radius: 16px;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
-  overflow: hidden;
+  /* 달력이 화면보다 길어질 때 모달 내부 스크롤 허용 */
+  overflow-y: auto;
   padding: 24px;
 }
 .calModalClose {

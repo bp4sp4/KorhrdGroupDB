@@ -9,6 +9,11 @@ import Calendar, {
 import { HakjeomDetailPanel } from "@/app/(dashboard)/hakjeom/_detail/HakjeomDetailPanel";
 import { HakjeomAddModal } from "@/app/(dashboard)/hakjeom/page";
 import type { HakjeomConsultation } from "@/app/(dashboard)/hakjeom/_types";
+import {
+  normSource,
+  reasonTags,
+} from "@/app/(dashboard)/hakjeom/_components/segments";
+import { SOURCE_MAJOR_LABEL } from "@/app/(dashboard)/hakjeom/_constants";
 import { DateInput } from "@/components/ui/Calendar/DateInput";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -233,6 +238,45 @@ function consultStatusShort(s: string): string {
 
 type HakItem = HakjeomConsultation & { latest_memo?: string | null };
 
+// ── 검색어 하이라이트 ────────────────────────────────────────────────
+// 일반 텍스트: 대소문자 무시 부분 일치 구간을 <mark>로 감싼다
+function hlText(text: string, q: string): ReactNode {
+  if (!q || !text) return text;
+  const idx = text.toLowerCase().indexOf(q);
+  if (idx === -1) return text;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <mark className={styles.wcHl}>{text.slice(idx, idx + q.length)}</mark>
+      {text.slice(idx + q.length)}
+    </>
+  );
+}
+
+// 연락처: 하이픈 등 기호를 무시하고 숫자 기준으로 일치 구간을 찾아 하이라이트
+function hlDigits(text: string, qDigits: string): ReactNode {
+  if (!qDigits || !text) return text;
+  const digitPos: number[] = [];
+  let stripped = "";
+  for (let i = 0; i < text.length; i++) {
+    if (/\d/.test(text[i])) {
+      stripped += text[i];
+      digitPos.push(i);
+    }
+  }
+  const idx = stripped.indexOf(qDigits);
+  if (idx === -1) return text;
+  const start = digitPos[idx];
+  const end = digitPos[idx + qDigits.length - 1] + 1;
+  return (
+    <>
+      {text.slice(0, start)}
+      <mark className={styles.wcHl}>{text.slice(start, end)}</mark>
+      {text.slice(end)}
+    </>
+  );
+}
+
 function ConsultationList({
   userName,
   refreshKey,
@@ -448,9 +492,25 @@ function ConsultationList({
     });
   }, [items, startDate, endDate]);
 
+  // 오늘 상담완료된 건은 오늘 하루 동안 "오늘 신규 문의" 탭에 유지
+  const isCompletedToday = (i: HakItem) => {
+    const st = i.status ?? "";
+    if (!st.startsWith("상담완료")) return false;
+    const stamp = i.counsel_completed_at ?? i.updated_at;
+    if (!stamp) return false;
+    const d = new Date(
+      new Date(stamp).toLocaleString("en-US", { timeZone: "Asia/Seoul" }),
+    );
+    const kst = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    return kst === todayIso;
+  };
   const todayList = useMemo(
-    () => rangedItems.filter((i) => (i.status ?? "") === "상담대기"),
-    [rangedItems],
+    () =>
+      rangedItems.filter(
+        (i) => (i.status ?? "") === "상담대기" || isCompletedToday(i),
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [rangedItems, todayIso],
   );
   const hopeList = useMemo(
     () =>
@@ -462,9 +522,24 @@ function ConsultationList({
 
   const base =
     tab === "today" ? todayList : tab === "hope" ? hopeList : rangedItems;
-  const rows = base.filter(
-    (i) => !query.trim() || (i.name ?? "").includes(query.trim()),
-  );
+  // 검색: 이름 / 연락처(숫자만 입력해도 매칭) / 희망과정 / 학력 / 유입경로
+  const q = query.trim().toLowerCase();
+  const qDigits = q.replace(/[^\d]/g, "");
+  const rows = base.filter((i) => {
+    if (!q) return true;
+    if (
+      qDigits.length >= 2 &&
+      (i.contact ?? "").replace(/[^\d]/g, "").includes(qDigits)
+    ) {
+      return true;
+    }
+    return (
+      (i.name ?? "").toLowerCase().includes(q) ||
+      (i.hope_course ?? "").toLowerCase().includes(q) ||
+      (i.education ?? "").toLowerCase().includes(q) ||
+      (i.click_source ?? "").toLowerCase().includes(q)
+    );
+  });
 
   const tabs = [
     { key: "today" as const, label: "오늘 신규 문의", count: todayList.length },
@@ -509,7 +584,7 @@ function ConsultationList({
               </div>
               <input
                 className={styles.wcConsultSearch}
-                placeholder="이름 검색"
+                placeholder="이름·연락처·유입경로 검색"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
@@ -579,7 +654,13 @@ function ConsultationList({
               };
               const course = r.hope_course || "";
               const education = r.education || "";
-              const memo = r.latest_memo || r.memo || r.reason || "";
+              // 취득사유는 태그로 분리 표시, 메모는 작성된 것만 (없으면 '-')
+              const memo = r.latest_memo || r.memo || "";
+              const tags = (() => {
+                const t = reasonTags(r.reason);
+                if (t.length > 0) return t;
+                return r.reason ? [r.reason] : [];
+              })();
               const dateStr = r.created_at
                 ? `${r.created_at.slice(0, 10).replace(/-/g, ". ")}. 등록`
                 : "";
@@ -599,16 +680,56 @@ function ConsultationList({
                   </span>
                   <div className={styles.wcConsultWho}>
                     <div className={styles.wcConsultNameLine}>
-                      <span className={styles.wcConsultName}>{r.name}</span>
+                      <span className={styles.wcConsultName}>
+                        {hlText(r.name ?? "", q)}
+                      </span>
                       {education && (
                         <span className={styles.wcConsultEdu} title={education}>
-                          {education}
+                          {hlText(education, q)}
                         </span>
                       )}
                     </div>
-                    <span className={styles.wcConsultCourse}>{course}</span>
+                    <span className={styles.wcConsultCourse}>
+                      {hlText(course, q)}
+                    </span>
+                    {r.contact && (
+                      <span className={styles.wcConsultPhone}>
+                        {qDigits.length >= 2
+                          ? hlDigits(r.contact, qDigits)
+                          : hlText(r.contact, q)}
+                      </span>
+                    )}
                   </div>
-                  <span className={styles.wcConsultMemo}>{memo}</span>
+                  {(() => {
+                    const major = normSource(r.click_source);
+                    const label = SOURCE_MAJOR_LABEL[major] ?? major;
+                    const rawMatched =
+                      !!q && (r.click_source ?? "").toLowerCase().includes(q);
+                    return (
+                      <span
+                        className={`${styles.wcConsultSource} ${rawMatched ? styles.wcConsultSourceHl : ""}`}
+                        title={r.click_source ?? ""}
+                      >
+                        {hlText(label, q)}
+                      </span>
+                    );
+                  })()}
+                  <div className={styles.wcConsultMid}>
+                    {tags.length > 0 && (
+                      <div className={styles.wcConsultTags}>
+                        {tags.map((t) => (
+                          <span key={t} className={styles.wcConsultTag}>
+                            {t}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <span
+                      className={`${styles.wcConsultMemo} ${memo ? "" : styles.wcConsultMemoEmpty}`}
+                    >
+                      {memo || "-"}
+                    </span>
+                  </div>
                   <span className={styles.wcConsultDate}>{dateStr}</span>
                   <div
                     className={styles.wcConsultActionWrap}
@@ -2862,15 +2983,12 @@ export default function WorkJournalPage() {
             >
               ✕
             </button>
+            {/* 일정 클릭 시 문의DB 이동 금지 — onSelectEvent 미전달 (클릭해도 이동 없음) */}
             <Calendar
               events={calEvents}
               today={calToday}
               hideAddEvent
               hideSideNav
-              onSelectEvent={(id) => {
-                const m = /^contact-(\d+)$/.exec(id);
-                if (m) router.push(`/hakjeom?id=${m[1]}`);
-              }}
             />
           </div>
         </div>
