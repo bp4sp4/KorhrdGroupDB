@@ -653,14 +653,14 @@ export default function AppraisalPage() {
               고과표 양식
             </button>
           )}
-          {evalCtx?.canOverview && (
+          {/* {evalCtx?.canOverview && (
             <button
               className={`${styles.tabBtn} ${tab === "status" ? styles.tabBtnActive : ""}`}
               onClick={() => setTab("status")}
             >
               평가 현황
             </button>
-          )}
+          )} */}
         </div>
       )}
 
