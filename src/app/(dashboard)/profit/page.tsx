@@ -437,7 +437,7 @@ export default function ProfitPage() {
           : {
               style: styles.rateBannerWarn,
               icon: "/face_03.png",
-              text: "이익률이 낮아요. 개선이 필요합니다.",
+              text: "이익률 개선이 필요합니다.",
             };
   const targetRemain = Math.max(goal - sales, 0);
   // 달성률 전월대비 — 전월 목표가 설정된 경우에만
@@ -836,7 +836,9 @@ export default function ProfitPage() {
                         {
                           field: trendMetric,
                           name:
-                            trendMetric === "profit" ? "영업이익" : "영업이익률",
+                            trendMetric === "profit"
+                              ? "영업이익"
+                              : "영업이익률",
                           valueFormatter: (v: number) =>
                             trendMetric === "profit"
                               ? `${v.toLocaleString("ko-KR")}원`
