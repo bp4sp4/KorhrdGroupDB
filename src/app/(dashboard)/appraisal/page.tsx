@@ -245,8 +245,9 @@ export default function AppraisalPage() {
   );
 
   // 양식에 적용 팀이 지정돼 있으면 평가 작성 대상도 그 팀으로 한정
+  // (어드민은 운영 보정을 위해 양식과 무관하게 전체 대상 노출)
   const filteredEvalCtx = useMemo(() => {
-    if (!evalCtx || !selected?.team_id) return evalCtx;
+    if (!evalCtx || !selected?.team_id || evalCtx.isMaster) return evalCtx;
     return {
       ...evalCtx,
       teamTargets: evalCtx.teamTargets.filter(
@@ -653,7 +654,7 @@ export default function AppraisalPage() {
               고과표 양식
             </button>
           )}
-          {/* 평가 현황 — 일반 오픈 전까지 어드민(master-admin)만 노출 */}
+          {/* 평가 현황 — 일반 오픈 전까지 어드민(master-admin)만 노출
           {evalCtx?.isMaster && evalCtx?.canOverview && (
             <button
               className={`${styles.tabBtn} ${tab === "status" ? styles.tabBtnActive : ""}`}
@@ -661,7 +662,7 @@ export default function AppraisalPage() {
             >
               평가 현황
             </button>
-          )}
+          )} */}
         </div>
       )}
 
