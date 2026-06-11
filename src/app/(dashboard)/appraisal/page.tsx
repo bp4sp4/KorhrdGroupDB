@@ -653,14 +653,15 @@ export default function AppraisalPage() {
               고과표 양식
             </button>
           )}
-          {/* {evalCtx?.canOverview && (
+          {/* 평가 현황 — 일반 오픈 전까지 어드민(master-admin)만 노출 */}
+          {evalCtx?.isMaster && evalCtx?.canOverview && (
             <button
               className={`${styles.tabBtn} ${tab === "status" ? styles.tabBtnActive : ""}`}
               onClick={() => setTab("status")}
             >
               평가 현황
             </button>
-          )} */}
+          )}
         </div>
       )}
 
