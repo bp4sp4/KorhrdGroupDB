@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAuthFull } from '@/lib/auth/requireAuth'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { canEditAppraisal } from '@/lib/auth/appraisalAccess'
+import { defaultPeriod, isValidPeriod } from '@/lib/appraisal/period'
 
 export const runtime = 'nodejs'
 
@@ -20,13 +21,16 @@ export async function GET(request: NextRequest) {
   if (!formId) {
     return NextResponse.json({ error: 'formId가 필요합니다.' }, { status: 400 })
   }
+  const periodParam = request.nextUrl.searchParams.get('period')
+  const period = isValidPeriod(periodParam) ? periodParam : defaultPeriod()
 
   const { data: evaluations, error } = await supabaseAdmin
     .from('appraisal_evaluations')
     .select(
-      'id, sheet_key, target_team_id, target_user_id, evaluator_id, scores, status, submitted_at, updated_at',
+      'id, sheet_key, target_team_id, target_user_id, evaluator_id, scores, status, submitted_at, updated_at, period',
     )
     .eq('form_id', formId)
+    .eq('period', period)
     .order('updated_at', { ascending: false })
 
   if (error) {
@@ -60,7 +64,23 @@ export async function GET(request: NextRequest) {
   const nameOf = (id: number) =>
     users.get(id)?.display_name ?? `사용자 ${id}`
 
+  // 이의제기 — 평가 현황에서 관리자가 확인
+  const evalIds = rows.map((r) => r.id as string)
+  let appeals: unknown[] = []
+  if (evalIds.length > 0) {
+    const { data: appealRows } = await supabaseAdmin
+      .from('appraisal_appeals')
+      .select(
+        'id, evaluation_id, user_id, content, attachments, status, created_at, resolved_at',
+      )
+      .in('evaluation_id', evalIds)
+      .order('created_at', { ascending: false })
+    appeals = appealRows ?? []
+  }
+
   return NextResponse.json({
+    appeals,
+    period,
     evaluations: rows.map((r) => {
       // 개인 평가 대상자의 소속 팀 — 종합 등급 산정(팀 점수 매칭)에 사용
       const targetUserTeamId =

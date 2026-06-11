@@ -540,6 +540,13 @@ export const PERSONAL_TOOLS_ITEMS: NavItem[] = [
     icon: <Clock size={16} />,
     permissionKey: "me-attendance",
   },
+  {
+    id: "me-appraisal",
+    label: "내 인사고과",
+    href: "/me/appraisal",
+    icon: <ClipboardList size={16} />,
+    fixedNote: "전직원 공통",
+  },
 ];
 
 export const SECTION_ITEM_MAP: Record<string, string> = {

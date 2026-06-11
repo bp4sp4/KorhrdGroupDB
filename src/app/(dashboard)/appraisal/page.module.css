@@ -235,6 +235,86 @@
   background: #dcfce7;
 }
 
+.badgeAppeal {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  color: #dc2626;
+  background: #fee2e2;
+}
+
+/* ── 이의제기 패널 (평가 작성 화면) ─────────────── */
+.appealPanel {
+  border: 1px solid #fecaca;
+  background: #fef2f2;
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.appealPanelHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.appealPanelDate {
+  font-size: 11px;
+  color: #8b95a1;
+}
+
+.appealPanelContent {
+  font-size: 13px;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.appealPanelFiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.appealFileLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #1b64da;
+  background: #e8f3ff;
+  border-radius: 6px;
+  padding: 3px 8px;
+  text-decoration: none;
+}
+
+.appealFileLink:hover {
+  background: #d7e9ff;
+}
+
+.appealPanelHint {
+  font-size: 12px;
+  color: #b45309;
+  margin: 0;
+}
+
+.appealHistoryItem {
+  border-top: 1px solid #fecaca;
+  padding-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.statusCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
 /* ── 평가 작성 화면 ──────────────────────────────── */
 .writeHeader {
   display: flex;
@@ -295,6 +375,46 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+/* 요약 카드 */
+.statCards {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.statCard {
+  flex: 1;
+  min-width: 140px;
+  max-width: 220px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.statCardAlert {
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+.statValue {
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.statCardAlert .statValue {
+  color: #dc2626;
+}
+
+.statLabel {
+  font-size: 12px;
+  color: #6b7684;
+  font-weight: 600;
 }
 
 .overviewTitle {
@@ -399,8 +519,7 @@
   max-width: 980px;
   background: #fff;
   border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-  padding: 44px 48px 56px;
+  padding: 44px 0px 56px;
   display: flex;
   flex-direction: column;
   gap: 40px;
@@ -543,11 +662,91 @@
 .indicatorInner {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
 }
 
 .indicatorInner > :first-child {
   flex: 1;
+}
+
+/* 정량평가 자동 산출 배지 — 매출 달성률 지표 아래 표시 */
+.quantBadge {
+  flex-basis: 100%;
+  display: inline-block;
+  width: fit-content;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #eef4ff;
+  border: 1px solid #c9dcff;
+  color: #2456c9;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.quantBadge b {
+  font-weight: 700;
+}
+
+/* 문항 텍스트 + ⓘ 묶음 — 아이콘이 문항 바로 옆에 붙도록 */
+.indicatorTextWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.indicatorTextWrap > :first-child {
+  flex: none;
+}
+
+/* 계산식 ⓘ 아이콘 + 호버 툴팁 */
+.quantInfo {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  color: #6f9be6;
+  cursor: help;
+}
+
+.quantInfo:hover {
+  color: #2456c9;
+}
+
+.quantTooltip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 320px;
+  background: #1f2937;
+  color: #f9fafb;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.6;
+  padding: 10px 12px;
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  white-space: pre-line;
+  text-align: left;
+  z-index: 30;
+}
+
+/* 말풍선 꼬리 */
+.quantTooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #1f2937;
+}
+
+.quantInfo:hover .quantTooltip,
+.quantInfo:focus-within .quantTooltip {
+  display: block;
 }
 
 .subtotalRow td:first-child,

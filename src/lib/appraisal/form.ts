@@ -42,6 +42,8 @@ export interface AppraisalFormRow {
   id: string;
   title: string;
   form_data: AppraisalFormData;
+  /** 적용 팀 (null = 전사 공통) */
+  team_id?: string | null;
   created_at: string;
   updated_at: string;
 }

@@ -6,6 +6,7 @@ import {
   getEvaluationTargets,
   isValidScores,
 } from '@/lib/appraisal/evaluationAccess'
+import { defaultPeriod, isValidPeriod } from '@/lib/appraisal/period'
 
 export const runtime = 'nodejs'
 
@@ -21,6 +22,8 @@ export async function GET(request: NextRequest) {
   if (!formId) {
     return NextResponse.json({ error: 'formId가 필요합니다.' }, { status: 400 })
   }
+  const periodParam = request.nextUrl.searchParams.get('period')
+  const period = isValidPeriod(periodParam) ? periodParam : defaultPeriod()
 
   const [targets, canOverview] = await Promise.all([
     getEvaluationTargets(appUser),
@@ -33,9 +36,10 @@ export async function GET(request: NextRequest) {
   const { data: evaluations, error } = await supabaseAdmin
     .from('appraisal_evaluations')
     .select(
-      'id, sheet_key, target_team_id, target_user_id, evaluator_id, scores, status, submitted_at, updated_at',
+      'id, sheet_key, target_team_id, target_user_id, evaluator_id, scores, status, submitted_at, updated_at, period',
     )
     .eq('form_id', formId)
+    .eq('period', period)
     .or(
       [
         teamIds.length > 0
@@ -53,6 +57,20 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
+  // 이의제기 — 조회된 평가들에 달린 이의제기 (평가자가 확인·재평가)
+  const evalIds = (evaluations ?? []).map((ev) => ev.id as string)
+  let appeals: unknown[] = []
+  if (evalIds.length > 0) {
+    const { data: appealRows } = await supabaseAdmin
+      .from('appraisal_appeals')
+      .select(
+        'id, evaluation_id, user_id, content, attachments, status, created_at, resolved_at',
+      )
+      .in('evaluation_id', evalIds)
+      .order('created_at', { ascending: false })
+    appeals = appealRows ?? []
+  }
+
   return NextResponse.json({
     canEvaluate:
       targets.teamTargets.length > 0 || targets.personalTargets.length > 0,
@@ -61,6 +79,8 @@ export async function GET(request: NextRequest) {
     teamTargets: targets.teamTargets,
     personalTargets: targets.personalTargets,
     evaluations: evaluations ?? [],
+    appeals,
+    period,
   })
 }
 
@@ -79,6 +99,7 @@ export async function POST(request: NextRequest) {
     target_user_id?: number | null
     scores?: unknown
     submit?: boolean
+    period?: string
   } | null
 
   if (!body?.form_id || (body.sheet_key !== 'team' && body.sheet_key !== 'personal')) {
@@ -87,6 +108,7 @@ export async function POST(request: NextRequest) {
   if (!isValidScores(body.scores)) {
     return NextResponse.json({ error: '점수 형식이 올바르지 않습니다.' }, { status: 400 })
   }
+  const period = isValidPeriod(body.period) ? body.period : defaultPeriod()
 
   // 평가 대상 권한 확인
   const targets = await getEvaluationTargets(appUser)
@@ -118,6 +140,7 @@ export async function POST(request: NextRequest) {
     .select('id, evaluator_id, status')
     .eq('form_id', body.form_id)
     .eq('sheet_key', body.sheet_key)
+    .eq('period', period)
   existingQuery =
     body.sheet_key === 'team'
       ? existingQuery.eq('target_team_id', body.target_team_id)
@@ -134,7 +157,20 @@ export async function POST(request: NextRequest) {
         { status: 403 },
       )
     }
-    if (existing.status === 'submitted' && !targets.isMaster) {
+
+    // 처리 대기 중인 이의제기가 있으면 제출된 평가도 평가자가 재수정 가능
+    const { data: pendingAppeal } = await supabaseAdmin
+      .from('appraisal_appeals')
+      .select('id')
+      .eq('evaluation_id', existing.id)
+      .eq('status', 'pending')
+      .maybeSingle()
+
+    if (
+      existing.status === 'submitted' &&
+      !targets.isMaster &&
+      !pendingAppeal
+    ) {
       return NextResponse.json(
         { error: '제출된 평가는 수정할 수 없습니다. 경영실장에게 재작성을 요청하세요.' },
         { status: 403 },
@@ -152,6 +188,19 @@ export async function POST(request: NextRequest) {
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
+
+    // 재제출 시 이의제기 처리 완료로 전환
+    if (submit && pendingAppeal) {
+      await supabaseAdmin
+        .from('appraisal_appeals')
+        .update({
+          status: 'resolved',
+          resolved_by: appUser.id,
+          resolved_at: now,
+          updated_at: now,
+        })
+        .eq('id', pendingAppeal.id)
+    }
     return NextResponse.json({ id: existing.id })
   }
 
@@ -166,6 +215,7 @@ export async function POST(request: NextRequest) {
       scores: body.scores,
       status: submit ? 'submitted' : 'draft',
       submitted_at: submit ? now : null,
+      period,
     })
     .select('id')
     .single()

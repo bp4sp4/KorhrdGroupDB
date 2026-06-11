@@ -14,6 +14,7 @@ export interface TeamTarget {
 export interface PersonalTarget {
   userId: number
   name: string
+  teamId: string | null
   teamName: string | null
   isLeader: boolean
 }
@@ -85,6 +86,7 @@ export async function getEvaluationTargets(
     personalMap.set(u.id, {
       userId: u.id,
       name: u.display_name ?? `사용자 ${u.id}`,
+      teamId: u.team_id ?? null,
       teamName: u.team_id ? (teamNameById.get(u.team_id) ?? null) : null,
       isLeader: leaderIds.has(u.id),
     })

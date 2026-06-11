@@ -22,6 +22,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   const body = (await request.json().catch(() => null)) as {
     title?: string
     form_data?: Record<string, unknown>
+    team_id?: string | null
   } | null
 
   const updates: Record<string, unknown> = { updated_by: appUser.id }
@@ -31,7 +32,12 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   if (typeof body?.form_data === 'object' && body.form_data !== null) {
     updates.form_data = body.form_data
   }
-  if (!('title' in updates) && !('form_data' in updates)) {
+  // 적용 팀 지정 — null = 전사 공통
+  if (body && 'team_id' in body) {
+    updates.team_id =
+      typeof body.team_id === 'string' && body.team_id ? body.team_id : null
+  }
+  if (!('title' in updates) && !('form_data' in updates) && !('team_id' in updates)) {
     return NextResponse.json({ error: '수정할 내용이 없습니다.' }, { status: 400 })
   }
 

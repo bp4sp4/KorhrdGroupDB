@@ -1,0 +1,327 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.pageTitle {
+  font-size: 20px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.titleSub {
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7684;
+}
+
+.pageHint {
+  font-size: 13px;
+  color: #8b95a1;
+  margin: -6px 0 0;
+}
+
+.empty {
+  padding: 60px 0;
+  text-align: center;
+  color: #8b95a1;
+  font-size: 14px;
+}
+
+/* ── 목록 카드 ───────────────────────────────────── */
+.cardList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 760px;
+}
+
+.card {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 16px 18px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.card:hover {
+  border-color: #3182f6;
+  box-shadow: 0 2px 8px rgba(49, 130, 246, 0.08);
+}
+
+.cardMain {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cardTitle {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.cardSub {
+  font-size: 12px;
+  color: #8b95a1;
+}
+
+.cardRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cardScore {
+  font-size: 16px;
+  font-weight: 800;
+  color: #3182f6;
+  white-space: nowrap;
+}
+
+/* ── 상세 ────────────────────────────────────────── */
+.detailHeader {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.docWrap {
+  display: flex;
+  justify-content: center;
+}
+
+.doc {
+  width: 100%;
+  max-width: 980px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  padding: 44px 48px 56px;
+}
+
+/* ── 버튼 ────────────────────────────────────────── */
+.btnGhost,
+.btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.15s;
+}
+
+.btnGhost {
+  background: #fff;
+  border-color: #e5e7eb;
+  color: #374151;
+}
+
+.btnGhost:hover {
+  background: #f9fafb;
+}
+
+.btnPrimary {
+  background: #3182f6;
+  color: #fff;
+}
+
+.btnPrimary:hover {
+  background: #1b64da;
+}
+
+.btnGhost:disabled,
+.btnPrimary:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* ── 이의제기 ────────────────────────────────────── */
+.appealSection {
+  max-width: 980px;
+  width: 100%;
+  margin: 0 auto;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.appealTitle {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.appealHint {
+  font-size: 12px;
+  color: #8b95a1;
+  margin: 0;
+}
+
+.appealList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.appealCard {
+  border: 1px solid #f2f4f6;
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.appealCardHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.appealDate {
+  font-size: 11px;
+  color: #8b95a1;
+}
+
+.appealContent {
+  font-size: 13px;
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.badgePending,
+.badgeResolved {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.badgePending {
+  color: #b45309;
+  background: #fef3c7;
+}
+
+.badgeResolved {
+  color: #15803d;
+  background: #dcfce7;
+}
+
+.attachList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.attachLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #1b64da;
+  background: #e8f3ff;
+  border-radius: 6px;
+  padding: 3px 8px;
+  text-decoration: none;
+}
+
+.attachLink:hover {
+  background: #d7e9ff;
+}
+
+.appealLocked {
+  font-size: 13px;
+  color: #b45309;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+
+.appealForm {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.appealTextarea {
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  resize: vertical;
+  outline: none;
+}
+
+.appealTextarea:focus {
+  border-color: #3182f6;
+}
+
+.appealFormFoot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.fileInput {
+  display: none;
+}
+
+.fileChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex: 1;
+}
+
+.fileChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  background: #f2f4f6;
+  border-radius: 6px;
+  padding: 3px 6px 3px 8px;
+}
+
+.fileChipRemove {
+  display: inline-flex;
+  align-items: center;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: #6b7684;
+  padding: 2px;
+}
+
+.fileChipRemove:hover {
+  color: #dc2626;
+}
