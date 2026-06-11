@@ -381,7 +381,7 @@ export function SheetView({
                         className={`${styles.scoreCell} ${styles.scoreCellClickable} ${marked ? styles.scoreCellMarked : ""}`}
                         onClick={() => onScore(bi, ii, marked ? null : n)}
                       >
-                        {marked ? n : ""}
+                        {marked ? "✓" : ""}
                       </td>
                     );
                   }
@@ -390,7 +390,7 @@ export function SheetView({
                       key={n}
                       className={`${styles.scoreCell} ${marked ? styles.scoreCellMarked : ""}`}
                     >
-                      {marked ? n : ""}
+                      {marked ? "✓" : ""}
                     </td>
                   );
                 })}
