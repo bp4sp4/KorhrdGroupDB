@@ -1933,7 +1933,7 @@ export default function WorkJournalPage() {
         {/* ── 상단 행 (학사팀은 stats 자리에 이번주 목표 바 표시) ─── */}
         <div className={styles.topRow}>
           {isDefault ? (
-            /* 업무 센터 — 인사 카드 (날짜 클릭 시 변경 가능) */
+            /* 업무 센터 — 인사 카드 (날짜는 표시 전용, 달력 미노출) */
             <div className={styles.wcGreetingCard} data-guide="wj-date">
               <div className={styles.wcGreetingText}>
                 <span className={styles.wcGreetingName}>
@@ -1941,15 +1941,9 @@ export default function WorkJournalPage() {
                 </span>
                 <span className={styles.wcGreetingMsg}>님, 오늘도 화이팅!</span>
               </div>
-              <label className={styles.wcDateBox}>
+              <div className={styles.wcDateBox}>
                 <span className={styles.wcDateText}>{formatPretty(date)}</span>
-                <input
-                  type="date"
-                  className={styles.dateInputOverlay}
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                />
-              </label>
+              </div>
             </div>
           ) : (
             /* 날짜 카드 (학사팀/실습팀) */
