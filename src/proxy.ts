@@ -103,5 +103,9 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  // 정적 자산(이미지/폰트 등)은 미들웨어를 태우지 않는다 — Fast Origin Transfer 절감.
+  // 미들웨어를 거치면 같은 요청이 이중으로 과금되므로 인증이 필요한 페이지/API만 매칭.
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|gif|svg|webp|ico|woff2?|ttf|otf|mp4|webm|txt|xml)$).*)',
+  ],
 }

@@ -46,7 +46,9 @@ export default function AttendanceButton() {
 
   useEffect(() => {
     fetchStatus();
-    const t = setInterval(fetchStatus, 60_000);
+    // 본인 출퇴근 상태는 본인 액션으로만 바뀌므로(액션 시 즉시 재조회)
+    // 백업 폴링은 5분이면 충분 — 요청 수 절감
+    const t = setInterval(fetchStatus, 300_000);
     return () => clearInterval(t);
   }, [fetchStatus]);
 

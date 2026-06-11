@@ -45,7 +45,10 @@ export default function CalendarPage() {
       fetch("/api/auth/me", { signal: ac.signal })
         .then((r) => (r.ok ? r.json() : null))
         .catch(() => null),
-      fetch("/api/hakjeom?has_scheduled=1", { signal: ac.signal })
+      fetch(
+        "/api/hakjeom?has_scheduled=1&fields=id,name,manager,status,contact_scheduled_at",
+        { signal: ac.signal },
+      )
         .then((r) => (r.ok ? r.json() : []))
         .catch(() => []),
     ]).then(([meRes, hakRes]) => {

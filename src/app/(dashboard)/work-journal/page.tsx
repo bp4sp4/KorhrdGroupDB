@@ -391,7 +391,8 @@ function ConsultationList({
     // 본인 이름 확정 전에는 조회하지 않음 (items 초기값이 [] 이라 아무것도 안 보임)
     if (!userName) return;
     let cancelled = false;
-    fetch("/api/hakjeom", { cache: "no-store" })
+    // mine=1 — 본인 담당분만 서버에서 필터해 받는다 (전체 리스트 전송 방지)
+    fetch("/api/hakjeom?mine=1", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : []))
       .then((list) => {
         if (cancelled) return;
@@ -1093,7 +1094,10 @@ export default function WorkJournalPage() {
   // 캘린더 팝업용 — 본인 연락예정 일정 조회 (manager == 본인)
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/hakjeom?has_scheduled=1", { cache: "no-store" })
+    fetch(
+      "/api/hakjeom?has_scheduled=1&mine=1&fields=id,name,manager,status,contact_scheduled_at",
+      { cache: "no-store" },
+    )
       .then((r) => (r.ok ? r.json() : []))
       .then((list) => {
         if (cancelled) return;

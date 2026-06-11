@@ -128,6 +128,28 @@ export async function GET(request: NextRequest) {
     const hasScheduled = searchParams.get('has_scheduled');
     const pageParam = searchParams.get('page');
 
+    // mine=1 — 본인 담당(manager == display_name)만 서버에서 필터 (응답 슬림화)
+    if (searchParams.get('mine')) {
+      const myName = appUser.display_name?.trim();
+      if (!myName) return NextResponse.json([]);
+      managerFilter = myName;
+    }
+
+    // fields=col1,col2 — 필요한 컬럼만 반환 (화이트리스트 검증, Transfer Out 절감)
+    // fields 지정 시 메모 병합(memo_count 등)은 생략한다.
+    const fieldsParam = searchParams.get('fields');
+    const selectColumns =
+      fieldsParam &&
+      fieldsParam
+        .split(',')
+        .map((f) => f.trim())
+        .every((f) => /^[a-z0-9_]+$/.test(f))
+        ? fieldsParam
+            .split(',')
+            .map((f) => f.trim())
+            .join(',')
+        : null;
+
     // ===== facets — 필터 옵션용 distinct(담당자/유입경로)만 경량 조회 =====
     // 서버 페이지 모드에서도 필터 드롭다운 옵션을 "전체 기준"으로 유지하기 위함
     if (searchParams.get('facets')) {
@@ -221,7 +243,7 @@ export async function GET(request: NextRequest) {
 
     let query = supabaseAdmin
       .from(TABLE)
-      .select('*')
+      .select((selectColumns ?? '*') as '*')
       .is('deleted_at', null)
       .order('created_at', { ascending: false })
       .order('id', { ascending: false })
@@ -232,6 +254,16 @@ export async function GET(request: NextRequest) {
     if (contact) query = query.ilike('contact', `%${contact}%`);
     if (status && status !== 'all') query = query.eq('status', status);
     if (hasScheduled === '1') query = query.not('contact_scheduled_at', 'is', null);
+
+    // fields 지정 시 — 메모 병합 없이 슬림 응답
+    if (selectColumns) {
+      const { data, error } = await query;
+      if (error) {
+        console.error('[hakjeom GET slim] Supabase error:', error);
+        return NextResponse.json({ error: 'Failed to fetch hakjeom consultations' }, { status: 500 });
+      }
+      return NextResponse.json(data ?? []);
+    }
 
     // 데이터 + 메모를 병렬로 조회
     const [queryResult, memoResult] = await Promise.all([

@@ -100,21 +100,35 @@ export default function Sidebar({
     fetchHakjeomCount();
     fetchCertCount();
 
+    // Realtime 이벤트 디바운스 — 변경이 몰릴 때 접속자 전원이 동시에 재조회하는
+    // 폭풍을 막아 서버 호출(Fast Origin Transfer)을 줄인다.
+    let hakjeomTimer: ReturnType<typeof setTimeout> | null = null;
+    let certTimer: ReturnType<typeof setTimeout> | null = null;
+
     const supabase = createClient();
     const channel = supabase.channel("sidebar-counsel-count");
     channel.on(
       "postgres_changes",
       { event: "*", schema: "public", table: "hakjeom_consultations" },
-      fetchHakjeomCount,
+      () => {
+        if (hakjeomTimer) clearTimeout(hakjeomTimer);
+        // 30초 트레일링 디바운스 — 상담 수정이 잦은 시간대에도 탭당 분당 최대 2회로 제한
+        hakjeomTimer = setTimeout(fetchHakjeomCount, 30000);
+      },
     );
     channel.on(
       "postgres_changes",
       { event: "*", schema: "public", table: "cert_students" },
-      fetchCertCount,
+      () => {
+        if (certTimer) clearTimeout(certTimer);
+        certTimer = setTimeout(fetchCertCount, 30000);
+      },
     );
     channel.subscribe();
 
     return () => {
+      if (hakjeomTimer) clearTimeout(hakjeomTimer);
+      if (certTimer) clearTimeout(certTimer);
       supabase.removeChannel(channel);
     };
   }, [userRole]);
@@ -135,6 +149,13 @@ export default function Sidebar({
     // 초기 1회 조회 후에는 Realtime 변경 이벤트로만 갱신 (5초 폴링 제거)
     fetchCount();
 
+    // 4개 테이블 변경이 몰릴 때 재조회를 1번으로 합침 (Fast Origin Transfer 절감)
+    let trashTimer: ReturnType<typeof setTimeout> | null = null;
+    const scheduleFetch = () => {
+      if (trashTimer) clearTimeout(trashTimer);
+      trashTimer = setTimeout(fetchCount, 30000);
+    };
+
     const supabase = createClient();
     const tables = [
       "hakjeom_consultations",
@@ -147,13 +168,14 @@ export default function Sidebar({
       channel.on(
         "postgres_changes",
         { event: "*", schema: "public", table },
-        () => fetchCount(),
+        scheduleFetch,
       );
     });
     channel.subscribe();
     channelRef.current = channel;
 
     return () => {
+      if (trashTimer) clearTimeout(trashTimer);
       if (channelRef.current) supabase.removeChannel(channelRef.current);
     };
   }, [userRole]);
