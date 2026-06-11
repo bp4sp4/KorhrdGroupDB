@@ -154,6 +154,7 @@ export function SheetView({
   scores,
   onScore,
   salesMetric,
+  highlightMissing = false,
 }: {
   sheet: AppraisalSheet;
   editing: boolean;
@@ -168,6 +169,8 @@ export function SheetView({
   ) => void;
   /** 정량평가 자동 산출값 — 정량 지표(매출·등록률·배정 DB·환불·근태)에 표시 */
   salesMetric?: QuantMetrics | null;
+  /** 제출 시도 후 미체크 행 빨간 표시 (체크하면 자동 해제) */
+  highlightMissing?: boolean;
 }) {
   const blocks = sheet.blocks ?? [];
   const hasEvalType =
@@ -374,11 +377,17 @@ export function SheetView({
                 )}
                 {SCORE_SCALE.map((n) => {
                   const marked = scores?.[bi]?.[ii] === n;
+                  // 제출 시도 후 미체크 행 강조 — 체크하는 순간 자동 해제
+                  const missing =
+                    highlightMissing &&
+                    !!onScore &&
+                    scores?.[bi]?.[ii] == null;
                   if (onScore) {
                     return (
                       <td
                         key={n}
-                        className={`${styles.scoreCell} ${styles.scoreCellClickable} ${marked ? styles.scoreCellMarked : ""}`}
+                        className={`${styles.scoreCell} ${styles.scoreCellClickable} ${marked ? styles.scoreCellMarked : ""} ${missing ? styles.scoreCellMissing : ""}`}
+                        data-score-missing={missing && n === 1 ? "1" : undefined}
                         onClick={() => onScore(bi, ii, marked ? null : n)}
                       >
                         {marked ? "✓" : ""}

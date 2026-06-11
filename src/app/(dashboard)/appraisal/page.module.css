@@ -20,28 +20,39 @@
 }
 
 .pageTitle {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 800;
-  margin: 0;
+  margin: 0 8px 0 0;
+  letter-spacing: -0.01em;
 }
 
 .formSelect {
-  padding: 7px 10px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  padding: 8px 13px;
+  border: 1px solid #e3e6ea;
+  border-radius: 9px;
   font-size: 13px;
+  font-weight: 600;
+  color: #3a3f45;
   background: #fff;
   outline: none;
-  max-width: 280px;
+  max-width: 300px;
+  cursor: pointer;
+}
+
+.formSelect:hover {
+  border-color: #c9cdd3;
 }
 
 .editorBadge {
-  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
   font-weight: 600;
-  color: #1b64da;
-  background: #e8f3ff;
-  padding: 4px 8px;
-  border-radius: 6px;
+  color: #2563eb;
+  background: #eaf1fe;
+  padding: 7px 12px;
+  border-radius: 8px;
 }
 
 .toolbarRight {
@@ -111,17 +122,18 @@
 /* ── 탭 ───────────────────────────────────────────── */
 .tabs {
   display: flex;
-  gap: 4px;
-  border-bottom: 1px solid #e5e7eb;
+  gap: 28px;
+  border-bottom: 1px solid #e7e9ec;
+  margin-top: 6px;
 }
 
 .tabBtn {
-  padding: 9px 16px;
+  padding: 0 0 13px;
   border: none;
   background: none;
-  font-size: 14px;
-  font-weight: 600;
-  color: #6b7684;
+  font-size: 14.5px;
+  font-weight: 500;
+  color: #8a9099;
   cursor: pointer;
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
@@ -132,82 +144,181 @@
 }
 
 .tabBtnActive {
-  color: #3182f6;
-  border-bottom-color: #3182f6;
+  color: #1a1d1f;
+  font-weight: 700;
+  border-bottom-color: #2563eb;
 }
 
-/* ── 평가 대상 목록 ──────────────────────────────── */
+/* ── 평가 대상 목록 (평가 작성 탭) ────────────────── */
 .targetWrap {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  max-width: 760px;
+  gap: 22px;
+  max-width: 1080px;
 }
 
-.targetSection {
+.evCard {
   background: #fff;
-  border-radius: 10px;
-  border: 1px solid #e5e7eb;
-  padding: 18px 20px;
+  border: 1px solid #eceef1;
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+  overflow: hidden;
 }
 
-.targetSectionTitle {
-  font-size: 15px;
+.evCardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  border-bottom: 1px solid #f1f3f5;
+}
+
+.evCardHeadLeft {
+  display: flex;
+  align-items: baseline;
+  gap: 11px;
+}
+
+.evCardTitle {
+  font-size: 16px;
   font-weight: 700;
-  margin: 0 0 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  color: #1a1d1f;
 }
 
-.targetHint {
-  font-size: 12px;
+.evCardHint {
+  font-size: 13px;
+  color: #8a9099;
   font-weight: 500;
-  color: #8b95a1;
 }
 
-.targetList {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.targetRow {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 4px;
-  border-top: 1px solid #f2f4f6;
-}
-
-.targetRow:first-child {
-  border-top: none;
-}
-
-.targetName {
-  font-size: 14px;
+.evCountPill {
+  font-size: 12.5px;
+  color: #6b7280;
   font-weight: 600;
-  flex: 1;
-  display: flex;
+  background: #f4f5f7;
+  border-radius: 999px;
+  padding: 5px 12px;
+}
+
+.evColHeader {
+  display: grid;
+  align-items: center;
+  padding: 10px 22px;
+  background: #fbfbfc;
+  border-bottom: 1px solid #f1f3f5;
+  font-size: 12px;
+  font-weight: 600;
+  color: #9aa0a6;
+}
+
+.evGridTeam {
+  grid-template-columns: 1fr 200px 100px;
+}
+
+.evGridPerson {
+  grid-template-columns: 1fr 160px 200px 100px;
+}
+
+.evRow {
+  display: grid;
+  align-items: center;
+  padding: 13px 22px;
+  border-bottom: 1px solid #f4f5f7;
+}
+
+.evRow:last-child {
+  border-bottom: none;
+}
+
+.evRow:hover {
+  background: #fafbfc;
+}
+
+.evName {
+  display: inline-flex;
+  align-items: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1d1f;
+}
+
+.evTeam {
+  font-size: 13.5px;
+  color: #6b7280;
+}
+
+.evStatusCell {
+  display: inline-flex;
   align-items: center;
   gap: 6px;
 }
 
-.leaderTag {
-  font-size: 10px;
-  font-weight: 700;
-  color: #6d28d9;
-  background: #f3e8ff;
-  border-radius: 4px;
-  padding: 2px 6px;
+.evStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 5px 11px;
+  font-size: 12.5px;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
-.targetTeam {
-  font-size: 12px;
-  color: #8b95a1;
-  min-width: 90px;
+.evStatusDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.65;
+}
+
+.evStatusNone {
+  background: #f1f3f5;
+  color: #6b7280;
+}
+
+.evStatusDraft {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.evStatusDone {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.evWriteBtn {
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #dce0e5;
+  background: #fff;
+  color: #3a3f45;
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  white-space: nowrap;
+}
+
+.evWriteBtn:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}
+
+.leaderTag {
+  margin-left: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #5b66e8;
+  background: #eef0ff;
+  border-radius: 6px;
+  padding: 2px 7px;
 }
 
 .badgeNone,
@@ -359,10 +470,19 @@
 }
 
 .scoreCellMarked {
-  background: #3182f6 !important;
-  color: #fff;
+  color: #111827;
   font-weight: 700;
   text-align: center;
+}
+
+/* 제출 시도 후 미체크 행 — 빨간 강조 (체크하면 자동 해제) */
+.scoreCellMissing {
+  background: #fee2e2 !important;
+  box-shadow: inset 0 0 0 1px #fca5a5;
+}
+
+.scoreCellMissing:hover {
+  background: #fecaca !important;
 }
 
 .totalCell {

@@ -9,7 +9,6 @@ import {
   Plus,
   Trash2,
   ArrowLeft,
-  Send,
   RotateCcw,
   Eye,
   Paperclip,
@@ -40,6 +39,7 @@ type TabKey = "form" | "write" | "status";
 
 interface EvaluationRow {
   id: string;
+  form_id?: string;
   sheet_key: SheetKey;
   target_team_id: string | null;
   target_user_id: number | null;
@@ -89,6 +89,8 @@ interface WriteTarget {
   teamId?: string;
   userId?: number;
   label: string;
+  /** 이 대상에 적용되는 양식 (팀 전용 양식 자동 매칭) */
+  formId?: string;
 }
 
 export default function AppraisalPage() {
@@ -114,6 +116,8 @@ export default function AppraisalPage() {
   const [writeTarget, setWriteTarget] = useState<WriteTarget | null>(null);
   const [writeScores, setWriteScores] = useState<ScoreMatrix>([]);
   const [writeLocked, setWriteLocked] = useState(false);
+  // 제출 시도 시 빈칸 빨간 표시
+  const [showMissingMarks, setShowMissingMarks] = useState(false);
 
   // 평가 현황 (경영실장)
   const [overviewRows, setOverviewRows] = useState<OverviewRow[] | null>(null);
@@ -176,12 +180,12 @@ export default function AppraisalPage() {
     }
   }, []);
 
-  const loadEvaluations = useCallback(async (formId: string, p: string) => {
+  // 평가 작성용 — 분기 내 모든 양식의 평가를 한 번에 조회 (팀별 양식 자동 매칭)
+  const loadEvaluations = useCallback(async (p: string) => {
     try {
-      const res = await fetch(
-        `/api/appraisal-evaluations?formId=${formId}&period=${p}`,
-        { cache: "no-store" },
-      );
+      const res = await fetch(`/api/appraisal-evaluations?period=${p}`, {
+        cache: "no-store",
+      });
       if (!res.ok) throw new Error();
       setEvalCtx((await res.json()) as EvalContext);
     } catch {
@@ -212,13 +216,17 @@ export default function AppraisalPage() {
     void loadForms();
   }, [loadForms]);
 
+  // 평가 작성 — 분기 변경 시에만 재조회 (양식 선택과 무관하게 전체 대상 노출)
   useEffect(() => {
     setWriteTarget(null);
+    void loadEvaluations(period);
+  }, [period, loadEvaluations]);
+
+  // 평가 현황 — 선택 양식/분기 기준
+  useEffect(() => {
     setOverviewDetail(null);
     setOverviewRows(null);
-    if (selectedId) void loadEvaluations(selectedId, period);
-    else setEvalCtx(null);
-  }, [selectedId, period, loadEvaluations]);
+  }, [selectedId, period]);
 
   useEffect(() => {
     if (tab === "status" && selectedId && overviewRows === null) {
@@ -244,20 +252,22 @@ export default function AppraisalPage() {
     [forms, selectedId],
   );
 
-  // 양식에 적용 팀이 지정돼 있으면 평가 작성 대상도 그 팀으로 한정
-  // (어드민은 운영 보정을 위해 양식과 무관하게 전체 대상 노출)
-  const filteredEvalCtx = useMemo(() => {
-    if (!evalCtx || !selected?.team_id || evalCtx.isMaster) return evalCtx;
-    return {
-      ...evalCtx,
-      teamTargets: evalCtx.teamTargets.filter(
-        (t) => t.teamId === selected.team_id,
-      ),
-      personalTargets: evalCtx.personalTargets.filter(
-        (p) => p.teamId === selected.team_id,
-      ),
-    };
-  }, [evalCtx, selected]);
+  // 평가 대상에 적용되는 양식 — 대상 팀 전용 양식 > 전사 공통 양식 > 현재 선택 양식
+  const formIdForTarget = useCallback(
+    (target: WriteTarget): string | null => {
+      const teamId =
+        target.sheetKey === "team"
+          ? (target.teamId ?? null)
+          : (evalCtx?.personalTargets.find((p) => p.userId === target.userId)
+              ?.teamId ?? null);
+      const teamForm = teamId
+        ? forms.find((f) => f.team_id === teamId)
+        : undefined;
+      const commonForm = forms.find((f) => !f.team_id);
+      return (teamForm ?? commonForm ?? selected)?.id ?? null;
+    },
+    [forms, evalCtx, selected],
+  );
 
   // ── 양식 수정 (평가서별) ──────────────────────────────────────────
   const startSheetEdit = (key: SheetKey) => {
@@ -408,14 +418,20 @@ export default function AppraisalPage() {
   };
 
   // ── 평가 작성 ─────────────────────────────────────────────────────
+  // 대상 + 해당 대상에 적용되는 양식 기준으로 기존 평가를 찾는다
   const findEvaluation = useCallback(
-    (target: WriteTarget): EvaluationRow | undefined =>
-      evalCtx?.evaluations.find((ev) =>
-        target.sheetKey === "team"
-          ? ev.sheet_key === "team" && ev.target_team_id === target.teamId
-          : ev.sheet_key === "personal" && ev.target_user_id === target.userId,
-      ),
-    [evalCtx],
+    (target: WriteTarget): EvaluationRow | undefined => {
+      const formId = formIdForTarget(target);
+      return evalCtx?.evaluations.find(
+        (ev) =>
+          (!ev.form_id || !formId || ev.form_id === formId) &&
+          (target.sheetKey === "team"
+            ? ev.sheet_key === "team" && ev.target_team_id === target.teamId
+            : ev.sheet_key === "personal" &&
+              ev.target_user_id === target.userId),
+      );
+    },
+    [evalCtx, formIdForTarget],
   );
 
   // 처리 대기 중 이의제기 — 있으면 제출된 평가도 재수정 가능
@@ -430,25 +446,38 @@ export default function AppraisalPage() {
   );
 
   const openWrite = (target: WriteTarget) => {
-    if (!selected) return;
-    const sheet = selected.form_data[target.sheetKey];
+    // 대상 팀 전용 양식 자동 매칭 — 영업팀원이면 영업팀 양식, 없으면 공통 양식
+    const formId = formIdForTarget(target);
+    const form = forms.find((f) => f.id === formId) ?? selected;
+    if (!form) return;
+    const sheet = form.form_data[target.sheetKey];
     const existing = findEvaluation(target);
     setWriteScores(normalizeScores(sheet, existing?.scores));
+    setShowMissingMarks(false);
     setWriteLocked(
       existing?.status === "submitted" &&
         !(evalCtx?.isMaster ?? false) &&
         !findPendingAppeal(existing?.id),
     );
-    setWriteTarget(target);
+    setWriteTarget({ ...target, formId: form.id });
+    // 상단 양식 선택도 동기화 (작성 화면이 닫히지 않도록 평가 재조회는 안 함)
+    if (form.id !== selectedId) setSelectedId(form.id);
   };
 
   const handleWriteSave = async (submit: boolean) => {
     if (!selected || !writeTarget) return;
-    if (
-      submit &&
-      writeScores.some((row) => row.some((v) => v === null)) &&
-      !window.confirm("점수가 비어있는 항목이 있습니다. 그래도 제출할까요?")
-    ) {
+    const writeFormId = writeTarget.formId ?? selected.id;
+    // 제출 시 빈칸이 있으면 차단하고 해당 칸을 빨간색으로 표시
+    if (submit && writeScores.some((row) => row.some((v) => v === null))) {
+      setShowMissingMarks(true);
+      alert(
+        "체크되지 않은 항목이 있습니다. 빨간색으로 표시된 칸을 모두 체크한 뒤 제출해주세요.",
+      );
+      setTimeout(() => {
+        document
+          .querySelector('[data-score-missing="1"]')
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 50);
       return;
     }
     setSaving(true);
@@ -457,7 +486,7 @@ export default function AppraisalPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          form_id: selected.id,
+          form_id: writeFormId,
           sheet_key: writeTarget.sheetKey,
           target_team_id: writeTarget.teamId ?? null,
           target_user_id: writeTarget.userId ?? null,
@@ -470,7 +499,7 @@ export default function AppraisalPage() {
         const d = await res.json().catch(() => ({}));
         throw new Error(d.error ?? "저장에 실패했습니다.");
       }
-      await loadEvaluations(selected.id, period);
+      await loadEvaluations(period);
       setOverviewRows(null);
       if (submit) {
         setWriteTarget(null);
@@ -502,7 +531,7 @@ export default function AppraisalPage() {
     if (selectedId) {
       await Promise.all([
         loadOverview(selectedId, period),
-        loadEvaluations(selectedId, period),
+        loadEvaluations(period),
       ]);
     }
   };
@@ -521,7 +550,7 @@ export default function AppraisalPage() {
     if (selectedId) {
       await Promise.all([
         loadOverview(selectedId, period),
-        loadEvaluations(selectedId, period),
+        loadEvaluations(period),
       ]);
     }
   };
@@ -556,7 +585,7 @@ export default function AppraisalPage() {
             >
               {forms.map((f) => (
                 <option key={f.id} value={f.id}>
-                  {f.title} —{" "}
+                  {f.title} -{" "}
                   {f.team_id
                     ? (teams.find((t) => t.id === f.team_id)?.name ?? "팀 지정")
                     : "전사 공통"}
@@ -655,14 +684,14 @@ export default function AppraisalPage() {
             </button>
           )}
           {/* 평가 현황 — 일반 오픈 전까지 어드민(master-admin)만 노출 */}
-          {/* {evalCtx?.isMaster && evalCtx?.canOverview && (
+          {evalCtx?.isMaster && evalCtx?.canOverview && (
             <button
               className={`${styles.tabBtn} ${tab === "status" ? styles.tabBtnActive : ""}`}
               onClick={() => setTab("status")}
             >
               평가 현황
             </button>
-          )} */}
+          )}
         </div>
       )}
 
@@ -791,53 +820,81 @@ export default function AppraisalPage() {
                 </div>
               </div>
               {(() => {
-                const appeal = findPendingAppeal(
-                  findEvaluation(writeTarget)?.id,
+                // 이의제기 전체 이력 — 처리 대기뿐 아니라 재평가 완료된 건도 평가자가 확인
+                const evalId = findEvaluation(writeTarget)?.id;
+                const rowAppeals = evalId
+                  ? (evalCtx?.appeals ?? []).filter(
+                      (a) => a.evaluation_id === evalId,
+                    )
+                  : [];
+                if (rowAppeals.length === 0) return null;
+                const hasPending = rowAppeals.some(
+                  (a) => a.status === "pending",
                 );
-                if (!appeal) return null;
                 return (
                   <div className={styles.appealPanel}>
                     <div className={styles.appealPanelHead}>
                       <span className={styles.badgeAppeal}>
-                        이의제기 · 처리 대기
-                      </span>
-                      <span className={styles.appealPanelDate}>
-                        {new Date(appeal.created_at).toLocaleDateString(
-                          "ko-KR",
-                        )}{" "}
-                        제출
+                        이의제기 {rowAppeals.length}건
                       </span>
                     </div>
-                    <p className={styles.appealPanelContent}>
-                      {appeal.content}
-                    </p>
-                    {appeal.attachments?.length > 0 && (
-                      <div className={styles.appealPanelFiles}>
-                        {appeal.attachments.map((f, i) => (
-                          <a
-                            key={i}
-                            href={f.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className={styles.appealFileLink}
+                    {rowAppeals.map((a) => (
+                      <div key={a.id} className={styles.appealHistoryItem}>
+                        <div className={styles.appealPanelHead}>
+                          <span
+                            className={
+                              a.status === "pending"
+                                ? styles.badgeDraft
+                                : styles.badgeDone
+                            }
                           >
-                            <Paperclip size={12} /> {f.name}
-                          </a>
-                        ))}
+                            {a.status === "pending"
+                              ? "처리 대기"
+                              : "재평가 완료"}
+                          </span>
+                          <span className={styles.appealPanelDate}>
+                            {new Date(a.created_at).toLocaleDateString("ko-KR")}{" "}
+                            제출
+                            {a.resolved_at &&
+                              ` · ${new Date(a.resolved_at).toLocaleDateString("ko-KR")} 처리`}
+                          </span>
+                        </div>
+                        <p className={styles.appealPanelContent}>{a.content}</p>
+                        {a.attachments?.length > 0 && (
+                          <div className={styles.appealPanelFiles}>
+                            {a.attachments.map((f, i) => (
+                              <a
+                                key={i}
+                                href={f.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className={styles.appealFileLink}
+                              >
+                                <Paperclip size={12} /> {f.name}
+                              </a>
+                            ))}
+                          </div>
+                        )}
                       </div>
+                    ))}
+                    {hasPending && (
+                      <p className={styles.appealPanelHint}>
+                        점수를 검토·수정한 뒤 다시 제출하면 이의제기가 처리
+                        완료됩니다.
+                      </p>
                     )}
-                    <p className={styles.appealPanelHint}>
-                      점수를 검토·수정한 뒤 다시 제출하면 이의제기가 처리
-                      완료됩니다.
-                    </p>
                   </div>
                 );
               })()}
               <SheetView
-                sheet={selected.form_data[writeTarget.sheetKey]}
+                sheet={
+                  (forms.find((f) => f.id === writeTarget.formId) ?? selected)
+                    .form_data[writeTarget.sheetKey]
+                }
                 editing={false}
                 onChange={() => {}}
                 salesMetric={quantMetric}
+                highlightMissing={showMissingMarks}
                 scores={writeScores}
                 onScore={
                   writeLocked
@@ -854,7 +911,7 @@ export default function AppraisalPage() {
           </div>
         ) : (
           <TargetList
-            evalCtx={filteredEvalCtx}
+            evalCtx={evalCtx}
             findEvaluation={findEvaluation}
             onOpen={openWrite}
           />
@@ -981,122 +1038,153 @@ function TargetList({
     );
   }
 
-  if (
-    evalCtx.teamTargets.length === 0 &&
-    evalCtx.personalTargets.length === 0
-  ) {
-    return (
-      <div className={styles.empty}>
-        이 양식의 적용 팀에 해당하는 평가 대상이 없습니다. 다른 고과표를
-        선택해보세요.
-      </div>
-    );
-  }
-
   const statusBadge = (ev?: EvaluationRow) => {
-    if (!ev) return <span className={styles.badgeNone}>미작성</span>;
+    if (!ev)
+      return (
+        <span className={`${styles.evStatus} ${styles.evStatusNone}`}>
+          <i className={styles.evStatusDot} />
+          미작성
+        </span>
+      );
     if (ev.status === "submitted")
-      return <span className={styles.badgeDone}>제출 완료</span>;
-    return <span className={styles.badgeDraft}>작성 중</span>;
+      return (
+        <span className={`${styles.evStatus} ${styles.evStatusDone}`}>
+          <i className={styles.evStatusDot} />
+          제출 완료
+        </span>
+      );
+    return (
+      <span className={`${styles.evStatus} ${styles.evStatusDraft}`}>
+        <i className={styles.evStatusDot} />
+        작성 중
+      </span>
+    );
   };
 
   return (
     <div className={styles.targetWrap}>
       {evalCtx.teamTargets.length > 0 && (
-        <section className={styles.targetSection}>
-          <h3 className={styles.targetSectionTitle}>
-            팀 역량평가{" "}
-            <span className={styles.targetHint}>평가자: 사업본부장</span>
-          </h3>
-          <ul className={styles.targetList}>
-            {evalCtx.teamTargets.map((t) => {
-              const target: WriteTarget = {
-                sheetKey: "team",
-                teamId: t.teamId,
-                label: t.teamName,
-              };
-              const ev = findEvaluation(target);
-              return (
-                <li key={t.teamId} className={styles.targetRow}>
-                  <span className={styles.targetName}>{t.teamName}</span>
-                  {statusBadge(ev)}
-                  <button
-                    className={styles.btnGhost}
-                    onClick={() => onOpen(target)}
-                  >
-                    {ev?.status === "submitted" ? (
-                      <>
-                        <Eye size={14} /> 보기
-                      </>
-                    ) : (
-                      <>
-                        <Pencil size={14} /> 작성
-                      </>
-                    )}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
+        <section className={styles.evCard}>
+          <div className={styles.evCardHead}>
+            <div className={styles.evCardHeadLeft}>
+              <span className={styles.evCardTitle}>팀 역량평가</span>
+              <span className={styles.evCardHint}>평가자 · 사업본부장</span>
+            </div>
+            <span className={styles.evCountPill}>
+              총 {evalCtx.teamTargets.length}팀
+            </span>
+          </div>
+
+          <div className={`${styles.evColHeader} ${styles.evGridTeam}`}>
+            <span>팀명</span>
+            <span>상태</span>
+            <span />
+          </div>
+
+          {evalCtx.teamTargets.map((t) => {
+            const target: WriteTarget = {
+              sheetKey: "team",
+              teamId: t.teamId,
+              label: t.teamName,
+            };
+            const ev = findEvaluation(target);
+            return (
+              <div
+                key={t.teamId}
+                className={`${styles.evRow} ${styles.evGridTeam}`}
+              >
+                <span className={styles.evName}>{t.teamName}</span>
+                <span className={styles.evStatusCell}>{statusBadge(ev)}</span>
+                <button
+                  className={styles.evWriteBtn}
+                  onClick={() => onOpen(target)}
+                >
+                  {ev?.status === "submitted" ? (
+                    <>
+                      <Eye size={13} /> 보기
+                    </>
+                  ) : (
+                    <>
+                      <Pencil size={13} /> 작성
+                    </>
+                  )}
+                </button>
+              </div>
+            );
+          })}
         </section>
       )}
 
       {evalCtx.personalTargets.length > 0 && (
-        <section className={styles.targetSection}>
-          <h3 className={styles.targetSectionTitle}>
-            개인 역량평가{" "}
-            <span className={styles.targetHint}>
-              팀원 → 팀장 작성 / 팀장 → 사업본부장 작성
+        <section className={styles.evCard}>
+          <div className={styles.evCardHead}>
+            <div className={styles.evCardHeadLeft}>
+              <span className={styles.evCardTitle}>개인 역량평가</span>
+              <span className={styles.evCardHint}>
+                팀원 → 팀장 작성 · 팀장 → 사업본부장 작성
+              </span>
+            </div>
+            <span className={styles.evCountPill}>
+              총 {evalCtx.personalTargets.length}명
             </span>
-          </h3>
-          <ul className={styles.targetList}>
-            {evalCtx.personalTargets.map((p) => {
-              const target: WriteTarget = {
-                sheetKey: "personal",
-                userId: p.userId,
-                label: p.name,
-              };
-              const ev = findEvaluation(target);
-              const hasPendingAppeal =
-                !!ev &&
-                (evalCtx.appeals ?? []).some(
-                  (a) => a.evaluation_id === ev.id && a.status === "pending",
-                );
-              return (
-                <li key={p.userId} className={styles.targetRow}>
-                  <span className={styles.targetName}>
-                    {p.name}
-                    {p.isLeader && (
-                      <span className={styles.leaderTag}>팀장</span>
-                    )}
-                  </span>
-                  <span className={styles.targetTeam}>{p.teamName ?? "-"}</span>
+          </div>
+
+          <div className={`${styles.evColHeader} ${styles.evGridPerson}`}>
+            <span>이름</span>
+            <span>소속팀</span>
+            <span>상태</span>
+            <span />
+          </div>
+
+          {evalCtx.personalTargets.map((p) => {
+            const target: WriteTarget = {
+              sheetKey: "personal",
+              userId: p.userId,
+              label: p.name,
+            };
+            const ev = findEvaluation(target);
+            const hasPendingAppeal =
+              !!ev &&
+              (evalCtx.appeals ?? []).some(
+                (a) => a.evaluation_id === ev.id && a.status === "pending",
+              );
+            return (
+              <div
+                key={p.userId}
+                className={`${styles.evRow} ${styles.evGridPerson}`}
+              >
+                <span className={styles.evName}>
+                  {p.name}
+                  {p.isLeader && <span className={styles.leaderTag}>팀장</span>}
+                </span>
+                <span className={styles.evTeam}>{p.teamName ?? "-"}</span>
+                <span className={styles.evStatusCell}>
+                  {statusBadge(ev)}
                   {hasPendingAppeal && (
                     <span className={styles.badgeAppeal}>이의제기</span>
                   )}
-                  {statusBadge(ev)}
-                  <button
-                    className={styles.btnGhost}
-                    onClick={() => onOpen(target)}
-                  >
-                    {hasPendingAppeal ? (
-                      <>
-                        <Pencil size={14} /> 재평가
-                      </>
-                    ) : ev?.status === "submitted" ? (
-                      <>
-                        <Eye size={14} /> 보기
-                      </>
-                    ) : (
-                      <>
-                        <Pencil size={14} /> 작성
-                      </>
-                    )}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
+                </span>
+                <button
+                  className={styles.evWriteBtn}
+                  onClick={() => onOpen(target)}
+                >
+                  {hasPendingAppeal ? (
+                    <>
+                      <Pencil size={13} /> 재평가
+                    </>
+                  ) : ev?.status === "submitted" ? (
+                    <>
+                      <Eye size={13} /> 보기
+                    </>
+                  ) : (
+                    <>
+                      <Pencil size={13} /> 작성
+                    </>
+                  )}
+                </button>
+              </div>
+            );
+          })}
         </section>
       )}
     </div>

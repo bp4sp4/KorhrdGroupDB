@@ -18,10 +18,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: '접근 권한이 없습니다.' }, { status: 403 })
   }
 
+  // formId 생략 시 — 분기 내 모든 양식의 평가를 반환 (평가 작성 탭: 팀별 양식 자동 매칭)
   const formId = request.nextUrl.searchParams.get('formId')
-  if (!formId) {
-    return NextResponse.json({ error: 'formId가 필요합니다.' }, { status: 400 })
-  }
   const periodParam = request.nextUrl.searchParams.get('period')
   const period = isValidPeriod(periodParam) ? periodParam : defaultPeriod()
 
@@ -33,14 +31,15 @@ export async function GET(request: NextRequest) {
   const teamIds = targets.teamTargets.map((t) => t.teamId)
   const userIds = targets.personalTargets.map((t) => t.userId)
 
-  const { data: evaluations, error } = await supabaseAdmin
+  let evalQuery = supabaseAdmin
     .from('appraisal_evaluations')
     .select(
-      'id, sheet_key, target_team_id, target_user_id, evaluator_id, scores, status, submitted_at, updated_at, period',
+      'id, form_id, sheet_key, target_team_id, target_user_id, evaluator_id, scores, status, submitted_at, updated_at, period',
     )
-    .eq('form_id', formId)
     .eq('period', period)
-    .or(
+  if (formId) evalQuery = evalQuery.eq('form_id', formId)
+
+  const { data: evaluations, error } = await evalQuery.or(
       [
         teamIds.length > 0
           ? `target_team_id.in.(${teamIds.join(',')})`
@@ -151,13 +150,6 @@ export async function POST(request: NextRequest) {
   const now = new Date().toISOString()
 
   if (existing) {
-    if (existing.evaluator_id !== appUser.id && !targets.isMaster) {
-      return NextResponse.json(
-        { error: '다른 평가자가 이미 작성한 평가입니다.' },
-        { status: 403 },
-      )
-    }
-
     // 처리 대기 중인 이의제기가 있으면 제출된 평가도 평가자가 재수정 가능
     const { data: pendingAppeal } = await supabaseAdmin
       .from('appraisal_appeals')
@@ -166,15 +158,22 @@ export async function POST(request: NextRequest) {
       .eq('status', 'pending')
       .maybeSingle()
 
-    if (
-      existing.status === 'submitted' &&
-      !targets.isMaster &&
-      !pendingAppeal
-    ) {
-      return NextResponse.json(
-        { error: '제출된 평가는 수정할 수 없습니다. 경영실장에게 재작성을 요청하세요.' },
-        { status: 403 },
-      )
+    // 제출 완료 상태에서만 잠금/평가자 일치 검사.
+    // draft(재작성 허용 포함)는 위에서 검증된 권한 있는 평가자라면 누가 썼든
+    // 이어서 작성 가능 — 어드민이 대신 작성한 건도 팀장이 재작성할 수 있다.
+    if (existing.status === 'submitted') {
+      if (!targets.isMaster && !pendingAppeal) {
+        return NextResponse.json(
+          { error: '제출된 평가는 수정할 수 없습니다. 경영실장에게 재작성을 요청하세요.' },
+          { status: 403 },
+        )
+      }
+      if (existing.evaluator_id !== appUser.id && !targets.isMaster) {
+        return NextResponse.json(
+          { error: '다른 평가자가 이미 작성한 평가입니다.' },
+          { status: 403 },
+        )
+      }
     }
     const { error } = await supabaseAdmin
       .from('appraisal_evaluations')

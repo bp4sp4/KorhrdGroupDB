@@ -10,6 +10,11 @@ import {
 } from "@/lib/appraisal/form";
 import { type QuantMetrics } from "@/lib/appraisal/quantScore";
 import { periodLabel } from "@/lib/appraisal/period";
+import {
+  APPEAL_WINDOW_DAYS,
+  appealDeadline,
+  isAppealWindowOpen,
+} from "@/lib/appraisal/appeal";
 import { SheetView } from "../../appraisal/_components/SheetView";
 
 interface AppealAttachment {
@@ -51,7 +56,13 @@ export default function MyAppraisalPage() {
   const [appealContent, setAppealContent] = useState("");
   const [appealFiles, setAppealFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const addAppealFiles = (list: File[]) => {
+    if (list.length === 0) return;
+    setAppealFiles((prev) => [...prev, ...list].slice(0, 10));
+  };
 
   const load = useCallback(async () => {
     try {
@@ -93,7 +104,9 @@ export default function MyAppraisalPage() {
       alert("이의제기 내용을 입력해주세요.");
       return;
     }
-    if (!window.confirm("이의제기를 제출할까요? 제출 후 평가자가 재검토합니다.")) {
+    if (
+      !window.confirm("이의제기를 제출할까요? 제출 후 평가자가 재검토합니다.")
+    ) {
       return;
     }
     setSubmitting(true);
@@ -148,6 +161,9 @@ export default function MyAppraisalPage() {
   if (detail) {
     const scores = normalizeScores(detail.sheet, detail.scores);
     const pendingAppeal = detail.appeals.find((a) => a.status === "pending");
+    // 이의제기 기간 — 평가 제출 후 5일 이내
+    const windowOpen = isAppealWindowOpen(detail.submittedAt);
+    const deadline = appealDeadline(detail.submittedAt);
 
     return (
       <div className={styles.page}>
@@ -181,8 +197,18 @@ export default function MyAppraisalPage() {
         <section className={styles.appealSection}>
           <h2 className={styles.appealTitle}>이의제기</h2>
           <p className={styles.appealHint}>
-            평가 결과에 이의가 있으면 사유와 근거 자료를 제출하세요. 평가자가
-            확인 후 재평가하며, 재제출되면 처리 완료로 표시됩니다.
+            평가 결과에 이의가 있으면 사유와 근거 자료를 제출하세요. 자료는
+            아래 영역에 드래그해서 놓아도 첨부됩니다. 평가자가 확인 후
+            재평가하며, 재제출되면 처리 완료로 표시됩니다.
+            {windowOpen && deadline && (
+              <>
+                {" "}
+                <b>
+                  이의제기는 {fmtDate(deadline.toISOString())}까지 가능합니다.
+                  (평가 제출 후 {APPEAL_WINDOW_DAYS}일)
+                </b>
+              </>
+            )}
           </p>
 
           {detail.appeals.length > 0 && (
@@ -225,13 +251,36 @@ export default function MyAppraisalPage() {
             </ul>
           )}
 
-          {pendingAppeal ? (
+          {!windowOpen ? (
+            <div className={styles.appealLocked}>
+              이의제기 기간이 종료되었습니다. (평가 제출 후{" "}
+              {APPEAL_WINDOW_DAYS}일 이내 가능)
+            </div>
+          ) : pendingAppeal ? (
             <div className={styles.appealLocked}>
               처리 대기 중인 이의제기가 있습니다. 평가자가 재평가하면 다시
               제출할 수 있습니다.
             </div>
           ) : (
-            <div className={styles.appealForm}>
+            <div
+              className={`${styles.appealForm} ${dragOver ? styles.appealFormDragOver : ""}`}
+              onDragOver={(e) => {
+                e.preventDefault();
+                if (!submitting) setDragOver(true);
+              }}
+              onDragLeave={(e) => {
+                // 자식 요소로 이동할 때는 무시
+                if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                  setDragOver(false);
+                }
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragOver(false);
+                if (submitting) return;
+                addAppealFiles(Array.from(e.dataTransfer.files ?? []));
+              }}
+            >
               <textarea
                 className={styles.appealTextarea}
                 placeholder="이의제기 사유를 구체적으로 작성해주세요. (예: 5월 매출 실적 누락 — 첨부 자료 참고)"
@@ -240,6 +289,11 @@ export default function MyAppraisalPage() {
                 onChange={(e) => setAppealContent(e.target.value)}
                 disabled={submitting}
               />
+              {dragOver && (
+                <div className={styles.dropHint}>
+                  여기에 놓으면 자료가 첨부됩니다
+                </div>
+              )}
               <div className={styles.appealFormFoot}>
                 <input
                   ref={fileInputRef}
@@ -247,10 +301,7 @@ export default function MyAppraisalPage() {
                   multiple
                   className={styles.fileInput}
                   onChange={(e) => {
-                    const list = Array.from(e.target.files ?? []);
-                    if (list.length > 0) {
-                      setAppealFiles((prev) => [...prev, ...list].slice(0, 10));
-                    }
+                    addAppealFiles(Array.from(e.target.files ?? []));
                     e.target.value = "";
                   }}
                 />
@@ -323,8 +374,7 @@ export default function MyAppraisalPage() {
                       {periodLabel(it.period)} · {it.formTitle}
                     </span>
                     <span className={styles.cardSub}>
-                      개인 역량평가 · 평가자 {it.evaluatorName} ·{" "}
-                      {fmtDate(it.submittedAt)} 제출
+                      개인 역량평가 ·&nbsp;{fmtDate(it.submittedAt)} 제출
                     </span>
                   </div>
                   <div className={styles.cardRight}>

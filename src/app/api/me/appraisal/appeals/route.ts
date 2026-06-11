@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuthFull } from '@/lib/auth/requireAuth'
 import { supabaseAdmin } from '@/lib/supabase/admin'
+import { APPEAL_WINDOW_DAYS, isAppealWindowOpen } from '@/lib/appraisal/appeal'
 
 export const runtime = 'nodejs'
 
@@ -60,7 +61,7 @@ export async function POST(request: NextRequest) {
   // 본인의 제출 완료된 평가인지 확인
   const { data: evaluation } = await supabaseAdmin
     .from('appraisal_evaluations')
-    .select('id, target_user_id, sheet_key, status')
+    .select('id, target_user_id, sheet_key, status, submitted_at')
     .eq('id', evaluationId)
     .maybeSingle()
 
@@ -73,6 +74,15 @@ export async function POST(request: NextRequest) {
   if (evaluation.status !== 'submitted') {
     return NextResponse.json(
       { error: '제출 완료된 평가에만 이의제기할 수 있습니다.' },
+      { status: 400 },
+    )
+  }
+  // 이의제기 기간 — 평가 제출 후 5일 이내
+  if (!isAppealWindowOpen(evaluation.submitted_at)) {
+    return NextResponse.json(
+      {
+        error: `이의제기 기간이 지났습니다. (평가 제출 후 ${APPEAL_WINDOW_DAYS}일 이내 가능)`,
+      },
       { status: 400 },
     )
   }
