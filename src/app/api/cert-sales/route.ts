@@ -80,7 +80,7 @@ async function checkSalesPermission(userId: number): Promise<'all' | 'own' | 'no
 
 type PaymentMethod = 'bank_transfer' | 'card'
 type RefundStatus = '정상' | '당월 환불' | '환불' | '정산' | '보류'
-type Category = '학점연계' | '후납'
+type Category = '학점연계' | '후납' | '집체교육'
 
 interface MergedItem {
   cert_application_id: string | null

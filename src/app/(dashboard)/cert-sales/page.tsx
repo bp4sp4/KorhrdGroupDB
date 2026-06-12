@@ -12,7 +12,7 @@ import SalesHeaderManager from "../edu-sales/SalesHeaderManager";
 // ─── 타입 ─────────────────────────────────────────────────────────────
 type PaymentMethod = "bank_transfer" | "card";
 type RefundStatus = "정상" | "당월 환불" | "환불" | "정산" | "보류";
-type Category = "학점연계" | "후납";
+type Category = "학점연계" | "후납" | "집체교육";
 
 const REFUND_ROW_COLORS: Partial<Record<RefundStatus, string>> = {
   환불: "#F3C8DE",
@@ -50,6 +50,7 @@ const PAYMENT_METHOD_OPTIONS: { value: PaymentMethod; label: string }[] = [
 const CATEGORY_OPTIONS: { value: Category; label: string }[] = [
   { value: "학점연계", label: "학점연계" },
   { value: "후납", label: "후납" },
+  { value: "집체교육", label: "집체교육" },
 ];
 
 // ─── KST 헬퍼 ──────────────────────────────────────────────────────
@@ -764,6 +765,7 @@ export default function CertSalesPage() {
             { value: "all", label: "분류 전체" },
             { value: "학점연계", label: "학점연계" },
             { value: "후납", label: "후납" },
+            { value: "집체교육", label: "집체교육" },
           ]}
           ariaLabel="분류 필터"
           minWidth={120}
