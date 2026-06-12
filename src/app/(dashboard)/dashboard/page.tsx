@@ -1105,35 +1105,205 @@ function ComingSoon({ icon, text }: { icon: React.ReactNode; text: string }) {
 }
 
 // ─── KPI 목표 카드 ──────────────────────────────────────────────────
+// 목표값: app_settings (dashboard.kpi_goal.{YYYY}-Q{n}) — 사업본부장이 분기별 설정
+// 분기가 바뀌면 현재 분기 키를 자동 조회하므로 별도 갱신 작업이 필요 없다.
 function KpiCard() {
-  // mock — 추후 API 연결
-  const target = 1_000_000_000;
-  const achieved = 636_553_000;
-  const pct = Math.min(100, Math.round((achieved / target) * 100));
+  const now = new Date();
+  const year = now.getFullYear();
+  const quarter = Math.floor(now.getMonth() / 3) + 1;
+  // 실적 — 분기 전사 매출 합산 (학점은행/수강등록 + 민간자격증 + 실습)
+  const [achieved, setAchieved] = useState<number | null>(null);
+  const [target, setTarget] = useState<number | null>(null);
+  const [canEdit, setCanEdit] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    fetch(`/api/dashboard/kpi-goal?year=${year}&quarter=${quarter}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then(
+        (
+          data: {
+            target: number | null;
+            achieved: number | null;
+            canEdit: boolean;
+          } | null,
+        ) => {
+          if (!alive || !data) return;
+          setTarget(data.target);
+          setAchieved(data.achieved);
+          setCanEdit(data.canEdit);
+        },
+      )
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [year, quarter]);
+
+  const handleSave = async (nextTarget: number) => {
+    setSaving(true);
+    try {
+      const res = await fetch("/api/dashboard/kpi-goal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ year, quarter, target: nextTarget }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        alert(err.error ?? "KPI 목표 저장에 실패했습니다.");
+        return;
+      }
+      setTarget(nextTarget);
+      setModalOpen(false);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // 달성률 — 100% 초과분도 그대로 표시 (예: 112%), 바 너비만 100%로 제한
+  const pct =
+    achieved !== null && target !== null && target > 0
+      ? Math.round((achieved / target) * 100)
+      : 0;
+  const isOver = pct > 100;
+
   return (
     <section className={`${styles.card} ${styles.kpiCard}`}>
       <div className={styles.kpiHead}>
         <h3 className={styles.cardTitle}>KPI 목표</h3>
+        {canEdit && (
+          <button
+            type="button"
+            className={styles.goalSettingBtn}
+            onClick={() => setModalOpen(true)}
+          >
+            <Target size={14} />
+            <span>목표 설정</span>
+          </button>
+        )}
       </div>
       <div className={styles.kpiRow}>
-        <span className={styles.kpiTag}>2026 목표</span>
+        <span className={styles.kpiTag}>
+          {year}년 {quarter}분기 목표
+        </span>
         <span className={styles.kpiTargetValue}>
-          {target.toLocaleString()}원
+          {target !== null ? `${target.toLocaleString()}원` : "목표 미설정"}
         </span>
       </div>
       <div className={styles.kpiBar}>
         <span
-          className={styles.kpiBarFill}
-          style={{ width: `${pct}%` }}
+          className={`${styles.kpiBarFill} ${isOver ? styles.kpiBarFillOver : ""}`}
+          style={{ width: `${Math.min(100, pct)}%` }}
         />
       </div>
       <div className={styles.kpiBottomRow}>
         <span className={styles.kpiAchieved}>
-          {achieved.toLocaleString()}원
+          {achieved !== null ? `${achieved.toLocaleString()}원` : "-"}
         </span>
-        <span className={styles.kpiPct}>{pct}%</span>
+        <span className={`${styles.kpiPct} ${isOver ? styles.kpiPctOver : ""}`}>
+          {pct}%{isOver && ` (+${pct - 100}% 초과)`}
+        </span>
       </div>
+
+      {modalOpen && (
+        <KpiGoalModal
+          year={year}
+          quarter={quarter}
+          initial={target}
+          saving={saving}
+          onClose={() => setModalOpen(false)}
+          onSave={handleSave}
+        />
+      )}
     </section>
+  );
+}
+
+// ─── KPI 목표 설정 모달 (사업본부장) ─────────────────────────────────
+function KpiGoalModal({
+  year,
+  quarter,
+  initial,
+  saving,
+  onClose,
+  onSave,
+}: {
+  year: number;
+  quarter: number;
+  initial: number | null;
+  saving: boolean;
+  onClose: () => void;
+  onSave: (target: number) => void;
+}) {
+  const [value, setValue] = useState<string>(
+    initial !== null ? String(initial) : "",
+  );
+
+  const parsed = parseInt(value.replace(/,/g, ""), 10);
+  const targetNum = Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+
+  return (
+    <div
+      className={styles.goalModalOverlay}
+      onClick={(e) => {
+        if (e.target === e.currentTarget && !saving) onClose();
+      }}
+    >
+      <div className={styles.goalModalBox}>
+        <div className={styles.goalModalHeader}>
+          <h3 className={styles.goalModalTitle}>KPI 목표 설정</h3>
+          <span className={styles.goalModalSubtitle}>
+            {year}년 {quarter}분기
+          </span>
+        </div>
+
+        <div className={styles.goalModalBody}>
+          <div className={styles.goalModalRow}>
+            <label className={styles.goalModalLabel}>분기 목표</label>
+            <div className={styles.goalModalInputWrap}>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={value}
+                onChange={(e) =>
+                  setValue(e.target.value.replace(/[^0-9,]/g, ""))
+                }
+                placeholder="예) 1000000000"
+                className={styles.goalModalInput}
+              />
+              <span className={styles.goalModalUnit}>원</span>
+            </div>
+          </div>
+          <div className={styles.goalModalSummary}>
+            <span>입력 금액</span>
+            <span className={styles.goalModalSummaryMatch}>
+              {targetNum > 0 ? `${targetNum.toLocaleString()}원` : "-"}
+            </span>
+          </div>
+        </div>
+
+        <div className={styles.goalModalFooter}>
+          <button
+            type="button"
+            className={styles.goalModalCancel}
+            onClick={onClose}
+            disabled={saving}
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            className={styles.goalModalSave}
+            onClick={() => targetNum > 0 && onSave(targetNum)}
+            disabled={saving || targetNum <= 0}
+          >
+            {saving ? "저장 중..." : "저장"}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 

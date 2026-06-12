@@ -1998,6 +1998,15 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* 목표 초과 달성 — 퍼센트·바 강조 */
+.kpiPctOver {
+  color: #0a9b56;
+}
+
+.kpiBarFillOver {
+  background: #0a9b56;
+}
+
 /* ─── 공지사항 카드 ─── */
 .noticeCard {
   display: flex;
