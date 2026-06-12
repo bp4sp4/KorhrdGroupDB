@@ -29,6 +29,9 @@ export type PermissionSection =
   | 'wj-archive'
   | 'me-attendance'
   | 'profit'
+  | 'me-contracts'
+  | 'appraisal'
+  | 'me-appraisal'
 
 export interface PermissionRecord {
   section: PermissionSection
@@ -71,14 +74,22 @@ export const ALL_PERMISSION_SECTIONS: PermissionSection[] = [
   'wj-archive',
   'me-attendance',
   'profit',
+  'me-contracts',
+  'appraisal',
+  'me-appraisal',
 ]
 
 // 기본 허용 섹션 — 권한 레코드가 없으면 'all' 로 간주 (명시적으로 none 줄 때만 차단)
 // wj-admin 은 역할(관리자/부서관리자) 게이트가 별도로 있어 기본 all 이어도 일반 직원에겐 안 열린다
+// me-contracts / appraisal / me-appraisal — 기존에 전직원 공통이던 메뉴라 기본 all,
+// 권한관리에서 특정 사용자만 '접근 불가'로 끌 수 있다
 const DEFAULT_ALLOW_SECTIONS: PermissionSection[] = [
   'wj-admin',
   'wj-archive',
   'me-attendance',
+  'me-contracts',
+  'appraisal',
+  'me-appraisal',
 ]
 
 // 직책별 기본 권한 (position_permissions 테이블이 비어있을 때 fallback)
@@ -86,6 +97,7 @@ const DEFAULT_ALLOW_SECTIONS: PermissionSection[] = [
 const COMMON_SECTIONS: PermissionSection[] = [
   'links', 'marketing', 'task-board', 'me-leave', 'calendar',
   'wj-admin', 'wj-archive', 'me-attendance',
+  'me-contracts', 'appraisal', 'me-appraisal',
 ]
 
 const MANAGEMENT_ACCESS_BY_POSITION: Record<string, PermissionSection[]> = {

@@ -1321,6 +1321,18 @@ function ComposePane({
           : base,
       );
     });
+    // 서명은 본문에 바로 붙지 않고 하단에 떨어져 보이도록 — 서명 앞에 여백 스페이서 삽입
+    // (이메일 클라이언트는 margin 을 무시하는 경우가 있어 높이 고정 div 사용)
+    const sig = doc.querySelector('[data-mail-signature="1"]');
+    if (sig) {
+      const spacer = doc.createElement("div");
+      spacer.setAttribute(
+        "style",
+        "height:120px;line-height:120px;font-size:0;",
+      );
+      spacer.innerHTML = "&nbsp;";
+      sig.parentNode?.insertBefore(spacer, sig);
+    }
     return doc.body.innerHTML;
   };
 

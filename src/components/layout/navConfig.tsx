@@ -376,14 +376,14 @@ export const ALL_SECTIONS: NavSection[] = [
         label: "내 근로계약서",
         href: "/me/contracts",
         icon: <FileText size={16} />,
-        fixedNote: "전직원 공통",
+        permissionKey: "me-contracts",
       },
       {
         id: "appraisal",
         label: "인사고과표",
         href: "/appraisal",
         icon: <ClipboardList size={16} />,
-        fixedNote: "팀장·본부장 평가 · 경영실장 관리",
+        permissionKey: "appraisal",
       },
       {
         id: "mail-settings",
@@ -545,7 +545,7 @@ export const PERSONAL_TOOLS_ITEMS: NavItem[] = [
     label: "내 인사고과",
     href: "/me/appraisal",
     icon: <ClipboardList size={16} />,
-    fixedNote: "전직원 공통",
+    permissionKey: "me-appraisal",
   },
 ];
 
@@ -573,6 +573,8 @@ export const SECTION_ITEM_MAP: Record<string, string> = {
   "task-board": "task-board",
   "me-leave": "me-leave",
   calendar: "calendar",
+  "me-contracts": "me-contracts",
+  appraisal: "appraisal",
 };
 
 // ─── 권한관리 화면용 레이아웃 (사이드바 구조 그대로) ─────────────────────────

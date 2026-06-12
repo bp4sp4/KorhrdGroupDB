@@ -27,6 +27,7 @@ import {
   HelpCircle,
   Inbox,
   Plus,
+  RotateCcw,
 } from "lucide-react";
 import styles from "./page.module.css";
 import {
@@ -595,6 +596,20 @@ function ConsultationList({
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
+              {(query || startDate || endDate) && (
+                <button
+                  type="button"
+                  className={styles.wcConsultResetBtn}
+                  onClick={() => {
+                    setQuery("");
+                    setStartDate("");
+                    setEndDate("");
+                  }}
+                  title="검색·기간 필터 초기화"
+                >
+                  <RotateCcw size={13} /> 초기화
+                </button>
+              )}
               <button
                 type="button"
                 className={styles.wcConsultAddBtn}
