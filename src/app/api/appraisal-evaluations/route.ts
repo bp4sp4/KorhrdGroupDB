@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuthFull } from '@/lib/auth/requireAuth'
 import { supabaseAdmin } from '@/lib/supabase/admin'
-import { canEditAppraisal } from '@/lib/auth/appraisalAccess'
+import {
+  canEditAppraisal,
+  canViewAppraisalOverview,
+} from '@/lib/auth/appraisalAccess'
 import {
   getEvaluationTargets,
   isValidScores,
@@ -23,8 +26,9 @@ export async function GET(request: NextRequest) {
   const periodParam = request.nextUrl.searchParams.get('period')
   const period = isValidPeriod(periodParam) ? periodParam : defaultPeriod()
 
-  const [targets, canOverview] = await Promise.all([
+  const [targets, canOverview, canManageOverview] = await Promise.all([
     getEvaluationTargets(appUser),
+    canViewAppraisalOverview(appUser),
     canEditAppraisal(appUser),
   ])
 
@@ -63,7 +67,7 @@ export async function GET(request: NextRequest) {
     const { data: appealRows } = await supabaseAdmin
       .from('appraisal_appeals')
       .select(
-        'id, evaluation_id, user_id, content, attachments, status, created_at, resolved_at',
+        'id, evaluation_id, user_id, content, attachments, status, created_at, resolved_at, block_index, indicator_index, indicator_text',
       )
       .in('evaluation_id', evalIds)
       .order('created_at', { ascending: false })
@@ -74,6 +78,7 @@ export async function GET(request: NextRequest) {
     canEvaluate:
       targets.teamTargets.length > 0 || targets.personalTargets.length > 0,
     canOverview,
+    canManageOverview,
     isMaster: targets.isMaster,
     teamTargets: targets.teamTargets,
     personalTargets: targets.personalTargets,
@@ -151,12 +156,13 @@ export async function POST(request: NextRequest) {
 
   if (existing) {
     // 처리 대기 중인 이의제기가 있으면 제출된 평가도 평가자가 재수정 가능
-    const { data: pendingAppeal } = await supabaseAdmin
+    const { data: pendingAppealRows } = await supabaseAdmin
       .from('appraisal_appeals')
       .select('id')
       .eq('evaluation_id', existing.id)
       .eq('status', 'pending')
-      .maybeSingle()
+      .limit(100)
+    const pendingAppeal = (pendingAppealRows ?? []).length > 0
 
     // 제출 완료 상태에서만 잠금/평가자 일치 검사.
     // draft(재작성 허용 포함)는 위에서 검증된 권한 있는 평가자라면 누가 썼든
@@ -188,7 +194,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // 재제출 시 이의제기 처리 완료로 전환
+    // 재제출 시 처리 대기 중인 이의제기 전체를 처리 완료로 전환
     if (submit && pendingAppeal) {
       await supabaseAdmin
         .from('appraisal_appeals')
@@ -198,7 +204,8 @@ export async function POST(request: NextRequest) {
           resolved_at: now,
           updated_at: now,
         })
-        .eq('id', pendingAppeal.id)
+        .eq('evaluation_id', existing.id)
+        .eq('status', 'pending')
     }
     return NextResponse.json({ id: existing.id })
   }

@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuthFull } from '@/lib/auth/requireAuth'
 import { supabaseAdmin } from '@/lib/supabase/admin'
-import { canEditAppraisal } from '@/lib/auth/appraisalAccess'
-import { defaultPeriod, isValidPeriod } from '@/lib/appraisal/period'
+import { canViewAppraisalOverview } from '@/lib/auth/appraisalAccess'
+import {
+  defaultPeriod,
+  isValidPeriod,
+  parsePeriod,
+} from '@/lib/appraisal/period'
+import { getMonthlySales } from '@/lib/dashboard/monthlySales'
 
 export const runtime = 'nodejs'
 
@@ -10,9 +15,9 @@ export const runtime = 'nodejs'
 export async function GET(request: NextRequest) {
   const { appUser, errorResponse } = await requireAuthFull()
   if (errorResponse) return errorResponse
-  if (!appUser || !(await canEditAppraisal(appUser))) {
+  if (!appUser || !(await canViewAppraisalOverview(appUser))) {
     return NextResponse.json(
-      { error: '평가 현황은 경영실장만 볼 수 있습니다.' },
+      { error: '평가 현황은 경영실장·사업본부장만 볼 수 있습니다.' },
       { status: 403 },
     )
   }
@@ -64,6 +69,55 @@ export async function GET(request: NextRequest) {
   const nameOf = (id: number) =>
     users.get(id)?.display_name ?? `사용자 ${id}`
 
+  // ── KPI 달성률 — 대시보드 월 목표(app_settings) 분기 합산 대비 실제 매출 ──
+  // 개인 평가 대상자별: 분기 3개월 목표 합 / 매출 합 → 달성률(%)
+  const { year, quarter } = parsePeriod(period)
+  const months = [quarter * 3 - 2, quarter * 3 - 1, quarter * 3]
+  const pad2 = (n: number) => String(n).padStart(2, '0')
+  const personalTargetIds = [
+    ...new Set(
+      rows
+        .filter((r) => r.sheet_key === 'personal' && r.target_user_id != null)
+        .map((r) => r.target_user_id as number),
+    ),
+  ]
+  const kpiRateByUser = new Map<number, number | null>()
+  if (personalTargetIds.length > 0) {
+    const goalKeys = personalTargetIds.flatMap((uid) =>
+      months.map((m) => `dashboard.monthly_goal.${uid}.${year}-${pad2(m)}`),
+    )
+    const { data: goalRows } = await supabaseAdmin
+      .from('app_settings')
+      .select('key, value')
+      .in('key', goalKeys)
+    const goalByKey = new Map(
+      (goalRows ?? []).map((g) => [g.key as string, g.value]),
+    )
+    await Promise.all(
+      personalTargetIds.map(async (uid) => {
+        const displayName = users.get(uid)?.display_name?.trim()
+        const goalTotal = months.reduce((sum, m) => {
+          const v = goalByKey.get(
+            `dashboard.monthly_goal.${uid}.${year}-${pad2(m)}`,
+          ) as { total?: unknown } | null | undefined
+          return sum + (typeof v?.total === 'number' ? v.total : 0)
+        }, 0)
+        if (!displayName || goalTotal <= 0) {
+          kpiRateByUser.set(uid, null)
+          return
+        }
+        const sales = await Promise.all(
+          months.map((m) => getMonthlySales(displayName, year, m)),
+        )
+        const actualTotal = sales.reduce((sum, s) => sum + s.total, 0)
+        kpiRateByUser.set(
+          uid,
+          Math.round((actualTotal / goalTotal) * 1000) / 10,
+        )
+      }),
+    )
+  }
+
   // 이의제기 — 평가 현황에서 관리자가 확인
   const evalIds = rows.map((r) => r.id as string)
   let appeals: unknown[] = []
@@ -71,7 +125,7 @@ export async function GET(request: NextRequest) {
     const { data: appealRows } = await supabaseAdmin
       .from('appraisal_appeals')
       .select(
-        'id, evaluation_id, user_id, content, attachments, status, created_at, resolved_at',
+        'id, evaluation_id, user_id, content, attachments, status, created_at, resolved_at, block_index, indicator_index, indicator_text',
       )
       .in('evaluation_id', evalIds)
       .order('created_at', { ascending: false })
@@ -100,6 +154,10 @@ export async function GET(request: NextRequest) {
         target_user_team_name: targetUserTeamId
           ? (teamName.get(targetUserTeamId) ?? null)
           : null,
+        target_kpi_rate:
+          r.sheet_key === 'personal' && r.target_user_id != null
+            ? (kpiRateByUser.get(r.target_user_id) ?? null)
+            : null,
       }
     }),
   })

@@ -12,6 +12,8 @@ import {
   RotateCcw,
   Eye,
   Paperclip,
+  Flag,
+  Info,
 } from "lucide-react";
 import styles from "./page.module.css";
 import {
@@ -19,10 +21,14 @@ import {
   type AppraisalFormRow,
   type AppraisalSheet,
   type ScoreMatrix,
+  clampToGrade,
   combinedScore,
   createEmptyFormData,
   gradeOf,
+  kpiCapGrade,
+  lowerGrade,
   normalizeScores,
+  relativeGradeOf,
   totalScore,
 } from "@/lib/appraisal/form";
 import {
@@ -62,11 +68,58 @@ interface AppealRow {
   status: "pending" | "resolved";
   created_at: string;
   resolved_at: string | null;
+  /** 항목별 이의제기 — 평가서 행 위치 (null = 평가 전체) */
+  block_index?: number | null;
+  indicator_index?: number | null;
+  indicator_text?: string | null;
+}
+
+/** 이의제기 본문 — 길면 3줄 접고 더보기로 펼침 */
+function ClampText({ text }: { text: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const isLong = text.length > 160 || text.split("\n").length > 3;
+  return (
+    <div className={styles.appealItemContent}>
+      <span className={!expanded && isLong ? styles.appealItemClamped : ""}>
+        {text}
+      </span>
+      {isLong && (
+        <button
+          type="button"
+          className={styles.appealMoreBtn}
+          onClick={() => setExpanded((v) => !v)}
+        >
+          {expanded ? "접기" : "더보기"}
+        </button>
+      )}
+    </div>
+  );
+}
+
+/** 항목별 이의제기 행 위치 추출 — SheetView 뱃지 표시용 */
+function indicatorAppealMarks(appeals: AppealRow[], evaluationId?: string) {
+  return appeals
+    .filter(
+      (a) =>
+        (!evaluationId || a.evaluation_id === evaluationId) &&
+        a.block_index != null &&
+        a.indicator_index != null,
+    )
+    .map((a) => ({
+      blockIndex: a.block_index as number,
+      indicatorIndex: a.indicator_index as number,
+      status: a.status,
+      content: a.content,
+      attachments: a.attachments ?? [],
+      createdAt: a.created_at,
+    }));
 }
 
 interface EvalContext {
   canEvaluate: boolean;
   canOverview: boolean;
+  /** 평가 현황 관리(재오픈·삭제) 권한 — 경영실장/master-admin */
+  canManageOverview?: boolean;
   isMaster: boolean;
   teamTargets: { teamId: string; teamName: string }[];
   personalTargets: {
@@ -85,6 +138,8 @@ interface OverviewRow extends EvaluationRow {
   evaluator_name: string;
   target_user_team_id: string | null;
   target_user_team_name: string | null;
+  /** KPI 달성률(%) — 대시보드 월 목표 분기 합산 대비 매출 (목표 미설정 시 null) */
+  target_kpi_rate?: number | null;
 }
 
 interface WriteTarget {
@@ -532,7 +587,11 @@ export default function AppraisalPage() {
 
   // ── 평가 현황 (경영실장) ──────────────────────────────────────────
   const handleReopen = async (row: OverviewRow) => {
-    if (!window.confirm("이 평가를 재작성(임시저장) 상태로 되돌릴까요?"))
+    if (
+      !window.confirm(
+        "평가자에게 재평가를 요청할까요?\n제출이 취소되고 평가자가 다시 수정할 수 있게 됩니다.",
+      )
+    )
       return;
     const res = await fetch(`/api/appraisal-evaluations/${row.id}`, {
       method: "PATCH",
@@ -699,8 +758,8 @@ export default function AppraisalPage() {
               고과표 양식
             </button>
           )}
-          {/* 평가 현황 — 일반 오픈 전까지 어드민(master-admin)만 노출 */}
-          {evalCtx?.isMaster && evalCtx?.canOverview && (
+          {/* 평가 현황 — 경영실장·사업본부장 열람 */}
+          {evalCtx?.canOverview && (
             <button
               className={`${styles.tabBtn} ${tab === "status" ? styles.tabBtnActive : ""}`}
               onClick={() => setTab("status")}
@@ -844,38 +903,57 @@ export default function AppraisalPage() {
                     )
                   : [];
                 if (rowAppeals.length === 0) return null;
-                const hasPending = rowAppeals.some(
+                const pendingCount = rowAppeals.filter(
                   (a) => a.status === "pending",
-                );
+                ).length;
                 return (
                   <div className={styles.appealPanel}>
-                    <div className={styles.appealPanelHead}>
-                      <span className={styles.badgeAppeal}>
-                        이의제기 {rowAppeals.length}건
-                      </span>
+                    {/* 헤더 — 플래그 아이콘 + 제목 + 건수 + 전체 상태 */}
+                    <div className={styles.appealPanelTitleRow}>
+                      <div className={styles.appealPanelTitleCol}>
+                        <span className={styles.appealPanelTitle}>
+                          이의제기
+                          <span className={styles.appealCountBadge}>
+                            {rowAppeals.length}건
+                          </span>
+                        </span>
+                        <span className={styles.appealPanelSub}>
+                          평가 대상자가 점수에 이의를 제기했어요
+                        </span>
+                      </div>
                     </div>
+
+                    {/* 건별 카드 */}
                     {rowAppeals.map((a) => (
                       <div key={a.id} className={styles.appealHistoryItem}>
-                        <div className={styles.appealPanelHead}>
-                          <span
-                            className={
-                              a.status === "pending"
-                                ? styles.badgeDraft
-                                : styles.badgeDone
-                            }
-                          >
-                            {a.status === "pending"
-                              ? "처리 대기"
-                              : "재평가 완료"}
+                        <div className={styles.appealItemHead}>
+                          <span className={styles.appealItemLabel}>
+                            대상 항목
                           </span>
-                          <span className={styles.appealPanelDate}>
-                            {new Date(a.created_at).toLocaleDateString("ko-KR")}{" "}
-                            제출
-                            {a.resolved_at &&
-                              ` · ${new Date(a.resolved_at).toLocaleDateString("ko-KR")} 처리`}
+                          <span className={styles.appealItemTitle}>
+                            {a.indicator_text ?? "평가 전체"}
+                          </span>
+                          <span className={styles.appealItemRight}>
+                            <span className={styles.appealPanelDate}>
+                              {new Date(a.created_at).toLocaleDateString(
+                                "ko-KR",
+                              )}
+                            </span>
+                            <span
+                              className={
+                                a.status === "pending"
+                                  ? styles.appealStatusPillPending
+                                  : styles.appealStatusPillDone
+                              }
+                            >
+                              <i className={styles.appealStatusDot} />
+                              {a.status === "pending"
+                                ? "처리 대기"
+                                : "처리 완료"}
+                            </span>
                           </span>
                         </div>
-                        <p className={styles.appealPanelContent}>{a.content}</p>
+                        <ClampText text={a.content} />
                         {a.attachments?.length > 0 && (
                           <div className={styles.appealPanelFiles}>
                             {a.attachments.map((f, i) => (
@@ -893,10 +971,12 @@ export default function AppraisalPage() {
                         )}
                       </div>
                     ))}
-                    {hasPending && (
-                      <p className={styles.appealPanelHint}>
-                        점수를 검토·수정한 뒤 다시 제출하면 이의제기가 처리
-                        완료됩니다.
+
+                    {/* 안내 — 재제출 시 자동 처리 */}
+                    {pendingCount > 0 && (
+                      <p className={styles.appealInfoBar}>
+                        <Info size={14} /> 점수를 검토하고 다시 제출하면
+                        이의제기가 자동으로 <b>처리 완료</b>돼요.
                       </p>
                     )}
                   </div>
@@ -911,6 +991,10 @@ export default function AppraisalPage() {
                 onChange={() => {}}
                 salesMetric={quantMetric}
                 highlightMissing={showMissingMarks}
+                indicatorAppeals={indicatorAppealMarks(
+                  evalCtx?.appeals ?? [],
+                  findEvaluation(writeTarget)?.id,
+                )}
                 scores={writeScores}
                 onScore={
                   writeLocked
@@ -962,31 +1046,48 @@ export default function AppraisalPage() {
               if (rowAppeals.length === 0) return null;
               return (
                 <div className={styles.appealPanel}>
-                  <div className={styles.appealPanelHead}>
-                    <span className={styles.badgeAppeal}>
-                      이의제기 {rowAppeals.length}건
+                  <div className={styles.appealPanelTitleRow}>
+                    <span className={styles.appealPanelFlag}>
+                      <Flag size={17} />
                     </span>
+                    <div className={styles.appealPanelTitleCol}>
+                      <span className={styles.appealPanelTitle}>
+                        이의제기
+                        <span className={styles.appealCountBadge}>
+                          {rowAppeals.length}건
+                        </span>
+                      </span>
+                      <span className={styles.appealPanelSub}>
+                        평가 대상자가 점수에 이의를 제기했어요
+                      </span>
+                    </div>
                   </div>
                   {rowAppeals.map((a) => (
                     <div key={a.id} className={styles.appealHistoryItem}>
-                      <div className={styles.appealPanelHead}>
-                        <span
-                          className={
-                            a.status === "pending"
-                              ? styles.badgeDraft
-                              : styles.badgeDone
-                          }
-                        >
-                          {a.status === "pending" ? "처리 대기" : "재평가 완료"}
+                      <div className={styles.appealItemHead}>
+                        <span className={styles.appealItemLabel}>
+                          대상 항목
                         </span>
-                        <span className={styles.appealPanelDate}>
-                          {new Date(a.created_at).toLocaleDateString("ko-KR")}{" "}
-                          제출
-                          {a.resolved_at &&
-                            ` · ${new Date(a.resolved_at).toLocaleDateString("ko-KR")} 처리`}
+                        <span className={styles.appealItemTitle}>
+                          {a.indicator_text ?? "평가 전체"}
+                        </span>
+                        <span className={styles.appealItemRight}>
+                          <span className={styles.appealPanelDate}>
+                            {new Date(a.created_at).toLocaleDateString("ko-KR")}
+                          </span>
+                          <span
+                            className={
+                              a.status === "pending"
+                                ? styles.appealStatusPillPending
+                                : styles.appealStatusPillDone
+                            }
+                          >
+                            <i className={styles.appealStatusDot} />
+                            {a.status === "pending" ? "처리 대기" : "처리 완료"}
+                          </span>
                         </span>
                       </div>
-                      <p className={styles.appealPanelContent}>{a.content}</p>
+                      <ClampText text={a.content} />
                       {a.attachments?.length > 0 && (
                         <div className={styles.appealPanelFiles}>
                           {a.attachments.map((f, i) => (
@@ -1012,6 +1113,10 @@ export default function AppraisalPage() {
               editing={false}
               onChange={() => {}}
               salesMetric={quantMetric}
+              indicatorAppeals={indicatorAppealMarks(
+                overviewAppeals,
+                overviewDetail.id,
+              )}
               scores={normalizeScores(
                 selected.form_data[overviewDetail.sheet_key],
                 overviewDetail.scores,
@@ -1024,6 +1129,7 @@ export default function AppraisalPage() {
           rows={overviewRows}
           appeals={overviewAppeals}
           sheet={selected.form_data}
+          canManage={evalCtx?.canManageOverview ?? false}
           onView={setOverviewDetail}
           onReopen={handleReopen}
           onDelete={handleEvalDelete}
@@ -1215,6 +1321,7 @@ function OverviewList({
   rows,
   appeals,
   sheet,
+  canManage,
   onView,
   onReopen,
   onDelete,
@@ -1222,6 +1329,8 @@ function OverviewList({
   rows: OverviewRow[] | null;
   appeals: AppealRow[];
   sheet: AppraisalFormData;
+  /** 재오픈·삭제 가능 여부 — 경영실장/master-admin (본부장은 열람 전용) */
+  canManage: boolean;
   onView: (row: OverviewRow) => void;
   onReopen: (row: OverviewRow) => void;
   onDelete: (row: OverviewRow) => void;
@@ -1246,14 +1355,18 @@ function OverviewList({
   const draftCount = rows.length - submittedCount;
   const appealCount = pendingAppealEvalIds.size;
 
-  // ── 종합 등급 (규정 제7조: 팀 50% + 개인 50% 합산 → 절대평가 등급) ──
+  // ── 종합 등급 (규정 제7조) ──────────────────────────────────────────
+  // ① 절대평가점수 = 팀 역량 50% + 개인 역량 50%
+  // ② 상대평가점수 = 절대평가 순위 백분위를 권장비율로 등급 구간 보정
+  // ③ 등급 조건 = KPI 달성률 100%↑ S / 90%↑ A / 미만 B (하향 하한 B)
+  // ④ 최종점수·등급 = 상대평가점수를 확정 등급 구간으로 보정
   const teamEvalByTeam = new Map(
     rows
       .filter((r) => r.sheet_key === "team" && r.target_team_id)
       .map((r) => [r.target_team_id as string, r]),
   );
   const fmt = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
-  const summary = rows
+  const base = rows
     .filter((r) => r.sheet_key === "personal")
     .map((p) => {
       const personalTotal = totalScore(
@@ -1275,12 +1388,44 @@ function OverviewList({
         personalTotal,
         teamTotal,
         combined,
-        grade: combined !== null ? gradeOf(combined) : null,
+        kpiRate: p.target_kpi_rate ?? null,
         submitted: p.status === "submitted",
         hasAppeal: pendingAppealEvalIds.has(p.id),
       };
+    });
+
+  // 상대평가 비교 그룹 = 절대평가점수가 산출된 인원
+  const rankedScores = base
+    .map((s) => s.combined)
+    .filter((v): v is number => v !== null);
+  const summary = base
+    .map((s) => {
+      if (s.combined === null) {
+        return {
+          ...s,
+          relScore: null as number | null,
+          finalScore: null as number | null,
+          grade: null as ReturnType<typeof gradeOf> | null,
+        };
+      }
+      // 상대평가 — 동점은 같은 순위, 비교 대상 1명이면 절대평가 등급 유지
+      const rank =
+        1 + rankedScores.filter((v) => v > (s.combined as number)).length;
+      const relGrade =
+        rankedScores.length >= 2
+          ? relativeGradeOf(rank, rankedScores.length)
+          : gradeOf(s.combined);
+      const relScore = clampToGrade(s.combined, relGrade);
+      // 등급 조건 (KPI) — 점수 등급과 KPI 허용 등급 중 낮은 쪽
+      const scoreGrade = gradeOf(relScore);
+      const grade =
+        s.kpiRate !== null
+          ? lowerGrade(scoreGrade, kpiCapGrade(s.kpiRate))
+          : scoreGrade;
+      const finalScore = clampToGrade(relScore, grade);
+      return { ...s, relScore, finalScore, grade };
     })
-    .sort((a, b) => (b.combined ?? -1) - (a.combined ?? -1));
+    .sort((a, b) => (b.finalScore ?? -1) - (a.finalScore ?? -1));
 
   const teamRows = rows.filter((r) => r.sheet_key === "team");
 
@@ -1309,8 +1454,10 @@ function OverviewList({
         <div className={styles.overviewWrap}>
           <h3 className={styles.overviewTitle}>직원별 종합</h3>
           <p className={styles.overviewHint}>
-            종합 점수 = 팀 역량 50% + 개인 역량 50% · 등급 S 95~100 / A 85~94 /
-            B 75~84 / C 65~74 / D 64 이하
+            절대평가 = 팀 역량 50% + 개인 역량 50% · 상대평가 = 절대평가 순위
+            백분위를 권장비율(S 5 / A 20 / B 45 / C 20 / D 10%) 구간으로 보정 ·
+            등급 조건 = KPI 달성률 100%↑ S / 90%↑ A / 미만 B (하향 시 B가 하한)
+            · 등급 S 95~100 / A 85~94 / B 75~84 / C 65~74 / D 64 이하
           </p>
           <table className={styles.overviewTable}>
             <thead>
@@ -1320,7 +1467,10 @@ function OverviewList({
                 <th>평가자</th>
                 <th>팀 점수</th>
                 <th>개인 점수</th>
-                <th>종합</th>
+                <th>절대평가</th>
+                <th>상대평가</th>
+                <th>KPI 달성률</th>
+                <th>최종점수</th>
                 <th>등급</th>
                 <th>상태</th>
                 <th>액션</th>
@@ -1336,8 +1486,13 @@ function OverviewList({
                     {s.teamTotal !== null ? `${fmt(s.teamTotal * 0.5)}점` : "-"}
                   </td>
                   <td>{fmt(s.personalTotal * 0.5)}점</td>
+                  <td>{s.combined !== null ? `${fmt(s.combined)}점` : "-"}</td>
+                  <td>{s.relScore !== null ? `${fmt(s.relScore)}점` : "-"}</td>
+                  <td>
+                    {s.kpiRate !== null ? `${fmt(s.kpiRate)}%` : "목표 없음"}
+                  </td>
                   <td className={styles.overviewTotal}>
-                    {s.combined !== null ? `${fmt(s.combined)}점` : "-"}
+                    {s.finalScore !== null ? `${fmt(s.finalScore)}점` : "-"}
                   </td>
                   <td>
                     {s.grade ? (
@@ -1370,22 +1525,24 @@ function OverviewList({
                       >
                         <Eye size={13} /> 보기
                       </button>
-                      {s.submitted && (
+                      {canManage && s.submitted && (
                         <button
                           className={styles.btnGhost}
                           onClick={() => onReopen(s.row)}
                           title="평가자가 다시 수정할 수 있게 잠금 해제"
                         >
-                          <RotateCcw size={13} />
+                          <RotateCcw size={13} /> 재평가요청
                         </button>
                       )}
-                      <button
-                        className={styles.btnDanger}
-                        onClick={() => onDelete(s.row)}
-                        title="평가 삭제"
-                      >
-                        <Trash2 size={13} />
-                      </button>
+                      {canManage && (
+                        <button
+                          className={styles.btnDanger}
+                          onClick={() => onDelete(s.row)}
+                          title="평가 삭제"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -1440,22 +1597,24 @@ function OverviewList({
                         >
                           <Eye size={13} /> 보기
                         </button>
-                        {row.status === "submitted" && (
+                        {canManage && row.status === "submitted" && (
                           <button
                             className={styles.btnGhost}
                             onClick={() => onReopen(row)}
                             title="평가자가 다시 수정할 수 있게 잠금 해제"
                           >
-                            <RotateCcw size={13} />
+                            <RotateCcw size={13} /> 재평가요청
                           </button>
                         )}
-                        <button
-                          className={styles.btnDanger}
-                          onClick={() => onDelete(row)}
-                          title="평가 삭제"
-                        >
-                          <Trash2 size={13} />
-                        </button>
+                        {canManage && (
+                          <button
+                            className={styles.btnDanger}
+                            onClick={() => onDelete(row)}
+                            title="평가 삭제"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

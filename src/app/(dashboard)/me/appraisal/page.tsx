@@ -31,6 +31,17 @@ interface AppealRow {
   status: "pending" | "resolved";
   created_at: string;
   resolved_at: string | null;
+  /** 항목별 이의제기 — 평가서 행 위치 (null = 평가 전체) */
+  block_index?: number | null;
+  indicator_index?: number | null;
+  indicator_text?: string | null;
+}
+
+/** 이의제기 대상 항목 (행에서 말풍선 클릭 시 지정) */
+interface AppealTarget {
+  blockIndex: number;
+  indicatorIndex: number;
+  text: string;
 }
 
 interface MyEvaluation {
@@ -52,12 +63,18 @@ export default function MyAppraisalPage() {
   const [detailId, setDetailId] = useState<string | null>(null);
   const [quantMetric, setQuantMetric] = useState<QuantMetrics | null>(null);
 
-  // 이의제기 작성
+  // 이의제기 작성 (하단 폼 — 평가 전체)
   const [appealContent, setAppealContent] = useState("");
   const [appealFiles, setAppealFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // 항목 이의제기 모달 — 행의 💬 버튼 클릭 시 그 자리에서 작성
+  const [modalTarget, setModalTarget] = useState<AppealTarget | null>(null);
+  const [modalContent, setModalContent] = useState("");
+  const [modalFiles, setModalFiles] = useState<File[]>([]);
+  const modalFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const addAppealFiles = (list: File[]) => {
     if (list.length === 0) return;
@@ -95,6 +112,62 @@ export default function MyAppraisalPage() {
     setDetailId(id);
     setAppealContent("");
     setAppealFiles([]);
+    setModalTarget(null);
+  };
+
+  // 첨부 업로드 — 공용
+  const uploadFiles = async (files: File[]): Promise<AppealAttachment[]> => {
+    if (files.length === 0) return [];
+    const fd = new FormData();
+    files.forEach((f) => fd.append("files", f));
+    const upRes = await fetch("/api/me/appraisal/appeals/upload", {
+      method: "POST",
+      body: fd,
+    });
+    if (!upRes.ok) {
+      const d = await upRes.json().catch(() => ({}));
+      throw new Error(d.error ?? "첨부파일 업로드에 실패했습니다.");
+    }
+    return ((await upRes.json()) as { files: AppealAttachment[] }).files;
+  };
+
+  // 항목 이의제기 제출 (모달)
+  const handleItemAppealSubmit = async () => {
+    if (!detail || !modalTarget) return;
+    const content = modalContent.trim();
+    if (!content) {
+      alert("이의제기 내용을 입력해주세요.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const attachments = await uploadFiles(modalFiles);
+      const res = await fetch("/api/me/appraisal/appeals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          evaluation_id: detail.evaluationId,
+          content,
+          attachments,
+          block_index: modalTarget.blockIndex,
+          indicator_index: modalTarget.indicatorIndex,
+          indicator_text: modalTarget.text,
+        }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error ?? "이의제기 제출에 실패했습니다.");
+      }
+      setModalTarget(null);
+      setModalContent("");
+      setModalFiles([]);
+      await load();
+      alert("이의제기가 제출되었습니다. 평가자가 확인 후 재평가합니다.");
+    } catch (e) {
+      alert((e as Error).message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleAppealSubmit = async () => {
@@ -128,7 +201,7 @@ export default function MyAppraisalPage() {
           .files;
       }
 
-      // 2) 이의제기 등록
+      // 2) 이의제기 등록 (평가 전체)
       const res = await fetch("/api/me/appraisal/appeals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -160,7 +233,20 @@ export default function MyAppraisalPage() {
   // ── 상세 보기 ──────────────────────────────────────────────────────
   if (detail) {
     const scores = normalizeScores(detail.sheet, detail.scores);
-    const pendingAppeal = detail.appeals.find((a) => a.status === "pending");
+    // 처리 대기 — 전체 이의제기 / 항목별 이의제기 위치 (같은 대상 중복 제기 방지)
+    const pendingWholeAppeal = detail.appeals.find(
+      (a) => a.status === "pending" && a.block_index == null,
+    );
+    const pendingItemKeys = new Set(
+      detail.appeals
+        .filter(
+          (a) =>
+            a.status === "pending" &&
+            a.block_index != null &&
+            a.indicator_index != null,
+        )
+        .map((a) => `${a.block_index}-${a.indicator_index}`),
+    );
     // 이의제기 기간 — 평가 제출 후 5일 이내
     const windowOpen = isAppealWindowOpen(detail.submittedAt);
     const deadline = appealDeadline(detail.submittedAt);
@@ -189,6 +275,38 @@ export default function MyAppraisalPage() {
               onChange={() => {}}
               scores={scores}
               salesMetric={quantMetric}
+              indicatorAppeals={detail.appeals
+                .filter(
+                  (a) => a.block_index != null && a.indicator_index != null,
+                )
+                .map((a) => ({
+                  blockIndex: a.block_index as number,
+                  indicatorIndex: a.indicator_index as number,
+                  status: a.status,
+                  content: a.content,
+                  attachments: a.attachments ?? [],
+                  createdAt: a.created_at,
+                }))}
+              onIndicatorAppeal={
+                windowOpen
+                  ? (bi, ii, text) => {
+                      if (pendingItemKeys.has(`${bi}-${ii}`)) {
+                        alert(
+                          "이 항목에 이미 처리 대기 중인 이의제기가 있습니다.",
+                        );
+                        return;
+                      }
+                      // 행에서 바로 작성 — 모달 오픈
+                      setModalContent("");
+                      setModalFiles([]);
+                      setModalTarget({
+                        blockIndex: bi,
+                        indicatorIndex: ii,
+                        text,
+                      });
+                    }
+                  : undefined
+              }
             />
           </div>
         </div>
@@ -230,6 +348,11 @@ export default function MyAppraisalPage() {
                       {a.resolved_at && ` · ${fmtDate(a.resolved_at)} 처리`}
                     </span>
                   </div>
+                  {a.indicator_text && (
+                    <span className={styles.appealTargetChip}>
+                      대상 항목: {a.indicator_text}
+                    </span>
+                  )}
                   <p className={styles.appealContent}>{a.content}</p>
                   {a.attachments.length > 0 && (
                     <div className={styles.attachList}>
@@ -256,10 +379,11 @@ export default function MyAppraisalPage() {
               이의제기 기간이 종료되었습니다. (평가 제출 후{" "}
               {APPEAL_WINDOW_DAYS}일 이내 가능)
             </div>
-          ) : pendingAppeal ? (
+          ) : pendingWholeAppeal ? (
             <div className={styles.appealLocked}>
-              처리 대기 중인 이의제기가 있습니다. 평가자가 재평가하면 다시
-              제출할 수 있습니다.
+              평가 전체 이의제기가 처리 대기 중입니다. 특정 항목에 대한
+              이의제기는 위 평가표의 항목 행에서 💬 버튼으로 추가 제기할 수
+              있습니다.
             </div>
           ) : (
             <div
@@ -283,7 +407,7 @@ export default function MyAppraisalPage() {
             >
               <textarea
                 className={styles.appealTextarea}
-                placeholder="이의제기 사유를 구체적으로 작성해주세요. (예: 5월 매출 실적 누락 — 첨부 자료 참고)"
+                placeholder="평가 전체에 대한 이의제기 사유를 작성해주세요. 특정 항목에 대한 이의제기는 위 평가표의 항목 행에서 💬 버튼으로 작성할 수 있습니다."
                 rows={4}
                 value={appealContent}
                 onChange={(e) => setAppealContent(e.target.value)}
@@ -343,6 +467,114 @@ export default function MyAppraisalPage() {
             </div>
           )}
         </section>
+
+        {/* ── 항목 이의제기 모달 — 행에서 바로 작성 ── */}
+        {modalTarget && (
+          <div
+            className={styles.appealModalOverlay}
+            onClick={(e) => {
+              if (e.target === e.currentTarget && !submitting)
+                setModalTarget(null);
+            }}
+          >
+            <div
+              className={styles.appealModalBox}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                if (submitting) return;
+                const files = Array.from(e.dataTransfer.files ?? []);
+                setModalFiles((prev) => [...prev, ...files].slice(0, 10));
+              }}
+            >
+              <div className={styles.appealModalHead}>
+                <h3 className={styles.appealModalTitle}>항목 이의제기</h3>
+                <button
+                  type="button"
+                  className={styles.appealTargetClear}
+                  onClick={() => setModalTarget(null)}
+                  disabled={submitting}
+                  aria-label="닫기"
+                >
+                  <X size={15} />
+                </button>
+              </div>
+              <span className={styles.appealTargetChip}>
+                {modalTarget.text}
+              </span>
+              <textarea
+                className={styles.appealTextarea}
+                placeholder="이 항목에 대한 이의제기 사유를 구체적으로 작성해주세요. 파일은 이 창에 끌어다 놓아도 첨부됩니다."
+                rows={4}
+                value={modalContent}
+                onChange={(e) => setModalContent(e.target.value)}
+                disabled={submitting}
+                autoFocus
+              />
+              {/* 첨부된 파일 — 전용 영역으로 또렷하게 표시 */}
+              {modalFiles.length > 0 && (
+                <div className={styles.modalFileList}>
+                  <span className={styles.modalFileListLabel}>
+                    첨부된 자료 {modalFiles.length}개
+                  </span>
+                  {modalFiles.map((f, i) => (
+                    <span key={i} className={styles.modalFileItem}>
+                      <Paperclip size={12} />
+                      <span className={styles.modalFileName}>{f.name}</span>
+                      <span className={styles.modalFileSize}>
+                        {f.size >= 1024 * 1024
+                          ? `${(f.size / 1024 / 1024).toFixed(1)}MB`
+                          : `${Math.max(1, Math.round(f.size / 1024))}KB`}
+                      </span>
+                      <button
+                        className={styles.fileChipRemove}
+                        onClick={() =>
+                          setModalFiles((prev) =>
+                            prev.filter((_, idx) => idx !== i),
+                          )
+                        }
+                        disabled={submitting}
+                        aria-label="첨부 제거"
+                      >
+                        <X size={12} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <div className={styles.appealFormFoot}>
+                <input
+                  ref={modalFileInputRef}
+                  type="file"
+                  multiple
+                  className={styles.fileInput}
+                  onChange={(e) => {
+                    // value 초기화 전에 파일 목록을 먼저 복사해야 함
+                    const files = Array.from(e.target.files ?? []);
+                    e.target.value = "";
+                    setModalFiles((prev) => [...prev, ...files].slice(0, 10));
+                  }}
+                />
+                <button
+                  className={styles.btnGhost}
+                  onClick={() => modalFileInputRef.current?.click()}
+                  disabled={submitting}
+                >
+                  <Paperclip size={14} /> 자료 첨부
+                </button>
+                <span className={styles.modalFootSpacer} />
+                <button
+                  className={styles.btnPrimary}
+                  onClick={handleItemAppealSubmit}
+                  disabled={submitting}
+                >
+                  <Send size={14} />{" "}
+                  {submitting ? "제출 중..." : "이의제기 제출"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }

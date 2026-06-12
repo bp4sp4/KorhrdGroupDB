@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuthFull } from '@/lib/auth/requireAuth'
 import { supabaseAdmin } from '@/lib/supabase/admin'
-import { canEditAppraisal } from '@/lib/auth/appraisalAccess'
+import { canViewAppraisalOverview } from '@/lib/auth/appraisalAccess'
 import { getEvaluationTargets } from '@/lib/appraisal/evaluationAccess'
 import { getMonthlySales } from '@/lib/dashboard/monthlySales'
 import { getTodayKstDate, kstDateAt, WORK_START_HOUR } from '@/lib/attendance'
@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
   if (userId !== appUser.id) {
     const [targets, canOverview] = await Promise.all([
       getEvaluationTargets(appUser),
-      canEditAppraisal(appUser),
+      canViewAppraisalOverview(appUser),
     ])
     const allowed =
       targets.isMaster ||

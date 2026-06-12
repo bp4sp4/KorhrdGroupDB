@@ -3,8 +3,8 @@
 // 평가서 1장 (양식 보기/수정 + 점수 입력 겸용)
 // 인사고과표(/appraisal)와 내 인사고과(/me/appraisal)에서 공용으로 사용한다.
 
-import { useEffect, useMemo, type ReactNode } from "react";
-import { Info, Minus, Plus } from "lucide-react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { Info, MessageSquare, Minus, Paperclip, Plus } from "lucide-react";
 import styles from "../page.module.css";
 import {
   type AppraisalSheet,
@@ -207,6 +207,48 @@ function autoQuantScore(metrics: QuantMetrics, text: string): number | null {
   }
 }
 
+/** 항목별 이의제기 표시용 — 평가서 행 위치 + 상태 + 내용 + 첨부 */
+export interface IndicatorAppealMark {
+  blockIndex: number;
+  indicatorIndex: number;
+  status: "pending" | "resolved";
+  /** 이의제기 내용 — 있으면 행 아래 인라인으로 표시 */
+  content?: string;
+  /** 첨부자료 — 행 메모에서 바로 열람 */
+  attachments?: { name: string; url: string }[];
+  /** 제출일 (ISO) */
+  createdAt?: string;
+}
+
+// 이의제기 본문 — 길면 3줄로 접고 "더보기"로 펼침 (스크롤 대신 명시적 토글)
+const APPEAL_CLAMP_LENGTH = 110;
+
+function AppealNoteText({ content }: { content: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const isLong =
+    content.length > APPEAL_CLAMP_LENGTH || content.split("\n").length > 3;
+  return (
+    <span className={styles.rowAppealNoteText}>
+      <span
+        className={
+          isLong && !expanded ? styles.rowAppealNoteClamped : undefined
+        }
+      >
+        {content}
+      </span>
+      {isLong && (
+        <button
+          type="button"
+          className={styles.rowAppealMoreBtn}
+          onClick={() => setExpanded((v) => !v)}
+        >
+          {expanded ? "접기 ▲" : "더보기 ▼"}
+        </button>
+      )}
+    </span>
+  );
+}
+
 export function SheetView({
   sheet,
   editing,
@@ -215,6 +257,8 @@ export function SheetView({
   onScore,
   salesMetric,
   highlightMissing = false,
+  indicatorAppeals,
+  onIndicatorAppeal,
 }: {
   sheet: AppraisalSheet;
   editing: boolean;
@@ -231,8 +275,32 @@ export function SheetView({
   salesMetric?: QuantMetrics | null;
   /** 제출 시도 후 미체크 행 빨간 표시 (체크하면 자동 해제) */
   highlightMissing?: boolean;
+  /** 항목별 이의제기 — 해당 행에 말풍선 뱃지 표시 */
+  indicatorAppeals?: IndicatorAppealMark[];
+  /** 항목 이의제기 버튼 핸들러 — 있으면 각 행에 말풍선 버튼 노출 (피평가자 화면) */
+  onIndicatorAppeal?: (
+    blockIdx: number,
+    indicatorIdx: number,
+    text: string,
+  ) => void;
 }) {
   const blocks = useMemo(() => sheet.blocks ?? [], [sheet.blocks]);
+
+  // 행 위치 → 이의제기 목록 (대기 건 먼저)
+  const appealByCell = useMemo(() => {
+    const map = new Map<string, IndicatorAppealMark[]>();
+    for (const a of indicatorAppeals ?? []) {
+      const key = `${a.blockIndex}-${a.indicatorIndex}`;
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(a);
+    }
+    for (const list of map.values()) {
+      list.sort((a, b) =>
+        a.status === b.status ? 0 : a.status === "pending" ? -1 : 1,
+      );
+    }
+    return map;
+  }, [indicatorAppeals]);
 
   // 정량 지표 자동산출 점수를 점수표에 강제 반영 (평가자가 변경 불가)
   // 산출 불가(null)인 정량 행도 수동 점수를 지워 자동산출 외 입력을 차단한다.
@@ -401,6 +469,67 @@ export function SheetView({
                     {!editing && salesMetric && (
                       <QuantBadge metrics={salesMetric} text={indicator.text} />
                     )}
+                    {/* 항목별 이의제기 — 행 아래 코멘트 카드로 표시 */}
+                    {!editing &&
+                      (appealByCell.get(`${bi}-${ii}`) ?? []).map((a, ai) => (
+                        <span
+                          key={ai}
+                          className={`${styles.rowAppealCard} ${a.status === "pending" ? styles.rowAppealPending : styles.rowAppealResolved}`}
+                        >
+                          <span className={styles.rowAppealCardHead}>
+                            <span className={styles.rowAppealIcon}>
+                              <MessageSquare size={11} />
+                            </span>
+                            <span className={styles.rowAppealTitle}>
+                              이의제기
+                            </span>
+                            <span className={styles.rowAppealStatus}>
+                              {a.status === "pending"
+                                ? "처리 대기"
+                                : "처리 완료"}
+                            </span>
+                            {a.createdAt && (
+                              <span className={styles.rowAppealDate}>
+                                {new Date(a.createdAt).toLocaleDateString(
+                                  "ko-KR",
+                                  { month: "long", day: "numeric" },
+                                )}{" "}
+                                제출
+                              </span>
+                            )}
+                          </span>
+                          {a.content && <AppealNoteText content={a.content} />}
+                          {(a.attachments ?? []).length > 0 && (
+                            <span className={styles.rowAppealFiles}>
+                              {(a.attachments ?? []).map((f, fi) => (
+                                <a
+                                  key={fi}
+                                  href={f.url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className={styles.rowAppealFileLink}
+                                >
+                                  <Paperclip size={11} /> {f.name}
+                                </a>
+                              ))}
+                            </span>
+                          )}
+                        </span>
+                      ))}
+                    {/* 항목 이의제기 버튼 — 피평가자 화면에서만 노출 */}
+                    {!editing && onIndicatorAppeal && (
+                      <button
+                        type="button"
+                        className={styles.rowAppealBtn}
+                        title="이 항목에 이의제기"
+                        onClick={() =>
+                          onIndicatorAppeal(bi, ii, indicator.text ?? "")
+                        }
+                      >
+                        <MessageSquare size={12} />
+                        이의제기
+                      </button>
+                    )}
                     {editing && block.indicators.length > 1 && (
                       <button
                         type="button"
@@ -479,15 +608,15 @@ export function SheetView({
                   const marked = scores?.[bi]?.[ii] === n;
                   // 제출 시도 후 미체크 행 강조 — 체크하는 순간 자동 해제
                   const missing =
-                    highlightMissing &&
-                    !!onScore &&
-                    scores?.[bi]?.[ii] == null;
+                    highlightMissing && !!onScore && scores?.[bi]?.[ii] == null;
                   if (onScore) {
                     return (
                       <td
                         key={n}
                         className={`${styles.scoreCell} ${styles.scoreCellClickable} ${marked ? styles.scoreCellMarked : ""} ${missing ? styles.scoreCellMissing : ""}`}
-                        data-score-missing={missing && n === 1 ? "1" : undefined}
+                        data-score-missing={
+                          missing && n === 1 ? "1" : undefined
+                        }
                         onClick={() => onScore(bi, ii, marked ? null : n)}
                       >
                         {marked ? "✓" : ""}

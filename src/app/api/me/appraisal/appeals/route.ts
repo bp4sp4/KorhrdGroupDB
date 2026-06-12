@@ -13,7 +13,9 @@ interface AttachmentInput {
 }
 
 // POST /api/me/appraisal/appeals — 내 평가에 대한 이의제기 등록
-// body: { evaluation_id: string, content: string, attachments?: [{name,url,type,size}] }
+// body: { evaluation_id: string, content: string, attachments?: [{name,url,type,size}],
+//         block_index?: number, indicator_index?: number, indicator_text?: string }
+// block/indicator 지정 시 특정 세부지표에 대한 이의제기 (미지정 = 평가 전체)
 export async function POST(request: NextRequest) {
   const { appUser, errorResponse } = await requireAuthFull()
   if (errorResponse) return errorResponse
@@ -25,7 +27,28 @@ export async function POST(request: NextRequest) {
     evaluation_id?: string
     content?: string
     attachments?: AttachmentInput[]
+    block_index?: unknown
+    indicator_index?: unknown
+    indicator_text?: unknown
   } | null
+
+  // 항목 위치 — 둘 다 0 이상의 정수일 때만 인정
+  const blockIndex =
+    typeof body?.block_index === 'number' &&
+    Number.isInteger(body.block_index) &&
+    body.block_index >= 0
+      ? body.block_index
+      : null
+  const indicatorIndex =
+    typeof body?.indicator_index === 'number' &&
+    Number.isInteger(body.indicator_index) &&
+    body.indicator_index >= 0
+      ? body.indicator_index
+      : null
+  const indicatorText =
+    typeof body?.indicator_text === 'string'
+      ? body.indicator_text.trim().slice(0, 500) || null
+      : null
 
   const evaluationId = body?.evaluation_id?.trim()
   const content = body?.content?.trim()
@@ -87,17 +110,35 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // 처리 대기 중인 이의제기 중복 방지
-  const { data: pending } = await supabaseAdmin
+  // 중복 방지 — 같은 대상(같은 항목 또는 평가 전체)에 처리 대기 건이 있으면 차단.
+  // 서로 다른 항목에는 여러 건 동시 제기 가능.
+  const { data: pendingRows } = await supabaseAdmin
     .from('appraisal_appeals')
-    .select('id')
+    .select('id, block_index, indicator_index')
     .eq('evaluation_id', evaluationId)
     .eq('status', 'pending')
-    .maybeSingle()
-  if (pending) {
+    .limit(100)
+  const pendings = pendingRows ?? []
+  const isItemAppeal = blockIndex !== null && indicatorIndex !== null
+  const duplicate = pendings.some((p) =>
+    isItemAppeal
+      ? p.block_index === blockIndex && p.indicator_index === indicatorIndex
+      : p.block_index == null && p.indicator_index == null,
+  )
+  if (duplicate) {
     return NextResponse.json(
-      { error: '이미 처리 대기 중인 이의제기가 있습니다.' },
+      {
+        error: isItemAppeal
+          ? '이 항목에 이미 처리 대기 중인 이의제기가 있습니다.'
+          : '이미 처리 대기 중인 전체 이의제기가 있습니다.',
+      },
       { status: 409 },
+    )
+  }
+  if (pendings.length >= 20) {
+    return NextResponse.json(
+      { error: '처리 대기 중인 이의제기가 너무 많습니다. (최대 20건)' },
+      { status: 400 },
     )
   }
 
@@ -108,6 +149,10 @@ export async function POST(request: NextRequest) {
       user_id: appUser.id,
       content,
       attachments,
+      block_index: blockIndex,
+      indicator_index: indicatorIndex,
+      indicator_text:
+        blockIndex !== null && indicatorIndex !== null ? indicatorText : null,
     })
     .select('id')
     .single()

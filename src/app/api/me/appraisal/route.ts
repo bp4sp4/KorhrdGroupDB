@@ -45,7 +45,7 @@ export async function GET() {
       .in('id', evaluatorIds),
     supabaseAdmin
       .from('appraisal_appeals')
-      .select('id, evaluation_id, content, attachments, status, created_at, resolved_at')
+      .select('id, evaluation_id, content, attachments, status, created_at, resolved_at, block_index, indicator_index, indicator_text')
       .in('evaluation_id', evalIds)
       .order('created_at', { ascending: false }),
   ])
