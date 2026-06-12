@@ -72,7 +72,9 @@ export async function GET(request: NextRequest) {
   });
 
   // ── 승인된 휴가를 가상 "휴가" 행으로 추가 (특정 직원 조회 시) ───────────
-  // 출근일수/정규시간 인정과 동일 기준. 같은 날짜에 실제 기록이 있으면 skip.
+  // 출근일수/정규시간 인정과 동일 기준.
+  // 같은 날짜에 실제 출퇴근 기록이 있으면 가상 행 대신 해당 기록에 휴가 종류를 표시
+  // (반차 후 출근한 날 등 — 근무시간 중복 인정은 하지 않음).
   const leaveRows: typeof records = [];
   if (userIdParam) {
     const uid = Number(userIdParam);
@@ -82,11 +84,13 @@ export async function GET(request: NextRequest) {
       );
       const u = userMap.get(uid);
       const creditedDates = new Set<string>();
+      const leaveTypeByDate = new Map<string, string>();
       const pushLeaveRow = (cr: LeaveCreditDay) => {
         if (cr.date < from || cr.date > to) return;
-        if (recordedDays.has(cr.date)) return;
         if (creditedDates.has(cr.date)) return;
         creditedDates.add(cr.date);
+        leaveTypeByDate.set(cr.date, cr.leave_type ?? "휴가");
+        if (recordedDays.has(cr.date)) return;
         leaveRows.push({
           id: -1,
           user_id: uid,
@@ -150,6 +154,14 @@ export async function GET(request: NextRequest) {
       for (const tx of leaveTxs ?? []) {
         const credits = leaveCreditsFromTransaction(tx.reason, tx.created_at);
         for (const cr of credits) pushLeaveRow(cr);
+      }
+
+      // 실제 출퇴근 기록이 있는 날의 휴가는 해당 기록 행에 종류만 표시
+      if (leaveTypeByDate.size) {
+        for (const r of records) {
+          const lt = leaveTypeByDate.get(r.date);
+          if (lt) r.leave_type = lt;
+        }
       }
     }
   }

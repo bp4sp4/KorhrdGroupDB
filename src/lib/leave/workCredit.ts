@@ -75,7 +75,9 @@ export function expandLeaveCredit(
   if (isHalfDay(type)) {
     const s = ymdToUtc(start);
     if (!s || isWeekendUtc(s)) return [];
-    return [{ date: start, days: 0.5, minutes: HALF_DAY_WORK_MINUTES }];
+    return [
+      { date: start, days: 0.5, minutes: HALF_DAY_WORK_MINUTES, leave_type: type },
+    ];
   }
 
   const s = ymdToUtc(start);

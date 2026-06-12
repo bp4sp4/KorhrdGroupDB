@@ -33,7 +33,7 @@ interface DayRecord {
   regularLabel?: string;
   otLabel?: string;
   status: DayStatus;
-  leaveType?: string; // 휴가 행일 때 휴가 종류 (연차/반차 등)
+  leaveType?: string; // 휴가 종류 (연차/반차 등) — 휴가 행 또는 같은 날 휴가가 승인된 출근 기록 행
 }
 
 // ─── 유틸 ────────────────────────────────────────────────────────────────
@@ -211,6 +211,7 @@ function toDayRecord(r: ApiDayRow): DayRecord {
     regularLabel: fmtHM(r.work_minutes),
     otLabel: r.overtime_minutes > 0 ? fmtHM(r.overtime_minutes) : undefined,
     status,
+    leaveType: r.leave_type ?? undefined,
   };
 }
 
@@ -487,7 +488,12 @@ export default function AdminAttendancePage() {
       ...records.map((r) => [
         r.date, r.weekday, r.in ?? "", r.out ?? "",
         r.recordedIn ?? "", r.recordedOut ?? "",
-        r.regularLabel ?? "", r.otLabel ?? "", statusKo[r.status],
+        r.regularLabel ?? "", r.otLabel ?? "",
+        r.status === "leave"
+          ? (r.leaveType ?? statusKo[r.status])
+          : r.leaveType
+            ? `${statusKo[r.status]} (${r.leaveType})`
+            : statusKo[r.status],
       ]),
     ];
     downloadCsv(`attendance_${selected.name}_${periodKey}.csv`, rows);
@@ -958,9 +964,19 @@ function DayRow({
         {editing ? (
           <span className={`${styles.chip} ${styles.chipEditing}`}>수정중</span>
         ) : (
-          <span className={`${styles.chip} ${styles[s.cls as keyof typeof styles] as string}`}>
-            {isLeave ? (record.leaveType ?? s.label) : s.label}
-          </span>
+          <>
+            {!isLeave && record.leaveType && (
+              <span className={`${styles.chip} ${styles.chipLeave}`}>
+                {record.leaveType}
+              </span>
+            )}
+            {/* 휴가 칩이 있고 상태가 정상이면 상태 칩 생략 (이슈 상태는 유지) */}
+            {!(record.leaveType && record.status === "normal") && (
+              <span className={`${styles.chip} ${styles[s.cls as keyof typeof styles] as string}`}>
+                {isLeave ? (record.leaveType ?? s.label) : s.label}
+              </span>
+            )}
+          </>
         )}
       </div>
     </div>
