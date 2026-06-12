@@ -25,7 +25,10 @@ import {
   normalizeScores,
   totalScore,
 } from "@/lib/appraisal/form";
-import { type QuantMetrics } from "@/lib/appraisal/quantScore";
+import {
+  quantIndicatorKind,
+  type QuantMetrics,
+} from "@/lib/appraisal/quantScore";
 import {
   defaultPeriod,
   parsePeriod,
@@ -467,8 +470,21 @@ export default function AppraisalPage() {
   const handleWriteSave = async (submit: boolean) => {
     if (!selected || !writeTarget) return;
     const writeFormId = writeTarget.formId ?? selected.id;
+    // 정량 지표(자동산출) 행은 산출 불가로 비어 있어도 제출 허용 (수동 입력 잠금 상태)
+    const writeSheet = (forms.find((f) => f.id === writeFormId) ?? selected)
+      .form_data[writeTarget.sheetKey];
+    const isAutoQuantRow = (bi: number, ii: number) =>
+      !!quantMetric &&
+      quantIndicatorKind(
+        writeSheet?.blocks?.[bi]?.indicators?.[ii]?.text ?? "",
+      ) != null;
     // 제출 시 빈칸이 있으면 차단하고 해당 칸을 빨간색으로 표시
-    if (submit && writeScores.some((row) => row.some((v) => v === null))) {
+    if (
+      submit &&
+      writeScores.some((row, bi) =>
+        row.some((v, ii) => v === null && !isAutoQuantRow(bi, ii)),
+      )
+    ) {
       setShowMissingMarks(true);
       alert(
         "체크되지 않은 항목이 있습니다. 빨간색으로 표시된 칸을 모두 체크한 뒤 제출해주세요.",

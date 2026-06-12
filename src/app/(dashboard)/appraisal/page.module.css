@@ -475,6 +475,12 @@
   text-align: center;
 }
 
+/* 자동산출 점수 칸 — 체크 고정, 클릭 불가 (체크는 수동과 동일한 검정색) */
+.scoreCellLocked {
+  cursor: default;
+  background: #f7fbff;
+}
+
 /* 제출 시도 후 미체크 행 — 빨간 강조 (체크하면 자동 해제) */
 .scoreCellMissing {
   background: #fee2e2 !important;

@@ -27,8 +27,11 @@ export function periodLabel(period: string): string {
   return `${year}년 ${quarter}분기`
 }
 
-/** 인사고과 운영 시작 분기 — 이전 분기는 선택기에 노출하지 않는다 */
+/** 인사고과 운영 시작 분기 — 기본 선택은 이 분기부터 */
 export const APPRAISAL_START_PERIOD = '2026-Q3'
+
+/** 선택기에 노출할 최소 분기 — 운영 시작 전 분기도 지표 확인용으로 열람 허용 */
+export const APPRAISAL_MIN_PERIOD = '2026-Q2'
 
 /** 기본 선택 분기 — 현재 분기, 단 시작 분기 이전이면 시작 분기 */
 export function defaultPeriod(now = new Date()): string {
@@ -36,14 +39,14 @@ export function defaultPeriod(now = new Date()): string {
   return cur < APPRAISAL_START_PERIOD ? APPRAISAL_START_PERIOD : cur
 }
 
-/** 시작 분기(2026-Q3)부터 현재 분기까지 자동 생성 (최신순) — 분기가 지나면 자동 추가 */
+/** 최소 분기(2026-Q2)부터 기본 분기까지 자동 생성 (최신순) — 분기가 지나면 자동 추가 */
 export function periodOptions(now = new Date()): string[] {
   const out: string[] = []
   let { year, quarter } = parsePeriod(defaultPeriod(now))
-  const { year: startYear, quarter: startQuarter } = parsePeriod(
-    APPRAISAL_START_PERIOD,
+  const { year: minYear, quarter: minQuarter } = parsePeriod(
+    APPRAISAL_MIN_PERIOD,
   )
-  while (year > startYear || (year === startYear && quarter >= startQuarter)) {
+  while (year > minYear || (year === minYear && quarter >= minQuarter)) {
     out.push(`${year}-Q${quarter}`)
     quarter -= 1
     if (quarter === 0) {

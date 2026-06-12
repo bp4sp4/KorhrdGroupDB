@@ -3,7 +3,7 @@
 // 평가서 1장 (양식 보기/수정 + 점수 입력 겸용)
 // 인사고과표(/appraisal)와 내 인사고과(/me/appraisal)에서 공용으로 사용한다.
 
-import { type ReactNode } from "react";
+import { useEffect, useMemo, type ReactNode } from "react";
 import { Info, Minus, Plus } from "lucide-react";
 import styles from "../page.module.css";
 import {
@@ -18,44 +18,69 @@ import {
   type QuantMetrics,
 } from "@/lib/appraisal/quantScore";
 
+// 전분기 대비 비율 → 점수 환산표 (매출·등록률 공통)
+const RATIO_BANDS_TEXT =
+  "점수 환산 (전분기 대비)\n" +
+  "· 150% 이상 = 5점\n" +
+  "· 120~150% 미만 = 4점\n" +
+  "· 80~120% 미만 = 3점\n" +
+  "· 60~80% 미만 = 2점\n" +
+  "· 60% 미만 = 1점";
+
 // 지표별 계산식 — 문항 옆 ⓘ 호버 툴팁에 표시
 function quantFormula(kind: ReturnType<typeof quantIndicatorKind>): string {
   switch (kind) {
     case "sales":
       return (
-        "달성률(%) = 분기 실적 ÷ 분기 목표 × 100\n" +
-        "· 목표: 대시보드 '이번달 목표 설정' 월별 입력값의 분기(3개월) 합산\n" +
-        "· 실적: 매출파일(자격증·수강등록·실습) 결제일 기준 분기 합산\n" +
-        "평가점수 환산\n" +
-        "· 120% 이상 = 120점\n" +
-        "· 110~119% = 110점\n" +
-        "· 100~109% = 100점\n" +
-        "· 90~99% = 90점\n" +
-        "· 80~89% = 80점\n" +
-        "· 80% 미만 = 70점"
+        "비율(%) = 당분기 평균 매출 ÷ 전분기 평균 매출 × 100\n" +
+        "· 평균 매출: 매출파일(자격증·수강등록·실습) 결제일 기준 분기 합산 ÷ 3개월\n" +
+        "· 2026년 3분기 평가는 전분기 기준을 2026년 6월(1개월)로 산정\n" +
+        RATIO_BANDS_TEXT
       );
     case "registration":
       return (
         "등록률(%) = 등록완료 ÷ 배정 DB × 100\n" +
         "· 배정 DB: 해당 분기 담당자로 배정된 학점은행 상담 건수\n" +
-        "· 등록완료: 그중 상담 상태가 '등록완료'인 건수"
+        "· 등록완료: 그중 상담 상태가 '등록완료'인 건수\n" +
+        "비율(%) = 당분기 등록률 ÷ 전분기 등록률 × 100\n" +
+        "· 2026년 3분기 평가는 전분기 기준을 2026년 6월(1개월)로 산정\n" +
+        RATIO_BANDS_TEXT
       );
     case "assignedDb":
       return (
         "배정 DB수 = 해당 분기 담당자로 배정된 학점은행 상담 건수\n" +
         "· 기준: 상담 등록일이 해당 분기(3개월)에 포함\n" +
-        "· 상대평가: 팀 내 담당자 간 비교"
+        "· 상대평가: 같은 부서 담당자 간 순위 비교\n" +
+        "  (분기 배정 이력이 있는 부서원 + 본인 기준)\n" +
+        "점수 환산\n" +
+        "· 상위 20% = 5점\n" +
+        "· 상위 40% = 4점\n" +
+        "· 중위 40% = 3점\n" +
+        "· 하위 20% = 2점\n" +
+        "· 최하위 = 1점"
       );
     case "refund":
       return (
         "환불 건수 = 해당 분기 수강등록 중 환불 처리 건수\n" +
-        "· 기준: 등록일이 해당 분기 + 상태가 '환불' 또는 '당월 환불'"
+        "· 기준: 등록일이 해당 분기 + 상태가 '환불' 또는 '당월 환불'\n" +
+        "점수 환산\n" +
+        "· 0~3회 = 5점\n" +
+        "· 4~6회 = 4점\n" +
+        "· 7~9회 = 3점\n" +
+        "· 10~12회 = 2점\n" +
+        "· 13회 이상 = 1점"
       );
     case "attendance":
       return (
-        "출근일수 = 해당 분기 출근 기록이 있는 날 수\n" +
         "지각 = 출근 시각이 10:00 이후인 날 수\n" +
-        "· 기준: 출퇴근 기록"
+        "결근 = 분기 내 지난 평일 중 출근 기록·승인 휴가 모두 없는 날 수\n" +
+        "· 기준: 출퇴근 기록 + 승인된 휴가신청서\n" +
+        "점수 환산\n" +
+        "· 지각 0회·결근 0회 = 5점\n" +
+        "· 지각 1~2회 = 4점\n" +
+        "· 지각 3~4회 = 3점\n" +
+        "· 지각 5~6회 또는 결근 1회 = 2점\n" +
+        "· 지각 7회 이상 또는 결근 2회 이상 = 1점"
       );
     default:
       return "";
@@ -93,48 +118,65 @@ function QuantBadge({
       body =
         metrics.sales.rate != null ? (
           <>
-            목표 {metrics.sales.goalTotal?.toLocaleString()}만원 · 실적{" "}
-            {metrics.sales.actualTotal.toLocaleString()}만원 · 달성률{" "}
+            {metrics.prevPeriod} 평균 {metrics.sales.prevAvg?.toLocaleString()}
+            만원 · 당분기 평균 {metrics.sales.currAvg.toLocaleString()}만원 ·{" "}
             {metrics.sales.rate}% → <b>{metrics.sales.score}점</b>
           </>
         ) : (
           <>
-            목표 미설정 (실적 {metrics.sales.actualTotal.toLocaleString()}만원)
-            — 대시보드에서 이번달 목표를 입력하세요
+            {metrics.prevPeriod} 실적 없음 (당분기 평균{" "}
+            {metrics.sales.currAvg.toLocaleString()}만원) — 비교 산출 불가
           </>
         );
       break;
     case "registration":
       body =
-        metrics.registration.assigned > 0 ? (
+        metrics.registration.compareRate != null ? (
+          <>
+            등록률 {metrics.prevPeriod} {metrics.registration.prevRate}% →
+            당분기 {metrics.registration.rate}% (
+            {metrics.registration.compareRate}%) →{" "}
+            <b>{metrics.registration.score}점</b>
+          </>
+        ) : metrics.registration.assigned > 0 ? (
           <>
             배정 DB {metrics.registration.assigned}건 중 등록{" "}
             {metrics.registration.registered}건 → 등록률{" "}
-            <b>{metrics.registration.rate}%</b>
+            <b>{metrics.registration.rate}%</b> ({metrics.prevPeriod} 자료 없음
+            — 비교 산출 불가)
           </>
         ) : (
           <>배정 DB 없음</>
         );
       break;
     case "assignedDb":
-      body = (
-        <>
-          배정 DB <b>{metrics.registration.assigned.toLocaleString()}건</b>
-        </>
-      );
+      body =
+        metrics.assignedDb.score != null ? (
+          <>
+            배정 DB <b>{metrics.assignedDb.count.toLocaleString()}건</b> · 부서
+            내 {metrics.assignedDb.rank}위/{metrics.assignedDb.groupSize}명 →{" "}
+            <b>{metrics.assignedDb.score}점</b>
+          </>
+        ) : (
+          <>
+            배정 DB <b>{metrics.assignedDb.count.toLocaleString()}건</b> (부서
+            내 비교 대상 없음)
+          </>
+        );
       break;
     case "refund":
       body = (
         <>
-          환불 <b>{metrics.refundCount}건</b>
+          환불 <b>{metrics.refund.count}건</b> → <b>{metrics.refund.score}점</b>
         </>
       );
       break;
     case "attendance":
       body = (
         <>
-          출근 {metrics.attendance.workDays}일 · 지각{" "}
-          <b>{metrics.attendance.lateCount}회</b>
+          지각 <b>{metrics.attendance.lateCount}회</b> · 결근{" "}
+          <b>{metrics.attendance.absentCount}회</b> →{" "}
+          <b>{metrics.attendance.score}점</b>
         </>
       );
       break;
@@ -145,6 +187,24 @@ function QuantBadge({
       자동산출 {metrics.period} · {body}
     </span>
   );
+}
+
+// 지표 문구에 해당하는 자동산출 점수 (1~5) — 산출 불가/비대상이면 null
+function autoQuantScore(metrics: QuantMetrics, text: string): number | null {
+  switch (quantIndicatorKind(text)) {
+    case "sales":
+      return metrics.sales.score;
+    case "registration":
+      return metrics.registration.score;
+    case "assignedDb":
+      return metrics.assignedDb.score;
+    case "refund":
+      return metrics.refund.score;
+    case "attendance":
+      return metrics.attendance.score;
+    default:
+      return null;
+  }
 }
 
 export function SheetView({
@@ -172,7 +232,21 @@ export function SheetView({
   /** 제출 시도 후 미체크 행 빨간 표시 (체크하면 자동 해제) */
   highlightMissing?: boolean;
 }) {
-  const blocks = sheet.blocks ?? [];
+  const blocks = useMemo(() => sheet.blocks ?? [], [sheet.blocks]);
+
+  // 정량 지표 자동산출 점수를 점수표에 강제 반영 (평가자가 변경 불가)
+  // 산출 불가(null)인 정량 행도 수동 점수를 지워 자동산출 외 입력을 차단한다.
+  useEffect(() => {
+    if (!salesMetric || !scores || !onScore) return;
+    blocks.forEach((block, bi) => {
+      (block.indicators ?? []).forEach((ind, ii) => {
+        if (!quantIndicatorKind(ind.text ?? "")) return;
+        const auto = autoQuantScore(salesMetric, ind.text ?? "");
+        if ((scores[bi]?.[ii] ?? null) !== auto) onScore(bi, ii, auto);
+      });
+    });
+  }, [salesMetric, scores, onScore, blocks]);
+
   const hasEvalType =
     editing || blocks.some((b) => b.indicators?.some((i) => i.evalType));
   const scoreCols = SCORE_SCALE.length;
@@ -376,6 +450,32 @@ export function SheetView({
                   </td>
                 )}
                 {SCORE_SCALE.map((n) => {
+                  // 정량 지표 행 — 자동산출 점수로 체크 고정, 평가자(팀장 포함) 수정 불가
+                  // 산출 불가인 행도 잠가서 수동 입력을 막는다 (채점 제외)
+                  const lockedMetrics =
+                    !editing && scores ? (salesMetric ?? null) : null;
+                  if (
+                    lockedMetrics &&
+                    quantIndicatorKind(indicator.text ?? "") != null
+                  ) {
+                    const autoScore = autoQuantScore(
+                      lockedMetrics,
+                      indicator.text ?? "",
+                    );
+                    return (
+                      <td
+                        key={n}
+                        className={`${styles.scoreCell} ${autoScore === n ? styles.scoreCellMarked : ""} ${styles.scoreCellLocked}`}
+                        title={
+                          autoScore != null
+                            ? "자동산출 점수 — 수정할 수 없습니다"
+                            : "자동산출 항목 — 산출 불가 (채점 제외)"
+                        }
+                      >
+                        {autoScore === n ? "✓" : ""}
+                      </td>
+                    );
+                  }
                   const marked = scores?.[bi]?.[ii] === n;
                   // 제출 시도 후 미체크 행 강조 — 체크하는 순간 자동 해제
                   const missing =
