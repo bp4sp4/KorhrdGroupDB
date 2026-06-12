@@ -514,6 +514,13 @@ export const ADMIN_TOOLS_ITEMS: NavItem[] = [
     icon: <TrendingUp size={16} />,
     permissionKey: "profit",
   },
+  {
+    id: "appraisal-admin",
+    label: "인사고과표",
+    href: "/appraisal",
+    icon: <ClipboardList size={16} />,
+    permissionKey: "appraisal",
+  },
 ];
 
 // 개인 도구 — 모든 사용자(미니어드민 제외)에게 노출. API가 본인 데이터만 반환하므로 각자 자기 것만 본다.
