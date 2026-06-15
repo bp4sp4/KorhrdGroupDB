@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth/requireAuth";
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import { getTodayKstDate, isInvalidRecord } from "@/lib/attendance";
+import {
+  getTodayKstDate,
+  isInvalidRecord,
+  isAfternoonHalfDay,
+  isMorningHalfDay,
+  kstDateAt,
+} from "@/lib/attendance";
 import {
   expandLeaveCredit,
   isVacationDocType,
   leaveCreditsFromTransaction,
+  HALF_DAY_WORK_MINUTES,
   type LeaveCreditDay,
 } from "@/lib/leave/workCredit";
 
@@ -156,11 +163,31 @@ export async function GET(request: NextRequest) {
         for (const cr of credits) pushLeaveRow(cr);
       }
 
-      // 실제 출퇴근 기록이 있는 날의 휴가는 해당 기록 행에 종류만 표시
+      // 실제 출퇴근 기록이 있는 날의 휴가는 해당 기록 행에 종류만 표시.
+      // 반차는 표준 시각·표준 4시간(점심 포함)으로 통일:
+      //   · 오후 반차: 퇴근 14:00 (출근은 실제 출근 유지)
+      //   · 오전 반차: 출근 15:00 ~ 퇴근 19:00
       if (leaveTypeByDate.size) {
         for (const r of records) {
           const lt = leaveTypeByDate.get(r.date);
-          if (lt) r.leave_type = lt;
+          if (!lt) continue;
+          r.leave_type = lt;
+          if (isAfternoonHalfDay(lt)) {
+            const outIso = kstDateAt(r.date, 14).toISOString();
+            r.clock_out_at = outIso;
+            r.recognized_clock_out = outIso;
+            r.work_minutes = HALF_DAY_WORK_MINUTES;
+            r.overtime_minutes = 0;
+          } else if (isMorningHalfDay(lt)) {
+            const inIso = kstDateAt(r.date, 15).toISOString();
+            const outIso = kstDateAt(r.date, 19).toISOString();
+            r.clock_in_at = inIso;
+            r.recognized_clock_in = inIso;
+            r.clock_out_at = outIso;
+            r.recognized_clock_out = outIso;
+            r.work_minutes = HALF_DAY_WORK_MINUTES;
+            r.overtime_minutes = 0;
+          }
         }
       }
     }

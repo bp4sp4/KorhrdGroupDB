@@ -118,6 +118,21 @@ export function calculateAttendance(
   };
 }
 
+// 반차 표준 근무창 — 점심(13:00~14:00)을 근무로 인정한 4시간(240분) 기준.
+//   · 오후 반차: 오전 근무 → 퇴근 14:00 (출근은 실제 출근 시각 유지)
+//   · 오전 반차: 오후 근무 → 출근 15:00 ~ 퇴근 19:00
+export function isAfternoonHalfDay(leaveType?: string | null): boolean {
+  return (leaveType ?? "").replace(/\s/g, "") === "반차(오후)";
+}
+
+export function isMorningHalfDay(leaveType?: string | null): boolean {
+  return (leaveType ?? "").replace(/\s/g, "") === "반차(오전)";
+}
+
+export function isHalfDayLeave(leaveType?: string | null): boolean {
+  return isAfternoonHalfDay(leaveType) || isMorningHalfDay(leaveType);
+}
+
 // 분 → "Xh Ym" 포맷
 export function formatMinutes(min: number): string {
   if (!min || min <= 0) return "0m";

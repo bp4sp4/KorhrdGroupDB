@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import {
   getTodayKstDate,
   isInvalidRecord,
+  isHalfDayLeave,
   kstDateAt,
   WORK_START_HOUR,
 } from "@/lib/attendance";
@@ -11,6 +12,8 @@ import {
   expandLeaveCredit,
   isVacationDocType,
   leaveCreditsFromTransaction,
+  HALF_DAY_WORK_MINUTES,
+  type LeaveCreditDay,
 } from "@/lib/leave/workCredit";
 
 // GET /api/admin/attendance/summary?month=YYYY-MM
@@ -53,7 +56,7 @@ export async function GET(request: NextRequest) {
   const { data: records, error } = await supabaseAdmin
     .from("attendance_records")
     .select(
-      "id, user_id, date, clock_in_at, clock_out_at, work_minutes, overtime_minutes",
+      "id, user_id, date, clock_in_at, clock_out_at, recognized_clock_in, recognized_clock_out, work_minutes, overtime_minutes",
     )
     .gte("date", from)
     .lte("date", to)
@@ -134,6 +137,10 @@ export async function GET(request: NextRequest) {
   const recordedDays = new Set(
     (records ?? []).map((r) => `${r.user_id}|${r.date}`),
   );
+  // (user|date) → 실제 기록 (오후반차 점심 인정 시 인정 출퇴근 참조용)
+  const recByUserDate = new Map(
+    (records ?? []).map((r) => [`${r.user_id}|${r.date}`, r]),
+  );
 
   const ensureAgg = (userId: number) => {
     let agg = aggMap.get(userId);
@@ -162,15 +169,29 @@ export async function GET(request: NextRequest) {
 
   // user별 휴가 인정 처리된 날짜 (중복 방지)
   const creditedByUser = new Map<number, Set<string>>();
-  const creditLeaveDay = (userId: number, cr: { date: string; days: number; minutes: number }) => {
+  const creditLeaveDay = (userId: number, cr: LeaveCreditDay) => {
     if (cr.date < from || cr.date > to) return;
-    if (recordedDays.has(`${userId}|${cr.date}`)) return;
     let cset = creditedByUser.get(userId);
     if (!cset) {
       cset = new Set();
       creditedByUser.set(userId, cset);
     }
     if (cset.has(cr.date)) return;
+    const key = `${userId}|${cr.date}`;
+    if (recordedDays.has(key)) {
+      // 실제 출퇴근 기록이 있는 날: 반차면 표준 4시간(240분)으로 보정,
+      // 그 외(연차 등)는 기존대로 중복 인정하지 않음.
+      if (isHalfDayLeave(cr.leave_type)) {
+        const rec = recByUserDate.get(key);
+        if (rec) {
+          cset.add(cr.date);
+          const actual = rec.work_minutes ?? 0;
+          ensureAgg(userId).total_work_minutes +=
+            HALF_DAY_WORK_MINUTES - actual;
+        }
+      }
+      return;
+    }
     cset.add(cr.date);
     const agg = ensureAgg(userId);
     agg.days_worked += cr.days;

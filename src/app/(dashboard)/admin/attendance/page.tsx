@@ -970,8 +970,12 @@ function DayRow({
                 {record.leaveType}
               </span>
             )}
-            {/* 휴가 칩이 있고 상태가 정상이면 상태 칩 생략 (이슈 상태는 유지) */}
-            {!(record.leaveType && record.status === "normal") && (
+            {/* 휴가 칩이 있으면 정상·조퇴/반차 상태 칩은 생략 (반차 칩과 중복).
+                지각·미체크·야근 등 이슈 상태는 유지 */}
+            {!(
+              record.leaveType &&
+              (record.status === "normal" || record.status === "halfday")
+            ) && (
               <span className={`${styles.chip} ${styles[s.cls as keyof typeof styles] as string}`}>
                 {isLeave ? (record.leaveType ?? s.label) : s.label}
               </span>
