@@ -22,36 +22,32 @@ export async function GET() {
     is_active: boolean
     departments: { name: string } | { name: string }[] | null
   }
-  const byAccount = new Map<string, { id: string; department_id: string; department_name: string; is_active: boolean }>()
+  // 계좌번호 → 등록된 사업부 목록 (여러 사업부가 같은 통장을 공유할 수 있음)
+  const byAccount = new Map<
+    string,
+    { id: string; department_id: string; department_name: string; is_active: boolean }[]
+  >()
   ;(rows ?? []).forEach((r) => {
     const row = r as unknown as Row
     const deptName = Array.isArray(row.departments)
       ? row.departments[0]?.name ?? ''
       : row.departments?.name ?? ''
-    byAccount.set(row.account_number, {
+    const list = byAccount.get(row.account_number) ?? []
+    list.push({
       id: row.id,
       department_id: row.department_id,
       department_name: deptName,
       is_active: row.is_active,
     })
+    byAccount.set(row.account_number, list)
   })
 
-  const accounts = SHINHAN_REGISTERED_ACCOUNTS.map((accountNumber) => {
-    const registered = byAccount.get(accountNumber) ?? null
-    return {
-      bank_name: '신한',
-      bank_code: '088',
-      account_number: accountNumber,
-      registered: registered
-        ? {
-            id: registered.id,
-            department_id: registered.department_id,
-            department_name: registered.department_name,
-            is_active: registered.is_active,
-          }
-        : null,
-    }
-  })
+  const accounts = SHINHAN_REGISTERED_ACCOUNTS.map((accountNumber) => ({
+    bank_name: '신한',
+    bank_code: '088',
+    account_number: accountNumber,
+    registrations: byAccount.get(accountNumber) ?? [],
+  }))
 
   return NextResponse.json({ accounts })
 }

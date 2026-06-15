@@ -305,7 +305,7 @@ function DepartmentsTab({ isActive = true }: { isActive?: boolean }) {
     bank_name: string
     bank_code: string
     account_number: string
-    registered: { id: string; department_id: string; department_name: string; is_active: boolean } | null
+    registrations: { id: string; department_id: string; department_name: string; is_active: boolean }[]
   }
   const [shinhanList, setShinhanList] = useState<ShinhanListItem[]>([])
   const [shinhanListLoading, setShinhanListLoading] = useState(false)
@@ -741,10 +741,11 @@ function DepartmentsTab({ isActive = true }: { isActive?: boolean }) {
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       {shinhanList.map((s) => {
-                        const otherDept = s.registered && s.registered.department_id !== bankModalDeptId
-                        const sameDept = s.registered && s.registered.department_id === bankModalDeptId
+                        const sameDept = s.registrations.some(r => r.department_id === bankModalDeptId)
+                        const otherDepts = s.registrations.filter(r => r.department_id !== bankModalDeptId)
                         const isSelected = bankForm.account_number === s.account_number
-                        const disabled = !!otherDept || !!sameDept
+                        // 같은 사업부 중복만 차단 — 다른 사업부 등록은 허용(통장 공유)
+                        const disabled = sameDept
                         return (
                           <button
                             type="button"
@@ -771,13 +772,13 @@ function DepartmentsTab({ isActive = true }: { isActive?: boolean }) {
                               <span style={{ fontWeight: 600 }}>
                                 {s.bank_name} <code>{s.account_number}</code>
                               </span>
-                              {otherDept && (
-                                <span style={{ fontSize: 11, color: '#DC2626' }}>
-                                  이미 등록됨: {s.registered?.department_name}
+                              {otherDepts.length > 0 && (
+                                <span style={{ fontSize: 11, color: '#6B7280' }}>
+                                  다른 사업부 등록: {otherDepts.map(d => d.department_name).join(', ')}
                                 </span>
                               )}
                               {sameDept && (
-                                <span style={{ fontSize: 11, color: '#6B7280' }}>이 사업부에 이미 등록됨</span>
+                                <span style={{ fontSize: 11, color: '#9CA3AF' }}>이 사업부에 이미 등록됨</span>
                               )}
                             </span>
                             {isSelected && bankLookupLoading && (
