@@ -52,46 +52,280 @@
   border-color: #3182f6;
 }
 
-/* ─── 상태 필터 칩 ─────────────────────────────────────────────────── */
-.filterChips {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+.addBtn {
+  height: 36px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 8px;
+  background: #3182f6;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
 }
 
-.chip {
+.addBtn:hover {
+  background: #1b64da;
+}
+
+/* ─── 검색/필터 바 (문의 DB 스타일) ───────────────────────────────── */
+.filterRow {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  height: 32px;
-  padding: 0 12px;
-  border: 1px solid #e5e8eb;
-  border-radius: 999px;
+  gap: 8px;
+  flex-wrap: wrap;
+  width: fit-content;
+  max-width: 100%;
+  padding: 10px 12px;
   background: #fff;
-  font-size: 13px;
-  color: #4e5968;
-  cursor: pointer;
+  border: 1px solid #eef0f2;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
-.chip:hover {
+.searchWrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 300px;
+  max-width: 100%;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 12px;
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  height: 38px;
+  padding: 0 12px 0 36px;
+  border: 1px solid #e5e8eb;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #191f28;
+  outline: none;
+}
+
+.searchInput:focus {
+  border-color: #3182f6;
+}
+
+.dateRangeWrap {
+  position: relative;
+  display: inline-block;
+}
+
+.dateRangeBtn {
+  min-width: 200px;
+  height: 38px;
+  padding: 0 14px;
+  text-align: left;
+  border: 1px solid #e5e8eb;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 13px;
+  color: #191f28;
+  cursor: pointer;
+  outline: none;
+}
+
+.dateRangeBtn:hover {
   background: #f9fafb;
 }
 
-.chipActive {
+.dateRangeBtn:focus {
   border-color: #3182f6;
-  background: #eaf2ff;
+}
+
+.dateRangePopover {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 40;
+}
+
+.guideBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 14px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  color: #2563eb;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.guideBtn:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
+/* ─── 가이드 모달 ─────────────────────────────────────────────────── */
+.guideModal {
+  width: 460px;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.guideBody {
+  padding: 18px 20px;
+}
+
+.guideBody ul {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.guideBody li {
+  font-size: 13px;
+  color: #4e5968;
+  line-height: 1.5;
+}
+
+.guideBody b {
+  color: #191f28;
+}
+
+/* ─── 페이징 ──────────────────────────────────────────────────────── */
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px 0;
+}
+
+.pagerBtn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid #e5e8eb;
+  border-radius: 8px;
+  background: #fff;
+  color: #4e5968;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.pagerBtn:hover:not(:disabled) {
+  background: #f9fafb;
+}
+
+.pagerBtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.pagerBtnActive {
+  border-color: #3182f6;
+  background: #3182f6;
+  color: #fff;
+  font-weight: 600;
+}
+
+.pagerInfo {
+  margin-left: 8px;
+  font-size: 12px;
+  color: #8b95a1;
+}
+
+/* ─── 헤더 필터 (학점은행제 사업부 스타일) ────────────────────────── */
+.thInner {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.thFilterBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  background: #454545;
+  border: none;
+  border-radius: 4px;
+  color: #f9fafb;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.thFilterBtnActive {
+  background: #3182f6;
+}
+
+.filterColumnDropdown {
+  position: fixed;
+  background: #fff;
+  border: 1px solid #e5e8eb;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  z-index: 1100;
+  min-width: 140px;
+  max-height: 260px;
+  padding: 4px;
+  overflow: auto;
+}
+
+.filterDropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  font-size: 13px;
+  color: #333d4b;
+  cursor: pointer;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.filterDropdownItem::before {
+  content: "";
+  display: block;
+  width: 15px;
+  height: 15px;
+  min-width: 15px;
+  border-radius: 4px;
+  border: 1.5px solid #d1d5db;
+  box-sizing: border-box;
+}
+
+.filterDropdownItem:hover {
+  background: #f9fafb;
+}
+
+.filterDropdownItemActive {
   color: #3182f6;
   font-weight: 600;
 }
 
-.chipCount {
-  font-size: 11px;
+.filterDropdownItemActive::before {
+  content: "✓";
+  background: #3182f6;
+  border-color: #3182f6;
+  color: #fff;
+  font-size: 10px;
   font-weight: 700;
-  color: #8b95a1;
-}
-
-.chipActive .chipCount {
-  color: #3182f6;
+  text-align: center;
+  line-height: 13px;
 }
 
 /* ─── 테이블 ──────────────────────────────────────────────────────── */
@@ -116,15 +350,20 @@
   color: #6b7684;
   font-weight: 600;
   text-align: left;
-  padding: 10px 12px;
+  padding: 8px 12px;
   border-bottom: 1px solid #eef0f2;
   font-size: 12px;
 }
 
 .table tbody td {
-  padding: 10px 12px;
+  padding: 14px 10px;
   border-bottom: 1px solid #f2f4f6;
   color: #333d4b;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.4;
 }
 
 .row {
@@ -137,29 +376,25 @@
 
 .cellNum {
   color: #8b95a1;
+  max-width: 44px;
 }
 
 .cellName {
   font-weight: 600;
   color: #191f28;
-}
-
-.cellWide {
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  max-width: 120px;
 }
 
 .cellAmount {
   font-weight: 600;
   color: #191f28;
+  max-width: 90px;
 }
 
-.cellMemo {
-  max-width: 240px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: #6b7684;
+/* 상태 select 는 잘리지 않도록 */
+.cellStatus {
+  max-width: none;
+  overflow: visible;
 }
 
 .empty {
@@ -169,11 +404,11 @@
 }
 
 .statusSelect {
-  height: 28px;
+  height: 24px;
   border: none;
   border-radius: 999px;
-  padding: 0 10px;
-  font-size: 12px;
+  text-align: center;
+  font-size: 11px;
   font-weight: 600;
   cursor: pointer;
   outline: none;
@@ -275,6 +510,46 @@
 
 .fieldFull {
   width: 100%;
+}
+
+/* 날짜/기간 선택 트리거 — 폼 인풋과 동일한 외관 */
+.dateWrap {
+  width: 100%;
+}
+
+.dateTrigger,
+.rangeTrigger {
+  width: 100%;
+  height: 36px;
+  border: 1px solid #e5e8eb;
+  border-radius: 8px;
+  padding: 0 10px;
+  background: #fff;
+  font-size: 13px;
+  color: #191f28;
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+}
+
+.rangeTrigger:focus,
+.dateTrigger:focus {
+  border-color: #3182f6;
+}
+
+.rangePlaceholder {
+  color: #9ca3af;
+}
+
+.rangeWrap {
+  width: 100%;
+}
+
+.rangePopover {
+  background: #fff;
+  border: 1px solid #e5e8eb;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.16);
 }
 
 .modalFoot {

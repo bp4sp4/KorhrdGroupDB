@@ -204,9 +204,24 @@ export const ALL_SECTIONS: NavSection[] = [
         permissionKey: "practice",
         children: [
           {
-            id: "practice-applicants-page",
-            label: "실습신청자",
-            href: "/practice-applicants",
+            id: "practice-applicants-other",
+            label: "타과정 실습",
+            href: "/practice-applicants/other",
+          },
+          {
+            id: "practice-applicants-social-worker",
+            label: "사회복지사 실습",
+            href: "/practice-applicants/social-worker",
+          },
+          {
+            id: "practice-applicants-completed",
+            label: "실습 완료 건",
+            href: "/practice-applicants/completed",
+          },
+          {
+            id: "practice-applicants-refunded",
+            label: "실습 환불 건",
+            href: "/practice-applicants/refunded",
           },
           {
             id: "practice-sales-page",
