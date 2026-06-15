@@ -179,7 +179,7 @@ export async function GET(request: NextRequest) {
       sale_id: ov ? (ov.id as string) : null,
       student_name: a.name,
       phone: a.contact ?? null,
-      manager_name: (ov?.manager_name as string | null | undefined) ?? '이한선',
+      manager_name: (ov?.manager_name as string | null | undefined) ?? '한지연',
       category: (ov?.category as Category | undefined) ?? '실습',
       total_amount: (ov?.total_amount as number | null | undefined) ?? a.payment_amount ?? null,
       payment_method:
@@ -214,7 +214,7 @@ export async function GET(request: NextRequest) {
     sale_id: r.id as string,
     student_name: (r.student_name as string) ?? '',
     phone: (r.phone as string | null) ?? null,
-    manager_name: (r.manager_name as string | null) ?? '이한선',
+    manager_name: (r.manager_name as string | null) ?? '한지연',
     category: ((r.category as Category | undefined) ?? '후납'),
     total_amount: (r.total_amount as number | null) ?? null,
     payment_method: (r.payment_method as PaymentMethod | null) ?? null,
@@ -385,7 +385,7 @@ export async function POST(request: NextRequest) {
         student_name: app.name,
         phone: app.contact,
         category: body.category ?? '실습',
-        manager_name: body.manager_name ?? '이한선',
+        manager_name: body.manager_name ?? '한지연',
         created_by: appUser.id,
       }
       const { data, error } = await supabaseAdmin
@@ -418,7 +418,7 @@ export async function POST(request: NextRequest) {
     student_name: body.student_name.trim(),
     phone: body.phone ?? null,
     category: body.category ?? '후납',
-    manager_name: body.manager_name ?? '이한선',
+    manager_name: body.manager_name ?? '한지연',
     created_by: appUser.id,
   }
   const { data, error } = await supabaseAdmin
@@ -522,7 +522,7 @@ export async function DELETE(request: NextRequest) {
         phone: (app.contact as string | null) ?? null,
         is_hidden: true,
         category: '실습',
-        manager_name: '이한선',
+        manager_name: '한지연',
         created_by: appUser.id,
       })
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })

@@ -1069,10 +1069,10 @@ export default function PracticeSalesPage() {
                     <td className={`${styles.td} ${styles.td_center}`}>
                       <InlineText
                         value={r.manager_name ?? ""}
-                        placeholder="이한선"
+                        placeholder="한지연"
                         onSave={(v) =>
                           updateRow(r, {
-                            manager_name: v.trim() || "이한선",
+                            manager_name: v.trim() || "한지연",
                           })
                         }
                         width={80}
@@ -1208,7 +1208,7 @@ function AddPracticeSalesModal({
   const [form, setForm] = useState({
     student_name: "",
     phone: "",
-    manager_name: "이한선",
+    manager_name: "한지연",
     category: "후납" as Category,
     payment_method: "card" as PaymentMethod,
     payment_date: todayKst,
@@ -1227,7 +1227,7 @@ function AddPracticeSalesModal({
       const payload = {
         student_name: form.student_name.trim(),
         phone: form.phone.trim() || null,
-        manager_name: form.manager_name.trim() || "이한선",
+        manager_name: form.manager_name.trim() || "한지연",
         category: form.category,
         payment_method: form.payment_method,
         payment_date: form.payment_date || null,
