@@ -1,9 +1,10 @@
 import React from 'react'
 import styles from './styles.module.css'
-import type { DocBodyProps, FieldDef } from '../types'
+import type { DocBodyProps, FieldDef, BankAccountLite } from '../types'
 
 export const EXPENSE_RESOLUTION_FIELDS: FieldDef[] = [
   { key: 'belong_dept',    label: '소속부서',           type: 'text' },
+  { key: 'bank_account_id', label: '출금 통장',          type: 'text' },
   { key: 'vendor_name',    label: '상호명(거래처명)',    type: 'text',   required: true },
   { key: 'vendor_phone',   label: '거래처 담당 전화번호', type: 'text' },
   { key: 'detail',         label: '상세내역',            type: 'text',   required: true },
@@ -30,10 +31,78 @@ function numDisplay(str: string): string {
   return !str || isNaN(n) || n === 0 ? '' : n.toLocaleString()
 }
 
-export function ExpenseResolutionBody({ content, onChange, departments = [] }: DocBodyProps) {
+function AccountDisplay({ account }: { account: BankAccountLite | null }) {
+  if (!account) return <span className={styles.empty_account}>등록된 통장이 없습니다.</span>
+  return (
+    <div className={styles.account_display}>
+      <span className={styles.account_display_main}>
+        {account.bank_name}
+        {account.account_holder ? ` · ${account.account_holder}` : ''}
+      </span>
+      <span className={styles.account_display_sub}>{account.account_number}</span>
+      {account.memo && (
+        <span className={styles.account_display_memo}>{account.memo}</span>
+      )}
+    </div>
+  )
+}
+
+function AccountList({
+  accounts,
+  selectedId,
+  onSelect,
+}: {
+  accounts: BankAccountLite[]
+  selectedId: string
+  onSelect: (id: string) => void
+}) {
+  return (
+    <div className={styles.account_list}>
+      {accounts.map((a) => {
+        const selected = a.id === selectedId
+        return (
+          <label
+            key={a.id}
+            className={`${styles.account_card} ${selected ? styles.account_card_selected : ''}`}
+          >
+            <input
+              type="radio"
+              name="bank_account_id_expense"
+              checked={selected}
+              onChange={() => onSelect(a.id)}
+            />
+            <div className={styles.account_card_body}>
+              <span className={styles.account_display_main}>
+                {a.bank_name}{a.account_holder ? ` · ${a.account_holder}` : ''}
+              </span>
+              <span className={styles.account_display_sub}>{a.account_number}</span>
+              {a.memo && <span className={styles.account_display_memo}>{a.memo}</span>}
+            </div>
+          </label>
+        )
+      })}
+    </div>
+  )
+}
+
+export function ExpenseResolutionBody({ content, onChange, departments = [], bankAccounts = [] }: DocBodyProps) {
   const ro = !onChange
 
   const costType = v(content, 'cost_type') || 'tax_invoice'
+  const belongDeptId = v(content, 'belong_dept')
+  const accountId = v(content, 'bank_account_id')
+  const deptAccounts = bankAccounts.filter(b => b.department_id === belongDeptId)
+  const selectedAccount = bankAccounts.find(b => b.id === accountId) ?? null
+
+  React.useEffect(() => {
+    if (ro || !belongDeptId) return
+    if (accountId && !deptAccounts.find(a => a.id === accountId)) {
+      onChange!('bank_account_id', '')
+    } else if (!accountId && deptAccounts.length === 1) {
+      onChange!('bank_account_id', deptAccounts[0].id)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [belongDeptId, deptAccounts.length])
 
   return (
     <>
@@ -72,6 +141,26 @@ export function ExpenseResolutionBody({ content, onChange, departments = [] }: D
                 <input type="text" className={styles.input_full}
                   value={v(content, 'vendor_name')} placeholder=""
                   onChange={(e) => onChange!('vendor_name', e.target.value)} />
+              )}
+            </td>
+          </tr>
+
+          {/* 출금 통장 (등록 통장 연결) */}
+          <tr>
+            <td className={styles.label_cell}>출금 통장</td>
+            <td className={styles.value_cell} colSpan={3}>
+              {ro ? (
+                <AccountDisplay account={selectedAccount} />
+              ) : !belongDeptId ? (
+                <span className={styles.empty_account}>소속부서를 먼저 선택하세요.</span>
+              ) : deptAccounts.length === 0 ? (
+                <span className={styles.empty_account}>이 사업부에 등록된 통장이 없습니다.</span>
+              ) : (
+                <AccountList
+                  accounts={deptAccounts}
+                  selectedId={accountId}
+                  onSelect={(id) => onChange!('bank_account_id', id)}
+                />
               )}
             </td>
           </tr>

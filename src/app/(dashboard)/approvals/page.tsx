@@ -1513,6 +1513,25 @@ export default function ApprovalsPage() {
   );
 
   const formTemplateConfig = getDocTemplate(formState.template, dynamicConfigs);
+
+  // 지출결의서류: 출금 소속부서(belong_dept)가 비어있으면 신청부서로 자동 채움
+  // → 출금 통장이 바로 뜨도록 (belong_dept 가 있는 양식만)
+  useEffect(() => {
+    if (!formTemplateConfig) return;
+    const hasBelongDept = (formTemplateConfig.fields ?? []).some(
+      (f) => f.key === "belong_dept",
+    );
+    if (!hasBelongDept) return;
+    const dept = formState.department_id || myDepartmentId;
+    if (!dept) return;
+    setFormState((prev) =>
+      prev.content.belong_dept
+        ? prev
+        : { ...prev, content: { ...prev.content, belong_dept: String(dept) } },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formTemplateConfig, formState.department_id, myDepartmentId]);
+
   const formIsDynamic =
     !!formState.template?.document_type.startsWith("custom_");
   const formDynamicName = formIsDynamic
