@@ -9,7 +9,7 @@ import { DateRangeCalendar, type DateRange } from "@/components/DateRangeCalenda
 import SalesHeaderAdmin from "../edu-sales/SalesHeaderAdmin";
 import SalesHeaderManager from "../edu-sales/SalesHeaderManager";
 
-type PaymentMethod = "bank_transfer" | "card";
+type PaymentMethod = "bank_transfer" | "card" | "payapp_transfer";
 type RefundStatus = "정상" | "당월 환불" | "환불" | "정산" | "보류";
 type Category = "실습" | "후납";
 
@@ -40,6 +40,7 @@ interface SalesRow {
 
 const PAYMENT_METHOD_OPTIONS: { value: PaymentMethod; label: string }[] = [
   { value: "card", label: "카드결제" },
+  { value: "payapp_transfer", label: "페이앱 계좌이체" },
   { value: "bank_transfer", label: "계좌이체" },
 ];
 
@@ -1312,10 +1313,7 @@ function AddPracticeSalesModal({
             <label className={styles.modal_label}>결제방법</label>
             <CustomSelect
               value={form.payment_method}
-              options={[
-                { value: "card", label: "카드결제" },
-                { value: "bank_transfer", label: "계좌이체" },
-              ]}
+              options={PAYMENT_METHOD_OPTIONS}
               onChange={(v) =>
                 setForm((p) => ({
                   ...p,

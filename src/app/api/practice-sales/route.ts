@@ -25,6 +25,7 @@ const FIELD_LABELS: Record<string, string> = {
 const PAYMENT_METHOD_LABELS: Record<string, string> = {
   bank_transfer: '계좌이체',
   card: '카드결제',
+  payapp_transfer: '페이앱 계좌이체',
 }
 
 function formatDetailValue(key: string, value: unknown): string {
@@ -74,7 +75,7 @@ async function checkSalesPermission(userId: number): Promise<'all' | 'own' | 'no
   return data.scope === 'all' ? 'all' : 'own'
 }
 
-type PaymentMethod = 'bank_transfer' | 'card'
+type PaymentMethod = 'bank_transfer' | 'card' | 'payapp_transfer'
 type RefundStatus = '정상' | '당월 환불' | '환불' | '정산' | '보류'
 type Category = '실습' | '후납'
 
@@ -100,6 +101,7 @@ interface MergedItem {
 function normalizePayMethod(raw: string | null | undefined): PaymentMethod | null {
   if (!raw) return null
   const s = raw.toLowerCase()
+  if (s.includes('payapp') || s.includes('페이앱')) return 'payapp_transfer'
   if (s.includes('card') || s.includes('카드')) return 'card'
   if (s.includes('bank') || s.includes('transfer') || s.includes('계좌')) return 'bank_transfer'
   return null
@@ -129,7 +131,7 @@ export async function GET(request: NextRequest) {
   // 1) 결제완료 practice_applications
   const { data: apps, error: appsError } = await supabaseAdmin
     .from('practice_applications')
-    .select('id, name, contact, payment_amount, payment_status, created_at')
+    .select('id, name, contact, payment_amount, payment_method, payment_status, created_at')
     .eq('payment_status', 'paid')
     .order('created_at', { ascending: false })
 
@@ -164,6 +166,7 @@ export async function GET(request: NextRequest) {
     name: string
     contact: string | null
     payment_amount: number | null
+    payment_method: string | null
     payment_status: string | null
     created_at: string
   }
@@ -180,7 +183,9 @@ export async function GET(request: NextRequest) {
       category: (ov?.category as Category | undefined) ?? '실습',
       total_amount: (ov?.total_amount as number | null | undefined) ?? a.payment_amount ?? null,
       payment_method:
-        (ov?.payment_method as PaymentMethod | null | undefined) ?? 'card',
+        (ov?.payment_method as PaymentMethod | null | undefined) ??
+        (a.payment_method as PaymentMethod | null) ??
+        'card',
       payment_date: (ov?.payment_date as string | null | undefined) ?? createdYmd,
       cohort: (ov?.cohort as string | null | undefined) ?? createdYmd,
       process_number: (ov?.process_number as string | null | undefined) ?? null,

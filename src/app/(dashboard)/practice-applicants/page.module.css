@@ -374,9 +374,66 @@
   background: #f9fbff;
 }
 
+.checkCol {
+  width: 36px;
+  max-width: 36px;
+  text-align: center;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.checkCol input {
+  cursor: pointer;
+}
+
 .cellNum {
   color: #8b95a1;
   max-width: 44px;
+}
+
+/* ─── 다중 선택 액션 바 ────────────────────────────────────────────── */
+.bulkBar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #fff5f5;
+  border: 1px solid #ffe0e0;
+  border-radius: 10px;
+}
+
+.bulkCount {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e03131;
+  margin-right: auto;
+}
+
+.bulkDeleteBtn {
+  height: 32px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 8px;
+  background: #e03131;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bulkDeleteBtn:hover {
+  background: #c92a2a;
+}
+
+.bulkClearBtn {
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid #e5e8eb;
+  border-radius: 8px;
+  background: #fff;
+  color: #4e5968;
+  font-size: 13px;
+  cursor: pointer;
 }
 
 .cellName {

@@ -166,23 +166,30 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ row: data })
 }
 
-// DELETE /api/practice-applicants?id=123
+// DELETE /api/practice-applicants?id=123  또는  ?ids=1,2,3 (다중 삭제)
 export async function DELETE(request: NextRequest) {
   const { errorResponse } = await requireAuthFull()
   if (errorResponse) return errorResponse
 
-  const id = Number(new URL(request.url).searchParams.get('id'))
-  if (!Number.isFinite(id)) {
+  const params = new URL(request.url).searchParams
+  const idsParam = params.get('ids')
+  const ids = (
+    idsParam ? idsParam.split(',') : [params.get('id') ?? '']
+  )
+    .map((v) => Number(v))
+    .filter((n) => Number.isFinite(n))
+
+  if (ids.length === 0) {
     return NextResponse.json({ error: 'id가 필요합니다.' }, { status: 400 })
   }
 
   const { error } = await supabaseAdmin
     .from('practice_applicants')
     .delete()
-    .eq('id', id)
+    .in('id', ids)
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
-  return NextResponse.json({ ok: true })
+  return NextResponse.json({ ok: true, deleted: ids.length })
 }

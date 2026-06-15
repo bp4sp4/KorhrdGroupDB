@@ -142,6 +142,7 @@ export default function ApplicantsView({
   const [guideOpen, setGuideOpen] = useState(false);
   const [editing, setEditing] = useState<Applicant | null>(null);
   const [page, setPage] = useState(1);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
 
   const fetchRows = useCallback(async () => {
     setLoading(true);
@@ -151,10 +152,36 @@ export default function ApplicantsView({
       );
       const d = await res.json();
       if (res.ok) setRows(d.rows ?? []);
+      setSelectedIds(new Set());
     } finally {
       setLoading(false);
     }
   }, [category]);
+
+  const toggleOne = (id: number) =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  // 다중 삭제
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    if (!confirm(`선택한 ${selectedIds.size}건을 삭제할까요?`)) return;
+    const ids = [...selectedIds];
+    const res = await fetch(`/api/practice-applicants?ids=${ids.join(",")}`, {
+      method: "DELETE",
+    });
+    if (res.ok) {
+      setRows((prev) => prev.filter((r) => !selectedIds.has(r.id)));
+      setSelectedIds(new Set());
+    } else {
+      const d = await res.json().catch(() => ({}));
+      alert(d.error ?? "삭제 실패");
+    }
+  };
 
   useEffect(() => {
     fetchRows();
@@ -279,6 +306,16 @@ export default function ApplicantsView({
     for (let n = start; n <= end; n++) arr.push(n);
     return arr;
   }, [page, totalPages]);
+
+  const allPagedSelected =
+    paged.length > 0 && paged.every((r) => selectedIds.has(r.id));
+  const toggleAllPaged = () =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (allPagedSelected) paged.forEach((r) => next.delete(r.id));
+      else paged.forEach((r) => next.add(r.id));
+      return next;
+    });
 
   // 상태 빠른 변경
   const handleStatusChange = async (id: number, status: string) => {
@@ -410,11 +447,39 @@ export default function ApplicantsView({
         </button>
       </div>
 
+      {/* 다중 선택 액션 바 */}
+      {selectedIds.size > 0 && (
+        <div className={styles.bulkBar}>
+          <span className={styles.bulkCount}>{selectedIds.size}건 선택됨</span>
+          <button
+            type="button"
+            className={styles.bulkDeleteBtn}
+            onClick={handleBulkDelete}
+          >
+            선택 삭제
+          </button>
+          <button
+            type="button"
+            className={styles.bulkClearBtn}
+            onClick={() => setSelectedIds(new Set())}
+          >
+            선택 해제
+          </button>
+        </div>
+      )}
+
       {/* 테이블 */}
       <div className={styles.tableScroll}>
         <table className={styles.table}>
           <thead>
             <tr>
+              <th className={styles.checkCol}>
+                <input
+                  type="checkbox"
+                  checked={allPagedSelected}
+                  onChange={toggleAllPaged}
+                />
+              </th>
               <th>번호</th>
               <th>이름</th>
               <th>연락처</th>
@@ -467,13 +532,13 @@ export default function ApplicantsView({
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={15} className={styles.empty}>
+                <td colSpan={16} className={styles.empty}>
                   불러오는 중…
                 </td>
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan={15} className={styles.empty}>
+                <td colSpan={16} className={styles.empty}>
                   데이터가 없습니다.
                 </td>
               </tr>
@@ -484,6 +549,16 @@ export default function ApplicantsView({
                   className={styles.row}
                   onClick={() => setEditing(r)}
                 >
+                  <td
+                    className={styles.checkCol}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(r.id)}
+                      onChange={() => toggleOne(r.id)}
+                    />
+                  </td>
                   <td className={styles.cellNum}>
                     {r.seq_no ?? (page - 1) * PAGE_SIZE + i + 1}
                   </td>
