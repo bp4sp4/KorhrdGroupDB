@@ -199,10 +199,15 @@ export const ALL_SECTIONS: NavSection[] = [
       {
         id: "practice",
         label: "실습 사업부",
-        href: "/practice-sales",
+        href: "/practice-applicants",
         icon: <GraduationCap size={16} />,
         permissionKey: "practice",
         children: [
+          {
+            id: "practice-applicants-page",
+            label: "실습신청자",
+            href: "/practice-applicants",
+          },
           {
             id: "practice-sales-page",
             label: "매출파일",

@@ -1,0 +1,330 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ─── 헤더 ────────────────────────────────────────────────────────── */
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.headerLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #191f28;
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 12px;
+  color: #6b7684;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.search {
+  height: 36px;
+  width: 240px;
+  max-width: 60vw;
+  padding: 0 12px;
+  border: 1px solid #e5e8eb;
+  border-radius: 8px;
+  font-size: 13px;
+  outline: none;
+}
+
+.search:focus {
+  border-color: #3182f6;
+}
+
+/* ─── 상태 필터 칩 ─────────────────────────────────────────────────── */
+.filterChips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid #e5e8eb;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 13px;
+  color: #4e5968;
+  cursor: pointer;
+}
+
+.chip:hover {
+  background: #f9fafb;
+}
+
+.chipActive {
+  border-color: #3182f6;
+  background: #eaf2ff;
+  color: #3182f6;
+  font-weight: 600;
+}
+
+.chipCount {
+  font-size: 11px;
+  font-weight: 700;
+  color: #8b95a1;
+}
+
+.chipActive .chipCount {
+  color: #3182f6;
+}
+
+/* ─── 테이블 ──────────────────────────────────────────────────────── */
+.tableScroll {
+  overflow-x: auto;
+  border: 1px solid #eef0f2;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.table thead th {
+  position: sticky;
+  top: 0;
+  background: #f9fafb;
+  color: #6b7684;
+  font-weight: 600;
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid #eef0f2;
+  font-size: 12px;
+}
+
+.table tbody td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #f2f4f6;
+  color: #333d4b;
+}
+
+.row {
+  cursor: pointer;
+}
+
+.row:hover td {
+  background: #f9fbff;
+}
+
+.cellNum {
+  color: #8b95a1;
+}
+
+.cellName {
+  font-weight: 600;
+  color: #191f28;
+}
+
+.cellWide {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cellAmount {
+  font-weight: 600;
+  color: #191f28;
+}
+
+.cellMemo {
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #6b7684;
+}
+
+.empty {
+  text-align: center;
+  color: #8b95a1;
+  padding: 40px 0;
+}
+
+.statusSelect {
+  height: 28px;
+  border: none;
+  border-radius: 999px;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+}
+
+/* ─── 상세 모달 ───────────────────────────────────────────────────── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal {
+  width: 640px;
+  max-width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.modalHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  border-bottom: 1px solid #eef0f2;
+}
+
+.modalHead h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #191f28;
+}
+
+.closeBtn {
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  color: #8b95a1;
+  cursor: pointer;
+}
+
+.modalBody {
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field > span {
+  font-size: 12px;
+  color: #6b7684;
+  font-weight: 600;
+}
+
+.field input,
+.field select,
+.field textarea {
+  border: 1px solid #e5e8eb;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+  color: #191f28;
+  outline: none;
+  font-family: inherit;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: #3182f6;
+}
+
+.field textarea {
+  resize: vertical;
+}
+
+.fieldFull {
+  width: 100%;
+}
+
+.modalFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-top: 1px solid #eef0f2;
+}
+
+.footRight {
+  display: flex;
+  gap: 8px;
+}
+
+.deleteBtn {
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid #ffe0e0;
+  background: #fff5f5;
+  color: #e03131;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.cancelBtn {
+  height: 38px;
+  padding: 0 16px;
+  border: 1px solid #e5e8eb;
+  background: #fff;
+  color: #4e5968;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.saveBtn {
+  height: 38px;
+  padding: 0 20px;
+  border: none;
+  background: #3182f6;
+  color: #fff;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.saveBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
