@@ -36,6 +36,7 @@ import {
   type JournalFormType,
 } from "@/lib/work-journal/formTypes";
 import CategorySelect from "./_components/CategorySelect";
+import { ArchiveView } from "./archive/page";
 import { useGuide } from "@/components/guide/GuideProvider";
 
 type Task = { id: string; text: string; done: boolean };
@@ -983,6 +984,7 @@ export default function WorkJournalPage() {
   const [userName, setUserName] = useState<string>("");
   // 업무 센터(default) — 업무일지 작성 드로어 열림 상태
   const [journalDrawerOpen, setJournalDrawerOpen] = useState(false);
+  const [journalTab, setJournalTab] = useState<"today" | "history">("today");
   const router = useRouter();
   // 업무 센터(default) — 캘린더 팝업 + 본인 연락예정 일정
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -1232,6 +1234,8 @@ export default function WorkJournalPage() {
     todayScheduledDone: number;
     rank: number;
     totalManagers: number;
+    nextRank: number;
+    gapToNext: number;
     delta: {
       inquiries: number;
       registrations: number;
@@ -1261,6 +1265,8 @@ export default function WorkJournalPage() {
           todayScheduledDone: Number(d.todayScheduledDone ?? 0),
           rank: Number(d.rank ?? 0),
           totalManagers: Number(d.totalManagers ?? 0),
+          nextRank: Number(d.nextRank ?? 0),
+          gapToNext: Number(d.gapToNext ?? 0),
           delta: {
             inquiries: Number(d?.delta?.inquiries ?? 0),
             registrations: Number(d?.delta?.registrations ?? 0),
@@ -1858,7 +1864,7 @@ export default function WorkJournalPage() {
         progress: null,
         footer:
           rank > 1
-            ? `${rank - 1}위까지 추월 가능`
+            ? `${stats?.nextRank ?? rank - 1}위까지 ${(stats?.gapToNext ?? 0).toLocaleString()}원!`
             : rank === 1
               ? "1위 유지 중!"
               : totalMgr > 0
@@ -1929,17 +1935,27 @@ export default function WorkJournalPage() {
         </button>
       </>
     ) : (
-      <button
-        type="button"
-        className={styles.btnSubmit}
-        onClick={handleSubmit}
-        disabled={saving || loading}
-      >
-        <svg className={styles.btnIcon} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-          <path d="M1.4033 7.10263H12.3215L8.27595 3.24975C7.90793 2.89925 7.90793 2.33113 8.27595 1.98064C8.64397 1.63015 9.2405 1.63015 9.60851 1.98064L15.2627 7.36557L15.3271 7.43393C15.629 7.78644 15.6077 8.30609 15.2627 8.63467L9.60851 14.0196C9.2405 14.3701 8.64397 14.3701 8.27595 14.0196C7.90793 13.6691 7.90793 13.101 8.27595 12.7505L12.3215 8.89761L1.4033 8.89761C0.882849 8.89761 0.460937 8.49579 0.460938 8.00012C0.460938 7.50445 0.882849 7.10263 1.4033 7.10263Z" fill="white" />
-        </svg>
-        제출하기
-      </button>
+      <>
+        <button
+          type="button"
+          className={styles.btnDraft}
+          onClick={() => persist("draft")}
+          disabled={saving || loading}
+        >
+          임시저장
+        </button>
+        <button
+          type="button"
+          className={styles.btnSubmit}
+          onClick={handleSubmit}
+          disabled={saving || loading}
+        >
+          <svg className={styles.btnIcon} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M1.4033 7.10263H12.3215L8.27595 3.24975C7.90793 2.89925 7.90793 2.33113 8.27595 1.98064C8.64397 1.63015 9.2405 1.63015 9.60851 1.98064L15.2627 7.36557L15.3271 7.43393C15.629 7.78644 15.6077 8.30609 15.2627 8.63467L9.60851 14.0196C9.2405 14.3701 8.64397 14.3701 8.27595 14.0196C7.90793 13.6691 7.90793 13.101 8.27595 12.7505L12.3215 8.89761L1.4033 8.89761C0.882849 8.89761 0.460937 8.49579 0.460938 8.00012C0.460938 7.50445 0.882849 7.10263 1.4033 7.10263Z" fill="white" />
+          </svg>
+          제출하기
+        </button>
+      </>
     );
 
   return (
@@ -2542,7 +2558,10 @@ export default function WorkJournalPage() {
                 <button
                   type="button"
                   className={styles.wcOpenJournalBtn}
-                  onClick={() => setJournalDrawerOpen(true)}
+                  onClick={() => {
+                    setJournalTab("today");
+                    setJournalDrawerOpen(true);
+                  }}
                 >
                   <span className={styles.wcOpenJournalText}>
                     업무일지 열기
@@ -2611,6 +2630,62 @@ export default function WorkJournalPage() {
                 >
                   ✕
                 </button>
+              </div>
+            )}
+
+            {/* 업무센터 드로어 — 오늘 / 지난 기록 탭 */}
+            {isDefault && (
+              <div className={styles.wjTabBar}>
+                <button
+                  type="button"
+                  className={`${styles.wjTab} ${journalTab === "today" ? styles.wjTabActive : ""}`}
+                  onClick={() => setJournalTab("today")}
+                >
+                  오늘
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.wjTab} ${journalTab === "history" ? styles.wjTabActive : ""}`}
+                  onClick={() => setJournalTab("history")}
+                >
+                  지난 기록
+                </button>
+              </div>
+            )}
+
+            {/* 지난 기록 — 업무일지 모음(압축) 오버레이 */}
+            {isDefault && journalTab === "history" && (
+              <div className={styles.wjHistoryOverlay}>
+                <div className={styles.wjDrawerHeader}>
+                  <span className={styles.wjDrawerTitle}>업무 일지</span>
+                  <button
+                    type="button"
+                    className={styles.wjDrawerClose}
+                    onClick={() => setJournalDrawerOpen(false)}
+                    aria-label="닫기"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <div className={styles.wjTabBar}>
+                  <button
+                    type="button"
+                    className={styles.wjTab}
+                    onClick={() => setJournalTab("today")}
+                  >
+                    오늘
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.wjTab} ${styles.wjTabActive}`}
+                    onClick={() => setJournalTab("history")}
+                  >
+                    지난 기록
+                  </button>
+                </div>
+                <div className={styles.wjHistoryBody}>
+                  <ArchiveView embedded />
+                </div>
               </div>
             )}
 
@@ -2976,8 +3051,8 @@ export default function WorkJournalPage() {
                 </section>
               )}
 
-              {/* 푸터 — default(업무센터)만 우측에 노출. 학사·실습팀은 좌측 '내일 예정' 카드 안으로 이동 */}
-              {isDefault && (
+              {/* 푸터 — default(업무센터) '오늘' 탭만 노출. 학사·실습팀은 좌측 '내일 예정' 카드 안으로 이동 */}
+              {isDefault && journalTab === "today" && (
                 <div className={styles.footer} data-guide="wj-footer">
                   {footerButtons}
                 </div>

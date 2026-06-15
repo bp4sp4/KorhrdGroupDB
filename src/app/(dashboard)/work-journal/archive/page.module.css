@@ -4,6 +4,11 @@
   background: #f7f8fa;
 }
 
+/* 드로어 '지난 기록' 탭 내 임베드 — 페이지 패딩/배경/최소높이 제거 */
+.embedRoot {
+  width: 100%;
+}
+
 /* ── 카드 ── */
 .card {
   display: flex;

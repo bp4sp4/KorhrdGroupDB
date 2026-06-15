@@ -152,7 +152,7 @@ function statusBadge(status: Journal["status"]) {
 // ─────────────────────────────────────────────────────────────
 // 페이지
 // ─────────────────────────────────────────────────────────────
-export default function WorkJournalArchivePage() {
+export function ArchiveView({ embedded = false }: { embedded?: boolean }) {
   const [journals, setJournals] = useState<Journal[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -246,11 +246,11 @@ export default function WorkJournalArchivePage() {
   }, [page, totalPages]);
 
   return (
-    <div className={styles.page}>
+    <div className={embedded ? styles.embedRoot : styles.page}>
       <div className={styles.card}>
         {/* 헤더 */}
         <div className={styles.cardHead}>
-          <h1 className={styles.title}>업무일지 모음</h1>
+          {!embedded && <h1 className={styles.title}>업무일지 모음</h1>}
           <div ref={dateRangeRef} className={styles.dateRangeWrap}>
             <button
               type="button"
@@ -385,6 +385,10 @@ export default function WorkJournalArchivePage() {
       )}
     </div>
   );
+}
+
+export default function WorkJournalArchivePage() {
+  return <ArchiveView />;
 }
 
 // ─────────────────────────────────────────────────────────────

@@ -546,18 +546,11 @@ export const ADMIN_TOOLS_ITEMS: NavItem[] = [
 // 개인 도구 — 모든 사용자(미니어드민 제외)에게 노출. API가 본인 데이터만 반환하므로 각자 자기 것만 본다.
 export const PERSONAL_TOOLS_ITEMS: NavItem[] = [
   {
-    id: "wj-archive",
-    label: "업무일지 모음",
-    href: "/work-journal/archive",
-    icon: <CalendarDays size={16} />,
-    groupLabel: "내 메뉴",
-    permissionKey: "wj-archive",
-  },
-  {
     id: "me-leave",
     label: "휴가현황",
     href: "/me/leave",
     icon: <FileText size={16} />,
+    groupLabel: "내 메뉴",
     permissionKey: "me-leave",
   },
   {

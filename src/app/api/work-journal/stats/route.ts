@@ -177,15 +177,14 @@ export async function GET() {
       .lt('contact_scheduled_at', todayEndISO)
       .gte('counsel_completed_at', todayStartISO)
       .lt('counsel_completed_at', todayEndISO),
-    // 실적 순위 — 분기 전체 담당자 등록완료율 (담당자 실적 기준, 지인소개 제외)
+    // 실적 순위 — 분기 전체 담당자 매출 (담당자별 합산)
     supabaseAdmin
-      .from('hakjeom_consultations')
-      .select('manager, status, click_source')
-      .is('deleted_at', null)
-      .not('manager', 'is', null)
-      .neq('manager', '')
-      .gte('created_at', quarterStartISO)
-      .lte('created_at', quarterEndISO),
+      .from('edu_sales')
+      .select('manager_name, total_amount')
+      .not('manager_name', 'is', null)
+      .neq('manager_name', '')
+      .gte('payment_date', quarterStartISO.slice(0, 10))
+      .lte('payment_date', quarterEndISO.slice(0, 10)),
   ])
 
   const totalInquiries = inqMonth.count ?? 0
@@ -197,23 +196,25 @@ export async function GET() {
     0,
   )
 
-  // 실적 순위 — 분기 등록완료율 내림차순 (담당자 실적과 동일)
-  const byMgr: Record<string, { t: number; reg: number }> = {}
+  // 실적 순위 — 분기 매출 내림차순 (담당자별 합산)
+  const revByMgr: Record<string, number> = {}
   for (const r of allSalesRes.data ?? []) {
-    const cs = (r as { click_source?: string | null }).click_source ?? ''
-    const stripped = cs.startsWith('바로폼_') ? cs.slice(4) : cs
-    if (stripped.split('_')[0] === '지인소개') continue
-    const m = (r as { manager?: string | null }).manager
+    const m = (r as { manager_name?: string | null }).manager_name
     if (!m) continue
-    byMgr[m] ??= { t: 0, reg: 0 }
-    byMgr[m].t += 1
-    if ((r as { status?: string | null }).status === '등록완료') byMgr[m].reg += 1
+    revByMgr[m] =
+      (revByMgr[m] ?? 0) +
+      Number((r as { total_amount?: number | null }).total_amount ?? 0)
   }
-  const ranked = Object.entries(byMgr)
-    .map(([m, v]) => ({ m, rate: v.t > 0 ? (v.reg / v.t) * 100 : 0 }))
-    .sort((a, b) => b.rate - a.rate)
-  const rank = ranked.findIndex((x) => x.m === managerName) + 1
+  const ranked = Object.entries(revByMgr)
+    .map(([m, rev]) => ({ m, rev }))
+    .sort((a, b) => b.rev - a.rev)
+  const myIdx = ranked.findIndex((x) => x.m === managerName)
+  const rank = myIdx + 1
   const totalManagers = ranked.length
+  // 한 단계 위 등수와의 매출 차이(원) — 그만큼 더 하면 추월
+  const gapToNext =
+    myIdx > 0 ? Math.max(0, ranked[myIdx - 1].rev - ranked[myIdx].rev) : 0
+  const nextRank = rank > 1 ? rank - 1 : 0
 
   return NextResponse.json({
     managerName,
@@ -227,6 +228,8 @@ export async function GET() {
     todayScheduledDone: todayScheduledDoneRes.count ?? 0,
     rank,
     totalManagers,
+    nextRank,
+    gapToNext,
     delta: {
       // 오늘 - 직전 영업일
       inquiries: baseStat.inquiries - prevStat.inquiries,
