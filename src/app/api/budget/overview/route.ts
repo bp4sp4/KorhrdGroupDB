@@ -9,7 +9,9 @@ function currentYearMonth(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
 }
 
-// GET: 사업부(본부+선택 팀) 예산 요약 (한도 / 사용액 / 가용액)
+// GET: 사용예산 요약 (한도 / 사용액 / 가용액)
+//  · scope 있으면 → 해당 사업부 통장(계좌) 기준 단일 카드
+//  · 없으면(경영지원본부 전체 보기) → 본부별 + 팀별 분해
 export async function GET(request: NextRequest) {
   const access = await resolveBudgetAccess()
   if (!access.ok) return access.response
@@ -17,44 +19,83 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const month = searchParams.get('month') || currentYearMonth()
 
-  // 사업부 스코프 (사이드바 사용예산 진입) — 본부 + 선택적 팀
+  const { start, end } = monthRange(month)
+  const startDate = `${start.slice(0, 4)}-${start.slice(4, 6)}-${start.slice(6, 8)}`
+  const endDate = `${end.slice(0, 4)}-${end.slice(4, 6)}-${end.slice(6, 8)}`
+
+  const monthBudget = async (deptIds: string[]) => {
+    const { data } = await supabaseAdmin
+      .from('department_budgets')
+      .select('department_id, limit_amount, memo')
+      .eq('year_month', month)
+      .in('department_id', deptIds)
+    const map = new Map<string, { limit: number; memo: string | null }>()
+    ;(data ?? []).forEach((b) =>
+      map.set(b.department_id, { limit: Number(b.limit_amount) || 0, memo: b.memo }),
+    )
+    return map
+  }
+
+  // ── 사업부 스코프 (통장 기준) ──
   const scope = await resolveScope(searchParams.get('scope'))
   if (scope) {
-    const accessible = access.departments.some((d) => d.id === scope.departmentId)
-    const teamOk = !access.teamRestricted || !scope.teamId || scope.teamId === access.ownTeamId
-    if (!accessible || !teamOk) {
+    // 접근: 같은 본부 소속(또는 전체권한)이면 팀과 무관하게 열람
+    const dept = access.departments.find((d) => d.id === scope.departmentId)
+    if (!dept) {
       return NextResponse.json(
         { month, seeAll: access.seeAll, scope, departments: [] },
         { status: 403 },
       )
     }
+
+    const { data: txs } = await supabaseAdmin
+      .from('bank_transactions')
+      .select('amount, tx_type')
+      .eq('is_budget', true)
+      .gte('tx_date', startDate)
+      .lte('tx_date', endDate)
+      .in('account_number', scope.accountNumbers)
+
+    let out = 0
+    let inAmt = 0
+    ;(txs ?? []).forEach((t) => {
+      const amt = Number(t.amount) || 0
+      if (t.tx_type === 'in') inAmt += amt
+      else out += amt
+    })
+
+    const limitMap = await monthBudget([dept.id])
+    const limit = limitMap.get(dept.id)?.limit ?? 0
+
+    return NextResponse.json({
+      month,
+      seeAll: access.seeAll,
+      scope,
+      departments: [
+        {
+          department_id: dept.id,
+          department_code: dept.code,
+          department_name: scope.label,
+          limit_amount: limit,
+          out_amount: out,
+          in_amount: inAmt,
+          available_amount: limit - out + inAmt,
+          can_edit_limit: canEditLimit(access, dept.id),
+          memo: limitMap.get(dept.id)?.memo ?? null,
+          teams: [],
+        },
+      ],
+    })
   }
-  const scopeTeamId = scope?.teamId ?? null
 
-  const deptIds = scope ? [scope.departmentId] : access.departments.map((d) => d.id)
-
+  // ── 전체 보기 (경영지원본부): 본부별 + 팀별 분해 ──
+  const deptIds = access.departments.map((d) => d.id)
   if (deptIds.length === 0) {
-    return NextResponse.json({ month, seeAll: access.seeAll, scope, departments: [] })
+    return NextResponse.json({ month, seeAll: access.seeAll, scope: null, departments: [] })
   }
 
-  // 예산 한도
-  const { data: budgets } = await supabaseAdmin
-    .from('department_budgets')
-    .select('department_id, limit_amount, memo')
-    .eq('year_month', month)
-    .in('department_id', deptIds)
+  const limitByDept = await monthBudget(deptIds)
 
-  const limitByDept = new Map<string, { limit: number; memo: string | null }>()
-  ;(budgets ?? []).forEach((b) =>
-    limitByDept.set(b.department_id, { limit: Number(b.limit_amount) || 0, memo: b.memo }),
-  )
-
-  // 사용액 = 해당 월 출금 중 예산반영(is_budget) 합계
-  const { start, end } = monthRange(month)
-  const startDate = `${start.slice(0, 4)}-${start.slice(4, 6)}-${start.slice(6, 8)}`
-  const endDate = `${end.slice(0, 4)}-${end.slice(4, 6)}-${end.slice(6, 8)}`
-
-  // 팀 목록 (본부별 분해용)
   const { data: teamRows } = await supabaseAdmin
     .from('teams')
     .select('id, name, department_id')
@@ -62,7 +103,6 @@ export async function GET(request: NextRequest) {
     .in('department_id', deptIds)
     .order('sort_order')
 
-  // 예산 반영된 거래 — 출금(−), 입금(+), 팀까지 집계
   const { data: txs } = await supabaseAdmin
     .from('bank_transactions')
     .select('department_id, team_id, amount, tx_type')
@@ -73,7 +113,6 @@ export async function GET(request: NextRequest) {
 
   const outByDept = new Map<string, number>()
   const inByDept = new Map<string, number>()
-  // 팀별 집계 — key: `${dept}|${team}`
   const outByTeam = new Map<string, number>()
   const inByTeam = new Map<string, number>()
   ;(txs ?? []).forEach((t) => {
@@ -94,17 +133,11 @@ export async function GET(request: NextRequest) {
     }
   })
 
-  const scopedDepts = scope
-    ? access.departments.filter((d) => d.id === scope.departmentId)
-    : access.departments
-
-  const departments = scopedDepts.map((d) => {
+  const departments = access.departments.map((d) => {
     const limit = limitByDept.get(d.id)?.limit ?? 0
 
-    // 소속 팀 분해 — 스코프 팀이 있으면 그 팀만, 일반 직원은 본인 팀만
     let teams = (teamRows ?? []).filter((tm) => tm.department_id === d.id)
-    if (scopeTeamId) teams = teams.filter((tm) => tm.id === scopeTeamId)
-    else if (access.teamRestricted) teams = teams.filter((tm) => tm.id === access.ownTeamId)
+    if (access.teamRestricted) teams = teams.filter((tm) => tm.id === access.ownTeamId)
 
     const teamBreakdown = teams.map((tm) => {
       const k = `${d.id}|${tm.id}`
@@ -116,13 +149,8 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    // 팀 스코프면 그 팀 사용액 기준, 아니면 본부 전체
-    const out = scopeTeamId
-      ? outByTeam.get(`${d.id}|${scopeTeamId}`) ?? 0
-      : outByDept.get(d.id) ?? 0
-    const inAmt = scopeTeamId
-      ? inByTeam.get(`${d.id}|${scopeTeamId}`) ?? 0
-      : inByDept.get(d.id) ?? 0
+    const out = outByDept.get(d.id) ?? 0
+    const inAmt = inByDept.get(d.id) ?? 0
 
     return {
       department_id: d.id,
@@ -131,7 +159,6 @@ export async function GET(request: NextRequest) {
       limit_amount: limit,
       out_amount: out,
       in_amount: inAmt,
-      // 가용 예산 = 한도 − 출금 + 입금
       available_amount: limit - out + inAmt,
       can_edit_limit: canEditLimit(access, d.id),
       memo: limitByDept.get(d.id)?.memo ?? null,
@@ -144,7 +171,7 @@ export async function GET(request: NextRequest) {
     seeAll: access.seeAll,
     teamRestricted: access.teamRestricted,
     ownTeamId: access.ownTeamId,
-    scope,
+    scope: null,
     departments,
   })
 }

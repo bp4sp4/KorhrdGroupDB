@@ -409,41 +409,9 @@ function BudgetPageInner() {
                 </div>
               </div>
 
-              <h3 className={styles.subTitle}>팀별 사용내역</h3>
-              <div className={styles.tableWrap}>
-                <table className={styles.table}>
-                  <thead>
-                    <tr>
-                      <th>팀</th>
-                      <th className={styles.colNum}>출금 (−)</th>
-                      <th className={styles.colNum}>입금 (+)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {activeDept.teams.length === 0 ? (
-                      <tr>
-                        <td colSpan={3} className={styles.emptyCell}>
-                          팀이 없습니다.
-                        </td>
-                      </tr>
-                    ) : (
-                      activeDept.teams.map((t) => (
-                        <tr key={t.team_id}>
-                          <td>{t.team_name}</td>
-                          <td className={`${styles.colNum} ${styles.used}`}>
-                            {t.out_amount ? `−${won(t.out_amount)}` : "0"}
-                          </td>
-                          <td className={`${styles.colNum} ${styles.deposit}`}>
-                            {t.in_amount ? `+${won(t.in_amount)}` : "0"}
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
               <p className={styles.hint}>
-                가용 예산 = 예산 한도 − 예산 반영 출금 + 예산 반영 입금.{" "}
+                이 사업부 통장 기준 · 가용 예산 = 예산 한도 − 예산 반영 출금 +
+                예산 반영 입금.{" "}
                 {activeDept.can_edit_limit
                   ? "예산 한도 칸을 클릭해 수정할 수 있습니다."
                   : "예산 한도는 어드민·경영지원본부·본부장만 수정할 수 있습니다."}

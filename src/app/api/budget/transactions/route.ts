@@ -33,21 +33,18 @@ export async function GET(request: NextRequest) {
   const month = searchParams.get('month') || currentYearMonth()
   const deptFilter = searchParams.get('department_id')
 
-  // 사업부 스코프 (본부 + 선택 팀)
+  // 사업부 스코프 (통장 기준) — 같은 본부 소속이면 팀과 무관하게 열람
   const scope = await resolveScope(searchParams.get('scope'))
   if (scope) {
     const accessible = access.departments.some((d) => d.id === scope.departmentId)
-    const teamOk = !access.teamRestricted || !scope.teamId || scope.teamId === access.ownTeamId
-    if (!accessible || !teamOk) {
+    if (!accessible) {
       return NextResponse.json({ error: '접근 권한이 없습니다.' }, { status: 403 })
     }
   }
-  const scopeTeamId = scope?.teamId ?? null
 
   const accessibleDeptIds = new Set(access.departments.map((d) => d.id))
-  const targetDeptIds = scope
-    ? [scope.departmentId]
-    : deptFilter && accessibleDeptIds.has(deptFilter)
+  const targetDeptIds =
+    deptFilter && accessibleDeptIds.has(deptFilter)
       ? [deptFilter]
       : access.departments.map((d) => d.id)
 
@@ -57,20 +54,22 @@ export async function GET(request: NextRequest) {
     supabaseAdmin.from('expense_categories').select('id, name').order('sort_order'),
   ])
 
-  // 대상 본부의 계좌 목록
-  const { data: accounts } = await supabaseAdmin
-    .from('bank_accounts')
-    .select('account_number, department_id')
-    .eq('is_active', true)
-    .in('department_id', targetDeptIds)
-
-  // 계좌번호 → 접근가능 본부(들)
+  // 계좌 목록 — 스코프면 그 사업부 통장, 아니면 대상 본부 전체 통장
   const acctToDepts = new Map<string, string[]>()
-  ;(accounts ?? []).forEach((a) => {
-    const list = acctToDepts.get(a.account_number) ?? []
-    if (a.department_id) list.push(a.department_id)
-    acctToDepts.set(a.account_number, list)
-  })
+  if (scope) {
+    scope.accountNumbers.forEach((acc) => acctToDepts.set(acc, [scope.departmentId]))
+  } else {
+    const { data: accounts } = await supabaseAdmin
+      .from('bank_accounts')
+      .select('account_number, department_id')
+      .eq('is_active', true)
+      .in('department_id', targetDeptIds)
+    ;(accounts ?? []).forEach((a) => {
+      const list = acctToDepts.get(a.account_number) ?? []
+      if (a.department_id) list.push(a.department_id)
+      acctToDepts.set(a.account_number, list)
+    })
+  }
   const accountNumbers = Array.from(acctToDepts.keys())
 
   if (accountNumbers.length === 0) {
@@ -112,8 +111,6 @@ export async function GET(request: NextRequest) {
   let transactions = unified.map((t) => {
     const saved = savedByKey.get(t.tx_key)
     // 기본 본부 결정 — 체크 시 항상 어느 본부에서든 깎이도록 가능한 한 채움
-    //  · 계좌가 한 본부에만 연결 → 그 본부
-    //  · 여러 본부 공용 → 본인 본부가 포함돼 있으면 본인 본부 (아니면 비움 → 직접 선택)
     const depts = acctToDepts.get(t.account_number) ?? []
     const defaultDept = scope
       ? scope.departmentId
@@ -122,23 +119,19 @@ export async function GET(request: NextRequest) {
         : access.ownDepartmentId && depts.includes(access.ownDepartmentId)
           ? access.ownDepartmentId
           : null
-    // 미분류 거래의 기본 팀 — 스코프 팀 > (팀 제한 직원이면) 본인 팀 (체크 시 그 팀으로 귀속)
-    const defaultTeam = scopeTeamId ?? (access.teamRestricted ? access.ownTeamId : null)
     return {
       ...t,
       department_id: saved?.department_id ?? defaultDept,
-      team_id: saved?.team_id ?? defaultTeam,
+      team_id: saved?.team_id ?? null,
       content: saved?.content ?? '',
       expense_category_id: saved?.expense_category_id ?? null,
       is_budget: saved?.is_budget ?? false,
     }
   })
 
-  if (scopeTeamId) {
-    // 사업부(팀) 스코프 — 그 팀 거래 + 미분류(공용 통장 미귀속)만 노출
-    transactions = transactions.filter((t) => t.team_id === scopeTeamId || !t.team_id)
-  } else if (access.teamRestricted) {
-    // 일반 직원 — 본인 팀 + 미분류 거래 (다른 팀으로 분류된 것만 가림)
+  // 스코프(통장 기준) 페이지는 그 통장 거래 전체 노출 — 팀 필터 없음.
+  // 전체 보기(경영지원본부)에서만 팀 제한 직원은 본인 팀 + 미분류로 제한.
+  if (!scope && access.teamRestricted) {
     transactions = transactions.filter(
       (t) => t.team_id === access.ownTeamId || !t.team_id,
     )
