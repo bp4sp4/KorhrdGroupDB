@@ -356,6 +356,14 @@ export default function Sidebar({
       return { ...item, children: filteredChildren };
     })
     .map((item) => {
+      // 예산현황 하위항목 — budget 권한이 'none'인 사용자에겐 숨김 (full access 제외)
+      if (!item.children || isFullAccess) return item;
+      const kids = item.children.filter(
+        (c) => c.permissionKey !== "budget" || allowedSections.has("budget"),
+      );
+      return { ...item, children: kids };
+    })
+    .map((item) => {
       // 임시 숨김 하위 메뉴 제거 (마케팅 안 민간자격증·유학 섹션)
       if (!item.children) return item;
       const kids = item.children.filter(
