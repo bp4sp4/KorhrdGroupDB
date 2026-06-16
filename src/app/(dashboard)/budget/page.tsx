@@ -322,7 +322,7 @@ function BudgetPageInner() {
     <div className={styles.container}>
       <div className={styles.header}>
         <div className={styles.headerTitle}>
-          <h1>{scopeLabel ? `${scopeLabel} 사용예산` : "예산현황"}</h1>
+          <h1>{scopeLabel ? `${scopeLabel} 예산현황` : "예산현황"}</h1>
         </div>
         <div className={styles.headerActions}>
           <select

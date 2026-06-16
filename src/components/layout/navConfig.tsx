@@ -150,7 +150,7 @@ export const ALL_SECTIONS: NavSection[] = [
           },
           {
             id: "education-budget",
-            label: "사용예산",
+            label: "예산현황",
             href: "/budget?scope=hakjeom",
           },
         ],
@@ -202,7 +202,7 @@ export const ALL_SECTIONS: NavSection[] = [
           { id: "cert-tab-stats", label: "통계", href: "/cert?tab=stats" },
           {
             id: "cert-budget",
-            label: "사용예산",
+            label: "예산현황",
             href: "/budget?scope=cert",
           },
         ],
@@ -242,7 +242,7 @@ export const ALL_SECTIONS: NavSection[] = [
           },
           {
             id: "practice-budget",
-            label: "사용예산",
+            label: "예산현황",
             href: "/budget?scope=practice",
           },
         ],
@@ -311,7 +311,7 @@ export const ALL_SECTIONS: NavSection[] = [
           },
           {
             id: "management-budget",
-            label: "사용예산",
+            label: "예산현황",
             href: "/budget",
             permissionKey: "budget",
           },
@@ -392,7 +392,7 @@ export const ALL_SECTIONS: NavSection[] = [
           },
           {
             id: "marketing-budget",
-            label: "사용예산",
+            label: "예산현황",
             href: "/budget?scope=dev",
           },
         ],
