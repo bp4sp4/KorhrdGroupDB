@@ -122,11 +122,12 @@ export async function GET(request: NextRequest) {
         : access.ownDepartmentId && depts.includes(access.ownDepartmentId)
           ? access.ownDepartmentId
           : null
+    // 미분류 거래의 기본 팀 — 스코프 팀 > (팀 제한 직원이면) 본인 팀 (체크 시 그 팀으로 귀속)
+    const defaultTeam = scopeTeamId ?? (access.teamRestricted ? access.ownTeamId : null)
     return {
       ...t,
       department_id: saved?.department_id ?? defaultDept,
-      // 스코프 팀이 있으면 미분류 거래의 기본 팀으로 채움 (체크 시 그 사업부로 귀속)
-      team_id: saved?.team_id ?? scopeTeamId ?? null,
+      team_id: saved?.team_id ?? defaultTeam,
       content: saved?.content ?? '',
       expense_category_id: saved?.expense_category_id ?? null,
       is_budget: saved?.is_budget ?? false,
@@ -137,8 +138,10 @@ export async function GET(request: NextRequest) {
     // 사업부(팀) 스코프 — 그 팀 거래 + 미분류(공용 통장 미귀속)만 노출
     transactions = transactions.filter((t) => t.team_id === scopeTeamId || !t.team_id)
   } else if (access.teamRestricted) {
-    // 일반 직원은 본인 팀으로 분류된 거래만 열람
-    transactions = transactions.filter((t) => t.team_id === access.ownTeamId)
+    // 일반 직원 — 본인 팀 + 미분류 거래 (다른 팀으로 분류된 것만 가림)
+    transactions = transactions.filter(
+      (t) => t.team_id === access.ownTeamId || !t.team_id,
+    )
   }
 
   return NextResponse.json({
