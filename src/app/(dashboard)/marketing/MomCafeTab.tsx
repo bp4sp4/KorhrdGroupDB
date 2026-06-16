@@ -161,6 +161,7 @@ export default function MomCafeTab() {
   const [items, setItems] = useState<MomCafe[]>([])
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
   const [searchText, setSearchText] = useState('')
+  const [agreementFilter, setAgreementFilter] = useState<'all' | 'O' | 'X' | 'none'>('all')
   const [currentPage, setCurrentPage] = useState(1)
 
   const [showModal, setShowModal] = useState(false)
@@ -191,9 +192,19 @@ export default function MomCafeTab() {
   useEffect(() => {
     setCurrentPage(1)
     setSelectedIds(new Set())
-  }, [searchText])
+  }, [searchText, agreementFilter])
+
+  const agreementCounts = {
+    all: items.length,
+    O: items.filter((x) => x.agreement_status === 'O').length,
+    X: items.filter((x) => x.agreement_status === 'X').length,
+    none: items.filter((x) => !x.agreement_status).length,
+  }
 
   const filtered = items.filter((item) => {
+    if (agreementFilter === 'O' && item.agreement_status !== 'O') return false
+    if (agreementFilter === 'X' && item.agreement_status !== 'X') return false
+    if (agreementFilter === 'none' && item.agreement_status) return false
     if (!searchText) return true
     const q = searchText.toLowerCase()
     return (
@@ -404,6 +415,22 @@ export default function MomCafeTab() {
     <div className={styles.page}>
       <div className={styles.header}>
         <span className={styles.sub}>등록된 맘카페 {items.length}건</span>
+        <div className={styles.filter_group}>
+          {([
+            { key: 'all', label: '전체' },
+            { key: 'O', label: '협약 O' },
+            { key: 'X', label: '미협약 X' },
+            { key: 'none', label: '미정' },
+          ] as const).map((f) => (
+            <button
+              key={f.key}
+              className={`${styles.filter_btn} ${agreementFilter === f.key ? styles.filter_btn_active : ''}`}
+              onClick={() => setAgreementFilter(f.key)}
+            >
+              {f.label} {agreementCounts[f.key]}
+            </button>
+          ))}
+        </div>
         <input
           className={styles.search_input}
           value={searchText}
