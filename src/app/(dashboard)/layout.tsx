@@ -269,18 +269,20 @@ export default function DashboardLayout({
     )
   }
 
+  // 메일·예산현황 화면은 좌측 앱 사이드바를 숨기고 전체 폭 사용 (상단 헤더로 이동)
+  const hideAppSidebar = pathname.startsWith('/mail') || pathname.startsWith('/budget')
+
   return (
     <GuideProvider>
       <div className={styles.dashboardWrap}>
         <Header userName={displayName} userRole={userRole} permissions={permissions} revenueOwnDivisions={revenueOwnDivisions} hiddenMenus={hiddenMenus} onMenuToggle={() => setSidebarOpen(v => !v)} />
 
         <div className={styles.dashboardBody}>
-          {/* 메일 화면은 네이버 메일처럼 좌측 앱 사이드바를 숨기고 전체 폭 사용 */}
-          {!pathname.startsWith('/mail') && (
+          {!hideAppSidebar && (
             <Sidebar userRole={userRole} permissions={permissions} revenueOwnDivisions={revenueOwnDivisions} isDivisionAdmin={isDivisionAdmin} hiddenMenus={hiddenMenus} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
           )}
 
-          {sidebarOpen && !pathname.startsWith('/mail') && (
+          {sidebarOpen && !hideAppSidebar && (
             <div className={styles.sidebarOverlay} onClick={() => setSidebarOpen(false)} />
           )}
 
@@ -290,7 +292,8 @@ export default function DashboardLayout({
               pathname.startsWith('/calendar') ||
               pathname.startsWith('/dashboard') ||
               pathname.startsWith('/work-journal') ||
-              pathname.startsWith('/mail')
+              pathname.startsWith('/mail') ||
+              pathname.startsWith('/budget')
                 ? { padding: 0 }
                 : undefined
             }

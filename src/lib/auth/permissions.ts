@@ -22,6 +22,7 @@ export type PermissionSection =
   | 'revenue-upload'
   | 'reports'
   | 'bankaccount'
+  | 'budget'
   | 'task-board'
   | 'me-leave'
   | 'calendar'
@@ -67,6 +68,7 @@ export const ALL_PERMISSION_SECTIONS: PermissionSection[] = [
   'revenue-upload',
   'reports',
   'bankaccount',
+  'budget',
   'task-board',
   'me-leave',
   'calendar',
@@ -92,6 +94,13 @@ const DEFAULT_ALLOW_SECTIONS: PermissionSection[] = [
   'me-appraisal',
 ]
 
+// 기본 'own' 섹션 — 권한 레코드가 없으면 본인 소속 데이터만 열람 가능
+// budget(예산현황): 모든 직원이 본인 본부 예산을 기본 열람,
+// 어드민/경영지원본부는 resolveBudgetAccess 에서 전 본부로 승격
+const DEFAULT_OWN_SECTIONS: PermissionSection[] = [
+  'budget',
+]
+
 // 직책별 기본 권한 (position_permissions 테이블이 비어있을 때 fallback)
 // links / marketing / task-board / me-leave / calendar 은 모든 직책 공통 (전사 도구로 누구나 접근)
 const COMMON_SECTIONS: PermissionSection[] = [
@@ -104,11 +113,11 @@ const MANAGEMENT_ACCESS_BY_POSITION: Record<string, PermissionSection[]> = {
   사원: [...COMMON_SECTIONS],
   주임: ['revenue-upload', 'approvals', ...COMMON_SECTIONS],
   대리: ['revenues', 'revenue-upload', 'approvals', ...COMMON_SECTIONS],
-  이사: ['revenues', 'revenue-upload', 'approvals', 'reports', 'bankaccount', ...COMMON_SECTIONS],
-  상무: ['revenues', 'revenue-upload', 'approvals', 'reports', 'bankaccount', ...COMMON_SECTIONS],
-  본부장: ['bankaccount', ...COMMON_SECTIONS],
-  대표이사: ['revenues', 'revenue-upload', 'approvals', 'reports', 'bankaccount', ...COMMON_SECTIONS],
-  임원: ['revenues', 'revenue-upload', 'approvals', 'reports', 'bankaccount', ...COMMON_SECTIONS],
+  이사: ['revenues', 'revenue-upload', 'approvals', 'reports', 'bankaccount', 'budget', ...COMMON_SECTIONS],
+  상무: ['revenues', 'revenue-upload', 'approvals', 'reports', 'bankaccount', 'budget', ...COMMON_SECTIONS],
+  본부장: ['bankaccount', 'budget', ...COMMON_SECTIONS],
+  대표이사: ['revenues', 'revenue-upload', 'approvals', 'reports', 'bankaccount', 'budget', ...COMMON_SECTIONS],
+  임원: ['revenues', 'revenue-upload', 'approvals', 'reports', 'bankaccount', 'budget', ...COMMON_SECTIONS],
 }
 
 function isPermissionSection(section: string): section is PermissionSection {
@@ -132,10 +141,12 @@ export function completePermissions(records: PermissionRecord[]): PermissionReco
   return ALL_PERMISSION_SECTIONS.map(section => {
     const existing = recordMap.get(section)
     if (existing) return existing
-    return {
-      section,
-      scope: DEFAULT_ALLOW_SECTIONS.includes(section) ? 'all' : 'none',
-    }
+    const scope: PermissionScope = DEFAULT_ALLOW_SECTIONS.includes(section)
+      ? 'all'
+      : DEFAULT_OWN_SECTIONS.includes(section)
+        ? 'own'
+        : 'none'
+    return { section, scope }
   })
 }
 

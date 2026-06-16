@@ -48,6 +48,7 @@ const SIDEBAR_HIDE_KEY: Record<string, string> = {
 const TEMP_HIDDEN_MENU_IDS = new Set<string>(["abroad", "appraisal"]);
 
 // 임시 숨김 하위 메뉴 — 마케팅개발본부 안의 민간자격증·유학 섹션 (학점은행제·맘카페만 남김)
+// management-budget(예산현황): 작업 중이라 사이드바에서 임시 숨김 (페이지/API 는 유효)
 const TEMP_HIDDEN_CHILD_IDS = new Set<string>([
   "marketing-cert-channel",
   "marketing-cert-creative",
@@ -55,6 +56,7 @@ const TEMP_HIDDEN_CHILD_IDS = new Set<string>([
   "marketing-abroad-channel",
   "marketing-abroad-creative",
   "marketing-abroad-dashboard",
+  "management-budget",
 ]);
 
 export default function Sidebar({
@@ -233,6 +235,7 @@ export default function Sidebar({
     "management-nms-sales": "revenues",
     "management-revenue-upload": "revenue-upload",
     "management-bankaccount": "bankaccount",
+    "management-budget": "budget",
     "management-approvals": "approvals",
     "management-reports": "reports",
   };
