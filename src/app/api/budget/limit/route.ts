@@ -1,15 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
-import { resolveBudgetAccess } from '@/lib/budget/access'
+import { resolveBudgetAccess, canEditLimit } from '@/lib/budget/access'
 
-// POST: 본부별 월 예산 한도 설정 (어드민/경영지원본부 전용)
+// POST: 본부별 월 예산 한도 설정 (어드민·경영지원본부 → 전체, 본부장 → 본인 본부)
 export async function POST(request: NextRequest) {
   const access = await resolveBudgetAccess()
   if (!access.ok) return access.response
-
-  if (!access.seeAll) {
-    return NextResponse.json({ error: '예산 한도 설정 권한이 없습니다.' }, { status: 403 })
-  }
 
   const body = await request.json()
   const { department_id, year_month, limit_amount, memo } = body as {
@@ -21,6 +17,10 @@ export async function POST(request: NextRequest) {
 
   if (!department_id || !year_month || !/^\d{4}-\d{2}$/.test(year_month)) {
     return NextResponse.json({ error: '본부와 연월(YYYY-MM)은 필수입니다.' }, { status: 400 })
+  }
+
+  if (!canEditLimit(access, department_id)) {
+    return NextResponse.json({ error: '예산 한도 설정 권한이 없습니다.' }, { status: 403 })
   }
 
   const amount = Math.max(0, Math.round(Number(limit_amount) || 0))

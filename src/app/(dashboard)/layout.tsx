@@ -22,6 +22,7 @@ export default function DashboardLayout({
   const [revenueOwnDivisions, setRevenueOwnDivisions] = useState<('nms' | 'cert' | 'abroad')[]>([])
   const [isDivisionAdmin, setIsDivisionAdmin] = useState<boolean>(false)
   const [hiddenMenus, setHiddenMenus] = useState<string[]>([])
+  const [departmentCode, setDepartmentCode] = useState<string | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [hrRecordStatus, setHrRecordStatus] = useState<'unknown' | 'approved' | 'blocked'>('unknown')
   const supabase = createClient()
@@ -33,6 +34,7 @@ export default function DashboardLayout({
     let divisions: ('nms' | 'cert' | 'abroad')[] = []
     let divisionAdminFlag = false
     let hidden: string[] = []
+    let deptCode: string | null = null
     try {
       const res = await fetch('/api/auth/me', { cache: 'no-store' })
       if (res.ok) {
@@ -47,6 +49,7 @@ export default function DashboardLayout({
           : []
         divisionAdminFlag = !!data.isDivisionAdmin
         hidden = Array.isArray(data.hiddenMenus) ? data.hiddenMenus : []
+        deptCode = data.departmentCode ?? null
       }
     } catch {
       // keep defaults
@@ -57,6 +60,7 @@ export default function DashboardLayout({
     setRevenueOwnDivisions(divisions)
     setIsDivisionAdmin(divisionAdminFlag)
     setHiddenMenus(hidden)
+    setDepartmentCode(deptCode)
 
     // 인사기록카드 승인 여부 — master-admin은 체크 생략, exempt=true 도 우회
     if (role === 'master-admin') {
@@ -269,8 +273,9 @@ export default function DashboardLayout({
     )
   }
 
-  // 메일·예산현황 화면은 좌측 앱 사이드바를 숨기고 전체 폭 사용 (상단 헤더로 이동)
-  const hideAppSidebar = pathname.startsWith('/mail') || pathname.startsWith('/budget')
+  // 메일 화면은 좌측 앱 사이드바를 숨기고 전체 폭 사용 (상단 헤더로 이동)
+  // 예산(/budget)은 사이드바 '사용예산' 하위항목으로 사업부 전환하므로 사이드바 유지
+  const hideAppSidebar = pathname.startsWith('/mail')
 
   return (
     <GuideProvider>
@@ -279,7 +284,7 @@ export default function DashboardLayout({
 
         <div className={styles.dashboardBody}>
           {!hideAppSidebar && (
-            <Sidebar userRole={userRole} permissions={permissions} revenueOwnDivisions={revenueOwnDivisions} isDivisionAdmin={isDivisionAdmin} hiddenMenus={hiddenMenus} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+            <Sidebar userRole={userRole} permissions={permissions} revenueOwnDivisions={revenueOwnDivisions} isDivisionAdmin={isDivisionAdmin} hiddenMenus={hiddenMenus} departmentCode={departmentCode} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
           )}
 
           {sidebarOpen && !hideAppSidebar && (

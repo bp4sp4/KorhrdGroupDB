@@ -148,6 +148,11 @@ export const ALL_SECTIONS: NavSection[] = [
             label: "올케어 통계",
             href: "/allcare?tab=stats",
           },
+          {
+            id: "education-budget",
+            label: "사용예산",
+            href: "/budget?scope=hakjeom",
+          },
         ],
       },
       {
@@ -195,6 +200,11 @@ export const ALL_SECTIONS: NavSection[] = [
             href: "/cert?tab=counsel-template",
           },
           { id: "cert-tab-stats", label: "통계", href: "/cert?tab=stats" },
+          {
+            id: "cert-budget",
+            label: "사용예산",
+            href: "/budget?scope=cert",
+          },
         ],
       },
       {
@@ -229,6 +239,11 @@ export const ALL_SECTIONS: NavSection[] = [
             label: "매출파일",
             href: "/practice-sales",
             permissionKey: "practice-sales",
+          },
+          {
+            id: "practice-budget",
+            label: "사용예산",
+            href: "/budget?scope=practice",
           },
         ],
       },
@@ -296,7 +311,7 @@ export const ALL_SECTIONS: NavSection[] = [
           },
           {
             id: "management-budget",
-            label: "예산현황",
+            label: "사용예산",
             href: "/budget",
             permissionKey: "budget",
           },
@@ -374,6 +389,11 @@ export const ALL_SECTIONS: NavSection[] = [
             label: "맘카페 관리",
             href: "/marketing?tab=mom-cafe",
             sectionLabel: "맘카페",
+          },
+          {
+            id: "marketing-budget",
+            label: "사용예산",
+            href: "/budget?scope=dev",
           },
         ],
       },

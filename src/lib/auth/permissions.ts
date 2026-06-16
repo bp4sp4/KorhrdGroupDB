@@ -113,11 +113,11 @@ const MANAGEMENT_ACCESS_BY_POSITION: Record<string, PermissionSection[]> = {
   사원: [...COMMON_SECTIONS],
   주임: ['revenue-upload', 'approvals', ...COMMON_SECTIONS],
   대리: ['revenues', 'revenue-upload', 'approvals', ...COMMON_SECTIONS],
-  이사: ['revenues', 'revenue-upload', 'approvals', 'reports', 'bankaccount', 'budget', ...COMMON_SECTIONS],
-  상무: ['revenues', 'revenue-upload', 'approvals', 'reports', 'bankaccount', 'budget', ...COMMON_SECTIONS],
-  본부장: ['bankaccount', 'budget', ...COMMON_SECTIONS],
-  대표이사: ['revenues', 'revenue-upload', 'approvals', 'reports', 'bankaccount', 'budget', ...COMMON_SECTIONS],
-  임원: ['revenues', 'revenue-upload', 'approvals', 'reports', 'bankaccount', 'budget', ...COMMON_SECTIONS],
+  이사: ['revenues', 'revenue-upload', 'approvals', 'reports', 'bankaccount', ...COMMON_SECTIONS],
+  상무: ['revenues', 'revenue-upload', 'approvals', 'reports', 'bankaccount', ...COMMON_SECTIONS],
+  본부장: ['bankaccount', ...COMMON_SECTIONS],
+  대표이사: ['revenues', 'revenue-upload', 'approvals', 'reports', 'bankaccount', ...COMMON_SECTIONS],
+  임원: ['revenues', 'revenue-upload', 'approvals', 'reports', 'bankaccount', ...COMMON_SECTIONS],
 }
 
 function isPermissionSection(section: string): section is PermissionSection {

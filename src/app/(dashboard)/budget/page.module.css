@@ -94,6 +94,73 @@
   margin-bottom: 16px;
 }
 
+/* ─── 본부(사업부) 탭 ─── */
+.deptTabBar {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #e5e7eb;
+  flex-wrap: wrap;
+}
+
+.deptTab {
+  padding: 10px 18px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #9ca3af;
+  cursor: pointer;
+}
+.deptTab:hover {
+  color: #6b7280;
+}
+.deptTabActive {
+  color: #2563eb;
+  border-bottom-color: #2563eb;
+}
+
+/* ─── 본부 예산 카드 ─── */
+.budgetCard {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.budgetRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 13px;
+}
+.budgetRow:last-child {
+  border-bottom: none;
+}
+.budgetRowTotal {
+  background: #f9fafb;
+  font-weight: 700;
+}
+.budgetLabel {
+  color: #6b7280;
+}
+.budgetValue {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: #111827;
+}
+
+.subTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  margin: 0 0 8px;
+}
+
 .layout {
   display: flex;
   align-items: flex-start;
@@ -104,7 +171,7 @@
 
 /* 좌측: 고정(스크롤 안 함). 내용이 길면 자체 스크롤 */
 .leftPane {
-  flex: 0 0 500px;
+  flex: 0 0 530px;
   align-self: flex-start;
   max-height: 100%;
   overflow: auto;

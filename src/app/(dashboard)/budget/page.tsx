@@ -1,18 +1,29 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { RefreshCw, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
 import styles from "./page.module.css";
 
 // ─── Types ────────────────────────────────────────────────
+interface TeamBreakdown {
+  team_id: string;
+  team_name: string;
+  out_amount: number;
+  in_amount: number;
+}
+
 interface DeptSummary {
   department_id: string;
   department_code: string | null;
   department_name: string;
   limit_amount: number;
-  used_amount: number;
+  out_amount: number;
+  in_amount: number;
   available_amount: number;
+  can_edit_limit: boolean;
   memo: string | null;
+  teams: TeamBreakdown[];
 }
 
 interface RefDept {
@@ -64,37 +75,89 @@ function recentMonths(count: number): string[] {
 
 const won = (n: number) => (n ?? 0).toLocaleString();
 
-// 출금 거래가 예산 사용액에 기여하는 본부/금액 (예산체크 + 본부지정 시에만)
-function budgetContribution(t: Tx): { dept: string | null; amount: number } {
-  const dept =
-    t.tx_type === "out" && t.is_budget && t.department_id
-      ? t.department_id
-      : null;
-  return { dept, amount: dept ? t.amount : 0 };
+// 예산 반영 거래의 본부/팀별 기여 (체크 + 본부지정 시) — 출금/입금 분리
+function budgetParts(t: Tx): {
+  dept: string | null;
+  team: string | null;
+  out: number;
+  in: number;
+} {
+  if (!t.is_budget || !t.department_id)
+    return { dept: null, team: null, out: 0, in: 0 };
+  return {
+    dept: t.department_id,
+    team: t.team_id,
+    out: t.tx_type === "out" ? t.amount : 0,
+    in: t.tx_type === "in" ? t.amount : 0,
+  };
 }
 
-// 체크/본부변경을 가용예산에 즉시 반영 (서버 재조회 없이 → 깜빡임 제거)
+// 체크/본부·팀변경을 가용예산에 즉시 반영 (서버 재조회 없이 → 깜빡임 제거)
+// 가용 = 한도 − 출금 + 입금
 function applyBudgetDelta(
   summary: DeptSummary[],
   oldTx: Tx,
   newTx: Tx,
 ): DeptSummary[] {
-  const before = budgetContribution(oldTx);
-  const after = budgetContribution(newTx);
-  if (before.dept === after.dept && before.amount === after.amount)
+  const before = budgetParts(oldTx);
+  const after = budgetParts(newTx);
+  if (
+    before.dept === after.dept &&
+    before.team === after.team &&
+    before.out === after.out &&
+    before.in === after.in
+  )
     return summary;
   return summary.map((d) => {
-    let used = d.used_amount;
-    if (before.dept === d.department_id) used -= before.amount;
-    if (after.dept === d.department_id) used += after.amount;
-    if (used === d.used_amount) return d;
-    return { ...d, used_amount: used, available_amount: d.limit_amount - used };
+    let out = d.out_amount;
+    let inAmt = d.in_amount;
+    let teams = d.teams;
+    const adjustTeam = (teamId: string | null, dOut: number, dIn: number) => {
+      if (!teamId || (dOut === 0 && dIn === 0)) return;
+      const idx = teams.findIndex((t) => t.team_id === teamId);
+      if (idx < 0) return;
+      teams = teams.map((t, i) =>
+        i === idx
+          ? { ...t, out_amount: t.out_amount + dOut, in_amount: t.in_amount + dIn }
+          : t,
+      );
+    };
+    if (before.dept === d.department_id) {
+      out -= before.out;
+      inAmt -= before.in;
+      adjustTeam(before.team, -before.out, -before.in);
+    }
+    if (after.dept === d.department_id) {
+      out += after.out;
+      inAmt += after.in;
+      adjustTeam(after.team, after.out, after.in);
+    }
+    if (out === d.out_amount && inAmt === d.in_amount && teams === d.teams)
+      return d;
+    return {
+      ...d,
+      out_amount: out,
+      in_amount: inAmt,
+      available_amount: d.limit_amount - out + inAmt,
+      teams,
+    };
   });
 }
 
 export default function BudgetPage() {
+  return (
+    <Suspense fallback={<div className={styles.container} />}>
+      <BudgetPageInner />
+    </Suspense>
+  );
+}
+
+function BudgetPageInner() {
+  const searchParams = useSearchParams();
+  const scopeKey = searchParams.get("scope") ?? "";
+
   const [month, setMonth] = useState(currentYearMonth());
-  const [seeAll, setSeeAll] = useState(false);
+  const [scopeLabel, setScopeLabel] = useState<string>("");
 
   const [summary, setSummary] = useState<DeptSummary[]>([]);
   const [loadingSummary, setLoadingSummary] = useState(false);
@@ -112,7 +175,8 @@ export default function BudgetPage() {
   const [loadingTx, setLoadingTx] = useState(false);
   const [txLoaded, setTxLoaded] = useState(false);
   const [txTab, setTxTab] = useState<"in" | "out">("out");
-  const [deptFilter, setDeptFilter] = useState("");
+  // 활성 본부(사업부) 탭
+  const [deptTab, setDeptTab] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
 
   const months = useMemo(() => recentMonths(12), []);
@@ -122,31 +186,47 @@ export default function BudgetPage() {
     setLoadingSummary(true);
     setError(null);
     try {
-      const res = await fetch(`/api/budget/overview?month=${month}`);
+      const params = new URLSearchParams({ month });
+      if (scopeKey) params.set("scope", scopeKey);
+      const res = await fetch(`/api/budget/overview?${params.toString()}`);
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "예산 조회 실패");
-      setSeeAll(!!json.seeAll);
       setSummary(json.departments ?? []);
+      setScopeLabel(json.scope?.label ?? "");
     } catch (e) {
       setError(e instanceof Error ? e.message : "예산 조회 실패");
     } finally {
       setLoadingSummary(false);
     }
-  }, [month]);
+  }, [month, scopeKey]);
 
   useEffect(() => {
     loadSummary();
+  }, [loadSummary]);
+
+  // 본부 목록 변하면 활성 탭 보정 (없거나 사라진 본부면 첫 본부로)
+  useEffect(() => {
+    if (summary.length === 0) return;
+    if (!summary.some((d) => d.department_id === deptTab)) {
+      setDeptTab(summary[0].department_id);
+    }
+  }, [summary, deptTab]);
+
+  // 본부 탭/월 바뀌면 입출금 결과 초기화 (본부별로 신한 재조회)
+  useEffect(() => {
     setTxs([]);
     setTxLoaded(false);
-  }, [loadSummary]);
+  }, [deptTab, month]);
 
   // ─── 입출금 조회 (신한 실시간) ──────────────────────────
   const loadTransactions = useCallback(async () => {
+    if (!deptTab) return;
     setLoadingTx(true);
     setError(null);
     try {
       const params = new URLSearchParams({ month });
-      if (deptFilter) params.set("department_id", deptFilter);
+      if (scopeKey) params.set("scope", scopeKey);
+      else params.set("department_id", deptTab);
       const res = await fetch(`/api/budget/transactions?${params.toString()}`);
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "입출금 조회 실패");
@@ -162,7 +242,7 @@ export default function BudgetPage() {
     } finally {
       setLoadingTx(false);
     }
-  }, [month, deptFilter]);
+  }, [month, deptTab, scopeKey]);
 
   // ─── 예산 한도 저장 ─────────────────────────────────────
   const saveLimit = async (departmentId: string, value: number) => {
@@ -224,10 +304,15 @@ export default function BudgetPage() {
     [txs],
   );
 
+  const scoped = !!scopeKey;
+  const activeDept = summary.find((d) => d.department_id === deptTab) ?? null;
+
+  // 전체 보기(경영지원본부)용 합계
   const totals = useMemo(
     () => ({
       limit: summary.reduce((s, d) => s + d.limit_amount, 0),
-      used: summary.reduce((s, d) => s + d.used_amount, 0),
+      out: summary.reduce((s, d) => s + d.out_amount, 0),
+      in: summary.reduce((s, d) => s + d.in_amount, 0),
       available: summary.reduce((s, d) => s + d.available_amount, 0),
     }),
     [summary],
@@ -237,7 +322,7 @@ export default function BudgetPage() {
     <div className={styles.container}>
       <div className={styles.header}>
         <div className={styles.headerTitle}>
-          <h1>예산현황</h1>
+          <h1>{scopeLabel ? `${scopeLabel} 사용예산` : "예산현황"}</h1>
         </div>
         <div className={styles.headerActions}>
           <select
@@ -265,100 +350,237 @@ export default function BudgetPage() {
       {error && <div className={styles.errorBox}>{error}</div>}
 
       <div className={styles.layout}>
-        {/* ─── 부서 가용 예산 ─── */}
+        {/* ─── 좌측: 예산 (스코프=단일 사업부 / 전체=모든 본부) ─── */}
         <section className={`${styles.section} ${styles.leftPane}`}>
-          <h2 className={styles.sectionTitle}>부서 가용 예산</h2>
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>본부</th>
-                  <th className={styles.colNum}>예산 한도</th>
-                  <th className={styles.colNum}>사용액</th>
-                  <th className={styles.colNum}>가용 예산</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loadingSummary ? (
-                  <tr>
-                    <td colSpan={4} className={styles.emptyCell}>
-                      불러오는 중...
-                    </td>
-                  </tr>
-                ) : summary.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className={styles.emptyCell}>
-                      표시할 본부가 없습니다.
-                    </td>
-                  </tr>
-                ) : (
-                  summary.map((d) => (
-                    <tr key={d.department_id}>
-                      <td>{d.department_name}</td>
-                      <td className={styles.colNum}>
-                        {seeAll ? (
-                          <input
-                            className={styles.limitInput}
-                            type="number"
-                            defaultValue={d.limit_amount || ""}
-                            placeholder="0"
-                            onBlur={(e) => {
-                              const v = Math.max(
-                                0,
-                                Math.round(Number(e.target.value) || 0),
-                              );
-                              if (v !== d.limit_amount)
-                                saveLimit(d.department_id, v);
-                            }}
-                          />
-                        ) : (
-                          won(d.limit_amount)
-                        )}
-                      </td>
-                      <td className={`${styles.colNum} ${styles.used}`}>
-                        {won(d.used_amount)}
-                      </td>
-                      <td
-                        className={`${styles.colNum} ${d.available_amount < 0 ? styles.negative : styles.available}`}
-                      >
-                        {won(d.available_amount)}
-                      </td>
+          {loadingSummary ? (
+            <p className={styles.hint}>불러오는 중...</p>
+          ) : summary.length === 0 ? (
+            <p className={styles.hint}>표시할 본부가 없습니다.</p>
+          ) : scoped && activeDept ? (
+            // ── 단일 사업부 (스코프) ──
+            <>
+              <h2 className={styles.sectionTitle}>
+                {scopeLabel || activeDept.department_name} 가용 예산
+              </h2>
+              <div className={styles.budgetCard}>
+                <div className={styles.budgetRow}>
+                  <span className={styles.budgetLabel}>예산 한도</span>
+                  <span className={styles.budgetValue}>
+                    {activeDept.can_edit_limit ? (
+                      <input
+                        key={`${activeDept.department_id}-${month}`}
+                        className={styles.limitInput}
+                        type="number"
+                        defaultValue={activeDept.limit_amount || ""}
+                        placeholder="0"
+                        onBlur={(e) => {
+                          const v = Math.max(
+                            0,
+                            Math.round(Number(e.target.value) || 0),
+                          );
+                          if (v !== activeDept.limit_amount)
+                            saveLimit(activeDept.department_id, v);
+                        }}
+                      />
+                    ) : (
+                      won(activeDept.limit_amount)
+                    )}
+                  </span>
+                </div>
+                <div className={styles.budgetRow}>
+                  <span className={styles.budgetLabel}>출금 (−)</span>
+                  <span className={`${styles.budgetValue} ${styles.used}`}>
+                    {activeDept.out_amount ? `−${won(activeDept.out_amount)}` : "0"}
+                  </span>
+                </div>
+                <div className={styles.budgetRow}>
+                  <span className={styles.budgetLabel}>입금 (+)</span>
+                  <span className={`${styles.budgetValue} ${styles.deposit}`}>
+                    {activeDept.in_amount ? `+${won(activeDept.in_amount)}` : "0"}
+                  </span>
+                </div>
+                <div className={`${styles.budgetRow} ${styles.budgetRowTotal}`}>
+                  <span className={styles.budgetLabel}>가용 예산</span>
+                  <span
+                    className={`${styles.budgetValue} ${activeDept.available_amount < 0 ? styles.negative : styles.available}`}
+                  >
+                    {won(activeDept.available_amount)}
+                  </span>
+                </div>
+              </div>
+
+              <h3 className={styles.subTitle}>팀별 사용내역</h3>
+              <div className={styles.tableWrap}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th>팀</th>
+                      <th className={styles.colNum}>출금 (−)</th>
+                      <th className={styles.colNum}>입금 (+)</th>
                     </tr>
-                  ))
-                )}
-              </tbody>
-              {summary.length > 1 && (
-                <tfoot>
-                  <tr>
-                    <td>합계</td>
-                    <td className={styles.colNum}>{won(totals.limit)}</td>
-                    <td className={styles.colNum}>{won(totals.used)}</td>
-                    <td className={styles.colNum}>{won(totals.available)}</td>
-                  </tr>
-                </tfoot>
-              )}
-            </table>
-          </div>
-          <p className={styles.hint}>
-            가용 예산 = 예산 한도 − 사용액(예산 반영된 출금 합계).{" "}
-            {seeAll
-              ? "예산 한도 칸을 클릭해 수정할 수 있습니다."
-              : "예산 한도 설정은 경영지원본부에서 관리합니다."}
-          </p>
+                  </thead>
+                  <tbody>
+                    {activeDept.teams.length === 0 ? (
+                      <tr>
+                        <td colSpan={3} className={styles.emptyCell}>
+                          팀이 없습니다.
+                        </td>
+                      </tr>
+                    ) : (
+                      activeDept.teams.map((t) => (
+                        <tr key={t.team_id}>
+                          <td>{t.team_name}</td>
+                          <td className={`${styles.colNum} ${styles.used}`}>
+                            {t.out_amount ? `−${won(t.out_amount)}` : "0"}
+                          </td>
+                          <td className={`${styles.colNum} ${styles.deposit}`}>
+                            {t.in_amount ? `+${won(t.in_amount)}` : "0"}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              <p className={styles.hint}>
+                가용 예산 = 예산 한도 − 예산 반영 출금 + 예산 반영 입금.{" "}
+                {activeDept.can_edit_limit
+                  ? "예산 한도 칸을 클릭해 수정할 수 있습니다."
+                  : "예산 한도는 어드민·경영지원본부·본부장만 수정할 수 있습니다."}
+              </p>
+            </>
+          ) : (
+            // ── 전체 보기 (경영지원본부): 모든 본부 + 팀 ──
+            <>
+              <h2 className={styles.sectionTitle}>부서 가용 예산</h2>
+              <div className={styles.tableWrap}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th>본부</th>
+                      <th className={styles.colNum}>예산 한도</th>
+                      <th className={styles.colNum}>출금 (−)</th>
+                      <th className={styles.colNum}>입금 (+)</th>
+                      <th className={styles.colNum}>가용 예산</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {summary.map((d) => (
+                      <tr key={d.department_id}>
+                        <td>{d.department_name}</td>
+                        <td className={styles.colNum}>
+                          {d.can_edit_limit ? (
+                            <input
+                              key={`${d.department_id}-${month}`}
+                              className={styles.limitInput}
+                              type="number"
+                              defaultValue={d.limit_amount || ""}
+                              placeholder="0"
+                              onBlur={(e) => {
+                                const v = Math.max(
+                                  0,
+                                  Math.round(Number(e.target.value) || 0),
+                                );
+                                if (v !== d.limit_amount)
+                                  saveLimit(d.department_id, v);
+                              }}
+                            />
+                          ) : (
+                            won(d.limit_amount)
+                          )}
+                        </td>
+                        <td className={`${styles.colNum} ${styles.used}`}>
+                          {d.out_amount ? `−${won(d.out_amount)}` : "0"}
+                        </td>
+                        <td className={`${styles.colNum} ${styles.deposit}`}>
+                          {d.in_amount ? `+${won(d.in_amount)}` : "0"}
+                        </td>
+                        <td
+                          className={`${styles.colNum} ${d.available_amount < 0 ? styles.negative : styles.available}`}
+                        >
+                          {won(d.available_amount)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  {summary.length > 1 && (
+                    <tfoot>
+                      <tr>
+                        <td>합계</td>
+                        <td className={styles.colNum}>{won(totals.limit)}</td>
+                        <td className={styles.colNum}>
+                          {totals.out ? `−${won(totals.out)}` : "0"}
+                        </td>
+                        <td className={styles.colNum}>
+                          {totals.in ? `+${won(totals.in)}` : "0"}
+                        </td>
+                        <td className={styles.colNum}>
+                          {won(totals.available)}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  )}
+                </table>
+              </div>
+
+              <h3 className={styles.subTitle}>팀별 사용내역</h3>
+              <div className={styles.tableWrap}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th>본부</th>
+                      <th>팀</th>
+                      <th className={styles.colNum}>출금 (−)</th>
+                      <th className={styles.colNum}>입금 (+)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {summary.flatMap((d) => d.teams).length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className={styles.emptyCell}>
+                          팀이 없습니다.
+                        </td>
+                      </tr>
+                    ) : (
+                      summary.flatMap((d) =>
+                        d.teams.map((t) => (
+                          <tr key={`${d.department_id}-${t.team_id}`}>
+                            <td>{d.department_name}</td>
+                            <td>{t.team_name}</td>
+                            <td className={`${styles.colNum} ${styles.used}`}>
+                              {t.out_amount ? `−${won(t.out_amount)}` : "0"}
+                            </td>
+                            <td className={`${styles.colNum} ${styles.deposit}`}>
+                              {t.in_amount ? `+${won(t.in_amount)}` : "0"}
+                            </td>
+                          </tr>
+                        )),
+                      )
+                    )}
+                  </tbody>
+                </table>
+              </div>
+              <p className={styles.hint}>
+                가용 예산 = 예산 한도 − 예산 반영 출금 + 예산 반영 입금.
+              </p>
+            </>
+          )}
         </section>
 
-        {/* ─── 입출금현황 ─── */}
+        {/* ─── 입출금현황 (활성 본부) ─── */}
         <section className={`${styles.section} ${styles.rightPane}`}>
           <div className={styles.txHeader}>
-            <h2 className={styles.sectionTitle}>입금 · 출금현황</h2>
+            <h2 className={styles.sectionTitle}>
+              {scopeLabel || (activeDept ? activeDept.department_name : "")} 입금 ·
+              출금현황
+            </h2>
             <div className={styles.txControls}>
-              {seeAll && (
+              {!scoped && summary.length > 1 && (
                 <select
                   className={styles.monthSelect}
-                  value={deptFilter}
-                  onChange={(e) => setDeptFilter(e.target.value)}
+                  value={deptTab}
+                  onChange={(e) => setDeptTab(e.target.value)}
                 >
-                  <option value="">전체 본부</option>
                   {summary.map((d) => (
                     <option key={d.department_id} value={d.department_id}>
                       {d.department_name}
@@ -369,7 +591,7 @@ export default function BudgetPage() {
               <button
                 className={styles.btnPrimary}
                 onClick={loadTransactions}
-                disabled={loadingTx}
+                disabled={loadingTx || !deptTab}
               >
                 {loadingTx ? "신한 조회 중..." : "입출금 조회"}
               </button>

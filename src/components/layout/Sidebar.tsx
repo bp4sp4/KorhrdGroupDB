@@ -28,6 +28,8 @@ interface SidebarProps {
   // 사용자가 부서 관리자(is_division_admin) 인 경우 work-journal admin 메뉴 노출
   isDivisionAdmin?: boolean;
   hiddenMenus?: string[];
+  // 현재 사용자 본부 코드 (경영지원본부 전용 메뉴 게이트용)
+  departmentCode?: string | null;
   isOpen?: boolean;
   onClose?: () => void;
 }
@@ -48,7 +50,6 @@ const SIDEBAR_HIDE_KEY: Record<string, string> = {
 const TEMP_HIDDEN_MENU_IDS = new Set<string>(["abroad", "appraisal"]);
 
 // 임시 숨김 하위 메뉴 — 마케팅개발본부 안의 민간자격증·유학 섹션 (학점은행제·맘카페만 남김)
-// management-budget(예산현황): 작업 중이라 사이드바에서 임시 숨김 (페이지/API 는 유효)
 const TEMP_HIDDEN_CHILD_IDS = new Set<string>([
   "marketing-cert-channel",
   "marketing-cert-creative",
@@ -56,7 +57,6 @@ const TEMP_HIDDEN_CHILD_IDS = new Set<string>([
   "marketing-abroad-channel",
   "marketing-abroad-creative",
   "marketing-abroad-dashboard",
-  "management-budget",
 ]);
 
 export default function Sidebar({
@@ -65,6 +65,7 @@ export default function Sidebar({
   revenueOwnDivisions = [],
   isDivisionAdmin = false,
   hiddenMenus = [],
+  departmentCode = null,
   isOpen,
   onClose,
 }: SidebarProps) {
@@ -208,6 +209,16 @@ export default function Sidebar({
           .filter(([, id]) => id === item.id)
           .map(([sec]) => sec);
         if (matchingSections.length === 0) return true;
+        // 경영지원본부(management): budget 은 전원 기본권한이라 parent 가 다 떠버림.
+        // budget 만으로는 경영지원본부(MGT) 소속에게만 노출, 다른 관리섹션은 평소대로.
+        if (item.id === "management") {
+          const hasOther = matchingSections.some(
+            (sec) => sec !== "budget" && allowedSections.has(sec),
+          );
+          const budgetGate =
+            allowedSections.has("budget") && departmentCode === "MGT";
+          return hasOther || budgetGate;
+        }
         return matchingSections.some((sec) => allowedSections.has(sec));
       });
 
@@ -247,6 +258,8 @@ export default function Sidebar({
       // (0) 경영지원본부 — 자식별 section 권한에 따라 필터
       if (item.id === "management" && !isFullAccess) {
         const filteredChildren = item.children.filter((child) => {
+          // 경영지원본부 사용예산(전체 보기)은 경영지원본부 소속만 (어드민은 isFullAccess 분기로 통과)
+          if (child.id === "management-budget") return departmentCode === "MGT";
           const sec = managementChildSection[child.id];
           if (!sec) return true;
           return allowedSections.has(sec);
