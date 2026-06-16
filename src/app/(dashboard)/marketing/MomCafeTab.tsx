@@ -22,6 +22,7 @@ interface MomCafe {
   expense_note: string | null
   writing_note: string | null
   special_note: string | null
+  agreement_status: string | null
   created_at: string
   updated_at: string
 }
@@ -39,9 +40,14 @@ interface FormState {
   expense_note: string
   writing_note: string
   special_note: string
+  agreement_status: string
 }
 
 const EXPENSE_OPTIONS = ['현금영수증', '세금계산서'] as const
+const AGREEMENT_OPTIONS = [
+  { value: 'O', label: '협약 O' },
+  { value: 'X', label: '미협약 X' },
+] as const
 
 const EMPTY_FORM: FormState = {
   name: '',
@@ -56,6 +62,7 @@ const EMPTY_FORM: FormState = {
   expense_note: '',
   writing_note: '',
   special_note: '',
+  agreement_status: '',
 }
 
 function toForm(c: MomCafe): FormState {
@@ -72,6 +79,7 @@ function toForm(c: MomCafe): FormState {
     expense_note: c.expense_note ?? '',
     writing_note: c.writing_note ?? '',
     special_note: c.special_note ?? '',
+    agreement_status: c.agreement_status ?? '',
   }
 }
 
@@ -294,6 +302,7 @@ export default function MomCafeTab() {
       expense_note: form.expense_note.trim() || null,
       writing_note: form.writing_note.trim() || null,
       special_note: form.special_note.trim() || null,
+      agreement_status: form.agreement_status.trim() || null,
     }
   }
 
@@ -411,6 +420,7 @@ export default function MomCafeTab() {
                 />
               </th>
               <th>맘카페 이름</th>
+              <th>협약구분</th>
               <th>관계자 연락처</th>
               <th>은행명</th>
               <th>입금 계좌</th>
@@ -427,7 +437,7 @@ export default function MomCafeTab() {
           <tbody>
             {paginated.length === 0 ? (
               <tr>
-                <td colSpan={13} className={styles.empty}>
+                <td colSpan={14} className={styles.empty}>
                   {searchText ? '검색 결과가 없습니다.' : '등록된 맘카페가 없습니다.'}
                 </td>
               </tr>
@@ -447,6 +457,11 @@ export default function MomCafeTab() {
                   </td>
                   <td className={styles.cafe_name}>
                     <Highlight text={item.name} query={searchText} />
+                  </td>
+                  <td>
+                    {item.agreement_status
+                      ? <span className={styles.agreement_badge} data-status={item.agreement_status}>{item.agreement_status}</span>
+                      : <span className={styles.muted}>-</span>}
                   </td>
                   <td><Highlight text={item.contact} query={searchText} /></td>
                   <td><Highlight text={item.bank_name} query={searchText} /></td>
@@ -600,6 +615,22 @@ export default function MomCafeTab() {
                       onClick={() => setField('expense_note', form.expense_note === opt ? '' : opt)}
                     >
                       {opt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className={styles.field}>
+                <label className={styles.label}>협약구분</label>
+                <div className={styles.pill_group}>
+                  {AGREEMENT_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      className={`${styles.pill} ${form.agreement_status === opt.value ? styles.pill_active : ''}`}
+                      onClick={() => setField('agreement_status', form.agreement_status === opt.value ? '' : opt.value)}
+                    >
+                      {opt.label}
                     </button>
                   ))}
                 </div>
