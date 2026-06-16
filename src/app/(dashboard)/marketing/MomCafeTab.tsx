@@ -370,6 +370,24 @@ export default function MomCafeTab() {
     setSelectedIds(new Set())
   }
 
+  async function handleBulkAgreement(status: string | null) {
+    if (selectedIds.size === 0) return
+    const supabase = createClient()
+    const ids = Array.from(selectedIds)
+    const { error } = await supabase
+      .from('mom_cafes')
+      .update({ agreement_status: status })
+      .in('id', ids)
+    if (error) {
+      alert(error.message)
+      return
+    }
+    setItems((prev) =>
+      prev.map((x) => (selectedIds.has(x.id) ? { ...x, agreement_status: status } : x)),
+    )
+    setSelectedIds(new Set())
+  }
+
   if (loading) return <div className={styles.loading}>불러오는 중...</div>
 
   const dateLabel =
@@ -398,9 +416,30 @@ export default function MomCafeTab() {
           </button>
         )}
         {selectedIds.size > 0 && (
-          <button className={styles.delete_btn} onClick={handleDeleteSelected}>
-            삭제
-          </button>
+          <>
+            <span className={styles.bulk_label}>협약구분 일괄:</span>
+            <button
+              className={styles.agreement_o_btn}
+              onClick={() => handleBulkAgreement('O')}
+            >
+              협약 O
+            </button>
+            <button
+              className={styles.agreement_x_btn}
+              onClick={() => handleBulkAgreement('X')}
+            >
+              미협약 X
+            </button>
+            <button
+              className={styles.edit_btn}
+              onClick={() => handleBulkAgreement(null)}
+            >
+              해제
+            </button>
+            <button className={styles.delete_btn} onClick={handleDeleteSelected}>
+              삭제
+            </button>
+          </>
         )}
         <button className={styles.add_btn} onClick={openAdd}>
           + 맘카페 추가

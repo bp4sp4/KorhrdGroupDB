@@ -58,6 +58,23 @@
 }
 .add_btn:hover { background: #1b64da; }
 
+.bulk_label { font-size: 0.8125rem; color: #6b7280; font-weight: 600; }
+
+.agreement_o_btn,
+.agreement_x_btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 120ms;
+}
+.agreement_o_btn { background: #d1fae5; color: #065f46; }
+.agreement_o_btn:hover { background: #a7f3d0; }
+.agreement_x_btn { background: #fee2e2; color: #991b1b; }
+.agreement_x_btn:hover { background: #fecaca; }
+
 /* 검색 하이라이트 */
 .highlight {
   background: #FFE500;
