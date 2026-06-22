@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin'
 import { resolveBudgetAccess, canEditLimit } from '@/lib/budget/access'
 import { monthRange } from '@/lib/budget/transactions'
 import { resolveScope } from '@/lib/budget/scopes'
+import { logBudget } from '@/lib/budget/log'
 
 function currentYearMonth(): string {
   const d = new Date()
@@ -18,6 +19,14 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url)
   const month = searchParams.get('month') || currentYearMonth()
+
+  // 예산현황 조회(체크) 기록
+  const scopeParam = searchParams.get('scope')
+  await logBudget(
+    access.appUserId,
+    'view',
+    `예산현황 조회 · ${scopeParam ?? '전체'} · ${month}`,
+  )
 
   const { start, end } = monthRange(month)
   const startDate = `${start.slice(0, 4)}-${start.slice(4, 6)}-${start.slice(6, 8)}`

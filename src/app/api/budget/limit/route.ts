@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { resolveBudgetAccess, canEditLimit } from '@/lib/budget/access'
+import { logBudget } from '@/lib/budget/log'
 
 // POST: 본부별 월 예산 한도 설정 (어드민·경영지원본부 → 전체, 본부장 → 본인 본부)
 export async function POST(request: NextRequest) {
@@ -41,5 +42,15 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  const deptName =
+    access.departments.find((d) => d.id === department_id)?.name ?? department_id
+  await logBudget(
+    access.appUserId,
+    'update',
+    `예산 한도 설정 · ${deptName} · ${year_month} · ${amount.toLocaleString('ko-KR')}원`,
+    department_id,
+  )
+
   return NextResponse.json(data)
 }

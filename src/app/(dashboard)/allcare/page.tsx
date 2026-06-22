@@ -73,6 +73,13 @@ interface CpRequest {
 
 type Tab = 'users' | 'payments' | 'custom' | 'stats'
 
+// 페이지 내부 탭바 (헤더에서 '올케어' 하나로 진입 후 여기서 전환)
+const ALLCARE_TABS: { id: Tab; label: string }[] = [
+  { id: 'users', label: '회원목록' },
+  { id: 'payments', label: '결제내역' },
+  { id: 'stats', label: '통계' },
+]
+
 interface ChartData {
   monthly: { month: string; users: number; subs: number }[]
   statusDist: { name: string; value: number; fill: string; pct: number }[]
@@ -129,7 +136,7 @@ function GoodNameCell({ goodName, amount, orderId }: { goodName: string | null; 
       </div>
     )
   }
-  let label = ''
+  const label = ''
   let planColor = '#64748b'
   let planBg = '#f1f5f9'
   let planName = goodName || '-'
@@ -458,6 +465,12 @@ export default function AllcarePage() {
     const valid: Tab[] = ['users', 'payments', 'stats']
     if (urlTab && valid.includes(urlTab)) setActiveTab(urlTab)
   }, [urlTab])
+
+  // 페이지 내부 탭 전환 — URL ?tab= 도 함께 갱신
+  const goTab = (t: Tab) => {
+    setActiveTab(t)
+    router.replace(`/allcare?tab=${t}`, { scroll: false })
+  }
 
   // 탭 제한(allowed_tabs) — 올케어 탭은 hakjeom 섹션 권한의 allcare-tab-* 키로 관리됨
   const [allowedAllcareTabs, setAllowedAllcareTabs] = useState<string[] | null>(null)
@@ -855,6 +868,21 @@ export default function AllcarePage() {
 
   return (
     <div className={styles.container}>
+
+      {/* 올케어 내부 탭바 (회원목록 / 결제내역 / 통계) */}
+      <div className={styles.tabs}>
+        {ALLCARE_TABS.filter(
+          (t) => !allowedAllcareTabs || allowedAllcareTabs.includes(t.id),
+        ).map((t) => (
+          <button
+            key={t.id}
+            className={`${styles.tab} ${activeTab === t.id ? styles.tabActive : ''}`}
+            onClick={() => goTab(t.id)}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
 
       {/* 통계 */}
       {activeTab !== 'stats' && (

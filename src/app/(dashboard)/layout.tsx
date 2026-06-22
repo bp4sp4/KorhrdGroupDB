@@ -273,23 +273,17 @@ export default function DashboardLayout({
     )
   }
 
-  // 메일 화면은 좌측 앱 사이드바를 숨기고 전체 폭 사용 (상단 헤더로 이동)
-  // 예산(/budget)은 사이드바 '사용예산' 하위항목으로 사업부 전환하므로 사이드바 유지
-  const hideAppSidebar = pathname.startsWith('/mail')
-
   return (
     <GuideProvider>
       <div className={styles.dashboardWrap}>
-        <Header userName={displayName} userRole={userRole} permissions={permissions} revenueOwnDivisions={revenueOwnDivisions} hiddenMenus={hiddenMenus} onMenuToggle={() => setSidebarOpen(v => !v)} />
+        <Sidebar userRole={userRole} permissions={permissions} isDivisionAdmin={isDivisionAdmin} hiddenMenus={hiddenMenus} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-        <div className={styles.dashboardBody}>
-          {!hideAppSidebar && (
-            <Sidebar userRole={userRole} permissions={permissions} revenueOwnDivisions={revenueOwnDivisions} isDivisionAdmin={isDivisionAdmin} hiddenMenus={hiddenMenus} departmentCode={departmentCode} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-          )}
+        {sidebarOpen && (
+          <div className={styles.sidebarOverlay} onClick={() => setSidebarOpen(false)} />
+        )}
 
-          {sidebarOpen && !hideAppSidebar && (
-            <div className={styles.sidebarOverlay} onClick={() => setSidebarOpen(false)} />
-          )}
+        <div className={styles.contentColumn}>
+          <Header userName={displayName} userRole={userRole} permissions={permissions} revenueOwnDivisions={revenueOwnDivisions} departmentCode={departmentCode} isDivisionAdmin={isDivisionAdmin} hiddenMenus={hiddenMenus} onMenuToggle={() => setSidebarOpen(v => !v)} />
 
           <main
             className={`${styles.mainContent}${pathname.startsWith('/approvals') ? ` ${styles.mainContentWhite}` : ''}`}

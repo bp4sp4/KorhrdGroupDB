@@ -167,6 +167,7 @@ const ACTION_OPTIONS = [
   { value: '', label: '전체 액션' },
   { value: 'create', label: '등록' },
   { value: 'update', label: '수정' },
+  { value: 'view', label: '조회' },
   { value: 'delete', label: '삭제(휴지통)' },
   { value: 'bulk_create', label: '일괄등록' },
   { value: 'bulk_delete', label: '일괄삭제' },
@@ -183,6 +184,7 @@ const RESOURCE_LABEL_MAP: Record<string, string> = {
   '매출파일': '매출파일',
   '휴지통': '삭제목록',
   '어드민관리': '어드민 관리',
+  '예산현황': '예산현황',
 }
 
 const RESOURCE_OPTIONS = [
@@ -192,6 +194,7 @@ const RESOURCE_OPTIONS = [
   { value: '자격증신청', label: '자격증 신청' },
   { value: '기관협약', label: '기관협약' },
   { value: '매출파일', label: '매출파일' },
+  { value: '예산현황', label: '예산현황' },
   { value: '휴지통', label: '삭제목록' },
   { value: '어드민관리', label: '어드민 관리' },
 ]
@@ -305,6 +308,7 @@ function formatEmail(email: string | null) {
 const ACTION_LABELS_LOG: Record<string, string> = {
   create: '등록',
   update: '수정',
+  view: '조회',
   delete: '삭제',
   bulk_create: '일괄등록',
   bulk_delete: '일괄삭제',

@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin'
 import { resolveBudgetAccess } from '@/lib/budget/access'
 import { fetchUnifiedTransactions } from '@/lib/budget/transactions'
 import { resolveScope } from '@/lib/budget/scopes'
+import { logBudget } from '@/lib/budget/log'
 
 function getClientIp(request: NextRequest): string {
   const xff = request.headers.get('x-forwarded-for')
@@ -220,5 +221,19 @@ export async function PATCH(request: NextRequest) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  const deptName = department_id
+    ? (access.departments.find((d) => d.id === department_id)?.name ?? '')
+    : ''
+  const amt = Math.round(Number(amount) || 0).toLocaleString('ko-KR')
+  await logBudget(
+    access.appUserId,
+    'update',
+    `예산 거래 분류 · ${tx_date} · ${tx_type === 'in' ? '입금' : '출금'} ${amt}원${
+      deptName ? ` · ${deptName}` : ''
+    }`,
+    tx_key,
+  )
+
   return NextResponse.json(data)
 }

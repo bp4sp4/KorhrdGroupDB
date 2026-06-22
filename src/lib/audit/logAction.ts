@@ -9,6 +9,7 @@ export type AuditAction =
   | 'restore'
   | 'hard_delete'
   | 'confirm_draft'
+  | 'view'
 
 interface LogActionParams {
   user_id?: string | null

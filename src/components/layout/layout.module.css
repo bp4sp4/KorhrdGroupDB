@@ -2,21 +2,26 @@
 
 .dashboardWrap {
   display: flex;
-  flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   background: #ffffff;
 }
 
-.dashboardBody {
+/* 사이드바 오른쪽: 헤더 + 메인 */
+.contentColumn {
   display: flex;
+  flex-direction: column;
   flex: 1;
-  min-height: 0;
+  min-width: 0;
+  height: 100vh;
 }
 
 .mainContent {
   flex: 1;
   padding: 24px;
   overflow: auto;
+  min-width: 0;
+  min-height: 0;
 }
 
 .mainContentWhite {
@@ -40,114 +45,300 @@
 /* ─── Header ─────────────────────────────────────────────────────────────── */
 
 .header {
-  height: var(--toss-nav-height);
-  background: var(--toss-card-bg);
+  height: 55px;
+  background: #ffffff;
   border-bottom: 1px solid var(--toss-border);
   display: flex;
   align-items: center;
   gap: 0;
-  padding: 0 24px 0 0;
+  padding: 0 24px 0 12px;
   flex-shrink: 0;
-}
-
-/* 로고 */
-.headerLogo {
-  display: flex;
-  align-items: center;
-  height: 100%;
-  width: var(--toss-sidebar-width);
-  padding: 0 20px;
-  border-right: 1px solid var(--toss-border);
-  flex-shrink: 0;
-  text-decoration: none;
-}
-
-.headerLogoImg {
-  height: auto;
-  width: 148px;
-  display: block;
-}
-
-/* 섹션 탭 네비게이션 */
-.headerNav {
-  display: flex;
-  align-items: center;
-  height: 100%;
-  padding: 0 4px;
 }
 
 .headerNavSpacer {
   flex: 1;
+  min-width: 12px;
 }
 
-.headerNavItem {
+/* 사업부 드롭다운 + 탭 영역 */
+.divisionBar {
   display: flex;
   align-items: center;
+  gap: 10px;
   height: 100%;
-  padding: 0 18px;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--toss-text-secondary);
-  text-decoration: none;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  transition: all 150ms ease;
-  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
 }
 
-.headerNavItem:hover {
-  color: var(--toss-text-primary);
-}
-
-.headerNavItemActive {
-  color: var(--toss-blue);
-  font-weight: 600;
-  border-bottom-color: var(--toss-blue);
-}
-
-/* "개발중" 같은 작은 태그 배지 (헤더 네비) */
-.navBadge {
-  margin-left: 6px;
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 6px;
-  border-radius: 999px;
-  background: #fff7ed;
-  border: 1px solid #fed7aa;
-  color: #ea580c;
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -0.2px;
-}
-
-/* 사이드바 메뉴의 "개발중" 배지 */
-.sidebarDevBadge {
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 6px;
-  border-radius: 999px;
-  background: #fff7ed;
-  border: 1px solid #fed7aa;
-  color: #ea580c;
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -0.2px;
+/* 사업부 드롭다운 */
+.divisionSelect {
+  position: relative;
   flex-shrink: 0;
 }
 
+.divisionTrigger {
+  display: flex;
+  width: 161px;
+  padding: 9px 14px;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  border-radius: 8px;
+  border: 1px solid #e4e4e4;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.divisionTrigger:hover {
+  border-color: var(--toss-border-hover);
+}
+
+.divisionTriggerLabel {
+  color: #010101;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.divisionTriggerIcon {
+  color: #919191;
+  flex-shrink: 0;
+}
+
+.divisionMenu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 100%;
+  background: #ffffff;
+  border: 1px solid var(--toss-border);
+  border-radius: 8px;
+  box-shadow: var(--toss-shadow-dropdown);
+  padding: 4px;
+  margin: 0;
+  list-style: none;
+  z-index: 300;
+}
+
+.divisionMenuItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 10px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #010101;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.divisionMenuItem:hover {
+  background: var(--toss-bg);
+}
+
+.divisionMenuItemActive {
+  color: var(--toss-blue);
+}
+
+.divisionMenuIcon {
+  display: flex;
+  align-items: center;
+  color: #919191;
+  flex-shrink: 0;
+}
+
+.divisionMenuItemActive .divisionMenuIcon {
+  color: var(--toss-blue);
+}
+
+/* 탭 — 내용 폭만큼만 차지(더보기가 탭 바로 오른쪽에 붙도록), 넘치면 축소·스크롤 */
+.tabsWrap {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* 경영지원본부 외 사업부 — 탭이 넘치면 가로 스크롤 (더보기 없음) */
+.tabsWrapScroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+.tabsWrapScroll::-webkit-scrollbar {
+  height: 0;
+  display: none;
+}
+
+.tabsMeasure {
+  position: absolute;
+  top: -9999px;
+  left: 0;
+  display: flex;
+  visibility: hidden;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.headerTab {
+  display: flex;
+  flex-shrink: 0;
+  padding: 0 16px;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  align-self: stretch;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  color: #010101;
+  font-family: Pretendard;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 100%; /* 14px */
+}
+
+.headerTab:hover {
+  color: #0081fe;
+}
+
+.headerTabActive {
+  color: #0081fe;
+  font-weight: 600;
+  border-bottom-color: #0081fe;
+}
+
+.headerTabBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  background: #fee2e2;
+  color: #dc2626;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  border-radius: 8px;
+}
+
+/* 더보기 */
+.moreWrap {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+  flex-shrink: 0;
+}
+
+.moreBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 100%;
+  padding: 0 16px;
+  border: none;
+  background: transparent;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 100%;
+  color: #919191;
+  cursor: pointer;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  flex-shrink: 0;
+}
+
+.moreBtn:hover {
+  color: var(--toss-text-primary);
+}
+
+.moreBtnIcon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.moreBtnActive {
+  color: #0081fe;
+  font-weight: 600;
+  border-bottom-color: #0081fe;
+}
+
+.moreBtnActive .moreBtnIcon {
+  color: #0081fe;
+}
+
+.moreMenu {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  background: #ffffff;
+  border: 1px solid var(--toss-border);
+  border-radius: 8px;
+  box-shadow: var(--toss-shadow-dropdown);
+  padding: 4px;
+  margin: 0;
+  list-style: none;
+  z-index: 300;
+}
+
+.moreMenuItem {
+  display: flex;
+  width: 161px;
+  padding: 10px 4px;
+  align-items: center;
+  gap: 4px;
+  border-radius: 6px;
+  color: #000000;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 100%;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.moreMenuItem:hover {
+  background: var(--toss-bg);
+}
+
+.moreMenuItemActive {
+  color: var(--toss-blue);
+  font-weight: 600;
+}
+
+/* 우측 액션 */
 .headerRight {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-shrink: 0;
 }
 
 .headerUserName {
   font-size: 13px;
   font-weight: 500;
   color: var(--toss-text-primary);
+  white-space: nowrap;
 }
 
 .headerDivider {
@@ -170,6 +361,7 @@
   font-weight: 400;
   cursor: pointer;
   transition: all 150ms ease;
+  white-space: nowrap;
 }
 
 .logoutBtn:hover {
@@ -177,217 +369,7 @@
   color: var(--toss-text-primary);
 }
 
-/* ─── Sidebar ────────────────────────────────────────────────────────────── */
-
-.sidebar {
-  flex-shrink: 0;
-  background: var(--toss-card-bg);
-  border-right: 1px solid var(--toss-border);
-  display: flex;
-  flex-direction: column;
-  width: var(--toss-sidebar-width);
-  overflow-y: auto;
-}
-
-/* 모바일 오버레이 (사이드바 열릴 때) */
-.sidebarOverlay {
-  display: none;
-}
-
-.sidebarNav {
-  flex: 1;
-  padding: 12px 10px;
-}
-
-.sidebarMenuLabel {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--toss-text-tertiary);
-  letter-spacing: 0.6px;
-  padding: 5px 10px;
-  margin: 16px 8px 4px;
-  white-space: nowrap;
-  background: var(--toss-bg);
-  border-radius: 6px;
-}
-
-.sidebarMenuLabel:first-child {
-  margin-top: 0;
-}
-
-.sidebarList {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-/* 관리 도구 영역 — 일반 메뉴와 구분하기 위한 하단 여백/구분선 */
-.sidebarAdminTools {
-}
-
-.sidebarLink {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  text-decoration: none;
-  font-size: 13px;
-  font-weight: 400;
-  color: var(--toss-text-secondary);
-  transition:
-    background 120ms ease,
-    color 120ms ease;
-}
-
-.sidebarLink:hover {
-  background: var(--toss-bg);
-  color: var(--toss-text-primary);
-}
-
-.sidebarLinkActive {
-  font-weight: 600;
-  color: var(--toss-blue);
-  background: var(--toss-blue-subtle);
-}
-
-.sidebarLinkActive:hover {
-  background: var(--toss-blue-subtle);
-  color: var(--toss-blue);
-}
-
-.sidebarLinkIcon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  color: var(--toss-text-tertiary);
-}
-
-.sidebarLinkActive .sidebarLinkIcon {
-  color: var(--toss-blue);
-}
-
-.sidebarLinkLabel {
-  flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.sidebarBadge {
-  font-size: 11px;
-  font-weight: 600;
-  background: #fee2e2;
-  color: #dc2626;
-  padding: 1px 6px;
-  border-radius: 10px;
-  min-width: 18px;
-  text-align: center;
-}
-
-/* ─── Sidebar Accordion ─────────────────────────────────────────────────── */
-
-.sidebarParentBtn {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  width: 100%;
-  border: none;
-  background: transparent;
-  font-size: 13px;
-  font-weight: 400;
-  color: var(--toss-text-secondary);
-  cursor: pointer;
-  text-align: left;
-  transition:
-    background 120ms ease,
-    color 120ms ease;
-}
-
-.sidebarParentBtn:hover {
-  background: var(--toss-bg);
-  color: var(--toss-text-primary);
-}
-
-.sidebarParentBtnActive {
-  font-weight: 600;
-  color: var(--toss-blue);
-}
-
-.sidebarParentBtnActive .sidebarLinkIcon {
-  color: var(--toss-blue);
-}
-
-.sidebarChevron {
-  display: flex;
-  align-items: center;
-  color: var(--toss-text-tertiary);
-  transition: transform 200ms ease;
-  flex-shrink: 0;
-}
-
-.sidebarChevronOpen {
-  transform: rotate(90deg);
-}
-
-.sidebarSubSectionLabel {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--toss-text-secondary);
-  letter-spacing: 0.3px;
-  padding: 5px 10px;
-  margin: 8px 8px 4px 0;
-  background: var(--toss-bg);
-  border-radius: 6px;
-  white-space: nowrap;
-}
-
-li:first-child > .sidebarSubSectionLabel {
-  margin-top: 2px;
-}
-
-.sidebarSubList {
-  list-style: none;
-  margin: 1px 0 2px 0;
-  padding: 0 0 0 28px;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.sidebarSubLink {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding: 6px 10px;
-  border-radius: 6px;
-  text-decoration: none;
-  font-size: 12px;
-  font-weight: 400;
-  color: var(--toss-text-secondary);
-  transition:
-    background 120ms ease,
-    color 120ms ease;
-}
-
-.sidebarSubLink:hover {
-  background: var(--toss-bg);
-  color: var(--toss-text-primary);
-}
-
-.sidebarSubLinkActive {
-  font-weight: 600;
-  color: var(--toss-blue);
-  background: var(--toss-blue-subtle);
-}
-
-/* 햄버거 버튼 (모바일에서만 표시) */
+/* 햄버거 (모바일) */
 .hamburgerBtn {
   display: none;
   align-items: center;
@@ -402,32 +384,203 @@ li:first-child > .sidebarSubSectionLabel {
   flex-shrink: 0;
 }
 
+/* ─── Sidebar (전역 개인/관리 메뉴) ──────────────────────────────────────── */
+
+.sidebar {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  width: 189px;
+  height: 100vh;
+  border-right: 1px solid #d9d9d9;
+  background: #ffffff;
+  transition: width 180ms ease;
+}
+
+.sidebarCollapsed {
+  width: 64px;
+}
+
+.sidebarOverlay {
+  display: none;
+}
+
+/* 로고 + 접기 버튼 */
+.sidebarHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 16px 12px;
+  flex-shrink: 0;
+}
+
+.sidebarCollapsed .sidebarHeader {
+  justify-content: center;
+  padding: 16px 0;
+}
+
+.sidebarLogo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  min-width: 0;
+}
+
+.sidebarLogoImg {
+  width: 120px;
+  height: 30px;
+  object-fit: contain;
+  object-position: left center;
+  display: block;
+}
+
+.sidebarCollapseBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  color: #919191;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.sidebarCollapseBtn:hover {
+  background: var(--toss-bg);
+  color: var(--toss-text-primary);
+}
+
+/* 스크롤 영역 */
+.sidebarScroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 0 12px;
+}
+
+.sidebarCollapsed .sidebarScroll {
+  padding: 0 8px;
+}
+
+.navList {
+  list-style: none;
+  margin: 0;
+  padding: 6px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.navGroupBordered {
+  border-top: 1px solid #d9d9d9;
+}
+
+.navLink {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 6px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: #1d1d1d;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 100%;
+  white-space: nowrap;
+  transition:
+    background 120ms ease,
+    color 120ms ease;
+}
+
+.navLink:hover {
+  background: var(--toss-bg);
+}
+
+.navLinkActive {
+  color: var(--toss-blue);
+  background: var(--toss-blue-subtle);
+}
+
+.sidebarCollapsed .navLink {
+  justify-content: center;
+  padding: 10px 0;
+}
+
+.navIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: #1d1d1d;
+}
+
+.navLinkActive .navIcon {
+  color: var(--toss-blue);
+}
+
+.navLabel {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.navBadgeCount {
+  font-size: 11px;
+  font-weight: 600;
+  background: #fee2e2;
+  color: #dc2626;
+  padding: 1px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* 하단 고정 — 시스템 설정 */
+.sidebarFooter {
+  flex-shrink: 0;
+  padding: 8px 12px 16px;
+  border-top: 1px solid #d9d9d9;
+}
+
+.sidebarCollapsed .sidebarFooter {
+  padding: 8px 8px 16px;
+}
+
+.sidebarFooter .navLink {
+  color: #919191;
+}
+
+.sidebarFooter .navIcon {
+  color: #919191;
+}
+
+.sidebarFooter .navLinkActive,
+.sidebarFooter .navLinkActive .navIcon {
+  color: var(--toss-blue);
+}
+
 /* ─── 모바일 반응형 (480px 이하) ────────────────────────────────────────── */
 
 @media (max-width: 480px) {
   .header {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 0;
+    padding: 0 12px;
   }
 
-  .headerNavSpacer {
-    display: none;
-  }
-
-  .headerLogo {
+  .divisionTrigger {
     width: auto;
-    padding: 0;
-    border-right: none;
-  }
-
-  .headerLogoImg {
-    width: 100px;
-  }
-
-  .headerNav {
-    display: none;
+    min-width: 120px;
+    padding: 8px 10px;
   }
 
   .hamburgerBtn {
@@ -441,13 +594,18 @@ li:first-child > .sidebarSubSectionLabel {
   /* 사이드바: 드로어 방식 */
   .sidebar {
     position: fixed;
-    top: var(--toss-nav-height);
+    top: 0;
     left: 0;
     bottom: 0;
+    height: 100vh;
     z-index: 200;
     transform: translateX(-100%);
     transition: transform 240ms ease;
     box-shadow: none;
+  }
+
+  .sidebarCollapsed {
+    width: 189px;
   }
 
   .sidebarOpen {
@@ -455,17 +613,14 @@ li:first-child > .sidebarSubSectionLabel {
     box-shadow: 4px 0 20px rgba(0, 0, 0, 0.12);
   }
 
-  /* 오버레이 */
   .sidebarOverlay {
     display: block;
     position: fixed;
     inset: 0;
-    top: var(--toss-nav-height);
     background: rgba(0, 0, 0, 0.35);
     z-index: 199;
   }
 
-  /* 메인: 왼쪽 여백 없앰 (사이드바가 fixed이므로) */
   .mainContent {
     padding: 14px 12px;
   }

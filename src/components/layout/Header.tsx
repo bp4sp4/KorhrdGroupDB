@@ -2,118 +2,17 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { LogOut, Menu } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { LogOut, Menu, ChevronDown } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import styles from "./layout.module.css";
 import NotificationBell from "./NotificationBell";
 import QuickSearch from "./QuickSearch";
-import AttendanceButton from "./AttendanceButton";
-
-interface NavSection {
-  label: string;
-  href: string;
-  activeOn: string[];
-  badge?: string;
-  // true 면 activeOn 경로와 "정확히 일치"할 때만 활성 (하위 경로 제외)
-  exact?: boolean;
-}
-
-// 섹션이 현재 경로에 해당하는지 (exact 면 정확히 일치, 아니면 startsWith)
-function sectionMatches(sec: NavSection, pathname: string): boolean {
-  return sec.activeOn.some((p) =>
-    sec.exact ? pathname === p : pathname.startsWith(p),
-  );
-}
-
-const SECTION_NAV: NavSection[] = [
-  {
-    label: "대시보드",
-    href: "/dashboard",
-    activeOn: ["/dashboard"],
-  },
-  {
-    label: "워크스페이스",
-    href: "/work-journal",
-    activeOn: ["/work-journal"],
-    // /work-journal/admin, /work-journal/archive 에서는 활성화되지 않도록 정확히 일치만
-    exact: true,
-  },
-  {
-    label: "게시판",
-    href: "/board",
-    activeOn: ["/board"],
-  },
-  {
-    label: "메일",
-    href: "/mail",
-    activeOn: ["/mail"],
-  },
-  {
-    label: "어드민",
-    href: "/admin",
-    activeOn: ["/admin"],
-  },
-];
-
-// 탭 없는 단일 페이지 레이블
-const PATH_LABELS: Record<string, string> = {
-  "/dashboard": "대시보드",
-  "/work-journal": "워크스페이스",
-  "/duplicate": "중복 조회",
-  "/trash": "삭제목록",
-  "/ref-manage": "어드민 관리",
-  "/logs": "로그 관리",
-  "/assignment": "배정 현황",
-  "/links": "링크모음",
-  "/approvals": "전자결재",
-  "/revenue-upload": "매출 데이터 관리",
-  "/reports": "손익 리포트",
-  "/profit": "영업 손익관리",
-  "/edu-sales": "매출파일",
-};
-
-// 경로 + 탭 → 헤더 표시 레이블
-const PATH_TAB_LABELS: Record<string, Record<string, string>> = {
-  "/hakjeom": {
-    hakjeom: "문의DB",
-    agency: "기관협약",
-    bulk: "일괄등록",
-    counsel_done: "연락예정",
-    "edu-students": "등록학생관리",
-    stats: "통계",
-  },
-  "/cert": {
-    hakjeom: "학점연계 신청",
-    edu: "교육원",
-    "private-cert": "민간자격증",
-    "student-mgmt": "학생관리",
-    "student-contact": "연락예정",
-    "student-bulk": "일괄등록",
-    stats: "통계",
-  },
-  "/abroad": {
-    users: "회원 목록",
-    consult: "간편상담",
-    applications: "신청서 목록",
-    payments: "결제 목록",
-  },
-  "/practice": {
-    consultation: "상담신청",
-    practice: "실습섭외신청",
-    employment: "취업신청",
-  },
-  "/allcare": {
-    users: "회원 목록",
-    payments: "결제 내역",
-    stats: "통계",
-  },
-  "/revenues/nms-sales": {
-    nms: "학점은행제",
-    cert: "민간자격증",
-    abroad: "유학",
-    stats: "통합 통계",
-  },
-};
+import {
+  getVisibleDivisions,
+  type NavItem,
+  type NavSubItem,
+} from "./navConfig";
 
 interface HeaderProps {
   userName?: string;
@@ -124,52 +23,23 @@ interface HeaderProps {
     allowed_tabs?: string[] | null;
   }[];
   revenueOwnDivisions?: ("nms" | "cert" | "abroad")[];
+  departmentCode?: string | null;
+  isDivisionAdmin?: boolean;
   hiddenMenus?: string[];
   onMenuToggle?: () => void;
 }
 
-// 헤더 메뉴 href → 개인별 숨김 키
-const HEADER_HIDE_KEY: Record<string, string> = {
-  "/dashboard": "dashboard",
-  "/work-journal": "work-journal",
-  "/board": "board",
-  "/mail": "mail",
-};
-
-function hasPermission(
-  permissions: { section: string; scope: string }[],
-  sections: string[],
-): boolean {
-  return sections.some((s) =>
-    permissions.some((p) => p.section === s && p.scope !== "none"),
-  );
+function tabOf(href: string): string | null {
+  return new URLSearchParams(href.split("?")[1] ?? "").get("tab");
 }
-
-const EDUCATION_SECTIONS = [
-  "hakjeom",
-  "edu-sales",
-  "cert",
-  "cert-sales",
-  "practice",
-  "practice-sales",
-  "allcare",
-  "duplicate",
-  "trash",
-  "logs",
-  "ref-manage",
-  "assignment",
-  "approvals",
-  "revenues",
-  "revenue-upload",
-  "reports",
-];
 
 export default function Header({
   userName = "관리자",
   userRole,
   permissions = [],
   revenueOwnDivisions = [],
-  hiddenMenus = [],
+  departmentCode = null,
+  isDivisionAdmin = false,
   onMenuToggle,
 }: HeaderProps) {
   const router = useRouter();
@@ -177,62 +47,110 @@ export default function Header({
   const searchParams = useSearchParams();
   const supabase = createClient();
 
-  // 현재 경로 + 탭 기반으로 레이블 결정
-  const getDynamicLabel = (sec: NavSection): string => {
-    if (!sectionMatches(sec, pathname)) return sec.label;
+  const [divOpen, setDivOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [counselCount, setCounselCount] = useState(0);
+  const [certCounselCount, setCertCounselCount] = useState(0);
 
-    // 탭 없는 단일 페이지
-    const flatLabel = PATH_LABELS[pathname];
-    if (flatLabel) return flatLabel;
+  const divRef = useRef<HTMLDivElement>(null);
+  const moreRef = useRef<HTMLDivElement>(null);
 
-    // 탭 있는 페이지 (가장 길게 매칭되는 경로 우선)
-    const matchedPath = Object.keys(PATH_TAB_LABELS)
-      .filter((p) => pathname.startsWith(p))
-      .sort((a, b) => b.length - a.length)[0];
-    if (!matchedPath) return sec.label;
+  const isMiniAdmin = userRole === "mini-admin";
 
-    const currentTab = searchParams.get("tab");
-    const tabLabels = PATH_TAB_LABELS[matchedPath];
-    if (
-      matchedPath === "/revenues/nms-sales" &&
-      pathname.startsWith("/revenues/nms-sales")
-    ) {
-      const revenueScope =
-        permissions.find((permission) => permission.section === "revenues")
-          ?.scope ?? "none";
-      if (revenueScope === "own" && revenueOwnDivisions.length === 1) {
-        const onlyDivision = revenueOwnDivisions[0];
-        if (tabLabels[onlyDivision]) return tabLabels[onlyDivision];
-      }
-    }
-    if (currentTab && tabLabels[currentTab]) return tabLabels[currentTab];
-    return sec.label;
+  // 연락예정 배지 카운트
+  useEffect(() => {
+    if (isMiniAdmin) return;
+    fetch("/api/hakjeom/counsel-count")
+      .then((r) => (r.ok ? r.json() : { count: 0 }))
+      .then((d: { count: number }) => setCounselCount(d.count ?? 0))
+      .catch(() => {});
+    fetch("/api/cert/students/counsel-count")
+      .then((r) => (r.ok ? r.json() : { count: 0 }))
+      .then((d: { count: number }) => setCertCounselCount(d.count ?? 0))
+      .catch(() => {});
+  }, [isMiniAdmin]);
+
+  const divisions: NavItem[] = isMiniAdmin
+    ? []
+    : getVisibleDivisions({
+        userRole,
+        permissions,
+        revenueOwnDivisions,
+        departmentCode,
+        isDivisionAdmin,
+      });
+
+  // 현재 경로에 해당하는 사업부
+  // 1차: 사업부 자체 경로(activeOn/href) 우선 → 2차: 자식 탭 경로로 폴백
+  const currentDivision =
+    divisions.find(
+      (d) =>
+        (d.activeOn && d.activeOn.some((p) => pathname.startsWith(p))) ||
+        pathname.startsWith(d.href.split("?")[0]),
+    ) ??
+    divisions.find((d) =>
+      d.children?.some((c) => pathname.startsWith(c.href.split("?")[0])),
+    ) ??
+    null;
+
+  // 사업부 페이지가 아니어도(홈 등) 드롭다운 진입 경로가 필요하므로 첫 사업부를 기본 표시
+  const displayDivision = currentDivision ?? divisions[0] ?? null;
+  const children = displayDivision?.children ?? [];
+  const currentTab = searchParams.get("tab");
+
+  // 인라인 탭 / "더보기" 드롭다운 분리 (inMore 플래그로 명시 — 경영지원본부 전용)
+  const inlineChildren = children.filter((c) => !c.inMore);
+  const overflowChildren = children.filter((c) => c.inMore);
+
+  const isTabActive = (child: NavSubItem): boolean => {
+    const cBase = child.href.split("?")[0];
+    if (!pathname.startsWith(cBase)) return false;
+    const cTab = tabOf(child.href);
+    const sameBaseTabs = children
+      .filter((s) => s.href.split("?")[0] === cBase)
+      .map((s) => tabOf(s.href))
+      .filter((t): t is string => !!t);
+    if (cTab) return currentTab === cTab;
+    if (sameBaseTabs.length > 0)
+      return !currentTab || !sameBaseTabs.includes(currentTab);
+    return true;
   };
+
+  // 바깥 클릭 시 드롭다운 닫기
+  useEffect(() => {
+    const onDocClick = (e: MouseEvent) => {
+      if (divRef.current && !divRef.current.contains(e.target as Node))
+        setDivOpen(false);
+      if (moreRef.current && !moreRef.current.contains(e.target as Node))
+        setMoreOpen(false);
+    };
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.replace("/login");
   };
 
-  const isMiniAdmin = userRole === "mini-admin";
-  const isMasterAdmin = userRole === "master-admin";
-  const isAdminRole = userRole === "admin" || isMasterAdmin;
+  const selectDivision = (div: NavItem) => {
+    setDivOpen(false);
+    const first = div.children?.[0];
+    if (first) router.push(first.href);
+    else router.push(div.href);
+  };
 
-  const showEducation =
-    isAdminRole || hasPermission(permissions, EDUCATION_SECTIONS);
-  const showAdmin = isAdminRole;
-
-  const visibleSectionNav = SECTION_NAV.filter((sec) => {
-    const hideKey = HEADER_HIDE_KEY[sec.href];
-    if (hideKey && hiddenMenus.includes(hideKey)) return false;
-    if (sec.href === "/admin") return showAdmin;
-    if (sec.href === "/hakjeom") return showEducation;
-    return true;
-  });
+  const badgeFor = (child: NavSubItem): number | null => {
+    if (child.id === "hakjeom-tab-counsel_done" && counselCount > 0)
+      return counselCount;
+    if (child.id === "cert-tab-student-contact" && certCounselCount > 0)
+      return certCounselCount;
+    return null;
+  };
 
   return (
     <header className={styles.header}>
-      {/* 햄버거 버튼 (모바일) */}
+      {/* 햄버거 (모바일) */}
       <button
         className={styles.hamburgerBtn}
         onClick={onMenuToggle}
@@ -241,38 +159,109 @@ export default function Header({
         <Menu size={20} />
       </button>
 
-      {/* 로고 — 클릭 시 홈(대시보드)으로 이동 */}
-      <Link href="/dashboard" className={styles.headerLogo}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/logo.png"
-          alt="한평생교육 로고"
-          className={styles.headerLogoImg}
-        />
-      </Link>
+      {/* 사업부 드롭다운 + 탭 */}
+      {!isMiniAdmin && displayDivision && (
+        <div className={styles.divisionBar}>
+          {/* 드롭다운 */}
+          <div className={styles.divisionSelect} ref={divRef}>
+            <button
+              type="button"
+              className={styles.divisionTrigger}
+              onClick={() => setDivOpen((v) => !v)}
+            >
+              <span className={styles.divisionTriggerLabel}>
+                {displayDivision.label}
+              </span>
+              <ChevronDown size={14} className={styles.divisionTriggerIcon} />
+            </button>
+            {divOpen && divisions.length > 0 && (
+              <ul className={styles.divisionMenu}>
+                {divisions.map((div) => (
+                  <li key={div.id}>
+                    <button
+                      type="button"
+                      className={`${styles.divisionMenuItem} ${
+                        div.id === currentDivision?.id
+                          ? styles.divisionMenuItemActive
+                          : ""
+                      }`}
+                      onClick={() => selectDivision(div)}
+                    >
+                      {div.label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
 
-      {/* 섹션 네비게이션 */}
-      {!isMiniAdmin && (
-        <nav className={styles.headerNav}>
-          {visibleSectionNav.map((sec) => {
-            const isActive = sectionMatches(sec, pathname);
-            return (
-              <Link
-                key={sec.label}
-                href={sec.href}
-                className={`${styles.headerNavItem} ${isActive ? styles.headerNavItemActive : ""}`}
+          {/* 인라인 탭 */}
+          <div className={`${styles.tabsWrap} ${styles.tabsWrapScroll}`}>
+            {inlineChildren.map((child) => {
+              const active = isTabActive(child);
+              const badge = badgeFor(child);
+              return (
+                <Link
+                  key={child.id}
+                  href={child.href}
+                  className={`${styles.headerTab} ${active ? styles.headerTabActive : ""}`}
+                >
+                  {child.label}
+                  {badge !== null && (
+                    <span className={styles.headerTabBadge}>{badge}</span>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* 더보기 (overflow 잘림 방지를 위해 탭 영역 바깥에 위치) */}
+          {overflowChildren.length > 0 && (
+            <div className={styles.moreWrap} ref={moreRef}>
+              <button
+                type="button"
+                className={`${styles.moreBtn} ${
+                  overflowChildren.some((c) => isTabActive(c))
+                    ? styles.moreBtnActive
+                    : ""
+                }`}
+                onClick={() => setMoreOpen((v) => !v)}
               >
-                {getDynamicLabel(sec)}
-                {sec.badge && (
-                  <span className={styles.navBadge}>{sec.badge}</span>
-                )}
-              </Link>
-            );
-          })}
-        </nav>
+                더보기
+                <ChevronDown size={14} className={styles.moreBtnIcon} />
+              </button>
+              {moreOpen && (
+                <ul className={styles.moreMenu}>
+                  {overflowChildren.map((child) => {
+                    const badge = badgeFor(child);
+                    return (
+                      <li key={child.id}>
+                        <Link
+                          href={child.href}
+                          onClick={() => setMoreOpen(false)}
+                          className={`${styles.moreMenuItem} ${
+                            isTabActive(child) ? styles.moreMenuItemActive : ""
+                          }`}
+                        >
+                          {child.label}
+                          {badge !== null && (
+                            <span className={styles.headerTabBadge}>{badge}</span>
+                          )}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
       )}
 
-      <div className={styles.headerNavSpacer} />
+      {/* 사업부 바가 없을 때만 우측 액션을 끝으로 밀어내는 스페이서 */}
+      {!(!isMiniAdmin && displayDivision) && (
+        <div className={styles.headerNavSpacer} />
+      )}
 
       {/* 우측 액션 */}
       <div className={styles.headerRight}>
@@ -281,10 +270,6 @@ export default function Header({
         </div>
 
         <div className={`${styles.headerDivider} ${styles.quickSearchHide}`} />
-
-        <AttendanceButton />
-
-        <div className={styles.headerDivider} />
 
         <NotificationBell />
 
