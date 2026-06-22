@@ -12,11 +12,17 @@ import {
 } from '@/lib/leave/workCredit'
 import {
   attendanceScore,
+  minSalesRateScore,
   quarterRatioScore,
   refundScore,
   relativeRankScore,
   type QuantMetrics,
 } from '@/lib/appraisal/quantScore'
+import {
+  defaultMinSales,
+  minSalesKey,
+  readTotal,
+} from '@/lib/appraisal/salesTarget'
 
 export const runtime = 'nodejs'
 
@@ -399,6 +405,32 @@ export async function GET(request: NextRequest) {
     }
   }
 
+  // ── 기준(최소) 매출 달성률 — 실제매출(분기 합) ÷ 최소매출(분기 합) ──────
+  let minSalesTotal = 0
+  {
+    // 팀장 여부 — 최소매출 기본값(팀장 1000 / 사원 600) 결정
+    const { data: ledTeams } = await supabaseAdmin
+      .from('teams')
+      .select('id')
+      .eq('leader_user_id', userId)
+      .limit(1)
+    const isLeaderUser = (ledTeams?.length ?? 0) > 0
+    const keys = curr.months.map((m) => minSalesKey(userId, year, m))
+    const { data: minRows } = await supabaseAdmin
+      .from('app_settings')
+      .select('key, value')
+      .in('key', keys)
+    const byKey = new Map(
+      (minRows ?? []).map((r) => [r.key as string, r.value]),
+    )
+    for (const m of curr.months) {
+      const v = readTotal(byKey.get(minSalesKey(userId, year, m)))
+      minSalesTotal += v ?? defaultMinSales(isLeaderUser)
+    }
+  }
+  const minSalesRateVal =
+    minSalesTotal > 0 ? round1((currSalesTotal / minSalesTotal) * 100) : null
+
   const metrics: QuantMetrics = {
     period: `${year}년 ${quarter}분기`,
     prevPeriod: prevLabel,
@@ -407,6 +439,12 @@ export async function GET(request: NextRequest) {
       currAvg: currSalesAvg,
       rate: salesRateF,
       score: salesRateF != null ? quarterRatioScore(salesRateF) : null,
+    },
+    minSalesRate: {
+      minTarget: minSalesTotal,
+      actual: currSalesTotal,
+      rate: minSalesRateVal,
+      score: minSalesRateVal != null ? minSalesRateScore(minSalesRateVal) : null,
     },
     registration: {
       assigned: currConsult.assigned,

@@ -22,6 +22,7 @@ export default function DashboardLayout({
   const [revenueOwnDivisions, setRevenueOwnDivisions] = useState<('nms' | 'cert' | 'abroad')[]>([])
   const [isDivisionAdmin, setIsDivisionAdmin] = useState<boolean>(false)
   const [isDeptHead, setIsDeptHead] = useState<boolean>(false)
+  const [isLeader, setIsLeader] = useState<boolean>(false)
   const [hiddenMenus, setHiddenMenus] = useState<string[]>([])
   const [departmentCode, setDepartmentCode] = useState<string | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -35,6 +36,7 @@ export default function DashboardLayout({
     let divisions: ('nms' | 'cert' | 'abroad')[] = []
     let divisionAdminFlag = false
     let deptHeadFlag = false
+    let leaderFlag = false
     let hidden: string[] = []
     let deptCode: string | null = null
     try {
@@ -51,6 +53,7 @@ export default function DashboardLayout({
           : []
         divisionAdminFlag = !!data.isDivisionAdmin
         deptHeadFlag = !!data.isDeptHead
+        leaderFlag = !!data.isLeader
         hidden = Array.isArray(data.hiddenMenus) ? data.hiddenMenus : []
         deptCode = data.departmentCode ?? null
       }
@@ -63,6 +66,7 @@ export default function DashboardLayout({
     setRevenueOwnDivisions(divisions)
     setIsDivisionAdmin(divisionAdminFlag)
     setIsDeptHead(deptHeadFlag)
+    setIsLeader(leaderFlag)
     setHiddenMenus(hidden)
     setDepartmentCode(deptCode)
 
@@ -280,7 +284,7 @@ export default function DashboardLayout({
   return (
     <GuideProvider>
       <div className={styles.dashboardWrap}>
-        <Sidebar userRole={userRole} permissions={permissions} isDivisionAdmin={isDivisionAdmin} hiddenMenus={hiddenMenus} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <Sidebar userRole={userRole} permissions={permissions} isDivisionAdmin={isDivisionAdmin} canManageSalesTargets={isDeptHead || isLeader || departmentCode === 'MGT'} hiddenMenus={hiddenMenus} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
         {sidebarOpen && (
           <div className={styles.sidebarOverlay} onClick={() => setSidebarOpen(false)} />

@@ -38,6 +38,18 @@ function quantFormula(kind: ReturnType<typeof quantIndicatorKind>): string {
         "  매출: (7월÷6월 + 8월÷7월 + 9월÷8월) 비율의 평균 (완료된 달만)\n" +
         RATIO_BANDS_TEXT
       );
+    case "minSalesRate":
+      return (
+        "기준 매출 달성률(%) = 당분기 실제매출 ÷ 최소매출 × 100\n" +
+        "· 최소매출: 경영지원본부 지정(기본 사원 600만 / 팀장 1000만, 분기 합산)\n" +
+        "· 실제매출: 매출파일(자격증·수강등록·실습) 결제일 기준 분기 합산\n" +
+        "점수 환산\n" +
+        "· 200% 이상 = 5점\n" +
+        "· 170~199% = 4점\n" +
+        "· 130~169% = 3점\n" +
+        "· 100~129% = 2점\n" +
+        "· 100% 미만 = 1점"
+      );
     case "registration":
       return (
         "등록률(%) = 등록완료 ÷ 배정 DB × 100\n" +
@@ -131,6 +143,18 @@ function QuantBadge({
           </>
         );
       break;
+    case "minSalesRate":
+      body =
+        metrics.minSalesRate.rate != null ? (
+          <>
+            실제 {metrics.minSalesRate.actual.toLocaleString()}만원 ÷ 최소{" "}
+            {metrics.minSalesRate.minTarget.toLocaleString()}만원 ·{" "}
+            {metrics.minSalesRate.rate}% → <b>{metrics.minSalesRate.score}점</b>
+          </>
+        ) : (
+          <>최소매출 미설정 — 산출 불가</>
+        );
+      break;
     case "registration":
       body =
         metrics.registration.compareRate != null ? (
@@ -196,6 +220,8 @@ function autoQuantScore(metrics: QuantMetrics, text: string): number | null {
   switch (quantIndicatorKind(text)) {
     case "sales":
       return metrics.sales.score;
+    case "minSalesRate":
+      return metrics.minSalesRate.score;
     case "registration":
       return metrics.registration.score;
     case "assignedDb":

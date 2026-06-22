@@ -110,13 +110,22 @@ export async function GET() {
 
     // 본부장 여부 — departments.head_user_id 에 본인이 지정돼 있으면 true (예산현황 노출 기준)
     let isDeptHead = false
+    let isLeader = false
     if (appUser?.id) {
-      const { data: headDepts } = await supabaseAdmin
-        .from('departments')
-        .select('id')
-        .eq('head_user_id', appUser.id)
-        .limit(1)
+      const [{ data: headDepts }, { data: ledTeams }] = await Promise.all([
+        supabaseAdmin
+          .from('departments')
+          .select('id')
+          .eq('head_user_id', appUser.id)
+          .limit(1),
+        supabaseAdmin
+          .from('teams')
+          .select('id')
+          .eq('leader_user_id', appUser.id)
+          .limit(1),
+      ])
       isDeptHead = (headDepts?.length ?? 0) > 0
+      isLeader = (ledTeams?.length ?? 0) > 0
     }
 
     return NextResponse.json({
@@ -135,6 +144,7 @@ export async function GET() {
       teamJournalForm,
       isDivisionAdmin: !!appUser?.is_division_admin,
       isDeptHead,
+      isLeader,
       hiddenMenus: Array.isArray(appUser?.hidden_menus) ? appUser.hidden_menus : [],
       basePermissions,
       overridePermissions,

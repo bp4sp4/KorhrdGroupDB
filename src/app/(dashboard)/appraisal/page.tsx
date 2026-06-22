@@ -21,14 +21,12 @@ import {
   type AppraisalFormRow,
   type AppraisalSheet,
   type ScoreMatrix,
-  clampToGrade,
   combinedScore,
   createEmptyFormData,
   gradeOf,
   kpiCapGrade,
   lowerGrade,
   normalizeScores,
-  relativeGradeOf,
   totalScore,
 } from "@/lib/appraisal/form";
 import {
@@ -1394,38 +1392,26 @@ function OverviewList({
       };
     });
 
-  // 상대평가 비교 그룹 = 절대평가점수가 산출된 인원
-  const rankedScores = base
-    .map((s) => s.combined)
-    .filter((v): v is number => v !== null);
+  // 등급 = 절대평가 점수 기반 / 최종등급 = 절대등급에 KPI 상한 적용(하향만)
   const summary = base
     .map((s) => {
       if (s.combined === null) {
         return {
           ...s,
-          relScore: null as number | null,
-          finalScore: null as number | null,
           grade: null as ReturnType<typeof gradeOf> | null,
+          finalGrade: null as ReturnType<typeof gradeOf> | null,
         };
       }
-      // 상대평가 — 동점은 같은 순위, 비교 대상 1명이면 절대평가 등급 유지
-      const rank =
-        1 + rankedScores.filter((v) => v > (s.combined as number)).length;
-      const relGrade =
-        rankedScores.length >= 2
-          ? relativeGradeOf(rank, rankedScores.length)
-          : gradeOf(s.combined);
-      const relScore = clampToGrade(s.combined, relGrade);
-      // 등급 조건 (KPI) — 점수 등급과 KPI 허용 등급 중 낮은 쪽
-      const scoreGrade = gradeOf(relScore);
-      const grade =
+      // 등급 — 절대평가 점수 구간 등급
+      const grade = gradeOf(s.combined);
+      // 최종등급 — KPI 허용 등급으로 하향(상한). KPI 없으면 절대등급 유지
+      const finalGrade =
         s.kpiRate !== null
-          ? lowerGrade(scoreGrade, kpiCapGrade(s.kpiRate))
-          : scoreGrade;
-      const finalScore = clampToGrade(relScore, grade);
-      return { ...s, relScore, finalScore, grade };
+          ? lowerGrade(grade, kpiCapGrade(s.kpiRate))
+          : grade;
+      return { ...s, grade, finalGrade };
     })
-    .sort((a, b) => (b.finalScore ?? -1) - (a.finalScore ?? -1));
+    .sort((a, b) => (b.combined ?? -1) - (a.combined ?? -1));
 
   const teamRows = rows.filter((r) => r.sheet_key === "team");
 
@@ -1454,10 +1440,10 @@ function OverviewList({
         <div className={styles.overviewWrap}>
           <h3 className={styles.overviewTitle}>직원별 종합</h3>
           <p className={styles.overviewHint}>
-            절대평가 = 팀 역량 50% + 개인 역량 50% · 상대평가 = 절대평가 순위
-            백분위를 권장비율(S 5 / A 20 / B 45 / C 20 / D 10%) 구간으로 보정 ·
-            등급 조건 = KPI 달성률 100%↑ S / 90%↑ A / 미만 B (하향 시 B가 하한)
-            · 등급 S 95~100 / A 85~94 / B 75~84 / C 65~74 / D 64 이하
+            절대평가 = 팀 역량 50% + 개인 역량 50% · 등급 = 절대평가 점수 구간
+            (S 95~100 / A 85~94 / B 75~84 / C 65~74 / D 64 이하) · 최종등급 =
+            등급에 KPI 달성률 상한 적용(KPI 100%↑ S / 90%↑ A / 미만 B,
+            하향만 적용)
           </p>
           <table className={styles.overviewTable}>
             <thead>
@@ -1468,10 +1454,9 @@ function OverviewList({
                 <th>팀 점수</th>
                 <th>개인 점수</th>
                 <th>절대평가</th>
-                <th>상대평가</th>
-                <th>KPI 달성률</th>
-                <th>최종점수</th>
                 <th>등급</th>
+                <th>KPI 달성률</th>
+                <th>최종등급</th>
                 <th>상태</th>
                 <th>액션</th>
               </tr>
@@ -1487,19 +1472,26 @@ function OverviewList({
                   </td>
                   <td>{fmt(s.personalTotal * 0.5)}점</td>
                   <td>{s.combined !== null ? `${fmt(s.combined)}점` : "-"}</td>
-                  <td>{s.relScore !== null ? `${fmt(s.relScore)}점` : "-"}</td>
-                  <td>
-                    {s.kpiRate !== null ? `${fmt(s.kpiRate)}%` : "목표 없음"}
-                  </td>
-                  <td className={styles.overviewTotal}>
-                    {s.finalScore !== null ? `${fmt(s.finalScore)}점` : "-"}
-                  </td>
                   <td>
                     {s.grade ? (
                       <span
                         className={`${styles.gradeBadge} ${styles[`grade${s.grade}`]}`}
                       >
                         {s.grade}
+                      </span>
+                    ) : (
+                      "-"
+                    )}
+                  </td>
+                  <td>
+                    {s.kpiRate !== null ? `${fmt(s.kpiRate)}%` : "목표 없음"}
+                  </td>
+                  <td className={styles.overviewTotal}>
+                    {s.finalGrade ? (
+                      <span
+                        className={`${styles.gradeBadge} ${styles[`grade${s.finalGrade}`]}`}
+                      >
+                        {s.finalGrade}
                       </span>
                     ) : (
                       "-"

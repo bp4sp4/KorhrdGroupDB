@@ -23,6 +23,8 @@ interface SidebarProps {
     allowed_tabs?: string[] | null;
   }[];
   isDivisionAdmin?: boolean;
+  /** 매출 목표 관리 노출 — 팀장/본부장/경영지원본부/관리자 */
+  canManageSalesTargets?: boolean;
   hiddenMenus?: string[];
   isOpen?: boolean;
   onClose?: () => void;
@@ -34,6 +36,7 @@ export default function Sidebar({
   userRole,
   permissions = [],
   isDivisionAdmin = false,
+  canManageSalesTargets = false,
   hiddenMenus = [],
   isOpen,
   onClose,
@@ -123,6 +126,9 @@ export default function Sidebar({
 
   // 관리자메뉴 게이트 — 권한별 개별 노출
   const visibleAdmin = SIDEBAR_ADMIN.filter((item) => {
+    // 매출 목표 관리 — 전용 게이트 (팀장/본부장/경영지원본부/관리자)
+    if (item.requiresSalesTargetAccess)
+      return isFullAccess || canManageSalesTargets;
     if (isFullAccess) return true;
     if (item.requiresDivisionAdmin && !isDivisionAdmin) return false;
     if (!item.permissionKey) return false;

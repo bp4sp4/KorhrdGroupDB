@@ -305,8 +305,6 @@ export default function DashboardPage() {
     total: number;
     weeks: number[];
   }>({ total: 0, weeks: [0, 0, 0, 0, 0] });
-  const [goalModalOpen, setGoalModalOpen] = useState(false);
-  const [goalSaving, setGoalSaving] = useState(false);
 
   const goalKey =
     userId != null ? `dashboard.monthly_goal.${userId}.${monthKey}` : null;
@@ -364,33 +362,6 @@ export default function DashboardPage() {
       cancelled = true;
     };
   }, []);
-
-  const handleSaveGoal = async (next: { total: number; weeks: number[] }) => {
-    if (!goalKey) {
-      alert("사용자 정보를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
-      return;
-    }
-    setGoalSaving(true);
-    try {
-      const res = await fetch("/api/app-settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          key: goalKey,
-          value: next,
-        }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        alert(err.error ?? "저장 실패");
-        return;
-      }
-      setMonthlyGoal(next);
-      setGoalModalOpen(false);
-    } finally {
-      setGoalSaving(false);
-    }
-  };
 
   const handleClockOut = () => {
     if (submitting) return;
@@ -648,14 +619,7 @@ export default function DashboardPage() {
         <section className={`${styles.card} ${styles.goalCard}`}>
           <div className={styles.goalHead}>
             <h3 className={styles.cardTitle}>이번달 목표 현황</h3>
-            <button
-              type="button"
-              className={styles.goalSettingBtn}
-              onClick={() => setGoalModalOpen(true)}
-            >
-              <Target size={14} />
-              <span>목표 설정</span>
-            </button>
+            {/* 목표 설정은 팀장·본부장이 '매출 목표 관리'에서 지정 */}
           </div>
 
           {(() => {
@@ -932,142 +896,6 @@ export default function DashboardPage() {
         onConfirm={confirmClockOut}
         onCancel={() => setShowClockOutConfirm(false)}
       />
-      {goalModalOpen && (
-        <GoalSettingModal
-          monthKey={monthKey}
-          initial={monthlyGoal}
-          saving={goalSaving}
-          onClose={() => setGoalModalOpen(false)}
-          onSave={handleSaveGoal}
-        />
-      )}
-    </div>
-  );
-}
-
-// ─── 이번달 목표 설정 모달 ──────────────────────────────────────────
-function GoalSettingModal({
-  monthKey,
-  initial,
-  saving,
-  onClose,
-  onSave,
-}: {
-  monthKey: string;
-  initial: { total: number; weeks: number[] };
-  saving: boolean;
-  onClose: () => void;
-  onSave: (next: { total: number; weeks: number[] }) => void;
-}) {
-  const [total, setTotal] = useState<string>(String(initial.total));
-  const [weeks, setWeeks] = useState<string[]>(
-    initial.weeks.map((n) => String(n)),
-  );
-
-  const parseNum = (v: string) => {
-    const n = parseInt(v.replace(/,/g, ""), 10);
-    return Number.isFinite(n) && n >= 0 ? n : 0;
-  };
-
-  const weeksSum = weeks.reduce((s, v) => s + parseNum(v), 0);
-  const totalNum = parseNum(total);
-  const sumMismatch = weeksSum !== totalNum;
-
-  const handleSubmit = () => {
-    onSave({
-      total: totalNum,
-      weeks: weeks.map((v) => parseNum(v)),
-    });
-  };
-
-  return (
-    <div
-      className={styles.goalModalOverlay}
-      onClick={(e) => {
-        if (e.target === e.currentTarget && !saving) onClose();
-      }}
-    >
-      <div className={styles.goalModalBox}>
-        <div className={styles.goalModalHeader}>
-          <h3 className={styles.goalModalTitle}>이번달 목표 설정</h3>
-          <span className={styles.goalModalSubtitle}>{monthKey}</span>
-        </div>
-
-        <div className={styles.goalModalBody}>
-          <div className={styles.goalModalRow}>
-            <label className={styles.goalModalLabel}>총 목표</label>
-            <div className={styles.goalModalInputWrap}>
-              <input
-                type="text"
-                inputMode="numeric"
-                value={total}
-                onChange={(e) =>
-                  setTotal(e.target.value.replace(/[^0-9,]/g, ""))
-                }
-                placeholder="예) 1500"
-                className={styles.goalModalInput}
-              />
-              <span className={styles.goalModalUnit}>만원</span>
-            </div>
-          </div>
-
-          <div className={styles.goalModalDivider} />
-
-          {weeks.map((w, i) => (
-            <div key={i} className={styles.goalModalRow}>
-              <label className={styles.goalModalLabel}>{i + 1}주차</label>
-              <div className={styles.goalModalInputWrap}>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={w}
-                  onChange={(e) => {
-                    const next = [...weeks];
-                    next[i] = e.target.value.replace(/[^0-9,]/g, "");
-                    setWeeks(next);
-                  }}
-                  placeholder="예) 200"
-                  className={styles.goalModalInput}
-                />
-                <span className={styles.goalModalUnit}>만원</span>
-              </div>
-            </div>
-          ))}
-
-          <div className={styles.goalModalSummary}>
-            <span>주차 합계</span>
-            <span
-              className={
-                sumMismatch
-                  ? styles.goalModalSummaryMismatch
-                  : styles.goalModalSummaryMatch
-              }
-            >
-              {weeksSum.toLocaleString()}만원
-              {sumMismatch && ` (총목표와 ${(weeksSum - totalNum).toLocaleString()}만원 차이)`}
-            </span>
-          </div>
-        </div>
-
-        <div className={styles.goalModalFooter}>
-          <button
-            type="button"
-            className={styles.goalModalCancel}
-            onClick={onClose}
-            disabled={saving}
-          >
-            취소
-          </button>
-          <button
-            type="button"
-            className={styles.goalModalSave}
-            onClick={handleSubmit}
-            disabled={saving}
-          >
-            {saving ? "저장 중..." : "저장"}
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

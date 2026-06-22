@@ -33,6 +33,18 @@ export function refundScore(count: number): number {
   return 1
 }
 
+/**
+ * 기준(최소) 매출 달성률(%) = 실제매출 ÷ 최소매출 × 100 → 1~5점
+ * | 200% 이상 5 | 170~199 4 | 130~169 3 | 100~129 2 | 100% 미만 1 |
+ */
+export function minSalesRateScore(ratePct: number): number {
+  if (ratePct >= 200) return 5
+  if (ratePct >= 170) return 4
+  if (ratePct >= 130) return 3
+  if (ratePct >= 100) return 2
+  return 1
+}
+
 /** 근태(지각·결근 횟수) → 1~5점 */
 export function attendanceScore(
   lateCount: number,
@@ -69,6 +81,7 @@ export function relativeRankScore(
 /** 정량평가 자동 산출 대상 지표 종류 */
 export type QuantIndicatorKind =
   | 'sales' // 전분기 평균 매출 대비 당분기 평균 매출
+  | 'minSalesRate' // 기준(최소) 매출 달성률 — 실제 ÷ 최소매출
   | 'registration' // 전분기 평균 등록률 대비 당분기 평균 등록률
   | 'assignedDb' // 배정 DB수
   | 'refund' // 환불 건수
@@ -77,6 +90,8 @@ export type QuantIndicatorKind =
 /** 지표 문구 → 자동 산출 종류 식별 (해당 없으면 null) */
 export function quantIndicatorKind(text: string): QuantIndicatorKind | null {
   if (text.includes('등록률')) return 'registration'
+  // "기준 매출 달성률" — 'sales'(매출+달성률)보다 먼저 판정
+  if (text.includes('기준') && text.includes('매출')) return 'minSalesRate'
   if (text.includes('매출') && (text.includes('대비') || text.includes('달성률')))
     return 'sales'
   if (text.includes('배정') && text.toUpperCase().includes('DB')) return 'assignedDb'
@@ -104,6 +119,17 @@ export interface QuantMetrics {
   prevPeriod: string
   /** 매출 — 전분기 평균 매출 대비 당분기 평균 매출 (만원) */
   sales: QuarterCompareMetric
+  /** 기준(최소) 매출 달성률 — 당분기 실제매출 ÷ 최소매출 (만원, 분기 합) */
+  minSalesRate: {
+    /** 분기 최소매출 합 (만원) */
+    minTarget: number
+    /** 분기 실제매출 합 (만원) */
+    actual: number
+    /** 달성률 % — 최소매출 0이면 null */
+    rate: number | null
+    /** 환산 점수 1~5 — 산출 불가 시 null */
+    score: number | null
+  }
   /** 등록률 — 전분기 평균 등록률 대비 당분기 평균 등록률 */
   registration: {
     /** 당분기 배정 DB(학점은행 상담) */

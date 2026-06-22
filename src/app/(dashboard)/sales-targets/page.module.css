@@ -1,0 +1,253 @@
+.page {
+  padding: 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 6px;
+  color: #111;
+}
+
+.hint {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.select {
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid #e6e7eb;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.saveBtn {
+  height: 38px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 8px;
+  background: #0084fe;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.saveBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.empty {
+  padding: 60px 20px;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+.tableWrap {
+  border: 1px solid #e6e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.table th {
+  background: #f9fafb;
+  text-align: left;
+  padding: 12px 14px;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 1px solid #e6e7eb;
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid #f1f2f4;
+  color: #111;
+  white-space: nowrap;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.input {
+  width: 110px;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  text-align: right;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #0084fe;
+}
+
+.muted {
+  color: #9ca3af;
+}
+
+.leaderTag {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #2563eb;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.achHigh {
+  color: #15803d;
+  font-weight: 600;
+}
+
+.achLow {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.targetCell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.weekBtn {
+  padding: 5px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 12px;
+  color: #374151;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.weekBtn:hover {
+  background: #f9fafb;
+}
+
+/* 주차별 목표 모달 */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modalBox {
+  width: 420px;
+  max-width: calc(100vw - 32px);
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+}
+
+.modalHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.modalTitle {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0;
+  color: #111;
+}
+
+.modalClose {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 4px;
+}
+
+.weekGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+
+.weekField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.weekLabel {
+  font-size: 12px;
+  color: #6b7280;
+  text-align: center;
+}
+
+.weekField .input {
+  width: 100%;
+  text-align: right;
+}
+
+.modalSummary {
+  margin-top: 14px;
+  padding: 10px 12px;
+  background: #f9fafb;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #374151;
+  text-align: right;
+}
+
+.modalFoot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.btnGhost {
+  height: 38px;
+  padding: 0 16px;
+  border: 1px solid #e6e7eb;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 14px;
+  cursor: pointer;
+}

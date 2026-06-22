@@ -759,6 +759,8 @@ export interface GlobalNavItem {
   adminOnly?: boolean;
   /** 관리자/부서관리자만 (wj-admin 등) */
   requiresDivisionAdmin?: boolean;
+  /** 매출 목표 관리 — 팀장/본부장/경영지원본부/관리자만 노출 */
+  requiresSalesTargetAccess?: boolean;
 }
 
 // 개인메뉴 — 모든 사용자 공통 (미니어드민 제외). 권한/숨김 키로 개별 게이트.
@@ -781,6 +783,7 @@ export const SIDEBAR_ADMIN: GlobalNavItem[] = [
   { id: "wj-admin", label: "직원 업무일지 현황", href: "/work-journal/admin", icon: <IconWorkJournal />, permissionKey: "wj-admin", requiresDivisionAdmin: true },
   { id: "assignment", label: "배정 현황", href: "/assignment", icon: <IconAssignment />, permissionKey: "assignment" },
   { id: "profit", label: "영업 손익관리", href: "/profit", icon: <IconProfit />, permissionKey: "profit" },
+  { id: "sales-targets", label: "매출 목표 관리", href: "/sales-targets", icon: <IconProfit />, requiresSalesTargetAccess: true },
   { id: "appraisal", label: "인사 고과", href: "/appraisal", icon: <IconAppraisal />, permissionKey: "appraisal" },
   { id: "duplicate", label: "중복 조회", href: "/duplicate", icon: <IconDuplicate />, permissionKey: "duplicate" },
   { id: "trash", label: "삭제 목록", href: "/trash", icon: <IconTrash />, permissionKey: "trash" },
