@@ -25,6 +25,7 @@ interface HeaderProps {
   revenueOwnDivisions?: ("nms" | "cert" | "abroad")[];
   departmentCode?: string | null;
   isDivisionAdmin?: boolean;
+  isDeptHead?: boolean;
   hiddenMenus?: string[];
   onMenuToggle?: () => void;
 }
@@ -40,6 +41,7 @@ export default function Header({
   revenueOwnDivisions = [],
   departmentCode = null,
   isDivisionAdmin = false,
+  isDeptHead = false,
   onMenuToggle,
 }: HeaderProps) {
   const router = useRouter();
@@ -78,6 +80,7 @@ export default function Header({
         revenueOwnDivisions,
         departmentCode,
         isDivisionAdmin,
+        isDeptHead,
       });
 
   const scopeParam = searchParams.get("scope");

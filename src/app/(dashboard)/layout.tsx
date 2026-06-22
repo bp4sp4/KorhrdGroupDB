@@ -21,6 +21,7 @@ export default function DashboardLayout({
   const [permissions, setPermissions] = useState<{ section: string; scope: string; allowed_tabs?: string[] | null }[]>([])
   const [revenueOwnDivisions, setRevenueOwnDivisions] = useState<('nms' | 'cert' | 'abroad')[]>([])
   const [isDivisionAdmin, setIsDivisionAdmin] = useState<boolean>(false)
+  const [isDeptHead, setIsDeptHead] = useState<boolean>(false)
   const [hiddenMenus, setHiddenMenus] = useState<string[]>([])
   const [departmentCode, setDepartmentCode] = useState<string | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -33,6 +34,7 @@ export default function DashboardLayout({
     let name = '관리자'
     let divisions: ('nms' | 'cert' | 'abroad')[] = []
     let divisionAdminFlag = false
+    let deptHeadFlag = false
     let hidden: string[] = []
     let deptCode: string | null = null
     try {
@@ -48,6 +50,7 @@ export default function DashboardLayout({
             ))
           : []
         divisionAdminFlag = !!data.isDivisionAdmin
+        deptHeadFlag = !!data.isDeptHead
         hidden = Array.isArray(data.hiddenMenus) ? data.hiddenMenus : []
         deptCode = data.departmentCode ?? null
       }
@@ -59,6 +62,7 @@ export default function DashboardLayout({
     setPermissions(perms)
     setRevenueOwnDivisions(divisions)
     setIsDivisionAdmin(divisionAdminFlag)
+    setIsDeptHead(deptHeadFlag)
     setHiddenMenus(hidden)
     setDepartmentCode(deptCode)
 
@@ -283,7 +287,7 @@ export default function DashboardLayout({
         )}
 
         <div className={styles.contentColumn}>
-          <Header userName={displayName} userRole={userRole} permissions={permissions} revenueOwnDivisions={revenueOwnDivisions} departmentCode={departmentCode} isDivisionAdmin={isDivisionAdmin} hiddenMenus={hiddenMenus} onMenuToggle={() => setSidebarOpen(v => !v)} />
+          <Header userName={displayName} userRole={userRole} permissions={permissions} revenueOwnDivisions={revenueOwnDivisions} departmentCode={departmentCode} isDivisionAdmin={isDivisionAdmin} isDeptHead={isDeptHead} hiddenMenus={hiddenMenus} onMenuToggle={() => setSidebarOpen(v => !v)} />
 
           <main
             className={`${styles.mainContent}${pathname.startsWith('/approvals') ? ` ${styles.mainContentWhite}` : ''}`}

@@ -800,6 +800,8 @@ export interface NavFilterContext {
   departmentCode: string | null;
   /** 부서 관리자 (is_division_admin) — "관리자" 전용 탭(adminOnly) 노출 대상 */
   isDivisionAdmin?: boolean;
+  /** 본부장 (departments.head_user_id) — 예산현황 노출 대상 */
+  isDeptHead?: boolean;
 }
 
 // 임시 숨김 사업부 (유학 — 미오픈)
@@ -868,7 +870,7 @@ const MANAGED_TAB_IDS: Record<string, Set<string>> = {
  * 반환: children 이 1개 이상 남은 사업부 NavItem 배열
  */
 export function getVisibleDivisions(ctx: NavFilterContext): NavItem[] {
-  const { userRole, permissions, departmentCode, isDivisionAdmin } = ctx;
+  const { userRole, permissions, departmentCode, isDivisionAdmin, isDeptHead } = ctx;
   const isFullAccess = userRole === "master-admin" || userRole === "admin";
   // adminOnly 탭 노출 대상 = 마스터 어드민 + 부서 관리자(관리자)
   const canSeeAdminTabs = isFullAccess || !!isDivisionAdmin;
@@ -949,11 +951,11 @@ export function getVisibleDivisions(ctx: NavFilterContext): NavItem[] {
       });
       return { ...item, children: filteredChildren };
     })
-    // 예산현황 하위 — budget 권한 없는 사용자에겐 숨김
+    // 예산현황 하위 — 본부장(또는 마스터/관리자)에게만 노출
     .map((item) => {
       if (!item.children || isFullAccess) return item;
       const kids = item.children.filter(
-        (c) => c.permissionKey !== "budget" || allowedSections.has("budget"),
+        (c) => c.permissionKey !== "budget" || isDeptHead,
       );
       return { ...item, children: kids };
     })

@@ -1,9 +1,20 @@
 import { supabaseAdmin } from '@/lib/supabase/admin'
 
+// 본부장 여부 — departments.head_user_id 에 본인이 지정돼 있으면 true
+export async function isDepartmentHead(userId: number): Promise<boolean> {
+  const { data } = await supabaseAdmin
+    .from('departments')
+    .select('id')
+    .eq('head_user_id', userId)
+    .limit(1)
+  return (data?.length ?? 0) > 0
+}
+
 // 부서 관리자(division admin) 접근 가능 사용자 목록 결정.
 //
 // 규칙:
 //   - master-admin / admin           → 전사 모든 활성 사용자
+//   - 본부장(departments.head_user_id)→ 전사 모든 활성 사용자 (타 부서 포함)
 //   - is_division_admin = true 사용자 → 자신과 같은 department_id 의 활성 사용자
 //   - 그 외                          → 본인만 (또는 빈 배열 — 호출부에서 결정)
 //
@@ -21,7 +32,8 @@ export async function getAccessibleUserIds(currentUser: {
   const role = currentUser.role
   const isGlobalAdmin = role === 'master-admin' || role === 'admin'
 
-  if (isGlobalAdmin) {
+  // 전사 admin 또는 본부장 → 전 부서 열람
+  if (isGlobalAdmin || (await isDepartmentHead(currentUser.id))) {
     const { data } = await supabaseAdmin
       .from('app_users')
       .select('id')
