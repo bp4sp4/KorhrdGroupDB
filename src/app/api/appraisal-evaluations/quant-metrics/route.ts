@@ -69,19 +69,39 @@ export async function GET(request: NextRequest) {
       ? quarterParam
       : Math.floor(now.getMonth() / 3) + 1
 
-  // 전분기 — 2026-Q3 평가는 특례: 전분기(2분기) 데이터가 6월부터만 존재하므로
-  // 비교 기준을 2026년 6월 한 달로 한다. 2026-Q4부터는 직전 분기 전체와 비교.
+  // 전분기 — 2026-Q3 평가는 특례: 전분기(2분기) 데이터가 없어
+  // 매출·등록률을 "전월 대비"(7↔6, 8↔7, 9↔8) 월별 비율의 평균으로 산출한다(아래 isFirstPeriod 분기).
+  // 2026-Q4부터는 직전 분기 전체와 비교(분기 단위).
   const isFirstPeriod = year === 2026 && quarter === 3
   const prevYear = quarter === 1 ? year - 1 : year
   const prevQuarter = quarter === 1 ? 4 : quarter - 1
 
   const curr = quarterRange(year, quarter)
+  // leaveTx 하한 등 기준 범위 (Q3는 6월부터)
   const prev = isFirstPeriod
     ? monthsRange(2026, [6])
     : quarterRange(prevYear, prevQuarter)
   const prevLabel = isFirstPeriod
-    ? '2026년 6월'
+    ? '전월 대비(월평균)'
     : `${prevYear}년 ${prevQuarter}분기`
+
+  // 월(year, m)이 완료됐는지 — 현재 월 이전이면 완료 (Q3 전월대비에서 미래·진행중 달 제외)
+  const monthCompleted = (m: number, y: number) =>
+    y < now.getFullYear() || (y === now.getFullYear() && m < now.getMonth() + 1)
+
+  // 전월대비 비율 평균 (값 배열 [이전월 … 최근월] 순) → %
+  const avgMomRatio = (vals: (number | null)[]): number | null => {
+    const ratios: number[] = []
+    for (let i = 1; i < vals.length; i++) {
+      const cur = vals[i]
+      const pr = vals[i - 1]
+      if (cur == null || pr == null || pr <= 0) continue
+      ratios.push((cur / pr) * 100)
+    }
+    return ratios.length
+      ? Math.round((ratios.reduce((a, b) => a + b, 0) / ratios.length) * 10) / 10
+      : null
+  }
 
   // 권한 확인
   if (userId !== appUser.id) {
@@ -224,6 +244,42 @@ export async function GET(request: NextRequest) {
       ? round1((currConsult.rate / prevConsult.rate) * 100)
       : null
 
+  // ── 2026-Q3 특례: 매출·등록률을 전월 대비(월평균)로 재산출 ──────────────
+  //   매출:   (7월÷6월 + 8월÷7월 + 9월÷8월) ÷ 완료된 쌍 수
+  //   등록률: (7월률÷6월률 + 8월률÷7월률 + 9월률÷8월률) ÷ 완료된 쌍 수
+  let salesRateF = salesRate
+  let salesPrevAvgF = prevSalesAvg
+  let regCompareF = regCompareRate
+  let regPrevRateF = prevConsult.rate
+  if (isFirstPeriod && displayName) {
+    const momMonths = [6, 7, 8, 9]
+    const monthSales = await Promise.all(
+      momMonths.map(async (m) =>
+        monthCompleted(m, 2026)
+          ? (await getMonthlySales(displayName, 2026, m)).total
+          : null,
+      ),
+    )
+    salesRateF = avgMomRatio(monthSales)
+    salesPrevAvgF = null
+
+    const monthRates = await Promise.all(
+      momMonths.map(async (m) => {
+        if (!monthCompleted(m, 2026)) return null
+        const res = await consultQuery(monthsRange(2026, [m]))
+        const rows =
+          'data' in res && Array.isArray(res.data) ? res.data : []
+        const assigned = rows.length
+        const registered = rows.filter(
+          (r) => (r as { status: string | null }).status === '등록완료',
+        ).length
+        return assigned > 0 ? (registered / assigned) * 100 : null
+      }),
+    )
+    regCompareF = avgMomRatio(monthRates)
+    regPrevRateF = null
+  }
+
   // ── 배정 DB수 상대평가 — 같은 부서 담당자 간 순위 ───────────────────
   let dbRank: number | null = null
   let dbGroupSize = 0
@@ -347,18 +403,18 @@ export async function GET(request: NextRequest) {
     period: `${year}년 ${quarter}분기`,
     prevPeriod: prevLabel,
     sales: {
-      prevAvg: prevSalesAvg,
+      prevAvg: salesPrevAvgF,
       currAvg: currSalesAvg,
-      rate: salesRate,
-      score: salesRate != null ? quarterRatioScore(salesRate) : null,
+      rate: salesRateF,
+      score: salesRateF != null ? quarterRatioScore(salesRateF) : null,
     },
     registration: {
       assigned: currConsult.assigned,
       registered: currConsult.registered,
       rate: currConsult.rate,
-      prevRate: prevConsult.rate,
-      compareRate: regCompareRate,
-      score: regCompareRate != null ? quarterRatioScore(regCompareRate) : null,
+      prevRate: regPrevRateF,
+      compareRate: regCompareF,
+      score: regCompareF != null ? quarterRatioScore(regCompareF) : null,
     },
     assignedDb: {
       count: currConsult.assigned,
