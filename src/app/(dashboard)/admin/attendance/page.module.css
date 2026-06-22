@@ -848,7 +848,8 @@
   border-color: #3182f6;
   box-shadow: 0 0 0 3px rgba(49, 130, 246, 0.12);
 }
-.ebSave {
+/* `.app button`(specificity 0,1,1)보다 우선하도록 .ebActions 부모를 붙임 */
+.ebActions .ebSave {
   height: 32px;
   padding: 0 14px;
   border-radius: 8px;
@@ -860,14 +861,14 @@
   align-items: center;
   gap: 5px;
 }
-.ebSave:hover {
+.ebActions .ebSave:hover {
   background: #1b64da;
 }
-.ebSave:disabled {
+.ebActions .ebSave:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
-.ebCancel {
+.ebActions .ebCancel {
   height: 32px;
   padding: 0 12px;
   border-radius: 8px;
@@ -877,7 +878,7 @@
   font-weight: 600;
   color: #4e5968;
 }
-.ebCancel:hover {
+.ebActions .ebCancel:hover {
   background: #f6f8fa;
 }
 
