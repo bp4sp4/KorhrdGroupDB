@@ -34,7 +34,8 @@ function quantFormula(kind: ReturnType<typeof quantIndicatorKind>): string {
       return (
         "비율(%) = 당분기 평균 매출 ÷ 전분기 평균 매출 × 100\n" +
         "· 평균 매출: 매출파일(자격증·수강등록·실습) 결제일 기준 분기 합산 ÷ 3개월\n" +
-        "· 2026년 3분기 평가는 전분기 기준을 2026년 6월(1개월)로 산정\n" +
+        "· 2026년 3분기는 전분기 데이터가 없어 전월 대비(월평균)로 산정\n" +
+        "  매출: (7월÷6월 + 8월÷7월 + 9월÷8월) 비율의 평균 (완료된 달만)\n" +
         RATIO_BANDS_TEXT
       );
     case "registration":
@@ -43,7 +44,8 @@ function quantFormula(kind: ReturnType<typeof quantIndicatorKind>): string {
         "· 배정 DB: 해당 분기 담당자로 배정된 학점은행 상담 건수\n" +
         "· 등록완료: 그중 상담 상태가 '등록완료'인 건수\n" +
         "비율(%) = 당분기 등록률 ÷ 전분기 등록률 × 100\n" +
-        "· 2026년 3분기 평가는 전분기 기준을 2026년 6월(1개월)로 산정\n" +
+        "· 2026년 3분기는 전분기 데이터가 없어 전월 대비(월평균)로 산정\n" +
+        "  등록률: (7월÷6월 + 8월÷7월 + 9월÷8월) 비율의 평균 (완료된 달만)\n" +
         RATIO_BANDS_TEXT
       );
     case "assignedDb":
