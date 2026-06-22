@@ -58,6 +58,7 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith('/login') ||
     pathname.startsWith('/api/auth/') ||
     pathname === '/api/hakjeom/notify' ||
+    pathname === '/api/hakjeom/webhook' ||
     pathname.startsWith('/_next/') ||
     pathname === '/favicon.ico' ||
     pathname === '/logo.png' ||
