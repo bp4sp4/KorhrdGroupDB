@@ -2498,7 +2498,7 @@ export default function WorkJournalPage() {
 
         {/* ── 3컬럼 본문 — 제출 완료 후 잠금 ───────────────────── */}
         <div
-          className={`${styles.bodyRow} ${isLocked ? styles.bodyRowLocked : ""}`}
+          className={`${styles.bodyRow} ${isPracticum ? styles.bodyRowPracticum : ""} ${isLocked ? styles.bodyRowLocked : ""}`}
           onBlur={handleFieldBlur}
         >
           {/* 좌: 오늘의 업무 (실습팀이면 내일 예정 업무와 위/아래 반반) */}

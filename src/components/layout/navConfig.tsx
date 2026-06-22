@@ -773,6 +773,7 @@ export const SIDEBAR_PERSONAL: GlobalNavItem[] = [
   { id: "me-leave", label: "휴가", href: "/me/leave", icon: <IconLeave />, permissionKey: "me-leave" },
   { id: "me-attendance", label: "근태", href: "/me/attendance", icon: <IconAttendance />, permissionKey: "me-attendance" },
   { id: "me-hr-record", label: "인사", href: "/me/hr-record", icon: <IconHr />, hideKey: "hr-record" },
+  { id: "me-appraisal", label: "내 인사고과", href: "/me/appraisal", icon: <IconAppraisal />, permissionKey: "me-appraisal" },
 ];
 
 // 관리자메뉴 — 권한별 개별 게이트 (해당 권한 보유자 또는 관리자에게만)

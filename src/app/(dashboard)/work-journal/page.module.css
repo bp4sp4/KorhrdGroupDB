@@ -1321,6 +1321,13 @@
   min-height: 600px;
 }
 
+/* 실습팀 — 좌(오늘/내일 업무) · 중(업무 일지) · 우(실습 연계 입력) 3컬럼.
+   wjContents(display:contents)로 그리드 아이템이 3개가 되므로 한 줄에 정렬한다.
+   (1100px 이하에서는 아래 미디어쿼리가 1컬럼으로 덮어쓴다) */
+.bodyRowPracticum {
+  grid-template-columns: 264px minmax(0, 1fr) 300px;
+}
+
 .col {
   display: flex;
   flex-direction: column;
@@ -1812,6 +1819,15 @@
   flex-shrink: 0;
 }
 
+/* 좁은 카드(264px) 안 푸터 — 버튼 좌우 패딩 축소 + 한 줄 유지 (텍스트 두 줄 줄바꿈 방지) */
+.tomorrowFooter .btnDraft,
+.tomorrowFooter .btnSubmit,
+.tomorrowFooter .btnEdit {
+  min-width: 0;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
 .btnDraft {
   flex: 1 0 0;
   display: flex;
@@ -1827,6 +1843,7 @@
   font-size: 16px;
   font-weight: 600;
   line-height: normal;
+  white-space: nowrap;
   cursor: pointer;
 }
 
@@ -1849,6 +1866,7 @@
   font-size: 16px;
   font-weight: 600;
   line-height: normal;
+  white-space: nowrap;
   cursor: pointer;
 }
 
