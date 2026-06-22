@@ -80,9 +80,25 @@ export default function Header({
         isDivisionAdmin,
       });
 
+  const scopeParam = searchParams.get("scope");
+
+  // 예산현황(/budget)은 여러 사업부가 ?scope= 로 공유 → scope 쿼리로 사업부 판정
+  // (경영지원본부 activeOn에 /budget이 있어 scope 없이는 항상 경영지원본부로 잡히는 문제 방지)
+  const budgetDivision = pathname.startsWith("/budget")
+    ? (divisions.find((d) =>
+        d.children?.some((c) => {
+          const [base, q] = c.href.split("?");
+          if (base !== "/budget") return false;
+          const childScope = new URLSearchParams(q ?? "").get("scope");
+          return (childScope ?? "") === (scopeParam ?? "");
+        }),
+      ) ?? null)
+    : null;
+
   // 현재 경로에 해당하는 사업부
-  // 1차: 사업부 자체 경로(activeOn/href) 우선 → 2차: 자식 탭 경로로 폴백
+  // 0차: 예산현황 scope 매칭 → 1차: 사업부 자체 경로(activeOn/href) → 2차: 자식 탭 경로
   const currentDivision =
+    budgetDivision ??
     divisions.find(
       (d) =>
         (d.activeOn && d.activeOn.some((p) => pathname.startsWith(p))) ||

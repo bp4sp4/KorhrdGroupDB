@@ -118,7 +118,11 @@ function applyBudgetDelta(
       if (idx < 0) return;
       teams = teams.map((t, i) =>
         i === idx
-          ? { ...t, out_amount: t.out_amount + dOut, in_amount: t.in_amount + dIn }
+          ? {
+              ...t,
+              out_amount: t.out_amount + dOut,
+              in_amount: t.in_amount + dIn,
+            }
           : t,
       );
     };
@@ -322,7 +326,7 @@ function BudgetPageInner() {
     <div className={styles.container}>
       <div className={styles.header}>
         <div className={styles.headerTitle}>
-          <h1>{scopeLabel ? `${scopeLabel} 예산현황` : "예산현황"}</h1>
+          <h1>{scopeLabel ? `${scopeLabel} 운용 예산` : "운용 예산"}</h1>
         </div>
         <div className={styles.headerActions}>
           <select
@@ -360,7 +364,7 @@ function BudgetPageInner() {
             // ── 단일 사업부 (스코프) ──
             <>
               <h2 className={styles.sectionTitle}>
-                {scopeLabel || activeDept.department_name} 가용 예산
+                {scopeLabel || activeDept.department_name} 운용 예산
               </h2>
               <div className={styles.budgetCard}>
                 <div className={styles.budgetRow}>
@@ -390,13 +394,17 @@ function BudgetPageInner() {
                 <div className={styles.budgetRow}>
                   <span className={styles.budgetLabel}>출금 (−)</span>
                   <span className={`${styles.budgetValue} ${styles.used}`}>
-                    {activeDept.out_amount ? `−${won(activeDept.out_amount)}` : "0"}
+                    {activeDept.out_amount
+                      ? `−${won(activeDept.out_amount)}`
+                      : "0"}
                   </span>
                 </div>
                 <div className={styles.budgetRow}>
                   <span className={styles.budgetLabel}>입금 (+)</span>
                   <span className={`${styles.budgetValue} ${styles.deposit}`}>
-                    {activeDept.in_amount ? `+${won(activeDept.in_amount)}` : "0"}
+                    {activeDept.in_amount
+                      ? `+${won(activeDept.in_amount)}`
+                      : "0"}
                   </span>
                 </div>
                 <div className={`${styles.budgetRow} ${styles.budgetRowTotal}`}>
@@ -518,7 +526,9 @@ function BudgetPageInner() {
                             <td className={`${styles.colNum} ${styles.used}`}>
                               {t.out_amount ? `−${won(t.out_amount)}` : "0"}
                             </td>
-                            <td className={`${styles.colNum} ${styles.deposit}`}>
+                            <td
+                              className={`${styles.colNum} ${styles.deposit}`}
+                            >
                               {t.in_amount ? `+${won(t.in_amount)}` : "0"}
                             </td>
                           </tr>
@@ -539,8 +549,8 @@ function BudgetPageInner() {
         <section className={`${styles.section} ${styles.rightPane}`}>
           <div className={styles.txHeader}>
             <h2 className={styles.sectionTitle}>
-              {scopeLabel || (activeDept ? activeDept.department_name : "")} 입금 ·
-              출금현황
+              {scopeLabel || (activeDept ? activeDept.department_name : "")}{" "}
+              입금 · 출금현황
             </h2>
             <div className={styles.txControls}>
               {!scoped && summary.length > 1 && (
