@@ -1,10 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
 import { Paperclip, Download, Send, Trash2 } from "lucide-react";
 import DOMPurify from "dompurify";
 import styles from "./page.module.css";
+
+// 수정 시 본문 — 작성과 동일한 WYSIWYG 에디터 (브라우저 전용)
+const MailEditor = dynamic(
+  () => import("@/app/(dashboard)/mail/_components/MailEditor"),
+  { ssr: false, loading: () => <div>에디터 불러오는 중…</div> },
+);
 
 // 게시글 본문 HTML 검사 — 빈 에디터 결과 ("<p><br/></p>" 등) 인지 판정
 function isHtml(content: string): boolean {
@@ -279,10 +286,9 @@ export default function BoardDetailPage() {
             </label>
             <label className={styles.fieldCol}>
               <span className={styles.fieldLabel}>내용</span>
-              <textarea
-                className={styles.fieldTextarea}
-                value={editContent}
-                onChange={(e) => setEditContent(e.target.value)}
+              <MailEditor
+                onChange={setEditContent}
+                initialHtml={post.content || "<p><br/></p>"}
               />
             </label>
             <div className={styles.editFoot}>
