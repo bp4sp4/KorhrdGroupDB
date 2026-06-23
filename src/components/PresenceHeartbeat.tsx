@@ -3,7 +3,8 @@
 import { useEffect, useRef } from "react";
 
 // 자리비움(보조 신호) — 활동 감지 + (권한 허용 시) Idle Detection API
-//  · 3분간 입력 없음 / 탭 숨김 / 시스템 유휴 → 'away'
+//  · 탭이 열려 있으면 활동 중 — 탭 닫기 / 3분간 입력 없음 / 시스템 유휴 → 'away'
+//    (백그라운드 탭은 활동 중 유지: document.hidden은 자리비움으로 보지 않음)
 //  · 45초마다, 상태 변할 때 즉시 서버로 하트비트
 const IDLE_MS = 3 * 60 * 1000;
 const HEARTBEAT_MS = 45 * 1000;
@@ -23,7 +24,7 @@ export default function PresenceHeartbeat() {
 
   useEffect(() => {
     const computeState = (): "active" | "away" => {
-      if (typeof document !== "undefined" && document.hidden) return "away";
+      // 탭 숨김(다른 탭/창)은 자리비움으로 보지 않음 — 탭만 열려 있으면 활동 중
       if (idleApiAway.current) return "away";
       if (Date.now() - lastActivity.current > IDLE_MS) return "away";
       return "active";
@@ -43,11 +44,7 @@ export default function PresenceHeartbeat() {
 
     const onActivity = () => {
       lastActivity.current = Date.now();
-      if (
-        lastSent.current !== "active" &&
-        !document.hidden &&
-        !idleApiAway.current
-      ) {
+      if (lastSent.current !== "active" && !idleApiAway.current) {
         send(true);
       }
     };
