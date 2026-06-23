@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import SalesTargetsBoard from "../sales-targets/SalesTargetsBoard";
 import styles from "./page.module.css";
 
 /* ── Ant Design Charts (SSR 비활성) ── */
@@ -217,6 +218,10 @@ export default function ProfitPage() {
   const monthOptions = buildMonthOptions();
   const [division, setDivision] = useState(DIVISIONS[0]);
   const [month, setMonth] = useState(monthOptions[0]);
+  // 탭 — 영업 손익관리 / 매출 목표 관리
+  const [tab, setTab] = useState<"profit" | "targets">("profit");
+  // 매출목표 탭 노출 여부 — 관리자/팀장/본부장/경영지원본부만
+  const [canTargets, setCanTargets] = useState(false);
 
   // 접근 가드 — 관리자는 항상, 그 외는 profit 권한이 부여된 경우만 (URL 직접 접근 차단)
   const [accessChecked, setAccessChecked] = useState(false);
@@ -232,15 +237,22 @@ export default function ProfitPage() {
                 p.section === "profit",
             )?.scope ?? "none")
           : "none";
+        // 매출목표 관리 권한자(팀장/본부장/경영지원본부)도 합본 페이지 접근 허용
+        const canSalesTarget =
+          !!data &&
+          (data.isDeptHead === true ||
+            data.isLeader === true ||
+            data.departmentCode === "MGT");
+        const isAdmin =
+          !!data && (data.role === "admin" || data.role === "master-admin");
         const allowed =
-          data &&
-          (data.role === "admin" ||
-            data.role === "master-admin" ||
-            profitScope !== "none");
+          isAdmin || profitScope !== "none" || canSalesTarget;
         if (!allowed) {
           router.replace("/work-journal");
           return;
         }
+        // 매출목표 탭은 관리자/팀장/본부장/경영지원본부에게만
+        setCanTargets(isAdmin || canSalesTarget);
         setAccessChecked(true);
       })
       .catch(() => {
@@ -474,6 +486,30 @@ export default function ProfitPage() {
   return (
     <div className={styles.page}>
       <div className={styles.content}>
+        {/* 탭 — 영업 손익관리 / 매출 목표 관리 (매출목표는 권한자만) */}
+        {canTargets && (
+          <div className={styles.tabBar}>
+            <button
+              type="button"
+              className={`${styles.tab} ${tab === "profit" ? styles.tabOn : ""}`}
+              onClick={() => setTab("profit")}
+            >
+              영업 손익관리
+            </button>
+            <button
+              type="button"
+              className={`${styles.tab} ${tab === "targets" ? styles.tabOn : ""}`}
+              onClick={() => setTab("targets")}
+            >
+              매출 목표 관리
+            </button>
+          </div>
+        )}
+
+        {canTargets && tab === "targets" ? (
+          <SalesTargetsBoard />
+        ) : (
+          <>
         {/* ── 헤더: 사업부 선택 + 월 선택 ── */}
         <div className={styles.header}>
           <HeaderSelect
@@ -852,6 +888,8 @@ export default function ProfitPage() {
             </div>
           </div>
         </div>
+          </>
+        )}
       </div>
     </div>
   );

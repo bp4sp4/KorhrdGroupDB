@@ -717,7 +717,10 @@ export function buildPermissionLayout(): PermissionLayoutGroup[] {
         }
       }
       if (item.permissionKey) {
-        pushEntry(current, { sectionKey: item.permissionKey, label: item.label });
+        pushEntry(current, {
+          sectionKey: item.permissionKey,
+          label: item.label,
+        });
       } else if (item.fixedNote) {
         pushEntry(current, { label: item.label, fixedNote: item.fixedNote });
       }
@@ -736,7 +739,10 @@ export function buildPermissionLayout(): PermissionLayoutGroup[] {
   walkItems(ADMIN_TOOLS_ITEMS, "관리 도구");
   walkItems(PERSONAL_TOOLS_ITEMS, "내 메뉴");
   for (const section of ALL_SECTIONS) {
-    walkItems(section.items, section.sectionKey === "어드민" ? "관리자" : "사업부서");
+    walkItems(
+      section.items,
+      section.sectionKey === "어드민" ? "관리자" : "사업부서",
+    );
   }
   return groups;
 }
@@ -764,45 +770,170 @@ export interface GlobalNavItem {
   requiresDivisionAdmin?: boolean;
   /** 매출 목표 관리 — 팀장/본부장/경영지원본부/관리자만 노출 */
   requiresSalesTargetAccess?: boolean;
+  /** permissionKey 외에 매출목표 권한자(팀장/본부장/경영지원본부)에게도 노출 (영업손익·매출목표 합본) */
+  orSalesTargetAccess?: boolean;
 }
 
 // 개인메뉴 — 모든 사용자 공통 (미니어드민 제외). 권한/숨김 키로 개별 게이트.
 export const SIDEBAR_PERSONAL: GlobalNavItem[] = [
-  { id: "home", label: "홈", href: "/dashboard", icon: <IconHome />, hideKey: "dashboard" },
-  { id: "work-journal", label: "워크스페이스", href: "/work-journal", icon: <IconWorkspace />, exactMatch: true, hideKey: "work-journal" },
-  { id: "board", label: "게시판", href: "/board", icon: <IconBoard />, hideKey: "board" },
-  { id: "calendar", label: "캘린더", href: "/calendar", icon: <IconCalendar />, permissionKey: "calendar", hideKey: "calendar" },
-  { id: "mail", label: "메일", href: "/mail", icon: <IconMail />, hideKey: "mail" },
-  { id: "approvals", label: "전자결재", href: "/approvals", icon: <IconApproval />, permissionKey: "approvals" },
-  { id: "e-contract", label: "전자계약", href: "/me/contracts", icon: <IconContract />, permissionKey: "me-contracts" },
-  { id: "me-leave", label: "휴가", href: "/me/leave", icon: <IconLeave />, permissionKey: "me-leave" },
-  { id: "me-attendance", label: "근태", href: "/me/attendance", icon: <IconAttendance />, permissionKey: "me-attendance" },
-  { id: "me-hr-record", label: "인사", href: "/me/hr-record", icon: <IconHr />, hideKey: "hr-record" },
-  { id: "me-appraisal", label: "인사고과", href: "/me/appraisal", icon: <IconAppraisal />, permissionKey: "me-appraisal" },
+  {
+    id: "home",
+    label: "홈",
+    href: "/dashboard",
+    icon: <IconHome />,
+    hideKey: "dashboard",
+  },
+  {
+    id: "work-journal",
+    label: "워크스페이스",
+    href: "/work-journal",
+    icon: <IconWorkspace />,
+    exactMatch: true,
+    hideKey: "work-journal",
+  },
+  {
+    id: "board",
+    label: "게시판",
+    href: "/board",
+    icon: <IconBoard />,
+    hideKey: "board",
+  },
+  {
+    id: "calendar",
+    label: "캘린더",
+    href: "/calendar",
+    icon: <IconCalendar />,
+    permissionKey: "calendar",
+    hideKey: "calendar",
+  },
+  {
+    id: "mail",
+    label: "메일",
+    href: "/mail",
+    icon: <IconMail />,
+    hideKey: "mail",
+  },
+  {
+    id: "approvals",
+    label: "전자결재",
+    href: "/approvals",
+    icon: <IconApproval />,
+    permissionKey: "approvals",
+  },
+  {
+    id: "e-contract",
+    label: "전자계약",
+    href: "/me/contracts",
+    icon: <IconContract />,
+    permissionKey: "me-contracts",
+  },
+  {
+    id: "me-leave",
+    label: "휴가",
+    href: "/me/leave",
+    icon: <IconLeave />,
+    permissionKey: "me-leave",
+  },
+  {
+    id: "me-attendance",
+    label: "근태",
+    href: "/me/attendance",
+    icon: <IconAttendance />,
+    permissionKey: "me-attendance",
+  },
+  {
+    id: "me-hr-record",
+    label: "인사",
+    href: "/me/hr-record",
+    icon: <IconHr />,
+    hideKey: "hr-record",
+  },
+  {
+    id: "me-appraisal",
+    label: "인사고과",
+    href: "/me/appraisal",
+    icon: <IconAppraisal />,
+    permissionKey: "me-appraisal",
+  },
 ];
 
 // 관리자메뉴 — 권한별 개별 게이트 (해당 권한 보유자 또는 관리자에게만)
 export const SIDEBAR_ADMIN: GlobalNavItem[] = [
-  { id: "wj-admin", label: "직원 업무일지 현황", href: "/work-journal/admin", icon: <IconWorkJournal />, permissionKey: "wj-admin", requiresDivisionAdmin: true },
-  { id: "assignment", label: "배정 현황", href: "/assignment", icon: <IconAssignment />, permissionKey: "assignment" },
-  { id: "profit", label: "영업 손익관리", href: "/profit", icon: <IconProfit />, permissionKey: "profit" },
-  { id: "sales-targets", label: "매출 목표 관리", href: "/sales-targets", icon: <IconProfit />, requiresSalesTargetAccess: true },
-  { id: "appraisal", label: "인사 고과", href: "/appraisal", icon: <IconAppraisal />, permissionKey: "appraisal" },
-  { id: "duplicate", label: "중복 조회", href: "/duplicate", icon: <IconDuplicate />, permissionKey: "duplicate" },
-  { id: "trash", label: "삭제 목록", href: "/trash", icon: <IconTrash />, permissionKey: "trash" },
-  { id: "logs", label: "로그 관리", href: "/logs", icon: <IconLogs />, permissionKey: "logs" },
+  {
+    id: "wj-admin",
+    label: "업무일지·활동현황",
+    href: "/work-journal/admin",
+    icon: <IconWorkJournal />,
+    permissionKey: "wj-admin",
+    requiresDivisionAdmin: true,
+  },
+  {
+    id: "assignment",
+    label: "배정 현황",
+    href: "/assignment",
+    icon: <IconAssignment />,
+    permissionKey: "assignment",
+  },
+  {
+    id: "profit",
+    label: "영업 손익·매출목표",
+    href: "/profit",
+    icon: <IconProfit />,
+    activeOn: ["/profit", "/sales-targets"],
+    permissionKey: "profit",
+    orSalesTargetAccess: true,
+  },
+  {
+    id: "appraisal",
+    label: "인사 고과",
+    href: "/appraisal",
+    icon: <IconAppraisal />,
+    permissionKey: "appraisal",
+  },
+  {
+    id: "duplicate",
+    label: "중복 조회",
+    href: "/duplicate",
+    icon: <IconDuplicate />,
+    permissionKey: "duplicate",
+  },
+  {
+    id: "trash",
+    label: "삭제 목록",
+    href: "/trash",
+    icon: <IconTrash />,
+    permissionKey: "trash",
+  },
+  {
+    id: "logs",
+    label: "로그 관리",
+    href: "/logs",
+    icon: <IconLogs />,
+    permissionKey: "logs",
+  },
 ];
 
 // 하단 고정 — 시스템 설정 (master-admin 전용)
 export const SIDEBAR_SYSTEM: GlobalNavItem[] = [
-  { id: "admin", label: "시스템 설정", href: "/admin", icon: <Settings size={16} />, exactMatch: true, adminOnly: true },
+  {
+    id: "admin",
+    label: "시스템 설정",
+    href: "/admin",
+    icon: <Settings size={16} />,
+    exactMatch: true,
+    adminOnly: true,
+  },
 ];
 
 // ─── 헤더: 사업부 드롭다운 + 탭 ─────────────────────────────────────────────
 
 export interface NavFilterContext {
   userRole?: string | null;
-  permissions: { section: string; scope: string; allowed_tabs?: string[] | null }[];
+  permissions: {
+    section: string;
+    scope: string;
+    allowed_tabs?: string[] | null;
+  }[];
   revenueOwnDivisions: ("nms" | "cert" | "abroad")[];
   departmentCode: string | null;
   /** 부서 관리자 (is_division_admin) — "관리자" 전용 탭(adminOnly) 노출 대상 */
@@ -882,7 +1013,9 @@ export function getVisibleDivisions(ctx: NavFilterContext): NavItem[] {
   // adminOnly 탭 노출 대상 = 마스터 어드민 + 부서 관리자(관리자)
   const canSeeAdminTabs = isFullAccess || !!isDivisionAdmin;
   const allowedSections = new Set(
-    permissions.filter((p) => p.scope && p.scope !== "none").map((p) => p.section),
+    permissions
+      .filter((p) => p.scope && p.scope !== "none")
+      .map((p) => p.section),
   );
 
   const allowedTabsBySection = new Map<string, Set<string> | null>();
@@ -918,92 +1051,99 @@ export function getVisibleDivisions(ctx: NavFilterContext): NavItem[] {
         return matchingSections.some((sec) => allowedSections.has(sec));
       });
 
-  return baseItems
-    .map((item) => {
-      if (!item.children) return item;
+  return (
+    baseItems
+      .map((item) => {
+        if (!item.children) return item;
 
-      // (0) 경영지원본부 — 자식별 section 권한 필터
-      if (item.id === "management" && !isFullAccess) {
+        // (0) 경영지원본부 — 자식별 section 권한 필터
+        if (item.id === "management" && !isFullAccess) {
+          const filteredChildren = item.children.filter((child) => {
+            if (child.id === "management-budget")
+              return departmentCode === "MGT";
+            const sec = MANAGEMENT_CHILD_SECTION[child.id];
+            if (!sec) return true;
+            return allowedSections.has(sec);
+          });
+          return { ...item, children: filteredChildren };
+        }
+
+        if (isFullAccess) return item;
+
+        const sectionForTabs = ITEM_ID_TO_SECTION[item.id];
+        if (!sectionForTabs) return item;
+
+        const allowed = allowedTabsBySection.get(sectionForTabs);
+        const managedSet = MANAGED_TAB_IDS[sectionForTabs];
+
+        const isEducationItem = item.id === "education";
+        const eduSalesAllowed = allowedSections.has("edu-sales");
+        const isCertItem = item.id === "cert";
+        const certSalesAllowed = allowedSections.has("cert-sales");
+        const isPracticeItem = item.id === "practice";
+        const practiceSalesAllowed = allowedSections.has("practice-sales");
+
         const filteredChildren = item.children.filter((child) => {
-          if (child.id === "management-budget") return departmentCode === "MGT";
-          const sec = MANAGEMENT_CHILD_SECTION[child.id];
-          if (!sec) return true;
-          return allowedSections.has(sec);
+          if (isEducationItem && child.id === "edu-sales-page")
+            return eduSalesAllowed;
+          if (isCertItem && child.id === "cert-sales-page")
+            return certSalesAllowed;
+          if (isPracticeItem && child.id === "practice-sales-page")
+            return practiceSalesAllowed;
+          if (allowed === undefined || allowed === null) return true;
+          return allowed.has(child.id) || !managedSet?.has(child.id);
         });
         return { ...item, children: filteredChildren };
-      }
-
-      if (isFullAccess) return item;
-
-      const sectionForTabs = ITEM_ID_TO_SECTION[item.id];
-      if (!sectionForTabs) return item;
-
-      const allowed = allowedTabsBySection.get(sectionForTabs);
-      const managedSet = MANAGED_TAB_IDS[sectionForTabs];
-
-      const isEducationItem = item.id === "education";
-      const eduSalesAllowed = allowedSections.has("edu-sales");
-      const isCertItem = item.id === "cert";
-      const certSalesAllowed = allowedSections.has("cert-sales");
-      const isPracticeItem = item.id === "practice";
-      const practiceSalesAllowed = allowedSections.has("practice-sales");
-
-      const filteredChildren = item.children.filter((child) => {
-        if (isEducationItem && child.id === "edu-sales-page") return eduSalesAllowed;
-        if (isCertItem && child.id === "cert-sales-page") return certSalesAllowed;
-        if (isPracticeItem && child.id === "practice-sales-page")
-          return practiceSalesAllowed;
-        if (allowed === undefined || allowed === null) return true;
-        return allowed.has(child.id) || !managedSet?.has(child.id);
-      });
-      return { ...item, children: filteredChildren };
-    })
-    // 예산현황 하위 — 부서별 예산 권한(budget-*) 보유자에게만 노출 (기본 접근 불가)
-    .map((item) => {
-      if (!item.children || isFullAccess) return item;
-      const kids = item.children.filter((c) => {
-        if (!c.permissionKey || !c.permissionKey.startsWith("budget"))
-          return true;
-        return allowedSections.has(c.permissionKey);
-      });
-      return { ...item, children: kids };
-    })
-    // 관리자 전용 탭 — 마스터 어드민/부서 관리자, 또는 allowed_tabs로 명시 부여된 경우만 노출
-    .map((item) => {
-      if (!item.children || canSeeAdminTabs) return item;
-      return {
-        ...item,
-        children: item.children.filter(
-          (c) => !c.adminOnly || explicitlyAllowedTabs.has(c.id),
-        ),
-      };
-    })
-    // 마스터 어드민 전용 탭 — master-admin 외에겐 숨김
-    .map((item) => {
-      if (!item.children || userRole === "master-admin") return item;
-      return {
-        ...item,
-        children: item.children.filter((c) => !c.masterAdminOnly),
-      };
-    })
-    // 헤더에서 숨기는 탭 (권한관리 레이아웃 유지용) — 항상 제거
-    .map((item) => {
-      if (!item.children) return item;
-      return {
-        ...item,
-        children: item.children.filter((c) => !c.headerHidden),
-      };
-    })
-    // 임시 숨김 하위 탭
-    .map((item) => {
-      if (!item.children) return item;
-      return {
-        ...item,
-        children: item.children.filter((c) => !TEMP_HIDDEN_CHILD_IDS.has(c.id)),
-      };
-    })
-    .filter((item) => {
-      if (TEMP_HIDDEN_DIVISION_IDS.has(item.id)) return false;
-      return !!item.children && item.children.length > 0;
-    });
+      })
+      // 예산현황 하위 — 부서별 예산 권한(budget-*) 보유자에게만 노출 (기본 접근 불가)
+      .map((item) => {
+        if (!item.children || isFullAccess) return item;
+        const kids = item.children.filter((c) => {
+          if (!c.permissionKey || !c.permissionKey.startsWith("budget"))
+            return true;
+          return allowedSections.has(c.permissionKey);
+        });
+        return { ...item, children: kids };
+      })
+      // 관리자 전용 탭 — 마스터 어드민/부서 관리자, 또는 allowed_tabs로 명시 부여된 경우만 노출
+      .map((item) => {
+        if (!item.children || canSeeAdminTabs) return item;
+        return {
+          ...item,
+          children: item.children.filter(
+            (c) => !c.adminOnly || explicitlyAllowedTabs.has(c.id),
+          ),
+        };
+      })
+      // 마스터 어드민 전용 탭 — master-admin 외에겐 숨김
+      .map((item) => {
+        if (!item.children || userRole === "master-admin") return item;
+        return {
+          ...item,
+          children: item.children.filter((c) => !c.masterAdminOnly),
+        };
+      })
+      // 헤더에서 숨기는 탭 (권한관리 레이아웃 유지용) — 항상 제거
+      .map((item) => {
+        if (!item.children) return item;
+        return {
+          ...item,
+          children: item.children.filter((c) => !c.headerHidden),
+        };
+      })
+      // 임시 숨김 하위 탭
+      .map((item) => {
+        if (!item.children) return item;
+        return {
+          ...item,
+          children: item.children.filter(
+            (c) => !TEMP_HIDDEN_CHILD_IDS.has(c.id),
+          ),
+        };
+      })
+      .filter((item) => {
+        if (TEMP_HIDDEN_DIVISION_IDS.has(item.id)) return false;
+        return !!item.children && item.children.length > 0;
+      })
+  );
 }

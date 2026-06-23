@@ -4,6 +4,11 @@
   margin: 0 auto;
 }
 
+/* profit 탭 등 다른 컨테이너에 임베드될 때 — 패딩/폭은 부모가 담당 */
+.board {
+  width: 100%;
+}
+
 .header {
   display: flex;
   align-items: flex-start;

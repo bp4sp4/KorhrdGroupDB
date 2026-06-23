@@ -212,11 +212,14 @@ export default function DashboardLayout({
       return
     }
 
-    // 영업 손익관리 — 관리자는 항상, 그 외는 profit 권한이 명시적으로 부여된 경우만
+    // 영업 손익·매출목표(합본) — 관리자, profit 권한자, 또는 매출목표 관리 권한자(본부장/팀장/경영지원본부)
     if (
       pathname.startsWith('/profit') &&
       !isAdminRole &&
-      scopeOf('profit') === 'none'
+      scopeOf('profit') === 'none' &&
+      !isDeptHead &&
+      !isLeader &&
+      departmentCode !== 'MGT'
     ) {
       router.replace('/work-journal')
       return
@@ -272,7 +275,7 @@ export default function DashboardLayout({
 
     // 리다이렉트 없이 여기까지 오면 권한 OK → 콘텐츠 표시
     setIsChecking(false)
-  }, [pathname, userRole, permissions, hrRecordStatus, isDivisionAdmin, router])
+  }, [pathname, userRole, permissions, hrRecordStatus, isDivisionAdmin, isDeptHead, isLeader, departmentCode, router])
 
   if (isChecking) {
     return (
@@ -297,7 +300,7 @@ export default function DashboardLayout({
           <Header userName={displayName} userRole={userRole} permissions={permissions} revenueOwnDivisions={revenueOwnDivisions} departmentCode={departmentCode} isDivisionAdmin={isDivisionAdmin} isDeptHead={isDeptHead} hiddenMenus={hiddenMenus} onMenuToggle={() => setSidebarOpen(v => !v)} />
 
           <main
-            className={`${styles.mainContent}${pathname.startsWith('/approvals') ? ` ${styles.mainContentWhite}` : ''}`}
+            className={`${styles.mainContent}${pathname.startsWith('/approvals') ? ` ${styles.mainContentWhite}` : ''}${pathname.startsWith('/profit') ? ` ${styles.mainContentFlush}` : ''}`}
             style={
               pathname.startsWith('/calendar') ||
               pathname.startsWith('/dashboard') ||

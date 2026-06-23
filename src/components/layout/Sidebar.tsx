@@ -131,6 +131,8 @@ export default function Sidebar({
       return isFullAccess || canManageSalesTargets;
     if (isFullAccess) return true;
     if (item.requiresDivisionAdmin && !isDivisionAdmin) return false;
+    // 영업손익·매출목표 합본 — profit 권한자 또는 매출목표 권한자(팀장/본부장/경영지원본부)
+    if (item.orSalesTargetAccess && canManageSalesTargets) return true;
     if (!item.permissionKey) return false;
     return permScopeOf(item.permissionKey) !== "none";
   });

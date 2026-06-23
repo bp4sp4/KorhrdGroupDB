@@ -29,6 +29,11 @@
   padding: 0;
 }
 
+/* 자체 레이아웃/패딩을 가진 페이지(예: 영업 손익·매출목표) — mainContent 패딩 제거 */
+.mainContentFlush {
+  padding: 0;
+}
+
 .loadingWrap {
   min-height: 100vh;
   background: var(--toss-bg);
@@ -748,5 +753,8 @@
 
   .mainContent {
     padding: 14px 12px;
+  }
+  .mainContentFlush {
+    padding: 0;
   }
 }

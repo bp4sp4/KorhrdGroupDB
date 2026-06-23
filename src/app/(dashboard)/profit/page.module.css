@@ -21,6 +21,33 @@
   align-self: stretch;
 }
 
+/* ── 탭 (영업 손익관리 / 매출 목표 관리) ── */
+.tabBar {
+  display: flex;
+  gap: 4px;
+  align-self: stretch;
+  border-bottom: 1px solid #e6e7eb;
+  margin-bottom: 8px;
+}
+.tab {
+  padding: 10px 16px;
+  border: 0;
+  background: none;
+  font-size: 15px;
+  font-weight: 600;
+  color: #8995a2;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.tab:hover {
+  color: #5b6573;
+}
+.tabOn {
+  color: #0084fe;
+  border-bottom-color: #0084fe;
+}
+
 /* ── 헤더 (사업부 / 월 선택) ── */
 
 .header {
