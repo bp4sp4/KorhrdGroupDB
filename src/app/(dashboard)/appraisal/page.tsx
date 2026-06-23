@@ -1474,11 +1474,7 @@ function OverviewList({
                   <td>{s.combined !== null ? `${fmt(s.combined)}점` : "-"}</td>
                   <td>
                     {s.grade ? (
-                      <span
-                        className={`${styles.gradeBadge} ${styles[`grade${s.grade}`]}`}
-                      >
-                        {s.grade}
-                      </span>
+                      <span className={styles.gradePlain}>{s.grade}</span>
                     ) : (
                       "-"
                     )}

@@ -898,6 +898,18 @@
   font-weight: 800;
 }
 
+/* 등급(절대) — 배경 없는 회색 글씨 (최종등급만 색상 배지 유지) */
+.gradePlain {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #7a8086;
+}
+
 .gradeS {
   background: #ede9fe;
   color: #6d28d9;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { DragEvent as ReactDragEvent, ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import Calendar, {
@@ -13,7 +13,11 @@ import {
   normSource,
   reasonTags,
 } from "@/app/(dashboard)/hakjeom/_components/segments";
-import { SOURCE_MAJOR_LABEL } from "@/app/(dashboard)/hakjeom/_constants";
+import {
+  REFERRER_CARD_META,
+  SOURCE_MAJOR_LABEL,
+  SOURCE_MAJORS,
+} from "@/app/(dashboard)/hakjeom/_constants";
 import { DateInput } from "@/components/ui/Calendar/DateInput";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -21,6 +25,8 @@ import {
   type DateRange,
 } from "@/components/DateRangeCalendar";
 import {
+  CalendarDays,
+  Check,
   ChevronDown,
   ChevronRight,
   ChevronUp,
@@ -28,6 +34,7 @@ import {
   Inbox,
   Plus,
   RotateCcw,
+  Search,
 } from "lucide-react";
 import styles from "./page.module.css";
 import {
@@ -181,6 +188,59 @@ type WcStat = {
   footer?: string;
 };
 
+// 영업팀 — 상단 통계 카드 캐러셀 (자동 순환 + 점 클릭). 인사말 영역 대체.
+function SalesStatCarousel({ stats }: { stats: WcStat[] }) {
+  const [idx, setIdx] = useState(0);
+  useEffect(() => {
+    if (stats.length <= 1) return;
+    const t = setInterval(
+      () => setIdx((i) => (i + 1) % stats.length),
+      4000,
+    );
+    return () => clearInterval(t);
+  }, [stats.length]);
+  const safeIdx = idx % Math.max(1, stats.length);
+  const s = stats[safeIdx];
+  if (!s) return null;
+  return (
+    <div className={styles.salesCarousel}>
+      <div className={styles.salesCard}>
+        <div className={styles.salesCardTop}>
+          <div className={styles.salesCardInfo}>
+            <span className={styles.salesCardTitle}>{s.title}</span>
+            <div className={styles.salesCardValueRow}>
+              <span className={styles.salesCardValue}>{s.value}</span>
+              {s.sub && <span className={styles.salesCardUnit}>{s.sub}</span>}
+            </div>
+          </div>
+          <span className={styles.salesCardIcon}>{s.icon}</span>
+        </div>
+        {s.progress === null ? (
+          <div className={styles.salesCardFooter}>{s.footer}</div>
+        ) : (
+          <div className={styles.salesCardTrack}>
+            <div
+              className={styles.salesCardFill}
+              style={{ width: `${Math.min(100, Math.max(0, s.progress))}%` }}
+            />
+          </div>
+        )}
+      </div>
+      <div className={styles.salesDots}>
+        {stats.map((_, i) => (
+          <button
+            key={i}
+            type="button"
+            className={`${styles.salesDot} ${i === safeIdx ? styles.salesDotActive : ""}`}
+            onClick={() => setIdx(i)}
+            aria-label={`${i + 1}번째 카드`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 const WcIconCalendar = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -216,18 +276,18 @@ const WcIconArrow = () => (
 // ── 업무 센터(default) — 상담 목록 (현재는 목업 데이터) ──────────────
 const WC_CONSULT_STATUS_COLORS: Record<string, { bg: string; color: string }> =
   {
-    상담대기: { bg: "#EBF3FE", color: "#3182F6" },
+    상담대기: { bg: "#EAF3FF", color: "#0084FE" },
     상담중: { bg: "#FFF8E6", color: "#D97706" },
     "부재중/추후통화": { bg: "#F3F4F6", color: "#6B7684" },
-    장기가망: { bg: "#F4F0FF", color: "#7C3AED" },
+    장기가망: { bg: "#ECE1FF", color: "#A06BFA" },
     보류: { bg: "#F3F4F6", color: "#6B7684" },
     등록대기: { bg: "#FEF3C7", color: "#B45309" },
-    등록완료: { bg: "#DCFCE7", color: "#16A34A" },
-    "상담완료-높음": { bg: "#DCFCE7", color: "#16A34A" },
-    "상담완료-중간": { bg: "#DCFCE7", color: "#16A34A" },
-    "상담완료-낮음": { bg: "#DCFCE7", color: "#16A34A" },
-    수신거부: { bg: "#FEE2E2", color: "#DC2626" },
-    지인등록: { bg: "#DCFCE7", color: "#16A34A" },
+    등록완료: { bg: "#D4FDE7", color: "#00A63D" },
+    "상담완료-높음": { bg: "#E0F7FA", color: "#0277BD" },
+    "상담완료-중간": { bg: "#E0F7FA", color: "#0277BD" },
+    "상담완료-낮음": { bg: "#E0F7FA", color: "#0277BD" },
+    수신거부: { bg: "#FFF1F1", color: "#FF4A4A" },
+    지인등록: { bg: "#D4FDE7", color: "#00A63D" },
   };
 
 // 배지에 짧게 표시
@@ -279,6 +339,131 @@ function hlDigits(text: string, qDigits: string): ReactNode {
   );
 }
 
+// 상세필터 정의 — 옵션은 추후 보강(학습자 유형 등). source 는 유입경로 대분류 재사용.
+const DETAIL_FILTERS: { key: string; label: string; options: string[] }[] = [
+  {
+    key: "status",
+    label: "상태",
+    options: [
+      "상담대기",
+      "상담완료",
+      "부재중(추후 통화)",
+      "장기가망",
+      "등록완료",
+      "수신거부",
+      "기타",
+    ],
+  },
+  {
+    key: "course",
+    label: "희망과정",
+    options: [
+      "사회복지사 2급 - 신법",
+      "사회복지사 2급 - 구법",
+      "사회복지사(실습예정)",
+      "건강가정사",
+      "직접입력",
+    ],
+  },
+  {
+    key: "education",
+    label: "최종학력",
+    options: [
+      "고졸",
+      "2년제 중퇴",
+      "2년제 졸업",
+      "3년제 중퇴",
+      "3년제 졸업",
+      "4년제 중퇴",
+      "4년제 졸업",
+      "대학원 이상",
+      "대학교졸업(외국)",
+      "직접입력",
+    ],
+  },
+  {
+    key: "reason",
+    label: "취득사유",
+    options: ["즉시취업", "이직", "미래준비", "취업"],
+  },
+  { key: "source", label: "유입경로", options: SOURCE_MAJORS },
+  {
+    key: "learner",
+    label: "학습자 유형",
+    options: ["주부", "직장인", "자영업자", "대학생", "기타"],
+  },
+];
+
+// 학습자 유형 이모지
+const LEARNER_EMOJI: Record<string, string> = {
+  주부: "🏠",
+  직장인: "👔",
+  자영업자: "🏪",
+  대학생: "🎓",
+};
+
+// 아이콘이 붙는 필터 (선택 시 ✓ 대신 아이콘 표시)
+const ICON_FILTERS = new Set(["source", "learner"]);
+
+// 옵션 라벨 (유입경로는 내부값→표시라벨 변환: 지인소개→개인마케팅)
+function detailOptionLabel(filterKey: string, opt: string): string {
+  if (filterKey === "source") return SOURCE_MAJOR_LABEL[opt] ?? opt;
+  return opt;
+}
+
+// 개인마케팅(person) / 기타(dots) 아이콘
+const IconPerson = () => (
+  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+    <path
+      d="M8.40021 6.29802C9.2846 6.7287 10.0371 7.38749 10.582 8.20645C11.127 9.02541 11.4436 9.97491 11.4992 10.957C11.5049 11.0554 11.4911 11.1539 11.4586 11.2469C11.4262 11.34 11.3758 11.4257 11.3102 11.4992C11.2447 11.5728 11.1653 11.6327 11.0766 11.6755C10.9879 11.7184 10.8916 11.7434 10.7932 11.749C10.6948 11.7547 10.5963 11.7409 10.5033 11.7085C10.4103 11.676 10.3245 11.6256 10.251 11.56C10.1774 11.4945 10.1175 11.4151 10.0747 11.3264C10.0318 11.2377 10.0069 11.1414 10.0012 11.043C9.94572 10.0191 9.50009 9.05536 8.75593 8.34988C8.01176 7.64441 7.02562 7.25082 6.00021 7.25002C4.97479 7.25082 3.98865 7.64441 3.24448 8.34988C2.50032 9.05536 2.05469 10.0191 1.9992 11.043C1.99362 11.1414 1.96872 11.2377 1.92593 11.3264C1.88313 11.4152 1.82327 11.4946 1.74978 11.5602C1.67628 11.6258 1.59058 11.6763 1.49757 11.7088C1.40456 11.7413 1.30606 11.7551 1.2077 11.7495C1.10934 11.7439 1.01305 11.719 0.92431 11.6762C0.835573 11.6334 0.756134 11.5736 0.69053 11.5001C0.624925 11.4266 0.574439 11.3409 0.541955 11.2479C0.509471 11.1549 0.495624 11.0564 0.501205 10.958C0.556675 9.97573 0.873202 9.02603 1.41813 8.20688C1.96306 7.38772 2.71667 6.72878 3.6012 6.29802C3.09074 5.81731 2.73643 5.19436 2.58419 4.5099C2.43196 3.82544 2.48881 3.11104 2.74739 2.45928C3.00597 1.80751 3.45436 1.24845 4.03443 0.854527C4.6145 0.460608 5.29952 0.25 6.00071 0.25C6.70189 0.25 7.38691 0.460608 7.96698 0.854527C8.54705 1.24845 8.99543 1.80751 9.25402 2.45928C9.5126 3.11104 9.56946 3.82544 9.41722 4.5099C9.26498 5.19436 8.91067 5.81731 8.40021 6.29802ZM6.00021 1.75002C5.73387 1.744 5.46901 1.79124 5.22118 1.88899C4.97335 1.98674 4.74755 2.13301 4.55703 2.31922C4.36651 2.50543 4.21512 2.72783 4.11173 2.97336C4.00835 3.21889 3.95506 3.4826 3.95499 3.74901C3.95492 4.01541 4.00808 4.27915 4.11134 4.52473C4.21461 4.77031 4.36589 4.99279 4.55632 5.17909C4.74674 5.3654 4.97247 5.51179 5.22025 5.60966C5.46803 5.70753 5.73286 5.75491 5.99921 5.74902C6.52177 5.73746 7.01904 5.52179 7.38458 5.14818C7.75011 4.77456 7.95486 4.2727 7.95499 3.75001C7.95512 3.22732 7.75062 2.72535 7.38527 2.35155C7.01993 1.97775 6.52276 1.76184 6.00021 1.75002Z"
+      fill="#767676"
+    />
+  </svg>
+);
+const IconEtc = () => (
+  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+    <path
+      d="M8.40039 6.15039C8.40039 5.95148 8.47941 5.76071 8.62006 5.62006C8.76071 5.47941 8.95148 5.40039 9.15039 5.40039C9.3493 5.40039 9.54007 5.47941 9.68072 5.62006C9.82137 5.76071 9.90039 5.95148 9.90039 6.15039C9.90039 6.3493 9.82137 6.54007 9.68072 6.68072C9.54007 6.82137 9.3493 6.90039 9.15039 6.90039C8.95148 6.90039 8.76071 6.82137 8.62006 6.68072C8.47941 6.54007 8.40039 6.3493 8.40039 6.15039ZM5.40039 6.15039C5.40039 5.95148 5.47941 5.76071 5.62006 5.62006C5.76071 5.47941 5.95148 5.40039 6.15039 5.40039C6.3493 5.40039 6.54007 5.47941 6.68072 5.62006C6.82137 5.76071 6.90039 5.95148 6.90039 6.15039C6.90039 6.3493 6.82137 6.54007 6.68072 6.68072C6.54007 6.82137 6.3493 6.90039 6.15039 6.90039C5.95148 6.90039 5.76071 6.82137 5.62006 6.68072C5.47941 6.54007 5.40039 6.3493 5.40039 6.15039ZM2.40039 6.15039C2.40039 5.95148 2.47941 5.76071 2.62006 5.62006C2.76071 5.47941 2.95148 5.40039 3.15039 5.40039C3.3493 5.40039 3.54007 5.47941 3.68072 5.62006C3.82137 5.76071 3.90039 5.95148 3.90039 6.15039C3.90039 6.3493 3.82137 6.54007 3.68072 6.68072C3.54007 6.82137 3.3493 6.90039 3.15039 6.90039C2.95148 6.90039 2.76071 6.82137 2.62006 6.68072C2.47941 6.54007 2.40039 6.3493 2.40039 6.15039Z"
+      fill="black"
+    />
+  </svg>
+);
+
+// 초기화 아이콘
+const IconReset = () => (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+    <path
+      d="M6.99976 1.7793C8.45552 1.77935 9.69178 2.28553 10.7031 3.29688C11.7145 4.30822 12.2207 5.54448 12.2207 7.00025C12.2207 8.45594 11.7143 9.69229 10.7031 10.7036C9.6918 11.7149 8.45546 12.2211 6.99976 12.2212C5.98934 12.2212 5.06951 11.96 4.24231 11.4376C3.41735 10.9166 2.78149 10.2214 2.33594 9.35352C2.23543 9.17756 2.23056 8.98782 2.31543 8.79383C2.39998 8.60076 2.54292 8.46981 2.73926 8.40845C2.91711 8.35003 3.09465 8.35326 3.26819 8.4187C3.44323 8.4848 3.57972 8.60332 3.67493 8.7699L3.67578 8.77161C3.99949 9.37846 4.45687 9.86186 5.0481 10.2225C5.63836 10.5826 6.28827 10.7626 6.99976 10.7626C8.04617 10.7625 8.93293 10.3973 9.66492 9.66541C10.3968 8.93342 10.7629 8.04665 10.7629 7.00025C10.7629 5.95377 10.3969 5.0671 9.66492 4.33509C8.93291 3.60308 8.04623 3.23711 6.99976 3.23706C6.31955 3.23709 5.69011 3.40447 5.11047 3.73865C4.57522 4.04737 4.14641 4.46443 3.82019 4.98706H5.71631C5.91938 4.98711 6.09434 5.05796 6.23498 5.19812C6.37573 5.33842 6.44645 5.51327 6.44604 5.7168C6.44557 5.92007 6.37468 6.09519 6.23498 6.23548C6.09507 6.37576 5.92 6.44563 5.71631 6.44568H2.50769C2.3043 6.44605 2.12931 6.37661 1.98901 6.23633C1.84865 6.09596 1.77883 5.92065 1.77881 5.7168V2.50818C1.77799 2.30517 1.84768 2.1301 1.98816 1.9895C2.12889 1.84888 2.30495 1.77882 2.50854 1.7793C2.71165 1.77991 2.88619 1.84982 3.02637 1.9895C3.16681 2.12946 3.23738 2.30437 3.23743 2.50818V3.40113C3.6948 2.90805 4.23134 2.52135 4.84644 2.24329C5.53132 1.93377 6.24959 1.77932 6.99976 1.7793Z"
+      fill="#8995A2"
+    />
+  </svg>
+);
+
+// 옵션 칩 아이콘 (유입경로 이미지 / 개인마케팅 / 기타 / 학습자 이모지)
+function DetailOptionIcon({
+  filterKey,
+  opt,
+}: {
+  filterKey: string;
+  opt: string;
+}) {
+  if (filterKey === "source") {
+    const meta = REFERRER_CARD_META[opt];
+    if (meta?.type === "img")
+      // eslint-disable-next-line @next/next/no-img-element
+      return <img src={meta.src} alt="" className={styles.wcOptIcon} />;
+    if (meta?.type === "person") return <IconPerson />;
+    if (meta?.type === "etc") return <IconEtc />;
+    return null;
+  }
+  if (filterKey === "learner") {
+    if (opt === "기타") return <IconEtc />;
+    const e = LEARNER_EMOJI[opt];
+    return e ? <span className={styles.wcOptEmoji}>{e}</span> : null;
+  }
+  return null;
+}
+
 function ConsultationList({
   userName,
   refreshKey,
@@ -290,6 +475,42 @@ function ConsultationList({
   const [query, setQuery] = useState("");
   const [items, setItems] = useState<HakItem[]>([]);
   const [detailItem, setDetailItem] = useState<HakItem | null>(null);
+
+  // ── 상세필터 (다중선택) ──────────────────────────────────────────
+  const [detailSel, setDetailSel] = useState<Record<string, string[]>>({});
+  const [openFilter, setOpenFilter] = useState<string | null>(null);
+  const [pointerLeft, setPointerLeft] = useState(0);
+  const detailBtnRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const toggleFilter = (key: string) =>
+    setOpenFilter((cur) => (cur === key ? null : key));
+  // 삼각 포인터 — 활성 버튼 중앙을 패널 기준 좌표로 변환 (렌더 후 측정)
+  useLayoutEffect(() => {
+    if (!openFilter) return;
+    const btn = detailBtnRefs.current[openFilter];
+    const panel = panelRef.current;
+    if (!btn || !panel) return;
+    const b = btn.getBoundingClientRect();
+    const p = panel.getBoundingClientRect();
+    setPointerLeft(b.left + b.width / 2 - p.left - 7);
+  }, [openFilter]);
+  const toggleOption = (key: string, opt: string) =>
+    setDetailSel((p) => {
+      const cur = p[key] ?? [];
+      return {
+        ...p,
+        [key]: cur.includes(opt)
+          ? cur.filter((o) => o !== opt)
+          : [...cur, opt],
+      };
+    });
+  const clearFilter = (key: string) =>
+    setDetailSel((p) => ({ ...p, [key]: [] }));
+  const resetAllFilters = () => {
+    setDetailSel({});
+    setOpenFilter(null);
+  };
+  const hasAnyDetailSel = Object.values(detailSel).some((v) => v.length > 0);
 
   // ── 문의 추가 모달 (문의 DB의 +추가 와 동일) ───────────────────
   const [showAddModal, setShowAddModal] = useState(false);
@@ -531,10 +752,46 @@ function ConsultationList({
 
   const base =
     tab === "today" ? todayList : tab === "hope" ? hopeList : rangedItems;
+
+  // ── 상세필터 매칭 ────────────────────────────────────────────────
+  const sourceMajor = (cs?: string | null) => {
+    if (!cs) return "";
+    const s = cs.startsWith("바로폼_") ? cs.slice(4) : cs;
+    const idx = s.indexOf("_");
+    return idx === -1 ? s : s.slice(0, idx);
+  };
+  const matchStatus = (st: string, opt: string) => {
+    if (opt === "상담완료") return st.startsWith("상담완료");
+    if (opt === "부재중(추후 통화)") return st.startsWith("부재중");
+    return st === opt;
+  };
+  const matchesDetail = (i: HakItem) => {
+    for (const f of DETAIL_FILTERS) {
+      const sel = detailSel[f.key];
+      if (!sel || sel.length === 0) continue;
+      if (f.key === "status") {
+        if (!sel.some((o) => matchStatus(i.status ?? "", o))) return false;
+      } else if (f.key === "source") {
+        if (!sel.includes(sourceMajor(i.click_source))) return false;
+      } else if (f.key === "education") {
+        if (!sel.includes(i.education ?? "")) return false;
+      } else if (f.key === "course") {
+        const hc = i.hope_course ?? "";
+        if (!sel.some((o) => hc.includes(o))) return false;
+      } else if (f.key === "reason") {
+        const rs = i.reason ?? "";
+        if (!sel.some((o) => rs.includes(o))) return false;
+      }
+      // learner(학습자 유형): 대응 필드 없음 → 미적용 (필드 확정 시 연결)
+    }
+    return true;
+  };
+
   // 검색: 이름 / 연락처(숫자만 입력해도 매칭) / 희망과정 / 학력 / 유입경로
   const q = query.trim().toLowerCase();
   const qDigits = q.replace(/[^\d]/g, "");
   const rows = base.filter((i) => {
+    if (!matchesDetail(i)) return false;
     if (!q) return true;
     if (
       qDigits.length >= 2 &&
@@ -551,7 +808,7 @@ function ConsultationList({
   });
 
   const tabs = [
-    { key: "today" as const, label: "오늘 신규 문의", count: todayList.length },
+    { key: "today" as const, label: "오늘 연락 예정", count: todayList.length },
     { key: "hope" as const, label: "오늘 가망관리", count: hopeList.length },
     { key: "all" as const, label: "전체", count: rangedItems.length },
   ];
@@ -560,9 +817,27 @@ function ConsultationList({
     <>
       <div className={styles.wcConsult}>
         <div className={styles.wcConsultInner}>
-          {/* 헤더 — 제목 + 기간 필터 + 검색 (space-between) */}
-          <div className={styles.wcConsultHead}>
-            <span className={styles.wcConsultTitle}>상담 목록</span>
+          {/* 헤더 — 제목 */}
+          <span className={styles.wcConsultTitle}>상담 목록</span>
+
+          {/* 빠른 필터 행 — 좌: 빠른필터 칩 / 우: 기간선택·검색·추가 */}
+          <div className={styles.wcFilterRow}>
+            <div className={styles.wcQuickFilter}>
+              <span className={styles.wcQuickFilterLabel}>빠른 필터</span>
+              <div className={styles.wcQuickChips}>
+                {tabs.map((t) => (
+                  <button
+                    key={t.key}
+                    type="button"
+                    className={`${styles.wcQuickChip} ${tab === t.key ? styles.wcQuickChipOn : ""}`}
+                    onClick={() => setTab(t.key)}
+                  >
+                    {t.label} ({t.count})
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className={styles.wcConsultHeadRight}>
               <div ref={dateRangeRef} className={styles.wcDateRangeWrap}>
                 <button
@@ -571,7 +846,8 @@ function ConsultationList({
                   onClick={() => setDateRangeOpen((v) => !v)}
                   title="등록일 기간으로 필터"
                 >
-                  {dateRangeLabel}
+                  <CalendarDays size={12} />
+                  <span>{dateRangeLabel}</span>
                 </button>
                 {dateRangeOpen && (
                   <div className={styles.wcDateRangePopover}>
@@ -591,12 +867,15 @@ function ConsultationList({
                   </div>
                 )}
               </div>
-              <input
-                className={styles.wcConsultSearch}
-                placeholder="이름·연락처·유입경로 검색"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-              />
+              <div className={styles.wcSearchBox}>
+                <Search size={12} className={styles.wcSearchIcon} />
+                <input
+                  className={styles.wcConsultSearch}
+                  placeholder="이름·연락처·유입경로 검색"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                />
+              </div>
               {(query || startDate || endDate) && (
                 <button
                   type="button"
@@ -620,24 +899,88 @@ function ConsultationList({
                   !userName ? "사용자 정보를 불러오는 중입니다" : undefined
                 }
               >
-                <Plus size={14} /> 추가
+                <Plus size={12} /> 추가
               </button>
             </div>
           </div>
 
-          {/* 탭 */}
-          <div className={styles.wcConsultTabs}>
-            {tabs.map((t) => (
+          {/* 상세필터 — 드롭다운 버튼 + 옵션 패널 */}
+          <div className={styles.wcDetailFilter}>
+            <span className={styles.wcDetailLabel}>상세필터</span>
+            <div className={styles.wcDetailBtns}>
+              {DETAIL_FILTERS.map((f) => {
+                const sel = detailSel[f.key] ?? [];
+                const open = openFilter === f.key;
+                const has = sel.length > 0;
+                return (
+                  <button
+                    key={f.key}
+                    ref={(el) => {
+                      detailBtnRefs.current[f.key] = el;
+                    }}
+                    type="button"
+                    className={`${styles.wcDetailBtn} ${has || open ? styles.wcDetailBtnOn : ""}`}
+                    onClick={() => toggleFilter(f.key)}
+                  >
+                    <span className={styles.wcDetailBtnText}>
+                      {has
+                        ? sel
+                            .map((s) => detailOptionLabel(f.key, s))
+                            .join(", ")
+                        : f.label}
+                    </span>
+                    {open ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+                  </button>
+                );
+              })}
               <button
-                key={t.key}
                 type="button"
-                className={`${styles.wcConsultTab} ${tab === t.key ? styles.wcConsultTabOn : ""}`}
-                onClick={() => setTab(t.key)}
+                className={styles.wcDetailReset}
+                onClick={resetAllFilters}
+                disabled={!hasAnyDetailSel}
               >
-                {t.label} ({t.count})
+                <IconReset />
+                초기화
               </button>
-            ))}
+            </div>
           </div>
+
+          {openFilter && (
+            <div className={styles.wcFilterPanel} ref={panelRef}>
+              <span
+                className={styles.wcFilterPointer}
+                style={{ left: `${pointerLeft}px` }}
+              />
+              <button
+                type="button"
+                className={`${styles.wcFilterOpt} ${(detailSel[openFilter]?.length ?? 0) === 0 ? styles.wcFilterOptOn : ""}`}
+                onClick={() => clearFilter(openFilter)}
+              >
+                전체
+              </button>
+              {(
+                DETAIL_FILTERS.find((f) => f.key === openFilter)?.options ?? []
+              ).map((opt) => {
+                const on = (detailSel[openFilter] ?? []).includes(opt);
+                const hasIcon = ICON_FILTERS.has(openFilter);
+                return (
+                  <button
+                    key={opt}
+                    type="button"
+                    className={`${styles.wcFilterOpt} ${on ? styles.wcFilterOptOn : ""}`}
+                    onClick={() => toggleOption(openFilter, opt)}
+                  >
+                    {hasIcon ? (
+                      <DetailOptionIcon filterKey={openFilter} opt={opt} />
+                    ) : (
+                      on && <Check size={12} />
+                    )}
+                    {detailOptionLabel(openFilter, opt)}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           {/* 리스트 */}
           <div className={styles.wcConsultList}>
@@ -689,6 +1032,8 @@ function ConsultationList({
               const dateStr = r.created_at
                 ? `${r.created_at.slice(0, 10).replace(/-/g, ". ")}. 등록`
                 : "";
+              const major = normSource(r.click_source);
+              const srcLabel = SOURCE_MAJOR_LABEL[major] ?? major;
               return (
                 <div
                   // 탭 전환 시 key가 바뀌어 등장 애니메이션이 다시 재생됨
@@ -697,83 +1042,82 @@ function ConsultationList({
                   style={{ animationDelay: `${Math.min(idx, 12) * 35}ms` }}
                   onClick={() => setDetailItem(r)}
                 >
-                  <span
-                    className={styles.wcConsultBadge}
-                    style={{ background: c.bg, color: c.color }}
-                  >
-                    {consultStatusShort(status)}
-                  </span>
-                  <div className={styles.wcConsultWho}>
-                    <div className={styles.wcConsultNameLine}>
-                      <span className={styles.wcConsultName}>
-                        {hlText(r.name ?? "", q)}
-                      </span>
-                      {education && (
-                        <span className={styles.wcConsultEdu} title={education}>
-                          {hlText(education, q)}
+                  <div className={styles.wcRowLeft}>
+                    <span
+                      className={styles.wcStatusTag}
+                      style={{ background: c.bg, color: c.color }}
+                    >
+                      {consultStatusShort(status)}
+                    </span>
+                    <div className={styles.wcRowWho}>
+                      <div className={styles.wcRowNameLine}>
+                        <span className={styles.wcRowName}>
+                          {hlText(r.name ?? "", q)}
+                        </span>
+                        {education && (
+                          <span className={styles.wcRowEdu} title={education}>
+                            {hlText(education, q)}
+                          </span>
+                        )}
+                      </div>
+                      {r.contact && (
+                        <span className={styles.wcRowPhone}>
+                          {qDigits.length >= 2
+                            ? hlDigits(r.contact, qDigits)
+                            : hlText(r.contact, q)}
                         </span>
                       )}
                     </div>
-                    <span className={styles.wcConsultCourse}>
-                      {hlText(course, q)}
-                    </span>
-                    {r.contact && (
-                      <span className={styles.wcConsultPhone}>
-                        {qDigits.length >= 2
-                          ? hlDigits(r.contact, qDigits)
-                          : hlText(r.contact, q)}
-                      </span>
-                    )}
-                  </div>
-                  {(() => {
-                    const major = normSource(r.click_source);
-                    const label = SOURCE_MAJOR_LABEL[major] ?? major;
-                    const rawMatched =
-                      !!q && (r.click_source ?? "").toLowerCase().includes(q);
-                    return (
-                      <span
-                        className={`${styles.wcConsultSource} ${rawMatched ? styles.wcConsultSourceHl : ""}`}
-                        title={r.click_source ?? ""}
-                      >
-                        {hlText(label, q)}
-                      </span>
-                    );
-                  })()}
-                  <div className={styles.wcConsultMid}>
-                    {tags.length > 0 && (
-                      <div className={styles.wcConsultTags}>
-                        {tags.map((t) => (
-                          <span key={t} className={styles.wcConsultTag}>
-                            {t}
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                    <div className={styles.wcRowTags}>
+                      {course && (
+                        <span className={styles.wcRowTag}>
+                          {hlText(course, q)}
+                        </span>
+                      )}
+                      {srcLabel && (
+                        <span
+                          className={styles.wcRowTag}
+                          title={r.click_source ?? ""}
+                        >
+                          <DetailOptionIcon filterKey="source" opt={major} />
+                          {hlText(srcLabel, q)}
+                        </span>
+                      )}
+                      {tags.map((t) => (
+                        <span key={t} className={styles.wcRowTag}>
+                          {t}
+                        </span>
+                      ))}
+                    </div>
                     <span
-                      className={`${styles.wcConsultMemo} ${memo ? "" : styles.wcConsultMemoEmpty}`}
+                      className={`${styles.wcRowMemo} ${memo ? "" : styles.wcRowMemoEmpty}`}
                     >
                       {memo || "-"}
                     </span>
                   </div>
-                  <span className={styles.wcConsultDate}>{dateStr}</span>
-                  <div
-                    className={styles.wcConsultActionWrap}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <DateInput
-                      value={
-                        r.contact_scheduled_at
-                          ? r.contact_scheduled_at.slice(0, 10)
-                          : ""
-                      }
-                      onChange={(d) =>
-                        handleDetailUpdate(r.id, {
-                          contact_scheduled_at: d ? d + "T00:00:00.000Z" : null,
-                        })
-                      }
-                      variant="button"
-                      align="right"
-                    />
+                  <div className={styles.wcRowRight}>
+                    <span className={styles.wcRowDate}>{dateStr}</span>
+                    <div
+                      className={styles.wcRowAction}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <DateInput
+                        value={
+                          r.contact_scheduled_at
+                            ? r.contact_scheduled_at.slice(0, 10)
+                            : ""
+                        }
+                        onChange={(d) =>
+                          handleDetailUpdate(r.id, {
+                            contact_scheduled_at: d
+                              ? d + "T00:00:00.000Z"
+                              : null,
+                          })
+                        }
+                        variant="button"
+                        align="right"
+                      />
+                    </div>
                   </div>
                 </div>
               );
@@ -968,6 +1312,9 @@ export default function WorkJournalPage() {
   const isPracticum = journalForm === JOURNAL_FORM_TYPES.PRACTICUM;
   // 미지정(default) 양식 — 새 "업무 센터" 디자인 대상
   const isDefault = !isAcademic && !isPracticum;
+  // 영업팀 전용 화면(teams.code=KORHRD003) — 상단 통계 캐러셀 + 인사말/상단 통계 숨김
+  const [isSalesTeam, setIsSalesTeam] = useState(false);
+  const isSales = isSalesTeam && isDefault;
   const { startById } = useGuide();
 
   // 실습팀 — 일일 연계 수치 + 주간(월~금) 합계
@@ -1100,7 +1447,14 @@ export default function WorkJournalPage() {
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (cancelled) return;
-        setJournalForm(normalizeJournalForm(d?.teamJournalForm));
+        // 관리자(master-admin/admin)도 영업팀 워크스페이스로 — default 양식 + 영업 레이아웃
+        const isAdminRole = d?.role === "master-admin" || d?.role === "admin";
+        setJournalForm(
+          isAdminRole
+            ? JOURNAL_FORM_TYPES.DEFAULT
+            : normalizeJournalForm(d?.teamJournalForm),
+        );
+        setIsSalesTeam(isAdminRole || d?.teamCode === "KORHRD003");
         if (typeof d?.id === "number") setUserId(d.id);
         if (typeof d?.displayName === "string") setUserName(d.displayName);
       })
@@ -2029,7 +2383,8 @@ export default function WorkJournalPage() {
     <div className={styles.app}>
       <div className={styles.container}>
         {/* ── 상단 행 (학사팀은 stats 자리에 이번주 목표 바 표시) ─── */}
-        <div className={styles.topRow}>
+        {/* 영업팀: 인사말+가로 통계 숨김 → 좌측 컬럼 상단 캐러셀로 대체 */}
+        <div className={`${styles.topRow} ${isSales ? styles.topRowHidden : ""}`}>
           {isDefault ? (
             /* 업무 센터 — 인사 카드 (날짜는 표시 전용, 달력 미노출) */
             <div className={styles.wcGreetingCard} data-guide="wj-date">
@@ -2503,9 +2858,13 @@ export default function WorkJournalPage() {
         >
           {/* 좌: 오늘의 업무 (실습팀이면 내일 예정 업무와 위/아래 반반) */}
           <div className={styles.colStack}>
+            {/* 영업팀 — 상단 통계 캐러셀 (인사말 대체) */}
+            {isSales && <SalesStatCarousel stats={wcStats} />}
             {/* 업무 센터(default) — 이번주 연락 예정 카드 */}
             {isDefault && (
-              <div className={styles.wcWeekCard}>
+              <div
+                className={`${styles.wcWeekCard} ${isSales ? styles.salesWeekCard : ""}`}
+              >
                 <div className={styles.wcWeekSection}>
                   <span className={styles.wcWeekTitle}>이번주 연락 예정</span>
                   <div className={styles.wcWeekDays}>
@@ -2541,7 +2900,10 @@ export default function WorkJournalPage() {
                 </div>
               </div>
             )}
-            <section className={styles.col} data-guide="wj-today-tasks">
+            <section
+              className={`${styles.col} ${isSales ? styles.salesTodayCol : ""}`}
+              data-guide="wj-today-tasks"
+            >
               <h3 className={styles.colTitle}>오늘의 업무</h3>
               <div className={styles.taskList}>
                 {tasks.map((t, idx) => {

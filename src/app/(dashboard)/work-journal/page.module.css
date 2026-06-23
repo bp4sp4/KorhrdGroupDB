@@ -714,7 +714,7 @@
 /* ── 업무 센터 — 이번주 연락 예정 카드 ──────────────────── */
 .wcWeekCard {
   display: flex;
-  width: 264px;
+  width: 240px;
   padding: 20px;
   flex-direction: column;
   align-items: flex-start;
@@ -760,6 +760,14 @@
   background: #f2f8ff;
 }
 .wcWeekDayActive {
+  background: #f2f8ff;
+  border-color: #0084fe;
+}
+/* 영업팀 — 비활성 요일 박스 회색, 활성은 파란 배경+테두리 (색상만) */
+.salesWeekCard .wcWeekDay {
+  background: #f7f8fa;
+}
+.salesWeekCard .wcWeekDayActive {
   background: #f2f8ff;
   border-color: #0084fe;
 }
@@ -1326,6 +1334,141 @@
    (1100px 이하에서는 아래 미디어쿼리가 1컬럼으로 덮어쓴다) */
 .bodyRowPracticum {
   grid-template-columns: 264px minmax(0, 1fr) 300px;
+}
+
+/* ─── 영업팀 — 상단 통계 캐러셀 (인사말 대체) ───────────────────────── */
+.topRowHidden {
+  display: none;
+}
+
+.salesCarousel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.salesCard {
+  box-sizing: border-box;
+  display: flex;
+  width: 240px;
+  height: 100px;
+  padding: 16px;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+}
+
+.salesCardTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  align-self: stretch;
+}
+
+.salesCardInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.salesCardTitle {
+  color: #7a8086;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 100%;
+}
+
+.salesCardValueRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 1px;
+}
+
+.salesCardValue {
+  color: #1f2937;
+  font-family: Pretendard, inherit;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 100%;
+}
+
+.salesCardUnit {
+  color: #1f2937;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 130%;
+}
+
+.salesCardIcon {
+  display: flex;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+}
+
+.salesCardIcon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.salesCardTrack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: stretch;
+  border-radius: 999px;
+  background: #e9ecee;
+}
+
+.salesCardFill {
+  height: 10px;
+  border-radius: 999px;
+  background: #0084fe;
+  transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.salesCardFooter {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+  align-self: stretch;
+  color: #0084fe;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.salesDots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.salesDot {
+  width: 6px;
+  height: 6px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: #d1d5db;
+  cursor: pointer;
+  transition:
+    width 0.2s,
+    background 0.2s;
+}
+
+.salesDotActive {
+  width: 16px;
+  background: #0084fe;
 }
 
 .col {
@@ -2250,11 +2393,18 @@
   gap: 12px;
   align-self: stretch;
   min-height: 0;
+  align-items: center;
 }
 .colStack > .col {
   flex: 1 1 0;
   min-height: 0;
   overflow: auto;
+}
+
+/* 영업팀 — 오늘의 업무 카드 240px 가운데 정렬 (.col 규칙보다 뒤·높은 특이성) */
+.colStack > .salesTodayCol {
+  width: 240px;
+  align-self: center;
 }
 
 /* ─── 실습팀 — 일일 연계 입력 폼 ──────────────────────────────────────────── */
@@ -2371,12 +2521,27 @@
   font-weight: 600;
   line-height: normal;
 }
-.wcConsultSearch {
-  width: 180px;
-  padding: 8px 12px;
+/* 검색 박스 — 아이콘 + 입력 (180×30) */
+.wcSearchBox {
+  display: flex;
+  height: 30px;
+  padding: 8px 10px;
+  align-items: center;
+  gap: 6px;
   border-radius: 8px;
   border: 1px solid #e6e7eb;
   background: #fff;
+  box-sizing: border-box;
+}
+.wcSearchIcon {
+  flex-shrink: 0;
+  color: #8995a2;
+}
+.wcConsultSearch {
+  flex: 1 0 0;
+  min-width: 0;
+  border: 0;
+  background: transparent;
   color: #1f2937;
   font-family:
     Pretendard,
@@ -2403,7 +2568,9 @@
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.12s, color 0.12s;
+  transition:
+    background 0.12s,
+    color 0.12s;
 }
 
 .wcConsultResetBtn:hover {
@@ -2414,12 +2581,13 @@
 .wcConsultAddBtn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   flex-shrink: 0;
-  padding: 8px 14px;
+  height: 30px;
+  padding: 8px 10px;
   border-radius: 8px;
   border: none;
-  background: #3182f6;
+  background: #0084fe;
   color: #fff;
   font-size: 12px;
   font-weight: 600;
@@ -2428,7 +2596,7 @@
 }
 
 .wcConsultAddBtn:hover {
-  background: #2272eb;
+  background: #0073df;
 }
 
 .wcConsultAddBtn:disabled {
@@ -2449,13 +2617,17 @@
 }
 
 .wcDateRangeBtn {
-  padding: 8px 12px;
-  min-width: 150px;
-  text-align: left;
+  display: flex;
+  height: 30px;
+  padding: 8px 10px;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  box-sizing: border-box;
   border-radius: 8px;
   border: 1px solid #e6e7eb;
   background: #fff;
-  color: #6b7684;
+  color: #8995a2;
   font-family:
     Pretendard,
     -apple-system,
@@ -2469,6 +2641,14 @@
   transition:
     border-color 0.15s,
     color 0.15s;
+}
+/* 달력 아이콘이 좌측, 라벨이 가운데~우측 — 라벨 span 이 남은 폭 차지 */
+.wcDateRangeBtn > span {
+  flex: 1 0 0;
+  text-align: left;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .wcDateRangeBtn:hover {
@@ -2524,6 +2704,202 @@
   border-color: #0084fe;
   color: #fff;
 }
+
+/* ── 상담 목록 — 빠른 필터 행 (좌: 칩 / 우: 기간·검색·추가) ───────── */
+.wcFilterRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  align-self: stretch;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.wcQuickFilter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.wcQuickFilterLabel {
+  color: #6b7684;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: normal;
+  white-space: nowrap;
+}
+.wcQuickChips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.wcQuickChip {
+  display: flex;
+  height: 30px;
+  padding: 8px 10px;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  color: #8995a2;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: normal;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    border-color 0.12s,
+    color 0.12s,
+    background 0.12s;
+}
+.wcQuickChip:hover {
+  border-color: #c4c9d0;
+}
+.wcQuickChipOn {
+  border-color: #0084fe;
+  color: #0084fe;
+  background: #f2f8ff;
+}
+
+/* ── 상담 목록 — 상세필터 (드롭다운 + 옵션 패널) ───────────────── */
+.wcDetailFilter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  align-self: stretch;
+}
+.wcDetailReset {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  height: 30px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: #8995a2;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 100%;
+  cursor: pointer;
+}
+.wcDetailReset:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.wcDetailLabel {
+  color: #6b7684;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: normal;
+  white-space: nowrap;
+}
+.wcDetailBtns {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.wcDetailBtn {
+  display: flex;
+  height: 30px;
+  padding: 8px 10px;
+  align-items: center;
+  gap: 10px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  color: #8995a2;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: normal;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    border-color 0.12s,
+    color 0.12s;
+}
+.wcDetailBtnText {
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wcDetailBtn:hover {
+  border-color: #c4c9d0;
+}
+.wcDetailBtnOn {
+  border-color: #4e5968;
+  color: #4e5968;
+}
+
+/* 옵션 패널 */
+.wcFilterPanel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-self: stretch;
+  margin-top: 4px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #f7f8fa;
+}
+.wcFilterPointer {
+  position: absolute;
+  top: -11px;
+  width: 0;
+  height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-bottom: 11px solid #f7f8fa;
+}
+.wcFilterOpt {
+  display: flex;
+  height: 30px;
+  padding: 8px 10px;
+  align-items: center;
+  gap: 6px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  color: #8995a2;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: normal;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    border-color 0.12s,
+    color 0.12s;
+}
+.wcFilterOpt:hover {
+  border-color: #c4c9d0;
+}
+.wcFilterOptOn {
+  border-color: #4e5968;
+  color: #4e5968;
+}
+.wcOptIcon {
+  width: 12px;
+  height: 12px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.wcOptEmoji {
+  font-size: 12px;
+  line-height: 1;
+}
 .wcConsultList {
   display: flex;
   flex-direction: column;
@@ -2537,12 +2913,15 @@
 }
 .wcConsultRow {
   display: flex;
+  height: 70px;
+  box-sizing: border-box;
   padding: 12px 16px;
   align-items: center;
-  gap: 16px;
+  gap: 20px;
   align-self: stretch;
   border-radius: 6px;
   border: 1px solid #e6e7eb;
+  background: #fff;
   cursor: pointer;
   transition:
     background 0.12s,
@@ -2550,6 +2929,141 @@
     box-shadow 0.12s;
   /* 토스풍 등장: 아래에서 떠오르며 페이드 인 (행별 stagger는 inline animationDelay) */
   animation: wcRowIn 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── 행 내부 레이아웃 (좌: 정보 / 우: 날짜·연락예정) ───────────── */
+.wcRowLeft {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex: 1 0 0;
+  min-width: 0;
+}
+.wcStatusTag {
+  display: flex;
+  width: 60px;
+  padding: 4px 8px;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  border-radius: 999px;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: normal;
+  white-space: nowrap;
+}
+.wcRowWho {
+  display: flex;
+  width: 130px;
+  flex-shrink: 0;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 4px;
+}
+.wcRowNameLine {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  align-self: stretch;
+  min-width: 0;
+}
+.wcRowName {
+  color: #1f2937;
+  font-family: Pretendard, inherit;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: normal;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wcRowEdu {
+  display: flex;
+  padding: 2px 4px;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  border-radius: 4px;
+  background: #f3f4f6;
+  color: #6b7684;
+  font-family: Pretendard, inherit;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: normal;
+  white-space: nowrap;
+}
+.wcRowPhone {
+  color: #8d99a5;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: normal;
+}
+.wcRowTags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.wcRowTag {
+  display: flex;
+  padding: 6px 8px;
+  align-items: center;
+  gap: 6px;
+  border-radius: 6px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  color: #4e5968;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: normal;
+  white-space: nowrap;
+}
+.wcRowMemo {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  flex: 1 0 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #1f2937;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: normal;
+}
+.wcRowMemoEmpty {
+  color: #c4c9d0;
+}
+.wcRowRight {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-shrink: 0;
+}
+.wcRowDate {
+  color: #1f2937;
+  text-align: center;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: normal;
+  white-space: nowrap;
+}
+.wcRowAction {
+  display: flex;
+  width: 80px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 10px;
 }
 
 .wcConsultRow:hover {
