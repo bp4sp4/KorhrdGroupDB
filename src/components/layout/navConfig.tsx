@@ -123,6 +123,11 @@ export const ALL_SECTIONS: NavSection[] = [
         permissionKey: "hakjeom",
         children: [
           {
+            id: "hakjeom-tab-hakjeom",
+            label: "문의 DB",
+            href: "/hakjeom?tab=hakjeom",
+          },
+          {
             id: "hakjeom-tab-edu-students",
             label: "등록학생 관리",
             href: "/hakjeom?tab=edu-students",
@@ -135,20 +140,15 @@ export const ALL_SECTIONS: NavSection[] = [
             permissionKey: "edu-sales",
           },
           {
-            id: "hakjeom-tab-stats",
-            label: "통계",
-            href: "/hakjeom?tab=stats",
-            adminOnly: true,
-          },
-          {
-            id: "hakjeom-tab-hakjeom",
-            label: "문의 DB",
-            href: "/hakjeom?tab=hakjeom",
-          },
-          {
             id: "hakjeom-tab-bulk",
             label: "일괄등록",
             href: "/hakjeom?tab=bulk",
+            adminOnly: true,
+          },
+          {
+            id: "hakjeom-tab-stats",
+            label: "통계",
+            href: "/hakjeom?tab=stats",
             adminOnly: true,
           },
           {
