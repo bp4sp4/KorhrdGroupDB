@@ -275,3 +275,29 @@
 .viewBtn:hover {
   background: #f5f7fa;
 }
+
+/* 업무일지 현황 / 활동 현황 탭 */
+.adminTabBar {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid #e6e7eb;
+  margin-bottom: 20px;
+}
+.adminTab {
+  padding: 10px 16px;
+  border: 0;
+  background: none;
+  font-size: 15px;
+  font-weight: 600;
+  color: #8995a2;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.adminTab:hover {
+  color: #4e5968;
+}
+.adminTabOn {
+  color: #0084fe;
+  border-bottom-color: #0084fe;
+}

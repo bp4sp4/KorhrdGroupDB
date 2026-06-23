@@ -37,8 +37,7 @@ export async function GET(request: NextRequest) {
   // 사업부 스코프 (통장 기준) — 같은 본부 소속이면 팀과 무관하게 열람
   const scope = await resolveScope(searchParams.get('scope'))
   if (scope) {
-    const accessible = access.departments.some((d) => d.id === scope.departmentId)
-    if (!accessible) {
+    if (!access.seeAll && !access.accessibleScopeKeys.has(scope.key)) {
       return NextResponse.json({ error: '접근 권한이 없습니다.' }, { status: 403 })
     }
   }

@@ -22,6 +22,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     phone,
     is_division_admin,
     team_id,
+    is_test,
   } = body as {
     role?: string
     display_name?: string
@@ -31,6 +32,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     phone?: string | null
     is_division_admin?: boolean
     team_id?: string | null
+    is_test?: boolean
   }
 
   // ── 권한 강화: role / is_active / is_division_admin 변경은 master-admin 전용 ──
@@ -70,6 +72,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
   if (phone !== undefined) updates.phone = phone || null
   if (is_division_admin !== undefined) updates.is_division_admin = !!is_division_admin
   if (team_id !== undefined) updates.team_id = team_id
+  if (is_test !== undefined) updates.is_test = !!is_test
 
   // 부서 변경 시 team_id 자동 정리 — 다른 부서의 팀이 남아있으면 안 되므로
   if (department_id !== undefined && team_id === undefined) {

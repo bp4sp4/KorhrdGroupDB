@@ -48,14 +48,16 @@ export async function GET(request: NextRequest) {
   // ── 사업부 스코프 (통장 기준) ──
   const scope = await resolveScope(searchParams.get('scope'))
   if (scope) {
-    // 접근: 같은 본부 소속(또는 전체권한)이면 팀과 무관하게 열람
-    const dept = access.departments.find((d) => d.id === scope.departmentId)
-    if (!dept) {
+    // 접근: 해당 부서 예산 권한(budget-*) 보유 또는 전체권한
+    if (!access.seeAll && !access.accessibleScopeKeys.has(scope.key)) {
       return NextResponse.json(
         { month, seeAll: access.seeAll, scope, departments: [] },
         { status: 403 },
       )
     }
+    const deptId = scope.departmentId
+    const deptCode =
+      access.departments.find((d) => d.id === deptId)?.code ?? null
 
     const { data: txs } = await supabaseAdmin
       .from('bank_transactions')
@@ -73,8 +75,8 @@ export async function GET(request: NextRequest) {
       else out += amt
     })
 
-    const limitMap = await monthBudget([dept.id])
-    const limit = limitMap.get(dept.id)?.limit ?? 0
+    const limitMap = await monthBudget([deptId])
+    const limit = limitMap.get(deptId)?.limit ?? 0
 
     return NextResponse.json({
       month,
@@ -82,15 +84,15 @@ export async function GET(request: NextRequest) {
       scope,
       departments: [
         {
-          department_id: dept.id,
-          department_code: dept.code,
+          department_id: deptId,
+          department_code: deptCode,
           department_name: scope.label,
           limit_amount: limit,
           out_amount: out,
           in_amount: inAmt,
           available_amount: limit - out + inAmt,
-          can_edit_limit: canEditLimit(access, dept.id),
-          memo: limitMap.get(dept.id)?.memo ?? null,
+          can_edit_limit: canEditLimit(access, deptId),
+          memo: limitMap.get(deptId)?.memo ?? null,
           teams: [],
         },
       ],

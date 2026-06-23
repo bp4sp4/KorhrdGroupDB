@@ -162,7 +162,7 @@ export const ALL_SECTIONS: NavSection[] = [
             id: "education-budget",
             label: "예산현황",
             href: "/budget?scope=hakjeom",
-            permissionKey: "budget",
+            permissionKey: "budget-hakjeom",
           },
         ],
       },
@@ -199,7 +199,7 @@ export const ALL_SECTIONS: NavSection[] = [
             id: "cert-budget",
             label: "예산현황",
             href: "/budget?scope=cert",
-            permissionKey: "budget",
+            permissionKey: "budget-cert",
           },
         ],
       },
@@ -240,7 +240,7 @@ export const ALL_SECTIONS: NavSection[] = [
             id: "practice-budget",
             label: "예산현황",
             href: "/budget?scope=practice",
-            permissionKey: "budget",
+            permissionKey: "budget-practice",
           },
         ],
       },
@@ -316,18 +316,21 @@ export const ALL_SECTIONS: NavSection[] = [
             href: "/bankaccount",
             permissionKey: "bankaccount",
             masterAdminOnly: true,
+            inMore: true,
           },
           {
             id: "management-attendance",
             label: "근태 관리",
             href: "/admin/attendance",
             masterAdminOnly: true,
+            inMore: true,
           },
           {
             id: "management-leave-balances",
             label: "휴가 관리",
             href: "/admin/leave-balances",
             masterAdminOnly: true,
+            inMore: true,
           },
           {
             id: "management-budget",
@@ -431,7 +434,7 @@ export const ALL_SECTIONS: NavSection[] = [
             id: "marketing-budget",
             label: "예산현황",
             href: "/budget?scope=dev",
-            permissionKey: "budget",
+            permissionKey: "budget-dev",
           },
         ],
       },
@@ -874,7 +877,7 @@ const MANAGED_TAB_IDS: Record<string, Set<string>> = {
  * 반환: children 이 1개 이상 남은 사업부 NavItem 배열
  */
 export function getVisibleDivisions(ctx: NavFilterContext): NavItem[] {
-  const { userRole, permissions, departmentCode, isDivisionAdmin, isDeptHead } = ctx;
+  const { userRole, permissions, departmentCode, isDivisionAdmin } = ctx;
   const isFullAccess = userRole === "master-admin" || userRole === "admin";
   // adminOnly 탭 노출 대상 = 마스터 어드민 + 부서 관리자(관리자)
   const canSeeAdminTabs = isFullAccess || !!isDivisionAdmin;
@@ -955,12 +958,14 @@ export function getVisibleDivisions(ctx: NavFilterContext): NavItem[] {
       });
       return { ...item, children: filteredChildren };
     })
-    // 예산현황 하위 — 본부장(또는 마스터/관리자)에게만 노출
+    // 예산현황 하위 — 부서별 예산 권한(budget-*) 보유자에게만 노출 (기본 접근 불가)
     .map((item) => {
       if (!item.children || isFullAccess) return item;
-      const kids = item.children.filter(
-        (c) => c.permissionKey !== "budget" || isDeptHead,
-      );
+      const kids = item.children.filter((c) => {
+        if (!c.permissionKey || !c.permissionKey.startsWith("budget"))
+          return true;
+        return allowedSections.has(c.permissionKey);
+      });
       return { ...item, children: kids };
     })
     // 관리자 전용 탭 — 마스터 어드민/부서 관리자, 또는 allowed_tabs로 명시 부여된 경우만 노출

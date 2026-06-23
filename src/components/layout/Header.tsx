@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { LogOut, Menu, ChevronDown } from "lucide-react";
+import { Menu, ChevronDown } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import styles from "./layout.module.css";
 import NotificationBell from "./NotificationBell";
 import QuickSearch from "./QuickSearch";
+import CommuteButton from "./CommuteButton";
+import ConsultStatusSelect from "./ConsultStatusSelect";
 import {
   getVisibleDivisions,
   type NavItem,
@@ -264,7 +266,9 @@ export default function Header({
                         >
                           {child.label}
                           {badge !== null && (
-                            <span className={styles.headerTabBadge}>{badge}</span>
+                            <span className={styles.headerTabBadge}>
+                              {badge}
+                            </span>
                           )}
                         </Link>
                       </li>
@@ -284,11 +288,13 @@ export default function Header({
 
       {/* 우측 액션 */}
       <div className={styles.headerRight}>
+        <ConsultStatusSelect />
+
         <div className={styles.quickSearchHide}>
           <QuickSearch />
         </div>
 
-        <div className={`${styles.headerDivider} ${styles.quickSearchHide}`} />
+        <div className={styles.headerDivider} />
 
         <NotificationBell />
 
@@ -299,9 +305,10 @@ export default function Header({
         <div className={styles.headerDivider} />
 
         <button onClick={handleLogout} className={styles.logoutBtn}>
-          <LogOut size={14} />
           로그아웃
         </button>
+        <div className={styles.headerDivider} />
+        <CommuteButton />
       </div>
     </header>
   );

@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
   // 모든 활성 직원 조회 (기록 없는 직원도 0으로 표시)
   const { data: users } = await supabaseAdmin
     .from("app_users")
-    .select("id, display_name, username, department_id, role")
+    .select("id, display_name, username, department_id, role, is_test")
     .eq("is_active", true)
     .neq("role", "mini-admin")
     .order("display_name", { ascending: true });
@@ -244,6 +244,7 @@ export async function GET(request: NextRequest) {
         ? (deptMap.get(u.department_id) ?? null)
         : null,
       role: u.role,
+      is_test: u.is_test ?? false,
       days_worked: a?.days_worked ?? 0,
       total_work_minutes: a?.total_work_minutes ?? 0,
       total_overtime_minutes: a?.total_overtime_minutes ?? 0,

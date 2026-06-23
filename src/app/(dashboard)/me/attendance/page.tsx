@@ -350,6 +350,10 @@ export default function MyAttendancePage() {
 
   useEffect(() => {
     fetchAll();
+    // 같은 탭(헤더 출퇴근 버튼 등) 즉시 동기화
+    const onChanged = () => fetchAll();
+    window.addEventListener("attendance-changed", onChanged);
+    return () => window.removeEventListener("attendance-changed", onChanged);
   }, [fetchAll]);
 
   // 30초마다 자동 데이터 갱신 (외부 변경 — 관리자 수정 등 — 감지 백업용)
@@ -406,6 +410,7 @@ export default function MyAttendancePage() {
         alert(err.error ?? "출근 처리 실패");
       } else {
         await fetchAll();
+        window.dispatchEvent(new Event("attendance-changed"));
       }
     } finally {
       setSubmitting(false);
@@ -427,6 +432,7 @@ export default function MyAttendancePage() {
         alert(err.error ?? "퇴근 처리 실패");
       } else {
         await fetchAll();
+        window.dispatchEvent(new Event("attendance-changed"));
       }
     } finally {
       setSubmitting(false);

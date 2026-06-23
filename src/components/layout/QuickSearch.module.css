@@ -370,3 +370,22 @@
   background: var(--toss-border);
   color: var(--toss-text-primary);
 }
+
+/* 헤더 검색 아이콘 버튼 (박스 대체) */
+.triggerIconBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #8995a2;
+  cursor: pointer;
+  border-radius: 8px;
+}
+.triggerIconBtn:hover {
+  background: #f3f4f6;
+  color: #4e5968;
+}

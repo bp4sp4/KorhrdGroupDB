@@ -1314,6 +1314,8 @@ export default function WorkJournalPage() {
   const isDefault = !isAcademic && !isPracticum;
   // 영업팀 전용 화면(teams.code=KORHRD003) — 상단 통계 캐러셀 + 인사말/상단 통계 숨김
   const [isSalesTeam, setIsSalesTeam] = useState(false);
+  // 양식/영업여부 확정 전까지 본문 렌더 보류 — 변경 전 레이아웃 깜빡임 방지
+  const [meLoaded, setMeLoaded] = useState(false);
   const isSales = isSalesTeam && isDefault;
   const { startById } = useGuide();
 
@@ -1458,7 +1460,10 @@ export default function WorkJournalPage() {
         if (typeof d?.id === "number") setUserId(d.id);
         if (typeof d?.displayName === "string") setUserName(d.displayName);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setMeLoaded(true);
+      });
     return () => {
       cancelled = true;
     };
@@ -2378,6 +2383,11 @@ export default function WorkJournalPage() {
         </button>
       </>
     );
+
+  // 양식/영업여부 확정 전 — 빈 셸만 (변경 전 레이아웃 깜빡임 방지)
+  if (!meLoaded) {
+    return <div className={styles.app} />;
+  }
 
   return (
     <div className={styles.app}>

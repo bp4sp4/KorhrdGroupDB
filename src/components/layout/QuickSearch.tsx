@@ -175,13 +175,12 @@ export default function QuickSearch() {
   if (!open) {
     return (
       <button
-        className={styles.triggerBtn}
+        className={styles.triggerIconBtn}
         onClick={() => setOpen(true)}
         title="빠른 검색 (Ctrl+K)"
+        aria-label="검색"
       >
-        <Search size={15} />
-        <span className={styles.triggerText}>검색</span>
-        <kbd className={styles.kbd}>Ctrl+K</kbd>
+        <Search size={16} />
       </button>
     )
   }

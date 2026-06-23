@@ -69,6 +69,7 @@ interface Account {
   phone: string | null
   is_division_admin: boolean
   team_id: string | null
+  is_test: boolean
 }
 
 interface AccountForm {
@@ -79,6 +80,7 @@ interface AccountForm {
   position_id: string
   department_id: string
   phone: string
+  isTest: boolean
 }
 
 const emptyAccountForm: AccountForm = {
@@ -89,6 +91,7 @@ const emptyAccountForm: AccountForm = {
   position_id: '',
   department_id: '',
   phone: '',
+  isTest: false,
 }
 
 const ROLE_LABELS: Record<AccountRole, string> = {
@@ -2087,6 +2090,7 @@ function AccountsTab() {
       position_id: item.position_id ?? '',
       department_id: item.department_id ?? '',
       phone: item.phone ?? '',
+      isTest: item.is_test ?? false,
     })
     setFormError('')
     setShowModal(true)
@@ -2115,6 +2119,7 @@ function AccountsTab() {
           position_id: form.position_id || null,
           department_id: form.department_id || null,
           phone: form.phone.trim() || null,
+          is_test: form.isTest,
         }),
       })
     } else {
@@ -2421,6 +2426,20 @@ function AccountsTab() {
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
                 />
               </div>
+              {editTarget && (
+                <div className={styles.formRow}>
+                  <label className={styles.formCheck}>
+                    <input
+                      type="checkbox"
+                      checked={form.isTest}
+                      onChange={(e) =>
+                        setForm({ ...form, isTest: e.target.checked })
+                      }
+                    />
+                    테스트 계정 (근태관리에서 기본 제외)
+                  </label>
+                </div>
+              )}
               {formError && <p className={styles.errorMsg}>{formError}</p>}
             </div>
             <div className={styles.modalFooter}>

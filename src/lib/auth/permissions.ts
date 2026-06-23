@@ -23,6 +23,10 @@ export type PermissionSection =
   | 'reports'
   | 'bankaccount'
   | 'budget'
+  | 'budget-hakjeom'
+  | 'budget-cert'
+  | 'budget-practice'
+  | 'budget-dev'
   | 'task-board'
   | 'me-leave'
   | 'calendar'
@@ -69,6 +73,10 @@ export const ALL_PERMISSION_SECTIONS: PermissionSection[] = [
   'reports',
   'bankaccount',
   'budget',
+  'budget-hakjeom',
+  'budget-cert',
+  'budget-practice',
+  'budget-dev',
   'task-board',
   'me-leave',
   'calendar',
@@ -95,11 +103,9 @@ const DEFAULT_ALLOW_SECTIONS: PermissionSection[] = [
 ]
 
 // 기본 'own' 섹션 — 권한 레코드가 없으면 본인 소속 데이터만 열람 가능
-// budget(예산현황): 모든 직원이 본인 본부 예산을 기본 열람,
-// 어드민/경영지원본부는 resolveBudgetAccess 에서 전 본부로 승격
-const DEFAULT_OWN_SECTIONS: PermissionSection[] = [
-  'budget',
-]
+// 예산현황(budget)은 기본 접근 불가(none) — 권한관리에서 개별 부여.
+// 부여받으면 본인 부서 예산현황만 노출(부서별 메뉴 분리).
+const DEFAULT_OWN_SECTIONS: PermissionSection[] = []
 
 // 직책별 기본 권한 (position_permissions 테이블이 비어있을 때 fallback)
 // links / marketing / task-board / me-leave / calendar 은 모든 직책 공통 (전사 도구로 누구나 접근)

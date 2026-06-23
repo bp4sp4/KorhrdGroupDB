@@ -15,6 +15,7 @@ interface Employee {
   otMinutes: number;
   lateCount: number;
   missedCount: number;
+  isTest: boolean;
 }
 
 type DayStatus = "normal" | "late" | "ot" | "miss" | "halfday" | "off" | "leave";
@@ -257,6 +258,8 @@ export default function AdminAttendancePage() {
   const [recordsLoading, setRecordsLoading] = useState(false);
   const [filter, setFilter] = useState<"all" | "issue" | "empty">("all");
   const [query, setQuery] = useState("");
+  // 테스트 계정 — 기본 제외, 토글로 포함
+  const [showTest, setShowTest] = useState(false);
   const [selectedId, setSelectedId] = useState<string>("");
   const [editingDate, setEditingDate] = useState<string | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
@@ -288,7 +291,7 @@ export default function AdminAttendancePage() {
         user_id: number; user_name: string; user_username: string | null;
         department_name: string | null;
         days_worked: number; total_work_minutes: number; total_overtime_minutes: number;
-        late_count: number; invalid_count: number;
+        late_count: number; invalid_count: number; is_test?: boolean;
       }) => ({
         id: String(s.user_id),
         name: s.user_name,
@@ -299,6 +302,7 @@ export default function AdminAttendancePage() {
         otMinutes: s.total_overtime_minutes,
         lateCount: s.late_count,
         missedCount: s.invalid_count,
+        isTest: s.is_test ?? false,
       }));
       setEmployees(list);
       // 첫 직원 자동 선택 (기존 선택이 없거나 목록에 없을 경우)
@@ -376,21 +380,31 @@ export default function AdminAttendancePage() {
   }, [fetchEmployees, fetchRecords, selectedId]);
 
   // ─── 필터 / 통계 ─────────────────────────────────────────────────────
+  // 테스트 계정 제외(토글 off일 때)
+  const baseEmployees = useMemo(
+    () => (showTest ? employees : employees.filter((e) => !e.isTest)),
+    [employees, showTest],
+  );
+  const testCount = useMemo(
+    () => employees.filter((e) => e.isTest).length,
+    [employees],
+  );
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return employees.filter((e) => {
+    return baseEmployees.filter((e) => {
       if (filter === "issue" && !hasIssue(e)) return false;
       if (filter === "empty" && hasRecord(e)) return false;
       if (q && !e.name.toLowerCase().includes(q) && !e.email.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [employees, filter, query]);
+  }, [baseEmployees, filter, query]);
 
   const counts = useMemo(() => ({
-    all: employees.length,
-    issue: employees.filter(hasIssue).length,
-    empty: employees.filter((e) => !hasRecord(e)).length,
-  }), [employees]);
+    all: baseEmployees.length,
+    issue: baseEmployees.filter(hasIssue).length,
+    empty: baseEmployees.filter((e) => !hasRecord(e)).length,
+  }), [baseEmployees]);
 
   const totals = useMemo(() => {
     const totalRegular = employees.reduce((s, e) => s + e.regularMinutes, 0);
@@ -638,6 +652,9 @@ export default function AdminAttendancePage() {
               <FilterChip on={filter === "all"} onClick={() => setFilter("all")} label="전체" n={counts.all} />
               <FilterChip on={filter === "issue"} onClick={() => setFilter("issue")} label="이슈 있음" n={counts.issue} />
               <FilterChip on={filter === "empty"} onClick={() => setFilter("empty")} label="미기록" n={counts.empty} />
+              {testCount > 0 && (
+                <FilterChip on={showTest} onClick={() => setShowTest((v) => !v)} label="테스트 포함" n={testCount} />
+              )}
             </div>
 
             <div className={styles.tblHead}>

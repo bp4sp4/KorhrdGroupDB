@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import Sidebar from '@/components/layout/Sidebar'
 import Header from '@/components/layout/Header'
 import GuideProvider from '@/components/guide/GuideProvider'
+import PresenceHeartbeat from '@/components/PresenceHeartbeat'
 import { createClient } from '@/lib/supabase/client'
 import styles from '@/components/layout/layout.module.css'
 
@@ -283,6 +284,8 @@ export default function DashboardLayout({
 
   return (
     <GuideProvider>
+      {/* 자리비움(보조 신호) 하트비트 — 로그인 사용자 전역 */}
+      {userRole && userRole !== 'guest' && <PresenceHeartbeat />}
       <div className={styles.dashboardWrap}>
         <Sidebar userRole={userRole} permissions={permissions} isDivisionAdmin={isDivisionAdmin} canManageSalesTargets={isDeptHead || isLeader || departmentCode === 'MGT'} hiddenMenus={hiddenMenus} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 

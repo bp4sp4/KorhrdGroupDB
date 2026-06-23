@@ -18,6 +18,7 @@ import Link from "next/link";
 import styles from "./page.module.css";
 import { CLOCK_OUT_CONFIRM, getTodayKstDate } from "@/lib/attendance";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { createClient } from "@/lib/supabase/client";
 import { getCalendarWeekIndex } from "@/lib/dashboard/weekOfMonth";
 
 interface AttendanceRec {
@@ -272,6 +273,25 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchAttendance();
+    // 같은 탭(헤더의 출퇴근 버튼 등) 즉시 동기화
+    const onChanged = () => fetchAttendance();
+    window.addEventListener("attendance-changed", onChanged);
+    // 다른 탭/기기 — Supabase 실시간
+    const supabase = createClient();
+    const channel = supabase
+      .channel("dashboard-attendance-rt")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "attendance_records" },
+        () => {
+          fetchAttendance();
+        },
+      )
+      .subscribe();
+    return () => {
+      window.removeEventListener("attendance-changed", onChanged);
+      supabase.removeChannel(channel);
+    };
   }, [fetchAttendance]);
 
   const handleClockIn = async () => {
@@ -284,6 +304,7 @@ export default function DashboardPage() {
         alert(err.error ?? "출근 처리 실패");
       } else {
         await fetchAttendance();
+        window.dispatchEvent(new Event("attendance-changed"));
       }
     } finally {
       setSubmitting(false);
@@ -378,6 +399,7 @@ export default function DashboardPage() {
         alert(err.error ?? "퇴근 처리 실패");
       } else {
         await fetchAttendance();
+        window.dispatchEvent(new Event("attendance-changed"));
       }
     } finally {
       setSubmitting(false);

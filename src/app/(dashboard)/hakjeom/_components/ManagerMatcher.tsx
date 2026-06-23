@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import styles from "./ManagerMatcher.module.css";
 import {
   AXES,
@@ -28,9 +28,40 @@ interface MgrRow {
   lift: number; // rate / overallRate
 }
 
+// 활동 상태 점 — 활동중(초록)/자리비움(회색). presence 기록 없으면 표시 안 함
+function PresenceDot({ away }: { away: boolean | undefined }) {
+  if (away === undefined) return null;
+  return (
+    <span
+      className={`${styles.presenceDot} ${away ? styles.presenceAway : styles.presenceActive}`}
+      title={away ? "자리 비움" : "활동 중"}
+    />
+  );
+}
+
 export default function ManagerMatcher({ data }: { data: SegmentRecord[] }) {
   const [profile, setProfile] = useState<Partial<Record<AxisKey, string>>>({});
   const [minSample, setMinSample] = useState(15);
+
+  // ── 담당자 자리비움(보조 신호) — 이름 기준 ──
+  const [awayByName, setAwayByName] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    let cancelled = false;
+    const fetchPresence = () => {
+      fetch("/api/presence", { cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+          if (!cancelled && d?.byName) setAwayByName(d.byName);
+        })
+        .catch(() => {});
+    };
+    fetchPresence();
+    const t = setInterval(fetchPresence, 60000);
+    return () => {
+      cancelled = true;
+      clearInterval(t);
+    };
+  }, []);
 
   // ── 축별 선택 가능한 값 목록 (빈도순) ──
   const axisOptions = useMemo(() => {
@@ -209,7 +240,10 @@ export default function ManagerMatcher({ data }: { data: SegmentRecord[] }) {
       {/* 추천 배정 카드 */}
       {best ? (
         <div className={styles.heroCard}>
-          <div className={styles.heroName}>{best.manager}</div>
+          <div className={styles.heroName}>
+            <PresenceDot away={awayByName[best.manager]} />
+            {best.manager}
+          </div>
           <div className={styles.heroRate}>
             이 유형 등록률 <b>{best.rate.toFixed(1)}%</b>
           </div>
@@ -259,6 +293,7 @@ export default function ManagerMatcher({ data }: { data: SegmentRecord[] }) {
                   >
                     <td className={styles.tdRank}>{idx + 1}</td>
                     <td className={styles.tdName}>
+                      <PresenceDot away={awayByName[r.manager]} />
                       {r.manager}
                       {isBest && <span className={styles.tdBestTag}>추천</span>}
                     </td>

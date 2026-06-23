@@ -329,44 +329,169 @@
 /* 우측 액션 */
 .headerRight {
   display: flex;
+  padding: 0 12px;
   align-items: center;
-  gap: 10px;
+  gap: 18px;
   flex-shrink: 0;
 }
 
 .headerUserName {
-  font-size: 13px;
+  color: #000;
+  font-family: Pretendard, inherit;
+  font-size: 14px;
   font-weight: 500;
-  color: var(--toss-text-primary);
+  line-height: 100%;
   white-space: nowrap;
 }
 
 .headerDivider {
   width: 1px;
-  height: 14px;
-  background: var(--toss-border);
+  height: 15px;
+  background: #e6e7eb;
   flex-shrink: 0;
 }
 
 .logoutBtn {
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 6px 10px;
+  padding: 0;
   border: none;
-  border-radius: 8px;
   background: transparent;
-  color: var(--toss-text-secondary);
-  font-size: 13px;
-  font-weight: 400;
+  color: #8995a2;
+  font-family: Pretendard, inherit;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 100%;
   cursor: pointer;
-  transition: all 150ms ease;
+  transition: color 150ms ease;
   white-space: nowrap;
 }
 
 .logoutBtn:hover {
-  background: var(--toss-bg);
-  color: var(--toss-text-primary);
+  color: #4e5968;
+}
+
+/* ── 상담 가능 상태 드롭다운 ───────────────────────────── */
+.statusWrap {
+  position: relative;
+  flex-shrink: 0;
+}
+.statusTrigger {
+  display: flex;
+  height: 30px;
+  padding: 8px 10px;
+  align-items: center;
+  gap: 6px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  cursor: pointer;
+}
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #0084fe;
+  flex-shrink: 0;
+}
+.statusDotOff {
+  background: #c4c9d0;
+}
+.statusLabel {
+  color: #8995a2;
+  font-family: Pretendard, inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 100%;
+  white-space: nowrap;
+}
+.statusChev {
+  color: #8995a2;
+}
+.statusMenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 110px;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: #fff;
+  border: 1px solid #e6e7eb;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  z-index: 60;
+}
+.statusMenuItem {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  background: none;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 600;
+  color: #4e5968;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.statusMenuItem:hover {
+  background: #f3f4f6;
+}
+.statusMenuItemOn {
+  color: #0084fe;
+}
+
+/* ── 출근/퇴근 버튼 ───────────────────────────── */
+.commuteIn,
+.commuteOut {
+  display: inline-flex;
+  height: 30px;
+  padding: 8px 10px;
+  align-items: center;
+  gap: 6px;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: 6px;
+  color: #fff;
+  font-family: Pretendard, inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: normal;
+  white-space: nowrap;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.commuteIn {
+  background: #0084fe;
+}
+.commuteIn:hover {
+  background: #0073df;
+}
+.commuteOut {
+  background: #ff4a4a;
+}
+.commuteOut:hover {
+  background: #e93d3d;
+}
+.commuteIn:disabled,
+.commuteOut:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.commuteDone {
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: #f3f4f6;
+  color: #8995a2;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* 햄버거 (모바일) */

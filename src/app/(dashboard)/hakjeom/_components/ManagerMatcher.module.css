@@ -376,3 +376,20 @@
   border-radius: 12px;
   margin-bottom: 20px;
 }
+
+/* 담당자 활동 상태 점 (자리비움 보조 신호) */
+.presenceDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  margin-right: 6px;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+.presenceActive {
+  background: #22c55e;
+}
+.presenceAway {
+  background: #c4c9d0;
+}

@@ -1436,3 +1436,13 @@
 .cellTop {
   vertical-align: top;
 }
+
+/* 테스트 계정 체크박스 라벨 */
+.formCheck {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+}
