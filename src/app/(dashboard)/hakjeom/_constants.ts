@@ -85,7 +85,7 @@ export const COUNSEL_CHECK_OPTIONS = [
   "당장 불필요",
 ];
 
-export const REASON_OPTIONS = ["즉시취업", "이직", "미래준비", "취업"];
+export const REASON_OPTIONS = ["즉시취업", "이직", "미래준비", "취미"];
 
 export const EDUCATION_OPTIONS = [
   "고졸",

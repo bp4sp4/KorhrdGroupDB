@@ -1278,7 +1278,7 @@ function HakjeomTab({
         name: "홍길동 (가이드 예시)",
         contact: "010-0000-0000",
         education: null,
-        reason: "취업",
+        reason: "취미",
         click_source: "가이드",
         status: "상담대기",
         memo: "이 학생은 가이드 예시 데이터입니다. 실제 저장되지 않아요.",
