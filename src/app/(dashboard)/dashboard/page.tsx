@@ -41,31 +41,13 @@ function formatTime(iso: string | null): string {
   });
 }
 
-// ─── 문의 유입경로 채널 색상 매핑 ───────────────────────────────────
-// 실데이터 연결 시 API에서 채널명만 받아오면 자동으로 색상 적용됨.
-// 신규 채널 추가 시 이곳에만 추가하면 됨.
-const SOURCE_COLORS: Record<string, string> = {
-  // 회사 배정 문의
-  당근: "#FF6F0E",
-  맘카페: "#75ED4C",
-  네이버: "#03C75A",
-  "인스타·페이스북": "#4DA8FF",
-  인스타: "#4DA8FF",
-  페이스북: "#4DA8FF",
-  구글: "#FB4E57",
-  카카오: "#FAE200",
-  토스: "#0064FF",
-  기타: "#1E1E1E",
-  // 직접 유입 문의
-  최적블로그: "#0084FE",
-  지인소개: "#767676",
+// ─── 등록률 랭킹 ────────────────────────────────────────────────────
+type RankItem = {
+  name: string;
+  rate: number;
+  registrations: number;
+  total: number;
 };
-
-const SOURCE_COLOR_FALLBACK = "#94A3B8";
-
-function getSourceColor(name: string): string {
-  return SOURCE_COLORS[name] ?? SOURCE_COLOR_FALLBACK;
-}
 
 // 2026년 05월 22일 (금) 15:44:58 형식
 function formatNowFull(): string {
@@ -172,41 +154,24 @@ export default function DashboardPage() {
     };
   }, []);
 
-  // 오늘의 문의 유입경로 — /api/dashboard/today-inquiry-sources 응답
-  // 채널명만 [{name, count}]로 받아오면 색상은 SOURCE_COLORS에서 자동 매핑됨
-  const [companyRaw, setCompanyRaw] = useState<
-    { name: string; count: number }[]
-  >([]);
-  const [directRaw, setDirectRaw] = useState<{ name: string; count: number }[]>(
-    [],
-  );
+  // 등록률 랭킹 — /api/dashboard/registration-ranking 응답 (당월 담당자별)
+  const [ranking, setRanking] = useState<RankItem[]>([]);
+  const [rankMonthLabel, setRankMonthLabel] = useState("");
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/dashboard/today-inquiry-sources", { cache: "no-store" })
+    fetch("/api/dashboard/registration-ranking", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (cancelled || !d) return;
-        if (Array.isArray(d.company)) setCompanyRaw(d.company);
-        if (Array.isArray(d.direct)) setDirectRaw(d.direct);
+        if (Array.isArray(d.ranking)) setRanking(d.ranking as RankItem[]);
+        if (d.year && d.month) setRankMonthLabel(`${d.year}년 ${d.month}월`);
       })
       .catch(() => {});
     return () => {
       cancelled = true;
     };
   }, []);
-
-  const companySourceData = companyRaw.map((s) => ({
-    ...s,
-    color: getSourceColor(s.name),
-  }));
-  const directSourceData = directRaw.map((s) => ({
-    ...s,
-    color: getSourceColor(s.name),
-  }));
-
-  const companyTotal = companySourceData.reduce((s, x) => s + x.count, 0);
-  const directTotal = directSourceData.reduce((s, x) => s + x.count, 0);
 
   // 매초 갱신 (시계용)
   useEffect(() => {
@@ -772,25 +737,8 @@ export default function DashboardPage() {
           })()}
         </section>
 
-        {/* 1행 우: 오늘의 문의 유입경로 */}
-        <section className={`${styles.card} ${styles.sourceCard}`}>
-          <div className={styles.sourceHead}>
-            <h3 className={styles.cardTitle}>오늘의 문의 유입경로</h3>
-          </div>
-
-          <div className={styles.sourceSectionsWrap}>
-            <SourceSection
-              label="회사 배정 문의"
-              data={companySourceData}
-              total={companyTotal}
-            />
-            <SourceSection
-              label="직접 유입 문의"
-              data={directSourceData}
-              total={directTotal}
-            />
-          </div>
-        </section>
+        {/* 1행 우: 등록률 랭킹 */}
+        <RegistrationRanking monthLabel={rankMonthLabel} items={ranking} />
 
         {/* 2행: 통계 4개 (업무일지와 동일 디자인) */}
         <section className={styles.statsRow}>
@@ -1893,81 +1841,63 @@ function InboxCard() {
   );
 }
 
-// 문의 유입경로 섹션 — 라벨 + 누적 막대 + TOP 3 칩
-function SourceSection({
-  label,
-  data,
-  total,
+// 등록률 랭킹 카드 — 담당자별 당월 등록률 (1~3위 메달, 4위↓ 번호 배지)
+const RANK_MEDALS = ["gold", "silver", "bronze"];
+
+function RegistrationRanking({
+  monthLabel,
+  items,
 }: {
-  label: string;
-  data: { name: string; count: number; color: string }[];
-  total: number;
+  monthLabel: string;
+  items: RankItem[];
 }) {
   return (
-    <div className={styles.sourceSection}>
-      <div className={styles.sourceSectionHead}>
-        <span className={styles.sourceSectionLabel}>{label}</span>
-        <span className={styles.sourceSectionTotal}>
-          {total.toLocaleString()}건
-        </span>
+    <section
+      className={`${styles.card} ${styles.sourceCard} ${styles.rankCard}`}
+    >
+      <div className={styles.rankHead}>
+        <h3 className={styles.rankTitle}>등록률 랭킹</h3>
+        <span className={styles.rankMonth}>{monthLabel}</span>
       </div>
-      {/* 가로 누적 막대 + 호버 툴팁 */}
-      <div className={styles.sourceBar}>
-        {total === 0 && (
-          <div className={styles.sourceBarEmpty}>오늘 0건</div>
-        )}
-        {data.map((s) => (
-          <div
-            key={s.name}
-            className={styles.sourceBarSegment}
-            style={{
-              width: total > 0 ? `${(s.count / total) * 100}%` : "0%",
-              background: s.color,
-            }}
-          >
-            <div className={styles.sourceBarTooltip}>
-              <span
-                className={styles.sourceDot}
-                style={{ background: s.color }}
-              />
-              <span className={styles.sourceBarTooltipName}>{s.name}</span>
-              <span className={styles.sourceBarTooltipCount}>
-                {s.count.toLocaleString()}건
-              </span>
-              <svg
-                className={styles.sourceBarTooltipLine}
-                width="1"
-                height="10"
-                viewBox="0 0 1 10"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path d="M0.5 0L0.5 10" stroke="#D9D9D9" strokeDasharray="2 2" />
-              </svg>
-            </div>
-          </div>
-        ))}
-      </div>
-      {/* TOP 3 칩 */}
-      <div className={styles.sourceChipRow}>
-        {data.slice(0, 3).map((s) => {
-          const pct = total > 0 ? Math.round((s.count / total) * 100) : 0;
-          return (
-            <div key={s.name} className={styles.sourceChipCard}>
-              <div className={styles.sourceChipNameRow}>
-                <span
-                  className={styles.sourceDot}
-                  style={{ background: s.color }}
-                />
-                <span className={styles.sourceChipName}>{s.name}</span>
+      <div className={styles.rankList}>
+        {items.length === 0 ? (
+          <div className={styles.rankEmpty}>이번 달 데이터가 없습니다</div>
+        ) : (
+          items.map((it, i) => {
+            const pct = Math.round(it.rate);
+            return (
+              <div key={it.name} className={styles.rankRow}>
+                <div className={styles.rankRowTop}>
+                  <div className={styles.rankWho}>
+                    {i < 3 ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        className={styles.rankMedal}
+                        src={`/${RANK_MEDALS[i]}.png`}
+                        alt={`${i + 1}위`}
+                        width={20}
+                        height={20}
+                      />
+                    ) : (
+                      <span className={styles.rankNum}>{i + 1}</span>
+                    )}
+                    <span className={styles.rankName}>{it.name}</span>
+                  </div>
+                  <span className={styles.rankPct}>{pct}%</span>
+                </div>
+                <div className={styles.rankBarRow}>
+                  <div className={styles.rankTrack}>
+                    <div
+                      className={styles.rankFill}
+                      style={{ width: `${Math.min(100, pct)}%` }}
+                    />
+                  </div>
+                </div>
               </div>
-              <span className={styles.sourceChipCount}>
-                {s.count.toLocaleString()}건 ({pct}%)
-              </span>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
-    </div>
+    </section>
   );
 }
