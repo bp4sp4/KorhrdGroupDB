@@ -82,6 +82,7 @@ export function relativeRankScore(
 export type QuantIndicatorKind =
   | 'sales' // 전분기 평균 매출 대비 당분기 평균 매출
   | 'minSalesRate' // 기준(최소) 매출 달성률 — 실제 ÷ 최소매출
+  | 'kpiRate' // (팀) KPI 달성률 — 팀 매출 ÷ 대시보드 KPI 목표
   | 'registration' // 전분기 평균 등록률 대비 당분기 평균 등록률
   | 'assignedDb' // 배정 DB수
   | 'refund' // 환불 건수
@@ -89,6 +90,8 @@ export type QuantIndicatorKind =
 
 /** 지표 문구 → 자동 산출 종류 식별 (해당 없으면 null) */
 export function quantIndicatorKind(text: string): QuantIndicatorKind | null {
+  // "KPI 달성률" — '매출' 미포함이라 먼저 판정 (팀역량평가서 전용)
+  if (text.toUpperCase().includes('KPI')) return 'kpiRate'
   if (text.includes('등록률')) return 'registration'
   // "기준 매출 달성률" — 'sales'(매출+달성률)보다 먼저 판정
   if (text.includes('기준') && text.includes('매출')) return 'minSalesRate'
@@ -126,6 +129,17 @@ export interface QuantMetrics {
     /** 분기 실제매출 합 (만원) */
     actual: number
     /** 달성률 % — 최소매출 0이면 null */
+    rate: number | null
+    /** 환산 점수 1~5 — 산출 불가 시 null */
+    score: number | null
+  }
+  /** (팀) KPI 달성률 — 팀 분기 매출 ÷ 대시보드 KPI 목표 (원). 팀역량평가서 전용 */
+  kpiRate?: {
+    /** 대시보드 KPI 목표 (원) — 미설정 시 0 */
+    target: number
+    /** 팀 분기 실매출 (원) */
+    actual: number
+    /** 달성률 % — 목표 0이면 null */
     rate: number | null
     /** 환산 점수 1~5 — 산출 불가 시 null */
     score: number | null

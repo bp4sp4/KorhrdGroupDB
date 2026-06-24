@@ -101,15 +101,79 @@ function quantFormula(kind: ReturnType<typeof quantIndicatorKind>): string {
   }
 }
 
+// 팀역량평가서 — 팀(구성원 합산) 기준 계산식
+function teamQuantFormula(
+  kind: ReturnType<typeof quantIndicatorKind>,
+): string {
+  switch (kind) {
+    case "sales":
+      return (
+        "비율(%) = 팀 당분기 평균 매출 ÷ 팀 전분기 평균 매출 × 100\n" +
+        "· 팀 평균 매출: 팀 매출원 합산 ÷ 3개월 (영업=수강등록 / 민간=자격증 / 실습=실습)\n" +
+        "· 2026년 3분기는 전분기 데이터가 없어 전월 대비(월평균)로 산정\n" +
+        "  (7월÷6월 + 8월÷7월 + 9월÷8월) 비율의 평균 (완료된 달만)\n" +
+        RATIO_BANDS_TEXT
+      );
+    case "registration":
+      return (
+        "팀 등록률(%) = 팀 등록완료 ÷ 팀 배정 DB × 100\n" +
+        "· 팀 구성원의 학점은행 상담을 모두 합산\n" +
+        "· 등록완료: 그중 상담 상태가 '등록완료'인 건수 합산\n" +
+        "비율(%) = 팀 당분기 등록률 ÷ 팀 전분기 등록률 × 100\n" +
+        "· 2026년 3분기는 전분기 데이터가 없어 전월 대비(월평균)로 산정\n" +
+        RATIO_BANDS_TEXT
+      );
+    case "kpiRate":
+      return (
+        "KPI 달성률(%) = 팀 분기 매출 ÷ KPI 목표 × 100\n" +
+        "· KPI 목표: 메인 대시보드 분기 KPI 목표(사업본부장 설정)\n" +
+        "· 팀 분기 매출: 팀 구성원 매출 합산\n" +
+        "점수 환산\n" +
+        "· 200% 이상 = 5점\n" +
+        "· 170~199% = 4점\n" +
+        "· 130~169% = 3점\n" +
+        "· 100~129% = 2점\n" +
+        "· 100% 미만 = 1점"
+      );
+    case "minSalesRate":
+      return (
+        "팀 기준 매출 달성률(%) = 팀 실제매출 ÷ 팀 최소매출 × 100\n" +
+        "· 팀 최소매출: 구성원 최소매출 합산(기본 사원 600만 / 팀장 1000만, 분기)\n" +
+        "· 팀 실제매출: 팀 구성원 매출 합산(분기)\n" +
+        "점수 환산\n" +
+        "· 200% 이상 = 5점\n" +
+        "· 170~199% = 4점\n" +
+        "· 130~169% = 3점\n" +
+        "· 100~129% = 2점\n" +
+        "· 100% 미만 = 1점"
+      );
+    case "attendance":
+      return (
+        "팀 지각 = 구성원 지각 합산 · 팀 결근 = 구성원 결근 합산\n" +
+        "· 지각: 출근 10:00 이후 / 결근: 평일 중 출근·승인휴가 모두 없는 날\n" +
+        "점수 환산\n" +
+        "· 지각 0·결근 0 = 5점\n" +
+        "· 지각 1~2회 = 4점\n" +
+        "· 지각 3~4회 = 3점\n" +
+        "· 지각 5~6회 또는 결근 1회 = 2점\n" +
+        "· 지각 7회 이상 또는 결근 2회 이상 = 1점"
+      );
+    default:
+      return quantFormula(kind);
+  }
+}
+
 // 문항 옆 ⓘ — 호버 시 계산식 툴팁
-function QuantInfo({ text }: { text: string }) {
+function QuantInfo({ text, isTeam }: { text: string; isTeam?: boolean }) {
   const kind = quantIndicatorKind(text);
   if (!kind) return null;
+  const formula = isTeam ? teamQuantFormula(kind) : quantFormula(kind);
+  if (!formula) return null;
   return (
     <span className={styles.quantInfo} aria-label="계산식 보기">
       <Info size={13} />
       <span className={styles.quantTooltip} role="tooltip">
-        {quantFormula(kind)}
+        {formula}
       </span>
     </span>
   );
@@ -153,6 +217,19 @@ function QuantBadge({
           </>
         ) : (
           <>최소매출 미설정 — 산출 불가</>
+        );
+      break;
+    case "kpiRate":
+      body =
+        metrics.kpiRate && metrics.kpiRate.rate != null ? (
+          <>
+            팀매출 {Math.round(metrics.kpiRate.actual / 10000).toLocaleString()}
+            만원 ÷ KPI목표{" "}
+            {Math.round(metrics.kpiRate.target / 10000).toLocaleString()}만원 ·{" "}
+            {metrics.kpiRate.rate}% → <b>{metrics.kpiRate.score}점</b>
+          </>
+        ) : (
+          <>KPI 목표 미설정 — 산출 불가</>
         );
       break;
     case "registration":
@@ -222,6 +299,8 @@ function autoQuantScore(metrics: QuantMetrics, text: string): number | null {
       return metrics.sales.score;
     case "minSalesRate":
       return metrics.minSalesRate.score;
+    case "kpiRate":
+      return metrics.kpiRate?.score ?? null;
     case "registration":
       return metrics.registration.score;
     case "assignedDb":
@@ -313,6 +392,8 @@ export function SheetView({
   ) => void;
 }) {
   const blocks = useMemo(() => sheet.blocks ?? [], [sheet.blocks]);
+  // 팀역량평가서 여부 — ⓘ 계산식 툴팁을 팀(구성원 합산) 기준으로 표시
+  const isTeam = (sheet.title ?? "").includes("팀");
 
   // 행 위치 → 이의제기 목록 (대기 건 먼저)
   const appealByCell = useMemo(() => {
@@ -481,7 +562,7 @@ export function SheetView({
                           editing={false}
                           onChange={() => {}}
                         />
-                        <QuantInfo text={indicator.text} />
+                        <QuantInfo text={indicator.text} isTeam={isTeam} />
                       </span>
                     ) : (
                       <EditableText

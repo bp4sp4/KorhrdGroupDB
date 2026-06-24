@@ -15,10 +15,14 @@ export interface MonthlySales {
   weeks: number[]
 }
 
+/** 매출원 — cert(자격증) / edu(수강등록) / practice(실습) */
+export type SalesSource = 'cert' | 'edu' | 'practice'
+
 export async function getMonthlySales(
   displayName: string,
   year: number,
   month: number,
+  sources: SalesSource[] = ['cert', 'edu', 'practice'],
 ): Promise<MonthlySales> {
   const pad = (n: number) => String(n).padStart(2, '0')
   const monthStart = `${year}-${pad(month)}-01`
@@ -97,13 +101,25 @@ export async function getMonthlySales(
     }
   }
 
-  if (certRes.status === 'fulfilled' && !certRes.value.error) {
+  if (
+    sources.includes('cert') &&
+    certRes.status === 'fulfilled' &&
+    !certRes.value.error
+  ) {
     accumulate(certRes.value.data as never, 'certificate_applications', 'amount')
   }
-  if (eduRes.status === 'fulfilled' && !eduRes.value.error) {
+  if (
+    sources.includes('edu') &&
+    eduRes.status === 'fulfilled' &&
+    !eduRes.value.error
+  ) {
     accumulate(eduRes.value.data as never, 'edu_students', 'cost')
   }
-  if (pracRes.status === 'fulfilled' && !pracRes.value.error) {
+  if (
+    sources.includes('practice') &&
+    pracRes.status === 'fulfilled' &&
+    !pracRes.value.error
+  ) {
     accumulate(
       pracRes.value.data as never,
       'practice_applications',

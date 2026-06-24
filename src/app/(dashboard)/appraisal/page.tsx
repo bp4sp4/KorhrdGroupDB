@@ -191,16 +191,26 @@ export default function AppraisalPage() {
           overviewDetail.target_user_id != null
         ? overviewDetail.target_user_id
         : null;
+  // 팀역량평가서 — 팀 단위 자동 산출 (구성원 합산)
+  const quantTeamId =
+    writeTarget?.sheetKey === "team" && writeTarget.teamId
+      ? writeTarget.teamId
+      : overviewDetail?.sheet_key === "team" && overviewDetail.target_team_id
+        ? overviewDetail.target_team_id
+        : null;
 
   useEffect(() => {
     setQuantMetric(null);
-    if (quantUserId == null) return;
-    let cancelled = false;
     const { year, quarter } = parsePeriod(period);
-    fetch(
-      `/api/appraisal-evaluations/quant-metrics?userId=${quantUserId}&year=${year}&quarter=${quarter}`,
-      { cache: "no-store" },
-    )
+    let url: string | null = null;
+    if (quantUserId != null) {
+      url = `/api/appraisal-evaluations/quant-metrics?userId=${quantUserId}&year=${year}&quarter=${quarter}`;
+    } else if (quantTeamId) {
+      url = `/api/appraisal-evaluations/team-quant-metrics?teamId=${encodeURIComponent(quantTeamId)}&year=${year}&quarter=${quarter}`;
+    }
+    if (!url) return;
+    let cancelled = false;
+    fetch(url, { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (!cancelled && data) setQuantMetric(data as QuantMetrics);
@@ -209,7 +219,7 @@ export default function AppraisalPage() {
     return () => {
       cancelled = true;
     };
-  }, [quantUserId, period]);
+  }, [quantUserId, quantTeamId, period]);
 
   const loadForms = useCallback(async (selectId?: string) => {
     try {
