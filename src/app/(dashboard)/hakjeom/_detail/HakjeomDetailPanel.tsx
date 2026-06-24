@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import styles from "../page.module.css";
 import { DateInput } from "@/components/ui/Calendar/DateInput";
 import MemoTimeline from "@/components/ui/MemoTimeline";
+import { FastConsultIcon } from "@/components/ui/FastConsultBadge";
 import type { ConsultationStatus, HakjeomConsultation } from "../_types";
 import {
   CONSULTATION_STATUS_STYLE,
@@ -25,6 +26,24 @@ import { CAFE_NAME_LIST, CAFE_NAMES, parseClickSource } from "../_cafe";
 import { formatDateShort, formatPhoneNumber } from "../_utils";
 import { matchReactionPoints } from "../_constants";
 import { StatusBadge } from "../_components/StatusBadge";
+
+// 빠른상담 선호 시간 옵션 (랜딩 폼과 동일) — 3개 전체 선택 시 "10:00~19:00" 로 병합 표시
+const FAST_CONSULT_TIME_OPTIONS = [
+  "10:00~13:00",
+  "14:00~17:00",
+  "17:00~19:00",
+];
+function formatPreferredTimes(times: string[] | null | undefined): string {
+  const list = times ?? [];
+  if (list.length === 0) return "시간 무관";
+  if (FAST_CONSULT_TIME_OPTIONS.every((t) => list.includes(t)))
+    return "10:00~19:00";
+  // 표준 순서로 정렬, 비표준 값은 뒤에 유지
+  return [
+    ...FAST_CONSULT_TIME_OPTIONS.filter((t) => list.includes(t)),
+    ...list.filter((t) => !FAST_CONSULT_TIME_OPTIONS.includes(t)),
+  ].join(", ");
+}
 
 // 당근 sub-panel의 기본 옵션
 // DANGGEUN_DEFAULT_OPTIONS 는 _constants 에서 import
@@ -663,6 +682,16 @@ export function HakjeomDetailPanel({
     prevStatusRef.current = editStatus;
   }, [editStatus, isDemoStudent]);
   const [memoCount, setMemoCount] = useState<number | null>(null);
+  // 빠른상담 pill: 담당자가 손대면 숨김 — 워크스페이스 리스트와 동일 기준
+  // (메모 / 상태 변경 / 학습자유형·반응포인트·과목당비용 중 하나라도 입력 시)
+  const fastConsultPending =
+    !!item.fast_consultation &&
+    editStatus === "상담대기" &&
+    (memoCount ?? item.memo_count ?? 0) === 0 &&
+    !item.memo &&
+    !editCurrentSituation &&
+    editReactionPoint.length === 0 &&
+    !editSubjectCost;
   const [cafeAddInput, setCafeAddInput] = useState("");
   const [showCafeAdd, setShowCafeAdd] = useState(false);
   const [danggeunAddInput, setDanggeunAddInput] = useState("");
@@ -1194,6 +1223,14 @@ export function HakjeomDetailPanel({
                     <span className={styles.detailModalContactBadge}>
                       {item.memo_count ?? 0}회 연락
                     </span>
+                    {fastConsultPending && (
+                      <span className={styles.fastConsultPill}>
+                        <FastConsultIcon />
+                        <span className={styles.fastConsultPillText}>
+                          빠른상담
+                        </span>
+                      </span>
+                    )}
                     {item.latest_memo_at && (
                       <span className={styles.detailModalLastContactBadge}>
                         마지막 연락일: {formatDateShort(item.latest_memo_at)}
@@ -1345,6 +1382,20 @@ export function HakjeomDetailPanel({
                 placeholder="예) 서울 강남구"
                 className={styles.detailFieldBoxFull}
               />
+            </div>
+
+            {/* 상담 시간 메모 (선호시간 | 시간 관련 메모) */}
+            <div className={styles.detailFieldRow}>
+              <span className={styles.detailFieldLabel}>상담 시간 메모</span>
+              <span className={styles.fastConsultLine}>
+                <span className={styles.fastConsultTimes}>
+                  {formatPreferredTimes(item.preferred_times)}
+                </span>
+                <span className={styles.fastConsultDivider}>|</span>
+                <span className={styles.fastConsultMemo}>
+                  {item.consult_time_memo || "-"}
+                </span>
+              </span>
             </div>
 
             {/* 메모 */}

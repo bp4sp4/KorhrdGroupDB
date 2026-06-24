@@ -101,6 +101,7 @@ import {
 } from "./_cafe";
 import { StatusBadge } from "./_components/StatusBadge";
 import { Highlight } from "./_components/Highlight";
+import { FastConsultBadge } from "@/components/ui/FastConsultBadge";
 import { CustomSelect } from "./_components/CustomSelect";
 import { StatusSelect } from "./_components/StatusSelect";
 import { HakjeomDetailPanel } from "./_detail/HakjeomDetailPanel";
@@ -2901,7 +2902,10 @@ function HakjeomTab({
                         {parseSource(item.click_source).minor || "-"}
                       </td>
                       <td className={styles.tdBold}>
-                        <Highlight text={item.name} query={searchText} />
+                        <span className={styles.nameWithBadge}>
+                          <Highlight text={item.name} query={searchText} />
+                          {item.fast_consultation && <FastConsultBadge />}
+                        </span>
                       </td>
                       <td
                         className={styles.tdTabular}

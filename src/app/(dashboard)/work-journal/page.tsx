@@ -9,6 +9,7 @@ import Calendar, {
 import { HakjeomDetailPanel } from "@/app/(dashboard)/hakjeom/_detail/HakjeomDetailPanel";
 import { HakjeomAddModal } from "@/app/(dashboard)/hakjeom/page";
 import type { HakjeomConsultation } from "@/app/(dashboard)/hakjeom/_types";
+import { FastConsultBadge } from "@/components/ui/FastConsultBadge";
 import {
   normSource,
   reasonTags,
@@ -299,6 +300,22 @@ function consultStatusShort(s: string): string {
 }
 
 type HakItem = HakjeomConsultation & { latest_memo?: string | null };
+
+// 빠른상담 "미처리" 판정 — 담당자가 메모 작성 / 상태 변경 /
+// 학습자유형(current_situation)·반응포인트·과목당비용 중 하나라도 손대면 false.
+// true면 워크스페이스에서 번개 표시 + 최상단 고정.
+// (취득사유·유입경로·담당자는 신청 시 자동 채워지는 값이라 신호에서 제외)
+function isFastConsultPending(r: HakItem): boolean {
+  const memo = r.latest_memo || r.memo || "";
+  return (
+    !!r.fast_consultation &&
+    (r.status ?? "") === "상담대기" &&
+    !memo &&
+    !r.current_situation &&
+    !r.reaction_point &&
+    !r.subject_cost
+  );
+}
 
 // ── 검색어 하이라이트 ────────────────────────────────────────────────
 // 일반 텍스트: 대소문자 무시 부분 일치 구간을 <mark>로 감싼다
@@ -807,6 +824,12 @@ function ConsultationList({
     );
   });
 
+  // 미처리 빠른상담을 최상단으로 고정 (나머지는 기존 등록일 순 유지 — 안정 정렬)
+  rows.sort(
+    (a, b) =>
+      (isFastConsultPending(b) ? 1 : 0) - (isFastConsultPending(a) ? 1 : 0),
+  );
+
   const tabs = [
     { key: "today" as const, label: "오늘 연락 예정", count: todayList.length },
     { key: "hope" as const, label: "오늘 가망관리", count: hopeList.length },
@@ -1024,6 +1047,8 @@ function ConsultationList({
               const education = r.education || "";
               // 취득사유는 태그로 분리 표시, 메모는 작성된 것만 (없으면 '-')
               const memo = r.latest_memo || r.memo || "";
+              // 빠른상담 번개: 미처리일 때만 표시 (최상단 정렬 기준과 동일)
+              const fastConsultPending = isFastConsultPending(r);
               const tags = (() => {
                 const t = reasonTags(r.reason);
                 if (t.length > 0) return t;
@@ -1059,6 +1084,7 @@ function ConsultationList({
                             {hlText(education, q)}
                           </span>
                         )}
+                        {fastConsultPending && <FastConsultBadge />}
                       </div>
                       {r.contact && (
                         <span className={styles.wcRowPhone}>
