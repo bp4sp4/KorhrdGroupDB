@@ -53,7 +53,8 @@ export function normSource(source: string | null | undefined): string {
   const s = source.startsWith("바로폼_") ? source.slice(4) : source;
   const i = s.indexOf("_");
   const major = (i === -1 ? s : s.slice(0, i)).trim();
-  if (META_CHANNEL_ALIASES.has(major)) return "메타";
+  // 메타 계열(인스타·페이스북) → 표준 라벨/아이콘 키와 일치시킴
+  if (META_CHANNEL_ALIASES.has(major)) return "인스타·페이스북";
   if (ETC_CHANNEL_ALIASES.has(major)) return ETC;
   return major || "바로폼";
 }
