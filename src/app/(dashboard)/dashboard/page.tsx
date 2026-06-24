@@ -47,6 +47,7 @@ type RankItem = {
   rate: number;
   registrations: number;
   total: number;
+  isMe?: boolean;
 };
 
 // 2026년 05월 22일 (금) 15:44:58 형식
@@ -1866,7 +1867,10 @@ function RegistrationRanking({
           items.map((it, i) => {
             const pct = Math.round(it.rate);
             return (
-              <div key={it.name} className={styles.rankRow}>
+              <div
+                key={it.name}
+                className={`${styles.rankRow}${it.isMe ? ` ${styles.rankRowMe}` : ""}`}
+              >
                 <div className={styles.rankRowTop}>
                   <div className={styles.rankWho}>
                     {i < 3 ? (

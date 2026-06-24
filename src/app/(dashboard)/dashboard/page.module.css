@@ -877,6 +877,12 @@
   box-sizing: border-box;
 }
 
+/* 본인 행 강조 (파란 배경) */
+.rankRowMe {
+  border-color: #4da8ff;
+  background: #eef6ff;
+}
+
 .rankRowTop {
   display: flex;
   justify-content: space-between;

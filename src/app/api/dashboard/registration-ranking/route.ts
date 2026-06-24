@@ -16,8 +16,9 @@ export const runtime = 'nodejs'
 const EXCLUDED_MANAGERS = new Set(['이규준'])
 
 export async function GET() {
-  const { errorResponse } = await requireAuthFull()
+  const { appUser, errorResponse } = await requireAuthFull()
   if (errorResponse) return errorResponse
+  const myName = appUser?.display_name?.trim() ?? null
 
   // 현재 KST 연/월
   const nowKst = new Date(
@@ -75,7 +76,7 @@ export async function GET() {
     .map(([name, total]) => {
       const registrations = regs.get(name) ?? 0
       const rate = total > 0 ? (registrations / total) * 100 : 0
-      return { name, total, registrations, rate }
+      return { name, total, registrations, rate, isMe: !!myName && name === myName }
     })
     .sort(
       (a, b) =>
