@@ -139,6 +139,16 @@ function formatMinutes(min: number | null): string {
   return `${mins}분`;
 }
 
+// 배정시간 — manager_assigned_at 를 "MM-DD HH:MM" (KST)
+function formatAssignedAt(iso?: string | null): string {
+  if (!iso) return "-";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "-";
+  const kst = new Date(d.getTime() + 9 * 3600 * 1000);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${p(kst.getUTCMonth() + 1)}-${p(kst.getUTCDate())} ${p(kst.getUTCHours())}:${p(kst.getUTCMinutes())}`;
+}
+
 // ─── 공통 서브 컴포넌트 ──────────────────────────────────────────────────────
 
 // 섹션 래퍼
@@ -2607,43 +2617,7 @@ function HakjeomTab({
                   <th className={styles.th}>연락처</th>
                   <th className={styles.th}>학력</th>
                   <th className={styles.th}>희망과정</th>
-                  <th className={styles.thFilterable}>
-                    <div className={styles.thInner}>
-                      취득사유
-                      <button
-                        className={`${styles.thFilterBtn}${reasonFilter.length > 0 ? ` ${styles.thFilterBtnActive}` : ""}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (openFilterColumn === "reason") {
-                            setOpenFilterColumn(null);
-                            return;
-                          }
-                          const rect = e.currentTarget.getBoundingClientRect();
-                          setFilterDropdownPos({
-                            top: rect.bottom + 4,
-                            left: rect.left,
-                          });
-                          setOpenFilterColumn("reason");
-                        }}
-                      >
-                        <svg
-                          width="10"
-                          height="10"
-                          viewBox="0 0 10 10"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            d="M2 3.5L5 6.5L8 3.5"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      </button>
-                    </div>
-                  </th>
+                  <th className={styles.th}>배정시간</th>
                   <th className={styles.thFilterable}>
                     <div className={styles.thInner}>
                       담당자
@@ -2894,11 +2868,8 @@ function HakjeomTab({
                       >
                         {item.hope_course ?? "-"}
                       </td>
-                      <td
-                        className={styles.tdEllipsis}
-                        title={item.reason ?? ""}
-                      >
-                        <Highlight text={item.reason} query={searchText} />
+                      <td className={styles.tdSecondary}>
+                        {formatAssignedAt(item.manager_assigned_at)}
                       </td>
                       <td className={styles.tdSecondary}>
                         {item.manager ?? "-"}
