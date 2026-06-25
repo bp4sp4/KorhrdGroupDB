@@ -7,6 +7,7 @@ interface EduStudentRow {
   name: string | null
   education_center_name: string | null
   manager_name: string | null
+  revenue_owner: string | null
   cost: number | null
   status: string | null
   registered_at: string | null
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await supabaseAdmin
     .from('edu_students')
-    .select('id, name, education_center_name, manager_name, cost, status, registered_at, edu_courses(name)')
+    .select('id, name, education_center_name, manager_name, revenue_owner, cost, status, registered_at, edu_courses(name)')
     .gte('registered_at', startDate)
     .lte('registered_at', endDate)
     .not('status', 'in', '("환불","삭제예정")')
@@ -54,7 +55,8 @@ export async function GET(request: NextRequest) {
     name: r.name,
     education_center_name: r.education_center_name,
     course_name: r.edu_courses?.name ?? null,
-    manager_name: r.manager_name,
+    // 매출 귀속 = revenue_owner (관리 담당과 분리)
+    manager_name: r.revenue_owner ?? r.manager_name,
     cost: Number(r.cost) || 0,
     status: r.status,
     registered_at: r.registered_at,

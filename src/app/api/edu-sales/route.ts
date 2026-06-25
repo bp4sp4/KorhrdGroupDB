@@ -105,13 +105,14 @@ export async function GET(request: NextRequest) {
   let studentsQuery = supabaseAdmin
     .from('edu_students')
     .select(
-      'id, name, phone, cost, unit_price, manager_name, education_center_name, class_start, status, course_id, registered_at, created_at, edu_courses(id, name)',
+      'id, name, phone, cost, unit_price, manager_name, revenue_owner, education_center_name, class_start, status, course_id, registered_at, created_at, edu_courses(id, name)',
     )
     .order('registered_at', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false })
 
   if (!canViewAll && appUser.display_name) {
-    studentsQuery = studentsQuery.eq('manager_name', appUser.display_name)
+    // 매출파일 권한 scope — 매출 귀속(revenue_owner) 기준 (관리 담당 변경과 무관)
+    studentsQuery = studentsQuery.eq('revenue_owner', appUser.display_name)
   }
 
   // 활성 학생만 (환불/삭제예정 제외)
@@ -156,6 +157,7 @@ export async function GET(request: NextRequest) {
     cost: number | null
     unit_price: number | null
     manager_name: string | null
+    revenue_owner: string | null
     education_center_name: string | null
     class_start: string | null
     status: string | null
@@ -197,7 +199,8 @@ export async function GET(request: NextRequest) {
       // 학생 정보 (등록학생관리에서 가져옴)
       student_name: s.name,
       phone: s.phone,
-      manager_name: s.manager_name,
+      // 매출파일 표시·집계 담당자 = 매출 귀속(revenue_owner). 관리 담당(manager_name) 변경과 분리.
+      manager_name: s.revenue_owner ?? s.manager_name,
       // 학생이 있는 경우 학생 값 우선, 없으면 sale 행의 값(과거 데이터 보호용)
       education_center_name:
         s.education_center_name ??
@@ -476,7 +479,7 @@ export async function POST(request: NextRequest) {
   if (body.student_id) {
     const { data: student, error: stuError } = await supabaseAdmin
       .from('edu_students')
-      .select('id, name, phone, manager_name')
+      .select('id, name, phone, manager_name, revenue_owner')
       .eq('id', body.student_id)
       .maybeSingle()
     if (stuError) return NextResponse.json({ error: stuError.message }, { status: 500 })
@@ -519,7 +522,8 @@ export async function POST(request: NextRequest) {
         student_id: body.student_id,
         student_name: student.name,
         phone: student.phone,
-        manager_name: student.manager_name,
+        // 매출 귀속 = revenue_owner (관리 담당 변경과 분리)
+        manager_name: student.revenue_owner ?? student.manager_name,
         created_by: appUser.id,
       }
       const { data, error } = await supabaseAdmin
