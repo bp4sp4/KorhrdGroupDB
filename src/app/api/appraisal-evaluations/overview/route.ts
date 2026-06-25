@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
   const { data: evaluations, error } = await supabaseAdmin
     .from('appraisal_evaluations')
     .select(
-      'id, sheet_key, target_team_id, target_user_id, evaluator_id, scores, status, submitted_at, updated_at, period',
+      'id, sheet_key, target_team_id, target_user_id, evaluator_id, scores, status, submitted_at, updated_at, period, feedback, feedback_at',
     )
     .eq('form_id', formId)
     .eq('period', period)

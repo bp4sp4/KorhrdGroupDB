@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
   let evalQuery = supabaseAdmin
     .from('appraisal_evaluations')
     .select(
-      'id, form_id, sheet_key, target_team_id, target_user_id, evaluator_id, scores, status, submitted_at, updated_at, period',
+      'id, form_id, sheet_key, target_team_id, target_user_id, evaluator_id, scores, status, submitted_at, updated_at, period, feedback, feedback_at',
     )
     .eq('period', period)
   if (formId) evalQuery = evalQuery.eq('form_id', formId)

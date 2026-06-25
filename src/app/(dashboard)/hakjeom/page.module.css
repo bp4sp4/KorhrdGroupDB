@@ -3184,7 +3184,6 @@
 .detailMemoSection {
   width: 100%;
   margin-top: 8px;
-  border-top: 1px solid var(--toss-border);
   padding-top: 16px;
   flex: 1 1 auto;
   display: flex;
@@ -5288,9 +5287,14 @@
 .detailFooterRow {
   display: flex;
   justify-content: flex-end;
-  align-items: flex-end;
+  align-items: center;
   gap: 10px;
   align-self: stretch;
+
+  background: #fff;
+  padding-top: 16px;
+  z-index: 5;
+  margin-top: auto;
 }
 
 .detailFooterCancel {
@@ -5605,4 +5609,62 @@
   .detailMemoSection {
     width: 100%;
   }
+}
+
+/* ── 상담 시작 전: 연락처 가림 + 상담 시작 ── */
+.consultLockWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.consultPhoneBlur {
+  color: #8995a2;
+  font-size: 14px;
+  font-weight: 500;
+  filter: blur(3px);
+  user-select: none;
+}
+
+.consultLockHint {
+  color: #8995a2;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 100%;
+}
+
+.consultStartBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 40px 0;
+  width: 100%;
+}
+
+.consultStartBtn {
+  display: flex;
+  padding: 14px 24px;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  border-radius: 8px;
+  background: #0084fe;
+  box-shadow: 0 0 6px 0 rgba(0, 0, 0, 0.1);
+  color: #fff;
+  font-family: Pretendard, inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: normal;
+  cursor: pointer;
+}
+
+.consultStartHint {
+  color: #8995a2;
+  font-family: Pretendard, inherit;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 100%;
 }

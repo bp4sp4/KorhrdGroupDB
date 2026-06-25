@@ -55,6 +55,8 @@ interface EvaluationRow {
   status: "draft" | "submitted";
   submitted_at: string | null;
   updated_at: string;
+  feedback?: string | null;
+  feedback_at?: string | null;
 }
 
 interface AppealRow {
@@ -181,6 +183,10 @@ export default function AppraisalPage() {
   const [overviewDetail, setOverviewDetail] = useState<OverviewRow | null>(
     null,
   );
+
+  // 평가자 피드백(총평) — 제출된 개인평가에 평가자가 남기는 마무리 코멘트
+  const [feedbackText, setFeedbackText] = useState("");
+  const [feedbackSaving, setFeedbackSaving] = useState(false);
 
   // 정량평가 자동 산출 (매출 달성률·등록률·배정 DB·환불·근태) — 개인 역량평가 대상자 기준
   const [quantMetric, setQuantMetric] = useState<QuantMetrics | null>(null);
@@ -593,6 +599,82 @@ export default function AppraisalPage() {
     }
   };
 
+  // ── 평가자 피드백(총평) ───────────────────────────────────────────
+  const handleFeedbackSave = async (
+    evaluationId: string,
+    reload: () => void,
+  ) => {
+    setFeedbackSaving(true);
+    try {
+      const res = await fetch(
+        `/api/appraisal-evaluations/${evaluationId}/feedback`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ feedback: feedbackText.trim() }),
+        },
+      );
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error ?? "저장에 실패했습니다.");
+      }
+      reload();
+      alert(
+        feedbackText.trim()
+          ? "피드백이 저장되었습니다."
+          : "피드백이 삭제되었습니다.",
+      );
+    } catch (e) {
+      alert((e as Error).message);
+    } finally {
+      setFeedbackSaving(false);
+    }
+  };
+
+  // 평가 상세를 열 때 기존 피드백을 입력란에 채움 (활성 탭 기준)
+  useEffect(() => {
+    if (tab === "status" && overviewDetail?.sheet_key === "personal") {
+      setFeedbackText(overviewDetail.feedback ?? "");
+      return;
+    }
+    if (tab === "write" && writeTarget?.sheetKey === "personal") {
+      setFeedbackText(findEvaluation(writeTarget)?.feedback ?? "");
+      return;
+    }
+    setFeedbackText("");
+  }, [tab, overviewDetail, writeTarget, findEvaluation]);
+
+  // 제출된 개인평가에만 노출되는 평가자 피드백 입력 박스 (작성/현황 공용)
+  const renderFeedbackEditor = (evaluationId: string, reload: () => void) => (
+    <div className={styles.feedbackBox}>
+      <div className={styles.feedbackBoxHead}>
+        <span className={styles.feedbackBoxTitle}>평가자 피드백 (총평)</span>
+        <span className={styles.feedbackBoxHint}>
+          제출된 개인평가에 남기는 마무리 코멘트입니다. 평가 대상자에게
+          공개됩니다.
+        </span>
+      </div>
+      <textarea
+        className={styles.feedbackTextarea}
+        value={feedbackText}
+        onChange={(e) => setFeedbackText(e.target.value)}
+        placeholder="예) 이번 분기 ○○ 부분이 아쉬웠어요. 다음 분기엔 △△를 기대합니다."
+        rows={3}
+        maxLength={2000}
+        disabled={feedbackSaving}
+      />
+      <div className={styles.feedbackBoxFoot}>
+        <button
+          className={styles.btnPrimary}
+          onClick={() => handleFeedbackSave(evaluationId, reload)}
+          disabled={feedbackSaving}
+        >
+          {feedbackSaving ? "저장 중..." : "피드백 저장"}
+        </button>
+      </div>
+    </div>
+  );
+
   // ── 평가 현황 (경영실장) ──────────────────────────────────────────
   const handleReopen = async (row: OverviewRow) => {
     if (
@@ -902,6 +984,15 @@ export default function AppraisalPage() {
                   )}
                 </div>
               </div>
+              {writeTarget.sheetKey === "personal" &&
+                (() => {
+                  const fe = findEvaluation(writeTarget);
+                  return fe?.status === "submitted"
+                    ? renderFeedbackEditor(fe.id, () => {
+                        void loadEvaluations(period);
+                      })
+                    : null;
+                })()}
               {(() => {
                 // 이의제기 전체 이력 — 처리 대기뿐 아니라 재평가 완료된 건도 평가자가 확인
                 const evalId = findEvaluation(writeTarget)?.id;
@@ -1116,6 +1207,14 @@ export default function AppraisalPage() {
                 </div>
               );
             })()}
+            {overviewDetail.sheet_key === "personal" &&
+              overviewDetail.status === "submitted" &&
+              renderFeedbackEditor(overviewDetail.id, () => {
+                if (selectedId) {
+                  void loadOverview(selectedId, period);
+                  void loadEvaluations(period);
+                }
+              })}
             <SheetView
               sheet={selected.form_data[overviewDetail.sheet_key]}
               editing={false}

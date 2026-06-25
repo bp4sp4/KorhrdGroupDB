@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     // 공통 필드. 학점은행제는 reaction_point(반응포인트)까지 포함하지만,
     // private_cert 테이블에는 reaction_point 컬럼이 없어 분리한다.
     const BASE_FIELDS = 'id, status, click_source, hope_course, counsel_check, manager, created_at, counsel_completed_at, registered_at, last_counsel_level, education, reason';
-    const HAKJEOM_FIELDS = `${BASE_FIELDS}, reaction_point`;
+    const HAKJEOM_FIELDS = `${BASE_FIELDS}, reaction_point, manager_assigned_at, consult_started_at`;
     const CERT_FIELDS = BASE_FIELDS;
 
     if (type === 'hakjeom') {

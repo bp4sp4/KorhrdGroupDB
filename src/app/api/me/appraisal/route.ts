@@ -15,7 +15,7 @@ export async function GET() {
 
   const { data: evaluations, error } = await supabaseAdmin
     .from('appraisal_evaluations')
-    .select('id, form_id, sheet_key, scores, status, submitted_at, updated_at, evaluator_id, period')
+    .select('id, form_id, sheet_key, scores, status, submitted_at, updated_at, evaluator_id, period, feedback, feedback_at')
     .eq('target_user_id', appUser.id)
     .eq('sheet_key', 'personal')
     .eq('status', 'submitted')
@@ -76,6 +76,8 @@ export async function GET() {
         submittedAt: r.submitted_at,
         period: r.period,
         evaluatorName: evaluatorMap.get(r.evaluator_id as number) ?? '평가자',
+        feedback: (r.feedback as string | null) ?? null,
+        feedbackAt: (r.feedback_at as string | null) ?? null,
         appeals: appealsByEval.get(r.id as string) ?? [],
       }
     })

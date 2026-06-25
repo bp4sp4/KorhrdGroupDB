@@ -19,6 +19,8 @@ interface Props {
   onCountChange?: (count: number) => void
   onLastMemoAt?: (at: string | null) => void
   onAdd?: (content: string) => void
+  /** true면 빈 목록 안내문("작성된 메모가 없습니다")만 숨김 — 작성칸은 유지 */
+  hideEmpty?: boolean
 }
 
 function fmtDateTime(iso: string) {
@@ -59,7 +61,7 @@ function renderContent(text: string) {
 }
 
 
-export default function MemoTimeline({ tableName, recordId, legacyMemo, defaultInput, onCountChange, onLastMemoAt, onAdd }: Props) {
+export default function MemoTimeline({ tableName, recordId, legacyMemo, defaultInput, onCountChange, onLastMemoAt, onAdd, hideEmpty }: Props) {
   const [logs, setLogs] = useState<MemoLog[]>([])
   const [loading, setLoading] = useState(true)
   const [input, setInput] = useState(defaultInput ?? '')
@@ -261,7 +263,7 @@ export default function MemoTimeline({ tableName, recordId, legacyMemo, defaultI
           </>
         )}
 
-        {!loading && logs.length === 0 && !legacyMemo && (
+        {!loading && logs.length === 0 && !legacyMemo && !hideEmpty && (
           <p className={styles.empty}>작성된 메모가 없습니다.</p>
         )}
 

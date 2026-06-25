@@ -109,6 +109,36 @@ import { HakjeomDetailPanel } from "./_detail/HakjeomDetailPanel";
 let _hakjeomBannerCache: { date: string; data: HakjeomConsultation[] } | null =
   null;
 
+// 응답시간 — 배정(manager_assigned_at) → 상담 시작(consult_started_at)까지 걸린 시간
+function formatResponseTime(
+  assignedAt?: string | null,
+  startedAt?: string | null,
+): string {
+  if (!assignedAt || !startedAt) return "-";
+  const ms = new Date(startedAt).getTime() - new Date(assignedAt).getTime();
+  if (!Number.isFinite(ms) || ms < 0) return "-";
+  const min = Math.floor(ms / 60000);
+  if (min < 1) return "1분 미만";
+  const days = Math.floor(min / 1440);
+  const hours = Math.floor((min % 1440) / 60);
+  const mins = min % 60;
+  if (days > 0) return hours > 0 ? `${days}일 ${hours}시간` : `${days}일`;
+  if (hours > 0) return mins > 0 ? `${hours}시간 ${mins}분` : `${hours}시간`;
+  return `${mins}분`;
+}
+
+// 분(평균 등) → "12분 / 1시간 5분 / 2일" 표기
+function formatMinutes(min: number | null): string {
+  if (min == null) return "-";
+  if (min < 1) return "1분 미만";
+  const days = Math.floor(min / 1440);
+  const hours = Math.floor((min % 1440) / 60);
+  const mins = min % 60;
+  if (days > 0) return hours > 0 ? `${days}일 ${hours}시간` : `${days}일`;
+  if (hours > 0) return mins > 0 ? `${hours}시간 ${mins}분` : `${hours}시간`;
+  return `${mins}분`;
+}
+
 // ─── 공통 서브 컴포넌트 ──────────────────────────────────────────────────────
 
 // 섹션 래퍼
@@ -2692,6 +2722,7 @@ function HakjeomTab({
                       </button>
                     </div>
                   </th>
+                  <th className={styles.th}>응답시간</th>
                   <th className={styles.th}>메모</th>
                   <th className={styles.th}>등록일</th>
                   <th className={styles.th}></th>
@@ -2699,10 +2730,10 @@ function HakjeomTab({
               </thead>
               <tbody>
                 {loading ? (
-                  <TableSkeleton cols={15} rows={8} />
+                  <TableSkeleton cols={16} rows={8} />
                 ) : filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={15} className={styles.tableEmptyMsg}>
+                    <td colSpan={16} className={styles.tableEmptyMsg}>
                       검색 결과가 없습니다.
                     </td>
                   </tr>
@@ -2885,6 +2916,12 @@ function HakjeomTab({
                           options={CONSULTATION_STATUS_OPTIONS}
                           styleMap={CONSULTATION_STATUS_STYLE}
                         />
+                      </td>
+                      <td className={styles.tdSecondary}>
+                        {formatResponseTime(
+                          item.manager_assigned_at,
+                          item.consult_started_at,
+                        )}
                       </td>
                       <td
                         className={styles.tdEllipsis}
@@ -5183,6 +5220,8 @@ interface StatItem {
   education?: string | null;
   reason?: string | null;
   reaction_point?: string | null;
+  manager_assigned_at?: string | null;
+  consult_started_at?: string | null;
 }
 
 type StatsSource = "hakjeom";
@@ -5614,13 +5653,27 @@ function StatsTab() {
     total: number;
     registered: number;
     rate: number;
+    respCount: number;
+    avgResponseMin: number | null;
   }[] = (() => {
-    const acc: Record<string, { total: number; registered: number }> = {};
+    const acc: Record<
+      string,
+      { total: number; registered: number; respSum: number; respCnt: number }
+    > = {};
     data.forEach((c) => {
       const m = (c.manager ?? "").trim() || "미배정";
-      if (!acc[m]) acc[m] = { total: 0, registered: 0 };
+      if (!acc[m]) acc[m] = { total: 0, registered: 0, respSum: 0, respCnt: 0 };
       acc[m].total += 1;
       if (c.status === "등록완료") acc[m].registered += 1;
+      if (c.manager_assigned_at && c.consult_started_at) {
+        const ms =
+          new Date(c.consult_started_at).getTime() -
+          new Date(c.manager_assigned_at).getTime();
+        if (Number.isFinite(ms) && ms >= 0) {
+          acc[m].respSum += ms / 60000;
+          acc[m].respCnt += 1;
+        }
+      }
     });
     return Object.entries(acc)
       .map(([name, v]) => ({
@@ -5628,6 +5681,8 @@ function StatsTab() {
         total: v.total,
         registered: v.registered,
         rate: v.total > 0 ? Math.round((v.registered / v.total) * 100) : 0,
+        respCount: v.respCnt,
+        avgResponseMin: v.respCnt ? Math.round(v.respSum / v.respCnt) : null,
       }))
       .sort((a, b) => b.total - a.total);
   })();
@@ -6611,8 +6666,8 @@ function StatsTab() {
               </div>
 
               <StatsPanel
-                title="담당자별 처리 건수 및 등록률"
-                sub="배정 건수와 등록률을 함께 비교"
+                title="담당자별 처리 건수 · 평균 응답시간 · 등록률"
+                sub="배정 건수, 평균 응답시간(배정→상담시작), 등록률을 함께 비교"
               >
                 {managerStats.length === 0 ? (
                   <div
@@ -6676,6 +6731,16 @@ function StatsTab() {
                               textAlign: "center",
                               fontWeight: 600,
                               color: "#475569",
+                            }}
+                          >
+                            평균 응답시간
+                          </th>
+                          <th
+                            style={{
+                              padding: "10px 12px",
+                              textAlign: "center",
+                              fontWeight: 600,
+                              color: "#475569",
                               minWidth: 200,
                             }}
                           >
@@ -6717,6 +6782,16 @@ function StatsTab() {
                               }}
                             >
                               {m.registered.toLocaleString()}
+                            </td>
+                            <td
+                              style={{
+                                padding: "10px 12px",
+                                textAlign: "center",
+                                color: "#475569",
+                                fontWeight: 600,
+                              }}
+                            >
+                              {formatMinutes(m.avgResponseMin)}
                             </td>
                             <td style={{ padding: "10px 12px" }}>
                               <div

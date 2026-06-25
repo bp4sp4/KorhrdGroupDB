@@ -8,6 +8,7 @@ import {
   CONSULTATION_STATUS_STYLE,
   COUNSEL_CHECK_OPTIONS,
   CURRENT_SITUATION_OPTIONS,
+  consultStartEligible,
   DANGGEUN_DEFAULT_OPTIONS,
   EDUCATION_CUSTOM,
   EDUCATION_OPTIONS,
@@ -28,11 +29,7 @@ import { matchReactionPoints } from "../_constants";
 import { StatusBadge } from "../_components/StatusBadge";
 
 // 빠른상담 선호 시간 옵션 (랜딩 폼과 동일) — 3개 전체 선택 시 "10:00~19:00" 로 병합 표시
-const FAST_CONSULT_TIME_OPTIONS = [
-  "10:00~13:00",
-  "14:00~17:00",
-  "17:00~19:00",
-];
+const FAST_CONSULT_TIME_OPTIONS = ["10:00~13:00", "14:00~17:00", "17:00~19:00"];
 function formatPreferredTimes(times: string[] | null | undefined): string {
   const list = times ?? [];
   if (list.length === 0) return "시간 무관";
@@ -552,6 +549,14 @@ export function HakjeomDetailPanel({
   );
   const [reactionParentTab, setReactionParentTab] = useState<string>("");
   const [editContact, setEditContact] = useState(item.contact ?? "");
+  // 상담 시작 전엔 연락처 가림 — 시작 버튼 클릭 시 로컬에서 즉시 공개
+  const [consultStartedAt, setConsultStartedAt] = useState<string | null>(
+    item.consult_started_at ?? null,
+  );
+  // 연락처 가림 + 상담 시작 버튼은 (적용 시점 이후 배정 && 아직 미시작)일 때만.
+  // 이전 배정 건은 가림/버튼 없이 기존처럼 표시.
+  const consultLocked =
+    !consultStartedAt && consultStartEligible(item.manager_assigned_at);
 
   // 중복 데이터 카운트 (이름 + 전화번호 동일, 본인 제외)
   const [duplicateCount, setDuplicateCount] = useState<number>(0);
@@ -1004,6 +1009,12 @@ export function HakjeomDetailPanel({
         ? `기타(${editStatusEtc.trim()})`
         : editStatus
     ) as ConsultationStatus;
+    // 희망과정 — 직접입력(커스텀) 텍스트를 합친 실제 값 (직접입력 값 유실 방지)
+    const customHope = isHopeCourseCustom ? editHopeCourseExtra.trim() : "";
+    const effectiveHope = customHope
+      ? [...editHopeCourse.filter(Boolean), customHope]
+      : editHopeCourse.filter(Boolean);
+
     // '등록완료'로 저장 시 과목당 비용(subject_cost) 필수 검증
     if (finalStatus === "등록완료") {
       const costNum = editSubjectCost
@@ -1020,29 +1031,14 @@ export function HakjeomDetailPanel({
         alert("'등록완료'로 변경하려면 최종학력을 먼저 선택해주세요.");
         return;
       }
-      // 희망과정 — 4개 프리셋 중 하나라도 포함되어 있어야 함 (등록학생관리 매핑용)
-      const PRESETS = [
-        "사회복지사2급 - 신법",
-        "사회복지사2급 - 구법",
-        "사회복지사 (실습예정)",
-        "건강가정사",
-      ];
-      const joined = editHopeCourse.join(", ");
-      const hasPreset = PRESETS.some((p) => joined.includes(p));
-      if (!editHopeCourse.length) {
+      // 희망과정 — 프리셋이든 직접입력이든 비어있지만 않으면 등록완료 허용
+      if (!effectiveHope.length) {
         alert("'등록완료'로 변경하려면 희망과정을 입력해주세요.");
-        return;
-      }
-      if (!hasPreset) {
-        alert(
-          "'등록완료'로 변경하려면 희망과정에 다음 중 하나가 포함되어 있어야 합니다:\n" +
-            PRESETS.join("\n"),
-        );
         return;
       }
     }
     const hopeCourseToSave =
-      editHopeCourse.length > 0 ? editHopeCourse.join(", ") : null;
+      effectiveHope.length > 0 ? effectiveHope.join(", ") : null;
     setSaving(true);
     try {
       await onUpdate(item.id, {
@@ -1238,9 +1234,22 @@ export function HakjeomDetailPanel({
                     )}
                   </div>
                 </div>
-                <p className={styles.detailModalSub}>
-                  {editContact || item.contact}
-                </p>
+                {consultLocked ? (
+                  <div className={styles.consultLockWrap}>
+                    <p
+                      className={`${styles.detailModalSub} ${styles.consultPhoneBlur}`}
+                    >
+                      {editContact || item.contact}
+                    </p>
+                    <span className={styles.consultLockHint}>
+                      아래 [상담시작]을 클릭해 연락처를 확인하세요.
+                    </span>
+                  </div>
+                ) : (
+                  <p className={styles.detailModalSub}>
+                    {editContact || item.contact}
+                  </p>
+                )}
               </>
             )}
           </div>
@@ -1398,7 +1407,26 @@ export function HakjeomDetailPanel({
               </span>
             </div>
 
-            {/* 메모 */}
+            {consultLocked && (
+              <div className={styles.consultStartBlock}>
+                <button
+                  type="button"
+                  className={styles.consultStartBtn}
+                  onClick={() => {
+                    const now = new Date().toISOString();
+                    setConsultStartedAt(now);
+                    void onUpdate(item.id, { consult_started_at: now });
+                  }}
+                >
+                  상담 시작
+                </button>
+                <span className={styles.consultStartHint}>
+                  상담시작 시, 연락처 확인이 가능합니다.
+                </span>
+              </div>
+            )}
+
+            {/* 메모 — 작성칸은 항상, 시작 전엔 빈 목록 문구만 숨김 */}
             <div className={styles.detailMemoSection} data-guide="detail-memo">
               <MemoTimeline
                 tableName="hakjeom_consultations"
@@ -1406,6 +1434,7 @@ export function HakjeomDetailPanel({
                 legacyMemo={item.memo}
                 onCountChange={setMemoCount}
                 onAdd={handleMemoAdded}
+                hideEmpty={consultLocked}
               />
             </div>
           </div>
@@ -2683,8 +2712,7 @@ export function HakjeomDetailPanel({
                 </div>
               )}
             </div>
-
-            {/* 푸터 (우측 컬럼 안) */}
+            {/* 푸터 — 모달 하단 고정(sticky) */}
             <div className={styles.detailFooterRow}>
               <button
                 type="button"

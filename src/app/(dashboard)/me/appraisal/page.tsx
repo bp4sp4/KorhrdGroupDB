@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowLeft, Paperclip, Send, X } from "lucide-react";
+import { ArrowLeft, MessageSquareText, Paperclip, Send, X } from "lucide-react";
 import styles from "./page.module.css";
 import {
   type AppraisalSheet,
@@ -52,6 +52,8 @@ interface MyEvaluation {
   submittedAt: string | null;
   period: string;
   evaluatorName: string;
+  feedback: string | null;
+  feedbackAt: string | null;
   appeals: AppealRow[];
 }
 
@@ -311,13 +313,28 @@ export default function MyAppraisalPage() {
           </div>
         </div>
 
+        {/* ── 평가자 피드백(총평) ── */}
+        {detail.feedback && (
+          <section className={styles.feedbackSection}>
+            <div className={styles.feedbackHead}>
+              <span className={styles.feedbackHeadTitle}>평가자 피드백</span>
+              <span className={styles.feedbackHeadMeta}>
+                {detail.evaluatorName}
+                {detail.feedbackAt && ` · ${fmtDate(detail.feedbackAt)}`}
+              </span>
+            </div>
+            <p className={styles.feedbackBody}>{detail.feedback}</p>
+          </section>
+        )}
+
         {/* ── 이의제기 ── */}
         <section className={styles.appealSection}>
           <h2 className={styles.appealTitle}>이의제기</h2>
           <p className={styles.appealHint}>
-            평가 결과에 이의가 있으면 사유와 근거 자료를 제출하세요. 자료는
-            아래 영역에 드래그해서 놓아도 첨부됩니다. 평가자가 확인 후
-            재평가하며, 재제출되면 처리 완료로 표시됩니다.
+            평가 결과에 이의가 있으면 사유와 근거 자료를 제출하세요. 자료는 아래
+            영역에 드래그해서 놓아도 첨부됩니다. 평가자가 확인 후 재평가하며,
+            재제출되면 처리 완료로 표시됩니다.
+            <br />
             {windowOpen && deadline && (
               <>
                 {" "}
@@ -376,8 +393,8 @@ export default function MyAppraisalPage() {
 
           {!windowOpen ? (
             <div className={styles.appealLocked}>
-              이의제기 기간이 종료되었습니다. (평가 제출 후{" "}
-              {APPEAL_WINDOW_DAYS}일 이내 가능)
+              이의제기 기간이 종료되었습니다. (평가 제출 후 {APPEAL_WINDOW_DAYS}
+              일 이내 가능)
             </div>
           ) : pendingWholeAppeal ? (
             <div className={styles.appealLocked}>

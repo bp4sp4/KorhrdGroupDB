@@ -88,6 +88,7 @@ interface HakjeomUpdatePayload {
   current_situation?: string | null;
   reaction_point?: string | null;
   contact_scheduled_at?: string | null;
+  consult_started_at?: string | null;
 }
 
 const TABLE = 'hakjeom_consultations';
@@ -449,7 +450,7 @@ export async function PATCH(request: NextRequest) {
     const {
       id, ids, status, memo, manager, counsel_check, subject_cost,
       name, contact, education, reason, click_source, residence, hope_course, current_situation, reaction_point,
-      contact_scheduled_at,
+      contact_scheduled_at, consult_started_at,
     } = body;
 
     // 일괄 담당자 배정
@@ -604,12 +605,18 @@ export async function PATCH(request: NextRequest) {
     if (current_situation !== undefined) updateData.current_situation = current_situation || null;
     if (reaction_point !== undefined) updateData.reaction_point = reaction_point || null;
     if (contact_scheduled_at !== undefined) updateData.contact_scheduled_at = contact_scheduled_at;
+    if (consult_started_at !== undefined) updateData.consult_started_at = consult_started_at;
 
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json({ error: 'At least one field is required for update' }, { status: 400 });
     }
 
     const { data: current } = await supabaseAdmin.from(TABLE).select('*').eq('id', id).single();
+
+    // 상담 시작 시각은 최초 1회만 기록 (재클릭·조작으로 응답시간 왜곡 방지)
+    if (updateData.consult_started_at !== undefined && current?.consult_started_at) {
+      delete updateData.consult_started_at;
+    }
 
     // 등록완료로 변경 시 최종학력 + 희망과정 필수
     if (status === '등록완료') {

@@ -272,6 +272,31 @@ export default function NotificationBell() {
   const lastApprovalIdRef = useRef<number | null>(null);
   // 게시판 공지(BOARD_NOTICE) 팝업
   const [noticePopup, setNoticePopup] = useState<Notification | null>(null);
+
+  // [테스트용] 개발자도구 콘솔에서 공지 팝업 강제 노출
+  //   새 공지 팝업:    __showNoticePopup()
+  //   게시판 공지 팝업: __showBoardNotice("제목", "내용")
+  useEffect(() => {
+    const w = window as unknown as {
+      __showNoticePopup?: () => void;
+      __showBoardNotice?: (title?: string, message?: string) => void;
+    };
+    w.__showNoticePopup = () => setShowNewPopup(true);
+    w.__showBoardNotice = (
+      title = "테스트 공지",
+      message = "테스트 공지 내용입니다.",
+    ) =>
+      setNoticePopup({
+        id: -1,
+        title,
+        message,
+        link: null,
+      } as unknown as Notification);
+    return () => {
+      delete w.__showNoticePopup;
+      delete w.__showBoardNotice;
+    };
+  }, []);
   const lastNoticeIdRef = useRef<number | null>(null);
   // 본인 작성 알림 억제용 자기 ID (ref + state — state는 useEffect 트리거용)
   const myIdRef = useRef<number | null>(null);

@@ -45,6 +45,7 @@ export interface HakjeomConsultation {
   reaction_point: string | null;
   contact_scheduled_at: string | null;
   manager_assigned_at?: string | null;
+  consult_started_at?: string | null;
   fast_consultation?: boolean | null;
   preferred_times?: string[] | null;
   consult_time_memo?: string | null;

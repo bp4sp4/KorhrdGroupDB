@@ -15,6 +15,7 @@ import {
   reasonTags,
 } from "@/app/(dashboard)/hakjeom/_components/segments";
 import {
+  consultStartEligible,
   REFERRER_CARD_META,
   SOURCE_MAJOR_LABEL,
   SOURCE_MAJORS,
@@ -550,6 +551,18 @@ function ConsultationList({
 
   // 신규 배정 팝업 — manager_assigned_at 이 마지막 확인 시각 이후면 알림
   const [newAssignCount, setNewAssignCount] = useState(0);
+
+  // [테스트용] 개발자도구 콘솔에서 신규 배정 팝업 강제 노출
+  //   콘솔에 입력:  __showAssignPopup(3)   (숨김: __showAssignPopup(0))
+  useEffect(() => {
+    const w = window as unknown as {
+      __showAssignPopup?: (n?: number) => void;
+    };
+    w.__showAssignPopup = (n = 1) => setNewAssignCount(n);
+    return () => {
+      delete w.__showAssignPopup;
+    };
+  }, []);
   const assignSeenRef = useRef<string | null>(null);
   const assignInitedRef = useRef(false);
 
@@ -1120,19 +1133,28 @@ function ConsultationList({
                       {consultStatusShort(status)}
                     </span>
                     <div className={styles.wcRowWho}>
-                      <div className={styles.wcRowNameLine}>
+                      <div className={styles.wcRowWhoText}>
                         <span className={styles.wcRowName}>
                           {hlText(r.name ?? "", q)}
                         </span>
-                        {education && (
-                          <span className={styles.wcRowEdu} title={education}>
-                            {hlText(education, q)}
-                          </span>
-                        )}
-                        {fastConsultPending && <FastConsultBadge />}
+                        <div className={styles.wcRowNameLine}>
+                          {education && (
+                            <span className={styles.wcRowEdu} title={education}>
+                              {hlText(education, q)}
+                            </span>
+                          )}
+                          {fastConsultPending && <FastConsultBadge />}
+                        </div>
                       </div>
                       {r.contact && (
-                        <span className={styles.wcRowPhone}>
+                        <span
+                          className={`${styles.wcRowPhone} ${
+                            !r.consult_started_at &&
+                            consultStartEligible(r.manager_assigned_at)
+                              ? styles.wcRowPhoneBlur
+                              : ""
+                          }`}
+                        >
                           {qDigits.length >= 2
                             ? hlDigits(r.contact, qDigits)
                             : hlText(r.contact, q)}
@@ -1190,6 +1212,22 @@ function ConsultationList({
                       />
                     </div>
                   </div>
+                  {!r.consult_started_at &&
+                    r.contact &&
+                    consultStartEligible(r.manager_assigned_at) && (
+                    <button
+                      type="button"
+                      className={styles.wcStartBtn}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDetailUpdate(r.id, {
+                          consult_started_at: new Date().toISOString(),
+                        });
+                      }}
+                    >
+                      상담 시작
+                    </button>
+                  )}
                 </div>
               );
             })}
@@ -1237,7 +1275,11 @@ function ConsultationList({
             className={styles.assignPopup}
             onClick={(e) => e.stopPropagation()}
           >
-            <span className={styles.assignPopupBadge}>NEW</span>
+            <img
+              src="/speech%20bubble_blue.png"
+              alt=""
+              className={styles.assignPopupImg}
+            />
             <p className={styles.assignPopupText}>
               신규 상담 <b>{newAssignCount}건</b>이 배정되었습니다.
             </p>

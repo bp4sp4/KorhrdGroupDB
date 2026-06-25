@@ -107,6 +107,17 @@ export const HAKJEOM_COURSE_OPTIONS = [
   "직접입력",
 ];
 
+// 상담 시작(응답시간) 기능 적용 시점 — 이 시각 이후 배정된 건만 '상담 시작' 버튼/연락처 가림 노출.
+// (이전에 배정된 건은 기존처럼 연락처 바로 노출, 버튼 없음)
+export const CONSULT_START_SINCE = "2026-06-25T17:00:00+09:00";
+
+export function consultStartEligible(
+  managerAssignedAt?: string | null,
+): boolean {
+  if (!managerAssignedAt) return false;
+  return new Date(managerAssignedAt) >= new Date(CONSULT_START_SINCE);
+}
+
 export const CURRENT_SITUATION_OPTIONS = [
   "주부",
   "직장인",

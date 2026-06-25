@@ -1377,3 +1377,55 @@
     page-break-before: always;
   }
 }
+
+/* ── 평가자 피드백(총평) ───────────────────────────── */
+.feedbackBox {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  background: #f5f5f5;
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin-bottom: 16px;
+}
+
+.feedbackBoxHead {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.feedbackBoxTitle {
+  font-size: 14px;
+  font-weight: 800;
+  color: #1f2937;
+}
+
+.feedbackBoxHint {
+  font-size: 12px;
+  color: #1f2937;
+}
+
+.feedbackTextarea {
+  width: 100%;
+  border: 1px solid #cdd6e4;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #1f2937;
+  background: #fff;
+  outline: none;
+  resize: vertical;
+  min-height: 76px;
+}
+
+.feedbackTextarea:focus {
+  border-color: #3182f6;
+}
+
+.feedbackBoxFoot {
+  display: flex;
+  justify-content: flex-end;
+}
