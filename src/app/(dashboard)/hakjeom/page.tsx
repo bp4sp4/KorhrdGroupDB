@@ -40,7 +40,7 @@ import type { DateRange } from "react-day-picker";
 import EduStudentsTab from "./education-center/EduStudentsTab";
 import HakjeomCustomSelect from "../admin/customers/CustomSelect";
 import { DEMO_LIST as HAKJEOM_DEMO_LIST } from "@/lib/guide/hakjeomDemo";
-import PerformerLeaderboard from "@/components/stats/PerformerLeaderboard";
+import AgentAvailability from "./_components/AgentAvailability";
 import ComboExplorer from "./_components/ComboExplorer";
 import ManagerMatcher from "./_components/ManagerMatcher";
 import { Search, HelpCircle } from "lucide-react";
@@ -1231,10 +1231,6 @@ function HakjeomTab({
     return "기간 선택";
   })();
 
-  // 담당자 실적 (검색영역 표시용)
-  const [managerStatsNode, setManagerStatsNode] =
-    useState<React.ReactNode>(null);
-
   // UI 상태
   const [selectedItem, setSelectedItem] = useState<HakjeomConsultation | null>(
     null,
@@ -1996,111 +1992,13 @@ function HakjeomTab({
     setCurrentPage(1);
   };
 
-  // 담당자별 실적 (검색영역 표시) — 스코프와 무관하게 전체 담당자 표시
-  useEffect(() => {
-    if (!isActive) {
-      setManagerStatsNode(null);
-      return;
-    }
-    let cancelled = false;
-    fetch("/api/hakjeom/perf-stats")
-      .then((r) => (r.ok ? r.json() : []))
-      .then(
-        (all: { manager: string; status: string; created_at: string }[]) => {
-          if (cancelled) return;
-          const mgrs = Array.from(
-            new Set(all.map((c) => c.manager).filter(Boolean)),
-          ) as string[];
-          if (mgrs.length === 0) {
-            setManagerStatsNode(null);
-            return;
-          }
-          const rate = (list: typeof all) => {
-            const t = list.length;
-            return t > 0
-              ? Math.round(
-                  (list.filter((c) => c.status === "등록완료").length / t) *
-                    100,
-                )
-              : 0;
-          };
-          // 한국시간(KST) 기준 월 / 분기 계산
-          const now = new Date();
-          const kstNow = new Date(
-            now.toLocaleString("en-US", { timeZone: "Asia/Seoul" }),
-          );
-          const kstYear = kstNow.getFullYear();
-          const kstMonth = kstNow.getMonth(); // 0-based
-          const quarter = Math.floor(kstMonth / 3) + 1; // 1~4
-          const monthStart = new Date(
-            `${kstYear}-${String(kstMonth + 1).padStart(2, "0")}-01T00:00:00+09:00`,
-          );
-          const monthLastDay = new Date(kstYear, kstMonth + 1, 0).getDate();
-          const monthEnd = new Date(
-            `${kstYear}-${String(kstMonth + 1).padStart(2, "0")}-${String(monthLastDay).padStart(2, "0")}T23:59:59+09:00`,
-          );
-          const quarterStartMonth = (quarter - 1) * 3;
-          const quarterEndMonth = quarterStartMonth + 2;
-          const quarterEndLastDay = new Date(
-            kstYear,
-            quarterEndMonth + 1,
-            0,
-          ).getDate();
-          const quarterStart = new Date(
-            `${kstYear}-${String(quarterStartMonth + 1).padStart(2, "0")}-01T00:00:00+09:00`,
-          );
-          const quarterEnd = new Date(
-            `${kstYear}-${String(quarterEndMonth + 1).padStart(2, "0")}-${String(quarterEndLastDay).padStart(2, "0")}T23:59:59+09:00`,
-          );
-
-          // 메인 수치 = 2분기 등록률 (분모가 크고 안정적), 보조 = 이번 달
-          //   → PerformerLeaderboard 의 month=primary, quarter=secondary 라
-          //     실제 값/라벨을 swap 해서 전달
-          const mStats = mgrs
-            .map((name) => {
-              const rows = all.filter((c) => c.manager === name);
-              const monthlyRows = rows.filter((c) => {
-                const d = new Date(c.created_at);
-                return d >= monthStart && d <= monthEnd;
-              });
-              const quarterlyRows = rows.filter((c) => {
-                const d = new Date(c.created_at);
-                return d >= quarterStart && d <= quarterEnd;
-              });
-              return {
-                name,
-                month: rate(quarterlyRows), // 메인 표시값 = 분기 등록률
-                quarter: rate(monthlyRows), // 보조 표시값 = 월 등록률
-              };
-            })
-            .sort((a, b) => b.month - a.month);
-          setManagerStatsNode(
-            <PerformerLeaderboard
-              performers={mStats}
-              primaryLabel={`${quarter}분기`}
-              secondaryLabel={`${kstMonth + 1}월`}
-            />,
-          );
-        },
-      )
-      .catch(() => setManagerStatsNode(null));
-    return () => {
-      cancelled = true;
-      setManagerStatsNode(null);
-    };
-  }, [isActive]);
 
   return (
     <div>
-      {/* 페이지 상단 — 담당자 실적 리더보드 */}
-      {managerStatsNode && (
-        <div
-          className={styles.leaderboardWrap}
-          data-guide="hakjeom-leaderboard"
-        >
-          {managerStatsNode}
-        </div>
-      )}
+      {/* 페이지 상단 — 영업 상담 가능 현황 (담당자 배정 참고용) */}
+      <div className={styles.leaderboardWrap} data-guide="hakjeom-leaderboard">
+        <AgentAvailability />
+      </div>
       {loading ? (
         <FilterBarSkeleton />
       ) : (

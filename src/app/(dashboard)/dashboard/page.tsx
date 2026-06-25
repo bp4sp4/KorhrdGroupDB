@@ -615,8 +615,9 @@ export default function DashboardPage() {
             const goalTotal = monthlyGoal.total;
             const goalAchieved = monthlyAchieved.total;
             const pct = goalTotal > 0
-              ? Math.min(100, Math.round((goalAchieved / goalTotal) * 100))
+              ? Math.round((goalAchieved / goalTotal) * 100)
               : 0;
+            const donutFill = Math.min(100, pct); // 도넛 시각은 100%까지, % 텍스트는 초과분 그대로
             // 오늘 날짜로 현재 주차 계산 (달력 주차: 월~일)
             const today = new Date();
             const currentWeekIdx = getCalendarWeekIndex(
@@ -660,7 +661,7 @@ export default function DashboardPage() {
                         stroke="#0084fe"
                         strokeWidth="10"
                         strokeLinecap="round"
-                        strokeDasharray={`${(pct / 100) * 2 * Math.PI * 32} ${2 * Math.PI * 32}`}
+                        strokeDasharray={`${(donutFill / 100) * 2 * Math.PI * 32} ${2 * Math.PI * 32}`}
                         transform="rotate(-90 40 40)"
                       />
                       <text
@@ -695,11 +696,9 @@ export default function DashboardPage() {
                   {weekly.map((w) => {
                     const wpct =
                       w.target > 0
-                        ? Math.min(
-                            100,
-                            Math.round((w.value / w.target) * 100),
-                          )
+                        ? Math.round((w.value / w.target) * 100)
                         : 0;
+                    const weekFill = Math.min(100, wpct); // 바는 100%까지, % 텍스트는 초과분 그대로
                     return (
                       <div
                         key={w.week}
@@ -717,7 +716,7 @@ export default function DashboardPage() {
                           <div className={styles.goalWeekBar}>
                             <span
                               className={styles.goalWeekFill}
-                              style={{ width: `${wpct}%` }}
+                              style={{ width: `${weekFill}%` }}
                             />
                           </div>
                         </div>

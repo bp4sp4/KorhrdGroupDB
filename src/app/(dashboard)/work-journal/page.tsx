@@ -548,6 +548,11 @@ function ConsultationList({
   const [customCafes, setCustomCafes] = useState<string[]>([]);
   const [customDanggeun, setCustomDanggeun] = useState<string[]>([]);
 
+  // 신규 배정 팝업 — manager_assigned_at 이 마지막 확인 시각 이후면 알림
+  const [newAssignCount, setNewAssignCount] = useState(0);
+  const assignSeenRef = useRef<string | null>(null);
+  const assignInitedRef = useRef(false);
+
   useEffect(() => {
     let cancelled = false;
     fetch("/api/hakjeom/custom-sources")
@@ -705,6 +710,35 @@ function ConsultationList({
       void supabase.removeChannel(ch);
     };
   }, [userName]);
+
+  // 신규 배정 감지 — items 변동(로드/실시간)마다 manager_assigned_at 기준으로 신규 건수 계산
+  useEffect(() => {
+    if (!userName) return;
+    const key = `wj_assign_seen_${userName}`;
+    if (!assignInitedRef.current) {
+      assignSeenRef.current = localStorage.getItem(key);
+      assignInitedRef.current = true;
+    }
+    const stamps = items
+      .map((i) => i.manager_assigned_at)
+      .filter((s): s is string => !!s);
+    if (stamps.length === 0) return;
+    // 기준선: 저장값 없으면(첫 방문) 최근 24시간 — 과거 전체는 제외하되 최근 배정은 알림
+    const baseline =
+      assignSeenRef.current ??
+      new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const baselineT = new Date(baseline).getTime();
+    const cnt = stamps.filter((s) => new Date(s).getTime() > baselineT).length;
+    if (cnt > 0) setNewAssignCount((prev) => prev + cnt);
+    // 기준선 전진 (가장 최근 배정시각, 뒤로 가지 않게) → 다음부턴 이후 건만 알림
+    const maxStamp = stamps.reduce((a, b) =>
+      new Date(a).getTime() > new Date(b).getTime() ? a : b,
+    );
+    const newSeen =
+      new Date(maxStamp).getTime() > baselineT ? maxStamp : baseline;
+    assignSeenRef.current = newSeen;
+    localStorage.setItem(key, newSeen);
+  }, [items, userName]);
 
   // 상세 모달 저장 → 목록/모달 동기화
   const handleDetailUpdate = async (
@@ -1192,6 +1226,30 @@ function ConsultationList({
           onAddDanggeun={handleAddDanggeun}
           onDeleteDanggeun={handleDeleteDanggeun}
         />
+      )}
+
+      {newAssignCount > 0 && (
+        <div
+          className={styles.assignPopupOverlay}
+          onClick={() => setNewAssignCount(0)}
+        >
+          <div
+            className={styles.assignPopup}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span className={styles.assignPopupBadge}>NEW</span>
+            <p className={styles.assignPopupText}>
+              신규 상담 <b>{newAssignCount}건</b>이 배정되었습니다.
+            </p>
+            <button
+              type="button"
+              className={styles.assignPopupBtn}
+              onClick={() => setNewAssignCount(0)}
+            >
+              확인
+            </button>
+          </div>
+        </div>
       )}
     </>
   );

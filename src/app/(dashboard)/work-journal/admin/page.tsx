@@ -5,7 +5,6 @@ import { Users, UserPlus, TrendingUp, Wallet } from "lucide-react";
 import styles from "./page.module.css";
 import { JournalDetailModal } from "./_detail/JournalDetailModal";
 import { DateInput } from "@/components/ui/Calendar/DateInput";
-import PresenceBoard from "@/app/(dashboard)/admin/presence/PresenceBoard";
 
 interface AdminRow {
   user_id: number;
@@ -77,7 +76,6 @@ export default function WorkJournalAdminPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [modalUserId, setModalUserId] = useState<number | null>(null);
-  const [tab, setTab] = useState<"journal" | "presence">("journal");
 
   const fetchList = useCallback(async () => {
     setLoading(true);
@@ -114,28 +112,7 @@ export default function WorkJournalAdminPage() {
 
   return (
     <div className={styles.page}>
-      {/* 탭 — 업무일지 현황 / 활동 현황 */}
-      <div className={styles.adminTabBar}>
-        <button
-          type="button"
-          className={`${styles.adminTab} ${tab === "journal" ? styles.adminTabOn : ""}`}
-          onClick={() => setTab("journal")}
-        >
-          업무일지 현황
-        </button>
-        <button
-          type="button"
-          className={`${styles.adminTab} ${tab === "presence" ? styles.adminTabOn : ""}`}
-          onClick={() => setTab("presence")}
-        >
-          활동 현황
-        </button>
-      </div>
-
-      {tab === "presence" ? (
-        <PresenceBoard />
-      ) : (
-        <>
+      <>
       {/* 헤더 KPI 4개 */}
       <section className={styles.kpiRow}>
         <KpiCard
@@ -282,7 +259,6 @@ export default function WorkJournalAdminPage() {
         />
       )}
         </>
-      )}
     </div>
   );
 }

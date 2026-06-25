@@ -1,0 +1,105 @@
+.bar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.title {
+  color: #1f2937;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.summary {
+  color: #7a8086;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.summary b {
+  color: #1aa76a;
+  font-weight: 700;
+}
+
+.list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-family: inherit;
+  cursor: default;
+}
+
+.chipEditable {
+  cursor: pointer;
+  transition: filter 0.12s;
+}
+
+.chipEditable:hover {
+  filter: brightness(0.96);
+}
+
+.chipOk {
+  background: #e6f8ef;
+  border-color: #b6ecd1;
+}
+
+.chipNo {
+  background: #f3f4f6;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.chipOk .dot {
+  background: #1aa76a;
+}
+
+.chipNo .dot {
+  background: #c9cdd2;
+}
+
+.name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.chipNo .name {
+  color: #8995a2;
+}
+
+.statusLabel {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.chipOk .statusLabel {
+  color: #1aa76a;
+}
+
+.chipNo .statusLabel {
+  color: #aeb6bf;
+}

@@ -397,7 +397,7 @@
   width: 8px;
   height: 8px;
   border-radius: 999px;
-  background: #0084fe;
+  background: #1aa76a;
   flex-shrink: 0;
 }
 .statusDotOff {
@@ -445,7 +445,7 @@
   background: #f3f4f6;
 }
 .statusMenuItemOn {
-  color: #0084fe;
+  color: #1aa76a;
 }
 
 /* ── 출근/퇴근 버튼 ───────────────────────────── */

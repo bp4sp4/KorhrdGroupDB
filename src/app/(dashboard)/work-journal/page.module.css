@@ -3411,3 +3411,68 @@
   background: #f2f4f6;
   color: #4e5968;
 }
+
+/* ─── 신규 배정 팝업 ─────────────────────────────────────────────────── */
+.assignPopupOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.45);
+}
+.assignPopup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 300px;
+  padding: 28px 24px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+  animation: assignPopIn 0.18s ease-out;
+}
+@keyframes assignPopIn {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.assignPopupBadge {
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: #e9f3ff;
+  color: #0084fe;
+  font-size: 12px;
+  font-weight: 700;
+}
+.assignPopupText {
+  margin: 0;
+  color: #1f2937;
+  font-size: 15px;
+  text-align: center;
+  line-height: 1.5;
+}
+.assignPopupText b {
+  color: #0084fe;
+}
+.assignPopupBtn {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  background: #0084fe;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.assignPopupBtn:hover {
+  background: #0072db;
+}

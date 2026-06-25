@@ -861,7 +861,7 @@ export const SIDEBAR_PERSONAL: GlobalNavItem[] = [
 export const SIDEBAR_ADMIN: GlobalNavItem[] = [
   {
     id: "wj-admin",
-    label: "업무일지·활동현황",
+    label: "업무일지 현황",
     href: "/work-journal/admin",
     icon: <IconWorkJournal />,
     permissionKey: "wj-admin",
