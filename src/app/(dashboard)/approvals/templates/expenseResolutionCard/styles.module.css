@@ -96,6 +96,7 @@
 .th_merchant { }
 .th_detail   { }
 .th_amount   { width: 100px; }
+.th_category { width: 100px; }
 
 .td_date     { width: 120px; }
 .td_card     { width: 110px; }
@@ -103,6 +104,7 @@
 .td_merchant { }
 .td_detail   { }
 .td_amount   { width: 100px; text-align: right; }
+.td_category { width: 100px; }
 
 .input_full {
   color: rgb(17, 17, 17);

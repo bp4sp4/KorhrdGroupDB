@@ -1,0 +1,561 @@
+/* ── 매출 목표 관리 ── */
+.board {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  color: #191f28;
+}
+
+.empty {
+  padding: 56px 0;
+  text-align: center;
+  color: #8b95a1;
+  font-size: 14px;
+}
+
+/* ── 헤더 ── */
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.title {
+  margin: 0;
+  font-size: 25px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+.badge {
+  background: #eaf1fe;
+  color: #3182f6;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 4px 11px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.desc {
+  margin: 9px 0 0;
+  font-size: 13.5px;
+  color: #8b95a1;
+  letter-spacing: -0.01em;
+  max-width: 640px;
+  line-height: 1.5;
+}
+.headRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+}
+.monthNav {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border: 1px solid #e5e8ec;
+  border-radius: 9px;
+  overflow: hidden;
+}
+.monthArrow {
+  padding: 9px 15px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #4e5968;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.monthArrow:hover {
+  background: #f9fafb;
+}
+.monthLabel {
+  padding: 9px 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #191f28;
+  border-left: 1px solid #ececf0;
+  border-right: 1px solid #ececf0;
+  white-space: nowrap;
+}
+.saveBtn {
+  background: #3182f6;
+  color: #fff;
+  border: none;
+  border-radius: 9px;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(49, 130, 246, 0.16);
+  white-space: nowrap;
+}
+.saveBtn:hover {
+  background: #2272ee;
+}
+.saveBtn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* ── 툴바 (필터 + 검색) ── */
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.filters {
+  display: flex;
+  gap: 8px;
+}
+.chip {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  background: #fff;
+  color: #4e5968;
+  border: 1px solid #e5e8ec;
+}
+.chip:hover {
+  border-color: #c8cdd4;
+}
+.chipOn {
+  background: #1c2331;
+  color: #fff;
+  border-color: #1c2331;
+}
+.search {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border: 1px solid #e5e8ec;
+  border-radius: 9px;
+  padding: 0 13px;
+  gap: 8px;
+  width: 240px;
+}
+.search:focus-within {
+  border-color: #3182f6;
+}
+.searchInput {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  padding: 9px 0;
+  font-size: 13.5px;
+  color: #191f28;
+}
+.searchInput::placeholder {
+  color: #b0b8c1;
+}
+
+/* ── 표 ── */
+.card {
+  background: #fff;
+  border: 1px solid #ececf0;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+.headRow,
+.row {
+  display: grid;
+  grid-template-columns: 200px 64px 92px 150px minmax(240px, 1fr) 120px 110px;
+  align-items: center;
+}
+.headRow {
+  background: #f9fafb;
+  border-bottom: 1px solid #ececf0;
+}
+.th {
+  padding: 14px 12px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #8b95a1;
+}
+.thName {
+  padding-left: 22px;
+}
+.thCenter {
+  text-align: center;
+}
+.thRight {
+  text-align: right;
+}
+.thRateEnd {
+  padding-right: 18px;
+}
+.thMuted {
+  color: #b0b8c1;
+  font-weight: 600;
+}
+
+.row {
+  border-top: 1px solid #f2f4f6;
+}
+.row:hover {
+  background: #fafbfc;
+}
+.nameCell {
+  padding: 13px 22px;
+}
+.name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #191f28;
+}
+.teamCell {
+  padding: 13px 6px;
+  font-size: 13.5px;
+  color: #4e5968;
+}
+.roleCell {
+  padding: 13px 6px;
+}
+.roleBadge {
+  font-size: 12px;
+  font-weight: 600;
+  color: #5a6577;
+  background: #eef1f5;
+  padding: 3px 9px;
+  border-radius: 7px;
+  white-space: nowrap;
+}
+.roleBadgeLead {
+  color: #3182f6;
+  background: #eaf1fe;
+}
+
+/* 최소매출 */
+.minCell {
+  padding: 9px 12px;
+}
+.minBox {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border: 1px solid #e5e8ec;
+  border-radius: 8px;
+  padding: 7px 10px;
+  gap: 6px;
+}
+.minBox:focus-within {
+  border-color: #3182f6;
+}
+.minInput {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #191f28;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.minText {
+  display: block;
+  padding: 13px 4px;
+  text-align: right;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #191f28;
+  font-variant-numeric: tabular-nums;
+}
+.unit {
+  font-size: 12px;
+  color: #b0b8c1;
+  flex: none;
+}
+.muted {
+  color: #b0b8c1;
+  font-weight: 500;
+}
+
+/* 목표매출 */
+.targetCell {
+  padding: 13px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.targetClickable {
+  cursor: pointer;
+}
+.targetVal {
+  font-size: 15px;
+  font-weight: 800;
+  color: #191f28;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+.targetUnit {
+  font-size: 11px;
+  color: #b0b8c1;
+  font-weight: 700;
+  margin-left: 2px;
+}
+.chevron {
+  font-size: 12px;
+  font-weight: 700;
+  color: #b0b8c1;
+}
+.setBtn {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #4e5968;
+  background: #fff;
+  border: 1px solid #d8dce1;
+  padding: 6px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.setBtn:hover {
+  border-color: #3182f6;
+  color: #3182f6;
+}
+
+/* 실제매출 */
+.actualCell {
+  padding: 13px 12px;
+  text-align: right;
+  font-size: 14px;
+  font-weight: 600;
+  color: #191f28;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 달성률 */
+.rateCell {
+  padding: 13px 18px 13px 12px;
+  display: flex;
+  justify-content: flex-end;
+}
+.rateBadge {
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 5px 11px;
+  border-radius: 8px;
+  font-variant-numeric: tabular-nums;
+  min-width: 54px;
+  text-align: center;
+}
+.rateHigh {
+  color: #15a05a;
+  background: #e6f6ec;
+}
+.rateMid {
+  color: #3182f6;
+  background: #eaf1fe;
+}
+.rateLow {
+  color: #c2700f;
+  background: #fdf2e1;
+}
+.rateNone {
+  color: #b0b8c1;
+  background: #f3f4f6;
+}
+
+/* ── 모달 ── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(15, 23, 42, 0.32);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+.modal {
+  width: 440px;
+  max-width: 100%;
+  background: #fff;
+  border-radius: 24px;
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.22);
+  overflow: hidden;
+}
+.modalHead {
+  padding: 26px 28px 20px;
+}
+.modalTopRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.modalBadge {
+  font-size: 13px;
+  font-weight: 700;
+  color: #3182f6;
+  letter-spacing: -0.01em;
+}
+.modalClose {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  color: #8b95a1;
+  border: none;
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+}
+.modalClose:hover {
+  background: #e9ebef;
+}
+.modalTitle {
+  margin: 14px 0 0;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: #191f28;
+  line-height: 1.3;
+}
+.modalSub {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: #b0b8c1;
+}
+.weekList {
+  padding: 0 28px;
+}
+.weekRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 0;
+  border-top: 1px solid #f2f4f6;
+}
+.weekBadge {
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border-radius: 12px;
+  background: #eaf1fe;
+  color: #3182f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+}
+.weekInfo {
+  flex: 1;
+  min-width: 0;
+}
+.weekLabel {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #191f28;
+}
+.weekInputWrap {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+.weekInput {
+  width: 96px;
+  border: none;
+  outline: none;
+  background: transparent;
+  border-bottom: 1.5px solid #e5e8ec;
+  font-size: 20px;
+  font-weight: 800;
+  color: #191f28;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  padding-bottom: 2px;
+}
+.weekInput:focus {
+  border-bottom-color: #3182f6;
+}
+.weekUnit {
+  font-size: 13px;
+  font-weight: 700;
+  color: #b0b8c1;
+  flex: none;
+}
+.totalBox {
+  margin: 8px 28px 0;
+  padding: 18px 20px;
+  background: #f9fafb;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.totalLabel {
+  font-size: 14px;
+  font-weight: 700;
+  color: #4e5968;
+}
+.totalVal {
+  font-size: 24px;
+  font-weight: 800;
+  color: #191f28;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.totalUnit {
+  font-size: 14px;
+  color: #b0b8c1;
+  font-weight: 700;
+  margin-left: 3px;
+}
+.modalFoot {
+  padding: 18px 28px 24px;
+  display: flex;
+  gap: 10px;
+}
+.btnGhost {
+  flex: none;
+  width: 108px;
+  background: #f2f4f6;
+  color: #4e5968;
+  border: none;
+  border-radius: 13px;
+  padding: 15px 0;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.btnGhost:hover {
+  background: #e9ebef;
+}
+.btnPrimary {
+  flex: 1;
+  background: #3182f6;
+  color: #fff;
+  border: none;
+  border-radius: 13px;
+  padding: 15px 0;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(49, 130, 246, 0.2);
+}
+.btnPrimary:hover {
+  background: #2272ee;
+}
+.btnPrimary:disabled,
+.btnGhost:disabled {
+  opacity: 0.55;
+  cursor: default;
+}

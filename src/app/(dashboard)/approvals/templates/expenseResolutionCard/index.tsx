@@ -19,12 +19,14 @@ interface CardItem {
   merchant: string
   detail: string
   amount: string
+  category: string
 }
 
-const DEFAULT_ROWS = 10
+const DEFAULT_ROWS = 1
+const CATEGORY_OPTIONS = ['운영비', '예산비'] as const
 
 function emptyItem(): CardItem {
-  return { date: '', card_last4: '', user: '', merchant: '', detail: '', amount: '' }
+  return { date: '', card_last4: '', user: '', merchant: '', detail: '', amount: '', category: '' }
 }
 
 function v(content: Record<string, unknown>, key: string): string {
@@ -204,6 +206,7 @@ export function ExpenseResolutionCardBody({ content, onChange, departments = [],
             <th className={styles.th_merchant}>상호명(거래처명)</th>
             <th className={styles.th_detail}>세부내용</th>
             <th className={styles.th_amount}>금액</th>
+            <th className={styles.th_category}>분류</th>
           </tr>
         </thead>
         <tbody>
@@ -275,21 +278,33 @@ export function ExpenseResolutionCardBody({ content, onChange, departments = [],
                   />
                 )}
               </td>
+              <td className={styles.td_category}>
+                {ro ? (
+                  <span>{item.category}</span>
+                ) : (
+                  <select
+                    className={styles.select_full}
+                    value={item.category}
+                    onChange={(e) => updateItem(idx, 'category', e.target.value)}
+                  >
+                    <option value="">분류</option>
+                    {CATEGORY_OPTIONS.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </td>
             </tr>
           ))}
           <tr className={styles.total_row}>
             <td colSpan={5} className={styles.total_label}>합 계</td>
             <td className={styles.total_amount}>{total.toLocaleString()}</td>
+            <td></td>
           </tr>
         </tbody>
       </table>
-
-      {!ro && (
-        <button type="button" className={styles.btn_add_row}
-          onClick={() => updateItems([...items, emptyItem()])}>
-          + 행 추가
-        </button>
-      )}
 
       {!ro && merchantSuggestions.length > 0 && (
         <datalist id="merchant-suggestions-card">
