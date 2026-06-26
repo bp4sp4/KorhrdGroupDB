@@ -7,6 +7,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import SalesTargetsBoard from "../sales-targets/SalesTargetsBoard";
+import ProfitPnlBoard from "./ProfitPnlBoard";
 import styles from "./page.module.css";
 
 /* ── Ant Design Charts (SSR 비활성) ── */
@@ -218,10 +219,13 @@ export default function ProfitPage() {
   const monthOptions = buildMonthOptions();
   const [division, setDivision] = useState(DIVISIONS[0]);
   const [month, setMonth] = useState(monthOptions[0]);
-  // 탭 — 영업 손익관리 / 매출 목표 관리
-  const [tab, setTab] = useState<"profit" | "targets">("profit");
+  // 탭 — 영업 손익관리 / 매출 목표 관리 / 예상손익계산서
+  const [tab, setTab] = useState<"profit" | "targets" | "pnl">("profit");
   // 매출목표 탭 노출 여부 — 관리자/팀장/본부장/경영지원본부만
   const [canTargets, setCanTargets] = useState(false);
+  // 예상손익계산서 — 보기(팀장 제외) / 수정(마스터어드민·경영지원본부)
+  const [canPnl, setCanPnl] = useState(false);
+  const [canEditPnl, setCanEditPnl] = useState(false);
 
   // 접근 가드 — 관리자는 항상, 그 외는 profit 권한이 부여된 경우만 (URL 직접 접근 차단)
   const [accessChecked, setAccessChecked] = useState(false);
@@ -253,6 +257,18 @@ export default function ProfitPage() {
         }
         // 매출목표 탭은 관리자/팀장/본부장/경영지원본부에게만
         setCanTargets(isAdmin || canSalesTarget);
+        // 예상손익계산서 탭은 팀장 제외 (마스터/관리자/본부장/경영지원본부/profit권한)
+        setCanPnl(
+          isAdmin ||
+            profitScope !== "none" ||
+            data?.isDeptHead === true ||
+            data?.departmentCode === "MGT",
+        );
+        // 예상손익계산서 수정 — 마스터어드민 + 경영지원본부(MGT)
+        setCanEditPnl(
+          (!!data && data.role === "master-admin") ||
+            data?.departmentCode === "MGT",
+        );
         setAccessChecked(true);
       })
       .catch(() => {
@@ -503,11 +519,22 @@ export default function ProfitPage() {
             >
               매출 목표 관리
             </button>
+            {canPnl && (
+              <button
+                type="button"
+                className={`${styles.tab} ${tab === "pnl" ? styles.tabOn : ""}`}
+                onClick={() => setTab("pnl")}
+              >
+                예상손익계산서
+              </button>
+            )}
           </div>
         )}
 
         {canTargets && tab === "targets" ? (
           <SalesTargetsBoard />
+        ) : canPnl && tab === "pnl" ? (
+          <ProfitPnlBoard canEdit={canEditPnl} />
         ) : (
           <>
         {/* ── 헤더: 사업부 선택 + 월 선택 ── */}

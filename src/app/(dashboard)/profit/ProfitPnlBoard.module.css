@@ -1,0 +1,406 @@
+/* ── 예상손익계산서 · 미니멀 라인형 ── */
+
+.wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  width: 100%;
+  padding: 28px 28px 36px;
+  background: #fff;
+  color: #0f172a;
+}
+
+.state {
+  padding: 40px 0;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+/* ── 헤더 ── */
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 28px;
+}
+.title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+.caption {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: #94a3b8;
+  letter-spacing: -0.01em;
+}
+.refreshBtn {
+  position: absolute;
+  top: 8px;
+  right: 28px;
+  padding: 6px 12px;
+  border: 1px solid #edf0f4;
+  border-radius: 7px;
+  background: #fff;
+  color: #64748b;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.refreshBtn:hover {
+  background: #f8fafc;
+}
+
+/* ── 본문 2단 ── */
+.body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 48px 80px;
+  align-items: flex-start;
+  justify-content: center;
+}
+.leftCol {
+  position: sticky;
+  top: 20px;
+  align-self: flex-start;
+  flex: none;
+  padding: 24px;
+  width: 400px;
+  border: 1px solid #eef0f4;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+.rightCol {
+  flex: 1;
+  min-width: 0;
+  max-width: 820px;
+}
+
+/* ── 좌측 요약 ── */
+.kicker {
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #b6c0cc;
+}
+.sumOpLabel {
+  margin-top: 20px;
+  font-size: 13.5px;
+  color: #64748b;
+}
+.sumOpValue {
+  margin-top: 6px;
+  font-size: 36px;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  font-variant-numeric: tabular-nums;
+}
+.sumOpUnit {
+  margin-left: 2px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #b6c0cc;
+}
+.sumRate {
+  margin-top: 11px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #2f6df6;
+}
+.sumDivider {
+  height: 1px;
+  background: #edf0f4;
+  margin: 26px 0 6px;
+}
+.sumRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 11px 0;
+  border-top: 1px solid #f3f5f8;
+}
+.sumRowFirst {
+  border-top: none;
+}
+.sumLabel {
+  font-size: 13.5px;
+  color: #64748b;
+}
+.sumLabelEm {
+  font-size: 13.5px;
+  color: #334155;
+  font-weight: 600;
+}
+.sumValue {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+}
+.sumValueEm {
+  font-weight: 700;
+}
+
+/* ── 우측 원장 그리드 ── */
+.grid3 {
+  display: grid;
+  grid-template-columns: minmax(0, 360px) 190px minmax(220px, 1fr);
+  align-items: center;
+}
+.colHeadRow {
+  padding: 0 2px 10px;
+  border-bottom: 1px solid #edf0f4;
+}
+.colHead {
+  font-size: 11.5px;
+  color: #b6c0cc;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.colHeadRight {
+  text-align: right;
+}
+.colHeadNote {
+  padding-left: 18px;
+}
+
+.groupHeader {
+  padding: 17px 2px 13px;
+  border-top: 2px solid #0f172a;
+  align-items: baseline;
+}
+.groupTitle {
+  font-size: 15.5px;
+  font-weight: 700;
+  color: #0f172a;
+}
+.groupTotal {
+  text-align: right;
+  font-size: 15.5px;
+  font-weight: 700;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+}
+.groupTotalCost {
+  color: #e23a52;
+}
+.groupNote {
+  font-size: 12.5px;
+  color: #5b6675;
+  padding-left: 18px;
+}
+
+.itemRow {
+  padding: 8px 2px;
+}
+.itemLabel {
+  font-size: 14px;
+  color: #64748b;
+  padding-left: 16px;
+}
+.itemHint {
+  color: #aeb8c4;
+}
+.itemAmt {
+  text-align: right;
+  font-size: 14px;
+  color: #334155;
+  font-variant-numeric: tabular-nums;
+}
+.itemNote {
+  font-size: 12.5px;
+  color: #5b6675;
+  padding-left: 18px;
+}
+
+/* 소계 — 매출총이익 */
+.subtotalRow {
+  padding: 16px 2px;
+  border-top: 1px solid #e3e8ef;
+  border-bottom: 1px solid #e3e8ef;
+  align-items: baseline;
+}
+.subtotalTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: #2f6df6;
+}
+.subtotalAmt {
+  text-align: right;
+  font-size: 15px;
+  font-weight: 700;
+  color: #2f6df6;
+  font-variant-numeric: tabular-nums;
+}
+.subtotalNote {
+  font-size: 12.5px;
+  color: #9bb4ec;
+  padding-left: 18px;
+}
+
+/* 합계 — 영업이익 */
+.totalRow {
+  padding: 20px 2px 6px;
+  border-top: 3px double #0f172a;
+  margin-top: 6px;
+  align-items: baseline;
+}
+.totalTitle {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.totalAmt {
+  text-align: right;
+  font-size: 18px;
+  font-weight: 800;
+  color: #2f6df6;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+.totalNote {
+  font-size: 12.5px;
+  color: #94a3b8;
+  padding-left: 18px;
+}
+
+/* ── 인라인 입력 (라인 디자인에 맞춤) ── */
+.labelCell {
+  padding-left: 16px;
+}
+.labelInput,
+.amtInput,
+.noteInput,
+.rateInput {
+  border: 1px solid #e6ebf1;
+  border-radius: 7px;
+  background: #fff;
+  color: #334155;
+  transition:
+    border-color 0.12s,
+    box-shadow 0.12s;
+}
+.labelInput {
+  width: 100%;
+  max-width: 260px;
+  padding: 7px 10px;
+  font-size: 14px;
+}
+.amtInput {
+  width: 100%;
+  text-align: right;
+  padding: 7px 10px;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.rateInput {
+  width: 56px;
+  text-align: right;
+  padding: 4px 8px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  margin: 0 4px;
+}
+.noteCell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 18px;
+}
+.noteInput {
+  flex: 1;
+  min-width: 0;
+  max-width: 280px;
+  padding: 7px 10px;
+  font-size: 13px;
+  color: #64748b;
+}
+.labelInput:hover,
+.amtInput:hover,
+.noteInput:hover,
+.rateInput:hover {
+  border-color: #c2cdda;
+}
+.labelInput:focus,
+.amtInput:focus,
+.noteInput:focus,
+.rateInput:focus {
+  outline: none;
+  border-color: #2f6df6;
+  box-shadow: 0 0 0 3px rgba(47, 109, 246, 0.12);
+}
+.labelInput::placeholder,
+.noteInput::placeholder {
+  color: #c2cad3;
+}
+/* 읽기 전용(마스터어드민 외) — 입력칸을 텍스트처럼 보이게 */
+.readonly {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  pointer-events: none;
+}
+.readonly::placeholder {
+  color: transparent;
+}
+
+.delBtn {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  line-height: 1;
+  border: 1px solid #edf0f4;
+  border-radius: 5px;
+  background: #fff;
+  color: #aeb8c4;
+  font-size: 13px;
+  cursor: pointer;
+}
+.delBtn:hover {
+  border-color: #e23a52;
+  color: #e23a52;
+}
+
+.addRow {
+  padding: 12px 2px 0;
+}
+.addBtn {
+  padding: 6px 12px;
+  border: 1px dashed #d6dde6;
+  border-radius: 6px;
+  background: #fff;
+  color: #64748b;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.addBtn:hover {
+  border-color: #2f6df6;
+  color: #2f6df6;
+}
+
+.linkBtn {
+  margin-left: 4px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #2f6df6;
+  font-size: 12px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.muted {
+  color: #5b6675;
+}
+.warn {
+  color: #e23a52;
+  font-weight: 600;
+}
+
+.footnote {
+  margin: 26px 0 0;
+  font-size: 12px;
+  color: #b6c0cc;
+  line-height: 1.6;
+}
