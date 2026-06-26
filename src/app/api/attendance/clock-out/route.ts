@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAuthFull } from "@/lib/auth/requireAuth";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { calculateAttendance, getTodayKstDate } from "@/lib/attendance";
+import { syncConsultAvailability } from "@/lib/presence/consultAvailability";
 
 // POST /api/attendance/clock-out
 // 오늘 출근 기록에 퇴근 시각 + 계산값 업데이트
@@ -49,6 +50,9 @@ export async function POST() {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  // 퇴근 → 영업 상담 불가 자동 전환 (영업팀원만)
+  await syncConsultAvailability(appUser.id, false);
 
   return NextResponse.json(data);
 }
