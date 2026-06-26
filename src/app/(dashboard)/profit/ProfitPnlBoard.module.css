@@ -37,10 +37,29 @@
   color: #94a3b8;
   letter-spacing: -0.01em;
 }
+.controls {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #f1f3f6;
+}
+.monthSelect {
+  padding: 6px 10px;
+  border: 1px solid #e6ebf1;
+  border-radius: 7px;
+  background: #fff;
+  color: #334155;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.monthSelect:focus {
+  outline: none;
+  border-color: #2f6df6;
+}
 .refreshBtn {
-  position: absolute;
-  top: 8px;
-  right: 28px;
   padding: 6px 12px;
   border: 1px solid #edf0f4;
   border-radius: 7px;

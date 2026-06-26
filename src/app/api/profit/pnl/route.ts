@@ -174,6 +174,15 @@ function pickLatest(byMonth: Map<string, { amount: number; subjects: number }>):
   return { month: latest, amount: acc.amount, subjects: acc.subjects }
 }
 
+// 지정 월 선택 (없으면 0)
+function pickMonth(
+  byMonth: Map<string, { amount: number; subjects: number }>,
+  month: string,
+): { month: string; amount: number; subjects: number } {
+  const acc = byMonth.get(month) ?? { amount: 0, subjects: 0 }
+  return { month, amount: acc.amount, subjects: acc.subjects }
+}
+
 const addMonth = (
   byMonth: Map<string, { amount: number; subjects: number }>,
   ym: string,
@@ -188,7 +197,7 @@ const addMonth = (
 
 // ── 민간자격증 — 매출파일과 동일: certificate_applications(학점연계) + cert_sales(overlay) + 후납 orphan ──
 // 결제일 = overlay.payment_date ?? paid_at, 금액 = overlay.total_amount ?? base.amount
-async function aggregateCert(windowStart: string) {
+async function aggregateCert(windowStart: string, targetMonth: string | null) {
   const { data: apps, error } = await supabaseAdmin
     .from('certificate_applications')
     .select('id, amount, paid_at, certificates')
@@ -245,11 +254,11 @@ async function aggregateCert(windowStart: string) {
     addMonth(byMonth, String(date).slice(0, 7), amt, Number(r.subject_count ?? 0) || 0)
   }
 
-  return pickLatest(byMonth)
+  return targetMonth ? pickMonth(byMonth, targetMonth) : pickLatest(byMonth)
 }
 
 // ── 실습서비스 — 매출파일과 동일: practice_applications + practice_sales(overlay) + 후납 orphan ──
-async function aggregatePractice(windowStart: string) {
+async function aggregatePractice(windowStart: string, targetMonth: string | null) {
   const { data: apps, error } = await supabaseAdmin
     .from('practice_applications')
     .select('id, payment_amount, created_at')
@@ -301,7 +310,7 @@ async function aggregatePractice(windowStart: string) {
     addMonth(byMonth, String(date).slice(0, 7), amt, 0)
   }
 
-  return pickLatest(byMonth)
+  return targetMonth ? pickMonth(byMonth, targetMonth) : pickLatest(byMonth)
 }
 
 // ── 학점은행제 교강사비 = '학점은행제 교수비' 전용 통장(신한)의 해당 월 출금 합계 ──
@@ -340,17 +349,23 @@ export async function GET(request: NextRequest) {
   if (errorResponse) return errorResponse
 
   try {
-    const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Seoul' }))
-    const settingsMonth = `${now.getFullYear()}-${pad(now.getMonth() + 1)}`
-    const windowStart = monthsAgoStart(4) // 최신월 탐색 윈도우 (약 4개월)
+    // ?month=YYYY-MM 지정 시 그 월, 없으면 최신(자동)
+    const monthParam = new URL(request.url).searchParams.get('month')
+    const targetMonth =
+      monthParam && /^\d{4}-\d{2}$/.test(monthParam) ? monthParam : null
 
-    const eduMonth = await latestEduMonth()
+    const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Seoul' }))
+    const currentMonth = `${now.getFullYear()}-${pad(now.getMonth() + 1)}`
+    const settingsMonth = targetMonth ?? currentMonth
+    const windowStart = targetMonth ? `${targetMonth}-01` : monthsAgoStart(4)
+
+    const eduMonth = targetMonth ?? (await latestEduMonth())
     const feeMonth = eduMonth ?? settingsMonth // 교강사비(교수비) 기준월
 
     const [edu, cert, practice, instructor] = await Promise.all([
       eduMonth ? aggregateEdu(eduMonth) : Promise.resolve({ ours: 0, others: 0, oursSubjects: 0 }),
-      aggregateCert(windowStart),
-      aggregatePractice(windowStart),
+      aggregateCert(windowStart, targetMonth),
+      aggregatePractice(windowStart, targetMonth),
       aggregateInstructorFee(feeMonth, getClientIp(request)),
     ])
     const certMonth = cert.month
@@ -394,6 +409,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       division: DIVISION,
       settingsMonth,
+      selectedMonth: targetMonth, // null이면 최신(자동)
       months: { edu: eduMonth, cert: certMonth, practice: pracMonth },
       revenue: {
         eduOurs: edu.ours,
@@ -451,8 +467,12 @@ export async function PUT(request: NextRequest) {
   }
 
   const body = await request.json().catch(() => ({}))
+  // 선택 월(body.month)에 저장, 없으면 당월
   const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Seoul' }))
-  const month = `${now.getFullYear()}-${pad(now.getMonth() + 1)}`
+  const month =
+    typeof body.month === 'string' && /^\d{4}-\d{2}$/.test(body.month)
+      ? body.month
+      : `${now.getFullYear()}-${pad(now.getMonth() + 1)}`
 
   const fields: Record<string, unknown> = {}
 

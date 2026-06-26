@@ -12,6 +12,7 @@ interface SgnaItem {
 interface PnlResp {
   division: string;
   settingsMonth: string;
+  selectedMonth: string | null;
   months: { edu: string | null; cert: string | null; practice: string | null };
   revenue: {
     eduOurs: number;
@@ -36,6 +37,18 @@ interface PnlResp {
 const INSURANCE_RATE = 0.12; // 4대보험 = 기본급(정규직) × 12%
 
 const won = (n: number) => Math.round(n).toLocaleString("ko-KR");
+
+// 월 선택 옵션 — 최근 12개월
+function buildMonthOptions(): { value: string; label: string }[] {
+  const now = new Date();
+  const list: { value: string; label: string }[] = [];
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const v = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    list.push({ value: v, label: `${d.getFullYear()}년 ${d.getMonth() + 1}월` });
+  }
+  return list;
+}
 
 // 숫자 입력 — 포커스 중엔 콤마 없이 원시 숫자(커서 안 튐), 벗어나면 콤마/단위 표시
 function NumberField({
@@ -89,18 +102,26 @@ export default function ProfitPnlBoard({ canEdit }: { canEdit: boolean }) {
   const [settlementRate, setSettlementRate] = useState(35);
   const [certUsageFee, setCertUsageFee] = useState(0);
   const [sgnaItems, setSgnaItems] = useState<SgnaItem[]>([]);
+  // 월 필터 — null이면 최신(자동)
+  const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
+  const monthOptions = buildMonthOptions();
+  const saveMonthRef = useRef<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/profit/pnl", { cache: "no-store" });
+      const url = selectedMonth
+        ? `/api/profit/pnl?month=${selectedMonth}`
+        : "/api/profit/pnl";
+      const res = await fetch(url, { cache: "no-store" });
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
         throw new Error(d.error ?? "불러오기 실패");
       }
       const d = (await res.json()) as PnlResp;
       setData(d);
+      saveMonthRef.current = d.settingsMonth; // 저장(PUT) 대상 월
       setSettlementRate(d.assumptions.settlement_rate);
       setCertUsageFee(d.certUsageFee);
       setSgnaItems(d.sgnaItems);
@@ -110,7 +131,7 @@ export default function ProfitPnlBoard({ canEdit }: { canEdit: boolean }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [selectedMonth]);
 
   useEffect(() => {
     void load();
@@ -128,7 +149,7 @@ export default function ProfitPnlBoard({ canEdit }: { canEdit: boolean }) {
       void fetch("/api/profit/pnl", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ ...payload, month: saveMonthRef.current }),
       }).catch(() => {});
     }, 600);
   }, []);
@@ -185,13 +206,27 @@ export default function ProfitPnlBoard({ canEdit }: { canEdit: boolean }) {
 
   return (
     <div className={styles.wrap}>
-      <button
-        type="button"
-        className={styles.refreshBtn}
-        onClick={() => void load()}
-      >
-        새로고침
-      </button>
+      <div className={styles.controls}>
+        <select
+          className={styles.monthSelect}
+          value={selectedMonth ?? ""}
+          onChange={(e) => setSelectedMonth(e.target.value || null)}
+        >
+          <option value="">최신(자동)</option>
+          {monthOptions.map((m) => (
+            <option key={m.value} value={m.value}>
+              {m.label}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          className={styles.refreshBtn}
+          onClick={() => void load()}
+        >
+          새로고침
+        </button>
+      </div>
 
       <div className={styles.body}>
         {/* ── 좌측 요약 (제목 + 손익 흐름) ── */}
