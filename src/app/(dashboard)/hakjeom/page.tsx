@@ -68,13 +68,13 @@ import {
   REASON_OPTIONS,
   EDUCATION_OPTIONS,
   HAKJEOM_COURSE_OPTIONS,
+  HOPE_COURSE_FILTER_OPTIONS,
   CURRENT_SITUATION_OPTIONS,
   REACTION_POINT_MAP,
   SHOW_AUTO_REACTION_TOAST,
   REACTION_KEYWORD_MAP,
   matchReactionPoints,
   EDUCATION_CUSTOM,
-  HOPE_COURSE_CUSTOM,
   SOURCE_MAJORS,
   SOURCE_MAJOR_LABEL,
   REFERRER_CARD_META,
@@ -139,14 +139,22 @@ function formatMinutes(min: number | null): string {
   return `${mins}분`;
 }
 
-// 배정시간 — manager_assigned_at 를 "MM-DD HH:MM" (KST)
-function formatAssignedAt(iso?: string | null): string {
-  if (!iso) return "-";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "-";
-  const kst = new Date(d.getTime() + 9 * 3600 * 1000);
-  const p = (n: number) => String(n).padStart(2, "0");
-  return `${p(kst.getUTCMonth() + 1)}-${p(kst.getUTCDate())} ${p(kst.getUTCHours())}:${p(kst.getUTCMinutes())}`;
+// 배정시간 — 등록(created_at) → 담당지정(manager_assigned_at)까지 걸린 시간
+function formatAssignDelay(
+  createdAt?: string | null,
+  assignedAt?: string | null,
+): string {
+  if (!createdAt || !assignedAt) return "-";
+  const ms = new Date(assignedAt).getTime() - new Date(createdAt).getTime();
+  if (!Number.isFinite(ms) || ms < 0) return "-";
+  const min = Math.floor(ms / 60000);
+  if (min < 1) return "1분 미만";
+  const days = Math.floor(min / 1440);
+  const hours = Math.floor((min % 1440) / 60);
+  const mins = min % 60;
+  if (days > 0) return hours > 0 ? `${days}일 ${hours}시간` : `${days}일`;
+  if (hours > 0) return mins > 0 ? `${hours}시간 ${mins}분` : `${hours}시간`;
+  return `${mins}분`;
 }
 
 // ─── 공통 서브 컴포넌트 ──────────────────────────────────────────────────────
@@ -1229,6 +1237,7 @@ function HakjeomTab({
   const [minorCategoryFilter, setMinorCategoryFilter] = useState<string[]>([]);
   const [reasonFilter, setReasonFilter] = useState<string[]>([]);
   const [counselCheckFilter, setCounselCheckFilter] = useState<string[]>([]);
+  const [hopeCourseFilter, setHopeCourseFilter] = useState<string[]>([]);
   // 기본값: 전체 기간 (필터 없음)
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -1462,6 +1471,7 @@ function HakjeomTab({
       minorCategoryFilter.length > 0 ||
       reasonFilter.length > 0 ||
       counselCheckFilter.length > 0 ||
+      hopeCourseFilter.length > 0 ||
       startDate ||
       endDate,
   );
@@ -1795,6 +1805,8 @@ function HakjeomTab({
       ? facetManagers
       : Array.from(new Set(items.map((c) => c.manager).filter(Boolean)))
   ) as string[];
+  // 희망과정 필터 옵션 — 지정 목록만 노출 (데이터 기반 직접입력값 제외)
+  const uniqueHopeCourses = HOPE_COURSE_FILTER_OPTIONS;
   const uniqueMajorCategories = Array.from(
     new Set(sourceList.map((s) => parseSource(s).major).filter(Boolean)),
   ).sort();
@@ -1865,6 +1877,16 @@ function HakjeomTab({
       );
       if (!matches) return false;
     }
+    if (hopeCourseFilter.length > 0) {
+      const courses = (c.hope_course || "")
+        .split(", ")
+        .map((h) => h.trim())
+        .filter(Boolean);
+      const matches = hopeCourseFilter.some((f) =>
+        f === "none" ? courses.length === 0 : courses.includes(f),
+      );
+      if (!matches) return false;
+    }
     if (startDate || endDate) {
       const d = new Date(c.created_at);
       if (startDate && d < new Date(startDate + "T00:00:00")) return false;
@@ -1902,6 +1924,7 @@ function HakjeomTab({
     minorCategoryFilter.length > 0 ||
     reasonFilter.length > 0 ||
     counselCheckFilter.length > 0 ||
+    hopeCourseFilter.length > 0 ||
     startDate ||
     endDate;
 
@@ -2027,6 +2050,7 @@ function HakjeomTab({
     setMinorCategoryFilter([]);
     setReasonFilter([]);
     setCounselCheckFilter([]);
+    setHopeCourseFilter([]);
     setStartDate("");
     setEndDate("");
     setCurrentPage(1);
@@ -2616,7 +2640,43 @@ function HakjeomTab({
                   <th className={styles.th}>이름</th>
                   <th className={styles.th}>연락처</th>
                   <th className={styles.th}>학력</th>
-                  <th className={styles.th}>희망과정</th>
+                  <th className={styles.thFilterable}>
+                    <div className={styles.thInner}>
+                      희망과정
+                      <button
+                        className={`${styles.thFilterBtn}${hopeCourseFilter.length > 0 ? ` ${styles.thFilterBtnActive}` : ""}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (openFilterColumn === "hopeCourse") {
+                            setOpenFilterColumn(null);
+                            return;
+                          }
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          setFilterDropdownPos({
+                            top: rect.bottom + 4,
+                            left: rect.left,
+                          });
+                          setOpenFilterColumn("hopeCourse");
+                        }}
+                      >
+                        <svg
+                          width="10"
+                          height="10"
+                          viewBox="0 0 10 10"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            d="M2 3.5L5 6.5L8 3.5"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </th>
                   <th className={styles.th}>배정시간</th>
                   <th className={styles.thFilterable}>
                     <div className={styles.thInner}>
@@ -2869,7 +2929,10 @@ function HakjeomTab({
                         {item.hope_course ?? "-"}
                       </td>
                       <td className={styles.tdSecondary}>
-                        {formatAssignedAt(item.manager_assigned_at)}
+                        {formatAssignDelay(
+                          item.created_at,
+                          item.manager_assigned_at,
+                        )}
                       </td>
                       <td className={styles.tdSecondary}>
                         {item.manager ?? "-"}
@@ -3122,6 +3185,49 @@ function HakjeomTab({
                   }}
                 >
                   {r}
+                </div>
+              ))}
+            </>
+          )}
+          {openFilterColumn === "hopeCourse" && (
+            <>
+              <div
+                className={`${styles.filterDropdownItem}${hopeCourseFilter.length === 0 ? ` ${styles.filterDropdownItemActive}` : ""}`}
+                onClick={() => {
+                  setHopeCourseFilter([]);
+                  setCurrentPage(1);
+                  setOpenFilterColumn(null);
+                }}
+              >
+                전체
+              </div>
+              <div
+                className={`${styles.filterDropdownItem}${hopeCourseFilter.includes("none") ? ` ${styles.filterDropdownItemActive}` : ""}`}
+                onClick={() => {
+                  setHopeCourseFilter((prev) =>
+                    prev.includes("none")
+                      ? prev.filter((x) => x !== "none")
+                      : [...prev, "none"],
+                  );
+                  setCurrentPage(1);
+                }}
+              >
+                미설정
+              </div>
+              {uniqueHopeCourses.map((o) => (
+                <div
+                  key={o}
+                  className={`${styles.filterDropdownItem}${hopeCourseFilter.includes(o) ? ` ${styles.filterDropdownItemActive}` : ""}`}
+                  onClick={() => {
+                    setHopeCourseFilter((prev) =>
+                      prev.includes(o)
+                        ? prev.filter((x) => x !== o)
+                        : [...prev, o],
+                    );
+                    setCurrentPage(1);
+                  }}
+                >
+                  {o}
                 </div>
               ))}
             </>
