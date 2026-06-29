@@ -5,7 +5,24 @@ import { supabaseAdmin } from '@/lib/supabase/admin'
 // 실습 사업부 "실습신청자" API
 // 데이터는 CSV 로 직접 import. 여기서는 조회 / 상태변경 / 편집 / 삭제만 담당.
 
-export const STATUS_OPTIONS = ['입금완료', '확인필요', '추후진행예정', '재연계'] as const
+export const STATUS_OPTIONS = [
+  // 현행 상태값 (상세/상태변경 팝업과 동일)
+  '입금대기',
+  '입금완료',
+  '교육원 연계',
+  '교육원 연계 완료',
+  '교육원 재연계',
+  '기관 연계',
+  '기관 연계 완료',
+  '기관 재연계',
+  '실습 연기',
+  '실습 완료',
+  '환불',
+  // 레거시 값 (기존 데이터 호환)
+  '확인필요',
+  '추후진행예정',
+  '재연계',
+] as const
 
 // 카테고리 구분 (페이지)
 export const CATEGORY_OPTIONS = ['타과정', '사회복지사', '완료', '환불'] as const
