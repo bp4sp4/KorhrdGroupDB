@@ -19,6 +19,7 @@ import {
   REFERRER_CARD_META,
   SOURCE_MAJOR_LABEL,
   SOURCE_MAJORS,
+  HOPE_COURSE_FILTER_OPTIONS,
 } from "@/app/(dashboard)/hakjeom/_constants";
 import { DateInput } from "@/components/ui/Calendar/DateInput";
 import { createClient } from "@/lib/supabase/client";
@@ -372,14 +373,8 @@ const DETAIL_FILTERS: { key: string; label: string; options: string[] }[] = [
   {
     key: "course",
     label: "희망과정",
-    options: [
-      "사회복지사",
-      "사회복지사 2급 - 신법",
-      "사회복지사 2급 - 구법",
-      "사회복지사(실습예정)",
-      "건강가정사",
-      "직접입력",
-    ],
+    // 문의 DB 희망과정 필터와 동일한 옵션 사용 (+ 미설정)
+    options: ["미설정", ...HOPE_COURSE_FILTER_OPTIONS],
   },
   {
     key: "education",
@@ -854,8 +849,9 @@ function ConsultationList({
       } else if (f.key === "education") {
         if (!sel.includes(i.education ?? "")) return false;
       } else if (f.key === "course") {
-        const hc = i.hope_course ?? "";
-        if (!sel.some((o) => hc.includes(o))) return false;
+        const hc = (i.hope_course ?? "").trim();
+        if (!sel.some((o) => (o === "미설정" ? hc === "" : hc.includes(o))))
+          return false;
       } else if (f.key === "reason") {
         const rs = i.reason ?? "";
         if (!sel.some((o) => rs.includes(o))) return false;
