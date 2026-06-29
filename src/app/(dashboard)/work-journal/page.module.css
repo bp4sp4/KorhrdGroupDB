@@ -2939,6 +2939,16 @@
   flex: 1 0 0;
   min-width: 0;
 }
+.wcRowNo {
+  flex-shrink: 0;
+  min-width: 18px;
+  text-align: right;
+  font-family: Pretendard, inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: #8B95A1;
+  font-variant-numeric: tabular-nums;
+}
 .wcStatusTag {
   display: flex;
   width: 60px;

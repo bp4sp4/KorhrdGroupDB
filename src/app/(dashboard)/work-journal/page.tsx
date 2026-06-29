@@ -1123,6 +1123,7 @@ function ConsultationList({
                   onClick={() => setDetailItem(r)}
                 >
                   <div className={styles.wcRowLeft}>
+                    <span className={styles.wcRowNo}>{idx + 1}</span>
                     <span
                       className={styles.wcStatusTag}
                       style={{ background: c.bg, color: c.color }}
