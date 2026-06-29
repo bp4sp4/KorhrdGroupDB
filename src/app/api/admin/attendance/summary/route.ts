@@ -6,7 +6,7 @@ import {
   isInvalidRecord,
   isHalfDayLeave,
   kstDateAt,
-  WORK_START_HOUR,
+  resolveWorkHours,
 } from "@/lib/attendance";
 import {
   expandLeaveCredit,
@@ -86,10 +86,18 @@ export async function GET(request: NextRequest) {
   const { data: depts } = deptIds.length
     ? await supabaseAdmin
         .from("departments")
-        .select("id, name")
+        .select("id, code, name")
         .in("id", deptIds)
-    : { data: [] as Array<{ id: string; name: string }> };
+    : { data: [] as Array<{ id: string; code: string | null; name: string }> };
   const deptMap = new Map((depts ?? []).map((d) => [d.id, d.name]));
+  // id → { code, name } (근무시간 프로필 판정용)
+  const deptRefMap = new Map(
+    (depts ?? []).map((d) => [d.id, { code: d.code, name: d.name }]),
+  );
+  // user_id → department_id (지각 판정 시 부서별 출근 기준 적용)
+  const userDeptMap = new Map(
+    (users ?? []).map((u) => [u.id, u.department_id ?? null]),
+  );
 
   // 사용자 ID 별로 집계
   const aggMap = new Map<
@@ -121,8 +129,11 @@ export async function GET(request: NextRequest) {
     agg.total_work_minutes += r.work_minutes ?? 0;
     agg.total_overtime_minutes += r.overtime_minutes ?? 0;
 
-    // 지각: 실제 clock_in_at 이 KST 10:00 이후인지
-    const dayStart = kstDateAt(r.date, WORK_START_HOUR);
+    // 지각: 실제 clock_in_at 이 부서·사용자별 정규 출근 시각 이후인지
+    // (사업본부는 2026-07-01부터 09:00, 파일럿 사용자는 선행, 그 외/이전은 10:00 기준)
+    const deptRef = deptRefMap.get(userDeptMap.get(r.user_id) ?? "") ?? null;
+    const { startHour } = resolveWorkHours(deptRef, r.date, r.user_id);
+    const dayStart = kstDateAt(r.date, startHour);
     if (new Date(r.clock_in_at) > dayStart) agg.late_count += 1;
 
     // 미체크 (퇴근 미체크 && 과거 날짜)

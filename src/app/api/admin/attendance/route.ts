@@ -7,7 +7,9 @@ import {
   isAfternoonHalfDay,
   isMorningHalfDay,
   kstDateAt,
+  resolveWorkHours,
 } from "@/lib/attendance";
+import { getDepartmentById } from "@/lib/attendance-server";
 import {
   expandLeaveCredit,
   isVacationDocType,
@@ -164,23 +166,25 @@ export async function GET(request: NextRequest) {
       }
 
       // 실제 출퇴근 기록이 있는 날의 휴가는 해당 기록 행에 종류만 표시.
-      // 반차는 표준 시각·표준 4시간(점심 포함)으로 통일:
-      //   · 오후 반차: 퇴근 14:00 (출근은 실제 출근 유지)
-      //   · 오전 반차: 출근 15:00 ~ 퇴근 19:00
+      // 반차는 표준 시각·표준 4시간(점심 포함)으로 통일. 시간대는 부서별:
+      //   · 오후 반차: 출근 실제 유지 ~ 퇴근 (정규출근+4h) — 사업본부 ~13:00 / 그 외 ~14:00
+      //   · 오전 반차: 출근 (정규퇴근-4h) ~ 퇴근 정규퇴근 — 사업본부 14:00~18:00 / 그 외 15:00~19:00
       if (leaveTypeByDate.size) {
+        const dept = await getDepartmentById(u?.department_id ?? null);
         for (const r of records) {
           const lt = leaveTypeByDate.get(r.date);
           if (!lt) continue;
           r.leave_type = lt;
+          const { startHour, endHour } = resolveWorkHours(dept, r.date, uid);
           if (isAfternoonHalfDay(lt)) {
-            const outIso = kstDateAt(r.date, 14).toISOString();
+            const outIso = kstDateAt(r.date, startHour + 4).toISOString();
             r.clock_out_at = outIso;
             r.recognized_clock_out = outIso;
             r.work_minutes = HALF_DAY_WORK_MINUTES;
             r.overtime_minutes = 0;
           } else if (isMorningHalfDay(lt)) {
-            const inIso = kstDateAt(r.date, 15).toISOString();
-            const outIso = kstDateAt(r.date, 19).toISOString();
+            const inIso = kstDateAt(r.date, endHour - 4).toISOString();
+            const outIso = kstDateAt(r.date, endHour).toISOString();
             r.clock_in_at = inIso;
             r.recognized_clock_in = inIso;
             r.clock_out_at = outIso;

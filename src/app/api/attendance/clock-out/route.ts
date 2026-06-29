@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAuthFull } from "@/lib/auth/requireAuth";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { calculateAttendance, getTodayKstDate } from "@/lib/attendance";
+import { resolveWorkHoursByDepartmentId } from "@/lib/attendance-server";
 import { syncConsultAvailability } from "@/lib/presence/consultAvailability";
 
 // POST /api/attendance/clock-out
@@ -33,7 +34,17 @@ export async function POST() {
     );
   }
 
-  const calc = calculateAttendance(existing.clock_in_at, nowIso, today);
+  const workHours = await resolveWorkHoursByDepartmentId(
+    appUser.department_id,
+    today,
+    appUser.id,
+  );
+  const calc = calculateAttendance(
+    existing.clock_in_at,
+    nowIso,
+    today,
+    workHours,
+  );
 
   const { data, error } = await supabaseAdmin
     .from("attendance_records")

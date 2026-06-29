@@ -1,7 +1,8 @@
 // 출퇴근 계산 유틸리티
-// 근무: 10:00 ~ 19:00 (점심 13:00 ~ 14:00 1시간 제외)
-// 야근: 19:30 이후
-// 인정 출근: clock_in_at < 10:00 → 10:00 으로 캡 (그 외 실시각)
+// 근무: 부서별 — 사업본부(BIZ) 09:00~18:00(점심 12:00~13:00) / 그 외 10:00~19:00(점심 13:00~14:00)
+//   · 사업본부 09-18 기준은 2026-07-01 이후 기록부터 적용 (이전은 부서 무관 10-19 유지)
+// 야근: 정규 퇴근 + 30분 이후 (사업본부 18:30 / 그 외 19:30)
+// 인정 출근: clock_in_at < 정규출근 → 정규출근으로 캡 (그 외 실시각)
 // 인정 퇴근: 실제 clock_out_at 그대로
 
 // 퇴근 처리 confirm 다이얼로그 메시지 (근태현황/대시보드/헤더 공통)
@@ -16,12 +17,80 @@ export const CLOCK_OUT_CONFIRM = {
 
 const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
 
+// 기본(개발/경영지원본부 등) 근무: 10:00 ~ 19:00
 export const WORK_START_HOUR = 10;
 export const WORK_END_HOUR = 19;
 export const LUNCH_START_HOUR = 13;
 export const LUNCH_END_HOUR = 14;
 export const OVERTIME_START_HOUR = 19;
 export const OVERTIME_START_MIN = 30;
+
+// ── 부서별 근무시간 프로필 ────────────────────────────────────────────────
+// 사업본부(BIZ): 09:00~18:00, 점심 12:00~13:00
+// 나머지:        10:00~19:00, 점심 13:00~14:00
+// 야근 시작 = 퇴근시각 + 30분 (사업본부 18:30 / 나머지 19:30)
+export interface WorkHours {
+  startHour: number; // 정규 출근 (인정 출근 캡)
+  endHour: number; // 정규 퇴근 (정규 근무 종료)
+  lunchStartHour: number; // 점심 시작 (근무 차감)
+  lunchEndHour: number; // 점심 종료
+}
+
+export const DEFAULT_WORK_HOURS: WorkHours = {
+  startHour: WORK_START_HOUR,
+  endHour: WORK_END_HOUR,
+  lunchStartHour: LUNCH_START_HOUR,
+  lunchEndHour: LUNCH_END_HOUR,
+};
+
+export const BIZ_WORK_HOURS: WorkHours = {
+  startHour: 9,
+  endHour: 18,
+  lunchStartHour: 12,
+  lunchEndHour: 13,
+};
+
+// 사업본부 9-18 근무 정식 적용 시작일(KST). 이 날짜 이전 기록은 부서와 무관하게
+// 기존 10-19 기준을 그대로 유지한다(과거 기록 재계산 왜곡 방지).
+export const BIZ_WORK_HOURS_EFFECTIVE_FROM = "2026-07-01";
+
+// 근무시간 개편 파일럿 — 지정 사용자는 정식 적용일보다 먼저 9-18 적용.
+//   · 부계정2(test@naver.com, id 17): 2026-06-29부터 선행 테스트
+// 정식 전환(2026-07-01) 후에는 이 목록과 무관하게 사업본부 전원에 적용된다.
+export const WORK_HOURS_PILOT_USER_IDS: readonly number[] = [17];
+export const WORK_HOURS_PILOT_EFFECTIVE_FROM = "2026-06-29";
+
+// 야근 시작 분 (정규 퇴근 후 30분부터 야근 인정)
+export const OVERTIME_GRACE_MIN = 30;
+
+// 부서가 사업본부(BIZ)인지 — code === 'BIZ' 또는 이름에 '사업본부' 포함
+export function isBizDepartment(
+  dept: { code?: string | null; name?: string | null } | null | undefined,
+): boolean {
+  if (!dept) return false;
+  const code = (dept.code ?? "").toUpperCase().replace(/\s+/g, "");
+  const name = (dept.name ?? "").replace(/\s+/g, "");
+  return code === "BIZ" || name.includes("사업본부");
+}
+
+// 부서 + 날짜(KST) (+ 사용자) → 적용 근무시간 프로필
+// 사업본부 한정. 정식 적용일(2026-07-01) 이후이거나, 파일럿 사용자가 파일럿
+// 시작일 이후이면 9-18. 그 외에는 모두 10-19.
+export function resolveWorkHours(
+  dept: { code?: string | null; name?: string | null } | null | undefined,
+  dateKst: string,
+  userId?: number | null,
+): WorkHours {
+  if (!isBizDepartment(dept)) return DEFAULT_WORK_HOURS;
+  const isPilot =
+    userId != null &&
+    WORK_HOURS_PILOT_USER_IDS.includes(userId) &&
+    dateKst >= WORK_HOURS_PILOT_EFFECTIVE_FROM;
+  if (dateKst >= BIZ_WORK_HOURS_EFFECTIVE_FROM || isPilot) {
+    return BIZ_WORK_HOURS;
+  }
+  return DEFAULT_WORK_HOURS;
+}
 
 // 현재 KST 날짜 (YYYY-MM-DD)
 export function getTodayKstDate(): string {
@@ -58,25 +127,27 @@ export interface AttendanceCalc {
 }
 
 // 출퇴근 시각으로부터 인정시간/근무분/야근분 계산
+// workHours: 부서별 근무시간 프로필 (기본 10-19). resolveWorkHours()로 산출.
 export function calculateAttendance(
   clockInIso: string,
   clockOutIso: string | null,
   dateKst: string,
+  workHours: WorkHours = DEFAULT_WORK_HOURS,
 ): AttendanceCalc {
   const clockIn = new Date(clockInIso);
   const clockOut = clockOutIso ? new Date(clockOutIso) : null;
 
-  const dayStart = kstDateAt(dateKst, WORK_START_HOUR);
-  const dayEnd = kstDateAt(dateKst, WORK_END_HOUR);
-  const lunchStart = kstDateAt(dateKst, LUNCH_START_HOUR);
-  const lunchEnd = kstDateAt(dateKst, LUNCH_END_HOUR);
+  const dayStart = kstDateAt(dateKst, workHours.startHour);
+  const dayEnd = kstDateAt(dateKst, workHours.endHour);
+  const lunchStart = kstDateAt(dateKst, workHours.lunchStartHour);
+  const lunchEnd = kstDateAt(dateKst, workHours.lunchEndHour);
   const overtimeStart = kstDateAt(
     dateKst,
-    OVERTIME_START_HOUR,
-    OVERTIME_START_MIN,
+    workHours.endHour,
+    OVERTIME_GRACE_MIN,
   );
 
-  // 인정 출근: 10:00 전이면 10:00 으로 캡
+  // 인정 출근: 정규 출근 시각 전이면 정규 출근으로 캡
   const recognizedIn = clockIn < dayStart ? dayStart : clockIn;
 
   if (!clockOut) {
@@ -88,14 +159,14 @@ export function calculateAttendance(
     };
   }
 
-  // 정규 근무 (10:00 ~ 19:00 사이)
+  // 정규 근무 (정규 출근 ~ 정규 퇴근 사이)
   const effStart = recognizedIn > dayStart ? recognizedIn : dayStart;
   const effEnd = clockOut < dayEnd ? clockOut : dayEnd;
   let workMs = effEnd.getTime() > effStart.getTime()
     ? effEnd.getTime() - effStart.getTime()
     : 0;
 
-  // 점심 13:00~14:00 overlap 차감
+  // 점심 overlap 차감 (부서별 — 사업본부 12~13 / 그 외 13~14)
   const lOverlapStart = effStart > lunchStart ? effStart : lunchStart;
   const lOverlapEnd = effEnd < lunchEnd ? effEnd : lunchEnd;
   if (lOverlapEnd.getTime() > lOverlapStart.getTime()) {
@@ -118,9 +189,9 @@ export function calculateAttendance(
   };
 }
 
-// 반차 표준 근무창 — 점심(13:00~14:00)을 근무로 인정한 4시간(240분) 기준.
-//   · 오후 반차: 오전 근무 → 퇴근 14:00 (출근은 실제 출근 시각 유지)
-//   · 오전 반차: 오후 근무 → 출근 15:00 ~ 퇴근 19:00
+// 반차 표준 근무창 — 점심을 근무로 인정한 4시간(240분) 기준. 시간대는 부서별:
+//   · 오후 반차: 오전 근무 → 퇴근 (정규출근+4h)  (그 외 14:00 / 사업본부 13:00)
+//   · 오전 반차: 오후 근무 → 출근 (정규퇴근-4h) ~ 퇴근 정규퇴근 (그 외 15:00~19:00 / 사업본부 14:00~18:00)
 export function isAfternoonHalfDay(leaveType?: string | null): boolean {
   return (leaveType ?? "").replace(/\s/g, "") === "반차(오후)";
 }

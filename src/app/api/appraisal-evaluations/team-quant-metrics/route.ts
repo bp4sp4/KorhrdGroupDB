@@ -4,7 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin'
 import { canViewAppraisalOverview } from '@/lib/auth/appraisalAccess'
 import { getEvaluationTargets } from '@/lib/appraisal/evaluationAccess'
 import { getMonthlySales, type SalesSource } from '@/lib/dashboard/monthlySales'
-import { getTodayKstDate, kstDateAt, WORK_START_HOUR } from '@/lib/attendance'
+import { getTodayKstDate, kstDateAt, resolveWorkHours } from '@/lib/attendance'
 import {
   expandLeaveCredit,
   isVacationDocType,
@@ -134,15 +134,30 @@ export async function GET(request: NextRequest) {
 
   const { data: memberRows } = await supabaseAdmin
     .from('app_users')
-    .select('id, display_name, is_active, role')
+    .select('id, display_name, is_active, role, department_id')
     .eq('team_id', teamId)
     .eq('is_active', true)
     .neq('role', 'guest')
   const members = (memberRows ?? []).map((u) => ({
     id: u.id as number,
     name: (u.display_name as string | null)?.trim() ?? '',
+    departmentId: (u.department_id as string | null) ?? null,
   }))
   const memberIds = members.map((m) => m.id)
+  // 멤버 부서 → 근무시간 프로필 (사업본부는 2026-07-01부터 09:00 출근 기준)
+  const memberDeptIds = Array.from(
+    new Set(members.map((m) => m.departmentId).filter((v): v is string => !!v)),
+  )
+  const { data: deptRows } = memberDeptIds.length
+    ? await supabaseAdmin
+        .from('departments')
+        .select('id, code, name')
+        .in('id', memberDeptIds)
+    : { data: [] as Array<{ id: string; code: string | null; name: string }> }
+  const deptRefById = new Map(
+    (deptRows ?? []).map((d) => [d.id, { code: d.code, name: d.name }]),
+  )
+  const deptIdByMember = new Map(members.map((m) => [m.id, m.departmentId]))
   const memberNames = members.map((m) => m.name).filter((n) => n)
 
   // 팀장(최소매출 기본값 결정용)
@@ -349,12 +364,14 @@ export async function GET(request: NextRequest) {
 
     for (const mId of memberIds) {
       const rows = attByUser.get(mId) ?? []
+      const memberDept = deptRefById.get(deptIdByMember.get(mId) ?? '') ?? null
       const recordedDates = new Set<string>()
       let late = 0
       for (const r of rows) {
         if (!r.clock_in_at) continue
         recordedDates.add(r.date)
-        if (new Date(r.clock_in_at) > kstDateAt(r.date, WORK_START_HOUR)) late += 1
+        const { startHour } = resolveWorkHours(memberDept, r.date, mId)
+        if (new Date(r.clock_in_at) > kstDateAt(r.date, startHour)) late += 1
       }
       const leaveDates = leaveByUser.get(mId) ?? new Set<string>()
       // 결근 = 분기 내 지난 평일 중 출근·휴가 모두 없는 날

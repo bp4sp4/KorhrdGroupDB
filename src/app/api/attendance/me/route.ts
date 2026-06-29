@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const today = getTodayKstDate();
 
-  // 자정 경과한 미퇴근 기록을 19:00 KST 로 자동 마감 (조회 이전 처리)
+  // 자정 경과한 미퇴근 기록을 정규 퇴근 시각(KST)으로 자동 마감 (조회 이전 처리)
   await autoCloseStaleRecords(appUser.id, today);
 
   // 기본: 이번 달 1일 ~ 오늘

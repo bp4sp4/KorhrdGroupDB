@@ -17,7 +17,8 @@ import { supabaseAdmin } from "@/lib/supabase/admin";
 import {
   calculateAttendance,
   kstDateAt,
-  WORK_END_HOUR,
+  resolveWorkHours,
+  type WorkHours,
 } from "@/lib/attendance";
 
 interface StaleRecord {
@@ -26,7 +27,56 @@ interface StaleRecord {
   clock_in_at: string;
 }
 
-const AUTO_CLOSE_NOTE = "자정 경과 — 자동 퇴근 처리 (19:00, 야근 없음)";
+interface DeptRef {
+  code: string | null;
+  name: string | null;
+}
+
+// department_id → { code, name } 조회 (근무시간 프로필 판정용)
+export async function getDepartmentById(
+  departmentId: string | null | undefined,
+): Promise<DeptRef | null> {
+  if (!departmentId) return null;
+  const { data } = await supabaseAdmin
+    .from("departments")
+    .select("code, name")
+    .eq("id", departmentId)
+    .maybeSingle();
+  return data ?? null;
+}
+
+// department_id + 날짜(KST) (+ 사용자) → 적용 근무시간 프로필
+export async function resolveWorkHoursByDepartmentId(
+  departmentId: string | null | undefined,
+  dateKst: string,
+  userId?: number | null,
+): Promise<WorkHours> {
+  const dept = await getDepartmentById(departmentId);
+  return resolveWorkHours(dept, dateKst, userId);
+}
+
+// user_id → 소속 부서 { code, name } 조회
+export async function getDepartmentByUserId(
+  userId: number,
+): Promise<DeptRef | null> {
+  const { data: u } = await supabaseAdmin
+    .from("app_users")
+    .select("department_id")
+    .eq("id", userId)
+    .maybeSingle();
+  return getDepartmentById(u?.department_id ?? null);
+}
+
+// user_id + 날짜(KST) → 적용 근무시간 프로필
+export async function resolveWorkHoursByUserId(
+  userId: number,
+  dateKst: string,
+): Promise<WorkHours> {
+  const dept = await getDepartmentByUserId(userId);
+  return resolveWorkHours(dept, dateKst, userId);
+}
+
+const AUTO_CLOSE_NOTE = "자정 경과 — 자동 퇴근 처리 (정규 퇴근 시각, 야근 없음)";
 
 // 특정 user_id 의 미퇴근 stale 기록을 19:00 KST 로 자동 마감
 //   - dateKst <  todayKst  AND clock_out_at IS NULL  대상
@@ -44,19 +94,23 @@ export async function autoCloseStaleRecords(
 
   if (!stale || stale.length === 0) return 0;
 
+  // 사용자 소속 부서 1회 조회 (근무시간 프로필 판정용)
+  const dept = await getDepartmentByUserId(userId);
+
   let closed = 0;
   for (const rec of stale as (StaleRecord & { edited_by_admin: boolean })[]) {
     // 관리자가 손댄 행은 자동으로 덮어쓰지 않음
     if (rec.edited_by_admin) continue;
 
-    // 19:00 KST 시각 (해당 record 의 date 기준)
-    const autoOut = kstDateAt(rec.date, WORK_END_HOUR, 0);
+    // 부서·날짜·사용자별 정규 퇴근 시각 (사업본부 18:00 / 나머지 19:00)
+    const workHours = resolveWorkHours(dept, rec.date, userId);
+    const autoOut = kstDateAt(rec.date, workHours.endHour, 0);
     const clockIn = new Date(rec.clock_in_at);
-    // 엣지: 19:00 KST 보다 늦게 출근한 경우 work_minutes 가 음수가 되지 않게 clock_in 으로 고정
+    // 엣지: 정규 퇴근 시각보다 늦게 출근한 경우 work_minutes 가 음수가 되지 않게 clock_in 으로 고정
     const effOut = autoOut.getTime() < clockIn.getTime() ? clockIn : autoOut;
     const effOutIso = effOut.toISOString();
 
-    const calc = calculateAttendance(rec.clock_in_at, effOutIso, rec.date);
+    const calc = calculateAttendance(rec.clock_in_at, effOutIso, rec.date, workHours);
 
     const { error } = await supabaseAdmin
       .from("attendance_records")

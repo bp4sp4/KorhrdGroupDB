@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import styles from "./page.module.css";
 import { createClient } from "@/lib/supabase/client";
+import { resolveWorkHours } from "@/lib/attendance";
 
 // ─── 타입 ────────────────────────────────────────────────────────────────
 interface Employee {
@@ -147,13 +148,13 @@ function timeToIso(date: string, time: string): string {
   return new Date(Date.UTC(y, mo - 1, da, hh - 9, mm)).toISOString();
 }
 
-// 지각 판정 (실제 출근 시각이 KST 10:00 이후)
-function isLate(clockInIso: string): boolean {
+// 지각 판정 (실제 출근 시각이 부서별 정규 출근 시각 이후) — 사업본부 09:00 / 그 외 10:00
+function isLate(clockInIso: string, startHour: number): boolean {
   const kstStr = new Date(clockInIso).toLocaleTimeString("en-GB", {
     hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Seoul",
   });
   const [h, m] = kstStr.split(":").map(Number);
-  return h > 10 || (h === 10 && m > 0);
+  return h > startHour || (h === startHour && m > 0);
 }
 
 // API DayRow → DayRecord 변환
@@ -174,8 +175,13 @@ interface ApiDayRow {
   admin_note: string | null;
 }
 
-function toDayRecord(r: ApiDayRow): DayRecord {
+function toDayRecord(
+  r: ApiDayRow,
+  dept: { code?: string | null; name?: string | null } | null,
+): DayRecord {
   const { name: weekday, isWeekend } = weekdayLabel(r.date);
+  // r.user_id 기준 파일럿/부서 근무시간 프로필 판정
+  const { startHour } = resolveWorkHours(dept, r.date, r.user_id);
 
   // 휴가(연차/반차 등) 인정 행 — 출퇴근 시각 없이 정규 인정시간만 표시
   if (r.is_leave) {
@@ -195,7 +201,7 @@ function toDayRecord(r: ApiDayRow): DayRecord {
   let status: DayStatus = "normal";
   if (r.is_invalid) status = "miss";
   else if (r.overtime_minutes > 0) status = "ot";
-  else if (r.clock_in_at && isLate(r.clock_in_at)) status = "late";
+  else if (r.clock_in_at && isLate(r.clock_in_at, startHour)) status = "late";
   else if (r.work_minutes > 0 && r.work_minutes < 300) status = "halfday";
 
   return {
@@ -253,7 +259,7 @@ export default function AdminAttendancePage() {
     quarterOf(thisMonth()),
   );
   const [employees, setEmployees] = useState<Employee[]>([]);
-  const [records, setRecords] = useState<DayRecord[]>([]);
+  const [rawRows, setRawRows] = useState<ApiDayRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [recordsLoading, setRecordsLoading] = useState(false);
   const [filter, setFilter] = useState<"all" | "issue" | "empty">("all");
@@ -329,12 +335,11 @@ export default function AdminAttendancePage() {
         cache: "no-store",
       });
       if (!res.ok) {
-        setRecords([]);
+        setRawRows([]);
         return;
       }
       const data = await res.json();
-      const list = ((data.records ?? []) as ApiDayRow[]).map(toDayRecord);
-      setRecords(list);
+      setRawRows((data.records ?? []) as ApiDayRow[]);
     } finally {
       setRecordsLoading(false);
     }
@@ -428,6 +433,16 @@ export default function AdminAttendancePage() {
   }, [employees]);
 
   const selected = employees.find((e) => e.id === selectedId);
+
+  // 선택 직원 부서 → 근무시간 프로필 판정 (사업본부 09:00~18:00). department 는 부서명.
+  const selectedDept = useMemo(
+    () => (selected ? { name: selected.department ?? null } : null),
+    [selected],
+  );
+  const records = useMemo(
+    () => rawRows.map((r) => toDayRecord(r, selectedDept)),
+    [rawRows, selectedDept],
+  );
 
   // ─── 액션 ─────────────────────────────────────────────────────────────
   const handleSelect = (id: string) => {

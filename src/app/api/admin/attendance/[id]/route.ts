@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth/requireAuth";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { calculateAttendance } from "@/lib/attendance";
+import { resolveWorkHoursByUserId } from "@/lib/attendance-server";
 
 // PATCH /api/admin/attendance/[id]
 // body: { clock_in_at?: ISO, clock_out_at?: ISO | null, admin_note?: string }
@@ -27,7 +28,7 @@ export async function PATCH(
 
   const { data: existing, error: fetchErr } = await supabaseAdmin
     .from("attendance_records")
-    .select("id, date, clock_in_at, clock_out_at")
+    .select("id, user_id, date, clock_in_at, clock_out_at")
     .eq("id", numericId)
     .maybeSingle();
 
@@ -49,7 +50,11 @@ export async function PATCH(
         ? body.clock_out_at
         : existing.clock_out_at;
 
-  const calc = calculateAttendance(newIn, newOut, existing.date);
+  const workHours = await resolveWorkHoursByUserId(
+    existing.user_id,
+    existing.date,
+  );
+  const calc = calculateAttendance(newIn, newOut, existing.date, workHours);
 
   const update: Record<string, unknown> = {
     clock_in_at: newIn,

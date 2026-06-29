@@ -7,7 +7,8 @@ import {
   CLOCK_OUT_CONFIRM,
   formatMinutes,
   getTodayKstDate,
-  WORK_END_HOUR,
+  resolveWorkHours,
+  type WorkHours,
 } from "@/lib/attendance";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { createClient } from "@/lib/supabase/client";
@@ -168,8 +169,12 @@ function avgClockInString(records: AttendanceRec[]): string {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
-// 지각 (10:00 이후 출근)
-function lateCount(records: AttendanceRec[]): number {
+// 지각 (부서·사용자별 정규 출근 시각 이후 출근) — 사업본부 09:00 / 그 외 10:00
+function lateCount(
+  records: AttendanceRec[],
+  dept: { code?: string | null; name?: string | null } | null,
+  userId: number | null,
+): number {
   let count = 0;
   for (const r of records) {
     const d = new Date(r.clock_in_at);
@@ -180,35 +185,45 @@ function lateCount(records: AttendanceRec[]): number {
       timeZone: "Asia/Seoul",
     });
     const [h, m] = kstStr.split(":").map(Number);
-    if (h > 10 || (h === 10 && m > 0)) count += 1;
+    const { startHour } = resolveWorkHours(dept, r.date, userId);
+    if (h > startHour || (h === startHour && m > 0)) count += 1;
   }
   return count;
 }
 
 // 오늘 실시간 누적 근무 분
-function liveWorkMinutes(today: AttendanceRec | null, todayDate: string): number {
+function liveWorkMinutes(
+  today: AttendanceRec | null,
+  todayDate: string,
+  workHours: WorkHours,
+): number {
   if (!today) return 0;
   if (today.clock_out_at) return today.work_minutes ?? 0;
   return calculateAttendance(
     today.clock_in_at,
     new Date().toISOString(),
     todayDate,
+    workHours,
   ).workMinutes;
 }
 
 // 오늘 실시간 누적 근무 초 (시:분:초 표시용)
-function liveWorkSeconds(today: AttendanceRec | null, todayDate: string): number {
+function liveWorkSeconds(
+  today: AttendanceRec | null,
+  todayDate: string,
+  workHours: WorkHours,
+): number {
   if (!today) return 0;
   if (today.clock_out_at) return (today.work_minutes ?? 0) * 60;
   // 점심 시간 제외하면서 초 단위로
   const clockIn = new Date(today.clock_in_at);
   const KST_OFFSET = 9 * 60 * 60 * 1000;
   const [y, m, d] = todayDate.split("-").map(Number);
-  const dayStartUtcMs = Date.UTC(y, m - 1, d, 10 - 9, 0);
-  const dayEndUtcMs = Date.UTC(y, m - 1, d, 19 - 9, 0);
-  const lunchStartMs = Date.UTC(y, m - 1, d, 13 - 9, 0);
-  const lunchEndMs = Date.UTC(y, m - 1, d, 14 - 9, 0);
-  // recognized in: max(actual, 10:00)
+  const dayStartUtcMs = Date.UTC(y, m - 1, d, workHours.startHour - 9, 0);
+  const dayEndUtcMs = Date.UTC(y, m - 1, d, workHours.endHour - 9, 0);
+  const lunchStartMs = Date.UTC(y, m - 1, d, workHours.lunchStartHour - 9, 0);
+  const lunchEndMs = Date.UTC(y, m - 1, d, workHours.lunchEndHour - 9, 0);
+  // recognized in: max(actual, 정규 출근)
   const recIn = Math.max(clockIn.getTime(), dayStartUtcMs);
   const nowMs = Date.now();
   const effStart = Math.max(recIn, dayStartUtcMs);
@@ -233,11 +248,11 @@ function formatHMS(totalSec: number): string {
   return `${s}초`;
 }
 
-function remainingUntilOff(): string {
+function remainingUntilOff(workHours: WorkHours): string {
   const kst = getKstNow();
   const h = kst.getHours();
   const m = kst.getMinutes();
-  const remainMin = WORK_END_HOUR * 60 - (h * 60 + m);
+  const remainMin = workHours.endHour * 60 - (h * 60 + m);
   if (remainMin <= 0) return "정시 퇴근 시간 지남";
   return `${Math.floor(remainMin / 60)}시간 ${String(remainMin % 60).padStart(2, "0")}분 남음`;
 }
@@ -285,6 +300,13 @@ export default function MyAttendancePage() {
   const [leaves, setLeaves] = useState<LeaveDay[]>([]);
   const [leaveUsages, setLeaveUsages] = useState<LeaveUsage[]>([]);
   const [userName, setUserName] = useState("");
+  // 소속 부서 (근무시간 프로필 판정용) — 사업본부는 09:00~18:00
+  const [dept, setDept] = useState<{
+    code: string | null;
+    name: string | null;
+  } | null>(null);
+  // 본인 user id (근무시간 파일럿 판정용)
+  const [userId, setUserId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showClockOutConfirm, setShowClockOutConfirm] = useState(false);
@@ -321,6 +343,11 @@ export default function MyAttendancePage() {
       if (meRes.ok) {
         const meData = await meRes.json();
         setUserName(meData.displayName ?? "");
+        setDept({
+          code: meData.departmentCode ?? null,
+          name: meData.departmentName ?? null,
+        });
+        setUserId(typeof meData.id === "number" ? meData.id : null);
       }
       if (attRes.ok) {
         const data = await attRes.json();
@@ -440,14 +467,16 @@ export default function MyAttendancePage() {
   };
 
   // ─── 헤로 ─────────────────────────────────────────────────────────────
-  const liveMin = liveWorkMinutes(todayRecord, today);
-  const liveSec = liveWorkSeconds(todayRecord, today);
+  // 오늘 적용 근무시간 프로필 (사업본부 09:00~18:00, 그 외 10:00~19:00)
+  const todayWorkHours = resolveWorkHours(dept, today, userId);
+  const liveMin = liveWorkMinutes(todayRecord, today, todayWorkHours);
+  const liveSec = liveWorkSeconds(todayRecord, today, todayWorkHours);
   const isWorking = !!todayRecord && !todayRecord.clock_out_at;
   const checkInTime = todayRecord ? formatTime(todayRecord.clock_in_at) : null;
   const checkOutTime = todayRecord?.clock_out_at
     ? formatTime(todayRecord.clock_out_at)
     : null;
-  const remainingText = remainingUntilOff();
+  const remainingText = remainingUntilOff(todayWorkHours);
 
   // ─── 통계 (range 적용) ──────────────────────────────────────────────
   // 근무시간: 실제 근무 + 휴가 근무 인정분
@@ -455,7 +484,7 @@ export default function MyAttendancePage() {
     records.reduce((s, r) => s + (r.work_minutes ?? 0), 0) + leaveMinutes;
   const totalOt = records.reduce((s, r) => s + (r.overtime_minutes ?? 0), 0);
   const avgIn = avgClockInString(records);
-  const late = lateCount(records);
+  const late = lateCount(records, dept, userId);
 
   // 주간 진행률 (week 모드에서만 의미있음)
   const weeklyGoalMin = 40 * 60;
@@ -754,7 +783,7 @@ export default function MyAttendancePage() {
                     )}
                     {checkOutTime
                       ? `근무 ${formatMinutes(todayRecord?.work_minutes ?? 0)}`
-                      : `예정 ${String(WORK_END_HOUR).padStart(2, "0")}:00 · ${remainingText}`}
+                      : `예정 ${String(todayWorkHours.endHour).padStart(2, "0")}:00 · ${remainingText}`}
                   </div>
                 </div>
               </div>

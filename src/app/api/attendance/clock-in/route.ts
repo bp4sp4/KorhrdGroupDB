@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 import { requireAuthFull } from "@/lib/auth/requireAuth";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { calculateAttendance, getTodayKstDate } from "@/lib/attendance";
-import { autoCloseStaleRecords } from "@/lib/attendance-server";
+import {
+  autoCloseStaleRecords,
+  resolveWorkHoursByDepartmentId,
+} from "@/lib/attendance-server";
 
 // POST /api/attendance/clock-in
 // 오늘 출근 기록 생성. 이미 출근한 경우 409.
@@ -13,7 +16,7 @@ export async function POST() {
   const today = getTodayKstDate();
   const nowIso = new Date().toISOString();
 
-  // 새 일자 출근 직전에 어제 이전의 미퇴근 기록을 19:00 KST 로 자동 마감
+  // 새 일자 출근 직전에 어제 이전의 미퇴근 기록을 정규 퇴근 시각(KST)으로 자동 마감
   await autoCloseStaleRecords(appUser.id, today);
 
   // 이미 오늘 기록이 있으면 차단
@@ -35,7 +38,12 @@ export async function POST() {
     );
   }
 
-  const calc = calculateAttendance(nowIso, null, today);
+  const workHours = await resolveWorkHoursByDepartmentId(
+    appUser.department_id,
+    today,
+    appUser.id,
+  );
+  const calc = calculateAttendance(nowIso, null, today, workHours);
 
   const { data, error } = await supabaseAdmin
     .from("attendance_records")

@@ -4,7 +4,8 @@ import { supabaseAdmin } from '@/lib/supabase/admin'
 import { canViewAppraisalOverview } from '@/lib/auth/appraisalAccess'
 import { getEvaluationTargets } from '@/lib/appraisal/evaluationAccess'
 import { getMonthlySales } from '@/lib/dashboard/monthlySales'
-import { getTodayKstDate, kstDateAt, WORK_START_HOUR } from '@/lib/attendance'
+import { getTodayKstDate, kstDateAt, resolveWorkHours } from '@/lib/attendance'
+import { getDepartmentById } from '@/lib/attendance-server'
 import {
   expandLeaveCredit,
   isVacationDocType,
@@ -137,6 +138,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: '대상 사용자를 찾을 수 없습니다.' }, { status: 404 })
   }
   const displayName = targetUser.display_name?.trim() ?? ''
+  // 대상자 부서 → 근무시간 프로필 (사업본부는 2026-07-01부터 09:00 출근 기준)
+  const targetDept = await getDepartmentById(targetUser.department_id)
 
   const consultQuery = (r: ReturnType<typeof quarterRange>) =>
     displayName
@@ -349,7 +352,8 @@ export async function GET(request: NextRequest) {
     if (!r.clock_in_at) continue
     recordedDates.add(r.date)
     workDays += 1
-    if (new Date(r.clock_in_at) > kstDateAt(r.date, WORK_START_HOUR)) {
+    const { startHour } = resolveWorkHours(targetDept, r.date, userId)
+    if (new Date(r.clock_in_at) > kstDateAt(r.date, startHour)) {
       lateCount += 1
     }
   }
