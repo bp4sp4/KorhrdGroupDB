@@ -79,6 +79,7 @@ const STATUS_TABS = [
   "교육원 연계",
   "교육원 연계 완료",
   "교육원 재연계",
+  "교육원 후연계",
   "기관 연계",
   "기관 연계 완료",
   "기관 재연계",
@@ -94,6 +95,7 @@ const STATUS_PILL: Record<string, { bg: string; color: string }> = {
   "교육원 연계": { bg: "#F3F4F6", color: "#6B7684" },
   "교육원 연계 완료": { bg: "#E0F7FA", color: "#0277BD" },
   "교육원 재연계": { bg: "#FFFDE7", color: "#F57F17" },
+  "교육원 후연계": { bg: "#FFEDD5", color: "#EA580C" },
   "기관 연계": { bg: "#F3F4F6", color: "#6B7684" },
   "기관 연계 완료": { bg: "#E0F7FA", color: "#0277BD" },
   "기관 재연계": { bg: "#FFFDE7", color: "#F57F17" },
@@ -126,7 +128,10 @@ function effectiveStatus(r: Applicant): string {
 // 상태변경 팝업 그룹 (디자인)
 const STATUS_GROUPS: { label: string; options: string[] }[] = [
   { label: "입금", options: ["입금대기", "입금완료", "환불"] },
-  { label: "교육원", options: ["교육원 연계", "교육원 연계 완료", "교육원 재연계"] },
+  {
+    label: "교육원",
+    options: ["교육원 연계", "교육원 연계 완료", "교육원 재연계", "교육원 후연계"],
+  },
   { label: "기관", options: ["기관 연계", "기관 연계 완료", "기관 재연계"] },
   { label: "실습", options: ["실습 완료", "실습 연기"] },
 ];
@@ -134,7 +139,7 @@ const STATUS_GROUPS: { label: string; options: string[] }[] = [
 // 상태 태그 표시 그룹 (디자인 — 그룹 사이 세로 구분선)
 const STATUS_TAG_GROUPS: string[][] = [
   ["입금대기", "입금완료"],
-  ["교육원 연계", "교육원 연계 완료", "교육원 재연계"],
+  ["교육원 연계", "교육원 연계 완료", "교육원 재연계", "교육원 후연계"],
   ["기관 연계", "기관 연계 완료", "기관 재연계"],
   ["실습 완료", "실습 연기"],
   ["환불"],
