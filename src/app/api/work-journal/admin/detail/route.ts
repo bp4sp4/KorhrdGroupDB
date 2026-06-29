@@ -198,7 +198,6 @@ export async function GET(request: NextRequest) {
       completedRes,
       pendingRes,
       schedRes,
-      schedDoneRes,
     ] = await Promise.all([
       supabaseAdmin
         .from('hakjeom_consultations')
@@ -234,23 +233,29 @@ export async function GET(request: NextRequest) {
         .eq('manager', displayName)
         .eq('status', '상담대기')
         .is('deleted_at', null),
-      // 해당일 연락 예정 (contact_scheduled_at)
+      // 해당일 연락 예정 (contact_scheduled_at) — 분모. id 목록까지 받아 가망관리 처리분 계산에 사용
       supabaseAdmin
         .from('hakjeom_consultations')
-        .select('id', { count: 'exact', head: true })
+        .select('id')
         .eq('manager', displayName)
         .gte('contact_scheduled_at', dayStartISO)
         .lt('contact_scheduled_at', dayEndISO),
-      // 해당일 연락 예정 중 상담완료 (가망관리 처리분)
-      supabaseAdmin
-        .from('hakjeom_consultations')
-        .select('id', { count: 'exact', head: true })
-        .eq('manager', displayName)
-        .gte('contact_scheduled_at', dayStartISO)
-        .lt('contact_scheduled_at', dayEndISO)
-        .gte('counsel_completed_at', dayStartISO)
-        .lt('counsel_completed_at', dayEndISO),
     ])
+
+    // 해당일 가망관리 처리분 — 오늘 연락예정 건 중, 오늘 메모(연락 기록)가 추가된 건수.
+    // (상담완료 status 는 메모 작성 시 counsel_completed_at 가 초기화되어 카운트가 어긋나므로 메모 기준으로 판정)
+    const schedIds = (schedRes.data ?? []).map((r) => String(r.id))
+    let scheduledDoneCount = 0
+    if (schedIds.length > 0) {
+      const { data: memoRows } = await supabaseAdmin
+        .from('memo_logs')
+        .select('record_id')
+        .eq('table_name', 'hakjeom_consultations')
+        .in('record_id', schedIds)
+        .gte('created_at', dayStartISO)
+        .lt('created_at', dayEndISO)
+      scheduledDoneCount = new Set((memoRows ?? []).map((m) => m.record_id)).size
+    }
     const totalInquiries = inqMonth.count ?? 0
     const registrations = regMonth.count ?? 0
     const registrationRate =
@@ -266,8 +271,8 @@ export async function GET(request: NextRequest) {
       salesThisMonth,
       completedNew: completedRes.count ?? 0,
       pendingNew: pendingRes.count ?? 0,
-      scheduledContacts: schedRes.count ?? 0,
-      scheduledDone: schedDoneRes.count ?? 0,
+      scheduledContacts: schedIds.length,
+      scheduledDone: scheduledDoneCount,
       delta: {
         inquiries: base.inquiries - prev.inquiries,
         registrations: base.registrations - prev.registrations,

@@ -124,7 +124,6 @@ export async function GET() {
     todayContactsRes,
     todayCompletedRes,
     pendingNewRes,
-    todayScheduledDoneRes,
     allSalesRes,
   ] = await Promise.all([
     supabaseAdmin
@@ -147,10 +146,10 @@ export async function GET() {
       .lt('payment_date', iso(monthEnd)),
     collectDay(baseDay, managerName),
     collectDay(prevDay, managerName),
-    // 오늘 본인 담당 연락 예정 (학점은행제 - hakjeom_consultations)
+    // 오늘 본인 담당 연락 예정 (학점은행제 - hakjeom_consultations) — id 목록까지 받음
     supabaseAdmin
       .from('hakjeom_consultations')
-      .select('id', { count: 'exact', head: true })
+      .select('id')
       .eq('manager', managerName)
       .gte('contact_scheduled_at', todayStartISO)
       .lt('contact_scheduled_at', todayEndISO),
@@ -168,15 +167,6 @@ export async function GET() {
       .eq('manager', managerName)
       .eq('status', '상담대기')
       .is('deleted_at', null),
-    // 오늘 연락예정 중 오늘 상담완료 (가망관리 처리분)
-    supabaseAdmin
-      .from('hakjeom_consultations')
-      .select('id', { count: 'exact', head: true })
-      .eq('manager', managerName)
-      .gte('contact_scheduled_at', todayStartISO)
-      .lt('contact_scheduled_at', todayEndISO)
-      .gte('counsel_completed_at', todayStartISO)
-      .lt('counsel_completed_at', todayEndISO),
     // 실적 순위 — 분기 전체 담당자 매출 (담당자별 합산)
     supabaseAdmin
       .from('edu_sales')
@@ -195,6 +185,23 @@ export async function GET() {
     (s, r) => s + Number(r.total_amount ?? 0),
     0,
   )
+
+  // 오늘 가망관리 처리분 — 오늘 연락예정 건 중 오늘 메모(연락 기록)가 추가된 건수
+  // (상담완료 status 는 메모 작성 시 counsel_completed_at 초기화로 어긋나므로 메모 기준 판정)
+  const todayScheduledIds = ((todayContactsRes.data ?? []) as { id: number | string }[]).map(
+    (r) => String(r.id),
+  )
+  let todayScheduledDone = 0
+  if (todayScheduledIds.length > 0) {
+    const { data: memoRows } = await supabaseAdmin
+      .from('memo_logs')
+      .select('record_id')
+      .eq('table_name', 'hakjeom_consultations')
+      .in('record_id', todayScheduledIds)
+      .gte('created_at', todayStartISO)
+      .lt('created_at', todayEndISO)
+    todayScheduledDone = new Set((memoRows ?? []).map((m) => m.record_id)).size
+  }
 
   // 실적 순위 — 분기 매출 내림차순 (담당자별 합산)
   const revByMgr: Record<string, number> = {}
@@ -222,10 +229,10 @@ export async function GET() {
     registrations,
     registrationRate: Math.round(registrationRate * 10) / 10,
     salesThisMonth,
-    todayScheduledContacts: todayContactsRes.count ?? 0,
+    todayScheduledContacts: todayScheduledIds.length,
     todayCompletedNew: todayCompletedRes.count ?? 0,
     pendingNew: pendingNewRes.count ?? 0,
-    todayScheduledDone: todayScheduledDoneRes.count ?? 0,
+    todayScheduledDone,
     rank,
     totalManagers,
     nextRank,

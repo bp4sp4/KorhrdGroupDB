@@ -1805,7 +1805,7 @@ function HakjeomTab({
       ? facetManagers
       : Array.from(new Set(items.map((c) => c.manager).filter(Boolean)))
   ) as string[];
-  // 희망과정 필터 옵션 — 지정 목록만 노출 (데이터 기반 직접입력값 제외)
+  // 희망과정 필터 옵션 — 지정 목록만 노출
   const uniqueHopeCourses = HOPE_COURSE_FILTER_OPTIONS;
   const uniqueMajorCategories = Array.from(
     new Set(sourceList.map((s) => parseSource(s).major).filter(Boolean)),

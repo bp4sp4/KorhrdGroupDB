@@ -110,6 +110,7 @@ export const HAKJEOM_COURSE_OPTIONS = [
 // 문의 DB 표 — 희망과정 필터 드롭다운 전용 옵션
 // (입력폼 선택지 HAKJEOM_COURSE_OPTIONS 와 분리. 기존 사회복지사 세부구분 유지 + 운영 과정 추가)
 export const HOPE_COURSE_FILTER_OPTIONS = [
+  "사회복지사",
   "사회복지사2급 - 신법",
   "사회복지사2급 - 구법",
   "사회복지사 (실습예정)",

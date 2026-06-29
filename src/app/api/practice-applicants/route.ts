@@ -29,10 +29,16 @@ const EDITABLE_FIELDS = [
   'certifications',
   'amount',
   'manager',
+  'gender',
+  'cash_receipt_number',
+  'own_car',
+  'desired_semester',
+  'grade_report_date',
+  'center_open_date',
 ] as const
 
 const SELECT_COLS =
-  'id, category, seq_no, name, contact, birth_date, address, desired_date, practice_type, desired_weekday, recognition_period, training_center, field_institution, status, counsel_content, certifications, amount, manager, created_at, updated_at'
+  'id, category, seq_no, name, contact, birth_date, address, desired_date, practice_type, desired_weekday, recognition_period, training_center, field_institution, status, counsel_content, certifications, amount, manager, gender, cash_receipt_number, own_car, desired_semester, grade_report_date, center_open_date, created_at, updated_at'
 
 // GET /api/practice-applicants?category=... — 목록 (정렬: 번호 → 생성일)
 export async function GET(request: NextRequest) {

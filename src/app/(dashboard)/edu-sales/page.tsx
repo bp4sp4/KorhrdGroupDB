@@ -716,13 +716,18 @@ export default function EduSalesPage() {
     return { daily: arr, totalDays };
   }, [filteredRows, myRows, canViewAll, activeYear, activeMonthNum]);
 
-  // 월별 히스토리 (현재 보유한 rows의 cohort 기준, 최대 5개월 — 활성 월 포함 직전 4개월)
+  // 월별 히스토리 (최대 5개월 — 활성 월 포함 직전 4개월)
+  // 월 분류 기준을 좌측 통계(담당자별/큰 숫자)와 동일하게: 결제일(payment_date) 월 우선,
+  // 결제일이 없으면 개강반(cohort) 월로 fallback. (기존엔 cohort만 사용해 좌측 합계와 불일치)
   const monthHistory = useMemo(() => {
     const target = canViewAll ? rows : rows.filter((r) => r.manager_name === myDisplayName);
     const monthly: Record<number, number> = {};
     target.forEach((r) => {
       if (r.refund_status === "환불") return;
-      const num = cohortToMonth(r.cohort);
+      const label =
+        paymentDateToMonthLabel(r.payment_date) ??
+        cohortToMonthLabel(r.cohort);
+      const num = label ? Number(label.match(/^(\d+)월$/)?.[1] ?? 0) : 0;
       if (!num) return;
       monthly[num] = (monthly[num] ?? 0) + (r.total_amount ?? 0);
     });

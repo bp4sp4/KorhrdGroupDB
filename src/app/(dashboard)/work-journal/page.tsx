@@ -373,6 +373,7 @@ const DETAIL_FILTERS: { key: string; label: string; options: string[] }[] = [
     key: "course",
     label: "희망과정",
     options: [
+      "사회복지사",
       "사회복지사 2급 - 신법",
       "사회복지사 2급 - 구법",
       "사회복지사(실습예정)",

@@ -494,12 +494,477 @@
   overflow: hidden;
 }
 
-.modalHead {
+.modalWide {
+  width: 1150px;
+  position: relative;
+}
+
+/* ─── 학생 상세 모달 (2열 구조) ────────────────────────────────────── */
+.modalHeadLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.modalNameRow {
   display: flex;
   align-items: center;
+  gap: 16px;
+}
+
+.modalNameGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.modalNameText {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1f2937;
+  white-space: nowrap;
+  cursor: text;
+}
+
+.modalNameInput {
+  border: none;
+  outline: none;
+  padding: 0;
+  min-width: 40px;
+  field-sizing: content;
+  font-size: 22px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.modalEditBtn {
+  display: flex;
+  align-items: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.modalBadges {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.modalStatusPill {
+  display: flex;
+  padding: 4px 9px;
+  align-items: center;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: normal;
+  white-space: nowrap;
+}
+
+.modalContactBadge {
+  display: flex;
+  padding: 4px 9px;
+  align-items: center;
+  border-radius: 999px;
+  background: #f5f5f5;
+  color: #7a8086;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: normal;
+  white-space: nowrap;
+}
+
+.modalContactInput {
+  border: none;
+  outline: none;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: #8995a2;
+}
+
+.modalCloseBtn {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  display: flex;
+  align-items: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.modalCols {
+  display: flex;
+  height: 608px;
+  align-items: flex-start;
+  gap: 30px;
+  flex-shrink: 0;
+  align-self: stretch;
+}
+
+.modalCol {
+  flex: 1;
+  min-width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-self: stretch;
+  overflow-y: auto;
+}
+
+.modalRow2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* ─── 좌측 컬럼 (기본정보) 전용 디자인 — 학점은행제 상세와 동일 ───────────── */
+.detailColLeft {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  flex: 1 0 0;
+  align-self: stretch;
+  min-width: 0;
+}
+
+.detailFieldRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  align-self: stretch;
+}
+
+.detailField {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1 0 0;
+  align-self: stretch;
+  min-width: 0;
+}
+
+.detailFieldLabel {
+  display: flex;
+  width: 80px;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 10px;
+  color: #8995a2;
+  font-family: Pretendard, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: normal;
+  white-space: nowrap;
+}
+
+.detailFieldBox {
+  display: flex;
+  padding: 10px;
+  align-items: center;
+  gap: 10px;
+  flex: 1 0 0;
+  min-width: 0;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  color: #1f2937;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: normal;
+  outline: none;
+}
+
+.detailFieldBox::placeholder {
+  color: #8995a2;
+}
+
+.detailFieldBox:focus {
+  border-color: #3182f6;
+}
+
+/* 세로형 박스 (주소 등) — flex-direction: column */
+.detailFieldBoxFull {
+  display: flex;
+  padding: 10px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  flex: 1 0 0;
+  min-width: 0;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  color: #1f2937;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: normal;
+  outline: none;
+}
+
+.detailFieldBoxFull::placeholder {
+  color: #8995a2;
+}
+
+.detailFieldBoxFull:focus {
+  border-color: #3182f6;
+}
+
+/* select 박스 — 우측 chevron 표시 */
+select.detailFieldBox {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 30px;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='10'%20height='10'%20viewBox='0%200%2010%2010'%20fill='none'%3E%3Cpath%20d='M8.97419%202.79041C8.85699%202.67324%208.69805%202.60742%208.53232%202.60742C8.36659%202.60742%208.20765%202.67324%208.09044%202.79041L4.99669%205.88416L1.90294%202.79041C1.78507%202.67656%201.62719%202.61357%201.46332%202.61499C1.29945%202.61642%201.14269%202.68215%201.02681%202.79803C0.910928%202.91391%200.845198%203.07066%200.843774%203.23454C0.84235%203.39841%200.905346%203.55629%201.01919%203.67416L4.55482%207.20979C4.67202%207.32696%204.83097%207.39278%204.99669%207.39278C5.16242%207.39278%205.32136%207.32696%205.43857%207.20979L8.97419%203.67416C9.09136%203.55696%209.15719%203.39802%209.15719%203.23229C9.15719%203.06656%209.09136%202.90762%208.97419%202.79041Z'%20fill='%238D99A5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+/* 메모 — 학점은행제 상세 메모(MemoTimeline)와 동일하게 남은 공간 채움 */
+.detailMemoSection {
+  width: 100%;
+  margin-top: 8px;
+  padding-top: 16px;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.detailMemoSection > * {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.detailMemoSection [class*="timeline"] {
+  flex: 1 1 auto;
+}
+
+/* ─── 가운데 구분선 ─────────────────────────────────────── */
+.detailDivider {
+  width: 1px;
+  align-self: stretch;
+  flex-shrink: 0;
+  background: #e6e7eb;
+}
+
+/* ─── 우측 컬럼 (실습 정보) ─────────────────────────────── */
+.detailColRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 20px;
+  flex: 1 0 0;
+  align-self: stretch;
+  min-width: 0;
+  overflow-y: auto;
+}
+
+.detailColRightTitle {
+  color: #000;
+  font-family: Pretendard, sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: normal;
+}
+
+.detailRightSection {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  align-self: stretch;
+}
+
+.detailRightRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  align-self: stretch;
+}
+
+/* DateInput / RangeField 를 박스처럼 — 필드 안에서 남은 너비 채움 */
+.detailDateWrap,
+.detailRangeWrap {
+  flex: 1 0 0;
+  min-width: 0;
+}
+
+/* 날짜 선택 트리거 — 값 + 달력아이콘이 가로 한 줄로 (column 박스 쓰면 깨짐) */
+.detailDateTrigger {
+  display: flex;
+  width: 100%;
+  padding: 10px;
+  align-items: center;
   justify-content: space-between;
-  padding: 18px 20px;
-  border-bottom: 1px solid #eef0f2;
+  gap: 10px;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  color: #1f2937;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: normal;
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+}
+
+.detailDateTrigger:focus {
+  border-color: #3182f6;
+}
+
+/* ─── 상태 태그 ─────────────────────────────────────────── */
+.detailStatusField {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  align-self: stretch;
+}
+
+.detailStatusTags {
+  display: flex;
+  align-items: center;
+  align-content: center;
+  gap: 8px;
+  flex: 1 0 0;
+  flex-wrap: wrap;
+}
+
+.detailStatusTag {
+  display: flex;
+  padding: 11px 12px;
+  justify-content: center;
+  align-items: center;
+  gap: 9px;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  color: #7a8086;
+  font-family: Pretendard, sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 100%;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.detailStatusTagActive {
+  border-color: #0084fe;
+  background: #eaf3ff;
+  color: #0084fe;
+}
+
+.detailStatusDivider {
+  width: 1px;
+  height: 18px;
+  flex-shrink: 0;
+  align-self: center;
+  background: #b2b2b2;
+}
+
+/* ─── 푸터 (우측 컬럼 하단에 고정 — 좌측 메모와 동일선상) ─── */
+.detailFoot {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+  gap: 10px;
+  align-self: stretch;
+  margin-top: auto;
+}
+
+.detailCancelBtn,
+.detailSaveBtn {
+  display: flex;
+  padding: 14px 24px;
+  justify-content: center;
+  align-items: center;
+  border: none;
+  border-radius: 8px;
+  font-family: Pretendard, sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: normal;
+  cursor: pointer;
+}
+
+.detailCancelBtn {
+  background: #f0f0f0;
+  color: #565656;
+}
+
+.detailSaveBtn {
+  background: #0084fe;
+  color: #fff;
+}
+
+.detailSaveBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.detailRangeTrigger {
+  display: flex;
+  width: 100%;
+  padding: 10px;
+  padding-right: 30px;
+  align-items: center;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  color: #1f2937;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: normal;
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='10'%20height='10'%20viewBox='0%200%2010%2010'%20fill='none'%3E%3Cpath%20d='M8.97419%202.79041C8.85699%202.67324%208.69805%202.60742%208.53232%202.60742C8.36659%202.60742%208.20765%202.67324%208.09044%202.79041L4.99669%205.88416L1.90294%202.79041C1.78507%202.67656%201.62719%202.61357%201.46332%202.61499C1.29945%202.61642%201.14269%202.68215%201.02681%202.79803C0.910928%202.91391%200.845198%203.07066%200.843774%203.23454C0.84235%203.39841%200.905346%203.55629%201.01919%203.67416L4.55482%207.20979C4.67202%207.32696%204.83097%207.39278%204.99669%207.39278C5.16242%207.39278%205.32136%207.32696%205.43857%207.20979L8.97419%203.67416C9.09136%203.55696%209.15719%203.39802%209.15719%203.23229C9.15719%203.06656%209.09136%202.90762%208.97419%202.79041Z'%20fill='%238D99A5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+.detailRangeTrigger:focus {
+  border-color: #3182f6;
+}
+
+.modalSectionTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.modalStatusWrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.modalMemoLog {
+  border: 1px solid #e6e7eb;
+  border-radius: 8px;
+  min-height: 100px;
+  background: #fafbfc;
+}
+
+.modalHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 24px 24px 0;
 }
 
 .modalHead h2 {
@@ -518,7 +983,7 @@
 }
 
 .modalBody {
-  padding: 20px;
+  padding: 16px 24px 24px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -659,4 +1124,597 @@
 .saveBtn:disabled {
   opacity: 0.6;
   cursor: default;
+}
+
+/* ─── 실습 학생 DB 헤더 / 과정 필터 (신규 디자인) ──────────────────── */
+.dbSection {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  align-self: stretch;
+}
+
+.dbTitle {
+  color: #000;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: normal;
+  margin: 0;
+}
+
+.dbFilterRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  align-self: stretch;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.courseFilterLeft {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.courseLabel {
+  color: #1f2937;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: normal;
+  white-space: nowrap;
+}
+
+.courseChips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.courseChip {
+  display: flex;
+  padding: 10px 12px;
+  align-items: center;
+  gap: 4px;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  color: #8995a2;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: normal;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.courseChip svg {
+  flex-shrink: 0;
+}
+
+.courseChipActive {
+  border-color: #0084fe;
+  background: #eaf3ff;
+  color: #0084fe;
+}
+
+.dbActions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.dbBtn {
+  display: flex;
+  height: 30px;
+  padding: 8px 10px;
+  align-items: center;
+  gap: 6px;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  color: #8995a2;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: normal;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.dbBtn svg {
+  flex-shrink: 0;
+}
+
+.dbBtnPrimary {
+  border: none;
+  background: #0084fe;
+  color: #fff;
+  font-weight: 600;
+}
+
+.dbSearch {
+  display: flex;
+  height: 30px;
+  padding: 8px 10px;
+  align-items: center;
+  gap: 6px;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+}
+
+.dbSearch svg {
+  flex-shrink: 0;
+}
+
+.dbSearchInput {
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #1f2937;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: normal;
+  width: 180px;
+  max-width: 40vw;
+}
+
+.dbSearchInput::placeholder {
+  color: #8995a2;
+}
+
+/* ─── 상태 탭 ──────────────────────────────────────────────────────── */
+.statusTabRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  align-self: stretch;
+  border-bottom: 1px solid #e6e7eb;
+}
+
+.statusLabel {
+  color: #1f2937;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: normal;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.statusTabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+}
+
+.statusTab {
+  display: flex;
+  padding: 12px 10px;
+  align-items: center;
+  gap: 10px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: #8995a2;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: normal;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.statusTabActive {
+  color: #1f2937;
+  border-bottom-color: #1f2937;
+}
+
+.statusDivider {
+  width: 1px;
+  height: 18px;
+  background: #b2b2b2;
+  flex-shrink: 0;
+}
+
+/* ─── 실습 학생 DB 테이블 (그리드) ──────────────────────────────────── */
+.gridScroll {
+  overflow-x: auto;
+  align-self: stretch;
+}
+
+.gridList {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 1180px;
+}
+
+.grid12 {
+  display: grid;
+  width: 100%;
+  grid-template-columns:
+    minmax(0, 0.5fr) minmax(0, 0.75fr) minmax(0, 0.75fr) minmax(0, 0.75fr)
+    minmax(0, 1fr) minmax(0, 0.5fr) minmax(0, 0.75fr) minmax(0, 1fr)
+    minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) 200px;
+  border-radius: 6px;
+  border: 1px solid #e6e7eb;
+}
+
+.gridHead {
+  min-height: 40px;
+  background: #f7f8fa;
+}
+
+.gridRow {
+  min-height: 70px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.gridRow:hover {
+  background: #fafbfc;
+}
+
+.headCell {
+  display: flex;
+  padding: 10px;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  color: #1f2937;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: normal;
+  text-align: center;
+}
+
+.sortHeadCell {
+  position: relative;
+}
+
+.sortBtn {
+  display: flex;
+  padding: 4px;
+  align-items: center;
+  border-radius: 6px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  cursor: pointer;
+}
+
+.sortMenu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 0 12px 0 rgba(0, 0, 0, 0.3);
+}
+
+.sortItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: none;
+  background: transparent;
+  color: #8995a2;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: normal;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.radio {
+  display: flex;
+  width: 20px;
+  height: 20px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  border: 1px solid #d0d0d0;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.radioDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #2469ff;
+}
+
+.bodyCell {
+  display: flex;
+  padding: 10px;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  color: #1f2937;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: normal;
+  text-align: center;
+}
+
+.cellNameBold {
+  font-weight: 700;
+}
+
+.statusPill {
+  display: flex;
+  min-width: 60px;
+  padding: 4px 8px;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: normal;
+  white-space: nowrap;
+}
+
+.twoLine {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.4;
+}
+
+.cellEllipsis {
+  justify-content: flex-start;
+}
+
+.ellipsisText {
+  display: block;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.gridCheckbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid #b2b2b2;
+  background: #fff;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.gridCheckbox:checked {
+  border-color: #2469ff;
+  background: #2469ff;
+}
+
+.gridCheckbox:checked::after {
+  content: "";
+  position: absolute;
+  left: 8px;
+  top: 4px;
+  width: 5px;
+  height: 10px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.gridEmpty {
+  display: flex;
+  align-self: stretch;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 0;
+  color: #8b95a1;
+  font-size: 13px;
+  border: 1px solid #e6e7eb;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.gridRowSelected,
+.gridRowSelected:hover {
+  background: #f2f8ff;
+}
+
+/* ─── 다중 선택 액션 바 (신규 디자인) ──────────────────────────────── */
+.selectBar {
+  display: flex;
+  padding: 10px 16px;
+  justify-content: space-between;
+  align-items: center;
+  align-self: stretch;
+  border-radius: 8px;
+  background: #fff5f5;
+}
+
+.selectCount {
+  color: #1f2937;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: normal;
+}
+
+.selectActions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+
+.selectChangeBtn {
+  display: flex;
+  padding: 8px 10px;
+  align-items: center;
+  gap: 4px;
+  border-radius: 8px;
+  border: 1px solid #8995a2;
+  background: #fff;
+  color: #8995a2;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: normal;
+  cursor: pointer;
+}
+
+.selectDeleteBtn {
+  display: flex;
+  padding: 8px 10px;
+  align-items: center;
+  gap: 4px;
+  border-radius: 8px;
+  border: none;
+  background: #ff4a4a;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: normal;
+  cursor: pointer;
+}
+
+.selectCancelBtn {
+  display: flex;
+  padding: 8px 10px;
+  align-items: center;
+  gap: 4px;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  color: #8995a2;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: normal;
+  cursor: pointer;
+}
+
+.selectChangeBtn svg {
+  flex-shrink: 0;
+}
+
+/* ─── 상태변경 팝업 ─────────────────────────────────────────────────── */
+.scAnchor {
+  position: relative;
+}
+
+.scPopup {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 0 12px 0 rgba(0, 0, 0, 0.3);
+}
+
+.scTitle {
+  color: #1f2937;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 100%;
+}
+
+.scGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  align-self: stretch;
+}
+
+.scGroupLabel {
+  width: 32px;
+  flex-shrink: 0;
+  color: #1f2937;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: normal;
+}
+
+.scStatusBtn {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #e6e7eb;
+  background: #fff;
+  color: #8995a2;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: normal;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.scStatusBtnActive {
+  border-color: #0084fe;
+  background: #eaf3ff;
+  color: #0084fe;
+}
+
+.scFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  align-self: stretch;
+  gap: 12px;
+}
+
+.scFooterText {
+  color: #1f2937;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 100%;
+  white-space: nowrap;
+}
+
+.scFooterN {
+  color: #0084fe;
+  font-weight: 500;
+}
+
+.scApplyBtn {
+  display: flex;
+  padding: 8px 12px;
+  align-items: center;
+  gap: 6px;
+  border-radius: 8px;
+  border: none;
+  background: #0084fe;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: normal;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.hubPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 240px;
+  color: #8b95a1;
+  font-size: 14px;
+  border: 1px dashed #e5e8eb;
+  border-radius: 12px;
+  background: #fafbfc;
 }

@@ -7,6 +7,7 @@ const ALLOWED_TABLES = [
   'private_cert_consultations',
   'practice_consultations',
   'practice_applications',
+  'practice_applicants',
   'employment_applications',
   'agency_agreements',
   'certificate_applications',

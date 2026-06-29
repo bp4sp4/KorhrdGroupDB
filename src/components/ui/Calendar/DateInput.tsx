@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useRef, useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { parse, format, isValid } from 'date-fns'
 import { CalendarDays } from 'lucide-react'
 import { Calendar } from './index'
@@ -55,11 +56,18 @@ export function DateInput({
   const [open, setOpen] = useState(false)
   const [popoverStyle, setPopoverStyle] = useState<React.CSSProperties>({})
   const wrapRef = useRef<HTMLDivElement>(null)
+  const popoverRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!open) return
     function onDown(e: MouseEvent) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+      const t = e.target as Node
+      // 팝오버는 body로 포탈되므로 wrap 안에 없음 — 팝오버 내부 클릭도 "바깥"으로 보지 않도록 함께 검사
+      if (
+        wrapRef.current &&
+        !wrapRef.current.contains(t) &&
+        (!popoverRef.current || !popoverRef.current.contains(t))
+      ) {
         setOpen(false)
       }
     }
@@ -146,23 +154,30 @@ export function DateInput({
         </button>
       )}
 
-      {open && (
-        <div className={styles.popoverFixed} style={popoverStyle}>
-          <Calendar
-            value={selected}
-            onChange={handleSelect}
-            disabled={
-              minDate || maxDate
-                ? [
-                    ...(minDate ? [{ before: minDate }] : []),
-                    ...(maxDate ? [{ after: maxDate }] : []),
-                  ]
-                : undefined
-            }
-            defaultMonth={defaultMonth ?? minDate ?? maxDate}
-          />
-        </div>
-      )}
+      {open &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div
+            ref={popoverRef}
+            className={styles.popoverFixed}
+            style={popoverStyle}
+          >
+            <Calendar
+              value={selected}
+              onChange={handleSelect}
+              disabled={
+                minDate || maxDate
+                  ? [
+                      ...(minDate ? [{ before: minDate }] : []),
+                      ...(maxDate ? [{ after: maxDate }] : []),
+                    ]
+                  : undefined
+              }
+              defaultMonth={defaultMonth ?? minDate ?? maxDate}
+            />
+          </div>,
+          document.body,
+        )}
     </div>
   )
 }
