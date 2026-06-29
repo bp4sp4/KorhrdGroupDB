@@ -1206,8 +1206,8 @@ function DetailModal({
                     onChange={(e) => set("gender", e.target.value)}
                   >
                     <option value="">선택</option>
-                    <option value="남성">남성</option>
-                    <option value="여성">여성</option>
+                    <option value="남">남성</option>
+                    <option value="여">여성</option>
                   </select>
                 </label>
                 <label className={styles.detailField}>
@@ -1298,13 +1298,11 @@ function DetailModal({
                 <div className={styles.detailRightRow}>
                   <div className={styles.detailField}>
                     <span className={styles.detailFieldLabel}>희망실습일</span>
-                    <DateInput
+                    <input
+                      className={styles.detailFieldBox}
                       value={form.desired_date ?? ""}
-                      onChange={(v) => set("desired_date", v)}
-                      placeholder="날짜 선택"
-                      className={styles.detailDateWrap}
-                      triggerClassName={styles.detailDateTrigger}
-                      showIcon={false}
+                      placeholder="예) 26년 04월"
+                      onChange={(e) => set("desired_date", e.target.value)}
                     />
                   </div>
                   <label className={styles.detailField}>
