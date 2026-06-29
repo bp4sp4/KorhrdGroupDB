@@ -57,6 +57,11 @@ export default function DashboardLayout({
         leaderFlag = !!data.isLeader
         hidden = Array.isArray(data.hiddenMenus) ? data.hiddenMenus : []
         deptCode = data.departmentCode ?? null
+      } else if (res.status === 403) {
+        // 비활성화된 계정 — 세션 종료 후 로그인으로
+        await supabase.auth.signOut()
+        router.replace('/login')
+        return
       }
     } catch {
       // keep defaults
@@ -300,7 +305,7 @@ export default function DashboardLayout({
           <Header userName={displayName} userRole={userRole} permissions={permissions} revenueOwnDivisions={revenueOwnDivisions} departmentCode={departmentCode} isDivisionAdmin={isDivisionAdmin} isDeptHead={isDeptHead} hiddenMenus={hiddenMenus} onMenuToggle={() => setSidebarOpen(v => !v)} />
 
           <main
-            className={`${styles.mainContent}${pathname.startsWith('/approvals') ? ` ${styles.mainContentWhite}` : ''}${pathname.startsWith('/profit') ? ` ${styles.mainContentFlush}` : ''}`}
+            className={`${styles.mainContent}${pathname.startsWith('/approvals') ? ` ${styles.mainContentWhite}` : ''}${pathname.startsWith('/profit') || pathname.startsWith('/practice-applicants/agency') ? ` ${styles.mainContentFlush}` : ''}`}
             style={
               pathname.startsWith('/calendar') ||
               pathname.startsWith('/dashboard') ||

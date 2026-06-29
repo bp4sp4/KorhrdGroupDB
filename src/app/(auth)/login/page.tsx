@@ -32,6 +32,12 @@ export default function LoginPage() {
             router.replace(getDefaultPath(data))
             return
           }
+          if (res.status === 403) {
+            // 비활성화된 계정 — 세션 종료, 로그인 화면 유지
+            await supabase.auth.signOut()
+            setError('비활성화된 계정입니다. 관리자에게 문의하세요.')
+            return
+          }
         } catch { /* ignore */ }
         router.replace('/dashboard')
       }
@@ -66,6 +72,13 @@ export default function LoginPage() {
         const data = await res.json()
         localStorage.setItem('user_role', data.role ?? 'guest')
         router.replace(getDefaultPath(data))
+        return
+      }
+      if (res.status === 403) {
+        // 비활성화된 계정 — 세션 종료 후 차단
+        await supabase.auth.signOut()
+        setError('비활성화된 계정입니다. 관리자에게 문의하세요.')
+        setIsLoading(false)
         return
       }
     } catch { /* ignore */ }

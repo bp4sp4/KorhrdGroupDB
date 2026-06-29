@@ -1,0 +1,256 @@
+/* 위치 검색 바 */
+.locationBar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.locationButtons {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+}
+
+.gpsButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 48px;
+  padding: 0 16px;
+  border-radius: 8px;
+  border: 1px solid var(--Grayscale-200, #e4e4e4);
+  background: #fff;
+  color: var(--Grayscale-900, #010101);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.gpsButton:hover {
+  border-color: var(--Blue-500, #0051ff);
+  color: var(--Blue-500, #0051ff);
+}
+
+.gpsButtonActive {
+  composes: gpsButton;
+  border-color: var(--Blue-500, #0051ff);
+  background: var(--Blue-50, #e5edff);
+  color: var(--Blue-500, #0051ff);
+}
+
+.gpsIcon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.addressInputWrapper {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.addressInput {
+  flex: 1;
+  height: 48px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--Grayscale-200, #e4e4e4);
+  background: #fff;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--Grayscale-900, #010101);
+  min-width: 0;
+}
+
+.addressInput::placeholder {
+  color: var(--Grayscale-500, #919191);
+}
+
+.addressInput:focus {
+  outline: none;
+  border: 1.5px solid var(--Blue-500, #0051ff);
+}
+
+.addressSearchButton {
+  height: 48px;
+  padding: 0 16px;
+  border-radius: 8px;
+  border: none;
+  background: var(--Blue-900, #00184d);
+  color: #fff;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.addressSearchButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 위치 상태 표시 */
+.locationStatus {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--Blue-50, #e5edff);
+  font-family: Pretendard, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--Blue-900, #002366);
+}
+
+.locationStatusIcon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.locationStatusText {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.locationClear {
+  background: none;
+  border: none;
+  color: var(--Grayscale-500, #919191);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+
+.locationError {
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #fff0f0;
+  color: #d32f2f;
+  font-family: Pretendard, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.locationLoading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 12px;
+  font-family: Pretendard, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--Grayscale-500, #919191);
+}
+
+/* 지도 컨테이너 */
+.mapContainer {
+  width: 100%;
+  height: 100%;
+  min-height: 300px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--Grayscale-200, #e4e4e4);
+}
+
+.mapLoading {
+  width: 100%;
+  height: 100%;
+  min-height: 300px;
+  border-radius: 12px;
+  background: var(--Grayscale-50, #fafafa);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  color: var(--Grayscale-500, #919191);
+  border: 1px solid var(--Grayscale-200, #e4e4e4);
+  margin-top: 12px;
+}
+
+/* 검색 모드 토글 */
+.searchModeToggle {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+  background: var(--Grayscale-50, #fafafa);
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.searchModeButton {
+  flex: 1;
+  height: 36px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--Grayscale-500, #919191);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.searchModeButtonActive {
+  flex: 1;
+  height: 36px;
+  border: none;
+  border-radius: 6px;
+  background: #fff;
+  color: var(--Blue-500, #0051ff);
+  font-family: Pretendard, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* 거리 배지 */
+.distanceBadge {
+  display: inline-flex;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--Blue-500, #0051ff);
+  color: #fff;
+  font-family: Pretendard, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* 스피너 애니메이션 */
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--Grayscale-200, #e4e4e4);
+  border-top-color: var(--Blue-500, #0051ff);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -1,0 +1,496 @@
+/* 기관 및 교육원 찾기 — 시안 B (좌: 필터+리스트 / 우: 지도) */
+
+.finder {
+  --navy: #16205a;
+  display: flex;
+  height: calc(100vh - 55px);
+  min-height: 560px;
+  font-family:
+    "Pretendard Variable",
+    Pretendard,
+    -apple-system,
+    sans-serif;
+  color: #1a1d24;
+  overflow: hidden;
+  background: #fff;
+}
+
+/* ── 좌측 패널 (필터 + 리스트) ── */
+.leftPanel {
+  width: 476px;
+  flex: none;
+  border-right: 1px solid #eceef2;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: #fafbfc;
+}
+
+.filterBox {
+  padding: 20px;
+  border-bottom: 1px solid #eceef2;
+  background: #fff;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 탭 토글 */
+.toggleWrap {
+  display: flex;
+  background: #f1f3f7;
+  border-radius: 11px;
+  padding: 4px;
+}
+.toggle {
+  flex: 1;
+  text-align: center;
+  padding: 11px 0;
+  border-radius: 9px;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: #7a8090;
+  font-weight: 600;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.toggleActive {
+  background: var(--navy);
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(22, 32, 90, 0.25);
+}
+
+/* 셀렉트 행 */
+.selectRow {
+  display: flex;
+  gap: 8px;
+}
+
+/* 커스텀 드롭다운 */
+.dd {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+.ddSort {
+  flex: none;
+  width: 116px;
+}
+.ddButton {
+  width: 100%;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 12px;
+  border: 1px solid #e1e4eb;
+  border-radius: 9px;
+  background: #fff;
+  font-size: 13.5px;
+  font-family: inherit;
+  cursor: pointer;
+}
+.ddButton:disabled {
+  background: #f6f7fa;
+  cursor: not-allowed;
+}
+.ddValue {
+  color: #1a1d24;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ddPlaceholder {
+  color: #9aa0ac;
+}
+.ddArrow {
+  flex: none;
+  transition: transform 0.15s;
+}
+.ddArrowOpen {
+  transform: rotate(180deg);
+}
+.ddList {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  background: #fff;
+  border: 1px solid #e8eaf0;
+  border-radius: 9px;
+  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.12);
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+.ddItem,
+.ddItemOn {
+  padding: 9px 11px;
+  border-radius: 6px;
+  font-size: 13.5px;
+  cursor: pointer;
+}
+.ddItem {
+  color: #3a3f4a;
+}
+.ddItem:hover {
+  background: #f4f6fa;
+}
+.ddItemOn {
+  background: #eef1fb;
+  color: #2563eb;
+  font-weight: 700;
+}
+
+/* 위치 검색 그룹 */
+.locGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.select {
+  flex: 1;
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid #e1e4eb;
+  border-radius: 9px;
+  font-size: 13.5px;
+  color: #475067;
+  background: #fff;
+  font-family: inherit;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+.select:disabled {
+  background: #f6f7fa;
+  color: #aab0bd;
+  cursor: not-allowed;
+}
+
+/* 위치 검색 행 */
+.locRow {
+  display: flex;
+  gap: 8px;
+}
+.locBtn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 10px 12px;
+  border: 1px solid #2563eb;
+  color: #2563eb;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  background: #fff;
+}
+.locBtnActive {
+  background: var(--navy);
+  border-color: var(--navy);
+  box-shadow: 0 2px 6px #16205a40;
+
+  color: #fff;
+}
+.locInput {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid #e1e4eb;
+  border-radius: 9px;
+  font-size: 13.5px;
+  outline: none;
+  font-family: inherit;
+}
+.locSearch {
+  display: flex;
+  align-items: center;
+  background: var(--navy);
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 700;
+  padding: 10px 20px;
+  border-radius: 9px;
+  cursor: pointer;
+  border: none;
+  white-space: nowrap;
+}
+.locStatus {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #5a6071;
+  padding: 0 2px;
+}
+.locStatus b {
+  color: var(--navy);
+  font-weight: 600;
+}
+.locStatus .reset {
+  margin-left: auto;
+  text-decoration: underline;
+}
+
+/* 적용 법령 그룹 */
+.lawGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  padding-top: 16px;
+  border-top: 1px solid #eef0f4;
+}
+
+.lawHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.lawTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a1d24;
+}
+.reset {
+  font-size: 12px;
+  color: #9aa0ac;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.chip {
+  padding: 7px 13px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 1px solid #e1e4eb;
+  background: #fff;
+  color: #5a6071;
+}
+.chipOn {
+  border-color: var(--navy);
+  background: var(--navy);
+  color: #fff;
+}
+
+/* 리스트 헤더 */
+.listHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  flex: none;
+}
+.listCount {
+  font-size: 13.5px;
+  color: #475067;
+}
+.listCount b {
+  color: var(--navy);
+}
+.sort {
+  border: none;
+  background: none;
+  font-size: 12px;
+  color: #8a90a0;
+  cursor: pointer;
+}
+
+/* 리스트 */
+.list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  min-height: 0;
+}
+.empty {
+  padding: 50px 0;
+  text-align: center;
+  color: #9aa0ac;
+  font-size: 14px;
+}
+
+.card {
+  padding: 17px 19px;
+  border-radius: 11px;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 1px solid #eaecf1;
+}
+.cardSel {
+  border-color: #c7d0f0;
+}
+.cardTop {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 12px;
+}
+.cardName {
+  font-weight: 700;
+  font-size: 13px;
+}
+.typeBadge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: #eef1fb;
+  color: #3650c7;
+  flex: none;
+}
+.distBadge {
+  margin-left: auto;
+  flex: none;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--navy);
+  color: #fff;
+}
+.cardFields {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.fieldRow {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.fieldLabel {
+  flex: none;
+  width: 82px;
+  color: #9aa0ac;
+  font-size: 12.5px;
+  padding-top: 1px;
+}
+.fieldValue {
+  flex: 1;
+  color: #2a2e38;
+}
+.fieldValueStrong {
+  flex: 1;
+  color: #2a2e38;
+  font-weight: 600;
+}
+.lawPill {
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 6px;
+  flex: none;
+  background: #eaf2ff;
+  color: #2563eb;
+}
+.lawPillOld {
+  background: #f2eefb;
+  color: #7048c4;
+}
+.noteBox {
+  margin-top: 11px;
+  padding: 9px 11px;
+  background: #eef3ff;
+  border-radius: 8px;
+  font-size: 12.5px;
+  color: #2d5ac7;
+  line-height: 1.45;
+}
+.cardActions {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+}
+.actionGhost {
+  flex: 1;
+  text-align: center;
+  padding: 9px 0;
+  border: 1px solid #e1e4eb;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475067;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  text-decoration: none;
+  background: #fff;
+}
+.actionPrimary {
+  flex: 1;
+  text-align: center;
+  padding: 9px 0;
+  background: var(--navy);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+/* ── 우측 지도 ── */
+.mapPanel {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  background: #e6eae4;
+  display: flex;
+}
+.mapPanel > * {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* 반응형 */
+@media (max-width: 1024px) {
+  .finder {
+    flex-direction: column;
+    height: auto;
+  }
+  .leftPanel {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid #eceef2;
+  }
+  .mapPanel {
+    height: 420px;
+    flex: none;
+  }
+}

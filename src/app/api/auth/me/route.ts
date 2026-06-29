@@ -17,9 +17,17 @@ export async function GET() {
     // app_users에서 role 조회 (email로 매칭)
     const { data: appUser } = await supabaseAdmin
       .from('app_users')
-      .select('id, role, display_name, ref_code, department_id, position_id, is_division_admin, team_id, hidden_menus')
+      .select('id, role, display_name, ref_code, department_id, position_id, is_division_admin, team_id, hidden_menus, is_active')
       .eq('username', user.email)
       .single();
+
+    // 비활성화된 계정 차단
+    if (appUser && appUser.is_active === false) {
+      return NextResponse.json(
+        { error: '비활성화된 계정입니다. 관리자에게 문의하세요.', deactivated: true },
+        { status: 403 },
+      );
+    }
 
     let positionName: string | null = null
     let departmentCode: string | null = null

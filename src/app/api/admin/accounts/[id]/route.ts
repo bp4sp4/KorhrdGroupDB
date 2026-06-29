@@ -95,6 +95,15 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: '계정 수정 중 오류가 발생했습니다.' }, { status: 500 })
   }
 
+  // 비활성화 시 기존 로그인 세션 즉시 무효화 (들고 있던 토큰으로 계속 접근 못 하도록)
+  if (is_active === false) {
+    const authUserId = (data as { auth_user_id?: string | null })?.auth_user_id
+    if (authUserId) {
+      const { error: soErr } = await supabaseAdmin.auth.admin.signOut(authUserId, 'global')
+      if (soErr) console.error('[admin/accounts PATCH] signOut:', soErr)
+    }
+  }
+
   // 팀 이동/해제 시 — 떠난 팀에 남아있는 팀장 지정 자동 해제 (인사고과 평가 권한 꼬임 방지)
   if (updates.team_id !== undefined) {
     let clearLeader = supabaseAdmin

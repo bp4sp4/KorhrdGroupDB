@@ -126,6 +126,17 @@ export default function Header({
   const isTabActive = (child: NavSubItem): boolean => {
     const cBase = child.href.split("?")[0];
     if (!pathname.startsWith(cBase)) return false;
+    // 더 구체적인(긴) 경로의 형제 탭이 매칭되면 이 탭은 비활성
+    // 예: /practice-applicants/agency 일 때 /practice-applicants(실습학생 DB)는 비활성
+    const moreSpecificMatch = children.some((s) => {
+      const sBase = s.href.split("?")[0];
+      return (
+        sBase !== cBase &&
+        sBase.length > cBase.length &&
+        pathname.startsWith(sBase)
+      );
+    });
+    if (moreSpecificMatch) return false;
     const cTab = tabOf(child.href);
     const sameBaseTabs = children
       .filter((s) => s.href.split("?")[0] === cBase)
