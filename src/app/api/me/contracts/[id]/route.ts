@@ -16,7 +16,7 @@ export async function GET(
   const { data, error } = await supabaseAdmin
     .from("employment_contracts")
     .select(
-      "id, contract_type, status, employee_name, signed_at, pdf_path, employee_user_id",
+      "id, contract_type, status, employee_name, signed_at, pdf_path, employee_user_id, form_data, signature",
     )
     .eq("id", id)
     .maybeSingle();
@@ -39,6 +39,10 @@ export async function GET(
     contract: "/contracts/contract.pdf",
     civil: "/contracts/civil.pdf",
     sales: "/contracts/sales.pdf",
+    privacy: "/contracts/privacy.pdf",
+    ethics: "/contracts/ethics.pdf",
+    nda: "/contracts/nda.pdf",
+    pledge: "/contracts/pledge.pdf",
   };
 
   return NextResponse.json({

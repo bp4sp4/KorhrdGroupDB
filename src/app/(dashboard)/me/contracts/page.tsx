@@ -9,6 +9,10 @@ const TYPE_LABEL: Record<string, string> = {
   contract: "계약직",
   civil: "민간",
   sales: "영업직",
+  privacy: "개인정보 동의서",
+  ethics: "보안·윤리 서약서",
+  nda: "비밀유지 서약서",
+  pledge: "입사 서약서",
 };
 const STATUS_LABEL: Record<string, string> = {
   draft: "초안",

@@ -15,11 +15,18 @@ export async function POST(request: NextRequest) {
     form_data?: Record<string, unknown>;
     signature?: string | null;
     signed?: boolean;
+    contract_type?: string;
   } | null;
 
   if (!body || typeof body.form_data !== "object" || body.form_data === null) {
     return NextResponse.json({ error: "form_data가 필요합니다." }, { status: 400 });
   }
+
+  const WORK_TYPES = ["regular", "contract", "civil", "sales"];
+  const contractType =
+    body.contract_type && WORK_TYPES.includes(body.contract_type)
+      ? body.contract_type
+      : "regular";
 
   const formData = body.form_data as Record<string, unknown>;
   const employeeName =
@@ -32,7 +39,7 @@ export async function POST(request: NextRequest) {
   const { data, error } = await supabaseAdmin
     .from("employment_contracts")
     .insert({
-      contract_type: "regular",
+      contract_type: contractType,
       status: signed ? "signed" : "draft",
       employee_user_id: appUser.id,
       employee_name: employeeName,

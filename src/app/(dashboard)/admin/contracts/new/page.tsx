@@ -4,19 +4,35 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./page.module.css";
 
-type ContractType = "regular" | "contract" | "civil" | "sales";
+type ContractType =
+  | "regular"
+  | "contract"
+  | "civil"
+  | "sales"
+  | "privacy"
+  | "ethics"
+  | "nda"
+  | "pledge";
 
 const CONTRACT_TYPE_LABEL: Record<ContractType, string> = {
   regular: "정규직",
   contract: "계약직",
   civil: "민간",
   sales: "영업직",
+  privacy: "개인정보 동의서",
+  ethics: "보안·윤리 서약서",
+  nda: "비밀유지 서약서",
+  pledge: "입사 서약서",
 };
 const CONTRACT_TYPE_DESC: Record<ContractType, string> = {
   regular: "연봉제, 기간 없음 — 기본급/식대/직책수당",
   contract: "시급제, 시작·종료일 명시",
   civil: "연봉제, 정규직과 동일 구조",
   sales: "연봉제, 인센티브 포함 (매출 기준 5~10%)",
+  privacy: "개인정보 수집·이용 및 제3자 제공 동의",
+  ethics: "보안/윤리 강령 준수 서약",
+  nda: "영업비밀 비밀유지 서약",
+  pledge: "입사 서약 (취업규칙 준수 등)",
 };
 
 interface AppUserOption {
@@ -26,7 +42,15 @@ interface AppUserOption {
 
 export default function NewContractPage() {
   const router = useRouter();
-  const [type, setType] = useState<ContractType>("regular");
+  // 여러 양식 동시 선택 가능
+  const [types, setTypes] = useState<Set<ContractType>>(new Set());
+  const toggleType = (t: ContractType) =>
+    setTypes((prev) => {
+      const next = new Set(prev);
+      if (next.has(t)) next.delete(t);
+      else next.add(t);
+      return next;
+    });
   const [users, setUsers] = useState<AppUserOption[]>([]);
   const [userQuery, setUserQuery] = useState("");
   const [employeeUserId, setEmployeeUserId] = useState<number | null>(null);
@@ -60,6 +84,10 @@ export default function NewContractPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErr(null);
+    if (types.size === 0) {
+      setErr("양식을 1개 이상 선택하세요.");
+      return;
+    }
     if (!employeeName.trim()) {
       setErr("근로자 이름을 선택하거나 입력하세요.");
       return;
@@ -70,7 +98,7 @@ export default function NewContractPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          contract_type: type,
+          contract_types: Array.from(types),
           employee_user_id: employeeUserId,
           employee_name: employeeName.trim(),
         }),
@@ -89,10 +117,10 @@ export default function NewContractPage() {
   return (
     <div className={styles.wrap}>
       <div className={styles.head}>
-        <h1 className={styles.title}>근로계약서 신규 작성</h1>
+        <h1 className={styles.title}>전자계약 신규 작성</h1>
         <p className={styles.sub}>
-          양식 종류와 직원을 지정하면 해당 직원이 패드에서 로그인 후 양식 위에
-          직접 작성·서명합니다.
+          양식(근로계약서·서약서·동의서)과 직원을 지정하면 해당 직원이 로그인 후
+          양식 위에 직접 작성·서명합니다.
         </p>
       </div>
 
@@ -100,23 +128,35 @@ export default function NewContractPage() {
         {err && <div className={styles.error}>{err}</div>}
 
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>1. 양식 선택</h2>
+          <h2 className={styles.sectionTitle}>
+            1. 양식 선택{" "}
+            <span className={styles.sectionHint}>
+              (여러 개 선택 가능{types.size > 0 ? ` · ${types.size}개 선택됨` : ""})
+            </span>
+          </h2>
           <div className={styles.typeGrid}>
-            {(Object.keys(CONTRACT_TYPE_LABEL) as ContractType[]).map((t) => (
-              <button
-                key={t}
-                type="button"
-                className={`${styles.typeCard} ${type === t ? styles.typeCardActive : ""}`}
-                onClick={() => setType(t)}
-              >
-                <span className={styles.typeName}>
-                  {CONTRACT_TYPE_LABEL[t]}
-                </span>
-                <span className={styles.typeDesc}>
-                  {CONTRACT_TYPE_DESC[t]}
-                </span>
-              </button>
-            ))}
+            {(Object.keys(CONTRACT_TYPE_LABEL) as ContractType[]).map((t) => {
+              const on = types.has(t);
+              return (
+                <button
+                  key={t}
+                  type="button"
+                  aria-pressed={on}
+                  className={`${styles.typeCard} ${on ? styles.typeCardActive : ""}`}
+                  onClick={() => toggleType(t)}
+                >
+                  <span className={styles.typeCheck} aria-hidden>
+                    {on ? "☑" : "☐"}
+                  </span>
+                  <span className={styles.typeName}>
+                    {CONTRACT_TYPE_LABEL[t]}
+                  </span>
+                  <span className={styles.typeDesc}>
+                    {CONTRACT_TYPE_DESC[t]}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </section>
 
@@ -176,7 +216,11 @@ export default function NewContractPage() {
             취소
           </button>
           <button type="submit" className={styles.btnPrimary} disabled={saving}>
-            {saving ? "저장 중..." : "저장 후 서명 대기"}
+            {saving
+              ? "저장 중..."
+              : types.size > 1
+                ? `${types.size}건 저장 후 서명 대기`
+                : "저장 후 서명 대기"}
           </button>
         </div>
       </form>

@@ -4,6 +4,62 @@
   background: #eef1f4;
 }
 
+/* 지정 계약서(에디터 내장 상단바) 전체화면 레이아웃 */
+.editorRoot {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - var(--toss-nav-height, 56px));
+  background: #eef1f4;
+}
+.editorBody {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+.editorBar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: #fff;
+  border-bottom: 1px solid #e6e7eb;
+  flex-shrink: 0;
+}
+.editorBack {
+  border: none;
+  background: #f2f4f6;
+  color: #4e5968;
+  font-size: 13px;
+  padding: 6px 11px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.editorBack:hover {
+  background: #e7eaef;
+}
+.editorBadge {
+  font-size: 12px;
+  font-weight: 700;
+  color: #3182f6;
+  background: #e8f3ff;
+  padding: 3px 9px;
+  border-radius: 6px;
+}
+.editorTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: #191f28;
+}
+.editorSignedBadge {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 700;
+  color: #15803d;
+  background: #e6f9ee;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
 /* ── 좌측 입력 폼 ── */
 .formPane {
   display: flex;
@@ -151,6 +207,7 @@
   font-weight: 600;
   cursor: pointer;
   border: 1px solid transparent;
+  white-space: nowrap;
 }
 
 .btnGhost {
@@ -221,6 +278,17 @@
   padding: 0 6px;
   font-weight: 600;
 }
+/* PDF 출력용 — 입력값의 밑줄·볼드·강조 제거(깔끔한 본문) */
+.pdfClean .fill {
+  border-bottom: none;
+  font-weight: inherit;
+  padding: 0;
+}
+.pdfClean .fieldHl,
+.pdfClean .fieldSpot {
+  background: transparent;
+  box-shadow: none;
+}
 
 .article {
   margin-bottom: 14px;
@@ -267,38 +335,53 @@
 /* 입력칸 포커스 시 미리보기 해당 위치 하이라이트 */
 .fieldSpot {
   border-radius: 3px;
-  transition: background 0.2s, box-shadow 0.2s;
+  transition:
+    background 0.2s,
+    box-shadow 0.2s;
 }
 
 .fieldHl {
   border-radius: 3px;
   background: #fff3a3;
   box-shadow: 0 0 0 3px #fff3a3;
-  transition: background 0.2s, box-shadow 0.2s;
+  transition:
+    background 0.2s,
+    box-shadow 0.2s;
 }
 
 /* 서명 슬롯 — 원본 양식처럼 "밑줄＿＿＿(서명)" 형태 */
+/* (서명) 마커 — 서명 이미지가 이 위에 겹쳐 찍힘 */
 .signSlot {
-  display: inline-flex;
-  align-items: flex-end;
-  gap: 3px;
+  position: relative;
+  display: inline-block;
   vertical-align: bottom;
   white-space: nowrap;
 }
 
 .signLine {
-  display: inline-flex;
-  align-items: flex-end;
-  justify-content: center;
-  min-width: 110px;
-  height: 20px;
+  display: inline-block;
+  min-width: 90px;
+  height: 18px;
   border-bottom: 1px solid #1f2937;
 }
 
+/* 서명 이미지 — "(서명)" 글자 아래쪽에 겹쳐 표시 (조금 진하게) */
 .signInline {
-  height: 30px;
-  /* 서명 이미지가 밑줄에 살짝 걸치도록 */
-  margin-bottom: -6px;
+  position: absolute;
+  left: 50%;
+  bottom: -10px;
+  transform: translateX(-50%);
+  height: 40px;
+  pointer-events: none;
+  /* 완전 검정 + 살짝 두껍게(윤곽 그림자)로 또렷하게 */
+  filter: brightness(0) drop-shadow(0 0 0 #000) drop-shadow(-0.4px 0 0 #000);
+}
+
+/* 갑 대표자 직인 — (인) 옆에 겹쳐 찍힘 */
+.stampImg {
+  height: 52px;
+  vertical-align: middle;
+  margin-left: -8px;
 }
 
 .closing {
@@ -343,6 +426,12 @@
 }
 
 /* ── 인쇄(PDF) ── */
+/* 페이지 여백 0 → 브라우저 기본 머리글(날짜)/바닥글(URL·페이지번호) 제거.
+   문서 내부 padding 으로 여백을 준다. */
+@page {
+  size: A4;
+  margin: 0;
+}
 @media print {
   /* 앱 셸(헤더/사이드바/입력폼)은 전부 숨기고 오른쪽 계약서 문서만 출력 */
   :global(html),
@@ -364,8 +453,16 @@
     overflow: visible;
     background: #fff;
   }
-  .formPane {
+  .formPane,
+  .editorBar,
+  .toolbar {
     display: none;
+  }
+  .editorRoot,
+  .editorBody {
+    display: block;
+    height: auto;
+    overflow: visible;
   }
   .previewPane {
     display: block;
@@ -385,7 +482,8 @@
     max-width: none;
     box-shadow: none;
     border-radius: 0;
-    padding: 0;
+    /* @page margin:0 이라 문서 내부 여백으로 가장자리 공백 확보 */
+    padding: 14mm 16mm;
     font-size: 11px;
   }
   /* 인쇄물에는 입력 하이라이트 미표시 */

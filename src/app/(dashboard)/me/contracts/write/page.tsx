@@ -10,6 +10,7 @@ import {
 import { useRouter } from "next/navigation";
 import { Download, Save, Eraser } from "lucide-react";
 import styles from "./page.module.css";
+import { formatRRN, formatPhone, comma } from "../_contract/format";
 
 // ─────────────────────────────────────────────────────────────
 // 고정 회사(갑) 정보
@@ -20,6 +21,8 @@ const COMPANY = {
   phone: "02-2135-6514",
   ceo: "양 병 웅",
 };
+const STAMP_URL =
+  "https://mipzevxfqacbheqojrwa.supabase.co/storage/v1/object/public/contract-stamps/korhrd-group.png";
 
 // ─────────────────────────────────────────────────────────────
 // 폼 타입 / 기본값
@@ -76,14 +79,19 @@ function SignaturePad({
   useEffect(() => {
     const ctx = canvasRef.current?.getContext("2d");
     if (!ctx) return;
-    ctx.lineWidth = 2.2;
+    ctx.lineWidth = 3;
     ctx.lineCap = "round";
-    ctx.strokeStyle = "#191f28";
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = "#0a0d12";
   }, []);
 
   const pos = (e: ReactPointerEvent<HTMLCanvasElement>) => {
-    const r = e.currentTarget.getBoundingClientRect();
-    return { x: e.clientX - r.left, y: e.clientY - r.top };
+    const c = e.currentTarget;
+    const r = c.getBoundingClientRect();
+    return {
+      x: (e.clientX - r.left) * (c.width / r.width),
+      y: (e.clientY - r.top) * (c.height / r.height),
+    };
   };
   const start = (e: ReactPointerEvent<HTMLCanvasElement>) => {
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -139,13 +147,11 @@ function SignaturePad({
 function Sign({ src }: { src: string | null }) {
   return (
     <span className={styles.signSlot}>
-      <span className={styles.signLine}>
-        {src && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={src} alt="서명" className={styles.signInline} />
-        )}
-      </span>
       (서명)
+      {src && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={src} alt="서명" className={styles.signInline} />
+      )}
     </span>
   );
 }
@@ -244,10 +250,10 @@ export default function WriteContractPage() {
               <input className={styles.input} value={form.employeeAddr} onChange={(e) => up("employeeAddr", e.target.value)} {...focusProps("employeeAddr")} placeholder="근로자 주소" />
             </Field>
             <Field label="주민번호">
-              <input className={styles.input} value={form.employeeRRN} onChange={(e) => up("employeeRRN", e.target.value)} {...focusProps("employeeRRN")} placeholder="예) 900101-1******" />
+              <input className={styles.input} value={form.employeeRRN} onChange={(e) => up("employeeRRN", formatRRN(e.target.value))} {...focusProps("employeeRRN")} inputMode="numeric" placeholder="901027-1234567" />
             </Field>
             <Field label="연락처">
-              <input className={styles.input} value={form.employeePhone} onChange={(e) => up("employeePhone", e.target.value)} {...focusProps("employeePhone")} placeholder="휴대폰 번호" />
+              <input className={styles.input} value={form.employeePhone} onChange={(e) => up("employeePhone", formatPhone(e.target.value))} {...focusProps("employeePhone")} inputMode="numeric" placeholder="010-1234-5678" />
             </Field>
           </Section>
 
@@ -265,13 +271,13 @@ export default function WriteContractPage() {
 
           <Section title="임금 (월 기준)">
             <Field label="기본급">
-              <input className={styles.input} inputMode="numeric" value={form.baseMonthly} onChange={(e) => up("baseMonthly", e.target.value.replace(/[^0-9]/g, ""))} {...focusProps("baseMonthly")} placeholder="예) 3960000" />
+              <input className={styles.input} inputMode="numeric" value={comma(form.baseMonthly)} onChange={(e) => up("baseMonthly", e.target.value.replace(/[^0-9]/g, ""))} {...focusProps("baseMonthly")} placeholder="예) 3,960,000" />
             </Field>
             <Field label="식대">
-              <input className={styles.input} inputMode="numeric" value={form.mealMonthly} onChange={(e) => up("mealMonthly", e.target.value.replace(/[^0-9]/g, ""))} {...focusProps("mealMonthly")} />
+              <input className={styles.input} inputMode="numeric" value={comma(form.mealMonthly)} onChange={(e) => up("mealMonthly", e.target.value.replace(/[^0-9]/g, ""))} {...focusProps("mealMonthly")} />
             </Field>
             <Field label="직책수당">
-              <input className={styles.input} inputMode="numeric" value={form.positionMonthly} onChange={(e) => up("positionMonthly", e.target.value.replace(/[^0-9]/g, ""))} {...focusProps("positionMonthly")} />
+              <input className={styles.input} inputMode="numeric" value={comma(form.positionMonthly)} onChange={(e) => up("positionMonthly", e.target.value.replace(/[^0-9]/g, ""))} {...focusProps("positionMonthly")} />
             </Field>
             <div className={styles.calcRow}>
               <span>월 합계 <b>{won(totalMonthly)}원</b></span>
@@ -447,7 +453,16 @@ export default function WriteContractPage() {
                 <div>주소 : {COMPANY.addr}</div>
                 <div>회사명 : {COMPANY.name}</div>
                 <div>연락처 : {COMPANY.phone}</div>
-                <div>대표자 : {COMPANY.ceo} (인)</div>
+                <div className={styles.partySign}>
+                  대표자 : {COMPANY.ceo} (인)
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={STAMP_URL}
+                    alt="직인"
+                    className={styles.stampImg}
+                    crossOrigin="anonymous"
+                  />
+                </div>
               </div>
             </div>
             <div className={styles.party}>

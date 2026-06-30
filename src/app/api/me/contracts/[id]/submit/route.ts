@@ -60,6 +60,10 @@ export async function POST(
     contract: "contract.pdf",
     civil: "civil.pdf",
     sales: "sales.pdf",
+    privacy: "privacy.pdf",
+    ethics: "ethics.pdf",
+    nda: "nda.pdf",
+    pledge: "pledge.pdf",
   };
   const templateFileName = templateFile[contract.contract_type];
   if (!templateFileName) {

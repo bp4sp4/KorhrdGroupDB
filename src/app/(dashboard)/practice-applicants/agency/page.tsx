@@ -262,6 +262,9 @@ export default function PracticeAgencyPage() {
     [sortedList, mode, markerCap, userLocation],
   );
 
+  // 소요시간 캐시 — 같은 (출발지 + 기관) 조합은 재호출 없이 재사용 (API 절약)
+  const routeCache = useRef<Map<string, RouteInfo>>(new Map());
+
   // 선택 변경 시 자동차·도보 소요시간 조회 (내 위치가 있을 때만)
   const coords = locationState.coords;
   useEffect(() => {
@@ -273,6 +276,14 @@ export default function PracticeAgencyPage() {
     if (!item || item.latitude == null || item.longitude == null) {
       setRouteInfo(null);
       return;
+    }
+    // 캐시 키 = 출발지 좌표(소수 5자리) + 기관 id
+    const cacheKey = `${coords.latitude.toFixed(5)},${coords.longitude.toFixed(5)}|${item.id}`;
+    const cached = routeCache.current.get(cacheKey);
+    if (cached) {
+      setRouteLoading(false);
+      setRouteInfo(cached);
+      return; // 캐시 적중 → API 호출 안 함
     }
     let cancelled = false;
     setRouteLoading(true);
@@ -286,7 +297,9 @@ export default function PracticeAgencyPage() {
     fetch(`/api/directions?${params}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d: RouteInfo | null) => {
-        if (!cancelled) setRouteInfo(d);
+        if (cancelled) return;
+        if (d) routeCache.current.set(cacheKey, d);
+        setRouteInfo(d);
       })
       .catch(() => {
         if (!cancelled) setRouteInfo(null);
