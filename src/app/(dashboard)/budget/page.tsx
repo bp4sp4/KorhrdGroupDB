@@ -65,10 +65,16 @@ function currentYearMonth(): string {
 
 function recentMonths(count: number): string[] {
   const out: string[] = [];
-  const d = new Date();
+  const now = new Date();
+  let y = now.getFullYear();
+  let m = now.getMonth(); // 0-based
   for (let i = 0; i < count; i++) {
-    out.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
-    d.setMonth(d.getMonth() - 1);
+    out.push(`${y}-${String(m + 1).padStart(2, "0")}`);
+    m -= 1;
+    if (m < 0) {
+      m = 11;
+      y -= 1;
+    }
   }
   return out;
 }

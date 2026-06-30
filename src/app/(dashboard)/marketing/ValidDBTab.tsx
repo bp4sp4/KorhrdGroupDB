@@ -158,22 +158,30 @@ interface ValidDBTabProps {
   division?: 'nms' | 'cert' | 'abroad'
   divisionLabel?: string
   controlledMonth?: string // 채널별 성과 등 상위에서 월을 제어할 때 (월 선택 UI 숨김)
+  controlledWeek?: string  // 상위에서 주간(week_start, 월요일)을 제어할 때 (선택 UI 숨김)
 }
 
-export default function ValidDBTab({ division = 'nms', divisionLabel, controlledMonth }: ValidDBTabProps = {}) {
+export default function ValidDBTab({ division = 'nms', divisionLabel, controlledMonth, controlledWeek }: ValidDBTabProps = {}) {
   const monthOptions = buildMonthOptions()
   const [internalMonth, setInternalMonth] = useState(monthOptions[0])
   const selectedMonth = controlledMonth ?? internalMonth
+  // 상위에서 기간을 제어하면 월 선택 UI 숨김 (월 또는 주간)
+  const isControlled = !!controlledMonth || !!controlledWeek
+  // 조회 기간 식별자/쿼리: 주간 우선
+  const periodKey = controlledWeek ?? selectedMonth
+  const periodQuery = controlledWeek
+    ? `week_start=${controlledWeek}`
+    : `year_month=${selectedMonth}`
   const [selectedChannel, setSelectedChannel] = useState('전체')
   const [stats, setStats] = useState<ValidDBItem[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchStats = useCallback(async (yearMonth: string) => {
+  const fetchStats = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(`/api/marketing/valid-db?year_month=${yearMonth}&division=${division}`)
+      const res = await fetch(`/api/marketing/valid-db?${periodQuery}&division=${division}`)
       if (!res.ok) {
         const body = await res.json().catch(() => ({}))
         throw new Error(body.error ?? '데이터 조회 실패')
@@ -184,15 +192,15 @@ export default function ValidDBTab({ division = 'nms', divisionLabel, controlled
     } finally {
       setLoading(false)
     }
-  }, [division])
+  }, [periodQuery, division])
 
   useEffect(() => {
-    fetchStats(selectedMonth)
-  }, [selectedMonth, fetchStats])
+    fetchStats()
+  }, [fetchStats])
 
   useEffect(() => {
     setSelectedChannel('전체')
-  }, [selectedMonth])
+  }, [periodKey])
 
   const channelOptions = useMemo(() => ['전체', ...stats.map((s) => s.channel)], [stats])
   const filteredStats = useMemo(
@@ -205,7 +213,7 @@ export default function ValidDBTab({ division = 'nms', divisionLabel, controlled
     <div className={styles.wrap}>
       {/* 필터 바 */}
       <div className={styles.filter_bar}>
-        {!controlledMonth && (
+        {!isControlled && (
           <div className={styles.filter_group}>
             <label className={styles.filter_label}>월</label>
             <CustomSelect ariaLabel="월 선택" value={selectedMonth} options={monthOptions} onChange={setInternalMonth} minWidth={120} />
@@ -220,7 +228,7 @@ export default function ValidDBTab({ division = 'nms', divisionLabel, controlled
         <button
           type="button"
           className={styles.excel_btn}
-          onClick={() => downloadExcel(filteredStats, selectedMonth)}
+          onClick={() => downloadExcel(filteredStats, periodKey)}
           disabled={filteredStats.length === 0 || loading}
         >
           엑셀 다운로드
@@ -230,7 +238,7 @@ export default function ValidDBTab({ division = 'nms', divisionLabel, controlled
       {error && (
         <div className={styles.error_box}>
           <p className={styles.error_text}>{error}</p>
-          <button type="button" className={styles.retry_btn} onClick={() => fetchStats(selectedMonth)}>
+          <button type="button" className={styles.retry_btn} onClick={() => fetchStats()}>
             다시 시도
           </button>
         </div>

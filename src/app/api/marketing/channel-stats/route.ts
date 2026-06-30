@@ -1,6 +1,12 @@
 import { requireAuth } from '@/lib/auth/requireAuth'
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
+import {
+  isValidWeekStart,
+  getWeekRange,
+  getPrevWeekStart,
+  WEEK_START_FLOOR,
+} from '@/lib/marketing/week'
 
 interface ConsultationRow {
   click_source: string | null
@@ -97,7 +103,6 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const now = new Date()
     const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-    const yearMonth = searchParams.get('year_month') ?? currentYearMonth
     const division = (searchParams.get('division') ?? 'nms') as Division
 
     const tableName = DIVISION_TABLE[division]
@@ -106,58 +111,95 @@ export async function GET(request: NextRequest) {
       return NextResponse.json([])
     }
 
-    const prevYearMonth = getPrevYearMonth(yearMonth)
-    const usePrev = prevYearMonth >= START_YEAR_MONTH
+    // 기간 모드: week_start(YYYY-MM-DD, 월요일) 있으면 주간, 없으면 월간(year_month)
+    const weekStartParam = searchParams.get('week_start')
+    const isWeek = !!weekStartParam && isValidWeekStart(weekStartParam)
 
-    const { start: currStart, end: currEnd } = getMonthRange(yearMonth)
-    const { start: prevStart, end: prevEnd } = getMonthRange(prevYearMonth)
+    let currStart: string
+    let currEnd: string
+    let prevStart: string
+    let prevEnd: string
+    let usePrev: boolean
+    // 현재 기간의 채널별 광고비 (정규화 채널명 → 합산 광고비)
+    let loadAdCostMap: () => Promise<Map<string, number>>
 
-    const [currResult, adCostResult, prevResult] = await Promise.all([
-      supabaseAdmin
-        .from(tableName)
-        .select('click_source, status')
-        .is('deleted_at', null)
-        .gte('created_at', currStart)
-        .lt('created_at', currEnd),
-      supabaseAdmin
-        .from('marketing_ad_costs')
-        .select('channel, ad_cost, year_month, division')
-        .in('year_month', [yearMonth, prevYearMonth]),
-      usePrev
-        ? supabaseAdmin
-            .from(tableName)
-            .select('click_source, status')
-            .is('deleted_at', null)
-            .gte('created_at', prevStart)
-            .lt('created_at', prevEnd)
-        : Promise.resolve({ data: [] as ConsultationRow[], error: null }),
-    ])
+    if (isWeek) {
+      const weekStart = weekStartParam as string
+      const prevWeek = getPrevWeekStart(weekStart)
+      usePrev = prevWeek >= WEEK_START_FLOOR
+      ;({ start: currStart, end: currEnd } = getWeekRange(weekStart))
+      ;({ start: prevStart, end: prevEnd } = getWeekRange(prevWeek))
+      loadAdCostMap = async () => {
+        const { data, error } = await supabaseAdmin
+          .from('marketing_ad_costs_weekly')
+          .select('channel, ad_cost')
+          .eq('division', division)
+          .eq('week_start', weekStart)
+        if (error) throw error
+        const map = new Map<string, number>()
+        for (const row of data ?? []) {
+          const key = normalizeChannel(row.channel)
+          map.set(key, (map.get(key) ?? 0) + Number(row.ad_cost))
+        }
+        return map
+      }
+    } else {
+      const yearMonth = searchParams.get('year_month') ?? currentYearMonth
+      const prevYearMonth = getPrevYearMonth(yearMonth)
+      usePrev = prevYearMonth >= START_YEAR_MONTH
+      ;({ start: currStart, end: currEnd } = getMonthRange(yearMonth))
+      ;({ start: prevStart, end: prevEnd } = getMonthRange(prevYearMonth))
+      loadAdCostMap = async () => {
+        const { data, error } = await supabaseAdmin
+          .from('marketing_ad_costs')
+          .select('channel, ad_cost')
+          .eq('division', division)
+          .eq('year_month', yearMonth)
+        if (error) throw error
+        const map = new Map<string, number>()
+        for (const row of data ?? []) {
+          const key = normalizeChannel(row.channel)
+          map.set(key, (map.get(key) ?? 0) + Number(row.ad_cost))
+        }
+        return map
+      }
+    }
+
+    let currResult, prevResult, adCostMap
+    try {
+      ;[currResult, prevResult, adCostMap] = await Promise.all([
+        supabaseAdmin
+          .from(tableName)
+          .select('click_source, status')
+          .is('deleted_at', null)
+          .gte('created_at', currStart)
+          .lt('created_at', currEnd),
+        usePrev
+          ? supabaseAdmin
+              .from(tableName)
+              .select('click_source, status')
+              .is('deleted_at', null)
+              .gte('created_at', prevStart)
+              .lt('created_at', prevEnd)
+          : Promise.resolve({ data: [] as ConsultationRow[], error: null }),
+        loadAdCostMap(),
+      ])
+    } catch (adErr) {
+      console.error('[channel-stats GET] 광고비 조회 오류:', adErr)
+      return NextResponse.json({ error: '광고비 데이터 조회 실패' }, { status: 500 })
+    }
 
     if (currResult.error) {
-      console.error('[channel-stats GET] 당월 조회 오류:', currResult.error)
-      return NextResponse.json({ error: '당월 데이터 조회 실패' }, { status: 500 })
+      console.error('[channel-stats GET] 당기 조회 오류:', currResult.error)
+      return NextResponse.json({ error: '당기 데이터 조회 실패' }, { status: 500 })
     }
     if (prevResult.error) {
-      console.error('[channel-stats GET] 전월 조회 오류:', prevResult.error)
-      return NextResponse.json({ error: '전월 데이터 조회 실패' }, { status: 500 })
-    }
-    if (adCostResult.error) {
-      console.error('[channel-stats GET] 광고비 조회 오류:', adCostResult.error)
-      return NextResponse.json({ error: '광고비 데이터 조회 실패' }, { status: 500 })
+      console.error('[channel-stats GET] 전기 조회 오류:', prevResult.error)
+      return NextResponse.json({ error: '전기 데이터 조회 실패' }, { status: 500 })
     }
 
     const currMap = aggregateByChannel((currResult.data ?? []) as ConsultationRow[])
     const prevMap = aggregateByChannel((prevResult.data ?? []) as ConsultationRow[])
-
-    // division별 광고비만 필터 — 채널명도 통합 정규화(메타 계열 → 'meta')해서 합산
-    const adCostMap = new Map<string, number>()
-    for (const row of adCostResult.data ?? []) {
-      const rowDivision = (row as { division?: string }).division ?? 'nms'
-      if (row.year_month === yearMonth && rowDivision === division) {
-        const key = normalizeChannel(row.channel)
-        adCostMap.set(key, (adCostMap.get(key) ?? 0) + Number(row.ad_cost))
-      }
-    }
 
     const stats: ChannelStatItem[] = Array.from(currMap.entries())
       .filter(([channel]) => channel !== '미입력')

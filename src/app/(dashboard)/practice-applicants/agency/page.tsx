@@ -1,6 +1,6 @@
 "use client";
 import styles from "./finder.module.css";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import REGIONS from "./region";
 import Dropdown from "./Dropdown";
@@ -9,7 +9,6 @@ import { useUserLocation } from "./useUserLocation";
 import type { LatLng, MapItem } from "./types";
 
 const DEFAULT_CENTER: LatLng = { latitude: 37.5665, longitude: 126.978 };
-const LAW_OPTIONS = ["전체", "구법", "신법", "구법+신법"];
 
 function toHref(raw: string): string {
   const u = raw.trim();
@@ -39,13 +38,83 @@ function distLabel(km: number): string {
   return km < 1 ? `${Math.round(km * 1000)}m` : `${km.toFixed(1)}km`;
 }
 
+// 검색 입력 좌측 돋보기 아이콘
+function SearchIcon() {
+  return (
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+    >
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.5-3.5" />
+    </svg>
+  );
+}
+
+// 분 → "N분" / "N시간 M분"
+function fmtDuration(min: number): string {
+  if (min < 60) return `${min}분`;
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return m ? `${h}시간 ${m}분` : `${h}시간`;
+}
+
+interface RouteLeg {
+  durationMin: number;
+  distanceM: number;
+}
+interface RouteInfo {
+  car: RouteLeg | null;
+  walk: RouteLeg | null;
+}
+
+interface StudentHit {
+  id: number;
+  name: string | null;
+  contact: string | null;
+  address: string | null;
+  birth_date?: string | null;
+  gender?: string | null;
+  status?: string | null;
+  practice_type?: string | null;
+  desired_date?: string | null;
+  desired_weekday?: string | null;
+  desired_semester?: string | null;
+  recognition_period?: string | null;
+  training_center?: string | null;
+  field_institution?: string | null;
+  own_car?: string | null;
+  manager?: string | null;
+  counsel_content?: string | null;
+}
+
+// "걸리는 시간" 값 — 미선택/출발지 없음: "-", 계산 중, 차로/도보 결과
+function etaDisplay(args: {
+  active: boolean;
+  loading: boolean;
+  route: RouteInfo | null;
+}): string {
+  if (!args.active) return "-";
+  if (args.loading) return "계산 중…";
+  const parts: string[] = [];
+  if (args.route?.car)
+    parts.push(`차로 ${fmtDuration(args.route.car.durationMin)}`);
+  if (args.route?.walk)
+    parts.push(`도보 ${fmtDuration(args.route.walk.durationMin)}`);
+  return parts.length ? parts.join("  ") : "-";
+}
+
 export default function PracticeAgencyPage() {
   const [supabase] = useState(createClient);
 
   const [mode, setMode] = useState<"교육원" | "현장실습기관">("교육원");
   const [region, setRegion] = useState("");
   const [subregion, setSubregion] = useState("");
-  const [law, setLaw] = useState("전체");
   const [hasSearched, setHasSearched] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [centers, setCenters] = useState<any[]>([]);
@@ -55,8 +124,26 @@ export default function PracticeAgencyPage() {
   const [selected, setSelected] = useState<number | null>(null);
   const [addressInput, setAddressInput] = useState("");
   const [sortMode, setSortMode] = useState<"default" | "distance">("default");
+  // 선택한 곳까지 자동차·도보 소요시간 (내 위치 설정 시에만)
+  const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
+  const [routeLoading, setRouteLoading] = useState(false);
+  // 학생 검색 → 집 주소를 출발지로
+  const [studentQuery, setStudentQuery] = useState("");
+  const [studentResults, setStudentResults] = useState<StudentHit[]>([]);
+  const [studentOpen, setStudentOpen] = useState(false);
+  const [studentBusy, setStudentBusy] = useState(false);
+  // 선택된 학생 + 간이 DB 팝업
+  const [selectedStudent, setSelectedStudent] = useState<StudentHit | null>(
+    null,
+  );
+  const [studentModal, setStudentModal] = useState(false);
+  // 실습학생 DB 목록 팝업 (이름 몰라도 목록에서 찾기)
+  const [browseOpen, setBrowseOpen] = useState(false);
+  const [browseQuery, setBrowseQuery] = useState("");
+  const [browseList, setBrowseList] = useState<StudentHit[]>([]);
+  const [browseLoading, setBrowseLoading] = useState(false);
 
-  const { locationState, detectGPS, geocodeAddress, clearLocation } =
+  const { locationState, geocodeAddress, setCoords, clearLocation } =
     useUserLocation();
   const userLocation: LatLng = locationState.coords ?? DEFAULT_CENTER;
 
@@ -100,13 +187,12 @@ export default function PracticeAgencyPage() {
       query = query.or(`province.eq.${region},available_region.ilike.%전국%`);
     if (subregion)
       query = query.or(`region.eq.${subregion},available_region.ilike.%전국%`);
-    if (law !== "전체") query = query.eq("law_type", law);
     query.limit(300).then(({ data }) => {
       setCenters(data || []);
       setLoading(false);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [region, subregion, law, mode, hasSearched]);
+  }, [region, subregion, mode, hasSearched]);
 
   // 현장실습기관 검색
   useEffect(() => {
@@ -141,8 +227,8 @@ export default function PracticeAgencyPage() {
     });
   }, [list, sortMode, userLocation]);
 
-  // 지도 마커 — 현재 위치 기준 가까운 순으로, 기관은 40개·교육원은 150개까지만
-  const markerCap = mode === "현장실습기관" ? 40 : 150;
+  // 지도 마커 — 현재 위치 기준 가까운 순으로, 기관은 50개·교육원은 150개까지만
+  const markerCap = mode === "현장실습기관" ? 50 : 150;
   const mapItems: MapItem[] = useMemo(
     () =>
       sortedList
@@ -176,6 +262,135 @@ export default function PracticeAgencyPage() {
     [sortedList, mode, markerCap, userLocation],
   );
 
+  // 선택 변경 시 자동차·도보 소요시간 조회 (내 위치가 있을 때만)
+  const coords = locationState.coords;
+  useEffect(() => {
+    if (selected == null || !coords) {
+      setRouteInfo(null);
+      return;
+    }
+    const item = list.find((r) => r.id === selected);
+    if (!item || item.latitude == null || item.longitude == null) {
+      setRouteInfo(null);
+      return;
+    }
+    let cancelled = false;
+    setRouteLoading(true);
+    setRouteInfo(null);
+    const params = new URLSearchParams({
+      sx: String(coords.longitude),
+      sy: String(coords.latitude),
+      gx: String(item.longitude),
+      gy: String(item.latitude),
+    });
+    fetch(`/api/directions?${params}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: RouteInfo | null) => {
+        if (!cancelled) setRouteInfo(d);
+      })
+      .catch(() => {
+        if (!cancelled) setRouteInfo(null);
+      })
+      .finally(() => {
+        if (!cancelled) setRouteLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected, coords?.latitude, coords?.longitude]);
+
+  // 학생 검색 (디바운스) — 이름/연락처/주소
+  const skipNextStudentSearch = useRef(false);
+  useEffect(() => {
+    if (skipNextStudentSearch.current) {
+      skipNextStudentSearch.current = false;
+      return;
+    }
+    const q = studentQuery.trim();
+    if (q.length < 1) {
+      setStudentResults([]);
+      setStudentOpen(false);
+      return;
+    }
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `/api/practice-applicants/search?q=${encodeURIComponent(q)}`,
+        );
+        if (!res.ok) return;
+        const data = (await res.json()) as StudentHit[];
+        if (!cancelled) {
+          setStudentResults(data);
+          setStudentOpen(true);
+        }
+      } catch {
+        /* 무시 */
+      }
+    }, 250);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [studentQuery]);
+
+  // 실습학생 DB 목록 팝업 — 검색어 없으면 최근 목록, 있으면 필터 (디바운스)
+  useEffect(() => {
+    if (!browseOpen) return;
+    let cancelled = false;
+    setBrowseLoading(true);
+    const t = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `/api/practice-applicants/search?q=${encodeURIComponent(browseQuery.trim())}&limit=50`,
+        );
+        const data = res.ok ? ((await res.json()) as StudentHit[]) : [];
+        if (!cancelled) setBrowseList(data);
+      } catch {
+        if (!cancelled) setBrowseList([]);
+      } finally {
+        if (!cancelled) setBrowseLoading(false);
+      }
+    }, 200);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [browseOpen, browseQuery]);
+
+  // 학생 선택 → 집 주소 지오코딩 → 출발지 설정 + 거리순 자동 정렬
+  const pickStudent = async (s: StudentHit) => {
+    setStudentOpen(false);
+    setBrowseOpen(false);
+    skipNextStudentSearch.current = true;
+    setStudentQuery(s.name ?? "");
+    setSelectedStudent(s);
+    setStudentModal(true); // 선택 즉시 간이 DB 팝업
+    if (!s.address) return;
+    setStudentBusy(true);
+    try {
+      const res = await fetch("/api/geocode", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address: s.address }),
+      });
+      const data = await res.json();
+      if (res.ok && data.latitude != null) {
+        setCoords(data.latitude, data.longitude, `${s.name ?? "학생"} 학생 집`);
+        setSortMode("distance");
+      } else {
+        alert(
+          `'${s.name ?? "학생"}' 주소를 좌표로 변환하지 못했습니다.\n주소: ${s.address}`,
+        );
+      }
+    } catch {
+      alert("주소 변환 중 오류가 발생했습니다.");
+    } finally {
+      setStudentBusy(false);
+    }
+  };
+
   const onRegion = (v: string) => {
     setRegion(v);
     setSubregion("");
@@ -185,17 +400,6 @@ export default function PracticeAgencyPage() {
     setSubregion(v);
     setHasSearched(true);
   };
-  const onLaw = (v: string) => {
-    setLaw(v);
-    setHasSearched(true);
-  };
-  const resetFilters = () => {
-    setRegion("");
-    setSubregion("");
-    setLaw("전체");
-    setHasSearched(false);
-  };
-
   const subregionList = region ? REGIONS[region] || [] : [];
 
   return (
@@ -246,27 +450,92 @@ export default function PracticeAgencyPage() {
             />
           </div>
 
-          {/* 위치 검색 */}
+          {/* 출발지 설정 — 내 위치(GPS) 또는 주소 직접 지정. 거리·소요시간의 기준점 */}
           <div className={styles.locGroup}>
+            <div className={styles.locTitle}>
+              출발지{" "}
+              <span className={styles.locHint}>
+                (여기 기준으로 소요시간 계산)
+              </span>
+            </div>
+
+            {/* 학생 검색 → 집 주소를 출발지로 (검색칸 + 정보보기 한 줄) */}
+            <div className={styles.stuSearch}>
+              <div className={styles.stuRow}>
+                <div className={styles.searchField}>
+                  <span className={styles.searchIcon}>
+                    <SearchIcon />
+                  </span>
+                  <input
+                    className={styles.locInput}
+                    placeholder="학생 이름·연락처로 검색"
+                    value={studentQuery}
+                    onChange={(e) => setStudentQuery(e.target.value)}
+                    onFocus={() => {
+                      if (studentResults.length) setStudentOpen(true);
+                    }}
+                    onBlur={() => setTimeout(() => setStudentOpen(false), 150)}
+                  />
+                </div>
+                <button
+                  type="button"
+                  className={styles.locSearch}
+                  onClick={() => {
+                    setBrowseQuery("");
+                    setBrowseOpen(true);
+                  }}
+                >
+                  찾기
+                </button>
+              </div>
+              {studentBusy && (
+                <span className={styles.stuBusy}>주소 변환 중…</span>
+              )}
+              {studentOpen && studentResults.length > 0 && (
+                <ul className={styles.stuList}>
+                  {studentResults.map((s) => (
+                    <li key={s.id}>
+                      <button
+                        type="button"
+                        className={styles.stuItem}
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => pickStudent(s)}
+                      >
+                        <span className={styles.stuName}>
+                          {s.name || "(이름없음)"}
+                        </span>
+                        <span className={styles.stuAddr}>
+                          {s.address || "주소 없음"}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {studentOpen &&
+                studentQuery.trim().length >= 1 &&
+                studentResults.length === 0 &&
+                !studentBusy && (
+                  <div className={styles.stuEmpty}>검색 결과가 없어요</div>
+                )}
+            </div>
+
             <div className={styles.locRow}>
-              <button
-                type="button"
-                className={`${styles.locBtn} ${locationState.source === "gps" ? styles.locBtnActive : ""}`}
-                onClick={detectGPS}
-                disabled={locationState.isLoading}
-              >
-                ◎ 내 위치
-              </button>
-              <input
-                className={styles.locInput}
-                placeholder="주소 입력 (예: 서울시 강남구)"
-                value={addressInput}
-                onChange={(e) => setAddressInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && addressInput.trim())
-                    geocodeAddress(addressInput.trim());
-                }}
-              />
+              <div className={styles.searchField}>
+                <span className={styles.searchIcon}>
+                  <SearchIcon />
+                </span>
+                <input
+                  className={styles.locInput}
+                  placeholder="출발지 주소 직접 입력"
+                  value={addressInput}
+                  onChange={(e) => setAddressInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && addressInput.trim())
+                      geocodeAddress(addressInput.trim());
+                  }}
+                />
+              </div>
               <button
                 type="button"
                 className={styles.locSearch}
@@ -279,11 +548,16 @@ export default function PracticeAgencyPage() {
             </div>
             {locationState.coords && (
               <div className={styles.locStatus}>
-                <b>
-                  {locationState.source === "gps"
-                    ? "현재 위치 사용 중"
-                    : locationState.addressText}
-                </b>
+                <b>출발지: {locationState.addressText}</b>
+                {selectedStudent && (
+                  <button
+                    type="button"
+                    className={styles.stuInfoBtn}
+                    onClick={() => setStudentModal(true)}
+                  >
+                    정보
+                  </button>
+                )}
                 <button
                   type="button"
                   className={styles.reset}
@@ -298,28 +572,6 @@ export default function PracticeAgencyPage() {
             )}
           </div>
 
-          {/* 적용 법령 (교육원만) */}
-          {mode === "교육원" && (
-            <div className={styles.lawGroup}>
-              <div className={styles.lawHead}>
-                <span className={styles.lawTitle}>적용 법령</span>
-                <button className={styles.reset} onClick={resetFilters}>
-                  ↻ 초기화
-                </button>
-              </div>
-              <div className={styles.chips}>
-                {LAW_OPTIONS.map((o) => (
-                  <div
-                    key={o}
-                    className={`${styles.chip} ${law === o ? styles.chipOn : ""}`}
-                    onClick={() => onLaw(o)}
-                  >
-                    {o}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
         <div className={styles.listHead}>
@@ -354,10 +606,14 @@ export default function PracticeAgencyPage() {
                   onClick={() => setSelected(sel ? null : it.id)}
                 >
                   <div className={styles.cardTop}>
-                    <span className={styles.cardName}>{it.institute_name}</span>
-                    <span className={styles.typeBadge}>
-                      {it.category || "교육원"}
-                    </span>
+                    <div className={styles.cardHead}>
+                      <span className={styles.cardType}>
+                        {it.category || "교육원"}
+                      </span>
+                      <span className={styles.cardName}>
+                        {it.institute_name}
+                      </span>
+                    </div>
                     {locationState.coords && it.latitude != null && (
                       <span className={styles.distBadge}>
                         {distLabel(
@@ -395,7 +651,10 @@ export default function PracticeAgencyPage() {
                     </div>
                     <div className={styles.fieldRow}>
                       <span className={styles.fieldLabel}>주소</span>
-                      <span className={styles.fieldValue}>
+                      <span
+                        className={styles.fieldValueEllipsis}
+                        title={it.address || undefined}
+                      >
                         {it.address || "-"}
                       </span>
                     </div>
@@ -405,6 +664,16 @@ export default function PracticeAgencyPage() {
                       <b>비고</b> · {it.note}
                     </div>
                   )}
+                  <div className={styles.etaRow}>
+                    <span className={styles.etaLabel}>걸리는 시간 :</span>
+                    <span className={styles.etaValue}>
+                      {etaDisplay({
+                        active: sel && !!coords,
+                        loading: routeLoading,
+                        route: routeInfo,
+                      })}
+                    </span>
+                  </div>
                   <div className={styles.cardActions}>
                     {it.link && (
                       <a
@@ -443,10 +712,12 @@ export default function PracticeAgencyPage() {
                   onClick={() => setSelected(sel ? null : it.id)}
                 >
                   <div className={styles.cardTop}>
-                    <span className={styles.cardName}>{it.name}</span>
-                    <span className={styles.typeBadge}>
-                      {it.institution_type || "기관"}
-                    </span>
+                    <div className={styles.cardHead}>
+                      <span className={styles.cardType}>
+                        {it.institution_type || "기관"}
+                      </span>
+                      <span className={styles.cardName}>{it.name}</span>
+                    </div>
                     {locationState.coords && it.latitude != null && (
                       <span className={styles.distBadge}>
                         {distLabel(
@@ -464,7 +735,10 @@ export default function PracticeAgencyPage() {
                     </div>
                     <div className={styles.fieldRow}>
                       <span className={styles.fieldLabel}>주소</span>
-                      <span className={styles.fieldValue}>
+                      <span
+                        className={styles.fieldValueEllipsis}
+                        title={it.full_address || undefined}
+                      >
                         {it.full_address || "-"}
                       </span>
                     </div>
@@ -482,6 +756,16 @@ export default function PracticeAgencyPage() {
                           : "-"}
                       </span>
                     </div>
+                  </div>
+                  <div className={styles.etaRow}>
+                    <span className={styles.etaLabel}>걸리는 시간 :</span>
+                    <span className={styles.etaValue}>
+                      {etaDisplay({
+                        active: sel && !!coords,
+                        loading: routeLoading,
+                        route: routeInfo,
+                      })}
+                    </span>
                   </div>
                   <div className={styles.cardActions}>
                     <button
@@ -510,8 +794,145 @@ export default function PracticeAgencyPage() {
           selectedId={selected}
           onSelect={(id) => setSelected(id)}
           showUserMarker={!!locationState.coords}
+          routeInfo={routeInfo}
+          routeLoading={routeLoading}
         />
       </div>
+
+      {/* 실습학생 DB 목록 팝업 — 이름 몰라도 목록에서 찾아 선택 */}
+      {browseOpen && (
+        <div
+          className={styles.modalOverlay}
+          onClick={() => setBrowseOpen(false)}
+        >
+          <div
+            className={`${styles.modalCard} ${styles.browseCard}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.modalHead}>
+              <div>
+                <div className={styles.modalTitle}>실습학생 DB</div>
+                <div className={styles.modalSub}>
+                  학생을 누르면 집 주소가 출발지로 설정됩니다
+                </div>
+              </div>
+              <button
+                type="button"
+                className={styles.modalClose}
+                onClick={() => setBrowseOpen(false)}
+                aria-label="닫기"
+              >
+                ✕
+              </button>
+            </div>
+            <div className={styles.browseBody}>
+              <div className={styles.searchField}>
+                <span className={styles.searchIcon}>
+                  <SearchIcon />
+                </span>
+                <input
+                  className={styles.locInput}
+                  placeholder="이름·연락처·주소로 검색"
+                  value={browseQuery}
+                  onChange={(e) => setBrowseQuery(e.target.value)}
+                  autoFocus
+                />
+              </div>
+              <div className={styles.browseList}>
+                {browseLoading ? (
+                  <div className={styles.browseEmpty}>불러오는 중…</div>
+                ) : browseList.length === 0 ? (
+                  <div className={styles.browseEmpty}>결과가 없어요</div>
+                ) : (
+                  browseList.map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      className={styles.browseItem}
+                      onClick={() => pickStudent(s)}
+                    >
+                      <span className={styles.browseName}>
+                        {s.name || "(이름없음)"}
+                        {s.contact && (
+                          <span className={styles.browseContact}>
+                            {s.contact}
+                          </span>
+                        )}
+                      </span>
+                      <span className={styles.browseMeta}>
+                        {s.address || "주소 없음"}
+                      </span>
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 간이 실습학생 DB 팝업 — 페이지 이동 없이 학생 정보 확인 */}
+      {studentModal && selectedStudent && (
+        <div
+          className={styles.modalOverlay}
+          onClick={() => setStudentModal(false)}
+        >
+          <div
+            className={styles.modalCard}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={styles.modalHead}>
+              <div>
+                <div className={styles.modalTitle}>
+                  {selectedStudent.name || "학생"}
+                </div>
+                <div className={styles.modalSub}>실습학생 DB · 간이 조회</div>
+              </div>
+              <button
+                type="button"
+                className={styles.modalClose}
+                onClick={() => setStudentModal(false)}
+                aria-label="닫기"
+              >
+                ✕
+              </button>
+            </div>
+            <div className={styles.modalBody}>
+              {(
+                [
+                  ["연락처", selectedStudent.contact],
+                  ["생년월일", selectedStudent.birth_date],
+                  ["성별", selectedStudent.gender],
+                  ["집 주소", selectedStudent.address],
+                  ["상태", selectedStudent.status],
+                  ["실습종류", selectedStudent.practice_type],
+                  ["희망 실습일", selectedStudent.desired_date],
+                  ["희망 요일", selectedStudent.desired_weekday],
+                  ["희망 학기", selectedStudent.desired_semester],
+                  ["인정기간", selectedStudent.recognition_period],
+                  ["실습 교육원", selectedStudent.training_center],
+                  ["현장실습기관", selectedStudent.field_institution],
+                  ["자차", selectedStudent.own_car],
+                  ["담당자", selectedStudent.manager],
+                ] as [string, string | null | undefined][]
+              ).map(([label, value]) => (
+                <div className={styles.modalRow} key={label}>
+                  <span className={styles.modalLabel}>{label}</span>
+                  <span className={styles.modalValue}>{value || "-"}</span>
+                </div>
+              ))}
+              {selectedStudent.counsel_content && (
+                <div className={styles.modalNote}>
+                  <div className={styles.modalLabel}>상담내용</div>
+                  <div className={styles.modalNoteText}>
+                    {selectedStudent.counsel_content}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

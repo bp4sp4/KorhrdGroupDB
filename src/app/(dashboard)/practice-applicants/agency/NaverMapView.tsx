@@ -3,22 +3,6 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import styles from "./navermap.module.css";
 import type { LatLng, MapItem } from "./types";
 
-// 두 좌표 거리(km)
-function haversineKm(aLat: number, aLng: number, bLat: number, bLng: number) {
-  const R = 6371;
-  const dLat = ((bLat - aLat) * Math.PI) / 180;
-  const dLng = ((bLng - aLng) * Math.PI) / 180;
-  const s =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((aLat * Math.PI) / 180) *
-      Math.cos((bLat * Math.PI) / 180) *
-      Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
-}
-function distText(km: number) {
-  return km < 1 ? `${Math.round(km * 1000)}m` : `${km.toFixed(1)}km`;
-}
-
 // 컨테이너 크기 변화 후 타일이 안 그려지는 문제 — 리사이즈 이벤트 + refresh 둘 다 쏨
 function nudgeMap(map: unknown) {
   if (typeof naver === "undefined" || !naver.maps) return;
@@ -38,12 +22,31 @@ function nudgeMap(map: unknown) {
   }
 }
 
+interface RouteLeg {
+  durationMin: number;
+  distanceM: number;
+}
+interface RouteInfo {
+  car: RouteLeg | null;
+  walk: RouteLeg | null;
+}
+
+// 분 → "N분" / "N시간 M분"
+function durText(min: number) {
+  if (min < 60) return `${min}분`;
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return m ? `${h}시간 ${m}분` : `${h}시간`;
+}
+
 interface NaverMapViewProps {
   userLocation: LatLng;
   items: MapItem[];
   selectedId?: number | null;
   onSelect?: (id: number) => void;
   showUserMarker?: boolean;
+  routeInfo?: RouteInfo | null;
+  routeLoading?: boolean;
 }
 
 export default function NaverMapView({
@@ -52,6 +55,8 @@ export default function NaverMapView({
   selectedId = null,
   onSelect,
   showUserMarker = false,
+  routeInfo = null,
+  routeLoading = false,
 }: NaverMapViewProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<naver.maps.Map | null>(null);
@@ -297,16 +302,22 @@ export default function NaverMapView({
         );
         map.panTo(selPos);
 
-        // 내 위치 ↔ 선택 기관 직선거리
+        // 내 위치 → 선택 기관 자동차·도보 소요시간
         let distHtml = "";
         if (showUserMarker) {
-          const km = haversineKm(
-            userLocation.latitude,
-            userLocation.longitude,
-            selItem.latitude,
-            selItem.longitude,
-          );
-          distHtml = `<div style="margin-top:8px;display:flex;align-items:center;gap:5px;font-size:12px;color:#16205A;font-weight:700;">📍 내 위치에서 ${distText(km)}</div>`;
+          let inner: string;
+          if (routeLoading) {
+            inner = `<span style="color:#8b93a1;font-weight:600;">소요시간 계산 중…</span>`;
+          } else {
+            const car = routeInfo?.car
+              ? `차로 ${durText(routeInfo.car.durationMin)}`
+              : `차로 —`;
+            const walk = routeInfo?.walk
+              ? `도보 ${durText(routeInfo.walk.durationMin)}`
+              : `도보 —`;
+            inner = `<span>${car}</span><span style="color:#C2C8D2;">·</span><span>${walk}</span>`;
+          }
+          distHtml = `<div style="margin-top:8px;display:flex;align-items:center;gap:7px;font-size:12px;color:#16205A;font-weight:700;">${inner}</div>`;
         }
 
         if (selectedMarker) {
@@ -317,10 +328,12 @@ export default function NaverMapView({
             : "";
           infoWindow.setContent(`
             <div style="padding:13px 14px;font-family:Pretendard,sans-serif;min-width:200px;max-width:240px;background:#fff;border-radius:11px;box-shadow:0 10px 30px rgba(16,24,40,.22);">
-              <div style="display:flex;align-items:center;gap:7px;margin-bottom:7px;">
-                <span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;background:#EEF1FB;color:#3650C7;">${selItem.type || ""}</span>
-                <span style="font-weight:700;font-size:14px;color:#1A1D24;">${selItem.name}</span>
-              </div>
+              ${
+                selItem.type
+                  ? `<div style="margin-bottom:7px;"><span style="display:inline-block;font-size:11px;font-weight:700;padding:4px 10px;border-radius:7px;background:#EEF1FB;color:#3650C7;">${selItem.type}</span></div>`
+                  : ""
+              }
+              <div style="font-weight:700;font-size:14px;color:#1A1D24;line-height:1.4;margin-bottom:6px;">${selItem.name}</div>
               <div style="font-size:12px;color:#5A6071;line-height:1.5;">${selItem.regionText || selItem.address || ""}</div>
               ${lawHtml ? `<div style="margin-top:8px;">${lawHtml}</div>` : ""}
               ${distHtml}
@@ -362,7 +375,7 @@ export default function NaverMapView({
         infoWindowRef.current = null;
       }
     };
-  }, [isLoaded, userLocation, items, selectedId, showUserMarker]);
+  }, [isLoaded, userLocation, items, selectedId, showUserMarker, routeInfo, routeLoading]);
 
   // 컴포넌트 언마운트 시 지도 파괴
   useEffect(() => {

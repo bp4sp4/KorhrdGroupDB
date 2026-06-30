@@ -87,9 +87,9 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 0 12px;
+  padding: 11px 13px;
   border: 1px solid #e1e4eb;
-  border-radius: 9px;
+  border-radius: 8px;
   background: #fff;
   font-size: 13.5px;
   font-family: inherit;
@@ -124,7 +124,7 @@
   z-index: 30;
   background: #fff;
   border: 1px solid #e8eaf0;
-  border-radius: 9px;
+  border-radius: 8px;
   box-shadow: 0 8px 24px rgba(16, 24, 40, 0.12);
   list-style: none;
   margin: 0;
@@ -156,6 +156,269 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+.locTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: #2b3140;
+  margin-bottom: -6px;
+}
+/* 학생 검색 */
+.stuSearch {
+  position: relative;
+}
+.stuRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.stuRow .locInput {
+  flex: 1;
+  min-width: 0;
+}
+.stuBusy {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 11.5px;
+  color: #8b93a1;
+  pointer-events: none;
+}
+.stuList {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: #fff;
+  border: 1px solid #e1e4eb;
+  border-radius: 10px;
+  box-shadow: 0 12px 28px rgba(16, 24, 40, 0.14);
+  max-height: 260px;
+  overflow-y: auto;
+}
+.stuItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  border-radius: 7px;
+  cursor: pointer;
+}
+.stuItem:hover {
+  background: #f2f5ff;
+}
+.stuName {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a1d24;
+}
+.stuAddr {
+  font-size: 11.5px;
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.stuEmpty {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  padding: 12px;
+  text-align: center;
+  font-size: 12.5px;
+  color: #8b93a1;
+  background: #fff;
+  border: 1px solid #e1e4eb;
+  border-radius: 10px;
+  box-shadow: 0 12px 28px rgba(16, 24, 40, 0.14);
+}
+.stuInfoBtn {
+  flex: none;
+  white-space: nowrap;
+  padding: 0px 4px;
+  border-radius: 8px;
+  color: #2b3fa0;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: background 0.15s;
+}
+
+/* 실습학생 DB 목록 팝업 */
+.browseCard {
+  max-width: 480px;
+  height: 70vh;
+}
+.browseBody {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 18px 18px;
+  flex: 1;
+  min-height: 0;
+}
+/* 팝업 세로 레이아웃에선 검색칸이 늘어나지 않게 */
+.browseBody .searchField {
+  flex: none;
+}
+.browseList {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.browseItem {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
+  text-align: left;
+  padding: 11px 13px;
+  border: 1px solid #eef0f4;
+  border-radius: 9px;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.browseItem:hover {
+  background: #f2f5ff;
+  border-color: #c7d0f0;
+}
+.browseName {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #1a1d24;
+}
+.browseContact {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #8b93a1;
+}
+.browseMeta {
+  font-size: 12px;
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.browseEmpty {
+  padding: 30px 0;
+  text-align: center;
+  font-size: 13px;
+  color: #9aa0ac;
+}
+
+/* 간이 학생 DB 팝업 */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(16, 24, 40, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modalCard {
+  width: 100%;
+  max-width: 440px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 24px 60px rgba(16, 24, 40, 0.32);
+  overflow: hidden;
+}
+.modalHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid #eef0f4;
+}
+.modalTitle {
+  font-size: 17px;
+  font-weight: 800;
+  color: #1a1d24;
+}
+.modalSub {
+  margin-top: 3px;
+  font-size: 12px;
+  color: #8b93a1;
+  font-weight: 600;
+}
+.modalClose {
+  border: none;
+  background: #f2f4f7;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #5a6071;
+  cursor: pointer;
+  flex: none;
+}
+.modalClose:hover {
+  background: #e7eaef;
+}
+.modalBody {
+  padding: 14px 20px 20px;
+  overflow-y: auto;
+}
+.modalRow {
+  display: flex;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid #f4f6f9;
+}
+.modalLabel {
+  flex: none;
+  width: 92px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #8b93a1;
+}
+.modalValue {
+  font-size: 13px;
+  color: #2b3140;
+  font-weight: 600;
+  word-break: break-all;
+}
+.modalNote {
+  margin-top: 12px;
+}
+.modalNoteText {
+  margin-top: 6px;
+  padding: 11px 13px;
+  background: #f7f8fa;
+  border-radius: 9px;
+  font-size: 12.5px;
+  color: #475067;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+.locHint {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #8b93a1;
 }
 .select {
   flex: 1;
@@ -203,15 +466,38 @@
 
   color: #fff;
 }
-.locInput {
+/* 검색 입력 (학생·출발지 공통) — 좌측 아이콘 자리 포함 */
+.searchField {
+  position: relative;
   flex: 1;
   min-width: 0;
-  padding: 10px 12px;
-  border: 1px solid #e1e4eb;
-  border-radius: 9px;
+}
+.searchIcon {
+  position: absolute;
+  left: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  color: #9aa0ac;
+  pointer-events: none;
+}
+.locInput {
+  width: 100%;
+  padding: 11px 13px 11px 38px;
+  border: 1px solid rgb(227, 229, 238);
+  border-radius: 11px;
+  background: rgb(251, 251, 253);
   font-size: 13.5px;
-  outline: none;
   font-family: inherit;
+  color: rgb(27, 31, 42);
+  outline: none;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+.locInput:focus {
+  border-color: #3182f6;
+  background: #fff;
 }
 .locSearch {
   display: flex;
@@ -220,8 +506,8 @@
   color: #fff;
   font-size: 13.5px;
   font-weight: 700;
-  padding: 10px 20px;
-  border-radius: 9px;
+  padding: 11px 13px;
+  border-radius: 8px;
   cursor: pointer;
   border: none;
   white-space: nowrap;
@@ -349,12 +635,26 @@
 .cardTop {
   display: flex;
   align-items: center;
+
   gap: 9px;
   margin-bottom: 12px;
 }
+.cardHead {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+.cardType {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #8b93a1;
+}
 .cardName {
   font-weight: 700;
-  font-size: 13px;
+  font-size: 16px;
+  line-height: 1.3;
 }
 .typeBadge {
   font-size: 11px;
@@ -398,6 +698,15 @@
   flex: 1;
   color: #2a2e38;
 }
+/* 주소 등 긴 값 — 한 줄 말줄임 */
+.fieldValueEllipsis {
+  flex: 1;
+  min-width: 0;
+  color: #2a2e38;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .fieldValueStrong {
   flex: 1;
   color: #2a2e38;
@@ -424,6 +733,23 @@
   font-size: 12.5px;
   color: #2d5ac7;
   line-height: 1.45;
+}
+.etaRow {
+  margin-top: 11px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+}
+.etaLabel {
+  color: #8b93a1;
+  font-weight: 600;
+  flex: none;
+}
+.etaValue {
+  color: #1f43b5;
+  font-weight: 700;
 }
 .cardActions {
   margin-top: 12px;

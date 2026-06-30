@@ -1,6 +1,7 @@
 import { requireAuth } from '@/lib/auth/requireAuth'
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
+import { isValidWeekStart, getWeekRange } from '@/lib/marketing/week'
 
 interface Row {
   click_source: string | null
@@ -83,13 +84,17 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const now = new Date()
     const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-    const yearMonth = searchParams.get('year_month') ?? currentYearMonth
     const division = (searchParams.get('division') ?? 'nms') as Division
 
     const tableName = DIVISION_TABLE[division]
     if (!tableName) return NextResponse.json([])
 
-    const { start, end } = getMonthRange(yearMonth)
+    // 기간 모드: week_start(YYYY-MM-DD, 월요일) 있으면 주간, 없으면 월간
+    const weekStartParam = searchParams.get('week_start')
+    const isWeek = !!weekStartParam && isValidWeekStart(weekStartParam)
+    const { start, end } = isWeek
+      ? getWeekRange(weekStartParam as string)
+      : getMonthRange(searchParams.get('year_month') ?? currentYearMonth)
 
     const { data, error } = await supabaseAdmin
       .from(tableName)
