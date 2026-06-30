@@ -52,14 +52,10 @@ export default function MyContractsPage() {
       <div className={styles.head}>
         <div className={styles.headRow}>
           <h1 className={styles.title}>내 근로계약서</h1>
-          <Link href="/me/contracts/write" className={styles.writeBtn}>
-            + 직접 작성하기
-          </Link>
         </div>
         <p className={styles.sub}>
           관리자가 작성을 요청한 계약서 목록입니다. &quot;서명 대기&quot;인
-          계약서를 눌러 작성·서명하세요. 표준 근로계약서를 직접 작성하려면
-          &quot;직접 작성하기&quot;를 누르세요.
+          계약서를 눌러 작성·서명하세요.
         </p>
       </div>
 
@@ -74,6 +70,7 @@ export default function MyContractsPage() {
           {items.map((c) => {
             const isPending = c.status === "pending_sign";
             const isSigned = c.status === "signed";
+            const isDraft = c.status === "draft";
             return (
               <li key={c.id} className={styles.item}>
                 <div className={styles.itemLeft}>
@@ -114,12 +111,20 @@ export default function MyContractsPage() {
                       작성·서명하기
                     </Link>
                   )}
+                  {isDraft && (
+                    <Link
+                      href={`/me/contracts/${c.id}`}
+                      className={styles.btnPrimary}
+                    >
+                      이어서 작성하기
+                    </Link>
+                  )}
                   {isSigned && (
                     <Link
                       href={`/me/contracts/${c.id}`}
                       className={styles.btnGhost}
                     >
-                      보기
+                      보기·수정
                     </Link>
                   )}
                 </div>

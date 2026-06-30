@@ -41,12 +41,6 @@ export async function POST(
   if (contract.employee_user_id !== appUser.id) {
     return NextResponse.json({ error: "권한이 없습니다." }, { status: 403 });
   }
-  if (contract.status === "signed") {
-    return NextResponse.json(
-      { error: "이미 서명 완료된 계약서입니다." },
-      { status: 400 },
-    );
-  }
 
   const signed = !!body.signed;
   if (signed && !body.signature) {

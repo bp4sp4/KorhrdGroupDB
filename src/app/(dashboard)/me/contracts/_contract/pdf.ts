@@ -9,20 +9,34 @@ export async function buildContractPdf(
   ]);
   const JsPDF = jspdfMod.jsPDF;
 
-  const canvas = await html2canvas(el, {
-    scale: 2,
-    backgroundColor: "#ffffff",
-    useCORS: true,
-    windowWidth: 900,
-    onclone: (doc) => {
-      const n = doc.getElementById("contract-doc") as HTMLElement | null;
-      if (n) {
-        n.classList.add(cleanClass);
-        n.style.width = "760px";
-        n.style.maxWidth = "760px";
-      }
-    },
-  });
+  // 미리보기(.doc)는 max-width:760px 로 렌더되지만, 좁은 화면(모바일)에서는
+  // width:100% 가 화면 폭으로 줄어 html2canvas 가 좁게 캡처 → A4 로 늘어나며
+  // 글자가 확대돼 보인다. 화면 레이아웃의 영향을 받지 않도록 문서를 760px 고정
+  // 폭으로 복제해 화면 밖(off-screen)에 붙여 캡처한다(미리보기와 동일 비율).
+  const RENDER_W = 760;
+  const clone = el.cloneNode(true) as HTMLElement;
+  clone.classList.add(cleanClass);
+  clone.style.setProperty("width", `${RENDER_W}px`, "important");
+  clone.style.setProperty("max-width", `${RENDER_W}px`, "important");
+  clone.style.margin = "0";
+  clone.style.position = "fixed";
+  clone.style.left = "-10000px";
+  clone.style.top = "0";
+  clone.style.background = "#ffffff";
+  document.body.appendChild(clone);
+
+  let canvas: HTMLCanvasElement;
+  try {
+    canvas = await html2canvas(clone, {
+      scale: 2,
+      backgroundColor: "#ffffff",
+      useCORS: true,
+      width: RENDER_W,
+      windowWidth: RENDER_W,
+    });
+  } finally {
+    document.body.removeChild(clone);
+  }
 
   const pdf = new JsPDF("p", "mm", "a4");
   const pw = 210;
@@ -57,9 +71,11 @@ export async function buildContractPdf(
       );
     }
     if (pageIdx > 0) pdf.addPage();
+    // JPEG(품질 0.85)로 인코딩 — 텍스트 위주 흰 배경 문서는 PNG 대비 용량이
+    // 수십 배 작아져 업로드 본문 크기 제한(10MB) 초과로 저장 실패하던 문제 해결
     pdf.addImage(
-      tmp.toDataURL("image/png"),
-      "PNG",
+      tmp.toDataURL("image/jpeg", 0.85),
+      "JPEG",
       margin,
       margin,
       contentW,

@@ -109,6 +109,7 @@ function SignaturePad({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
   const last = useRef<{ x: number; y: number } | null>(null);
+  const loadedInitial = useRef(false);
   useEffect(() => {
     const ctx = canvasRef.current?.getContext("2d");
     if (!ctx) return;
@@ -117,6 +118,17 @@ function SignaturePad({
     ctx.lineJoin = "round";
     ctx.strokeStyle = "#0a0d12";
   }, []);
+  // 기존(저장된) 서명을 패드에 한 번 그려준다 — "보기·수정" 시 서명이 보이도록
+  useEffect(() => {
+    if (loadedInitial.current || !value) return;
+    const c = canvasRef.current;
+    const ctx = c?.getContext("2d");
+    if (!c || !ctx) return;
+    loadedInitial.current = true;
+    const img = new Image();
+    img.onload = () => ctx.drawImage(img, 0, 0, c.width, c.height);
+    img.src = value;
+  }, [value]);
   const pos = (e: ReactPointerEvent<HTMLCanvasElement>) => {
     const c = e.currentTarget;
     const r = c.getBoundingClientRect();
@@ -174,15 +186,18 @@ function SignaturePad({
   );
 }
 
-function Sign({ src }: { src: string | null }) {
+function Sign({ src, name }: { src: string | null; name?: string }) {
   return (
-    <span className={styles.signSlot}>
-      (서명)
-      {src && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={src} alt="서명" className={styles.signInline} />
-      )}
-    </span>
+    <>
+      {name ? <span className={styles.signName}>{name}</span> : null}
+      <span className={styles.signSlot}>
+        (서명)
+        {src && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={src} alt="서명" className={styles.signInline} />
+        )}
+      </span>
+    </>
   );
 }
 
@@ -266,6 +281,8 @@ export default function ContractEditor({
   const docRef = useRef<HTMLDivElement>(null);
   const cfg = VARIANT[variant];
   const isHourly = variant === "contract";
+  // 관리자가 지정한 계약(assigned)에서는 임금을 관리자가 설정 → 직원은 보기만
+  const lockWage = mode === "assigned";
 
   useEffect(() => {
     if (initialForm?.employeeName) return;
@@ -418,20 +435,25 @@ export default function ContractEditor({
             </Section>
 
             <Section title={isHourly ? "② 임금 (시급)" : "② 임금 (월 기준)"}>
+              {lockWage && (
+                <p className={styles.lockHint}>
+                  임금은 관리자가 지정한 금액으로, 수정할 수 없습니다.
+                </p>
+              )}
               {isHourly ? (
                 <Field label="시급">
-                  <input className={styles.input} inputMode="numeric" value={comma(form.hourlyWage)} onChange={(ev) => up("hourlyWage", ev.target.value.replace(/[^0-9]/g, ""))} {...focusProps("hourlyWage")} placeholder="예) 10,320" />
+                  <input className={styles.input} inputMode="numeric" value={comma(form.hourlyWage)} onChange={(ev) => up("hourlyWage", ev.target.value.replace(/[^0-9]/g, ""))} {...focusProps("hourlyWage")} placeholder="예) 10,320" disabled={lockWage} />
                 </Field>
               ) : (
                 <>
                   <Field label="기본급">
-                    <input className={styles.input} inputMode="numeric" value={comma(form.baseMonthly)} onChange={(ev) => up("baseMonthly", ev.target.value.replace(/[^0-9]/g, ""))} {...focusProps("baseMonthly")} placeholder="예) 3,960,000" />
+                    <input className={styles.input} inputMode="numeric" value={comma(form.baseMonthly)} onChange={(ev) => up("baseMonthly", ev.target.value.replace(/[^0-9]/g, ""))} {...focusProps("baseMonthly")} placeholder="예) 3,960,000" disabled={lockWage} />
                   </Field>
                   <Field label="식대">
-                    <input className={styles.input} inputMode="numeric" value={comma(form.mealMonthly)} onChange={(ev) => up("mealMonthly", ev.target.value.replace(/[^0-9]/g, ""))} {...focusProps("mealMonthly")} />
+                    <input className={styles.input} inputMode="numeric" value={comma(form.mealMonthly)} onChange={(ev) => up("mealMonthly", ev.target.value.replace(/[^0-9]/g, ""))} {...focusProps("mealMonthly")} disabled={lockWage} />
                   </Field>
                   <Field label={cfg.allowanceLabel}>
-                    <input className={styles.input} inputMode="numeric" value={comma(form.allowanceMonthly)} onChange={(ev) => up("allowanceMonthly", ev.target.value.replace(/[^0-9]/g, ""))} {...focusProps("allowanceMonthly")} />
+                    <input className={styles.input} inputMode="numeric" value={comma(form.allowanceMonthly)} onChange={(ev) => up("allowanceMonthly", ev.target.value.replace(/[^0-9]/g, ""))} {...focusProps("allowanceMonthly")} disabled={lockWage} />
                   </Field>
                   <div className={styles.calcRow}>
                     <span>월 합계 <b>{won(totalMonthly)}원</b></span>
@@ -508,7 +530,7 @@ export default function ContractEditor({
           <Article n={3} title="담당업무 및 업무 장소">
             <p>1) 직원의 담당업무는 {spot("jobDesc", <u className={styles.fill}>{form.jobDesc || " ".repeat(12)}</u>)} 이며, 업무장소는 “갑”의 소재지 근무를 원칙으로 한다.</p>
             <p className={styles.indent}>소재지 : {COMPANY.addr}</p>
-            <p>2) 전항은 회사의 업무상 필요에 의해 직종, 보직, 근무지를 변경할 수 있다. 동의 <Sign src={signature} /></p>
+            <p>2) 전항은 회사의 업무상 필요에 의해 직종, 보직, 근무지를 변경할 수 있다. 동의 <Sign src={signature} name={form.employeeName} /></p>
           </Article>
 
           <Article n={4} title="근로시간">
@@ -516,7 +538,7 @@ export default function ContractEditor({
             <p>2) 휴게시간은 13시부터 14시로 하며, 근무시간에는 제외한다.</p>
             <p>3) 주 5일 근무로 하며 주 40시간을 원칙으로 한다. 단, “갑”은 “을”에게 업무상 필요시 주 52시간 내에서 근무를 요할 수 있다.</p>
             <p>4) 주휴일은 일요일로 하되, 업무상 부득이한 경우 미리 협의하여 주휴일을 변경할 수 있다. 단, 주휴일은 1주 소정근로일을 만근한 경우에 한해 부여한다.</p>
-            <p>5) 기타 회사 상황 또는 업무의 특성으로 인하여 연장, 야간, 휴일 근로가 요구되는 경우, 관련법령의 허용 범위 내에서 이를 수행함에 동의한다. <Sign src={signature} /></p>
+            <p>5) 기타 회사 상황 또는 업무의 특성으로 인하여 연장, 야간, 휴일 근로가 요구되는 경우, 관련법령의 허용 범위 내에서 이를 수행함에 동의한다. <Sign src={signature} name={form.employeeName} /></p>
           </Article>
 
           <Article n={5} title="임금">
@@ -612,7 +634,7 @@ export default function ContractEditor({
           <p className={styles.closing}>
             위와 같이 계약을 체결하고 계약서 2통을 작성, 서명 날인 후 “갑”과 “을”이 각각 1통씩 보관한다.
           </p>
-          <p>근로자 교부 확인 : <Sign src={signature} /></p>
+          <p>근로자 교부 확인 : <Sign src={signature} name={form.employeeName} /></p>
 
           <p className={styles.docDate}>
             {spot("contractDate", <>{c.y}년 {c.m || "  "}월 {c.d || "  "}일</>)}
@@ -644,7 +666,7 @@ export default function ContractEditor({
                 <div>주민번호 : {spot("employeeRRN", form.employeeRRN)}</div>
                 <div>연락처 : {spot("employeePhone", form.employeePhone)}</div>
                 <div className={styles.partySign}>
-                  성명 : {form.employeeName} <Sign src={signature} />
+                  성명 : <Sign src={signature} name={form.employeeName} />
                 </div>
               </div>
             </div>

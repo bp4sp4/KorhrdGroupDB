@@ -128,6 +128,22 @@
   border-color: #3182f6;
 }
 
+.input:disabled {
+  background: #f2f4f6;
+  color: #8b95a1;
+  cursor: not-allowed;
+}
+
+.lockHint {
+  margin: 0 0 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #fff4e6;
+  color: #b54708;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 .calcRow {
   display: flex;
   justify-content: space-between;
@@ -375,6 +391,11 @@
   pointer-events: none;
   /* 완전 검정 + 살짝 두껍게(윤곽 그림자)로 또렷하게 */
   filter: brightness(0) drop-shadow(0 0 0 #000) drop-shadow(-0.4px 0 0 #000);
+}
+
+/* 이름 + 서명 한 묶음 — 이름이 앞, "(서명)"+사인이 뒤 */
+.signName {
+  margin-right: 4px;
 }
 
 /* 갑 대표자 직인 — (인) 옆에 겹쳐 찍힘 */

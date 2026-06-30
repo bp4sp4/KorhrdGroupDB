@@ -61,6 +61,7 @@ function SignaturePad({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
   const last = useRef<{ x: number; y: number } | null>(null);
+  const loadedInitial = useRef(false);
   useEffect(() => {
     const ctx = canvasRef.current?.getContext("2d");
     if (!ctx) return;
@@ -69,6 +70,17 @@ function SignaturePad({
     ctx.lineJoin = "round";
     ctx.strokeStyle = "#0a0d12";
   }, []);
+  // 기존(저장된) 서명을 패드에 한 번 그려준다 — "보기·수정" 시 서명이 보이도록
+  useEffect(() => {
+    if (loadedInitial.current || !value) return;
+    const c = canvasRef.current;
+    const ctx = c?.getContext("2d");
+    if (!c || !ctx) return;
+    loadedInitial.current = true;
+    const img = new Image();
+    img.onload = () => ctx.drawImage(img, 0, 0, c.width, c.height);
+    img.src = value;
+  }, [value]);
   const pos = (e: ReactPointerEvent<HTMLCanvasElement>) => {
     const c = e.currentTarget;
     const r = c.getBoundingClientRect();

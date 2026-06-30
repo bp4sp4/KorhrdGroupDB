@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // 전자계약 PDF(base64) 업로드가 기본 10MB 제한을 넘겨 저장 실패하던 문제 → 상향
+    proxyClientMaxBodySize: "25mb",
+  },
   async headers() {
     return [
       {

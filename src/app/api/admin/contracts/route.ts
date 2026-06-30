@@ -54,6 +54,12 @@ export async function POST(req: NextRequest) {
     contract_types?: ContractType[];
     employee_user_id?: number | null;
     employee_name?: string;
+    wage?: {
+      baseMonthly?: string;
+      mealMonthly?: string;
+      allowanceMonthly?: string;
+      hourlyWage?: string;
+    } | null;
   } | null;
 
   if (!body) {
@@ -100,12 +106,29 @@ export async function POST(req: NextRequest) {
   }
 
   const employeeName = body.employee_name.trim();
+
+  // 근로계약서 4종은 관리자가 지정한 임금을 form_data 에 저장 (직원은 보기만)
+  const WORK_TYPES: ContractType[] = ["regular", "contract", "civil", "sales"];
+  const onlyDigits = (v: unknown) =>
+    typeof v === "string" ? v.replace(/[^0-9]/g, "") : "";
+  const wageForm = (t: ContractType) => {
+    const w = body.wage ?? {};
+    return t === "contract"
+      ? { hourlyWage: onlyDigits(w.hourlyWage) }
+      : {
+          baseMonthly: onlyDigits(w.baseMonthly),
+          mealMonthly: onlyDigits(w.mealMonthly),
+          allowanceMonthly: onlyDigits(w.allowanceMonthly),
+        };
+  };
+
   const payloads = types.map((t) => ({
     contract_type: t,
     status: "pending_sign" as const,
     employee_user_id: body.employee_user_id ?? null,
     employee_name: employeeName,
     created_by: appUser.id,
+    ...(WORK_TYPES.includes(t) ? { form_data: wageForm(t) } : {}),
   }));
 
   const { data, error } = await supabaseAdmin

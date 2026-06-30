@@ -44,11 +44,25 @@ export default function NewContractPage() {
   const router = useRouter();
   // 여러 양식 동시 선택 가능
   const [types, setTypes] = useState<Set<ContractType>>(new Set());
+  // 근로계약서 4종은 서로 하나만 선택 가능(상호 배타) / 서약서·동의서는 다중 선택
+  const WORK_TYPE_SET = new Set<ContractType>([
+    "regular",
+    "contract",
+    "civil",
+    "sales",
+  ]);
   const toggleType = (t: ContractType) =>
     setTypes((prev) => {
       const next = new Set(prev);
-      if (next.has(t)) next.delete(t);
-      else next.add(t);
+      if (next.has(t)) {
+        next.delete(t);
+        return next;
+      }
+      // 근로계약서 양식을 켤 때는 기존 근로계약서 선택을 해제
+      if (WORK_TYPE_SET.has(t)) {
+        for (const w of WORK_TYPE_SET) next.delete(w);
+      }
+      next.add(t);
       return next;
     });
   const [users, setUsers] = useState<AppUserOption[]>([]);
@@ -58,6 +72,22 @@ export default function NewContractPage() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+
+  // 관리자가 지정하는 임금 (직원은 보기만)
+  const [baseMonthly, setBaseMonthly] = useState("");
+  const [mealMonthly, setMealMonthly] = useState("200000");
+  const [allowanceMonthly, setAllowanceMonthly] = useState("0");
+  const [hourlyWage, setHourlyWage] = useState("10320");
+
+  const hasMonthly = (["regular", "civil", "sales"] as ContractType[]).some(
+    (t) => types.has(t),
+  );
+  const hasHourly = types.has("contract");
+  const showWage = hasMonthly || hasHourly;
+  const comma = (v: string) => {
+    const n = v.replace(/[^0-9]/g, "");
+    return n ? Number(n).toLocaleString() : "";
+  };
 
   useEffect(() => {
     fetch("/api/users")
@@ -101,6 +131,7 @@ export default function NewContractPage() {
           contract_types: Array.from(types),
           employee_user_id: employeeUserId,
           employee_name: employeeName.trim(),
+          wage: { baseMonthly, mealMonthly, allowanceMonthly, hourlyWage },
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -205,6 +236,79 @@ export default function NewContractPage() {
             </p>
           </div>
         </section>
+
+        {showWage && (
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>
+              3. 임금 설정{" "}
+              <span className={styles.sectionHint}>
+                (근로계약서 — 직원은 수정할 수 없습니다)
+              </span>
+            </h2>
+            {hasMonthly && (
+              <>
+                <div className={styles.field}>
+                  <label className={styles.label}>기본급 (월)</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    className={styles.input}
+                    value={comma(baseMonthly)}
+                    placeholder="예) 3,960,000"
+                    onChange={(e) =>
+                      setBaseMonthly(e.target.value.replace(/[^0-9]/g, ""))
+                    }
+                  />
+                </div>
+                <div className={styles.field}>
+                  <label className={styles.label}>식대 (월)</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    className={styles.input}
+                    value={comma(mealMonthly)}
+                    onChange={(e) =>
+                      setMealMonthly(e.target.value.replace(/[^0-9]/g, ""))
+                    }
+                  />
+                </div>
+                <div className={styles.field}>
+                  <label className={styles.label}>
+                    수당 (직책/민간/인센티브, 월)
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    className={styles.input}
+                    value={comma(allowanceMonthly)}
+                    onChange={(e) =>
+                      setAllowanceMonthly(e.target.value.replace(/[^0-9]/g, ""))
+                    }
+                  />
+                </div>
+              </>
+            )}
+            {hasHourly && (
+              <div className={styles.field}>
+                <label className={styles.label}>시급 (계약직)</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  className={styles.input}
+                  value={comma(hourlyWage)}
+                  placeholder="예) 10,320"
+                  onChange={(e) =>
+                    setHourlyWage(e.target.value.replace(/[^0-9]/g, ""))
+                  }
+                />
+              </div>
+            )}
+            <p className={styles.hint}>
+              여기서 입력한 임금이 직원 계약서에 자동 반영되며, 직원은 보기만
+              가능합니다. (서약서·동의서에는 적용되지 않습니다.)
+            </p>
+          </section>
+        )}
 
         <div className={styles.footer}>
           <button

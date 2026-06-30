@@ -66,7 +66,6 @@ export default function ContractSignPage({
     );
   if (!contract) return null;
 
-  const isSigned = contract.status === "signed";
   const initialForm = {
     ...((contract.form_data ?? {}) as Record<string, unknown>),
     employeeName:
@@ -83,7 +82,7 @@ export default function ContractSignPage({
         contractId={id}
         initialForm={initialForm as never}
         initialSignature={contract.signature}
-        readOnly={isSigned}
+        readOnly={false}
         headerTitle={`${contract.employee_name} 근로계약서`}
         headerBadge={TYPE_LABEL[contract.contract_type]}
         onBack={onBack}
@@ -99,7 +98,7 @@ export default function ContractSignPage({
         contractId={id}
         initialForm={initialForm as never}
         initialSignature={contract.signature}
-        readOnly={isSigned}
+        readOnly={false}
         headerTitle={`${contract.employee_name} ${TYPE_LABEL[contract.contract_type] ?? "서약서"}`}
         headerBadge={TYPE_LABEL[contract.contract_type]}
         onBack={onBack}
