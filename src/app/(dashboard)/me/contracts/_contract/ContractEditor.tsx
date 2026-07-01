@@ -51,6 +51,7 @@ export interface ContractForm {
   position?: string; // 직책/직위
   department?: string; // 부서
   specialTerms?: string; // 특약사항
+  wageComposition?: string; // 제5조 2) 임금 구성항목 (줄바꿈으로 여러 줄)
 }
 
 export const DEFAULT_FORM: ContractForm = {
@@ -106,6 +107,9 @@ const DEFAULT_WORK_DAYS =
   "주 5일 근무로 하며 주 40시간을 원칙으로 한다. 단, “갑”은 “을”에게 업무상 필요시 주 52시간 내에서 근무를 요할 수 있다.";
 const DEFAULT_WEEKLY_HOLIDAY =
   "주휴일은 일요일로 하되, 업무상 부득이한 경우 미리 협의하여 주휴일을 변경할 수 있다. 단, 주휴일은 1주 소정근로일을 만근한 경우에 한해 부여한다.";
+// 제5조 2) 임금 구성항목 기본 문구 (관리자가 지정 안 하면 사용)
+const DEFAULT_WAGE_COMPOSITION =
+  "- 식대 : 근무일수에 적합하게 일할 계산되어 지급되는 점심 식대, 1개월 만근시 20만원 지급";
 
 const num = (v: string) => Number(String(v).replace(/[^0-9]/g, "")) || 0;
 const won = (n: number) => (n > 0 ? n.toLocaleString() : "0");
@@ -361,8 +365,7 @@ export default function ContractEditor({
 
   const base = num(form.baseMonthly);
   const meal = num(form.mealMonthly);
-  const allowance = num(form.allowanceMonthly);
-  const totalMonthly = base + meal + allowance;
+  const totalMonthly = base + meal;
   const annual = totalMonthly * 12;
   const hourly = num(form.hourlyWage);
 
@@ -541,9 +544,6 @@ export default function ContractEditor({
                   <Field label="식대">
                     <input className={styles.input} inputMode="numeric" value={comma(form.mealMonthly)} onChange={(ev) => up("mealMonthly", ev.target.value.replace(/[^0-9]/g, ""))} {...focusProps("mealMonthly")} disabled={lockWage} />
                   </Field>
-                  <Field label={cfg.allowanceLabel}>
-                    <input className={styles.input} inputMode="numeric" value={comma(form.allowanceMonthly)} onChange={(ev) => up("allowanceMonthly", ev.target.value.replace(/[^0-9]/g, ""))} {...focusProps("allowanceMonthly")} disabled={lockWage} />
-                  </Field>
                   <div className={styles.calcRow}>
                     <span>월 합계 <b>{won(totalMonthly)}원</b></span>
                     <span>연봉 <b>{won(annual)}원</b></span>
@@ -654,7 +654,7 @@ export default function ContractEditor({
                 <table className={styles.salaryTable}>
                   <thead>
                     <tr>
-                      <th>구분</th><th>기본급</th><th>식대</th><th>{cfg.allowanceLabel}</th><th>합계</th>
+                      <th>구분</th><th>기본급</th><th>식대</th><th>합계</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -662,14 +662,18 @@ export default function ContractEditor({
                       <td>월</td>
                       <td>{spot("baseMonthly", won(base))}</td>
                       <td>{spot("mealMonthly", won(meal))}</td>
-                      <td>{spot("allowanceMonthly", won(allowance))}</td>
                       <td>{won(totalMonthly)}</td>
                     </tr>
                   </tbody>
                 </table>
                 <p>2) 임금 구성항목</p>
-                <p className={styles.indent}>- 식대 : 근무일수에 적합하게 일할 계산되어 지급되는 점심 식대, 1개월 만근시 20만원 지급</p>
-                <p className={styles.indent}>- {cfg.allowanceLabel} : {cfg.allowanceDesc}</p>
+                {(form.wageComposition?.trim() || DEFAULT_WAGE_COMPOSITION)
+                  .split("\n")
+                  .map((line, i) => (
+                    <p className={styles.indent} key={i}>
+                      {line}
+                    </p>
+                  ))}
                 <p>3) 지급방법 : 원천징수 후 본인이 지정한 본인 명의 통장으로 지급한다. 계산방법 : 1일부터 말일까지 산정하여 익월 10일 지급하되, 휴일인 경우 직전 영업일에 지급한다. 월중 입/퇴사자나 무단 결근시에는 일할 계산하여 지급한다.</p>
                 <p>4) “을”은 급여에 대하여 고용보험, 의료보험, 국민연금 부담분 등 법률이 정하는 바에 따른 모든 제세공과금을 부담하고, “갑”은 이를 공제한 후 지급한다.</p>
                 <p>5) 퇴직금은 별도 규정에 준하며, 퇴직금을 지급하는 것에 갈음하여 퇴직연금에 가입할 수 있다.</p>

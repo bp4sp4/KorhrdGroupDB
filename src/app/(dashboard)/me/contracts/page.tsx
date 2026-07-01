@@ -7,8 +7,8 @@ import styles from "./page.module.css";
 const TYPE_LABEL: Record<string, string> = {
   regular: "정규직",
   contract: "계약직",
-  civil: "민간",
-  sales: "영업직",
+  civil: "정규직(민간)",
+  sales: "정규직(영업직)",
   privacy: "개인정보 동의서",
   ethics: "보안·윤리 서약서",
   nda: "비밀유지 서약서",

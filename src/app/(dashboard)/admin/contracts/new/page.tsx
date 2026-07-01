@@ -21,23 +21,33 @@ type ContractType =
 const CONTRACT_TYPE_LABEL: Record<ContractType, string> = {
   regular: "정규직",
   contract: "계약직",
-  civil: "민간",
-  sales: "영업직",
+  civil: "정규직(민간)",
+  sales: "정규직(영업직)",
   privacy: "개인정보 동의서",
   ethics: "보안·윤리 서약서",
   nda: "비밀유지 서약서",
   pledge: "입사 서약서",
 };
 const CONTRACT_TYPE_DESC: Record<ContractType, string> = {
-  regular: "연봉제, 기간 없음 — 기본급/식대/직책수당",
+  regular: "연봉제, 기간 없음 — 기본급·식대",
   contract: "시급제, 시작·종료일 명시",
-  civil: "연봉제, 정규직과 동일 구조",
-  sales: "연봉제, 인센티브 포함 (매출 기준 5~10%)",
+  civil: "연봉제 — 정규직과 동일 구조",
+  sales: "연봉제 — 영업직",
   privacy: "개인정보 수집·이용 및 제3자 제공 동의",
   ethics: "보안/윤리 강령 준수 서약",
   nda: "영업비밀 비밀유지 서약",
   pledge: "입사 서약 (취업규칙 준수 등)",
 };
+// 신규 작성에서 선택 가능한 양식 (계약직 제외)
+const VISIBLE_TYPES: ContractType[] = [
+  "regular",
+  "civil",
+  "sales",
+  "privacy",
+  "ethics",
+  "nda",
+  "pledge",
+];
 
 interface AppUserOption {
   id: number;
@@ -80,8 +90,9 @@ export default function NewContractPage() {
   // 관리자가 지정하는 임금 (직원은 보기만)
   const [baseMonthly, setBaseMonthly] = useState("");
   const [mealMonthly, setMealMonthly] = useState("200000");
-  const [allowanceMonthly, setAllowanceMonthly] = useState("0");
   const [hourlyWage, setHourlyWage] = useState("10320");
+  // 제5조 2) 임금 구성항목 (비우면 기본 문구)
+  const [wageComposition, setWageComposition] = useState("");
 
   // 관리자가 지정하는 근로조건 (비우면 계약서 기본 문구 유지 — 직원은 보기만)
   const [workTime, setWorkTime] = useState("");
@@ -148,10 +159,10 @@ export default function NewContractPage() {
           contract_types: Array.from(types),
           employee_user_id: employeeUserId,
           employee_name: employeeName.trim(),
-          wage: { baseMonthly, mealMonthly, allowanceMonthly, hourlyWage },
+          wage: { baseMonthly, mealMonthly, hourlyWage },
           work_conditions: {
             workTime, breakTime, workDays, weeklyHoliday, workLocation,
-            probationMonths, position, department, specialTerms,
+            probationMonths, position, department, specialTerms, wageComposition,
           },
         }),
       });
@@ -174,8 +185,8 @@ export default function NewContractPage() {
     employeeName,
     baseMonthly,
     mealMonthly,
-    allowanceMonthly,
     hourlyWage,
+    wageComposition,
     workTime,
     breakTime,
     workDays,
@@ -209,7 +220,7 @@ export default function NewContractPage() {
             </span>
           </h2>
           <div className={styles.typeGrid}>
-            {(Object.keys(CONTRACT_TYPE_LABEL) as ContractType[]).map((t) => {
+            {VISIBLE_TYPES.map((t) => {
               const on = types.has(t);
               return (
                 <button
@@ -318,18 +329,14 @@ export default function NewContractPage() {
                   />
                 </div>
                 <div className={styles.field}>
-                  <label className={styles.label}>
-                    수당 (직책/민간/인센티브, 월)
-                  </label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
+                  <label className={styles.label}>임금 구성항목 (제5조 2)</label>
+                  <textarea
                     className={styles.input}
-                    value={comma(allowanceMonthly)}
-                onFocus={() => setFocusedArticle(5)}
-                    onChange={(e) =>
-                      setAllowanceMonthly(e.target.value.replace(/[^0-9]/g, ""))
-                    }
+                    rows={3}
+                    value={wageComposition}
+                    onFocus={() => setFocusedArticle(5)}
+                    placeholder="비우면 기본: - 식대 : 근무일수에 적합하게 일할 계산되어 지급되는 점심 식대, 1개월 만근시 20만원 지급 (줄바꿈으로 여러 줄)"
+                    onChange={(e) => setWageComposition(e.target.value)}
                   />
                 </div>
               </>

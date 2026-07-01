@@ -71,6 +71,7 @@ export async function POST(req: NextRequest) {
       position?: string;
       department?: string;
       specialTerms?: string;
+      wageComposition?: string;
     } | null;
   } | null;
 
@@ -130,7 +131,6 @@ export async function POST(req: NextRequest) {
       : {
           baseMonthly: onlyDigits(w.baseMonthly),
           mealMonthly: onlyDigits(w.mealMonthly),
-          allowanceMonthly: onlyDigits(w.allowanceMonthly),
         };
   };
 
@@ -138,6 +138,7 @@ export async function POST(req: NextRequest) {
   const WC_KEYS = [
     "workTime", "breakTime", "workDays", "weeklyHoliday",
     "workLocation", "probationMonths", "position", "department", "specialTerms",
+    "wageComposition",
   ] as const;
   const workConditions: Record<string, string> = {};
   const wc = body.work_conditions ?? {};
