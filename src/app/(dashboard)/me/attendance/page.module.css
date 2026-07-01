@@ -73,6 +73,7 @@
 
 .controls {
   display: flex;
+  align-items: center;
   gap: 8px;
 }
 
@@ -898,4 +899,214 @@
 .lgGoal {
   margin-left: auto;
   color: #6b7684;
+}
+
+/* ─── 다운로드 버튼 ─────────────────────────────────────── */
+.downloadBtn {
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 10px;
+  background: #191f28;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.downloadBtn:hover {
+  background: #000;
+}
+
+/* ─── 월간 이동 네비 ─────────────────────────────────────── */
+.monthNav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.monthNavBtn {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: #f2f4f6;
+  color: #4e5968;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  cursor: pointer;
+}
+.monthNavBtn:hover {
+  background: #e8eaed;
+}
+.monthNavLabel {
+  min-width: 74px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #191f28;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+.monthNavToday {
+  margin-left: 4px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 9px;
+  background: #f2f4f6;
+  color: #333d4b;
+  font-size: 13px;
+  font-weight: 600;
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+.monthNavToday:hover {
+  background: #e8eaed;
+}
+
+/* ─── 월간 달력 그리드 ─────────────────────────────────────── */
+.cal {
+  display: grid;
+  grid-template-columns: 92px repeat(7, 1fr);
+  border: 1px solid #eef0f3;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.calHead {
+  padding: 12px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #6b7684;
+  background: #f9fafb;
+  border-bottom: 1px solid #eef0f3;
+  border-right: 1px solid #eef0f3;
+  text-align: center;
+}
+.calHeadFirst {
+  text-align: left;
+  font-size: 11px;
+  color: #8b95a1;
+}
+.calHeadSun {
+  color: #f04452;
+}
+.calHeadSat {
+  color: #3182f6;
+}
+
+.calWeekCell {
+  padding: 12px 10px;
+  border-right: 1px solid #eef0f3;
+  border-bottom: 1px solid #eef0f3;
+  background: #f9fafb;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.calWeekVal {
+  font-size: 15px;
+  font-weight: 700;
+  color: #333d4b;
+  font-variant-numeric: tabular-nums;
+}
+.calWeekOt {
+  font-size: 11px;
+  font-weight: 700;
+  color: #7c3aed;
+}
+
+.calCell {
+  position: relative;
+  min-height: 118px;
+  padding: 8px 8px 10px;
+  border-right: 1px solid #eef0f3;
+  border-bottom: 1px solid #eef0f3;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.calCellOut {
+  background: #fbfcfd;
+}
+.calCellOut .calDayNum {
+  color: #c4ccd4;
+}
+.calCellToday {
+  background: #f4f9ff;
+  box-shadow: inset 0 0 0 2px rgba(49, 130, 246, 0.35);
+}
+.calCellToday .calDayNum {
+  color: #3182f6;
+}
+.calCellWeekend {
+  background: #fcfcfd;
+}
+
+.calCellTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.calDayNum {
+  font-size: 13px;
+  font-weight: 700;
+  color: #4e5968;
+  font-variant-numeric: tabular-nums;
+}
+.calDayNumSun {
+  color: #f04452;
+}
+.calDayNumSat {
+  color: #3182f6;
+}
+.calHoliday {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #8b95a1;
+}
+
+.calWorkChip {
+  align-self: flex-start;
+  font-size: 12px;
+  font-weight: 700;
+  color: #15803d;
+  background: #e6f9ee;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+.calOtChip {
+  align-self: flex-start;
+  font-size: 11px;
+  font-weight: 700;
+  color: #7c3aed;
+  background: #f1ecff;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+.calLeaveChip {
+  align-self: flex-start;
+  font-size: 12px;
+  font-weight: 700;
+  color: #3182f6;
+  background: #e8f3ff;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+.calTimes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #8b95a1;
+  font-variant-numeric: tabular-nums;
+}
+.calTimes span {
+  white-space: nowrap;
 }

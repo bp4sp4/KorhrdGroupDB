@@ -140,6 +140,86 @@ function shortHM(min: number): string {
   return `${h}h ${String(m).padStart(2, "0")}m`;
 }
 
+// 분 → "Xh" / "Xh Ym" (0분이면 시만) — 달력 칩·주차 합계용
+function hm(min: number): string {
+  if (!min || min <= 0) return "0h";
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return m === 0 ? `${h}h` : `${h}h ${m}m`;
+}
+
+// 달력용: 이번 달을 포함하는 월~일 주 단위 그리드 (앞뒤 달 넘침 포함)
+function monthCalendarWeeks(
+  today: string,
+): { date: string; dayNum: number; inMonth: boolean; dow: number }[][] {
+  const [y, m] = today.split("-").map(Number);
+  const first = new Date(y, m - 1, 1);
+  const last = new Date(y, m, 0);
+  const startDow = first.getDay(); // 0=일 … 6=토
+  const startOffset = startDow === 0 ? -6 : 1 - startDow; // 그 주 월요일로
+  const cur = new Date(y, m - 1, 1 + startOffset);
+  const weeks: { date: string; dayNum: number; inMonth: boolean; dow: number }[][] = [];
+  while (true) {
+    const week: { date: string; dayNum: number; inMonth: boolean; dow: number }[] = [];
+    for (let i = 0; i < 7; i++) {
+      week.push({
+        date: ymd(cur),
+        dayNum: cur.getDate(),
+        inMonth: cur.getMonth() === m - 1,
+        dow: cur.getDay(),
+      });
+      cur.setDate(cur.getDate() + 1);
+    }
+    weeks.push(week);
+    if (cur > last) break;
+  }
+  return weeks;
+}
+
+// 월 이동 — anchor(YYYY-MM-DD)를 delta개월 이동한 그 달 1일
+function shiftMonth(anchor: string, delta: number): string {
+  const [y, m] = anchor.split("-").map(Number);
+  return ymd(new Date(y, m - 1 + delta, 1));
+}
+
+// anchor → "YYYY-MM"
+function monthKey(anchor: string): string {
+  const [y, m] = anchor.split("-");
+  return `${y}-${m}`;
+}
+
+// 날짜 → 요일 한글
+function weekdayKo(dateStr: string): string {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return ["일", "월", "화", "수", "목", "금", "토"][new Date(y, m - 1, d).getDay()];
+}
+
+// CSV 다운로드 (BOM 포함 — 엑셀에서 한글 정상 표시)
+function downloadCsv(filename: string, rows: (string | number)[][]) {
+  const csv = rows
+    .map((r) =>
+      r
+        .map((c) => {
+          const s = String(c ?? "");
+          if (s.includes(",") || s.includes('"') || s.includes("\n")) {
+            return `"${s.replace(/"/g, '""')}"`;
+          }
+          return s;
+        })
+        .join(","),
+    )
+    .join("\n");
+  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 function hoursFromMinutes(min: number): string {
   const h = Math.floor(min / 60);
   const m = min % 60;
@@ -276,7 +356,7 @@ function rangeFetch(range: RangeKey, today: string): { from: string; to: string 
 }
 
 // range별 라벨
-function rangeRangeLabel(range: RangeKey): string {
+function rangeRangeLabel(range: RangeKey, monthAnchor?: string): string {
   const today = getTodayKstDate();
   if (range === "week") {
     const dates = thisWeekDates();
@@ -285,7 +365,7 @@ function rangeRangeLabel(range: RangeKey): string {
     return `${y1}년 ${Number(m1)}월 ${Number(d1)}일 (월) ~ ${y2 !== y1 ? `${y2}년 ` : ""}${Number(m2)}월 ${Number(d2)}일 (일)`;
   }
   if (range === "month") {
-    const [y, m] = today.split("-");
+    const [y, m] = (monthAnchor ?? today).split("-");
     return `${y}년 ${Number(m)}월`;
   }
   return `${today.slice(0, 4)}년`;
@@ -295,7 +375,10 @@ function rangeRangeLabel(range: RangeKey): string {
 export default function MyAttendancePage() {
   const today = getTodayKstDate();
 
-  const [range, setRange] = useState<RangeKey>("week");
+  // 근태현황은 월간 뷰만 사용 (주/년 뷰 제거)
+  const range = "month" as RangeKey;
+  // 월간 뷰에서 조회 중인 달 (해당 달의 임의 날짜) — 이전/다음 달 이동용
+  const [monthAnchor, setMonthAnchor] = useState(today);
   const [records, setRecords] = useState<AttendanceRec[]>([]);
   const [leaves, setLeaves] = useState<LeaveDay[]>([]);
   const [leaveUsages, setLeaveUsages] = useState<LeaveUsage[]>([]);
@@ -326,7 +409,8 @@ export default function MyAttendancePage() {
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const { from, to } = rangeFetch(range, today);
+      const anchor = range === "month" ? monthAnchor : today;
+      const { from, to } = rangeFetch(range, anchor);
       const weekDates = thisWeekDates();
       const weekFrom = weekDates[0].date;
       const weekTo = weekDates[6].date;
@@ -373,7 +457,7 @@ export default function MyAttendancePage() {
     } finally {
       setLoading(false);
     }
-  }, [range, today]);
+  }, [range, today, monthAnchor]);
 
   useEffect(() => {
     fetchAll();
@@ -466,6 +550,54 @@ export default function MyAttendancePage() {
     }
   };
 
+  // 현재 조회 범위의 일별 근무 내역을 CSV로 다운로드
+  const handleDownload = () => {
+    const dateSet = new Set<string>();
+    records.forEach((r) => dateSet.add(r.date));
+    leaves.forEach((l) => dateSet.add(l.date));
+    const dates = [...dateSet].sort();
+    const statusOf = (
+      rec: AttendanceRec | undefined,
+      lv: { type: string; minutes: number } | undefined,
+    ): string => {
+      if (!rec && lv) return lv.type;
+      if (rec?.is_invalid) return "퇴근 미체크";
+      if ((rec?.overtime_minutes ?? 0) > 0) return "야근";
+      return "정상";
+    };
+    const rows: (string | number)[][] = [
+      ["날짜", "요일", "출근", "퇴근", "인정 출근", "인정 퇴근", "정규", "야근", "상태"],
+      ...dates.map((d) => {
+        const rec = records.find((r) => r.date === d);
+        const lv = leaveMap.get(d);
+        const wd = weekdayKo(d);
+        // 엑셀이 날짜/시간으로 자동 변환(→ ####)하지 않도록 텍스트로 고정
+        const asText = (v: string) => (v ? `="${v}"` : "");
+        if (!rec && lv) {
+          return [asText(d), wd, "", "", "", "", hm(lv.minutes), "", statusOf(rec, lv)];
+        }
+        return [
+          asText(d),
+          wd,
+          asText(rec ? formatTime(rec.clock_in_at) : ""),
+          asText(rec?.clock_out_at ? formatTime(rec.clock_out_at) : ""),
+          asText(rec ? formatTime(rec.recognized_clock_in) : ""),
+          asText(rec?.recognized_clock_out ? formatTime(rec.recognized_clock_out) : ""),
+          rec ? hm(rec.work_minutes ?? 0) : "",
+          rec && (rec.overtime_minutes ?? 0) > 0 ? hm(rec.overtime_minutes) : "",
+          statusOf(rec, lv),
+        ];
+      }),
+    ];
+    const periodKey =
+      range === "month"
+        ? monthKey(monthAnchor)
+        : range === "year"
+          ? monthAnchor.slice(0, 4)
+          : thisWeekDates()[0].date;
+    downloadCsv(`근태_${userName || "내근무"}_${periodKey}.csv`, rows);
+  };
+
   // ─── 헤로 ─────────────────────────────────────────────────────────────
   // 오늘 적용 근무시간 프로필 (사업본부 09:00~18:00, 그 외 10:00~19:00)
   const todayWorkHours = resolveWorkHours(dept, today, userId);
@@ -490,9 +622,14 @@ export default function MyAttendancePage() {
   const weeklyGoalMin = 40 * 60;
   const weekProgress = Math.min(100, Math.round((totalWork / weeklyGoalMin) * 100));
 
+  // 월간은 조회 중인 달 기준 라벨 (예: "3월") — 이전 달 조회 시 "이번 달" 오표기 방지
+  const viewingCurrentMonth = monthKey(monthAnchor) === monthKey(today);
+  const monthWord = viewingCurrentMonth
+    ? "이번 달"
+    : `${Number(monthAnchor.split("-")[1])}월`;
   const rangeLabel: Record<RangeKey, string> = {
     week: "이번 주",
-    month: "이번 달",
+    month: monthWord,
     year: "올해",
   };
 
@@ -656,15 +793,15 @@ export default function MyAttendancePage() {
   // 통계 카드 라벨 동적
   const workStatLabel =
     range === "week" ? "이번 주 근무"
-    : range === "month" ? "이번 달 근무"
+    : range === "month" ? `${monthWord} 근무`
     : "올해 근무";
   const otStatLabel =
     range === "week" ? "이번 주 야근"
-    : range === "month" ? "이번 달 야근"
+    : range === "month" ? `${monthWord} 야근`
     : "올해 야근";
   const lateStatUnit =
     range === "week" ? "회 / 이번 주"
-    : range === "month" ? "회 / 이번 달"
+    : range === "month" ? `회 / ${monthWord}`
     : "회 / 올해";
 
   return (
@@ -686,17 +823,47 @@ export default function MyAttendancePage() {
               </div>
             </div>
             <div className={styles.controls}>
-              <div className={styles.seg}>
-                {(["week", "month", "year"] as const).map((k) => (
+              {range === "month" && (
+                <div className={styles.monthNav}>
                   <button
-                    key={k}
-                    className={range === k ? styles.segOn : ""}
-                    onClick={() => setRange(k)}
+                    className={styles.monthNavBtn}
+                    onClick={() => setMonthAnchor((a) => shiftMonth(a, -1))}
+                    aria-label="이전 달"
                   >
-                    {k === "week" ? "주" : k === "month" ? "월" : "년"}
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="m15 18-6-6 6-6" />
+                    </svg>
                   </button>
-                ))}
-              </div>
+                  <span className={styles.monthNavLabel}>
+                    {monthKey(monthAnchor)}
+                  </span>
+                  <button
+                    className={styles.monthNavBtn}
+                    onClick={() => setMonthAnchor((a) => shiftMonth(a, 1))}
+                    aria-label="다음 달"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="m9 18 6-6-6-6" />
+                    </svg>
+                  </button>
+                  {monthKey(monthAnchor) !== monthKey(today) && (
+                    <button
+                      className={styles.monthNavToday}
+                      onClick={() => setMonthAnchor(today)}
+                    >
+                      오늘
+                    </button>
+                  )}
+                </div>
+              )}
+              <button className={styles.downloadBtn} onClick={handleDownload}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <path d="M7 10l5 5 5-5" />
+                  <path d="M12 15V3" />
+                </svg>
+                {`${Number(monthAnchor.split("-")[1])}월 근무 다운받기`}
+              </button>
             </div>
           </div>
 
@@ -888,8 +1055,8 @@ export default function MyAttendancePage() {
             </div>
           </section>
 
-          {/* 주 52시간 한도 진행률 (항상 이번 주 기준) */}
-          {(() => {
+          {/* 주 52시간 한도 진행률 (항상 이번 주 기준) — 월간 뷰에서는 숨김 */}
+          {range !== "month" && (() => {
             // 출근 중인 동안엔 DB에 work_minutes이 아직 0이므로 라이브 분을 더해
             // 출근 즉시 진행률(및 work.mp4)이 표시되도록 한다
             const weekTotalMin = weekStat.work + weekStat.ot + (isWorking ? liveMin : 0);
@@ -1035,13 +1202,137 @@ export default function MyAttendancePage() {
                   {range === "week"
                     ? "이번 주 근무 시간"
                     : range === "month"
-                      ? "이번 달 일별 근무"
+                      ? "월간 근무 달력"
                       : "올해 월별 근무"}
                 </div>
-                <div className={styles.panelS}>{rangeRangeLabel(range)}</div>
+                <div className={styles.panelS}>
+                  {rangeRangeLabel(range, monthAnchor)}
+                </div>
               </div>
             </div>
 
+            {range === "month" ? (
+              <>
+                {/* 월간 달력 그리드 — 일별 출퇴근 시각·야근·주차별 합계 */}
+                <div className={styles.cal}>
+                  <div className={`${styles.calHead} ${styles.calHeadFirst}`}>
+                    주차별 근로시간
+                  </div>
+                  {["월", "화", "수", "목", "금", "토", "일"].map((w, i) => (
+                    <div
+                      key={w}
+                      className={`${styles.calHead} ${i === 6 ? styles.calHeadSun : ""} ${i === 5 ? styles.calHeadSat : ""}`}
+                    >
+                      {w}
+                    </div>
+                  ))}
+                  {monthCalendarWeeks(monthAnchor).flatMap((week, wi) => {
+                    let weekWork = 0;
+                    let weekOt = 0;
+                    for (const d of week) {
+                      const rec = records.find((r) => r.date === d.date);
+                      if (!rec) continue;
+                      const isWorkingDay = d.date === today && !rec.clock_out_at;
+                      weekWork += isWorkingDay
+                        ? liveMin
+                        : (rec.work_minutes ?? 0) + (rec.overtime_minutes ?? 0);
+                      weekOt += rec.overtime_minutes ?? 0;
+                    }
+                    return [
+                      <div key={`w${wi}`} className={styles.calWeekCell}>
+                        <span className={styles.calWeekVal}>
+                          {hm(weekWork)}
+                        </span>
+                        {weekOt > 0 && (
+                          <span className={styles.calWeekOt}>
+                            야근 {hm(weekOt)}
+                          </span>
+                        )}
+                      </div>,
+                      ...week.map((d) => {
+                        const rec = records.find((r) => r.date === d.date);
+                        const lv = leaveMap.get(d.date);
+                        const isToday = d.date === today;
+                        const isSun = d.dow === 0;
+                        const isSat = d.dow === 6;
+                        const isWeekend = isSun || isSat;
+                        const isWorking = isToday && !!rec && !rec.clock_out_at;
+                        const workMin = rec
+                          ? isWorking
+                            ? liveMin
+                            : rec.work_minutes ?? 0
+                          : 0;
+                        const otMin = rec ? rec.overtime_minutes ?? 0 : 0;
+                        return (
+                          <div
+                            key={d.date}
+                            className={`${styles.calCell} ${!d.inMonth ? styles.calCellOut : ""} ${isToday ? styles.calCellToday : ""} ${isWeekend ? styles.calCellWeekend : ""}`}
+                          >
+                            <div className={styles.calCellTop}>
+                              <span
+                                className={`${styles.calDayNum} ${isSun ? styles.calDayNumSun : ""} ${isSat ? styles.calDayNumSat : ""}`}
+                              >
+                                {d.dayNum}
+                              </span>
+                              {isWeekend && !rec && !lv && (
+                                <span className={styles.calHoliday}>휴일</span>
+                              )}
+                            </div>
+                            {rec && (
+                              <>
+                                <span className={styles.calWorkChip}>
+                                  {isWorking ? "진행중" : hm(workMin)}
+                                </span>
+                                <div className={styles.calTimes}>
+                                  <span>출 {formatTime(rec.clock_in_at)}</span>
+                                  {rec.clock_out_at && (
+                                    <span>퇴 {formatTime(rec.clock_out_at)}</span>
+                                  )}
+                                </div>
+                                {otMin > 0 && (
+                                  <span className={styles.calOtChip}>
+                                    야근 {hm(otMin)}
+                                  </span>
+                                )}
+                              </>
+                            )}
+                            {!rec && lv && (
+                              <span className={styles.calLeaveChip}>
+                                {hm(lv.minutes)}{" "}
+                                {lv.type.startsWith("반차") ? "반차" : lv.type}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      }),
+                    ];
+                  })}
+                </div>
+
+                <div className={styles.chartLegend}>
+                  <div className={styles.lg}>
+                    <span className={styles.lgSw} style={{ background: "#15803d" }} />
+                    근무
+                  </div>
+                  <div className={styles.lg}>
+                    <span className={styles.lgSw} style={{ background: "#7c3aed" }} />
+                    야근
+                  </div>
+                  <div className={styles.lg}>
+                    <span className={styles.lgSw} style={{ background: "#3182f6" }} />
+                    휴가
+                  </div>
+                  <div className={styles.lg}>
+                    <span className={styles.lgSw} style={{ background: "#c4ccd4" }} />
+                    휴일
+                  </div>
+                  <div className={`${styles.lg} ${styles.lgGoal}`}>
+                    {monthWord} 야근 {hm(totalOt)} 누적
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
             <div className={`${styles.chart} ${chartGridCls}`}>
               {bars.map((d, i) => {
                 const off = d.state === "off";
@@ -1125,6 +1416,8 @@ export default function MyAttendancePage() {
                 </div>
               )}
             </div>
+              </>
+            )}
           </section>
 
           {/* 휴가 사용 내역 — 해당 기간에 사용한 휴가 (근무 인정) */}

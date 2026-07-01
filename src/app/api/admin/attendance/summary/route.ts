@@ -8,6 +8,7 @@ import {
   kstDateAt,
   resolveWorkHours,
 } from "@/lib/attendance";
+import { autoCloseAllStaleRecords } from "@/lib/attendance-server";
 import {
   expandLeaveCredit,
   isVacationDocType,
@@ -24,6 +25,9 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const today = getTodayKstDate();
+
+  // 미퇴근 기록을 부서별 정규 퇴근 시각으로 자동 마감 (사업본부 18:00 등) — 조회 이전 처리
+  await autoCloseAllStaleRecords(today);
 
   // from/to (YYYY-MM-DD) 범위 우선 — 분기/기간 조회 지원. 없으면 month(YYYY-MM) 폴백
   const fromParam = searchParams.get("from");

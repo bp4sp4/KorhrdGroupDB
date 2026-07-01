@@ -314,6 +314,15 @@
   );
 }
 
+/* 초과근무(8h 이후) 구간 — 주황 */
+.attProgressOt {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: #ff9500;
+  border-radius: 0 999px 999px 0;
+}
+
 .attProgressOver {
   position: absolute;
   top: 0;

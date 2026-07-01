@@ -9,7 +9,11 @@ import {
   kstDateAt,
   resolveWorkHours,
 } from "@/lib/attendance";
-import { getDepartmentById } from "@/lib/attendance-server";
+import {
+  getDepartmentById,
+  autoCloseStaleRecords,
+  autoCloseAllStaleRecords,
+} from "@/lib/attendance-server";
 import {
   expandLeaveCredit,
   isVacationDocType,
@@ -31,6 +35,14 @@ export async function GET(request: NextRequest) {
   const from = searchParams.get("from") || defaultFrom;
   const to = searchParams.get("to") || today;
   const userIdParam = searchParams.get("user_id");
+
+  // 미퇴근 기록 자동 마감 (사업본부 18:00 등) — 조회 이전 처리.
+  // 특정 직원 조회면 해당 직원만, 전체 조회면 전 직원 일괄.
+  if (userIdParam && Number.isFinite(Number(userIdParam))) {
+    await autoCloseStaleRecords(Number(userIdParam), today);
+  } else {
+    await autoCloseAllStaleRecords(today);
+  }
 
   let query = supabaseAdmin
     .from("attendance_records")

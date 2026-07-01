@@ -372,10 +372,6 @@ export default function DashboardPage() {
     }
   };
 
-  // 이번 주 통계
-  const weekTotal = weekRecs.reduce((s, r) => s + (r.work_minutes ?? 0), 0);
-  const weekOt = weekRecs.reduce((s, r) => s + (r.overtime_minutes ?? 0), 0);
-
   // 상태 결정
   const isWorking = !!todayRec && !todayRec.clock_out_at;
   const isDone = !!todayRec && !!todayRec.clock_out_at;
@@ -388,42 +384,24 @@ export default function DashboardPage() {
     return Math.max(0, Math.floor((Date.now() - start) / 60000));
   })();
 
-  // 주간 누적 합산 (정규 + 야근 + 오늘 라이브, 분 단위)
-  const weekTotalAll = weekTotal + weekOt + todayLiveMin;
-  // 진행률 계산 (52h = 100%)
-  const LEGAL_MAX = 52 * 60; // 3120분
-  const NORMAL_MAX = 40 * 60; // 2400분
-  const pctFill = Math.min(100, (weekTotalAll / LEGAL_MAX) * 100);
-  const isOver = weekTotalAll > LEGAL_MAX;
+  // 오늘 근무(정규+야근) 분 — 출근 중이면 라이브
+  const todayWorkedMin = isWorking
+    ? todayLiveMin
+    : (todayRec?.work_minutes ?? 0) + (todayRec?.overtime_minutes ?? 0);
+
+  // 진행률(일 기준): 0~8h 정규, 8h 이후 초과근무. 바 끝 = 12h(100%).
+  const DAILY_NORMAL = 8 * 60; // 480분 (8h) — 정규/초과 경계
+  const DAILY_MAX = 12 * 60; // 720분 (12h) — 바 끝
+  const normalMin = Math.min(todayWorkedMin, DAILY_NORMAL);
+  const otMin = Math.max(0, Math.min(todayWorkedMin, DAILY_MAX) - DAILY_NORMAL);
+  const normalPct = (normalMin / DAILY_MAX) * 100;
+  const otPct = (otMin / DAILY_MAX) * 100;
+  const pctFill = Math.min(100, (todayWorkedMin / DAILY_MAX) * 100); // 봇 위치용
+  const isOver = todayWorkedMin > DAILY_MAX; // 12h 초과분(빨강 스트립)
   const overPct = isOver
-    ? Math.min(100, ((weekTotalAll - LEGAL_MAX) / LEGAL_MAX) * 100)
+    ? Math.min(100, ((todayWorkedMin - DAILY_MAX) / DAILY_MAX) * 100)
     : 0;
-  const normalMarkerPct = (NORMAL_MAX / LEGAL_MAX) * 100; // 76.92%
-
-  const status: "ok" | "warn" | "danger" = isOver
-    ? "danger"
-    : weekTotalAll >= NORMAL_MAX
-      ? "warn"
-      : "ok";
-  const fillCls =
-    status === "warn"
-      ? styles.attProgressFillWarn
-      : status === "danger"
-        ? styles.attProgressFillDanger
-        : "";
-
-  // "이번주 N 더 필요해요" — 40h 까지 부족분
-  const needMin = Math.max(0, NORMAL_MAX - weekTotalAll);
-  const needText =
-    weekTotalAll === 0
-      ? `이번주 ${Math.floor(NORMAL_MAX / 60)}h 0m 채워주세요.`
-      : needMin > 0
-        ? `이번주 ${Math.floor(needMin / 60)}h ${needMin % 60}m 더 필요해요.`
-        : `이번주 목표 달성! 🎉`;
-
-  // 주간 누적 표시용
-  const weekH = Math.floor(weekTotalAll / 60);
-  const weekM = weekTotalAll % 60;
+  const normalMarkerPct = (DAILY_NORMAL / DAILY_MAX) * 100; // 66.67% (8h 위치)
 
   return (
     <div className={styles.app}>
@@ -454,11 +432,15 @@ export default function DashboardPage() {
             <div className={styles.attProgressWrap}>
               <div className={styles.attProgressBar}>
                 <div
-                  className={`${styles.attProgressFill} ${fillCls}`}
-                  style={{
-                    width: `${pctFill}%`,
-                  }}
+                  className={styles.attProgressFill}
+                  style={{ width: `${normalPct}%` }}
                 />
+                {otPct > 0 && (
+                  <div
+                    className={styles.attProgressOt}
+                    style={{ left: `${normalMarkerPct}%`, width: `${otPct}%` }}
+                  />
+                )}
                 {isOver && (
                   <div
                     className={styles.attProgressOver}
@@ -482,7 +464,7 @@ export default function DashboardPage() {
                   playsInline
                 />
               )}
-              {/* 0h / 40h / 52h 라벨 */}
+              {/* 0h / 8h / 초과근무 라벨 */}
               <div className={styles.attMarkerLabel} style={{ left: 0 }}>
                 0h
               </div>
@@ -497,25 +479,18 @@ export default function DashboardPage() {
                   transform: "translateX(-50%)",
                 }}
               >
-                40h
+                8h
               </div>
               <div className={styles.attMarker} style={{ right: 0 }} />
               <div className={styles.attMarkerLabel} style={{ right: 0 }}>
-                52h
+                초과근무
               </div>
             </div>
 
             <div className={styles.attWeekTitleRow}>
               <span className={styles.attWeekLabel}>오늘 근무시간</span>
               <span className={styles.attWeekValue}>
-                {(() => {
-                  const todayMin = isWorking
-                    ? todayLiveMin
-                    : (todayRec?.work_minutes ?? 0);
-                  const h = Math.floor(todayMin / 60);
-                  const m = todayMin % 60;
-                  return `${h}h ${String(m).padStart(2, "0")}m`;
-                })()}
+                {`${Math.floor(todayWorkedMin / 60)}h ${String(todayWorkedMin % 60).padStart(2, "0")}m`}
               </span>
             </div>
           </div>
