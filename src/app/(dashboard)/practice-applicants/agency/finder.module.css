@@ -256,6 +256,17 @@
   transition: background 0.15s;
 }
 
+/* 출발지로 선택된 학생 이름 — 밑줄 표시(상세 팝업 없음) */
+.stuInfoName {
+  flex: none;
+  white-space: nowrap;
+  color: #2b3fa0;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 /* 실습학생 DB 목록 팝업 */
 .browseCard {
   max-width: 480px;

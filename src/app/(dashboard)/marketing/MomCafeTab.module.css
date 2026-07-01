@@ -330,6 +330,18 @@
   overflow-x: auto;
 }
 
+/* 계약기간 — 시작/종료 개별 선택 (자연 폭, 왼쪽 정렬) */
+.date_range_row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+}
+.date_range_sep {
+  color: #9ca3af;
+  font-weight: 600;
+}
+
 .modal_footer {
   display: flex;
   justify-content: flex-end;

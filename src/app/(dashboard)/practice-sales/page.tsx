@@ -9,7 +9,7 @@ import { DateRangeCalendar, type DateRange } from "@/components/DateRangeCalenda
 import SalesHeaderAdmin from "../edu-sales/SalesHeaderAdmin";
 import SalesHeaderManager from "../edu-sales/SalesHeaderManager";
 
-type PaymentMethod = "bank_transfer" | "card" | "payapp_transfer";
+type PaymentMethod = "bank_transfer" | "card" | "payapp_card";
 type RefundStatus = "정상" | "당월 환불" | "환불" | "정산" | "보류";
 type Category = "실습" | "후납";
 
@@ -40,7 +40,7 @@ interface SalesRow {
 
 const PAYMENT_METHOD_OPTIONS: { value: PaymentMethod; label: string }[] = [
   { value: "card", label: "카드결제" },
-  { value: "payapp_transfer", label: "페이앱 계좌이체" },
+  { value: "payapp_card", label: "페이앱 카드결제" },
   { value: "bank_transfer", label: "계좌이체" },
 ];
 
@@ -1029,7 +1029,7 @@ export default function PracticeSalesPage() {
                           value={r.payment_method ?? ""}
                           placeholder="-"
                           size="sm"
-                          minWidth={110}
+                          minWidth={120}
                           options={[
                             { value: "", label: "-" },
                             ...PAYMENT_METHOD_OPTIONS,

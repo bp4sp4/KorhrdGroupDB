@@ -1,9 +1,8 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { format, parseISO } from 'date-fns'
 import { createClient } from '@/lib/supabase/client'
-import { DateRangeCalendar, type DateRange } from '@/components/DateRangeCalendar'
+import { DateInput } from '@/components/ui/Calendar/DateInput'
 import styles from './MomCafeTab.module.css'
 
 const ITEMS_PER_PAGE = 10
@@ -95,14 +94,6 @@ function formatContact(value: string): string {
   return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`
 }
 
-function formToDateRange(start: string, end: string): DateRange | undefined {
-  if (!start && !end) return undefined
-  return {
-    from: start ? parseISO(start) : undefined,
-    to: end ? parseISO(end) : undefined,
-  }
-}
-
 function getPaginationPages(current: number, total: number): (number | '...')[] {
   if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
   const delta = 2
@@ -170,8 +161,6 @@ export default function MomCafeTab() {
   const [saving, setSaving] = useState(false)
   const savingRef = useRef(false)
 
-  const [showDatePicker, setShowDatePicker] = useState(false)
-  const [calendarRange, setCalendarRange] = useState<DateRange | undefined>(undefined)
 
   useEffect(() => {
     let cancelled = false
@@ -245,8 +234,6 @@ export default function MomCafeTab() {
   function openAdd() {
     setEditTarget(null)
     setForm(EMPTY_FORM)
-    setCalendarRange(undefined)
-    setShowDatePicker(false)
     setShowModal(true)
   }
 
@@ -254,8 +241,6 @@ export default function MomCafeTab() {
     setEditTarget(item)
     const f = toForm(item)
     setForm(f)
-    setCalendarRange(formToDateRange(f.contract_start, f.contract_end))
-    setShowDatePicker(false)
     setShowModal(true)
   }
 
@@ -270,8 +255,6 @@ export default function MomCafeTab() {
     setShowModal(false)
     setEditTarget(null)
     setForm(EMPTY_FORM)
-    setCalendarRange(undefined)
-    setShowDatePicker(false)
   }
 
   function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
@@ -282,20 +265,6 @@ export default function MomCafeTab() {
     setField('contact', formatContact(raw))
   }
 
-  function handleDateConfirm(range: DateRange | undefined) {
-    const start = range?.from ? format(range.from, 'yyyy-MM-dd') : ''
-    const end = range?.to ? format(range.to, 'yyyy-MM-dd') : ''
-    setField('contract_start', start)
-    setField('contract_end', end)
-    setCalendarRange(range)
-    setShowDatePicker(false)
-  }
-
-  function handleDateReset() {
-    setField('contract_start', '')
-    setField('contract_end', '')
-    setCalendarRange(undefined)
-  }
 
   function buildPayload() {
     const monthly = form.monthly_payment.trim() === '' ? 0 : Number(form.monthly_payment)
@@ -354,7 +323,6 @@ export default function MomCafeTab() {
       setShowModal(false)
       setEditTarget(null)
       setForm(EMPTY_FORM)
-      setCalendarRange(undefined)
       setSelectedIds(new Set())
     } catch (err) {
       const msg = err instanceof Error ? err.message : '저장 중 오류가 발생했습니다.'
@@ -400,13 +368,6 @@ export default function MomCafeTab() {
   }
 
   if (loading) return <div className={styles.loading}>불러오는 중...</div>
-
-  const dateLabel =
-    form.contract_start && form.contract_end
-      ? `${form.contract_start} ~ ${form.contract_end}`
-      : form.contract_start
-        ? `${form.contract_start} ~`
-        : '날짜를 선택하세요'
 
   const pageIds = paginated.map((x) => x.id)
   const allPageSelected = pageIds.length > 0 && pageIds.every((id) => selectedIds.has(id))
@@ -713,24 +674,19 @@ export default function MomCafeTab() {
 
               <div className={`${styles.field} ${styles.field_full}`}>
                 <label className={styles.label}>계약기간</label>
-                <button
-                  type="button"
-                  className={`${styles.date_trigger} ${showDatePicker ? styles.date_trigger_open : ''}`}
-                  onClick={() => setShowDatePicker((v) => !v)}
-                >
-                  {dateLabel}
-                </button>
-                {showDatePicker && (
-                  <div className={styles.date_picker_wrap}>
-                    <DateRangeCalendar
-                      value={calendarRange}
-                      onChange={setCalendarRange}
-                      onConfirm={handleDateConfirm}
-                      onReset={handleDateReset}
-                      maxRangeMonths={60}
-                    />
-                  </div>
-                )}
+                <div className={styles.date_range_row}>
+                  <DateInput
+                    value={form.contract_start}
+                    onChange={(v) => setField('contract_start', v)}
+                    placeholder="시작일 선택"
+                  />
+                  <span className={styles.date_range_sep}>~</span>
+                  <DateInput
+                    value={form.contract_end}
+                    onChange={(v) => setField('contract_end', v)}
+                    placeholder="종료일 선택"
+                  />
+                </div>
               </div>
 
               <div className={`${styles.field} ${styles.field_full}`}>

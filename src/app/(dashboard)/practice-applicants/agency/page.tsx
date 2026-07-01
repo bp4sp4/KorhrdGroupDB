@@ -106,7 +106,7 @@ function etaDisplay(args: {
     parts.push(`차로 ${fmtDuration(args.route.car.durationMin)}`);
   if (args.route?.walk)
     parts.push(`도보 ${fmtDuration(args.route.walk.durationMin)}`);
-  return parts.length ? parts.join("  ") : "-";
+  return parts.length ? parts.join(", ") : "-";
 }
 
 export default function PracticeAgencyPage() {
@@ -132,11 +132,9 @@ export default function PracticeAgencyPage() {
   const [studentResults, setStudentResults] = useState<StudentHit[]>([]);
   const [studentOpen, setStudentOpen] = useState(false);
   const [studentBusy, setStudentBusy] = useState(false);
+  // 출발지로 선택된 학생 (이름만 밑줄로 표시 — 상세 팝업은 띄우지 않음)
+  const [selectedStudent, setSelectedStudent] = useState<StudentHit | null>(null);
   // 선택된 학생 + 간이 DB 팝업
-  const [selectedStudent, setSelectedStudent] = useState<StudentHit | null>(
-    null,
-  );
-  const [studentModal, setStudentModal] = useState(false);
   // 실습학생 DB 목록 팝업 (이름 몰라도 목록에서 찾기)
   const [browseOpen, setBrowseOpen] = useState(false);
   const [browseQuery, setBrowseQuery] = useState("");
@@ -379,7 +377,6 @@ export default function PracticeAgencyPage() {
     skipNextStudentSearch.current = true;
     setStudentQuery(s.name ?? "");
     setSelectedStudent(s);
-    setStudentModal(true); // 선택 즉시 간이 DB 팝업
     if (!s.address) return;
     setStudentBusy(true);
     try {
@@ -562,14 +559,10 @@ export default function PracticeAgencyPage() {
             {locationState.coords && (
               <div className={styles.locStatus}>
                 <b>출발지: {locationState.addressText}</b>
-                {selectedStudent && (
-                  <button
-                    type="button"
-                    className={styles.stuInfoBtn}
-                    onClick={() => setStudentModal(true)}
-                  >
-                    정보
-                  </button>
+                {selectedStudent?.name && (
+                  <span className={styles.stuInfoName}>
+                    {selectedStudent.name}
+                  </span>
                 )}
                 <button
                   type="button"
@@ -884,68 +877,6 @@ export default function PracticeAgencyPage() {
         </div>
       )}
 
-      {/* 간이 실습학생 DB 팝업 — 페이지 이동 없이 학생 정보 확인 */}
-      {studentModal && selectedStudent && (
-        <div
-          className={styles.modalOverlay}
-          onClick={() => setStudentModal(false)}
-        >
-          <div
-            className={styles.modalCard}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className={styles.modalHead}>
-              <div>
-                <div className={styles.modalTitle}>
-                  {selectedStudent.name || "학생"}
-                </div>
-                <div className={styles.modalSub}>실습학생 DB · 간이 조회</div>
-              </div>
-              <button
-                type="button"
-                className={styles.modalClose}
-                onClick={() => setStudentModal(false)}
-                aria-label="닫기"
-              >
-                ✕
-              </button>
-            </div>
-            <div className={styles.modalBody}>
-              {(
-                [
-                  ["연락처", selectedStudent.contact],
-                  ["생년월일", selectedStudent.birth_date],
-                  ["성별", selectedStudent.gender],
-                  ["집 주소", selectedStudent.address],
-                  ["상태", selectedStudent.status],
-                  ["실습종류", selectedStudent.practice_type],
-                  ["희망 실습일", selectedStudent.desired_date],
-                  ["희망 요일", selectedStudent.desired_weekday],
-                  ["희망 학기", selectedStudent.desired_semester],
-                  ["인정기간", selectedStudent.recognition_period],
-                  ["실습 교육원", selectedStudent.training_center],
-                  ["현장실습기관", selectedStudent.field_institution],
-                  ["자차", selectedStudent.own_car],
-                  ["담당자", selectedStudent.manager],
-                ] as [string, string | null | undefined][]
-              ).map(([label, value]) => (
-                <div className={styles.modalRow} key={label}>
-                  <span className={styles.modalLabel}>{label}</span>
-                  <span className={styles.modalValue}>{value || "-"}</span>
-                </div>
-              ))}
-              {selectedStudent.counsel_content && (
-                <div className={styles.modalNote}>
-                  <div className={styles.modalLabel}>상담내용</div>
-                  <div className={styles.modalNoteText}>
-                    {selectedStudent.counsel_content}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

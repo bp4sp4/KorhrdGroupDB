@@ -1336,9 +1336,9 @@ select.detailFieldBox {
   display: grid;
   width: 100%;
   grid-template-columns:
-    minmax(0, 0.5fr) minmax(0, 0.75fr) minmax(0, 0.75fr) minmax(0, 0.75fr)
-    minmax(0, 1fr) minmax(0, 0.5fr) minmax(0, 0.75fr) minmax(0, 1fr)
-    minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) 200px;
+    minmax(0, 0.5fr) minmax(0, 0.5fr) minmax(0, 0.55fr) minmax(0, 0.75fr)
+    minmax(0, 1fr) minmax(0, 0.45fr) minmax(0, 0.55fr) minmax(0, 1fr)
+    minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(240px, 2.2fr);
   border-radius: 6px;
   border: 1px solid #e6e7eb;
 }
@@ -1478,12 +1478,15 @@ select.detailFieldBox {
 }
 
 .ellipsisText {
-  display: block;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
   text-align: left;
+  word-break: break-word;
+  line-height: 1.4;
 }
 
 .gridCheckbox {

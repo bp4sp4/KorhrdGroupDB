@@ -21,6 +21,8 @@ export async function GET(request: NextRequest) {
     )
     .not("address", "is", null)
     .neq("address", "")
+    // 길찾기 대상은 입금완료(결제 후 실습기관 배정 대기) 학생만 노출
+    .eq("status", "입금완료")
     .order("seq_no", { ascending: true, nullsFirst: false })
     .limit(limit);
 

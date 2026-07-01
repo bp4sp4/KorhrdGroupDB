@@ -25,7 +25,7 @@ const FIELD_LABELS: Record<string, string> = {
 const PAYMENT_METHOD_LABELS: Record<string, string> = {
   bank_transfer: '계좌이체',
   card: '카드결제',
-  payapp_transfer: '페이앱 계좌이체',
+  payapp_card: '페이앱 카드결제',
 }
 
 function formatDetailValue(key: string, value: unknown): string {
@@ -75,7 +75,7 @@ async function checkSalesPermission(userId: number): Promise<'all' | 'own' | 'no
   return data.scope === 'all' ? 'all' : 'own'
 }
 
-type PaymentMethod = 'bank_transfer' | 'card' | 'payapp_transfer'
+type PaymentMethod = 'bank_transfer' | 'card' | 'payapp_card'
 type RefundStatus = '정상' | '당월 환불' | '환불' | '정산' | '보류'
 type Category = '실습' | '후납'
 
@@ -101,7 +101,7 @@ interface MergedItem {
 function normalizePayMethod(raw: string | null | undefined): PaymentMethod | null {
   if (!raw) return null
   const s = raw.toLowerCase()
-  if (s.includes('payapp') || s.includes('페이앱')) return 'payapp_transfer'
+  if (s.includes('payapp') || s.includes('페이앱')) return 'payapp_card'
   if (s.includes('card') || s.includes('카드')) return 'card'
   if (s.includes('bank') || s.includes('transfer') || s.includes('계좌')) return 'bank_transfer'
   return null

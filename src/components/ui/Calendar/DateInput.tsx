@@ -24,10 +24,31 @@ interface DateInputProps {
   defaultMonth?: Date          // value가 없을 때 캘린더 첫 진입 월 (미지정 시 minDate로 fallback)
 }
 
+// 저장 표준은 'yyyy-MM-dd' 이지만, 과거 데이터/수기 입력이 한글·점 포맷으로
+// 들어간 경우(예: "26년 03월 03일", "2026.03.03")도 표시되도록 관대하게 파싱한다.
+const PARSE_FORMATS = [
+  'yyyy-MM-dd',
+  'yyyy.MM.dd',
+  'yyyy/MM/dd',
+  'yyyy년 MM월 dd일',
+  'yyyy년 M월 d일',
+  'yy.MM.dd',
+  'yy년 MM월 dd일',
+  'yy년 M월 d일',
+]
+
 function parseDate(str: string): Date | undefined {
   if (!str) return undefined
-  const d = parse(str, 'yyyy-MM-dd', new Date())
-  return isValid(d) ? d : undefined
+  const s = str.trim()
+  for (const fmt of PARSE_FORMATS) {
+    const d = parse(s, fmt, new Date())
+    if (isValid(d)) {
+      // 2자리 연도("26년")가 0026으로 파싱되는 경우 20xx로 보정
+      if (d.getFullYear() < 100) d.setFullYear(d.getFullYear() + 2000)
+      return d
+    }
+  }
+  return undefined
 }
 
 function formatDisplay(str: string): string {
