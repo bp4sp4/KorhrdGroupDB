@@ -627,6 +627,10 @@ export default function MyAttendancePage() {
   const monthWord = viewingCurrentMonth
     ? "이번 달"
     : `${Number(monthAnchor.split("-")[1])}월`;
+  // 지난달(마감된 달) 리포트 히어로용 값
+  const monthNum = Number(monthAnchor.split("-")[1]);
+  const daysWorked = records.filter((r) => r.clock_out_at).length;
+  const avgWorkMin = daysWorked > 0 ? Math.round(totalWork / daysWorked) : 0;
   const rangeLabel: Record<RangeKey, string> = {
     week: "이번 주",
     month: monthWord,
@@ -867,7 +871,57 @@ export default function MyAttendancePage() {
             </div>
           </div>
 
-          {/* TODAY HERO */}
+          {/* HERO — 이번 달은 오늘 출퇴근, 지난달은 마감 리포트 */}
+          {!viewingCurrentMonth ? (
+            <section className={styles.hero}>
+              <div className={styles.heroL}>
+                <div className={styles.eyebrow}>
+                  <span className={styles.liveDot} />
+                  {monthNum}월 근무 리포트 · 마감됨
+                </div>
+                <div className={styles.greet}>
+                  {userName ? `${userName}님, ` : ""}{monthNum}월 한 달 수고하셨어요.
+                  <br />
+                  {monthNum}월에 총 <em>{hoursFromMinutes(totalWork)}</em> 일하셨어요.
+                </div>
+                <div className={styles.nowLine}>
+                  근무 {daysWorked}일 · 평균 출근 {avgIn} · 지각 {late}회
+                </div>
+              </div>
+
+              <div className={styles.heroR}>
+                <div className={styles.punchPair}>
+                  <div className={styles.punch}>
+                    <div className={styles.punchK}>총 근무시간</div>
+                    <div className={styles.punchV}>
+                      {Math.floor(totalWork / 60)}
+                      <span className={styles.punchSm}>
+                        시간 {String(totalWork % 60).padStart(2, "0")}분
+                      </span>
+                    </div>
+                    <div className={styles.punchMeta}>{monthNum}월 합계</div>
+                  </div>
+                  <div className={styles.punch}>
+                    <div className={styles.punchK}>평균 근무</div>
+                    <div className={styles.punchV}>
+                      {Math.floor(avgWorkMin / 60)}
+                      <span className={styles.punchSm}>
+                        시간 {String(avgWorkMin % 60).padStart(2, "0")}분
+                      </span>
+                    </div>
+                    <div className={styles.punchMeta}>근무일 기준</div>
+                  </div>
+                </div>
+                <div className={styles.status}>
+                  <span className={styles.statusPip} />
+                  <div className={styles.statusTxt}>
+                    <em>마감된 달</em>이라 출퇴근 기록은 변경할 수 없어요. 수정이
+                    필요하면 관리자에게 문의하세요.
+                  </div>
+                </div>
+              </div>
+            </section>
+          ) : (
           <section className={styles.hero}>
             <div className={styles.heroL}>
               <div className={styles.eyebrow}>
@@ -974,6 +1028,7 @@ export default function MyAttendancePage() {
               </div>
             </div>
           </section>
+          )}
 
           {/* STATS */}
           <section className={styles.stats}>
@@ -1209,6 +1264,39 @@ export default function MyAttendancePage() {
                   {rangeRangeLabel(range, monthAnchor)}
                 </div>
               </div>
+              {range === "month" && (
+                <div className={styles.monthNav}>
+                  <button
+                    className={styles.monthNavBtn}
+                    onClick={() => setMonthAnchor((a) => shiftMonth(a, -1))}
+                    aria-label="이전 달"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="m15 18-6-6 6-6" />
+                    </svg>
+                  </button>
+                  <span className={styles.monthNavLabel}>
+                    {monthKey(monthAnchor)}
+                  </span>
+                  <button
+                    className={styles.monthNavBtn}
+                    onClick={() => setMonthAnchor((a) => shiftMonth(a, 1))}
+                    aria-label="다음 달"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="m9 18 6-6-6-6" />
+                    </svg>
+                  </button>
+                  {monthKey(monthAnchor) !== monthKey(today) && (
+                    <button
+                      className={styles.monthNavToday}
+                      onClick={() => setMonthAnchor(today)}
+                    >
+                      오늘
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
             {range === "month" ? (
