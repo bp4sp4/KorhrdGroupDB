@@ -139,18 +139,44 @@ function formatMinutes(min: number | null): string {
   return `${mins}분`;
 }
 
+// 영업시간(KST) 겹치는 시간(ms)만 합산 — 월~금 09:00~18:00, 토·일 제외
+// 예) 금 17:00 등록 → 월 10:00 배정 = 금 17~18(1h) + 월 09~10(1h) = 2시간
+const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
+const BIZ_START_MIN = 9 * 60; // 09:00
+const BIZ_END_MIN = 18 * 60; // 18:00
+function businessMs(startMs: number, endMs: number): number {
+  if (!(endMs > startMs)) return 0;
+  const DAY = 24 * 60 * 60 * 1000;
+  // 시작 시각이 속한 KST 자정(UTC ms)부터 하루씩 순회
+  let cursor = Math.floor((startMs + KST_OFFSET_MS) / DAY) * DAY - KST_OFFSET_MS;
+  let total = 0;
+  for (; cursor < endMs; cursor += DAY) {
+    const dow = new Date(cursor + KST_OFFSET_MS).getUTCDay(); // 0=일 … 6=토 (KST 기준)
+    if (dow === 0 || dow === 6) continue; // 주말 제외
+    const bizStart = cursor + BIZ_START_MIN * 60000;
+    const bizEnd = cursor + BIZ_END_MIN * 60000;
+    const os = Math.max(startMs, bizStart);
+    const oe = Math.min(endMs, bizEnd);
+    if (oe > os) total += oe - os;
+  }
+  return total;
+}
+
 // 배정시간 — 등록(created_at) → 담당지정(manager_assigned_at)까지 걸린 시간
+// 영업시간(월~금 09:00~18:00 KST)만 계산. 1일 = 영업 9시간 기준.
 function formatAssignDelay(
   createdAt?: string | null,
   assignedAt?: string | null,
 ): string {
   if (!createdAt || !assignedAt) return "-";
-  const ms = new Date(assignedAt).getTime() - new Date(createdAt).getTime();
-  if (!Number.isFinite(ms) || ms < 0) return "-";
-  const min = Math.floor(ms / 60000);
+  const s = new Date(createdAt).getTime();
+  const e = new Date(assignedAt).getTime();
+  if (!Number.isFinite(s) || !Number.isFinite(e) || e < s) return "-";
+  const min = Math.floor(businessMs(s, e) / 60000);
   if (min < 1) return "1분 미만";
-  const days = Math.floor(min / 1440);
-  const hours = Math.floor((min % 1440) / 60);
+  const BIZ_DAY_MIN = BIZ_END_MIN - BIZ_START_MIN; // 영업 9시간 = 540분
+  const days = Math.floor(min / BIZ_DAY_MIN);
+  const hours = Math.floor((min % BIZ_DAY_MIN) / 60);
   const mins = min % 60;
   if (days > 0) return hours > 0 ? `${days}일 ${hours}시간` : `${days}일`;
   if (hours > 0) return mins > 0 ? `${hours}시간 ${mins}분` : `${hours}시간`;
