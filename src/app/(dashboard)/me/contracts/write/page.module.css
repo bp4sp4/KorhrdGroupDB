@@ -579,4 +579,35 @@
     background: transparent;
     box-shadow: none;
   }
+  /* 조항이 페이지 경계에서 잘리지 않도록 — 한 조는 한 페이지에 유지 */
+  .article {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .articleHead {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+  .articleBody p,
+  .salaryTable,
+  .intro {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  /* 인쇄물: 입력값의 밑줄·볼드·강조 제거 (깔끔한 본문) */
+  .fill {
+    border-bottom: none !important;
+    font-weight: inherit !important;
+    padding: 0 !important;
+  }
+  .fieldSpot {
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+  .articleActive {
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 8px 0 14px !important;
+  }
 }

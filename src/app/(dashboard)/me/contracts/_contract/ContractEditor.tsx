@@ -256,7 +256,7 @@ function Article({
   children: React.ReactNode;
 }) {
   return (
-    <div className={styles.article} data-article={n}>
+    <div className={styles.article} data-article={n} data-keep="">
       <div className={styles.articleHead}>
         제{n}조 ({title})
       </div>
@@ -393,6 +393,19 @@ export default function ContractEditor({
     return buildContractPdf(el, styles.pdfClean);
   }, []);
 
+  // PDF 다운로드 — 여러 페이지 정상 분할 + 밑줄·볼드 제거된 깔끔한 문서
+  const [pdfBusy, setPdfBusy] = useState(false);
+  const handleDownloadPdf = useCallback(async () => {
+    if (pdfBusy) return;
+    setPdfBusy(true);
+    try {
+      const pdf = await buildPdf();
+      if (pdf) pdf.save(`${(form.employeeName || "근로계약서").trim()}.pdf`);
+    } finally {
+      setPdfBusy(false);
+    }
+  }, [buildPdf, form.employeeName, pdfBusy]);
+
   const renderPdfDataUrl = useCallback(async (): Promise<string | null> => {
     const pdf = await buildPdf();
     return pdf ? pdf.output("datauristring") : null;
@@ -478,9 +491,10 @@ export default function ContractEditor({
               <button
                 type="button"
                 className={`${styles.barBtn} ${styles.barBtnGhost}`}
-                onClick={() => window.print()}
+                onClick={handleDownloadPdf}
+                disabled={pdfBusy}
               >
-                <Download size={15} /> PDF 다운로드
+                <Download size={15} /> {pdfBusy ? "PDF 생성 중…" : "PDF 다운로드"}
               </button>
             </div>
           )}
@@ -559,8 +573,8 @@ export default function ContractEditor({
           </div>
 
           <div className={styles.toolbar}>
-            <button type="button" className={styles.btnGhost} onClick={() => window.print()}>
-              <Download size={15} /> PDF 저장
+            <button type="button" className={styles.btnGhost} onClick={handleDownloadPdf} disabled={pdfBusy}>
+              <Download size={15} /> {pdfBusy ? "PDF 생성 중…" : "PDF 저장"}
             </button>
             <button type="button" className={styles.btnSecondary} onClick={() => handleSave(false)} disabled={saving}>
               <Save size={15} /> 임시저장
@@ -733,8 +747,8 @@ export default function ContractEditor({
             {spot("contractDate", <>{c.y}년 {c.m || "  "}월 {c.d || "  "}일</>)}
           </p>
 
-          <div className={styles.signGrid}>
-            <div className={styles.party}>
+          <div className={styles.signGrid} data-keep="">
+            <div className={styles.party} data-keep="">
               <div className={styles.partyTag}>(갑)</div>
               <div className={styles.partyRows}>
                 <div>주소 : {COMPANY.addr}</div>
@@ -752,7 +766,7 @@ export default function ContractEditor({
                 </div>
               </div>
             </div>
-            <div className={styles.party}>
+            <div className={styles.party} data-keep="">
               <div className={styles.partyTag}>(을)</div>
               <div className={styles.partyRows}>
                 <div>주소 : {spot("employeeAddr", form.employeeAddr)}</div>

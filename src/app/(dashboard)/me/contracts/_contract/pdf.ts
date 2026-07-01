@@ -25,10 +25,23 @@ export async function buildContractPdf(
   clone.style.background = "#ffffff";
   document.body.appendChild(clone);
 
+  const SCALE = 2;
+  // 페이지에서 쪼개지면 안 되는 블록(조항·서명 갑/을)의 세로 범위를 캔버스 px로 수집
+  const cloneTop = clone.getBoundingClientRect().top;
+  const keepRanges = Array.from(clone.querySelectorAll("[data-keep]")).map(
+    (node) => {
+      const r = (node as HTMLElement).getBoundingClientRect();
+      return {
+        top: (r.top - cloneTop) * SCALE,
+        bottom: (r.bottom - cloneTop) * SCALE,
+      };
+    },
+  );
+
   let canvas: HTMLCanvasElement;
   try {
     canvas = await html2canvas(clone, {
-      scale: 2,
+      scale: SCALE,
       backgroundColor: "#ffffff",
       useCORS: true,
       width: RENDER_W,
@@ -47,10 +60,59 @@ export async function buildContractPdf(
   const pxPerMm = canvas.width / contentW; // 캔버스 폭을 본문 폭(여백 제외)에 매핑
   const pageHpx = Math.floor(contentH * pxPerMm); // 한 페이지 본문 영역에 해당하는 원본 px
 
+  // 페이지 경계 근처에서 글자 줄을 자르지 않도록, 목표 높이 위쪽의 '빈(흰) 줄'을
+  // 찾아 그 지점에서 자른다. (tainted canvas 등 실패 시 고정 높이로 폴백)
+  const srcCtx = canvas.getContext("2d");
+  const findWhiteCut = (start: number, ideal: number): number => {
+    if (!srcCtx) return ideal;
+    const win = Math.min(160, ideal - 40); // 위로 최대 160px 탐색
+    if (win <= 0) return ideal;
+    let band: Uint8ClampedArray;
+    try {
+      band = srcCtx.getImageData(0, start + ideal - win, canvas.width, win).data;
+    } catch {
+      return ideal; // cross-origin 등으로 읽기 불가 → 고정 높이
+    }
+    const w = canvas.width;
+    for (let y = win - 1; y >= 0; y--) {
+      const base = y * w * 4;
+      let white = true;
+      for (let x = 0; x < w; x++) {
+        const i = base + x * 4;
+        if (band[i] < 245 || band[i + 1] < 245 || band[i + 2] < 245) {
+          white = false;
+          break;
+        }
+      }
+      if (white) return ideal - win + y + 1;
+    }
+    return ideal; // 빈 줄 못 찾으면 고정 높이
+  };
+
   let rendered = 0;
   let pageIdx = 0;
   while (rendered < canvas.height) {
-    const sliceH = Math.min(pageHpx, canvas.height - rendered);
+    let sliceH = Math.min(pageHpx, canvas.height - rendered);
+    // 마지막 페이지가 아니면: ① keep 블록이 경계에 걸치면 그 블록 시작 전에서 자름
+    //                         ② 아니면 빈 줄(여백)에서 자름
+    if (rendered + sliceH < canvas.height) {
+      const idealCut = rendered + sliceH;
+      let keepCut = Infinity;
+      for (const k of keepRanges) {
+        if (
+          k.top > rendered + 8 &&
+          k.top < idealCut &&
+          k.bottom > idealCut &&
+          k.bottom - k.top <= pageHpx
+        ) {
+          keepCut = Math.min(keepCut, k.top);
+        }
+      }
+      sliceH =
+        keepCut !== Infinity
+          ? Math.round(keepCut - rendered)
+          : findWhiteCut(rendered, sliceH);
+    }
     const tmp = document.createElement("canvas");
     tmp.width = canvas.width;
     tmp.height = sliceH;

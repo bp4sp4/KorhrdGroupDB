@@ -83,7 +83,7 @@ export default function ContractSignPage({
         initialForm={initialForm as never}
         initialSignature={contract.signature}
         readOnly={false}
-        viewFirst
+        viewFirst={contract.status === "signed"}
         headerTitle={`${contract.employee_name} 근로계약서`}
         headerBadge={TYPE_LABEL[contract.contract_type]}
         onBack={onBack}
