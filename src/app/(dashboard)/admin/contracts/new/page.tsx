@@ -38,9 +38,10 @@ const CONTRACT_TYPE_DESC: Record<ContractType, string> = {
   nda: "영업비밀 비밀유지 서약",
   pledge: "입사 서약 (취업규칙 준수 등)",
 };
-// 신규 작성에서 선택 가능한 양식 (계약직 제외)
+// 신규 작성에서 선택 가능한 양식
 const VISIBLE_TYPES: ContractType[] = [
   "regular",
+  "contract",
   "civil",
   "sales",
   "privacy",
