@@ -1,7 +1,36 @@
 .wrap {
-  max-width: 720px;
+  max-width: 1180px;
   margin: 0 auto;
   padding: 32px 24px 80px;
+}
+
+/* 좌: 입력 폼 / 우: 실시간 미리보기 */
+.splitLayout {
+  display: flex;
+  gap: 24px;
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+.previewPane {
+  flex: 1 1 520px;
+  min-width: 0;
+}
+.previewSticky {
+  position: sticky;
+  top: 16px;
+}
+.previewLabel {
+  font-size: 13px;
+  font-weight: 700;
+  color: #4e5968;
+  margin-bottom: 8px;
+}
+.previewDoc {
+  border: 1px solid #e5e8eb;
+  border-radius: 12px;
+  background: #fff;
+  overflow: auto;
+  max-height: calc(100vh - 120px);
 }
 
 .head {
@@ -24,6 +53,9 @@
   display: flex;
   flex-direction: column;
   gap: 18px;
+  flex: 1 1 480px;
+  min-width: 0;
+  max-width: 620px;
 }
 
 .section {
@@ -42,6 +74,19 @@
   font-size: 12px;
   font-weight: 500;
   color: #8b95a1;
+}
+
+/* 근로조건 조항별 그룹 헤더 */
+.groupLabel {
+  margin: 22px 0 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #eef0f3;
+  font-size: 13px;
+  font-weight: 700;
+  color: #3182f6;
+}
+.groupLabel:first-of-type {
+  margin-top: 4px;
 }
 
 .typeGrid {

@@ -793,6 +793,7 @@ export default function ApplicantsView({
             </div>
             <div className={styles.headCell}>상태</div>
             <div className={styles.headCell}>이름</div>
+            <div className={styles.headCell}>연락처</div>
             <div className={styles.headCell}>실습 과정</div>
             <div
               ref={sortRef}
@@ -878,6 +879,9 @@ export default function ApplicantsView({
 
                 <div className={`${styles.bodyCell} ${styles.cellNameBold}`}>
                   {r.name}
+                </div>
+                <div className={styles.bodyCell} title={r.contact ?? ""}>
+                  {r.contact ?? "-"}
                 </div>
                 <div className={styles.bodyCell} title={r.practice_type ?? ""}>
                   {r.practice_type ?? "-"}

@@ -3,6 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./page.module.css";
+import ContractEditor, {
+  type WorkVariant,
+  type ContractForm,
+} from "@/app/(dashboard)/me/contracts/_contract/ContractEditor";
 
 type ContractType =
   | "regular"
@@ -79,6 +83,19 @@ export default function NewContractPage() {
   const [allowanceMonthly, setAllowanceMonthly] = useState("0");
   const [hourlyWage, setHourlyWage] = useState("10320");
 
+  // 관리자가 지정하는 근로조건 (비우면 계약서 기본 문구 유지 — 직원은 보기만)
+  const [workTime, setWorkTime] = useState("");
+  const [breakTime, setBreakTime] = useState("");
+  const [workDays, setWorkDays] = useState("");
+  const [weeklyHoliday, setWeeklyHoliday] = useState("");
+  const [workLocation, setWorkLocation] = useState("");
+  const [probationMonths, setProbationMonths] = useState("");
+  const [position, setPosition] = useState("");
+  const [department, setDepartment] = useState("");
+  const [specialTerms, setSpecialTerms] = useState("");
+  // 미리보기에서 강조할 조항 (편집 중인 필드에 해당)
+  const [focusedArticle, setFocusedArticle] = useState<number | null>(null);
+
   const hasMonthly = (["regular", "civil", "sales"] as ContractType[]).some(
     (t) => types.has(t),
   );
@@ -132,6 +149,10 @@ export default function NewContractPage() {
           employee_user_id: employeeUserId,
           employee_name: employeeName.trim(),
           wage: { baseMonthly, mealMonthly, allowanceMonthly, hourlyWage },
+          work_conditions: {
+            workTime, breakTime, workDays, weeklyHoliday, workLocation,
+            probationMonths, position, department, specialTerms,
+          },
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -145,6 +166,27 @@ export default function NewContractPage() {
     }
   };
 
+  // 실시간 미리보기 — 선택된 근로계약서 1종 기준 (서약서·동의서는 미리보기 없음)
+  const previewVariant = (
+    ["regular", "civil", "sales", "contract"] as ContractType[]
+  ).find((t) => types.has(t)) as WorkVariant | undefined;
+  const previewForm: Partial<ContractForm> = {
+    employeeName,
+    baseMonthly,
+    mealMonthly,
+    allowanceMonthly,
+    hourlyWage,
+    workTime,
+    breakTime,
+    workDays,
+    weeklyHoliday,
+    workLocation,
+    probationMonths,
+    position,
+    department,
+    specialTerms,
+  };
+
   return (
     <div className={styles.wrap}>
       <div className={styles.head}>
@@ -155,6 +197,7 @@ export default function NewContractPage() {
         </p>
       </div>
 
+      <div className={styles.splitLayout}>
       <form onSubmit={handleSubmit} className={styles.form}>
         {err && <div className={styles.error}>{err}</div>}
 
@@ -254,6 +297,7 @@ export default function NewContractPage() {
                     inputMode="numeric"
                     className={styles.input}
                     value={comma(baseMonthly)}
+                onFocus={() => setFocusedArticle(5)}
                     placeholder="예) 3,960,000"
                     onChange={(e) =>
                       setBaseMonthly(e.target.value.replace(/[^0-9]/g, ""))
@@ -267,6 +311,7 @@ export default function NewContractPage() {
                     inputMode="numeric"
                     className={styles.input}
                     value={comma(mealMonthly)}
+                onFocus={() => setFocusedArticle(5)}
                     onChange={(e) =>
                       setMealMonthly(e.target.value.replace(/[^0-9]/g, ""))
                     }
@@ -281,6 +326,7 @@ export default function NewContractPage() {
                     inputMode="numeric"
                     className={styles.input}
                     value={comma(allowanceMonthly)}
+                onFocus={() => setFocusedArticle(5)}
                     onChange={(e) =>
                       setAllowanceMonthly(e.target.value.replace(/[^0-9]/g, ""))
                     }
@@ -296,6 +342,7 @@ export default function NewContractPage() {
                   inputMode="numeric"
                   className={styles.input}
                   value={comma(hourlyWage)}
+                onFocus={() => setFocusedArticle(5)}
                   placeholder="예) 10,320"
                   onChange={(e) =>
                     setHourlyWage(e.target.value.replace(/[^0-9]/g, ""))
@@ -306,6 +353,134 @@ export default function NewContractPage() {
             <p className={styles.hint}>
               여기서 입력한 임금이 직원 계약서에 자동 반영되며, 직원은 보기만
               가능합니다. (서약서·동의서에는 적용되지 않습니다.)
+            </p>
+          </section>
+        )}
+
+        {showWage && (
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>
+              4. 근로조건 설정{" "}
+              <span className={styles.sectionHint}>
+                (선택 — 비우면 기본 문구 유지, 직원은 수정할 수 없습니다)
+              </span>
+            </h2>
+            {/* 제2조 */}
+            <div className={styles.groupLabel}>제2조 · 수습기간</div>
+            <div className={styles.field}>
+              <label className={styles.label}>수습기간 (개월)</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                className={styles.input}
+                value={probationMonths}
+                onFocus={() => setFocusedArticle(2)}
+                placeholder="비우면 기본: 3"
+                onChange={(e) =>
+                  setProbationMonths(e.target.value.replace(/[^0-9]/g, ""))
+                }
+              />
+            </div>
+
+            {/* 제3조 */}
+            <div className={styles.groupLabel}>제3조 · 담당업무 및 업무 장소</div>
+            <div className={styles.field}>
+              <label className={styles.label}>근무 장소</label>
+              <input
+                type="text"
+                className={styles.input}
+                value={workLocation}
+                onFocus={() => setFocusedArticle(3)}
+                placeholder="비우면 기본: 서울시 도봉구 마들로13길 61, B동 905,906호(창동)"
+                onChange={(e) => setWorkLocation(e.target.value)}
+              />
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label}>직책 / 직위</label>
+              <input
+                type="text"
+                className={styles.input}
+                value={position}
+                onFocus={() => setFocusedArticle(3)}
+                placeholder="예) 팀장 (비우면 표시 안 함)"
+                onChange={(e) => setPosition(e.target.value)}
+              />
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label}>부서</label>
+              <input
+                type="text"
+                className={styles.input}
+                value={department}
+                onFocus={() => setFocusedArticle(3)}
+                placeholder="예) 마케팅개발본부 (비우면 표시 안 함)"
+                onChange={(e) => setDepartment(e.target.value)}
+              />
+            </div>
+
+            {/* 제4조 */}
+            <div className={styles.groupLabel}>제4조 · 근로시간</div>
+            <div className={styles.field}>
+              <label className={styles.label}>근무시간</label>
+              <textarea
+                className={styles.input}
+                rows={2}
+                value={workTime}
+                onFocus={() => setFocusedArticle(4)}
+                placeholder="비우면 기본: 1일 8시간 근무, 오전 10시부터 오후 7시까지"
+                onChange={(e) => setWorkTime(e.target.value)}
+              />
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label}>휴게시간</label>
+              <textarea
+                className={styles.input}
+                rows={2}
+                value={breakTime}
+                onFocus={() => setFocusedArticle(4)}
+                placeholder="비우면 기본: 휴게시간은 13시부터 14시로 하며, 근무시간에는 제외한다."
+                onChange={(e) => setBreakTime(e.target.value)}
+              />
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label}>근무일</label>
+              <textarea
+                className={styles.input}
+                rows={2}
+                value={workDays}
+                onFocus={() => setFocusedArticle(4)}
+                placeholder="비우면 기본: 주 5일 근무, 주 40시간 원칙 (최대 52시간)"
+                onChange={(e) => setWorkDays(e.target.value)}
+              />
+            </div>
+            <div className={styles.field}>
+              <label className={styles.label}>주휴일</label>
+              <textarea
+                className={styles.input}
+                rows={2}
+                value={weeklyHoliday}
+                onFocus={() => setFocusedArticle(4)}
+                placeholder="비우면 기본: 주휴일은 일요일로 하되, 협의하여 변경 가능"
+                onChange={(e) => setWeeklyHoliday(e.target.value)}
+              />
+            </div>
+
+            {/* 특약 */}
+            <div className={styles.groupLabel}>특약사항 (선택)</div>
+            <div className={styles.field}>
+              <label className={styles.label}>특약사항</label>
+              <textarea
+                className={styles.input}
+                rows={3}
+                value={specialTerms}
+                onFocus={() => setFocusedArticle(16)}
+                placeholder="계약별 추가 특약 조항 (줄바꿈으로 여러 줄, 비우면 조항 없음)"
+                onChange={(e) => setSpecialTerms(e.target.value)}
+              />
+            </div>
+            <p className={styles.hint}>
+              입력한 근로조건이 계약서 본문에 반영되며, 직원은 보기만 가능합니다.
+              비워두면 기존 표준 문구가 그대로 사용됩니다.
             </p>
           </section>
         )}
@@ -328,6 +503,26 @@ export default function NewContractPage() {
           </button>
         </div>
       </form>
+
+        {previewVariant && (
+          <aside className={styles.previewPane}>
+            <div className={styles.previewSticky}>
+              <div className={styles.previewLabel}>
+                실시간 미리보기 · {CONTRACT_TYPE_LABEL[previewVariant]}
+              </div>
+              <div className={styles.previewDoc}>
+                <ContractEditor
+                  variant={previewVariant}
+                  mode="assigned"
+                  preview
+                  initialForm={previewForm}
+                  highlightArticleN={focusedArticle}
+                />
+              </div>
+            </div>
+          </aside>
+        )}
+      </div>
     </div>
   );
 }

@@ -60,6 +60,18 @@ export async function POST(req: NextRequest) {
       allowanceMonthly?: string;
       hourlyWage?: string;
     } | null;
+    // 관리자가 지정하는 근로조건 (비어있으면 계약서 기본 문구 유지)
+    work_conditions?: {
+      workTime?: string;
+      breakTime?: string;
+      workDays?: string;
+      weeklyHoliday?: string;
+      workLocation?: string;
+      probationMonths?: string;
+      position?: string;
+      department?: string;
+      specialTerms?: string;
+    } | null;
   } | null;
 
   if (!body) {
@@ -122,13 +134,27 @@ export async function POST(req: NextRequest) {
         };
   };
 
+  // 근로조건 — 관리자가 입력한 값 중 비어있지 않은 것만 저장 (빈 값은 계약서 기본 문구 유지)
+  const WC_KEYS = [
+    "workTime", "breakTime", "workDays", "weeklyHoliday",
+    "workLocation", "probationMonths", "position", "department", "specialTerms",
+  ] as const;
+  const workConditions: Record<string, string> = {};
+  const wc = body.work_conditions ?? {};
+  for (const k of WC_KEYS) {
+    const v = wc[k];
+    if (typeof v === "string" && v.trim()) workConditions[k] = v.trim();
+  }
+
   const payloads = types.map((t) => ({
     contract_type: t,
     status: "pending_sign" as const,
     employee_user_id: body.employee_user_id ?? null,
     employee_name: employeeName,
     created_by: appUser.id,
-    ...(WORK_TYPES.includes(t) ? { form_data: wageForm(t) } : {}),
+    ...(WORK_TYPES.includes(t)
+      ? { form_data: { ...wageForm(t), ...workConditions } }
+      : {}),
   }));
 
   const { data, error } = await supabaseAdmin

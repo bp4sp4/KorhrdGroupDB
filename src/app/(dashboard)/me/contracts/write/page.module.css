@@ -16,6 +16,21 @@
   min-height: 0;
   display: flex;
 }
+
+/* 미리보기(관리자 신규작성 오른쪽) — 박스 안에서 문서 전체가 흐르도록 높이 고정 해제 */
+.editorRootPreview {
+  height: auto;
+  background: transparent;
+}
+.editorRootPreview .editorBody {
+  display: block;
+  flex: none;
+  min-height: 0;
+}
+.previewPanePreview {
+  overflow: visible;
+  padding: 16px;
+}
 .editorBar {
   display: flex;
   align-items: center;
@@ -24,6 +39,46 @@
   background: #fff;
   border-bottom: 1px solid #e6e7eb;
   flex-shrink: 0;
+}
+.editorBarActions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.barBtn {
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 9px;
+  font-size: 13.5px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  font-family: inherit;
+  white-space: nowrap;
+  transition:
+    background 0.12s,
+    border-color 0.12s;
+}
+.barBtnPrimary {
+  background: #3182f6;
+  color: #fff;
+}
+.barBtnPrimary:hover {
+  background: #1b64da;
+}
+.barBtnGhost {
+  background: #fff;
+  color: #333d4b;
+  border-color: #d1d6db;
+}
+.barBtnGhost:hover {
+  background: #f7f8fa;
+  border-color: #b0b8c1;
 }
 .editorBack {
   border: none;
@@ -308,6 +363,18 @@
 
 .article {
   margin-bottom: 14px;
+}
+
+/* 미리보기 — 관리자가 편집 중인 조항 강조 */
+.articleActive {
+  background: #fff8e1;
+  box-shadow: 0 0 0 2px #ffca28;
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin: 8px -10px 14px;
+  transition:
+    background 0.2s,
+    box-shadow 0.2s;
 }
 
 .articleHead {

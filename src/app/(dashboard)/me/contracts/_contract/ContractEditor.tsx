@@ -41,6 +41,16 @@ export interface ContractForm {
   mealMonthly: string; // 식대(월)
   allowanceMonthly: string; // 직책수당/민간수당/인센티브(월)
   hourlyWage: string; // 계약직: 시급
+  // 관리자가 지정하는 근로조건 (비어있으면 기본 문구 유지)
+  workTime?: string; // 제4조 근무시간
+  breakTime?: string; // 제4조 휴게시간
+  workDays?: string; // 제4조 근무일
+  weeklyHoliday?: string; // 제4조 주휴일
+  workLocation?: string; // 제3조 업무 장소(소재지)
+  probationMonths?: string; // 제2조 수습기간(개월)
+  position?: string; // 직책/직위
+  department?: string; // 부서
+  specialTerms?: string; // 특약사항
 }
 
 export const DEFAULT_FORM: ContractForm = {
@@ -89,6 +99,13 @@ const VARIANT: Record<
     workTimeText: "1일 8시간 근무로 하며, 오전 10시부터 오후 7시까지로 한다.",
   },
 };
+
+// 제4조 근로시간 기본 문구 (관리자가 값을 지정하지 않으면 사용)
+const DEFAULT_BREAK_TIME = "휴게시간은 13시부터 14시로 하며, 근무시간에는 제외한다.";
+const DEFAULT_WORK_DAYS =
+  "주 5일 근무로 하며 주 40시간을 원칙으로 한다. 단, “갑”은 “을”에게 업무상 필요시 주 52시간 내에서 근무를 요할 수 있다.";
+const DEFAULT_WEEKLY_HOLIDAY =
+  "주휴일은 일요일로 하되, 업무상 부득이한 경우 미리 협의하여 주휴일을 변경할 수 있다. 단, 주휴일은 1주 소정근로일을 만근한 경우에 한해 부여한다.";
 
 const num = (v: string) => Number(String(v).replace(/[^0-9]/g, "")) || 0;
 const won = (n: number) => (n > 0 ? n.toLocaleString() : "0");
@@ -239,7 +256,7 @@ function Article({
   children: React.ReactNode;
 }) {
   return (
-    <div className={styles.article}>
+    <div className={styles.article} data-article={n}>
       <div className={styles.articleHead}>
         제{n}조 ({title})
       </div>
@@ -255,6 +272,12 @@ interface Props {
   initialForm?: Partial<ContractForm>;
   initialSignature?: string | null;
   readOnly?: boolean;
+  /** 미리보기 전용 — 폼 패널·서명·제출을 숨기고 문서만, initialForm 변경을 실시간 반영 */
+  preview?: boolean;
+  /** 미리보기에서 강조할 조항 번호 (관리자가 편집 중인 필드에 해당하는 조를 하이라이트·스크롤) */
+  highlightArticleN?: number | null;
+  /** true면 처음엔 문서만 보기(사이드바 숨김), 헤더의 '수정' 버튼으로 편집 시작 */
+  viewFirst?: boolean;
   headerTitle?: string;
   headerBadge?: string;
   onBack?: () => void;
@@ -267,6 +290,9 @@ export default function ContractEditor({
   initialForm,
   initialSignature = null,
   readOnly = false,
+  preview = false,
+  highlightArticleN = null,
+  viewFirst = false,
   headerTitle,
   headerBadge,
   onBack,
@@ -276,6 +302,14 @@ export default function ContractEditor({
     ...DEFAULT_FORM,
     ...initialForm,
   });
+
+  // 미리보기 모드에서는 부모(관리자 폼)의 입력값 변경을 실시간으로 반영
+  const initialFormKey = JSON.stringify(initialForm ?? {});
+  useEffect(() => {
+    if (!preview) return;
+    setForm({ ...DEFAULT_FORM, ...initialForm });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preview, initialFormKey]);
   const [signature, setSignature] = useState<string | null>(initialSignature);
   const [saving, setSaving] = useState(false);
   const docRef = useRef<HTMLDivElement>(null);
@@ -283,6 +317,27 @@ export default function ContractEditor({
   const isHourly = variant === "contract";
   // 관리자가 지정한 계약(assigned)에서는 임금을 관리자가 설정 → 직원은 보기만
   const lockWage = mode === "assigned";
+
+  // 편집 모드 — viewFirst면 처음엔 문서만 보기, '수정' 버튼으로 사이드바 노출
+  const [editing, setEditing] = useState(!viewFirst);
+
+  // 미리보기 — 편집 중인 조항을 하이라이트하고 화면에 보이도록 스크롤
+  useEffect(() => {
+    if (!preview) return;
+    const root = docRef.current;
+    if (!root) return;
+    root
+      .querySelectorAll(`.${styles.articleActive}`)
+      .forEach((el) => el.classList.remove(styles.articleActive));
+    if (highlightArticleN == null) return;
+    const el = root.querySelector(
+      `[data-article="${highlightArticleN}"]`,
+    ) as HTMLElement | null;
+    if (el) {
+      el.classList.add(styles.articleActive);
+      el.scrollIntoView({ block: "center", behavior: "smooth" });
+    }
+  }, [preview, highlightArticleN]);
 
   useEffect(() => {
     if (initialForm?.employeeName) return;
@@ -392,7 +447,7 @@ export default function ContractEditor({
   const e = ymdParts(form.endDate);
 
   return (
-    <div className={styles.editorRoot}>
+    <div className={`${styles.editorRoot} ${preview ? styles.editorRootPreview : ""}`}>
       {(headerTitle || onBack) && (
         <div className={styles.editorBar}>
           {onBack && (
@@ -409,11 +464,31 @@ export default function ContractEditor({
           {readOnly && (
             <span className={styles.editorSignedBadge}>✅ 서명 완료</span>
           )}
+          {!preview && (
+            <div className={styles.editorBarActions}>
+              {!readOnly && (
+                <button
+                  type="button"
+                  className={`${styles.barBtn} ${editing ? styles.barBtnGhost : styles.barBtnPrimary}`}
+                  onClick={() => setEditing((v) => !v)}
+                >
+                  {editing ? "보기" : "수정"}
+                </button>
+              )}
+              <button
+                type="button"
+                className={`${styles.barBtn} ${styles.barBtnGhost}`}
+                onClick={() => window.print()}
+              >
+                <Download size={15} /> PDF 다운로드
+              </button>
+            </div>
+          )}
         </div>
       )}
       <div className={styles.editorBody}>
         {/* 좌측 입력 */}
-        {!readOnly && (
+        {!readOnly && !preview && editing && (
         <aside className={styles.formPane}>
           <div className={styles.formScroll}>
             {/* 계약서 문서 순서대로: 성명 → 계약 → 임금 → 체결·근로자정보 → 서명 */}
@@ -498,7 +573,7 @@ export default function ContractEditor({
       )}
 
       {/* 우측 미리보기 */}
-      <main className={styles.previewPane}>
+      <main className={`${styles.previewPane} ${preview ? styles.previewPanePreview : ""}`}>
         <div className={styles.doc} id="contract-doc" ref={docRef}>
           <h1 className={styles.docTitle}>근 로 계 약 서</h1>
           <p className={styles.intro}>
@@ -522,22 +597,29 @@ export default function ContractEditor({
           </Article>
 
           <Article n={2} title="수습기간">
-            <p>1) 근로 계약 체결 후 3개월이 도래하기 전일까지를 수습기간으로 한다. (단 당사 근로 유 경력자 및 동종 업체 및 관련 업무 유 경력자는 제외)</p>
+            <p>1) 근로 계약 체결 후 {form.probationMonths?.trim() || "3"}개월이 도래하기 전일까지를 수습기간으로 한다. (단 당사 근로 유 경력자 및 동종 업체 및 관련 업무 유 경력자는 제외)</p>
             <p>2) 수습기간 또는 수습기간 만료 시에도 직무를 수행함에 있어 자질이 부적합 또는 부적당하다고 인정되는 경우 및 조직융화, 업무지식, 건강상태 등이 부적격하다고 인정되는 경우에 당사는 본 채용을 거부하거나 수습기간을 연장 할 수 있다.</p>
             <p>3) 수습기간동안의 급여는 정규직원과 동일한 조건으로 지급한다.</p>
           </Article>
 
           <Article n={3} title="담당업무 및 업무 장소">
-            <p>1) 직원의 담당업무는 {spot("jobDesc", <u className={styles.fill}>{form.jobDesc || " ".repeat(12)}</u>)} 이며, 업무장소는 “갑”의 소재지 근무를 원칙으로 한다.</p>
-            <p className={styles.indent}>소재지 : {COMPANY.addr}</p>
+            <p>1) 직원의 담당업무는 {spot("jobDesc", <u className={styles.fill}>{form.jobDesc || " ".repeat(12)}</u>)}
+              {(() => {
+                const parts = [
+                  form.position?.trim() && `직책: ${form.position.trim()}`,
+                  form.department?.trim() && `부서: ${form.department.trim()}`,
+                ].filter(Boolean);
+                return parts.length ? ` (${parts.join(", ")})` : "";
+              })()} 이며, 업무장소는 “갑”의 소재지 근무를 원칙으로 한다.</p>
+            <p className={styles.indent}>소재지 : {form.workLocation?.trim() || COMPANY.addr}</p>
             <p>2) 전항은 회사의 업무상 필요에 의해 직종, 보직, 근무지를 변경할 수 있다. 동의 <Sign src={signature} name={form.employeeName} /></p>
           </Article>
 
           <Article n={4} title="근로시간">
-            <p>1) “을”의 근로시간은 {cfg.workTimeText}</p>
-            <p>2) 휴게시간은 13시부터 14시로 하며, 근무시간에는 제외한다.</p>
-            <p>3) 주 5일 근무로 하며 주 40시간을 원칙으로 한다. 단, “갑”은 “을”에게 업무상 필요시 주 52시간 내에서 근무를 요할 수 있다.</p>
-            <p>4) 주휴일은 일요일로 하되, 업무상 부득이한 경우 미리 협의하여 주휴일을 변경할 수 있다. 단, 주휴일은 1주 소정근로일을 만근한 경우에 한해 부여한다.</p>
+            <p>1) “을”의 근로시간은 {form.workTime?.trim() || cfg.workTimeText}</p>
+            <p>2) {form.breakTime?.trim() || DEFAULT_BREAK_TIME}</p>
+            <p>3) {form.workDays?.trim() || DEFAULT_WORK_DAYS}</p>
+            <p>4) {form.weeklyHoliday?.trim() || DEFAULT_WEEKLY_HOLIDAY}</p>
             <p>5) 기타 회사 상황 또는 업무의 특성으로 인하여 연장, 야간, 휴일 근로가 요구되는 경우, 관련법령의 허용 범위 내에서 이를 수행함에 동의한다. <Sign src={signature} name={form.employeeName} /></p>
           </Article>
 
@@ -630,6 +712,17 @@ export default function ContractEditor({
           <Article n={15} title="준거법 및 관할 법원">
             <p>본 계약은 대한민국 법률에 따라 규율되며, 분쟁 발생 시 사용자의 본사 소재지를 관할하는 법원을 제1심 관할 법원으로 한다.</p>
           </Article>
+
+          {form.specialTerms?.trim() && (
+            <Article n={16} title="특약사항">
+              {form.specialTerms
+                .trim()
+                .split("\n")
+                .map((line, i) => (
+                  <p key={i}>{line}</p>
+                ))}
+            </Article>
+          )}
 
           <p className={styles.closing}>
             위와 같이 계약을 체결하고 계약서 2통을 작성, 서명 날인 후 “갑”과 “을”이 각각 1통씩 보관한다.
