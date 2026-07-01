@@ -16,7 +16,12 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import styles from "./page.module.css";
-import { CLOCK_OUT_CONFIRM, getTodayKstDate } from "@/lib/attendance";
+import {
+  CLOCK_OUT_CONFIRM,
+  getTodayKstDate,
+  resolveWorkHours,
+  calculateAttendance,
+} from "@/lib/attendance";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { createClient } from "@/lib/supabase/client";
 import { getCalendarWeekIndex } from "@/lib/dashboard/weekOfMonth";
@@ -111,6 +116,11 @@ export default function DashboardPage() {
   const [submitting, setSubmitting] = useState(false);
   const [, setTick] = useState(0);
   const [userName, setUserName] = useState<string>("");
+  // 소속 부서 (근무시간 프로필: 사업본부 09~18 / 그 외 10~19)
+  const [dept, setDept] = useState<{
+    code: string | null;
+    name: string | null;
+  } | null>(null);
   const [leaveData, setLeaveData] = useState<{
     balance: number;
     total: number;
@@ -189,6 +199,10 @@ export default function DashboardPage() {
         if (cancelled) return;
         if (d?.displayName) setUserName(d.displayName);
         if (typeof d?.id === "number") setUserId(d.id);
+        setDept({
+          code: d?.departmentCode ?? null,
+          name: d?.departmentName ?? null,
+        });
       })
       .catch(() => {});
     return () => {
@@ -376,12 +390,18 @@ export default function DashboardPage() {
   const isWorking = !!todayRec && !todayRec.clock_out_at;
   const isDone = !!todayRec && !!todayRec.clock_out_at;
 
-  // 출근 중일 때 오늘 라이브 분 (DB의 work_minutes은 퇴근 시점에야 채워지므로
-  // 출근 즉시 progress bar / work.mp4 가 표시되도록 라이브 계산값을 더한다)
+  // 출근 중일 때 오늘 라이브 분 — 부서별 근무시간 프로필 적용
+  // (사업본부 09~18 / 그 외 10~19: 정규 출근 전 시간 미인정 + 점심 제외 + 정규 퇴근 후는 야근)
   const todayLiveMin = (() => {
     if (!isWorking || !todayRec?.clock_in_at) return 0;
-    const start = new Date(todayRec.clock_in_at).getTime();
-    return Math.max(0, Math.floor((Date.now() - start) / 60000));
+    const workHours = resolveWorkHours(dept, today, userId);
+    const calc = calculateAttendance(
+      todayRec.clock_in_at,
+      new Date().toISOString(),
+      today,
+      workHours,
+    );
+    return calc.workMinutes + calc.overtimeMinutes;
   })();
 
   // 오늘 근무(정규+야근) 분 — 출근 중이면 라이브

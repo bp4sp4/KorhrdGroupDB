@@ -60,6 +60,10 @@ export const BIZ_WORK_HOURS_EFFECTIVE_FROM = "2026-07-01";
 export const WORK_HOURS_PILOT_USER_IDS: readonly number[] = [17];
 export const WORK_HOURS_PILOT_EFFECTIVE_FROM = "2026-06-29";
 
+// 사업본부지만 근무시간 개편(9-18)에서 제외 — 개인 사정으로 10-19 유지하는 사용자
+//   · 홍영훈(brian98@naver.com, id 24)
+export const WORK_HOURS_EXCLUDED_USER_IDS: readonly number[] = [24];
+
 // 야근 시작 분 (정규 퇴근 후 30분부터 야근 인정)
 export const OVERTIME_GRACE_MIN = 30;
 
@@ -82,6 +86,9 @@ export function resolveWorkHours(
   userId?: number | null,
 ): WorkHours {
   if (!isBizDepartment(dept)) return DEFAULT_WORK_HOURS;
+  // 사업본부여도 제외 대상은 10-19 유지
+  if (userId != null && WORK_HOURS_EXCLUDED_USER_IDS.includes(userId))
+    return DEFAULT_WORK_HOURS;
   const isPilot =
     userId != null &&
     WORK_HOURS_PILOT_USER_IDS.includes(userId) &&

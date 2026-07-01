@@ -203,3 +203,20 @@
   color: #374151;
   margin: 16px 0 6px;
 }
+
+/* 출금 통장 선택 드롭다운 */
+.account_select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #d1d6db;
+  border-radius: 8px;
+  font-size: 13px;
+  background: #fff;
+  color: #191f28;
+  cursor: pointer;
+  font-family: inherit;
+}
+.account_select:focus {
+  outline: none;
+  border-color: #3182f6;
+}

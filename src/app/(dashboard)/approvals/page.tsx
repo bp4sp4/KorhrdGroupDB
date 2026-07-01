@@ -883,47 +883,56 @@ export default function ApprovalsPage() {
     fetchHomeData();
   };
 
+  // 문서 → 편집 폼으로 열기 (임시저장 + 진행 중 문서 공용)
+  const openForEdit = (data: Approval) => {
+    const template = templates.find((t) => t.id === data.template_id) ?? null;
+    const dataContent = data.content as Record<string, unknown>;
+    const rawAttachments = dataContent["_attachments"];
+    const existingAttachments: AttachedFile[] = Array.isArray(rawAttachments)
+      ? (rawAttachments as AttachedFile[])
+      : [];
+    const rawLinked = dataContent["_linked_proposal"];
+    const existingLinked =
+      rawLinked && typeof rawLinked === "object"
+        ? (rawLinked as LinkedProposal)
+        : null;
+    const { _attachments, _linked_proposal, ...restContent } = dataContent;
+    void _attachments;
+    void _linked_proposal;
+
+    // 진행 중 문서면 기존 결재선(결재자)을 미리 채움
+    const existingApprovers = Array.isArray(data.steps)
+      ? [...(data.steps as { step_number: number; approver_id: string }[])]
+          .sort((a, b) => a.step_number - b.step_number)
+          .map((s) => String(s.approver_id))
+      : [];
+
+    setFormState({
+      template,
+      title: data.title,
+      department_id: String(data.department_id ?? ""),
+      content: Object.fromEntries(
+        Object.entries(restContent).map(([k, v]) => [k, String(v ?? "")]),
+      ),
+      approver_ids: existingApprovers,
+      reference_ids: Array.isArray(data.reference_ids)
+        ? data.reference_ids.map(String)
+        : [],
+    });
+    setAttachedFiles(existingAttachments);
+    setLinkedProposal(existingLinked);
+    setEditingDraftId(data.id);
+    setFormError("");
+    setCurrentView("new_form");
+  };
+
   const handleRowClick = async (approval: Approval) => {
     const res = await fetch(`/api/management/approvals/${approval.id}`);
     if (!res.ok) return;
     const data = await res.json();
 
     if (data.status === "DRAFT") {
-      // 임시저장 문서 → 편집 폼으로 열기
-      const template = templates.find((t) => t.id === data.template_id) ?? null;
-      const rawAttachments = data.content["_attachments"];
-      const existingAttachments: AttachedFile[] = Array.isArray(rawAttachments)
-        ? (rawAttachments as AttachedFile[])
-        : [];
-      const rawLinked = (data.content as Record<string, unknown>)[
-        "_linked_proposal"
-      ];
-      const existingLinked =
-        rawLinked && typeof rawLinked === "object"
-          ? (rawLinked as LinkedProposal)
-          : null;
-      const { _attachments, _linked_proposal, ...restContent } =
-        data.content as Record<string, unknown>;
-      void _attachments;
-      void _linked_proposal;
-
-      setFormState({
-        template,
-        title: data.title,
-        department_id: String(data.department_id ?? ""),
-        content: Object.fromEntries(
-          Object.entries(restContent).map(([k, v]) => [k, String(v ?? "")]),
-        ),
-        approver_ids: [],
-        reference_ids: Array.isArray(data.reference_ids)
-          ? data.reference_ids.map(String)
-          : [],
-      });
-      setAttachedFiles(existingAttachments);
-      setLinkedProposal(existingLinked);
-      setEditingDraftId(data.id);
-      setFormError("");
-      setCurrentView("new_form");
+      openForEdit(data);
     } else {
       setSelectedApproval(data);
       setActionComment("");
@@ -1499,6 +1508,12 @@ export default function ApprovalsPage() {
   const canCancel =
     selectedApproval?.applicant_id === myUserId &&
     ["DRAFT", "SUBMITTED"].includes(selectedApproval?.status ?? "");
+  // 신청자 본인 — 진행 중(미완결)이면 수정 가능 (수정·재상신 시 결재 초기화)
+  const canEdit =
+    selectedApproval?.applicant_id === myUserId &&
+    ["DRAFT", "SUBMITTED", "IN_PROGRESS"].includes(
+      selectedApproval?.status ?? "",
+    );
   const canResyncExpense =
     !!selectedApproval &&
     selectedApproval.status === "APPROVED" &&
@@ -1983,6 +1998,15 @@ export default function ApprovalsPage() {
                   승인
                 </button>
               </>
+            )}
+            {canEdit && (
+              <button
+                className={styles.btn_secondary}
+                onClick={() => openForEdit(selectedApproval)}
+                disabled={actioning}
+              >
+                수정
+              </button>
             )}
             {canCancel && (
               <button

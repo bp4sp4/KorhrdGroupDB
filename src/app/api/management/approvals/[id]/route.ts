@@ -246,7 +246,10 @@ export async function PATCH(
 
   if (!approval) return NextResponse.json({ error: '문서를 찾을 수 없습니다.' }, { status: 404 })
   if (approval.applicant_id !== userId) return NextResponse.json({ error: '권한이 없습니다.' }, { status: 403 })
-  if (approval.status !== 'DRAFT') return NextResponse.json({ error: '임시저장 상태가 아닙니다.' }, { status: 400 })
+  // 임시저장(DRAFT) + 결재 진행 중(IN_PROGRESS)만 수정 가능. (완료/반려/취소는 불가)
+  // 진행 중 문서를 수정·재상신하면 아래에서 결재선을 초기화한다.
+  if (approval.status !== 'DRAFT' && approval.status !== 'IN_PROGRESS')
+    return NextResponse.json({ error: '수정할 수 없는 상태입니다.' }, { status: 400 })
 
   const body = await request.json()
   const { content, title, department_id, approver_ids, action } = body
@@ -258,8 +261,10 @@ export async function PATCH(
   }).eq('id', id)
 
   if (action === 'submit' && approver_ids?.length) {
-    const docNumber = genDocNumber(approval.category)
+    // 이미 문서번호가 있으면(재상신) 유지, 없으면 새로 발번
+    const docNumber = approval.document_number ?? genDocNumber(approval.category)
 
+    // 결재선 초기화 — 기존 결재 이력(승인/반려/대기) 모두 삭제 후 재생성
     await supabaseAdmin.from('approval_steps').delete().eq('approval_id', id)
 
     const steps = (approver_ids as string[]).map((approverId, idx) => ({

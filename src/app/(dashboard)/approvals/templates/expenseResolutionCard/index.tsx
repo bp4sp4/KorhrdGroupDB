@@ -75,31 +75,21 @@ function AccountList({
   onSelect: (id: string) => void
 }) {
   return (
-    <div className={styles.account_list}>
+    <select
+      className={styles.account_select}
+      value={selectedId}
+      onChange={(e) => onSelect(e.target.value)}
+    >
+      <option value="">통장 선택</option>
       {accounts.map((a) => {
-        const selected = a.id === selectedId
+        const label = `${a.bank_name}${a.account_holder ? ` · ${a.account_holder}` : ''} · ${a.account_number}${a.memo ? ` (${a.memo})` : ''}`
         return (
-          <label
-            key={a.id}
-            className={`${styles.account_card} ${selected ? styles.account_card_selected : ''}`}
-          >
-            <input
-              type="radio"
-              name="bank_account_id_card"
-              checked={selected}
-              onChange={() => onSelect(a.id)}
-            />
-            <div className={styles.account_card_body}>
-              <span className={styles.account_display_main}>
-                {a.bank_name}{a.account_holder ? ` · ${a.account_holder}` : ''}
-              </span>
-              <span className={styles.account_display_sub}>{a.account_number}</span>
-              {a.memo && <span className={styles.account_display_memo}>{a.memo}</span>}
-            </div>
-          </label>
+          <option key={a.id} value={a.id}>
+            {label}
+          </option>
         )
       })}
-    </div>
+    </select>
   )
 }
 
