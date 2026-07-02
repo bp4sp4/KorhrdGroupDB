@@ -44,6 +44,7 @@ export default function ContractSignPage({
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [verified, setVerified] = useState(false);
+  const [phoneMasked, setPhoneMasked] = useState("");
 
   // 이미 최근 본인인증을 통과했으면 게이트 건너뜀 (한 번 인증 → 여러 문서 서명)
   useEffect(() => {
@@ -51,6 +52,7 @@ export default function ContractSignPage({
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (d?.verified) setVerified(true);
+        if (typeof d?.phoneMasked === "string") setPhoneMasked(d.phoneMasked);
       })
       .catch(() => {});
   }, []);
@@ -91,17 +93,13 @@ export default function ContractSignPage({
   if (needsSign && !verified) {
     return (
       <div className={styles.gateScreen}>
-        <div className={styles.gateBox}>
-          <button type="button" className={styles.gateBack} onClick={onBack}>
-            ← 목록
-          </button>
-          <h1 className={styles.gateTitle}>본인인증 후 서명</h1>
-          <p className={styles.gateSub}>
-            {contract.employee_name}님, 계약서 작성·서명 전에 휴대폰 본인인증을
-            진행해 주세요.
-          </p>
-          <PhoneOtpGate contractId={id} onVerifiedChange={setVerified} />
-        </div>
+        <PhoneOtpGate
+          contractId={id}
+          onVerifiedChange={setVerified}
+          onBack={onBack}
+          userName={contract.employee_name}
+          initialPhoneMasked={phoneMasked}
+        />
       </div>
     );
   }

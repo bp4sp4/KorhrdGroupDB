@@ -24,8 +24,18 @@ export async function GET() {
     .limit(1)
     .maybeSingle();
 
+  // 발송 전에도 대상 번호를 보여주기 위한 마스킹 번호
+  const { data: user } = await supabaseAdmin
+    .from("app_users")
+    .select("phone")
+    .eq("id", appUser.id)
+    .maybeSingle();
+  const digits = String(user?.phone ?? "").replace(/[^0-9]/g, "");
+  const phoneMasked =
+    digits.length >= 8 ? `${digits.slice(0, 3)}****${digits.slice(-4)}` : "";
+
   return NextResponse.json(
-    { verified: !!data },
+    { verified: !!data, phoneMasked },
     { headers: { "Cache-Control": "no-store" } },
   );
 }

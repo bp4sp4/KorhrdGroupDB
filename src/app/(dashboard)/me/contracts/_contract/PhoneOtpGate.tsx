@@ -1,23 +1,40 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ShieldCheck, Send } from "lucide-react";
+import { ShieldCheck, Send, Clock } from "lucide-react";
 import styles from "./PhoneOtpGate.module.css";
+
+const OTP_LEN = 6;
 
 interface Props {
   contractId: string;
   onVerifiedChange: (v: boolean) => void;
+  onBack?: () => void;
+  userName?: string;
+  initialPhoneMasked?: string;
 }
 
-// 서명 전 휴대폰 OTP 본인인증 게이트
-export default function PhoneOtpGate({ contractId, onVerifiedChange }: Props) {
-  const [phase, setPhase] = useState<"idle" | "sent" | "verified">("idle");
-  const [phoneMasked, setPhoneMasked] = useState("");
+// 휴대폰 본인인증 — 발송(request) → 6칸 OTP 입력(verify)
+export default function PhoneOtpGate({
+  contractId,
+  onVerifiedChange,
+  onBack,
+  userName,
+  initialPhoneMasked = "",
+}: Props) {
+  const [step, setStep] = useState<"request" | "verify">("request");
+  const [phoneMasked, setPhoneMasked] = useState(initialPhoneMasked);
   const [code, setCode] = useState("");
+  const [seconds, setSeconds] = useState(0);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [left, setLeft] = useState(0);
+  const [verified, setVerified] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    setPhoneMasked((p) => p || initialPhoneMasked);
+  }, [initialPhoneMasked]);
 
   useEffect(() => {
     return () => {
@@ -26,10 +43,10 @@ export default function PhoneOtpGate({ contractId, onVerifiedChange }: Props) {
   }, []);
 
   const startCountdown = useCallback((sec: number) => {
-    setLeft(sec);
+    setSeconds(sec);
     if (timer.current) clearInterval(timer.current);
     timer.current = setInterval(() => {
-      setLeft((s) => {
+      setSeconds((s) => {
         if (s <= 1) {
           if (timer.current) clearInterval(timer.current);
           return 0;
@@ -39,7 +56,7 @@ export default function PhoneOtpGate({ contractId, onVerifiedChange }: Props) {
     }, 1000);
   }, []);
 
-  const send = async () => {
+  const requestCode = async () => {
     setBusy(true);
     setErr(null);
     try {
@@ -53,16 +70,19 @@ export default function PhoneOtpGate({ contractId, onVerifiedChange }: Props) {
         setErr(d.error ?? "인증번호 발송에 실패했습니다.");
         return;
       }
-      setPhoneMasked(d.phoneMasked ?? "");
-      setPhase("sent");
+      if (d.phoneMasked) setPhoneMasked(d.phoneMasked);
       setCode("");
+      setVerified(false);
+      setStep("verify");
       startCountdown(d.expiresInSec ?? 300);
+      setTimeout(() => inputRef.current?.focus(), 50);
     } finally {
       setBusy(false);
     }
   };
 
   const verify = async () => {
+    if (code.length !== OTP_LEN || busy) return;
     setBusy(true);
     setErr(null);
     try {
@@ -76,78 +96,126 @@ export default function PhoneOtpGate({ contractId, onVerifiedChange }: Props) {
         setErr(d.error ?? "인증에 실패했습니다.");
         return;
       }
-      setPhase("verified");
-      onVerifiedChange(true);
+      setVerified(true);
       if (timer.current) clearInterval(timer.current);
+      onVerifiedChange(true);
     } finally {
       setBusy(false);
     }
   };
 
-  const mmss = `${String(Math.floor(left / 60)).padStart(2, "0")}:${String(left % 60).padStart(2, "0")}`;
-
-  if (phase === "verified") {
-    return (
-      <div className={`${styles.gate} ${styles.gateOk}`}>
-        <ShieldCheck size={16} />
-        <span>휴대폰 본인인증 완료{phoneMasked ? ` · ${phoneMasked}` : ""}</span>
-      </div>
-    );
-  }
+  const ready = code.length === OTP_LEN;
+  const low = seconds <= 60;
+  const time = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 
   return (
-    <div className={styles.gate}>
-      <div className={styles.gateTitle}>
-        <ShieldCheck size={15} /> 휴대폰 본인인증
-      </div>
-      <p className={styles.gateDesc}>
-        서명 전 등록된 휴대폰으로 인증번호를 받아 본인 확인을 진행합니다.
-      </p>
-
-      {phase === "idle" ? (
-        <button
-          type="button"
-          className={styles.sendBtn}
-          onClick={send}
-          disabled={busy}
-        >
-          <Send size={14} /> {busy ? "발송 중…" : "인증번호 받기"}
+    <div className={styles.card}>
+      {onBack && (
+        <button type="button" className={styles.back} onClick={onBack}>
+          ← 목록
         </button>
-      ) : (
+      )}
+
+      {step === "request" ? (
         <>
-          <div className={styles.sentInfo}>
-            {phoneMasked}로 발송됨 {left > 0 && <b>· {mmss}</b>}
+          <div className={`${styles.badge} ${styles.badgeLg}`}>
+            <ShieldCheck size={26} />
           </div>
-          <div className={styles.codeRow}>
-            <input
-              className={styles.codeInput}
-              value={code}
-              inputMode="numeric"
-              maxLength={6}
-              placeholder="인증번호 6자리"
-              onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, ""))}
-            />
-            <button
-              type="button"
-              className={styles.verifyBtn}
-              onClick={verify}
-              disabled={busy || code.length !== 6}
-            >
-              확인
-            </button>
+          <h2 className={styles.reqTitle}>본인인증 후 서명</h2>
+          <p className={styles.reqDesc}>
+            {userName ? `${userName}님, ` : ""}계약서 서명 전 등록된 휴대폰으로 본인
+            확인을 진행합니다.
+          </p>
+          <div className={styles.targetRow}>
+            <span className={styles.targetLabel}>발송 대상</span>
+            <span className={styles.targetPhone}>{phoneMasked || "등록된 휴대폰"}</span>
           </div>
           <button
             type="button"
-            className={styles.resendBtn}
-            onClick={send}
-            disabled={busy || left > 270}
+            className={styles.reqBtn}
+            onClick={requestCode}
+            disabled={busy}
           >
-            인증번호 재발송
+            <Send size={17} /> {busy ? "발송 중…" : "인증번호 받기"}
           </button>
+          {err && <div className={styles.err}>{err}</div>}
+        </>
+      ) : (
+        <>
+          <div className={styles.vHeader}>
+            <div className={`${styles.badge} ${styles.badgeSm}`}>
+              <ShieldCheck size={18} />
+            </div>
+            <div className={styles.vHeaderText}>
+              <div className={styles.vTitle}>인증번호 입력</div>
+              <div className={styles.vSub}>
+                <b>{phoneMasked}</b>로 발송됨
+              </div>
+            </div>
+            <span className={`${styles.timer} ${low ? styles.timerLow : ""}`}>
+              <Clock size={14} />
+              {time}
+            </span>
+          </div>
+
+          <div className={styles.otpWrap}>
+            <input
+              ref={inputRef}
+              className={styles.otpInput}
+              value={code}
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={OTP_LEN}
+              onChange={(e) => {
+                setCode(e.target.value.replace(/\D/g, "").slice(0, OTP_LEN));
+                setErr(null);
+                setVerified(false);
+              }}
+            />
+            <div className={styles.otpCells}>
+              {Array.from({ length: OTP_LEN }, (_, i) => {
+                const digit = code[i] ?? "";
+                const active = i === code.length;
+                const filled = !!digit;
+                return (
+                  <div
+                    key={i}
+                    className={`${styles.cell} ${active ? styles.cellActive : ""} ${filled ? styles.cellFilled : ""}`}
+                  >
+                    {digit}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className={`${styles.verifyBtn} ${ready ? styles.verifyBtnReady : ""}`}
+            onClick={verify}
+            disabled={!ready || busy}
+          >
+            {busy ? "확인 중…" : "확인"}
+          </button>
+
+          <div className={styles.footer}>
+            {verified && (
+              <span className={styles.verifiedMsg}>
+                ✓ 본인인증이 완료되었습니다.
+              </span>
+            )}
+            <button
+              type="button"
+              className={styles.resend}
+              onClick={requestCode}
+              disabled={busy}
+            >
+              인증번호 재발송
+            </button>
+          </div>
+          {err && <div className={styles.err}>{err}</div>}
         </>
       )}
-
-      {err && <div className={styles.gateErr}>{err}</div>}
     </div>
   );
 }
