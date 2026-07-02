@@ -321,6 +321,9 @@ export default function ContractEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [preview, initialFormKey]);
   const [signature, setSignature] = useState<string | null>(initialSignature);
+  // 문서별 동의(본인 직접 서명·내용 동의) — 관리자 지정 직원 서명 흐름에서만
+  const employeeSign = mode === "assigned" && !submitUrl;
+  const [consent, setConsent] = useState(false);
   const [saving, setSaving] = useState(false);
   const docRef = useRef<HTMLDivElement>(null);
   const cfg = VARIANT[variant];
@@ -423,6 +426,8 @@ export default function ContractEditor({
   const handleSave = async (signed: boolean) => {
     if (!form.employeeName.trim()) return alert("근로자 성명을 입력해 주세요.");
     if (signed && !signature) return alert("서명을 먼저 작성해 주세요.");
+    if (signed && employeeSign && !consent)
+      return alert("서명 전 동의에 체크해 주세요.");
     setSaving(true);
     try {
       if (mode === "assigned" && contractId) {
@@ -432,7 +437,7 @@ export default function ContractEditor({
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ form_data: form, signature, signed, pdfDataUrl }),
+            body: JSON.stringify({ form_data: form, signature, signed, pdfDataUrl, consent }),
           },
         );
         if (!res.ok) {
@@ -515,7 +520,7 @@ export default function ContractEditor({
         <aside className={styles.formPane}>
           <div className={styles.formScroll}>
             {/* 계약서 문서 순서대로: 성명 → 계약 → 임금 → 체결·근로자정보 → 서명 */}
-            <Section title="① 계약 / 업무">
+            <Section title="계약 / 업무">
               <Field label="성명">
                 <input className={styles.input} value={form.employeeName} onChange={(ev) => up("employeeName", ev.target.value)} {...focusProps("employeeName")} />
               </Field>
@@ -532,7 +537,7 @@ export default function ContractEditor({
               </Field>
             </Section>
 
-            <Section title={isHourly ? "② 임금 (시급)" : "② 임금 (월 기준)"}>
+            <Section title={isHourly ? "임금 (시급)" : "임금 (월 기준)"}>
               {lockWage && (
                 <p className={styles.lockHint}>
                   임금은 관리자가 지정한 금액으로, 수정할 수 없습니다.
@@ -558,7 +563,7 @@ export default function ContractEditor({
               )}
             </Section>
 
-            <Section title="③ 계약 체결 · 근로자(을) 정보">
+            <Section title="계약 체결 · 근로자(을) 정보">
               <Field label="계약 체결일">
                 <input type="date" className={styles.input} value={form.contractDate} onChange={(ev) => up("contractDate", ev.target.value)} {...focusProps("contractDate")} />
               </Field>
@@ -573,8 +578,18 @@ export default function ContractEditor({
               </Field>
             </Section>
 
-            <Section title="④ 서명 (을)">
+            <Section title="서명 (을)">
               <SignaturePad value={signature} onChange={setSignature} />
+              {employeeSign && (
+                <label className={styles.consentRow}>
+                  <input
+                    type="checkbox"
+                    checked={consent}
+                    onChange={(e) => setConsent(e.target.checked)}
+                  />
+                  <span>본인이 직접 서명하며, 위 계약 내용에 동의합니다.</span>
+                </label>
+              )}
             </Section>
           </div>
 
@@ -585,7 +600,7 @@ export default function ContractEditor({
             <button type="button" className={styles.btnSecondary} onClick={() => handleSave(false)} disabled={saving}>
               <Save size={15} /> 임시저장
             </button>
-            <button type="button" className={styles.btnPrimary} onClick={() => handleSave(true)} disabled={saving}>
+            <button type="button" className={styles.btnPrimary} onClick={() => handleSave(true)} disabled={saving || (employeeSign && !consent)}>
               {saving ? "저장 중…" : "서명 후 저장"}
             </button>
           </div>

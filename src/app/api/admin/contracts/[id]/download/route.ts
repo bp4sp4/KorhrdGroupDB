@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuthFull } from "@/lib/auth/requireAuth";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { logAction } from "@/lib/audit/logAction";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -58,6 +59,14 @@ export async function GET(
   const buf = Buffer.from(await file.arrayBuffer());
   const label = TYPE_LABEL[row.contract_type as string] ?? row.contract_type;
   const fileName = `${(row.employee_name as string) || "계약서"}_${label}.pdf`;
+
+  await logAction({
+    user_id: String(appUser.id),
+    action: "view",
+    resource: "전자계약",
+    resource_id: id,
+    detail: `${row.employee_name ?? ""} ${label} PDF 다운로드`,
+  });
 
   return new NextResponse(new Uint8Array(buf), {
     status: 200,

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createHash } from "crypto";
 import { requireAuthFull } from "@/lib/auth/requireAuth";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { logAction } from "@/lib/audit/logAction";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -35,7 +37,7 @@ export async function POST(
 
   const { data: contract, error: fetchError } = await supabaseAdmin
     .from("employment_contracts")
-    .select("id, status, employee_user_id, pdf_path")
+    .select("id, status, employee_user_id, pdf_path, locked")
     .eq("id", id)
     .maybeSingle();
   if (fetchError)
@@ -49,6 +51,17 @@ export async function POST(
     return NextResponse.json(
       { error: "서명 완료된 계약서만 재생성할 수 있습니다." },
       { status: 400 },
+    );
+  }
+  // 무결성: 해시로 봉인·잠긴 계약서는 재생성(문서 변경) 금지.
+  // (구버전 서명본은 아직 해시가 없어 1회 재생성 후 자동 봉인됨)
+  if (contract.locked) {
+    return NextResponse.json(
+      {
+        error:
+          "서명 완료·봉인된 계약서는 재생성할 수 없습니다. 내용을 바꾸려면 새로 작성·재서명해야 합니다.",
+      },
+      { status: 409 },
     );
   }
   if (!body.pdfDataUrl) {
@@ -75,8 +88,15 @@ export async function POST(
     );
   }
 
-  // 상태·서명일시는 유지, 문서 데이터만 최신으로 반영
-  const update: Record<string, unknown> = { pdf_path: storagePath };
+  // 재생성 후 해시로 봉인 — 이후에는 변경 불가(1회 보정만 허용)
+  const pdfSha256 = createHash("sha256").update(pdfBytes).digest("hex");
+
+  // 상태·서명일시는 유지, 문서 데이터만 최신으로 반영 + 봉인
+  const update: Record<string, unknown> = {
+    pdf_path: storagePath,
+    pdf_sha256: pdfSha256,
+    locked: true,
+  };
   if (body.form_data) update.form_data = body.form_data;
   if (body.signature !== undefined) update.signature = body.signature;
 
@@ -87,5 +107,14 @@ export async function POST(
   if (updateError)
     return NextResponse.json({ error: updateError.message }, { status: 500 });
 
-  return NextResponse.json({ ok: true });
+  await logAction({
+    user_id: String(appUser.id),
+    action: "update",
+    resource: "전자계약",
+    resource_id: id,
+    detail: "관리자 PDF 재생성 후 봉인",
+    meta: { pdf_sha256: pdfSha256 },
+  });
+
+  return NextResponse.json({ ok: true, pdf_sha256: pdfSha256 });
 }

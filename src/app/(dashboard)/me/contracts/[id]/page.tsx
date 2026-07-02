@@ -7,6 +7,7 @@ import ContractEditor, {
   type WorkVariant,
 } from "../_contract/ContractEditor";
 import PledgeEditor, { type PledgeKind } from "../_contract/PledgeEditor";
+import PhoneOtpGate from "../_contract/PhoneOtpGate";
 
 const TYPE_LABEL: Record<string, string> = {
   regular: "정규직",
@@ -42,6 +43,17 @@ export default function ContractSignPage({
   const [contract, setContract] = useState<ContractDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const [verified, setVerified] = useState(false);
+
+  // 이미 최근 본인인증을 통과했으면 게이트 건너뜀 (한 번 인증 → 여러 문서 서명)
+  useEffect(() => {
+    fetch("/api/me/contracts/otp-status", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.verified) setVerified(true);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     fetch(`/api/me/contracts/${id}`)
@@ -72,6 +84,27 @@ export default function ContractSignPage({
       (contract.form_data?.employeeName as string) || contract.employee_name,
   };
   const onBack = () => router.push("/me/contracts");
+
+  // 서명 전 본인인증 게이트 — 미서명(작성/서명 대기) 계약서는 인증 후 진입
+  const needsSign =
+    contract.status === "pending_sign" || contract.status === "draft";
+  if (needsSign && !verified) {
+    return (
+      <div className={styles.gateScreen}>
+        <div className={styles.gateBox}>
+          <button type="button" className={styles.gateBack} onClick={onBack}>
+            ← 목록
+          </button>
+          <h1 className={styles.gateTitle}>본인인증 후 서명</h1>
+          <p className={styles.gateSub}>
+            {contract.employee_name}님, 계약서 작성·서명 전에 휴대폰 본인인증을
+            진행해 주세요.
+          </p>
+          <PhoneOtpGate contractId={id} onVerifiedChange={setVerified} />
+        </div>
+      </div>
+    );
+  }
 
   // 근로계약서 4종 — 폼+미리보기 에디터 (전체화면)
   if (WORK_TYPES.has(contract.contract_type)) {

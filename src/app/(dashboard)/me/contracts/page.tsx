@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import styles from "./page.module.css";
+
+type Tab = "all" | "pending" | "done";
 
 const TYPE_LABEL: Record<string, string> = {
   regular: "정규직",
@@ -35,6 +37,7 @@ export default function MyContractsPage() {
   const [items, setItems] = useState<ContractItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const [tab, setTab] = useState<Tab>("all");
 
   useEffect(() => {
     fetch("/api/me/contracts")
@@ -46,6 +49,36 @@ export default function MyContractsPage() {
       .catch((e) => setErr((e as Error).message))
       .finally(() => setLoading(false));
   }, []);
+
+  const isDone = (s: string) => s === "signed";
+  const isWaiting = (s: string) => s === "pending_sign" || s === "draft";
+
+  const counts = useMemo(
+    () => ({
+      all: items.length,
+      pending: items.filter((c) => isWaiting(c.status)).length,
+      done: items.filter((c) => isDone(c.status)).length,
+    }),
+    [items],
+  );
+
+  const rows = useMemo(
+    () =>
+      items.filter((c) =>
+        tab === "all"
+          ? true
+          : tab === "pending"
+            ? isWaiting(c.status)
+            : isDone(c.status),
+      ),
+    [items, tab],
+  );
+
+  const TABS: { key: Tab; label: string; count: number }[] = [
+    { key: "all", label: "전체", count: counts.all },
+    { key: "pending", label: "서명 대기", count: counts.pending },
+    { key: "done", label: "완료", count: counts.done },
+  ];
 
   return (
     <div className={styles.wrap}>
@@ -59,18 +92,42 @@ export default function MyContractsPage() {
         </p>
       </div>
 
+      {/* 탭 */}
+      <div className={styles.tabs}>
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            type="button"
+            className={`${styles.tab} ${tab === t.key ? styles.tabActive : ""}`}
+            onClick={() => setTab(t.key)}
+          >
+            {t.label}
+            <span className={styles.tabCount}>{t.count}</span>
+          </button>
+        ))}
+      </div>
+
       {err && <div className={styles.error}>{err}</div>}
 
       {loading ? (
         <div className={styles.empty}>불러오는 중…</div>
       ) : items.length === 0 ? (
         <div className={styles.empty}>지정된 계약서가 없습니다.</div>
+      ) : rows.length === 0 ? (
+        <div className={styles.empty}>해당 상태의 계약서가 없습니다.</div>
       ) : (
         <ul className={styles.list}>
-          {items.map((c) => {
+          {rows.map((c) => {
             const isPending = c.status === "pending_sign";
             const isSigned = c.status === "signed";
             const isDraft = c.status === "draft";
+            const statusCls = isSigned
+              ? styles.statusSigned
+              : isPending
+                ? styles.statusPending
+                : isDraft
+                  ? styles.statusDraft
+                  : styles.statusCancelled;
             return (
               <li key={c.id} className={styles.item}>
                 <div className={styles.itemLeft}>
@@ -78,15 +135,7 @@ export default function MyContractsPage() {
                     <span className={styles.typeBadge}>
                       {TYPE_LABEL[c.contract_type] ?? c.contract_type}
                     </span>
-                    <span
-                      className={`${styles.statusChip} ${
-                        isSigned
-                          ? styles.statusSigned
-                          : isPending
-                            ? styles.statusPending
-                            : styles.statusDraft
-                      }`}
-                    >
+                    <span className={`${styles.statusText} ${statusCls}`}>
                       {STATUS_LABEL[c.status] ?? c.status}
                     </span>
                   </div>
