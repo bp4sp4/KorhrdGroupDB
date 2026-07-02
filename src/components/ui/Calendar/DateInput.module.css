@@ -203,3 +203,31 @@
   from { opacity: 0; transform: translateY(-4px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+/* 팝오버 하단 — 초기화(선택값 비우기) */
+.popoverFooter {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 12px 10px;
+}
+
+.clearBtn {
+  border: 1px solid #e5e8eb;
+  background: #fff;
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #4e5968;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.clearBtn:hover {
+  background: #f2f4f6;
+}
+
+.clearBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

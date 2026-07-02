@@ -22,6 +22,7 @@ interface DateInputProps {
   minDate?: Date               // 선택 가능 최소 날짜 (포함)
   maxDate?: Date               // 선택 가능 최대 날짜 (포함)
   defaultMonth?: Date          // value가 없을 때 캘린더 첫 진입 월 (미지정 시 minDate로 fallback)
+  clearable?: boolean          // 팝오버 하단에 "초기화" 버튼 표시 (선택값 비우기)
 }
 
 // 저장 표준은 'yyyy-MM-dd' 이지만, 과거 데이터/수기 입력이 한글·점 포맷으로
@@ -73,6 +74,7 @@ export function DateInput({
   minDate,
   maxDate,
   defaultMonth,
+  clearable = false,
 }: DateInputProps) {
   const [open, setOpen] = useState(false)
   const [popoverStyle, setPopoverStyle] = useState<React.CSSProperties>({})
@@ -196,6 +198,21 @@ export function DateInput({
               }
               defaultMonth={defaultMonth ?? minDate ?? maxDate}
             />
+            {clearable && (
+              <div className={styles.popoverFooter}>
+                <button
+                  type="button"
+                  className={styles.clearBtn}
+                  onClick={() => {
+                    onChange?.('')
+                    setOpen(false)
+                  }}
+                  disabled={!display}
+                >
+                  초기화
+                </button>
+              </div>
+            )}
           </div>,
           document.body,
         )}

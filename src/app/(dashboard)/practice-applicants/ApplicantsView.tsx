@@ -1356,6 +1356,7 @@ function DetailModal({
                       className={styles.detailDateWrap}
                       triggerClassName={styles.detailDateTrigger}
                       showIcon={false}
+                      clearable
                     />
                   </div>
                 </div>
@@ -1378,6 +1379,7 @@ function DetailModal({
                       className={styles.detailDateWrap}
                       triggerClassName={styles.detailDateTrigger}
                       showIcon={false}
+                      clearable
                     />
                   </div>
                 </div>

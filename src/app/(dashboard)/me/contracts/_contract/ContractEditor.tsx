@@ -282,6 +282,10 @@ interface Props {
   highlightArticleN?: number | null;
   /** true면 처음엔 문서만 보기(사이드바 숨김), 헤더의 '수정' 버튼으로 편집 시작 */
   viewFirst?: boolean;
+  /** 저장 API 오버라이드 — 관리자 PDF 재생성 등 me 이외 경로로 제출할 때 */
+  submitUrl?: string;
+  /** 저장 성공 후 이동 경로 (기본 /me/contracts) */
+  afterSavePath?: string;
   headerTitle?: string;
   headerBadge?: string;
   onBack?: () => void;
@@ -297,6 +301,8 @@ export default function ContractEditor({
   preview = false,
   highlightArticleN = null,
   viewFirst = false,
+  submitUrl,
+  afterSavePath = "/me/contracts",
   headerTitle,
   headerBadge,
   onBack,
@@ -422,7 +428,7 @@ export default function ContractEditor({
       if (mode === "assigned" && contractId) {
         const pdfDataUrl = signed ? await renderPdfDataUrl() : null;
         const res = await fetch(
-          `/api/me/contracts/${contractId}/submit-form`,
+          submitUrl ?? `/api/me/contracts/${contractId}/submit-form`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -450,7 +456,7 @@ export default function ContractEditor({
         }
       }
       alert(signed ? "서명 완료 후 저장되었습니다." : "임시 저장되었습니다.");
-      router.push("/me/contracts");
+      router.push(afterSavePath);
     } catch (e) {
       alert((e as Error).message);
     } finally {

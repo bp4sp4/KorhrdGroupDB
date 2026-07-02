@@ -174,6 +174,14 @@ export default function ContractsListPage() {
                           PDF 다운로드
                         </button>
                       )}
+                      {c.status === "signed" && (
+                        <Link
+                          href={`/admin/contracts/${c.id}`}
+                          className={styles.actionBtn}
+                        >
+                          PDF 재생성
+                        </Link>
+                      )}
                       <button
                         type="button"
                         className={styles.actionDelBtn}

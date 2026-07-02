@@ -2,6 +2,8 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import styles from "./navermap.module.css";
 import type { LatLng, MapItem } from "./types";
+import { distance } from "motion/react";
+import { differenceInBusinessDays } from "date-fns";
 
 // 컨테이너 크기 변화 후 타일이 안 그려지는 문제 — 리사이즈 이벤트 + refresh 둘 다 쏨
 function nudgeMap(map: unknown) {
@@ -180,7 +182,9 @@ export default function NaverMapView({
     // HMR/리마운트로 기존 지도가 현재 컨테이너와 분리됐으면 폐기 후 재생성
     if (mapInstanceRef.current && mapElRef.current !== mapRef.current) {
       try {
-        (mapInstanceRef.current as unknown as { destroy?: () => void }).destroy?.();
+        (
+          mapInstanceRef.current as unknown as { destroy?: () => void }
+        ).destroy?.();
       } catch {
         /* 무시 */
       }
@@ -375,7 +379,15 @@ export default function NaverMapView({
         infoWindowRef.current = null;
       }
     };
-  }, [isLoaded, userLocation, items, selectedId, showUserMarker, routeInfo, routeLoading]);
+  }, [
+    isLoaded,
+    userLocation,
+    items,
+    selectedId,
+    showUserMarker,
+    routeInfo,
+    routeLoading,
+  ]);
 
   // 컴포넌트 언마운트 시 지도 파괴
   useEffect(() => {

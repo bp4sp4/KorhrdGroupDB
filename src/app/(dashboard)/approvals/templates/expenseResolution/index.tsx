@@ -64,7 +64,7 @@ function AccountList({
     >
       <option value="">통장 선택</option>
       {accounts.map((a) => {
-        const label = `${a.bank_name}${a.account_holder ? ` · ${a.account_holder}` : ''} · ${a.account_number}${a.memo ? ` (${a.memo})` : ''}`
+        const label = `${a.account_number}${a.memo ? ` (${a.memo})` : ''}`
         return (
           <option key={a.id} value={a.id}>
             {label}

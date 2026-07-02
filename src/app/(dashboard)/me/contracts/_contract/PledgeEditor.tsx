@@ -161,7 +161,7 @@ function Body({ kind }: { kind: PledgeKind }) {
           수집·이용 및 제3자 제공에 대하여 아래 사항을 모두 숙지하신 후 동의 여부를
           결정하여 회사에 제출하여 주시기 바랍니다.
         </p>
-        <div className={styles.article}>
+        <div className={styles.article} data-keep="">
           <div className={styles.articleHead}>개인정보 수집·이용 동의</div>
           <div className={styles.articleBody}>
             <p>· 수집·이용 목적 : 근로계약 체결 및 유지 / 인사·노무 관리 및 급여 지급</p>
@@ -253,7 +253,7 @@ function Body({ kind }: { kind: PledgeKind }) {
         회사의 영업비밀 보호와 관련하여 다음과 같이 서약합니다.
       </p>
       {arts.map(([t, b], i) => (
-        <div key={i} className={styles.article}>
+        <div key={i} className={styles.article} data-keep="">
           <div className={styles.articleHead}>
             제{i + 1}조 ({t})
           </div>
@@ -272,6 +272,10 @@ interface Props {
   initialForm?: Partial<PledgeForm>;
   initialSignature?: string | null;
   readOnly?: boolean;
+  /** 저장 API 오버라이드 — 관리자 PDF 재생성 등 me 이외 경로로 제출할 때 */
+  submitUrl?: string;
+  /** 저장 성공 후 이동 경로 (기본 /me/contracts) */
+  afterSavePath?: string;
   headerTitle?: string;
   headerBadge?: string;
   onBack?: () => void;
@@ -283,6 +287,8 @@ export default function PledgeEditor({
   initialForm,
   initialSignature = null,
   readOnly = false,
+  submitUrl,
+  afterSavePath = "/me/contracts",
   headerTitle,
   headerBadge,
   onBack,
@@ -315,6 +321,22 @@ export default function PledgeEditor({
     return buildContractPdf(el, styles.pdfClean);
   }, []);
 
+  // PDF 다운로드 — 근로계약서와 동일하게 페이지분할 엔진으로 생성
+  const [pdfBusy, setPdfBusy] = useState(false);
+  const handleDownloadPdf = useCallback(async () => {
+    if (pdfBusy) return;
+    setPdfBusy(true);
+    try {
+      const pdf = await buildPdf();
+      if (pdf)
+        pdf.save(
+          `${(form.employeeName || "").trim() || "문서"} ${TITLE[kind]}.pdf`,
+        );
+    } finally {
+      setPdfBusy(false);
+    }
+  }, [buildPdf, form.employeeName, kind, pdfBusy]);
+
   const renderPdfDataUrl = useCallback(async (): Promise<string | null> => {
     const pdf = await buildPdf();
     return pdf ? pdf.output("datauristring") : null;
@@ -326,7 +348,7 @@ export default function PledgeEditor({
     setSaving(true);
     try {
       const pdfDataUrl = signed ? await renderPdfDataUrl() : null;
-      const res = await fetch(`/api/me/contracts/${contractId}/submit-form`, {
+      const res = await fetch(submitUrl ?? `/api/me/contracts/${contractId}/submit-form`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ form_data: form, signature, signed, pdfDataUrl }),
@@ -336,7 +358,7 @@ export default function PledgeEditor({
         throw new Error(d.error ?? "저장 실패");
       }
       alert(signed ? "서명 완료 후 저장되었습니다." : "임시 저장되었습니다.");
-      router.push("/me/contracts");
+      router.push(afterSavePath);
     } catch (e) {
       alert((e as Error).message);
     } finally {
@@ -358,6 +380,16 @@ export default function PledgeEditor({
           {headerBadge && <span className={styles.editorBadge}>{headerBadge}</span>}
           {headerTitle && <span className={styles.editorTitle}>{headerTitle}</span>}
           {readOnly && <span className={styles.editorSignedBadge}>✅ 서명 완료</span>}
+          <div className={styles.editorBarActions}>
+            <button
+              type="button"
+              className={`${styles.barBtn} ${styles.barBtnGhost}`}
+              onClick={handleDownloadPdf}
+              disabled={pdfBusy}
+            >
+              <Download size={15} /> {pdfBusy ? "PDF 생성 중…" : "PDF 다운로드"}
+            </button>
+          </div>
         </div>
       )}
       <div className={styles.editorBody}>
@@ -394,8 +426,8 @@ export default function PledgeEditor({
               </section>
             </div>
             <div className={styles.toolbar}>
-              <button type="button" className={styles.btnGhost} onClick={() => window.print()}>
-                <Download size={15} /> PDF 저장
+              <button type="button" className={styles.btnGhost} onClick={handleDownloadPdf} disabled={pdfBusy}>
+                <Download size={15} /> {pdfBusy ? "PDF 생성 중…" : "PDF 저장"}
               </button>
               <button type="button" className={styles.btnSecondary} onClick={() => handleSave(false)} disabled={saving}>
                 <Save size={15} /> 임시저장
@@ -410,7 +442,7 @@ export default function PledgeEditor({
           <div className={styles.doc} id="contract-doc" ref={docRef}>
             <h1 className={styles.docTitle}>{TITLE[kind]}</h1>
             {useRrn && (
-              <div className={styles.signGrid}>
+              <div className={styles.signGrid} data-keep="">
                 <div className={styles.party}>
                   <div className={styles.partyRows}>
                     <div>성명 : {form.employeeName}</div>
@@ -421,15 +453,18 @@ export default function PledgeEditor({
             )}
             <Body kind={kind} />
 
-            <p className={styles.docDate}>
-              {d.y}년 {d.m || "  "}월 {d.d || "  "}일
-            </p>
-            <div className={styles.signGrid}>
-              <div className={styles.party}>
-                <div className={styles.partyRows}>
-                  {!useRrn && <div>생년월일 : {ymdParts(form.birthDate).y !== "20" || form.birthDate ? `${ymdParts(form.birthDate).y}년 ${ymdParts(form.birthDate).m || "  "}월 ${ymdParts(form.birthDate).d || "  "}일` : ""}</div>}
-                  <div className={styles.partySign}>
-                    성명 : {form.employeeName} <Sign src={signature} />
+            {/* 날짜+서명은 한 페이지에 함께 유지 */}
+            <div data-keep="">
+              <p className={styles.docDate}>
+                {d.y}년 {d.m || "  "}월 {d.d || "  "}일
+              </p>
+              <div className={styles.signGrid}>
+                <div className={styles.party}>
+                  <div className={styles.partyRows}>
+                    {!useRrn && <div>생년월일 : {ymdParts(form.birthDate).y !== "20" || form.birthDate ? `${ymdParts(form.birthDate).y}년 ${ymdParts(form.birthDate).m || "  "}월 ${ymdParts(form.birthDate).d || "  "}일` : ""}</div>}
+                    <div className={styles.partySign}>
+                      성명 : {form.employeeName} <Sign src={signature} />
+                    </div>
                   </div>
                 </div>
               </div>

@@ -2001,7 +2001,7 @@ export default function ApprovalsPage() {
             )}
             {canEdit && (
               <button
-                className={styles.btn_secondary}
+                className={styles.btn_primary}
                 onClick={() => openForEdit(selectedApproval)}
                 disabled={actioning}
               >

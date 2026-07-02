@@ -121,6 +121,9 @@
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
 }
 .actionBtn:hover {
   background: #e8f3ff;
