@@ -645,9 +645,16 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  flex: 1 0 0;
   align-self: stretch;
   min-width: 0;
+}
+
+/* 가로 2단 행(성별·생년월일 / 희망요일·성적보고일 등) 안의 필드만 반반 분할.
+   세로 컬럼 직속 단일 필드는 flex-grow 를 주지 않아 세로로 늘어나지 않고,
+   폭은 align-self:stretch 로 채운다. */
+.detailFieldRow > .detailField,
+.detailRightRow > .detailField {
+  flex: 1 0 0;
 }
 
 .detailFieldLabel {
