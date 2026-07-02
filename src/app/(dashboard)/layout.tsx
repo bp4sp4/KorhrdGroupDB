@@ -305,7 +305,7 @@ export default function DashboardLayout({
           <Header userName={displayName} userRole={userRole} permissions={permissions} revenueOwnDivisions={revenueOwnDivisions} departmentCode={departmentCode} isDivisionAdmin={isDivisionAdmin} isDeptHead={isDeptHead} hiddenMenus={hiddenMenus} onMenuToggle={() => setSidebarOpen(v => !v)} />
 
           <main
-            className={`${styles.mainContent}${pathname.startsWith('/approvals') ? ` ${styles.mainContentWhite}` : ''}${pathname.startsWith('/profit') || pathname.startsWith('/practice-applicants/agency') ? ` ${styles.mainContentFlush}` : ''}`}
+            className={`${styles.mainContent}${pathname.startsWith('/approvals') ? ` ${styles.mainContentWhite}` : ''}${pathname.startsWith('/profit') || pathname.startsWith('/practice-applicants/agency') || pathname.startsWith('/admin/contracts/new') ? ` ${styles.mainContentFlush}` : ''}`}
             style={
               pathname.startsWith('/calendar') ||
               pathname.startsWith('/dashboard') ||

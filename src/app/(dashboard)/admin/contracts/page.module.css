@@ -1,144 +1,557 @@
+/* 근로계약서 관리 — 커맨드센터 (부서 → 근로자 트리) */
 .wrap {
-  max-width: 1200px;
+  max-width: 1240px;
   margin: 0 auto;
-  padding: 32px 24px 80px;
+  padding: 26px 24px 60px;
+  color: #1a2233;
 }
 
+/* ---------------------------------------------------------------------------
+   페이지 헤드
+   --------------------------------------------------------------------------- */
 .head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 .title {
-  margin: 0 0 6px;
-  font-size: 24px;
+  margin: 0;
+  font-size: 21px;
   font-weight: 800;
-  color: #191f28;
+  letter-spacing: -0.01em;
+  color: #1a2233;
 }
 .sub {
-  margin: 0;
-  font-size: 14px;
-  color: #8b95a1;
+  margin: 5px 0 0;
+  font-size: 13.5px;
+  color: #667085;
 }
-
 .btnPrimary {
   display: inline-flex;
   align-items: center;
-  padding: 10px 18px;
-  border-radius: 8px;
-  background: #3182f6;
+  gap: 7px;
+  background: #2b6ef2;
   color: #fff;
   font-size: 14px;
   font-weight: 700;
+  padding: 11px 17px;
+  border-radius: 9px;
+  border: none;
+  cursor: pointer;
   text-decoration: none;
-  flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(43, 110, 242, 0.35);
+  white-space: nowrap;
 }
 .btnPrimary:hover {
-  background: #1b64da;
+  background: #1f5fda;
 }
 
 .error {
   padding: 12px 16px;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  color: #dc2626;
-  font-size: 13px;
   margin-bottom: 16px;
+  background: #fef3f2;
+  border: 1px solid #f4c7c2;
+  border-radius: 10px;
+  color: #d92d20;
+  font-size: 13px;
 }
 
-.tableWrap {
+/* ---------------------------------------------------------------------------
+   레이아웃
+   --------------------------------------------------------------------------- */
+.layout {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+/* ---------------------------------------------------------------------------
+   좌측 필터 레일
+   --------------------------------------------------------------------------- */
+.rail {
+  width: 242px;
+  flex: 0 0 auto;
   background: #fff;
-  border: 1px solid #eef0f3;
-  border-radius: 12px;
+  border: 1px solid #eaeef4;
+  border-radius: 13px;
+  padding: 8px;
+}
+.railLabel {
+  font-size: 11px;
+  font-weight: 800;
+  color: #8592a3;
+  letter-spacing: 0.08em;
+  padding: 12px 12px 8px;
+}
+.railDivider {
+  height: 1px;
+  background: #f0f2f6;
+  margin: 8px 4px;
+}
+
+.facet {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  text-align: left;
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  color: #5b6577;
+  font-weight: 500;
+  font-family: inherit;
+}
+.facet:hover {
+  background: #f6f8fb;
+}
+.facetActive,
+.facetActive:hover {
+  background: #eef4ff;
+  color: #1f5fda;
+  font-weight: 700;
+}
+.facetCount {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.deptHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  text-align: left;
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  color: #3c4657;
+  font-weight: 600;
+  font-family: inherit;
+}
+.deptHead:hover {
+  background: #f6f8fb;
+}
+.deptHeadActive,
+.deptHeadActive:hover {
+  background: #eef4ff;
+  color: #1f5fda;
+  font-weight: 700;
+}
+.deptChevron {
+  display: flex;
+  color: #1f5fda;
+  transition: transform 0.15s ease;
+}
+.deptChevronCollapsed {
+  transform: rotate(-90deg);
+  color: #98a2b3;
+}
+.deptName {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 7px 12px 7px 34px;
+  border-radius: 8px;
+  font-size: 13px;
+  text-align: left;
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  color: #5b6577;
+  font-weight: 500;
+  font-family: inherit;
+}
+.workRow:hover {
+  background: #f6f8fb;
+}
+.workRowActive,
+.workRowActive:hover {
+  background: #eef4ff;
+  color: #1f5fda;
+  font-weight: 700;
+}
+.workName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------------------
+   메인 패널
+   --------------------------------------------------------------------------- */
+.panel {
+  flex: 1;
+  min-width: 0;
+  background: #fff;
+  border: 1px solid #eaeef4;
+  border-radius: 13px;
   overflow: hidden;
 }
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-.table thead {
-  background: #f9fafb;
-}
-.table th,
-.table td {
-  padding: 12px 16px;
-  text-align: left;
-  border-bottom: 1px solid #eef0f3;
-}
-.table th {
-  font-weight: 700;
-  color: #4e5968;
-  font-size: 12px;
-}
-.table tbody tr:hover {
-  background: #fafbfc;
-}
-.strong {
-  font-weight: 700;
-  color: #191f28;
-}
-.empty {
-  text-align: center;
-  padding: 60px 20px;
-  color: #8b95a1;
-}
 
-.statusChip {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 10px;
-  font-size: 11px;
-  font-weight: 700;
-}
-.statusDraft {
-  background: #f2f4f6;
-  color: #4e5968;
-}
-.statusPending {
-  background: #fff7ed;
-  color: #c2410c;
-}
-.statusSigned {
-  background: #ecfdf5;
-  color: #047857;
-}
-
-.actions {
+/* 툴바 */
+.toolbar {
   display: flex;
-  gap: 6px;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #eef1f6;
 }
-.actionBtn {
-  padding: 5px 10px;
-  border-radius: 6px;
-  border: 1px solid #3182f6;
-  background: #fff;
-  color: #3182f6;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
+.searchWrap {
+  position: relative;
+  flex: 1;
+  max-width: 340px;
+}
+.searchIcon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #98a2b3;
+  display: flex;
+}
+.searchInput {
+  width: 100%;
+  padding: 9px 12px 9px 36px;
+  border: 1px solid #e3e8f0;
+  border-radius: 9px;
+  font-size: 13.5px;
+  background: #fbfcfe;
+  outline: none;
   font-family: inherit;
-  text-decoration: none;
+  color: #1a2233;
+}
+.searchInput:focus {
+  border-color: #2b6ef2;
+}
+.toolbarSpacer {
+  flex: 1;
+}
+.toolbarCount {
+  font-size: 13px;
+  color: #8592a3;
+}
+
+/* 필터 칩 */
+.chipBar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #eef1f6;
+  background: #fbfcfe;
+}
+.chipBarLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: #8592a3;
+}
+.chip {
   display: inline-flex;
   align-items: center;
-}
-.actionBtn:hover {
-  background: #e8f3ff;
-}
-.actionDelBtn {
-  padding: 5px 10px;
-  border-radius: 6px;
-  border: 1px solid #fecaca;
-  background: #fff;
-  color: #dc2626;
-  font-size: 12px;
+  gap: 7px;
+  padding: 5px 8px 5px 12px;
+  border-radius: 999px;
+  background: #eef4ff;
+  color: #1f5fda;
+  font-size: 12.5px;
   font-weight: 600;
+  border: 1px solid #d6e4ff;
+}
+.chipClear {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #c9dbff;
+  color: #1f5fda;
+  border: none;
+  cursor: pointer;
+}
+.chipReset {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #667085;
+  padding: 5px 8px;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+.chipReset:hover {
+  background: #f0f2f6;
+}
+
+/* 일괄 작업 바 */
+.bulkBar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 16px;
+  background: #eef4ff;
+  border-bottom: 1px solid #dbe6ff;
+}
+.bulkCount {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1f5fda;
+}
+.bulkAction {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1f5fda;
+  padding: 6px 11px;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #c9dbff;
   cursor: pointer;
   font-family: inherit;
 }
-.actionDelBtn:hover {
-  background: #fef2f2;
+.bulkAction:hover {
+  background: #eef4ff;
+}
+.bulkAction:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.bulkDanger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #d92d20;
+  padding: 6px 11px;
+  border-radius: 8px;
+  background: #fff;
+  border: 1px solid #f4c7c2;
+  cursor: pointer;
+  font-family: inherit;
+}
+.bulkDanger:hover {
+  background: #fef3f2;
+}
+.bulkClear {
+  font-size: 13px;
+  color: #667085;
+  font-weight: 500;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* ---------------------------------------------------------------------------
+   테이블 (grid)
+   --------------------------------------------------------------------------- */
+.grid {
+  display: grid;
+  grid-template-columns: 44px 1.6fr 1fr 1fr 120px 108px 108px 52px;
+  align-items: center;
+  padding: 0 16px;
+}
+.gridHead {
+  height: 44px;
+  background: #fafbfd;
+  border-bottom: 1px solid #eef1f6;
+  font-size: 12px;
+  font-weight: 700;
+  color: #8592a3;
+}
+.gridRow {
+  height: 52px;
+  border-bottom: 1px solid #f2f4f8;
+  font-size: 13px;
+  background: #fff;
+}
+.gridRow:hover {
+  background: #fbfcfe;
+}
+.gridRowSel,
+.gridRowSel:hover {
+  background: #f4f8ff;
+}
+.check {
+  accent-color: #2b6ef2;
+  width: 17px;
+  height: 17px;
+  cursor: pointer;
+}
+.cellForm {
+  font-weight: 600;
+}
+.cellWorker {
+  color: #3c4657;
+}
+.cellMuted {
+  color: #667085;
+  font-size: 12.5px;
+}
+.cellActions {
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* 상태 배지 */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+.badgeDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.badgeDone {
+  background: #ecfdf3;
+  color: #067647;
+}
+.badgeWait {
+  background: #fffaeb;
+  color: #b54708;
+}
+.badgeDraft {
+  background: #f2f4f8;
+  color: #667085;
+}
+.badgeCancel {
+  background: #fef3f2;
+  color: #d92d20;
+}
+
+/* 아이콘 버튼 + 메뉴 */
+.iconBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  color: #8592a3;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+.iconBtn:hover {
+  background: #f2f4f8;
+  color: #5b6577;
+}
+.menuScrim {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+}
+.menu {
+  position: absolute;
+  right: 0;
+  top: 36px;
+  width: 158px;
+  background: #fff;
+  border: 1px solid #e6eaf1;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(16, 24, 40, 0.14);
+  padding: 6px;
+  z-index: 30;
+}
+.menuItem {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 10px;
+  border-radius: 7px;
+  font-size: 13px;
+  color: #3c4657;
+  text-align: left;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-decoration: none;
+  font-family: inherit;
+}
+.menuItem:hover {
+  background: #f6f8fb;
+}
+.menuItemDanger {
+  color: #d92d20;
+}
+.menuItemDanger:hover {
+  background: #fef3f2;
+}
+.menuDivider {
+  height: 1px;
+  background: #f0f2f6;
+  margin: 4px 6px;
+}
+
+/* 상태/빈 행 */
+.stateRow {
+  padding: 48px 16px;
+  text-align: center;
+  color: #98a2b3;
+  font-size: 13.5px;
+}
+
+/* 푸터 */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 16px;
+}
+.footerTotal {
+  font-size: 13px;
+  color: #8592a3;
+}
+.footerTotal strong {
+  color: #3c4657;
+}
+
+/* 일괄 다운로드용 숨김 렌더 호스트 (화면 밖) */
+.bulkRenderHost {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  width: 820px;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* 반응형 — 좁은 화면에서 레일을 위로 */
+@media (max-width: 900px) {
+  .layout {
+    flex-direction: column;
+  }
+  .rail {
+    width: 100%;
+  }
 }

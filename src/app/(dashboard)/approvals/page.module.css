@@ -774,18 +774,20 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 36px;
-  padding: 0 16px;
+  width: 50px;
+  height: 30px;
+  padding: 8px 10px;
   background: var(--toss-blue);
   color: #fff;
   border: none;
   border-radius: var(--toss-radius-button);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: background 150ms ease;
   white-space: nowrap;
   flex-shrink: 0;
+  justify-content: center;
 }
 
 .btn_primary:hover {

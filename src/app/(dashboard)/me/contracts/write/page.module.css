@@ -439,6 +439,7 @@
   display: inline-block;
   vertical-align: bottom;
   white-space: nowrap;
+  width: 100px;
 }
 
 .signLine {
@@ -451,7 +452,7 @@
 /* 서명 이미지 — "(서명)" 글자 아래쪽에 겹쳐 표시 (조금 진하게) */
 .signInline {
   position: absolute;
-  left: 50%;
+  left: 40%;
   bottom: -10px;
   transform: translateX(-50%);
   height: 40px;

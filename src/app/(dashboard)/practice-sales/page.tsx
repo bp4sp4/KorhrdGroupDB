@@ -153,6 +153,9 @@ export default function PracticeSalesPage() {
   const [rows, setRows] = useState<SalesRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [canViewAll, setCanViewAll] = useState(false);
+  // 실습팀(계정관리 팀 설정) 재직 멤버 = 담당자 후보 + 기본 담당자
+  const [managers, setManagers] = useState<string[]>([]);
+  const [defaultManager, setDefaultManager] = useState<string>("");
   const [myDisplayName, setMyDisplayName] = useState<string>("");
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -248,6 +251,10 @@ export default function PracticeSalesPage() {
       const data = await res.json();
       setRows(data.items ?? []);
       setCanViewAll(!!data.canViewAll);
+      if (Array.isArray(data.managers)) setManagers(data.managers);
+      setDefaultManager(
+        typeof data.defaultManager === "string" ? data.defaultManager : "",
+      );
       if (Array.isArray(data.cohorts)) setApiCohorts(data.cohorts);
     } finally {
       setLoading(false);
@@ -469,11 +476,27 @@ export default function PracticeSalesPage() {
 
   const managerOptions = useMemo(() => {
     const set = new Set<string>();
+    managers.forEach((m) => set.add(m));
     rows.forEach((r) => {
       if (r.manager_name) set.add(r.manager_name);
     });
-    return Array.from(set).sort();
-  }, [rows]);
+    return Array.from(set).sort((a, b) => a.localeCompare(b, "ko"));
+  }, [rows, managers]);
+
+  // 담당자 셀 드롭다운 옵션 — 실습팀 멤버 + (팀에 없는) 현재값 보존
+  const managerCellOptions = useCallback(
+    (current: string) => {
+      const names = new Set<string>(managers);
+      if (current) names.add(current);
+      const opts = Array.from(names)
+        .sort((a, b) => a.localeCompare(b, "ko"))
+        .map((m) => ({ value: m, label: m }));
+      // 팀 멤버가 아직 없을 때도 최소한 "미지정"을 고를 수 있도록
+      if (opts.length === 0) return [{ value: "", label: "미지정" }];
+      return opts;
+    },
+    [managers],
+  );
 
   const monthTabCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -1065,18 +1088,16 @@ export default function PracticeSalesPage() {
                         />
                       </div>
                     </td>
-                    {/* 담당자 */}
+                    {/* 담당자 — 실습팀(계정관리) 재직 멤버 드롭다운 */}
                     <td className={`${styles.td} ${styles.td_center}`}>
-                      <InlineText
+                      <CustomSelect
                         value={r.manager_name ?? ""}
-                        placeholder="한지연"
-                        onSave={(v) =>
-                          updateRow(r, {
-                            manager_name: v.trim() || "한지연",
-                          })
-                        }
-                        width={80}
+                        size="sm"
+                        minWidth={90}
+                        options={managerCellOptions(r.manager_name ?? "")}
+                        onChange={(v) => updateRow(r, { manager_name: v })}
                         disabled={!isRowEditable(r)}
+                        ariaLabel="담당자"
                       />
                     </td>
                     {/* (현)처리번호 */}
@@ -1178,6 +1199,8 @@ export default function PracticeSalesPage() {
       {/* 매출 추가 모달 */}
       {addModalOpen && (
         <AddPracticeSalesModal
+          managers={managers}
+          defaultManager={defaultManager}
           onClose={() => setAddModalOpen(false)}
           onCreated={() => {
             setAddModalOpen(false);
@@ -1191,9 +1214,13 @@ export default function PracticeSalesPage() {
 
 // ─── 매출 추가 모달 ─────────────────────────────────────────────────
 function AddPracticeSalesModal({
+  managers,
+  defaultManager,
   onClose,
   onCreated,
 }: {
+  managers: string[];
+  defaultManager: string;
   onClose: () => void;
   onCreated: () => void;
 }) {
@@ -1208,7 +1235,7 @@ function AddPracticeSalesModal({
   const [form, setForm] = useState({
     student_name: "",
     phone: "",
-    manager_name: "한지연",
+    manager_name: defaultManager,
     category: "후납" as Category,
     payment_method: "card" as PaymentMethod,
     payment_date: todayKst,
@@ -1227,7 +1254,7 @@ function AddPracticeSalesModal({
       const payload = {
         student_name: form.student_name.trim(),
         phone: form.phone.trim() || null,
-        manager_name: form.manager_name.trim() || "한지연",
+        manager_name: form.manager_name.trim() || defaultManager,
         category: form.category,
         payment_method: form.payment_method,
         payment_date: form.payment_date || null,
@@ -1351,12 +1378,15 @@ function AddPracticeSalesModal({
           </div>
           <div className={styles.modal_field}>
             <label className={styles.modal_label}>담당자</label>
-            <input
-              className={styles.modal_input}
+            <CustomSelect
               value={form.manager_name}
-              onChange={(e) =>
-                setForm((p) => ({ ...p, manager_name: e.target.value }))
+              options={
+                managers.length > 0
+                  ? managers.map((m) => ({ value: m, label: m }))
+                  : [{ value: "", label: "미지정 (실습팀 멤버 없음)" }]
               }
+              onChange={(v) => setForm((p) => ({ ...p, manager_name: v }))}
+              ariaLabel="담당자"
             />
           </div>
           <div className={styles.modal_field}>
@@ -1388,44 +1418,6 @@ function AddPracticeSalesModal({
         </div>
       </div>
     </div>
-  );
-}
-
-function InlineText({
-  value,
-  placeholder,
-  onSave,
-  width,
-  disabled,
-}: {
-  value: string;
-  placeholder?: string;
-  onSave: (v: string) => void;
-  width?: number;
-  disabled?: boolean;
-}) {
-  const [local, setLocal] = useState(value);
-  const [prevValue, setPrevValue] = useState(value);
-  if (value !== prevValue) {
-    setPrevValue(value);
-    setLocal(value);
-  }
-  return (
-    <input
-      type="text"
-      className={styles.inline_input}
-      value={local}
-      placeholder={placeholder}
-      style={width ? { width } : undefined}
-      disabled={disabled}
-      onChange={(e) => setLocal(e.target.value)}
-      onBlur={() => {
-        if (local !== value) onSave(local);
-      }}
-      onKeyDown={(e) => {
-        if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-      }}
-    />
   );
 }
 

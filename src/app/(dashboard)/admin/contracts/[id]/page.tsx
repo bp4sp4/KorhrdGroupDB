@@ -87,7 +87,7 @@ export default function AdminContractRegeneratePage({
         viewFirst
         submitUrl={submitUrl}
         afterSavePath="/admin/contracts"
-        headerTitle={`${contract.employee_name} 근로계약서 — PDF 재생성`}
+        headerTitle={`${contract.employee_name} 근로계약서`}
         headerBadge={TYPE_LABEL[contract.contract_type]}
         onBack={onBack}
       />
@@ -104,7 +104,7 @@ export default function AdminContractRegeneratePage({
         readOnly={false}
         submitUrl={submitUrl}
         afterSavePath="/admin/contracts"
-        headerTitle={`${contract.employee_name} ${TYPE_LABEL[contract.contract_type] ?? "서약서"} — PDF 재생성`}
+        headerTitle={`${contract.employee_name} ${TYPE_LABEL[contract.contract_type] ?? "서약서"}`}
         headerBadge={TYPE_LABEL[contract.contract_type]}
         onBack={onBack}
       />

@@ -645,7 +645,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  flex: 1 0 0;
+
   align-self: stretch;
   min-width: 0;
 }
@@ -662,6 +662,11 @@
   font-weight: 600;
   line-height: normal;
   white-space: nowrap;
+}
+
+/* 라벨 텍스트가 긴 필드용 (예: 온라인 수업 담당자) */
+.detailFieldLabelWide {
+  width: 100px;
 }
 
 .detailFieldBox {
@@ -1338,7 +1343,10 @@ select.detailFieldBox {
   grid-template-columns:
     minmax(0, 0.5fr) minmax(0, 0.5fr) minmax(0, 0.55fr) minmax(0, 0.85fr)
     minmax(0, 0.75fr) minmax(0, 1fr) minmax(0, 0.45fr) minmax(0, 0.55fr)
-    minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(200px, 1.9fr);
+    minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(
+      200px,
+      1.9fr
+    );
   border-radius: 6px;
   border: 1px solid #e6e7eb;
 }

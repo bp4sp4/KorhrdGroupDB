@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Search, Info, Check, ArrowRight } from "lucide-react";
 import styles from "./page.module.css";
 import ContractEditor, {
   type WorkVariant,
@@ -201,8 +202,12 @@ export default function NewContractPage() {
 
   return (
     <div className={styles.wrap}>
+      <div className={styles.inner}>
       <div className={styles.head}>
-        <h1 className={styles.title}>전자계약 신규 작성</h1>
+        <div className={styles.headTitleRow}>
+          <h1 className={styles.title}>전자계약 신규 작성</h1>
+          <span className={styles.headBadge}>임시저장 없음</span>
+        </div>
         <p className={styles.sub}>
           양식(근로계약서·서약서·동의서)과 직원을 지정하면 해당 직원이 로그인 후
           양식 위에 직접 작성·서명합니다.
@@ -210,16 +215,18 @@ export default function NewContractPage() {
       </div>
 
       <div className={styles.splitLayout}>
-      <form onSubmit={handleSubmit} className={styles.form}>
+      <form id="contract-new-form" onSubmit={handleSubmit} className={styles.form}>
         {err && <div className={styles.error}>{err}</div>}
 
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>
-            1. 양식 선택{" "}
-            <span className={styles.sectionHint}>
-              (여러 개 선택 가능{types.size > 0 ? ` · ${types.size}개 선택됨` : ""})
-            </span>
-          </h2>
+          <div className={styles.sectionHead}>
+            <span className={styles.sectionBadge}>1</span>
+            <h2 className={styles.sectionTitle}>양식 선택</h2>
+            <span className={styles.sectionHint}>여러 개 선택 가능</span>
+            {types.size > 0 && (
+              <span className={styles.countChip}>{types.size}개 선택됨</span>
+            )}
+          </div>
           <div className={styles.typeGrid}>
             {VISIBLE_TYPES.map((t) => {
               const on = types.has(t);
@@ -231,11 +238,13 @@ export default function NewContractPage() {
                   className={`${styles.typeCard} ${on ? styles.typeCardActive : ""}`}
                   onClick={() => toggleType(t)}
                 >
-                  <span className={styles.typeCheck} aria-hidden>
-                    {on ? "☑" : "☐"}
-                  </span>
-                  <span className={styles.typeName}>
-                    {CONTRACT_TYPE_LABEL[t]}
+                  <span className={styles.typeCardTop}>
+                    <span className={styles.typeName}>
+                      {CONTRACT_TYPE_LABEL[t]}
+                    </span>
+                    <span className={styles.typeCheck} aria-hidden>
+                      {on && <Check size={12} strokeWidth={3} />}
+                    </span>
                   </span>
                   <span className={styles.typeDesc}>
                     {CONTRACT_TYPE_DESC[t]}
@@ -247,28 +256,38 @@ export default function NewContractPage() {
         </section>
 
         <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>2. 근로자(을) 지정</h2>
+          <div className={styles.sectionHead}>
+            <span className={styles.sectionBadge}>2</span>
+            <h2 className={styles.sectionTitle}>근로자(을) 지정</h2>
+          </div>
           <div className={styles.field}>
-            <label className={styles.label}>시스템 사용자 선택 *</label>
+            <label className={styles.label}>
+              시스템 사용자 선택 <span className={styles.req}>*</span>
+            </label>
             <div className={styles.dropdownWrap}>
-              <input
-                type="text"
-                className={styles.input}
-                value={userQuery}
-                placeholder="이름으로 검색"
-                onFocus={() => setShowDropdown(true)}
-                onChange={(e) => {
-                  setUserQuery(e.target.value);
-                  setShowDropdown(true);
-                  if (!e.target.value) {
-                    setEmployeeUserId(null);
-                    setEmployeeName("");
+              <div className={styles.inputAffix}>
+                <span className={styles.inputIcon}>
+                  <Search size={15} />
+                </span>
+                <input
+                  type="text"
+                  className={`${styles.input} ${styles.inputWithIcon}`}
+                  value={userQuery}
+                  placeholder="이름으로 검색"
+                  onFocus={() => setShowDropdown(true)}
+                  onChange={(e) => {
+                    setUserQuery(e.target.value);
+                    setShowDropdown(true);
+                    if (!e.target.value) {
+                      setEmployeeUserId(null);
+                      setEmployeeName("");
+                    }
+                  }}
+                  onBlur={() =>
+                    setTimeout(() => setShowDropdown(false), 150)
                   }
-                }}
-                onBlur={() =>
-                  setTimeout(() => setShowDropdown(false), 150)
-                }
-              />
+                />
+              </div>
               {showDropdown && filteredUsers.length > 0 && (
                 <ul className={styles.dropdown}>
                   {filteredUsers.map((u) => (
@@ -294,45 +313,57 @@ export default function NewContractPage() {
 
         {showWage && (
           <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>
-              3. 임금 설정{" "}
+            <div className={styles.sectionHead}>
+              <span className={styles.sectionBadge}>3</span>
+              <h2 className={styles.sectionTitle}>임금 설정</h2>
               <span className={styles.sectionHint}>
-                (근로계약서 — 직원은 수정할 수 없습니다)
+                근로계약서 — 직원은 수정할 수 없습니다
               </span>
-            </h2>
+            </div>
             {hasMonthly && (
               <>
-                <div className={styles.field}>
-                  <label className={styles.label}>기본급 (월)</label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    className={styles.input}
-                    value={comma(baseMonthly)}
-                onFocus={() => setFocusedArticle(5)}
-                    placeholder="예) 3,960,000"
-                    onChange={(e) =>
-                      setBaseMonthly(e.target.value.replace(/[^0-9]/g, ""))
-                    }
-                  />
+                <div className={styles.fieldRow}>
+                  <div className={styles.field}>
+                    <label className={styles.label}>기본급 (월)</label>
+                    <div className={styles.inputAffix}>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        className={`${styles.input} ${styles.inputWithSuffix}`}
+                        value={comma(baseMonthly)}
+                        onFocus={() => setFocusedArticle(5)}
+                        placeholder="예) 3,960,000"
+                        onChange={(e) =>
+                          setBaseMonthly(e.target.value.replace(/[^0-9]/g, ""))
+                        }
+                      />
+                      <span className={styles.inputSuffix}>원</span>
+                    </div>
+                  </div>
+                  <div className={styles.field}>
+                    <label className={styles.label}>식대 (월)</label>
+                    <div className={styles.inputAffix}>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        className={`${styles.input} ${styles.inputWithSuffix}`}
+                        value={comma(mealMonthly)}
+                        onFocus={() => setFocusedArticle(5)}
+                        onChange={(e) =>
+                          setMealMonthly(e.target.value.replace(/[^0-9]/g, ""))
+                        }
+                      />
+                      <span className={styles.inputSuffix}>원</span>
+                    </div>
+                  </div>
                 </div>
                 <div className={styles.field}>
-                  <label className={styles.label}>식대 (월)</label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    className={styles.input}
-                    value={comma(mealMonthly)}
-                onFocus={() => setFocusedArticle(5)}
-                    onChange={(e) =>
-                      setMealMonthly(e.target.value.replace(/[^0-9]/g, ""))
-                    }
-                  />
-                </div>
-                <div className={styles.field}>
-                  <label className={styles.label}>임금 구성항목 (제5조 2)</label>
+                  <label className={styles.label}>
+                    임금 구성항목{" "}
+                    <span className={styles.labelSub}>(제5조 2)</span>
+                  </label>
                   <textarea
-                    className={styles.input}
+                    className={`${styles.input} ${styles.textarea}`}
                     rows={3}
                     value={wageComposition}
                     onFocus={() => setFocusedArticle(5)}
@@ -345,179 +376,204 @@ export default function NewContractPage() {
             {hasHourly && (
               <div className={styles.field}>
                 <label className={styles.label}>시급 (계약직)</label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  className={styles.input}
-                  value={comma(hourlyWage)}
-                onFocus={() => setFocusedArticle(5)}
-                  placeholder="예) 10,320"
-                  onChange={(e) =>
-                    setHourlyWage(e.target.value.replace(/[^0-9]/g, ""))
-                  }
-                />
+                <div className={styles.inputAffix}>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    className={`${styles.input} ${styles.inputWithSuffix}`}
+                    value={comma(hourlyWage)}
+                    onFocus={() => setFocusedArticle(5)}
+                    placeholder="예) 10,320"
+                    onChange={(e) =>
+                      setHourlyWage(e.target.value.replace(/[^0-9]/g, ""))
+                    }
+                  />
+                  <span className={styles.inputSuffix}>원</span>
+                </div>
               </div>
             )}
-            <p className={styles.hint}>
-              여기서 입력한 임금이 직원 계약서에 자동 반영되며, 직원은 보기만
-              가능합니다. (서약서·동의서에는 적용되지 않습니다.)
-            </p>
+            <div className={styles.infoBox}>
+              <span className={styles.infoIcon}>
+                <Info size={14} />
+              </span>
+              <p className={styles.infoText}>
+                여기서 입력한 임금이 직원 계약서에 자동 반영되며, 직원은 보기만
+                가능합니다. (서약서·동의서에는 적용되지 않습니다.)
+              </p>
+            </div>
           </section>
         )}
 
         {showWage && (
           <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>
-              4. 근로조건 설정{" "}
-              <span className={styles.sectionHint}>
-                (선택 — 비우면 기본 문구 유지, 직원은 수정할 수 없습니다)
-              </span>
-            </h2>
+            <div className={styles.sectionHead}>
+              <span className={styles.sectionBadge}>4</span>
+              <h2 className={styles.sectionTitle}>근로조건 설정</h2>
+              <span className={styles.sectionHint}>선택 — 비우면 기본 문구 유지</span>
+            </div>
+
             {/* 제2조 */}
-            <div className={styles.groupLabel}>제2조 · 수습기간</div>
-            <div className={styles.field}>
-              <label className={styles.label}>수습기간 (개월)</label>
-              <input
-                type="text"
-                inputMode="numeric"
-                className={styles.input}
-                value={probationMonths}
-                onFocus={() => setFocusedArticle(2)}
-                placeholder="비우면 기본: 3"
-                onChange={(e) =>
-                  setProbationMonths(e.target.value.replace(/[^0-9]/g, ""))
-                }
-              />
+            <div className={styles.group}>
+              <div className={styles.groupHead}>
+                <span className={styles.groupClause}>제2조</span>
+                <span className={styles.groupTitle}>수습기간</span>
+              </div>
+              <div className={styles.groupFields}>
+                <div className={styles.field}>
+                  <label className={styles.groupLabel}>수습기간 (개월)</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    className={`${styles.input} ${styles.inputSm}`}
+                    value={probationMonths}
+                    onFocus={() => setFocusedArticle(2)}
+                    placeholder="비우면 기본: 3"
+                    onChange={(e) =>
+                      setProbationMonths(e.target.value.replace(/[^0-9]/g, ""))
+                    }
+                  />
+                </div>
+              </div>
             </div>
 
             {/* 제3조 */}
-            <div className={styles.groupLabel}>제3조 · 담당업무 및 업무 장소</div>
-            <div className={styles.field}>
-              <label className={styles.label}>근무 장소</label>
-              <input
-                type="text"
-                className={styles.input}
-                value={workLocation}
-                onFocus={() => setFocusedArticle(3)}
-                placeholder="비우면 기본: 서울시 도봉구 마들로13길 61, B동 905,906호(창동)"
-                onChange={(e) => setWorkLocation(e.target.value)}
-              />
-            </div>
-            <div className={styles.field}>
-              <label className={styles.label}>직책 / 직위</label>
-              <input
-                type="text"
-                className={styles.input}
-                value={position}
-                onFocus={() => setFocusedArticle(3)}
-                placeholder="예) 팀장 (비우면 표시 안 함)"
-                onChange={(e) => setPosition(e.target.value)}
-              />
-            </div>
-            <div className={styles.field}>
-              <label className={styles.label}>부서</label>
-              <input
-                type="text"
-                className={styles.input}
-                value={department}
-                onFocus={() => setFocusedArticle(3)}
-                placeholder="예) 마케팅개발본부 (비우면 표시 안 함)"
-                onChange={(e) => setDepartment(e.target.value)}
-              />
+            <div className={styles.group}>
+              <div className={styles.groupHead}>
+                <span className={styles.groupClause}>제3조</span>
+                <span className={styles.groupTitle}>담당업무 및 업무 장소</span>
+              </div>
+              <div className={styles.groupFields}>
+                <div className={styles.field}>
+                  <label className={styles.groupLabel}>근무 장소</label>
+                  <input
+                    type="text"
+                    className={`${styles.input} ${styles.inputSm}`}
+                    value={workLocation}
+                    onFocus={() => setFocusedArticle(3)}
+                    placeholder="비우면 기본: 서울시 도봉구 마들로13길 61, B동 905,906호(창동)"
+                    onChange={(e) => setWorkLocation(e.target.value)}
+                  />
+                </div>
+                <div className={styles.field}>
+                  <label className={styles.groupLabel}>직책 / 직위</label>
+                  <input
+                    type="text"
+                    className={`${styles.input} ${styles.inputSm}`}
+                    value={position}
+                    onFocus={() => setFocusedArticle(3)}
+                    placeholder="예) 팀장 (비우면 표시 안 함)"
+                    onChange={(e) => setPosition(e.target.value)}
+                  />
+                </div>
+                <div className={styles.field}>
+                  <label className={styles.groupLabel}>부서</label>
+                  <input
+                    type="text"
+                    className={`${styles.input} ${styles.inputSm}`}
+                    value={department}
+                    onFocus={() => setFocusedArticle(3)}
+                    placeholder="예) 마케팅개발본부 (비우면 표시 안 함)"
+                    onChange={(e) => setDepartment(e.target.value)}
+                  />
+                </div>
+              </div>
             </div>
 
             {/* 제4조 */}
-            <div className={styles.groupLabel}>제4조 · 근로시간</div>
-            <div className={styles.field}>
-              <label className={styles.label}>근무시간</label>
-              <textarea
-                className={styles.input}
-                rows={2}
-                value={workTime}
-                onFocus={() => setFocusedArticle(4)}
-                placeholder="비우면 기본: 1일 8시간 근무, 오전 10시부터 오후 7시까지"
-                onChange={(e) => setWorkTime(e.target.value)}
-              />
-            </div>
-            <div className={styles.field}>
-              <label className={styles.label}>휴게시간</label>
-              <textarea
-                className={styles.input}
-                rows={2}
-                value={breakTime}
-                onFocus={() => setFocusedArticle(4)}
-                placeholder="비우면 기본: 휴게시간은 13시부터 14시로 하며, 근무시간에는 제외한다."
-                onChange={(e) => setBreakTime(e.target.value)}
-              />
-            </div>
-            <div className={styles.field}>
-              <label className={styles.label}>근무일</label>
-              <textarea
-                className={styles.input}
-                rows={2}
-                value={workDays}
-                onFocus={() => setFocusedArticle(4)}
-                placeholder="비우면 기본: 주 5일 근무, 주 40시간 원칙 (최대 52시간)"
-                onChange={(e) => setWorkDays(e.target.value)}
-              />
-            </div>
-            <div className={styles.field}>
-              <label className={styles.label}>주휴일</label>
-              <textarea
-                className={styles.input}
-                rows={2}
-                value={weeklyHoliday}
-                onFocus={() => setFocusedArticle(4)}
-                placeholder="비우면 기본: 주휴일은 일요일로 하되, 협의하여 변경 가능"
-                onChange={(e) => setWeeklyHoliday(e.target.value)}
-              />
+            <div className={styles.group}>
+              <div className={styles.groupHead}>
+                <span className={styles.groupClause}>제4조</span>
+                <span className={styles.groupTitle}>근로시간</span>
+              </div>
+              <div className={styles.groupFields}>
+                <div className={styles.field}>
+                  <label className={styles.groupLabel}>근무시간</label>
+                  <textarea
+                    className={`${styles.input} ${styles.inputSm} ${styles.textarea}`}
+                    rows={2}
+                    value={workTime}
+                    onFocus={() => setFocusedArticle(4)}
+                    placeholder="비우면 기본: 1일 8시간 근무, 오전 10시부터 오후 7시까지"
+                    onChange={(e) => setWorkTime(e.target.value)}
+                  />
+                </div>
+                <div className={styles.field}>
+                  <label className={styles.groupLabel}>휴게시간</label>
+                  <textarea
+                    className={`${styles.input} ${styles.inputSm} ${styles.textarea}`}
+                    rows={2}
+                    value={breakTime}
+                    onFocus={() => setFocusedArticle(4)}
+                    placeholder="비우면 기본: 휴게시간은 13시부터 14시로 하며, 근무시간에는 제외한다."
+                    onChange={(e) => setBreakTime(e.target.value)}
+                  />
+                </div>
+                <div className={styles.field}>
+                  <label className={styles.groupLabel}>근무일</label>
+                  <textarea
+                    className={`${styles.input} ${styles.inputSm} ${styles.textarea}`}
+                    rows={2}
+                    value={workDays}
+                    onFocus={() => setFocusedArticle(4)}
+                    placeholder="비우면 기본: 주 5일 근무, 주 40시간 원칙 (최대 52시간)"
+                    onChange={(e) => setWorkDays(e.target.value)}
+                  />
+                </div>
+                <div className={styles.field}>
+                  <label className={styles.groupLabel}>주휴일</label>
+                  <textarea
+                    className={`${styles.input} ${styles.inputSm} ${styles.textarea}`}
+                    rows={2}
+                    value={weeklyHoliday}
+                    onFocus={() => setFocusedArticle(4)}
+                    placeholder="비우면 기본: 주휴일은 일요일로 하되, 협의하여 변경 가능"
+                    onChange={(e) => setWeeklyHoliday(e.target.value)}
+                  />
+                </div>
+              </div>
             </div>
 
             {/* 특약 */}
-            <div className={styles.groupLabel}>특약사항 (선택)</div>
-            <div className={styles.field}>
-              <label className={styles.label}>특약사항</label>
-              <textarea
-                className={styles.input}
-                rows={3}
-                value={specialTerms}
-                onFocus={() => setFocusedArticle(16)}
-                placeholder="계약별 추가 특약 조항 (줄바꿈으로 여러 줄, 비우면 조항 없음)"
-                onChange={(e) => setSpecialTerms(e.target.value)}
-              />
+            <div className={styles.group}>
+              <div className={styles.groupHead}>
+                <span className={styles.groupClause}>특약사항</span>
+                <span className={styles.groupSub}>(선택)</span>
+              </div>
+              <div className={styles.groupFields}>
+                <textarea
+                  className={`${styles.input} ${styles.inputSm} ${styles.textarea}`}
+                  rows={2}
+                  value={specialTerms}
+                  onFocus={() => setFocusedArticle(16)}
+                  placeholder="계약별 추가 특약 조항 (줄바꿈으로 여러 줄, 비우면 조항 없음)"
+                  onChange={(e) => setSpecialTerms(e.target.value)}
+                />
+              </div>
+              <div className={styles.infoBox}>
+                <span className={styles.infoIcon}>
+                  <Info size={14} />
+                </span>
+                <p className={styles.infoText}>
+                  입력한 근로조건이 계약서 본문에 반영되며, 직원은 보기만
+                  가능합니다. 비워두면 기존 표준 문구가 그대로 사용됩니다.
+                </p>
+              </div>
             </div>
-            <p className={styles.hint}>
-              입력한 근로조건이 계약서 본문에 반영되며, 직원은 보기만 가능합니다.
-              비워두면 기존 표준 문구가 그대로 사용됩니다.
-            </p>
           </section>
         )}
 
-        <div className={styles.footer}>
-          <button
-            type="button"
-            className={styles.btnGhost}
-            onClick={() => router.back()}
-            disabled={saving}
-          >
-            취소
-          </button>
-          <button type="submit" className={styles.btnPrimary} disabled={saving}>
-            {saving
-              ? "저장 중..."
-              : types.size > 1
-                ? `${types.size}건 저장 후 서명 대기`
-                : "저장 후 서명 대기"}
-          </button>
-        </div>
       </form>
 
         {previewVariant && (
           <aside className={styles.previewPane}>
-            <div className={styles.previewSticky}>
-              <div className={styles.previewLabel}>
-                실시간 미리보기 · {CONTRACT_TYPE_LABEL[previewVariant]}
-              </div>
+            <div className={styles.previewLabel}>
+              <span className={styles.previewDot} />
+              <span className={styles.previewLabelText}>실시간 미리보기</span>
+              <span className={styles.previewLabelSub}>
+                · {CONTRACT_TYPE_LABEL[previewVariant]}
+              </span>
+            </div>
+            <div className={styles.previewFrame}>
               <div className={styles.previewDoc}>
                 <ContractEditor
                   variant={previewVariant}
@@ -531,6 +587,43 @@ export default function NewContractPage() {
           </aside>
         )}
       </div>
+      </div>
+
+      {/* 하단 고정 액션바 */}
+      <footer className={styles.footer}>
+        <div className={styles.footerInner}>
+          <span className={styles.footerStatus}>
+            양식 <b>{types.size}건</b> · 근로자{" "}
+            {employeeName ? (
+              <b>{employeeName}</b>
+            ) : (
+              <span className={styles.footerStatusWarn}>미지정</span>
+            )}
+          </span>
+          <div className={styles.footerSpacer} />
+          <button
+            type="button"
+            className={styles.btnGhost}
+            onClick={() => router.back()}
+            disabled={saving}
+          >
+            취소
+          </button>
+          <button
+            type="submit"
+            form="contract-new-form"
+            className={styles.btnPrimary}
+            disabled={saving}
+          >
+            {saving
+              ? "저장 중..."
+              : types.size > 1
+                ? `${types.size}건 저장 후 서명 대기`
+                : "저장 후 서명 대기"}
+            {!saving && <ArrowRight size={15} />}
+          </button>
+        </div>
+      </footer>
     </div>
   );
 }

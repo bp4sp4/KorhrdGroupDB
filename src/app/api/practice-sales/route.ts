@@ -75,6 +75,38 @@ async function checkSalesPermission(userId: number): Promise<'all' | 'own' | 'no
   return data.scope === 'all' ? 'all' : 'own'
 }
 
+// 실습팀(journal_form='practicum') 재직 멤버 = 담당자 후보.
+// 하드코딩 대신 계정관리 > 팀 설정과 연동 — 담당자가 바뀌면 팀 소속만 바꾸면 된다.
+// default: 팀장(leader) 우선, 없으면 이름순 첫 멤버, 그것도 없으면 ''(미지정)
+async function getPracticeManagers(): Promise<{ names: string[]; default: string }> {
+  const { data: teams } = await supabaseAdmin
+    .from('teams')
+    .select('id, leader_user_id')
+    .eq('journal_form', 'practicum')
+    .eq('is_active', true)
+  const teamIds = (teams ?? []).map((t) => t.id as string)
+  if (teamIds.length === 0) return { names: [], default: '' }
+
+  const { data: members } = await supabaseAdmin
+    .from('app_users')
+    .select('id, display_name')
+    .in('team_id', teamIds)
+    .eq('is_active', true)
+    .eq('is_test', false)
+
+  const list = (members ?? [])
+    .map((m) => ({ id: m.id as number, name: String(m.display_name ?? '').trim() }))
+    .filter((m) => m.name)
+    .sort((a, b) => a.name.localeCompare(b.name, 'ko'))
+
+  const leaderId = (teams ?? []).find((t) => t.leader_user_id != null)?.leader_user_id as
+    | number
+    | undefined
+  const leaderName = leaderId != null ? list.find((m) => m.id === leaderId)?.name : undefined
+  const names = list.map((m) => m.name)
+  return { names, default: leaderName ?? names[0] ?? '' }
+}
+
 type PaymentMethod = 'bank_transfer' | 'card' | 'payapp_card'
 type RefundStatus = '정상' | '당월 환불' | '환불' | '정산' | '보류'
 type Category = '실습' | '후납'
@@ -128,6 +160,9 @@ export async function GET(request: NextRequest) {
     canViewAll = scope === 'all'
   }
 
+  // 실습팀 담당자 후보 + 기본 담당자 (하드코딩 대신 팀 설정 연동)
+  const { names: managerNames, default: defaultManager } = await getPracticeManagers()
+
   // 1) 결제완료 practice_applications
   const { data: apps, error: appsError } = await supabaseAdmin
     .from('practice_applications')
@@ -179,7 +214,7 @@ export async function GET(request: NextRequest) {
       sale_id: ov ? (ov.id as string) : null,
       student_name: a.name,
       phone: a.contact ?? null,
-      manager_name: (ov?.manager_name as string | null | undefined) ?? '한지연',
+      manager_name: (ov?.manager_name as string | null | undefined) ?? defaultManager,
       category: (ov?.category as Category | undefined) ?? '실습',
       total_amount: (ov?.total_amount as number | null | undefined) ?? a.payment_amount ?? null,
       payment_method:
@@ -214,7 +249,7 @@ export async function GET(request: NextRequest) {
     sale_id: r.id as string,
     student_name: (r.student_name as string) ?? '',
     phone: (r.phone as string | null) ?? null,
-    manager_name: (r.manager_name as string | null) ?? '한지연',
+    manager_name: (r.manager_name as string | null) ?? defaultManager,
     category: ((r.category as Category | undefined) ?? '후납'),
     total_amount: (r.total_amount as number | null) ?? null,
     payment_method: (r.payment_method as PaymentMethod | null) ?? null,
@@ -267,7 +302,13 @@ export async function GET(request: NextRequest) {
 
   // 사용하지 않는 매개변수 방어
   void normalizePayMethod
-  return NextResponse.json({ items: visible, canViewAll, cohorts })
+  return NextResponse.json({
+    items: visible,
+    canViewAll,
+    cohorts,
+    managers: managerNames,
+    defaultManager,
+  })
 }
 
 interface SalesPayload {
@@ -379,13 +420,14 @@ export async function POST(request: NextRequest) {
       })
       return NextResponse.json(data)
     } else {
+      const { default: defaultManager } = await getPracticeManagers()
       const insertPayload = {
         ...sanitize(body),
         practice_application_id: body.practice_application_id,
         student_name: app.name,
         phone: app.contact,
         category: body.category ?? '실습',
-        manager_name: body.manager_name ?? '한지연',
+        manager_name: body.manager_name ?? defaultManager,
         created_by: appUser.id,
       }
       const { data, error } = await supabaseAdmin
@@ -412,13 +454,14 @@ export async function POST(request: NextRequest) {
       { status: 400 },
     )
   }
+  const { default: defaultManager } = await getPracticeManagers()
   const insertPayload = {
     ...sanitize(body),
     practice_application_id: null,
     student_name: body.student_name.trim(),
     phone: body.phone ?? null,
     category: body.category ?? '후납',
-    manager_name: body.manager_name ?? '한지연',
+    manager_name: body.manager_name ?? defaultManager,
     created_by: appUser.id,
   }
   const { data, error } = await supabaseAdmin
@@ -514,6 +557,7 @@ export async function DELETE(request: NextRequest) {
       .eq('id', existing.id)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   } else {
+    const { default: defaultManager } = await getPracticeManagers()
     const { error } = await supabaseAdmin
       .from('practice_sales')
       .insert({
@@ -522,7 +566,7 @@ export async function DELETE(request: NextRequest) {
         phone: (app.contact as string | null) ?? null,
         is_hidden: true,
         category: '실습',
-        manager_name: '한지연',
+        manager_name: defaultManager,
         created_by: appUser.id,
       })
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })

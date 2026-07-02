@@ -35,7 +35,54 @@ export async function GET() {
 
   if (error)
     return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ contracts: data ?? [] });
+
+  const rows = data ?? [];
+
+  // 근로자 → 부서명 매핑 (부서·근로자 트리용)
+  const userIds = Array.from(
+    new Set(
+      rows
+        .map((r) => r.employee_user_id as number | null)
+        .filter((v): v is number => typeof v === "number"),
+    ),
+  );
+  const deptByUser = new Map<number, string>();
+  if (userIds.length > 0) {
+    const { data: users } = await supabaseAdmin
+      .from("app_users")
+      .select("id, department_id")
+      .in("id", userIds);
+    const deptIds = Array.from(
+      new Set(
+        (users ?? [])
+          .map((u) => u.department_id as string | null)
+          .filter((v): v is string => !!v),
+      ),
+    );
+    const deptName = new Map<string, string>();
+    if (deptIds.length > 0) {
+      const { data: depts } = await supabaseAdmin
+        .from("departments")
+        .select("id, name")
+        .in("id", deptIds);
+      for (const d of depts ?? [])
+        deptName.set(d.id as string, (d.name as string) ?? "");
+    }
+    for (const u of users ?? []) {
+      const dn = u.department_id ? deptName.get(u.department_id as string) : "";
+      if (dn) deptByUser.set(u.id as number, dn);
+    }
+  }
+
+  const contracts = rows.map((r) => ({
+    ...r,
+    department:
+      typeof r.employee_user_id === "number"
+        ? (deptByUser.get(r.employee_user_id) ?? "미지정")
+        : "미지정",
+  }));
+
+  return NextResponse.json({ contracts });
 }
 
 // POST /api/admin/contracts — 신규 작성
