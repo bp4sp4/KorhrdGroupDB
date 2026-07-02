@@ -123,7 +123,7 @@ export default function PracticeAgencyPage() {
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<number | null>(null);
   const [addressInput, setAddressInput] = useState("");
-  const [sortMode, setSortMode] = useState<"default" | "distance">("default");
+  const [sortMode, setSortMode] = useState<"default" | "distance">("distance");
   // 선택한 곳까지 자동차·도보 소요시간 (내 위치 설정 시에만)
   const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
   const [routeLoading, setRouteLoading] = useState(false);
