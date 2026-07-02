@@ -62,6 +62,7 @@ import CustomSelect from "../marketing/CustomSelect";
 import { useGuide } from "@/components/guide/GuideProvider";
 import { getSeenGuideIds } from "@/lib/guide/steps";
 import GuidePicker from "@/components/guide/GuidePicker";
+import { createClient } from "@/lib/supabase/client";
 
 // ---------------------------------------------------------------------------
 // 타입 정의
@@ -1218,26 +1219,66 @@ export default function ApprovalsPage() {
     const validFiles = files.filter((f) => f instanceof File);
     if (!validFiles.length) return;
     setUploadingFiles(true);
-    const fd = new FormData();
-    validFiles.forEach((file) => fd.append("files", file));
-    const res = await fetch("/api/management/approvals/upload", {
-      method: "POST",
-      body: fd,
-    });
-    if (res.ok) {
-      const { files: uploaded } = await res.json();
-      setAttachedFiles((prev) => [...prev, ...(uploaded as AttachedFile[])]);
-    } else {
-      const text = await res.text();
-      let msg = "파일 업로드 실패";
-      try {
-        msg = JSON.parse(text).error ?? msg;
-      } catch {
-        /* empty body */
+    try {
+      // 1) 서버에서 서명 업로드 URL 발급 (작은 JSON — 본문 크기 제한 회피)
+      const res = await fetch("/api/management/approvals/upload-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          files: validFiles.map((f) => ({ name: f.name, type: f.type })),
+        }),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        let msg = "파일 업로드 실패";
+        try {
+          msg = JSON.parse(text).error ?? msg;
+        } catch {
+          /* empty body */
+        }
+        alert(msg);
+        return;
       }
-      alert(msg);
+      const { uploads } = (await res.json()) as {
+        uploads: {
+          name: string;
+          type: string;
+          path: string;
+          token: string;
+          publicUrl: string;
+        }[];
+      };
+
+      // 2) 브라우저에서 Supabase 스토리지로 직접 업로드
+      const supabase = createClient();
+      const done: AttachedFile[] = [];
+      for (let i = 0; i < validFiles.length; i++) {
+        const file = validFiles[i];
+        const u = uploads[i];
+        if (!u) continue;
+        const { error } = await supabase.storage
+          .from("approval-attachments")
+          .uploadToSignedUrl(u.path, u.token, file, {
+            contentType: file.type || undefined,
+          });
+        if (error) {
+          alert(`${file.name} 업로드 실패: ${error.message}`);
+          continue;
+        }
+        done.push({
+          name: u.name,
+          url: u.publicUrl,
+          type: file.type,
+          size: file.size,
+        });
+      }
+      if (done.length)
+        setAttachedFiles((prev) => [...prev, ...done]);
+    } catch (e) {
+      alert((e as Error).message);
+    } finally {
+      setUploadingFiles(false);
     }
-    setUploadingFiles(false);
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {

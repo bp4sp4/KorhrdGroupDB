@@ -1287,6 +1287,7 @@ function DetailModal({
                     tableName="practice_applicants"
                     recordId={String(form.id)}
                     legacyMemo={form.counsel_content}
+                    hideQuickChips
                   />
                 </div>
               )}

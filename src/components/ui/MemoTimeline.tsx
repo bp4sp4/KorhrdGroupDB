@@ -21,6 +21,8 @@ interface Props {
   onAdd?: (content: string) => void
   /** true면 빈 목록 안내문("작성된 메모가 없습니다")만 숨김 — 작성칸은 유지 */
   hideEmpty?: boolean
+  /** true면 빠른 메모 칩(부재중·오전부재·오후부재·전화거절) 숨김 */
+  hideQuickChips?: boolean
 }
 
 function fmtDateTime(iso: string) {
@@ -61,7 +63,7 @@ function renderContent(text: string) {
 }
 
 
-export default function MemoTimeline({ tableName, recordId, legacyMemo, defaultInput, onCountChange, onLastMemoAt, onAdd, hideEmpty }: Props) {
+export default function MemoTimeline({ tableName, recordId, legacyMemo, defaultInput, onCountChange, onLastMemoAt, onAdd, hideEmpty, hideQuickChips }: Props) {
   const [logs, setLogs] = useState<MemoLog[]>([])
   const [loading, setLoading] = useState(true)
   const [input, setInput] = useState(defaultInput ?? '')
@@ -368,18 +370,20 @@ export default function MemoTimeline({ tableName, recordId, legacyMemo, defaultI
 
       {/* 입력창 */}
       <div className={styles.inputWrap}>
-        <div className={styles.quickChipRow}>
-          {QUICK_MEMOS.map(label => (
-            <button
-              key={label}
-              type="button"
-              onClick={() => handleQuickMemo(label)}
-              className={styles.quickChip}
-            >
-              + {label}
-            </button>
-          ))}
-        </div>
+        {!hideQuickChips && (
+          <div className={styles.quickChipRow}>
+            {QUICK_MEMOS.map(label => (
+              <button
+                key={label}
+                type="button"
+                onClick={() => handleQuickMemo(label)}
+                className={styles.quickChip}
+              >
+                + {label}
+              </button>
+            ))}
+          </div>
+        )}
         <textarea
           ref={textareaRef}
           className={styles.input}

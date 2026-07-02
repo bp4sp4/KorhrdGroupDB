@@ -36,6 +36,18 @@ type Filter = "all" | "set" | "unset";
 
 const fmt = (n: number) => n.toLocaleString("ko-KR");
 
+// 만원 단위 값을 실제 금액(억·만원)으로 — 예) 13000 → "1억 3,000만원"
+function fmtKRW(manwon: number): string {
+  const won = Math.round(manwon) * 10000;
+  if (won === 0) return "0원";
+  const eok = Math.floor(won / 100_000_000);
+  const man = Math.floor((won % 100_000_000) / 10_000);
+  const parts: string[] = [];
+  if (eok > 0) parts.push(`${eok.toLocaleString("ko-KR")}억`);
+  if (man > 0) parts.push(`${man.toLocaleString("ko-KR")}만`);
+  return (parts.length ? parts.join(" ") : "0") + "원";
+}
+
 // 숫자 입력 — 포커스 중엔 콤마 없이(커서 안 튐), 벗어나면 콤마 표시
 function MoneyInput({
   value,
@@ -201,6 +213,15 @@ export default function SalesTargetsBoard() {
   });
   const ym = `${year} · ${month}월`;
 
+  // 요약 — 현재 보이는(필터·검색 적용) 인원 기준 합계
+  const sumTarget = rows.reduce((a, r) => a + (r.targetSales ?? 0), 0);
+  const sumActual = rows.reduce(
+    (a, r) => a + (r.targetSales != null ? r.actualSales : 0),
+    0,
+  );
+  const sumRate =
+    sumTarget > 0 ? Math.round((sumActual / sumTarget) * 100) : null;
+
   return (
     <div className={styles.board}>
       {/* 헤더 */}
@@ -286,6 +307,28 @@ export default function SalesTargetsBoard() {
       ) : rows.length === 0 ? (
         <div className={styles.empty}>조건에 맞는 직원이 없습니다.</div>
       ) : (
+        <>
+        {/* 합계 요약 */}
+        <div className={styles.summaryBar}>
+          <div className={styles.summaryItem}>
+            <span className={styles.summaryLabel}>목표매출 합계</span>
+            <span className={styles.summaryVal}>{fmtKRW(sumTarget)}</span>
+          </div>
+          <div className={styles.summaryDivider} />
+          <div className={styles.summaryItem}>
+            <span className={styles.summaryLabel}>실제매출 합계</span>
+            <span className={styles.summaryVal}>{fmtKRW(sumActual)}</span>
+          </div>
+          <div className={styles.summaryDivider} />
+          <div className={styles.summaryItem}>
+            <span className={styles.summaryLabel}>종합 달성률</span>
+            <span className={styles.summaryVal}>
+              {sumRate != null ? `${sumRate}%` : "—"}
+            </span>
+          </div>
+          <span className={styles.summaryNote}>{rows.length}명 기준</span>
+        </div>
+
         <div className={styles.card}>
           {/* head */}
           <div className={styles.headRow}>
@@ -396,6 +439,7 @@ export default function SalesTargetsBoard() {
             );
           })}
         </div>
+        </>
       )}
 
       {/* ── 주차별 목표 설정 모달 ── */}
